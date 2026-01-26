@@ -1,102 +1,56 @@
-import { useEffect, useRef } from 'react'
-
 interface NetworkVizProps {
   pointRadius: number
   maxDistance: number
   color: string
 }
 
-export function NetworkViz({ pointRadius, maxDistance, color }: NetworkVizProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const frameRef = useRef(0)
-  const pointsRef = useRef<{ x: number; y: number; vx: number; vy: number }[]>([])
+export function NetworkViz({ pointRadius, color }: NetworkVizProps) {
+  // Static point positions
+  const points = [
+    { x: 10, y: 8 },
+    { x: 25, y: 16 },
+    { x: 40, y: 6 },
+    { x: 55, y: 18 },
+    { x: 70, y: 10 },
+    { x: 35, y: 12 },
+  ]
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    // Initialize points
-    if (pointsRef.current.length === 0) {
-      for (let i = 0; i < 8; i++) {
-        pointsRef.current.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
-        })
+  // Generate connection lines
+  const lines = []
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const dx = points[i].x - points[j].x
+      const dy = points[i].y - points[j].y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      if (dist < 35) {
+        lines.push(
+          <line
+            key={`${i}-${j}`}
+            x1={points[i].x}
+            y1={points[i].y}
+            x2={points[j].x}
+            y2={points[j].y}
+            stroke={color}
+            strokeWidth={0.5}
+            opacity={1 - dist / 40}
+          />
+        )
       }
     }
-
-    let animationId: number
-
-    const draw = () => {
-      const w = canvas.width
-      const h = canvas.height
-      const points = pointsRef.current
-
-      ctx.fillStyle = '#0a0a0a'
-      ctx.fillRect(0, 0, w, h)
-
-      // Update points
-      points.forEach((p) => {
-        p.x += p.vx
-        p.y += p.vy
-        if (p.x < 0 || p.x > w) p.vx *= -1
-        if (p.y < 0 || p.y > h) p.vy *= -1
-        p.x = Math.max(0, Math.min(w, p.x))
-        p.y = Math.max(0, Math.min(h, p.y))
-      })
-
-      // Draw connections
-      const maxDist = maxDistance * 100
-      ctx.strokeStyle = color
-      ctx.lineWidth = 0.5
-
-      for (let i = 0; i < points.length; i++) {
-        for (let j = i + 1; j < points.length; j++) {
-          const dx = points[i].x - points[j].x
-          const dy = points[i].y - points[j].y
-          const dist = Math.sqrt(dx * dx + dy * dy)
-
-          if (dist < maxDist) {
-            ctx.globalAlpha = 1 - dist / maxDist
-            ctx.beginPath()
-            ctx.moveTo(points[i].x, points[j].y)
-            ctx.lineTo(points[j].x, points[j].y)
-            ctx.stroke()
-          }
-        }
-      }
-
-      // Draw points
-      ctx.globalAlpha = 1
-      ctx.fillStyle = color
-      ctx.shadowColor = color
-      ctx.shadowBlur = 4
-
-      points.forEach((p) => {
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, Math.max(1, pointRadius * 0.3), 0, Math.PI * 2)
-        ctx.fill()
-      })
-
-      ctx.shadowBlur = 0
-      frameRef.current++
-      animationId = requestAnimationFrame(draw)
-    }
-
-    draw()
-    return () => cancelAnimationFrame(animationId)
-  }, [pointRadius, maxDistance, color])
+  }
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={80}
-      height={24}
-      className="rounded border border-[#333]"
-    />
+    <svg width="80" height="24" viewBox="0 0 80 24" className="rounded">
+      {lines}
+      {points.map((p, i) => (
+        <circle
+          key={i}
+          cx={p.x}
+          cy={p.y}
+          r={Math.max(1.5, pointRadius * 0.3)}
+          fill={color}
+        />
+      ))}
+    </svg>
   )
 }

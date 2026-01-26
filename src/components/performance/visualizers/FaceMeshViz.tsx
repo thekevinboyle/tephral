@@ -1,103 +1,40 @@
-import { useEffect, useRef } from 'react'
-
 interface FaceMeshVizProps {
   confidence: number
   color: string
 }
 
 export function FaceMeshViz({ confidence, color }: FaceMeshVizProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const frameRef = useRef(0)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    let animationId: number
-
-    const draw = () => {
-      const w = canvas.width
-      const h = canvas.height
-      const t = frameRef.current * 0.03
-
-      ctx.fillStyle = '#0a0a0a'
-      ctx.fillRect(0, 0, w, h)
-
-      const cx = w / 2
-      const cy = h / 2 + 2
-
-      ctx.strokeStyle = color
-      ctx.lineWidth = 1
-      ctx.globalAlpha = confidence / 100
-
-      // Simplified face outline
-      ctx.beginPath()
-      // Face oval
-      ctx.ellipse(cx, cy, 12, 10, 0, 0, Math.PI * 2)
-      ctx.stroke()
-
-      // Eyes
-      const eyeY = cy - 2
-      const eyeSpacing = 5
-      const blinkPhase = Math.sin(t * 2)
-      const eyeHeight = blinkPhase > 0.9 ? 0.5 : 2
-
-      ctx.beginPath()
-      ctx.ellipse(cx - eyeSpacing, eyeY, 2, eyeHeight, 0, 0, Math.PI * 2)
-      ctx.ellipse(cx + eyeSpacing, eyeY, 2, eyeHeight, 0, 0, Math.PI * 2)
-      ctx.stroke()
-
-      // Nose
-      ctx.beginPath()
-      ctx.moveTo(cx, eyeY + 2)
-      ctx.lineTo(cx - 1, cy + 2)
-      ctx.lineTo(cx + 1, cy + 2)
-      ctx.stroke()
-
-      // Mouth
-      const mouthOpen = Math.sin(t) * 0.5 + 0.5
-      ctx.beginPath()
-      ctx.ellipse(cx, cy + 5, 4, 1 + mouthOpen, 0, 0, Math.PI)
-      ctx.stroke()
-
-      // Tracking points
-      ctx.fillStyle = color
-      ctx.shadowColor = color
-      ctx.shadowBlur = 3
-
-      const points = [
-        [cx - eyeSpacing, eyeY],
-        [cx + eyeSpacing, eyeY],
-        [cx, cy + 2],
-        [cx, cy + 5],
-        [cx - 10, cy],
-        [cx + 10, cy],
-      ]
-
-      points.forEach(([x, y]) => {
-        ctx.beginPath()
-        ctx.arc(x, y, 1, 0, Math.PI * 2)
-        ctx.fill()
-      })
-
-      ctx.globalAlpha = 1
-      ctx.shadowBlur = 0
-      frameRef.current++
-      animationId = requestAnimationFrame(draw)
-    }
-
-    draw()
-    return () => cancelAnimationFrame(animationId)
-  }, [confidence, color])
+  const opacity = confidence / 100
+  const cx = 40
+  const cy = 14
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={80}
-      height={24}
-      className="rounded border border-[#333]"
-    />
+    <svg width="80" height="24" viewBox="0 0 80 24" className="rounded">
+      {/* Face oval */}
+      <ellipse
+        cx={cx}
+        cy={cy}
+        rx={12}
+        ry={10}
+        fill="none"
+        stroke={color}
+        strokeWidth={1}
+        opacity={opacity}
+      />
+      {/* Eyes */}
+      <ellipse cx={cx - 5} cy={cy - 2} rx={2} ry={1.5} fill="none" stroke={color} strokeWidth={0.8} opacity={opacity} />
+      <ellipse cx={cx + 5} cy={cy - 2} rx={2} ry={1.5} fill="none" stroke={color} strokeWidth={0.8} opacity={opacity} />
+      {/* Nose */}
+      <path d={`M${cx},${cy - 1} L${cx - 1},${cy + 2} L${cx + 1},${cy + 2}`} fill="none" stroke={color} strokeWidth={0.8} opacity={opacity} />
+      {/* Mouth */}
+      <path d={`M${cx - 4},${cy + 5} Q${cx},${cy + 7} ${cx + 4},${cy + 5}`} fill="none" stroke={color} strokeWidth={0.8} opacity={opacity} />
+      {/* Tracking points */}
+      <circle cx={cx - 5} cy={cy - 2} r={1} fill={color} opacity={opacity} />
+      <circle cx={cx + 5} cy={cy - 2} r={1} fill={color} opacity={opacity} />
+      <circle cx={cx} cy={cy + 2} r={1} fill={color} opacity={opacity} />
+      <circle cx={cx} cy={cy + 5} r={1} fill={color} opacity={opacity} />
+      <circle cx={cx - 10} cy={cy} r={1} fill={color} opacity={opacity} />
+      <circle cx={cx + 10} cy={cy} r={1} fill={color} opacity={opacity} />
+    </svg>
   )
 }

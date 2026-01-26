@@ -1,66 +1,36 @@
-import { useEffect, useRef } from 'react'
-
 interface PixelateVizProps {
   pixelSize: number
   color: string
 }
 
 export function PixelateViz({ pixelSize, color }: PixelateVizProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const frameRef = useRef(0)
+  const pSize = Math.max(3, Math.floor(pixelSize / 3))
+  const cols = Math.ceil(80 / pSize)
+  const rows = Math.ceil(24 / pSize)
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    let animationId: number
-
-    const draw = () => {
-      const w = canvas.width
-      const h = canvas.height
-      const t = frameRef.current * 0.02
-
-      ctx.fillStyle = '#0a0a0a'
-      ctx.fillRect(0, 0, w, h)
-
-      // Dynamic pixel size based on param
-      const pSize = Math.max(2, Math.floor(pixelSize / 4))
-      const cols = Math.ceil(w / pSize)
-      const rows = Math.ceil(h / pSize)
-
-      // Parse color
-      const r = parseInt(color.slice(1, 3), 16)
-      const g = parseInt(color.slice(3, 5), 16)
-      const b = parseInt(color.slice(5, 7), 16)
-
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          // Animated wave pattern
-          const wave = Math.sin((x + t) * 0.5) * Math.cos((y + t * 0.7) * 0.5)
-          const brightness = 0.3 + (wave + 1) * 0.35
-
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${brightness})`
-          ctx.fillRect(x * pSize, y * pSize, pSize - 1, pSize - 1)
-        }
-      }
-
-      frameRef.current++
-      animationId = requestAnimationFrame(draw)
+  const cells = []
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const i = y * cols + x
+      // Checkerboard-ish pattern
+      const brightness = 0.2 + ((x + y) % 2) * 0.3 + ((i * 3) % 5) * 0.1
+      cells.push(
+        <rect
+          key={i}
+          x={x * pSize}
+          y={y * pSize}
+          width={pSize - 1}
+          height={pSize - 1}
+          fill={color}
+          opacity={brightness}
+        />
+      )
     }
-
-    draw()
-    return () => cancelAnimationFrame(animationId)
-  }, [pixelSize, color])
+  }
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={80}
-      height={24}
-      className="rounded border border-[#333]"
-      style={{ imageRendering: 'pixelated' }}
-    />
+    <svg width="80" height="24" viewBox="0 0 80 24" className="rounded">
+      {cells}
+    </svg>
   )
 }

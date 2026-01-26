@@ -1,5 +1,3 @@
-import { useEffect, useRef } from 'react'
-
 interface ScanLinesVizProps {
   lineCount: number
   opacity: number
@@ -7,67 +5,28 @@ interface ScanLinesVizProps {
 }
 
 export function ScanLinesViz({ lineCount, opacity, color }: ScanLinesVizProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const frameRef = useRef(0)
+  const numLines = Math.max(3, Math.floor(lineCount / 80))
+  const spacing = 24 / numLines
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    let animationId: number
-
-    const draw = () => {
-      const w = canvas.width
-      const h = canvas.height
-      const t = frameRef.current * 0.1
-
-      // Background gradient
-      const gradient = ctx.createLinearGradient(0, 0, w, 0)
-      gradient.addColorStop(0, '#1a1a2e')
-      gradient.addColorStop(1, '#0a0a15')
-      ctx.fillStyle = gradient
-      ctx.fillRect(0, 0, w, h)
-
-      // Scan lines
-      const numLines = Math.max(4, Math.floor(lineCount / 50))
-      const lineSpacing = h / numLines
-
-      ctx.strokeStyle = color
-      ctx.lineWidth = 1
-
-      for (let i = 0; i < numLines; i++) {
-        const y = (i * lineSpacing + t) % h
-        const flicker = Math.random() > 0.95 ? 0.3 : 1
-        ctx.globalAlpha = opacity * flicker
-        ctx.beginPath()
-        ctx.moveTo(0, y)
-        ctx.lineTo(w, y)
-        ctx.stroke()
-      }
-
-      // Moving scan beam
-      const beamY = (t * 3) % h
-      ctx.globalAlpha = 0.6
-      ctx.fillStyle = color
-      ctx.fillRect(0, beamY - 1, w, 2)
-
-      ctx.globalAlpha = 1
-      frameRef.current++
-      animationId = requestAnimationFrame(draw)
-    }
-
-    draw()
-    return () => cancelAnimationFrame(animationId)
-  }, [lineCount, opacity, color])
+  const lines = []
+  for (let i = 0; i < numLines; i++) {
+    lines.push(
+      <line
+        key={i}
+        x1={0}
+        y1={i * spacing + spacing / 2}
+        x2={80}
+        y2={i * spacing + spacing / 2}
+        stroke={color}
+        strokeWidth={1}
+        opacity={opacity * (0.5 + (i % 2) * 0.5)}
+      />
+    )
+  }
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={80}
-      height={24}
-      className="rounded border border-[#333]"
-    />
+    <svg width="80" height="24" viewBox="0 0 80 24" className="rounded">
+      {lines}
+    </svg>
   )
 }

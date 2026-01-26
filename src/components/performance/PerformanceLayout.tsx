@@ -107,24 +107,24 @@ export function PerformanceLayout() {
         {/* Button grid - 50vw */}
         <PerformanceGrid />
 
-        {/* Right side - Graphic panel + XY Pad + Mix Controls */}
-        <div className="flex-1 flex flex-col gap-3">
-          {/* Top row: Graphic panel + XY Pad */}
-          <div className="flex-1 flex gap-3 min-h-0">
-            {/* Graphic panel */}
-            <div
-              className="flex-1 rounded-xl overflow-hidden"
-              style={{
-                background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
-                boxShadow: `
-                  inset 0 1px 2px rgba(255,255,255,0.03),
-                  0 0 0 1px #2a2d35
-                `,
-              }}
-            >
-              <GraphicPanelV2 />
-            </div>
+        {/* Right side - Graphic panel + (XY Pad + Mix Controls) */}
+        <div className="flex-1 flex gap-3">
+          {/* Graphic panel */}
+          <div
+            className="flex-1 rounded-xl overflow-hidden"
+            style={{
+              background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
+              boxShadow: `
+                inset 0 1px 2px rgba(255,255,255,0.03),
+                0 0 0 1px #2a2d35
+              `,
+            }}
+          >
+            <GraphicPanelV2 />
+          </div>
 
+          {/* XY Pad + Mix Controls column */}
+          <div className="flex-1 flex flex-col gap-3">
             {/* XY Pad */}
             <div
               className="flex-1 rounded-xl overflow-hidden relative"
@@ -138,21 +138,21 @@ export function PerformanceLayout() {
             >
               <XYPad />
             </div>
-          </div>
 
-          {/* Bottom row: Mix Controls */}
-          <div
-            className="flex-shrink-0 rounded-xl overflow-hidden"
-            style={{
-              height: '80px',
-              background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
-              boxShadow: `
-                inset 0 1px 2px rgba(255,255,255,0.03),
-                0 0 0 1px #2a2d35
-              `,
-            }}
-          >
-            <MixControls />
+            {/* Mix Controls */}
+            <div
+              className="flex-shrink-0 rounded-xl overflow-hidden"
+              style={{
+                height: '80px',
+                background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
+                boxShadow: `
+                  inset 0 1px 2px rgba(255,255,255,0.03),
+                  0 0 0 1px #2a2d35
+                `,
+              }}
+            >
+              <MixControls />
+            </div>
           </div>
         </div>
       </div>

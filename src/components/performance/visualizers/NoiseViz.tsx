@@ -1,57 +1,37 @@
-import { useEffect, useRef } from 'react'
-
 interface NoiseVizProps {
   amount: number
   speed: number
   color: string
 }
 
-export function NoiseViz({ amount, speed, color }: NoiseVizProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const frameRef = useRef(0)
+export function NoiseViz({ amount, color }: NoiseVizProps) {
+  // Generate static noise dots
+  const dots = []
+  const density = Math.floor(amount * 0.8) + 10
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+  for (let i = 0; i < density; i++) {
+    // Pseudo-random positions
+    const x = ((i * 37) % 80)
+    const y = ((i * 23) % 24)
+    const size = 1 + (i % 3)
+    const opacity = 0.3 + ((i * 7) % 5) * 0.15
 
-    let animationId: number
-    const imageData = ctx.createImageData(canvas.width, canvas.height)
-
-    const draw = () => {
-      // Parse color to RGB
-      const r = parseInt(color.slice(1, 3), 16)
-      const g = parseInt(color.slice(3, 5), 16)
-      const b = parseInt(color.slice(5, 7), 16)
-
-      for (let i = 0; i < imageData.data.length; i += 4) {
-        const noise = Math.random()
-        const intensity = noise * amount * 2.55
-
-        imageData.data[i] = Math.min(255, (r * intensity) / 255)
-        imageData.data[i + 1] = Math.min(255, (g * intensity) / 255)
-        imageData.data[i + 2] = Math.min(255, (b * intensity) / 255)
-        imageData.data[i + 3] = 255
-      }
-
-      ctx.putImageData(imageData, 0, 0)
-
-      frameRef.current++
-      animationId = requestAnimationFrame(draw)
-    }
-
-    draw()
-    return () => cancelAnimationFrame(animationId)
-  }, [amount, speed, color])
+    dots.push(
+      <rect
+        key={i}
+        x={x}
+        y={y}
+        width={size}
+        height={size}
+        fill={color}
+        opacity={opacity}
+      />
+    )
+  }
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={80}
-      height={24}
-      className="rounded border border-[#333]"
-      style={{ imageRendering: 'pixelated' }}
-    />
+    <svg width="80" height="24" viewBox="0 0 80 24" className="rounded">
+      {dots}
+    </svg>
   )
 }

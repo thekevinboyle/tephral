@@ -73,9 +73,9 @@ export class AsciiRenderer {
 
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
-        // Sample pixel at cell center
-        const px = Math.floor((col + 0.5) * cellW)
-        const py = Math.floor((row + 0.5) * cellH)
+        // Sample pixel at cell center (normalize to imageData dimensions)
+        const px = Math.floor((col + 0.5) / cols * imageData.width)
+        const py = Math.floor((row + 0.5) / rows * imageData.height)
         const idx = (py * imageData.width + px) * 4
 
         const r = imageData.data[idx] || 0

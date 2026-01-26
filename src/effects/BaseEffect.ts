@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import { Pass, FullScreenQuad } from 'postprocessing'
+import { Pass } from 'postprocessing'
+import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 
 export class ShaderPassEffect extends Pass {
   material: THREE.ShaderMaterial

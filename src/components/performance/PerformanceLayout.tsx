@@ -7,6 +7,7 @@ import { PerformanceGrid } from './PerformanceGrid'
 import { GraphicPanelV2 } from './GraphicPanelV2'
 import { XYPad } from './XYPad'
 import { MixControls } from './MixControls'
+import { ThumbnailFilmstrip } from './ThumbnailFilmstrip'
 
 export function PerformanceLayout() {
   return (
@@ -39,6 +40,9 @@ export function PerformanceLayout() {
         <div className="w-full h-full">
           <Canvas />
         </div>
+
+        {/* Thumbnail filmstrip at bottom of preview */}
+        <ThumbnailFilmstrip />
 
         {/* Corner accents */}
         <div

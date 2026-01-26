@@ -218,24 +218,29 @@ export function PerformanceGrid() {
   }
 
   return (
-    <div className="grid grid-cols-4 grid-rows-4 gap-1.5 w-full h-full">
-      {EFFECTS.map((effect) => {
-        const state = getEffectState(effect.id)
-        return (
-          <EffectButton
-            key={effect.id}
-            id={effect.id}
-            label={effect.label}
-            color={effect.color}
-            active={state.active}
-            value={state.value}
-            min={effect.min}
-            max={effect.max}
-            onToggle={state.onToggle}
-            onValueChange={state.onValueChange}
-          />
-        )
-      })}
+    <div
+      className="h-full flex items-center justify-center p-3"
+      style={{ width: '50vw' }}
+    >
+      <div className="grid grid-cols-4 grid-rows-4 gap-2 w-full h-full">
+        {EFFECTS.map((effect) => {
+          const state = getEffectState(effect.id)
+          return (
+            <EffectButton
+              key={effect.id}
+              id={effect.id}
+              label={effect.label}
+              color={effect.color}
+              active={state.active}
+              value={state.value}
+              min={effect.min}
+              max={effect.max}
+              onToggle={state.onToggle}
+              onValueChange={state.onValueChange}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }

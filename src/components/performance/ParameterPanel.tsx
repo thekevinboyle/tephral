@@ -378,82 +378,102 @@ export function ParameterPanel() {
     })
   }
 
+  const { selectedEffectId, setSelectedEffect } = useUIStore()
+
   if (sections.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <span className="text-[10px] text-muted uppercase tracking-wider">
+      <div
+        className="h-full flex items-center justify-center"
+        style={{
+          background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
+        }}
+      >
+        <span className="text-[10px] text-[#4b5563] uppercase tracking-wider">
           No active effects
         </span>
       </div>
     )
   }
 
-  const { selectedEffectId, setSelectedEffect } = useUIStore()
-
   return (
-    <div className="h-full flex items-stretch gap-2 overflow-x-auto px-3 py-2">
-      {sections.length === 0 ? (
-        <div className="flex items-center justify-center w-full">
-          <span className="text-[10px] text-muted/50 uppercase tracking-wider">
-            No active effects
-          </span>
-        </div>
-      ) : (
-        sections.map((section) => (
-          <button
-            key={section.id}
-            onClick={() => setSelectedEffect(section.id)}
-            className={`bg-[#0d0d0d] border rounded px-3 py-2 flex-shrink-0 flex flex-col transition-all ${
-              selectedEffectId === section.id
-                ? 'border-current'
-                : 'border-[#222] hover:border-[#333]'
-            }`}
+    <div
+      className="h-full flex items-stretch gap-3 overflow-x-auto px-4 py-3"
+      style={{
+        background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
+      }}
+    >
+      {sections.map((section) => (
+        <button
+          key={section.id}
+          onClick={() => setSelectedEffect(section.id)}
+          className="flex-shrink-0 flex flex-col transition-all rounded-lg"
+          style={{
+            background: selectedEffectId === section.id
+              ? `linear-gradient(180deg, ${section.color}15 0%, ${section.color}08 100%)`
+              : 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
+            boxShadow: selectedEffectId === section.id
+              ? `
+                inset 0 1px 1px rgba(255,255,255,0.05),
+                inset 0 -1px 2px rgba(0,0,0,0.3),
+                0 0 20px -4px ${section.color},
+                0 0 0 1px ${section.color}40
+              `
+              : `
+                inset 0 1px 1px rgba(255,255,255,0.03),
+                inset 0 -1px 2px rgba(0,0,0,0.4),
+                0 2px 4px rgba(0,0,0,0.2),
+                0 0 0 1px #2a2d35
+              `,
+            minWidth: '140px',
+            padding: '12px',
+          }}
+        >
+          {/* Section header with LED */}
+          <div className="flex items-center gap-2 mb-2">
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{
+                backgroundColor: section.color,
+                boxShadow: `0 0 8px ${section.color}`,
+              }}
+            />
+            <span
+              className="text-[9px] font-semibold tracking-wider uppercase"
+              style={{ color: section.color }}
+            >
+              {section.label}
+            </span>
+          </div>
+
+          {/* Visualizer */}
+          <div
+            className="flex-1 flex items-center justify-center rounded-md mb-2"
             style={{
-              borderColor: selectedEffectId === section.id ? section.color : undefined,
-              minWidth: '120px',
+              background: 'linear-gradient(180deg, #0d0f12 0%, #1a1d24 100%)',
+              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.4)',
+              minHeight: '40px',
             }}
           >
-            {/* Section header with LED */}
-            <div className="flex items-center gap-1.5 mb-1">
-              <div
-                className="w-1.5 h-1.5 rounded-full"
-                style={{
-                  backgroundColor: section.color,
-                  boxShadow: `0 0 6px ${section.color}`,
-                }}
+            {section.visualizer}
+          </div>
+
+          {/* Knobs row */}
+          <div className="flex justify-around gap-3">
+            {section.params.map((param) => (
+              <Knob
+                key={param.label}
+                label={param.label}
+                value={param.value}
+                min={param.min}
+                max={param.max}
+                color={section.color}
+                size="sm"
+                onChange={param.onChange}
               />
-              <span
-                className="text-[8px] font-bold tracking-wider"
-                style={{ color: section.color }}
-              >
-                {section.label}
-              </span>
-            </div>
-
-            {/* Visualizer */}
-            <div className="flex-1 flex items-center justify-center">
-              {section.visualizer}
-            </div>
-
-            {/* Knobs row */}
-            <div className="flex justify-around gap-2 mt-1">
-              {section.params.map((param) => (
-                <Knob
-                  key={param.label}
-                  label={param.label}
-                  value={param.value}
-                  min={param.min}
-                  max={param.max}
-                  color={section.color}
-                  size="sm"
-                  onChange={param.onChange}
-                  formatValue={param.format}
-                />
-              ))}
-            </div>
-          </button>
-        ))
-      )}
+            ))}
+          </div>
+        </button>
+      ))}
     </div>
   )
 }

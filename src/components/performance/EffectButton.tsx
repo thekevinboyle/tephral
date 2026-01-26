@@ -1,5 +1,6 @@
 import { useRef, useCallback } from 'react'
 import { useRecordingStore } from '../../stores/recordingStore'
+import { useUIStore } from '../../stores/uiStore'
 
 interface EffectButtonProps {
   id: string
@@ -29,6 +30,7 @@ export function EffectButton({
   const didDrag = useRef(false)
   const addEvent = useRecordingStore((s) => s.addEvent)
   const isRecording = useRecordingStore((s) => s.isRecording)
+  const setSelectedEffect = useUIStore((s) => s.setSelectedEffect)
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault()
@@ -70,6 +72,9 @@ export function EffectButton({
     // Toggle if we didn't drag
     if (!wasDrag) {
       onToggle()
+      // Set this effect as selected in the graphic panel
+      // If turning on, select it. If turning off, still select it to show its params
+      setSelectedEffect(id)
       if (isRecording) {
         addEvent({ effect: id, action: active ? 'off' : 'on', param: value })
       }
@@ -77,77 +82,84 @@ export function EffectButton({
 
     dragStartY.current = null
     didDrag.current = false
-  }, [onToggle, isRecording, addEvent, id, active, value])
+  }, [onToggle, isRecording, addEvent, id, active, value, setSelectedEffect])
 
-  // Encoder rotation based on value
-  const rotation = ((value - min) / (max - min)) * 270 - 135
+  // Value percentage for the progress bar
+  const percentage = ((value - min) / (max - min)) * 100
 
   return (
     <div
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      className={`
-        relative p-1 rounded-md transition-all duration-150
-        flex flex-col items-center justify-between
-        select-none touch-none cursor-pointer
-        w-full h-full min-h-0
-        ${active
-          ? 'bg-base-darker'
-          : 'bg-base-darker hover:bg-[#222]'
-        }
-        border border-border
-      `}
+      className="relative rounded-lg transition-all duration-150 flex select-none touch-none cursor-pointer w-full h-full p-2"
       style={{
-        boxShadow: active ? `0 0 12px -4px ${color}` : 'none',
+        background: active
+          ? `linear-gradient(180deg, ${color}15 0%, ${color}08 100%)`
+          : 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
+        boxShadow: active
+          ? `
+            inset 0 1px 1px rgba(255,255,255,0.05),
+            inset 0 -1px 2px rgba(0,0,0,0.3),
+            0 0 20px -4px ${color},
+            0 0 40px -8px ${color}40
+          `
+          : `
+            inset 0 1px 1px rgba(255,255,255,0.03),
+            inset 0 -1px 2px rgba(0,0,0,0.4),
+            0 2px 4px rgba(0,0,0,0.2)
+          `,
+        border: active ? `1px solid ${color}40` : '1px solid #2a2d35',
       }}
     >
-      {/* LED indicator + label */}
-      <div className="w-full flex items-center gap-1 py-0.5">
-        <div
-          className="w-1.5 h-1.5 rounded-full transition-all duration-150 shrink-0"
-          style={{
-            backgroundColor: active ? color : '#333',
-            boxShadow: active ? `0 0 6px 1px ${color}` : 'none',
-          }}
-        />
-        <span className={`text-[7px] uppercase tracking-wider truncate ${active ? 'text-base-light' : 'text-muted'}`}>
-          {label}
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col justify-between">
+        {/* LED indicator + label */}
+        <div className="flex items-center gap-1.5">
+          <div
+            className="w-2 h-2 rounded-full transition-all duration-150 shrink-0"
+            style={{
+              backgroundColor: active ? color : '#2a2d35',
+              boxShadow: active ? `0 0 8px 2px ${color}` : 'inset 0 1px 2px rgba(0,0,0,0.5)',
+            }}
+          />
+          <span
+            className="text-[8px] uppercase tracking-wider truncate font-medium"
+            style={{ color: active ? color : '#6b7280' }}
+          >
+            {label}
+          </span>
+        </div>
+
+        {/* Parameter value */}
+        <span
+          className="text-[10px] tabular-nums font-medium"
+          style={{ color: active ? color : '#4b5563' }}
+        >
+          {Math.round(value)}
         </span>
       </div>
 
-      {/* Encoder graphic */}
-      <div className="flex-1 flex items-center justify-center w-full">
-        <div className="relative w-6 h-6">
-          {/* Encoder ring */}
-          <div
-            className="absolute inset-0 rounded-full border transition-colors"
-            style={{ borderColor: active ? color : '#444' }}
-          />
-          {/* Encoder notch */}
-          <div
-            className="absolute w-0.5 h-1.5 left-1/2 transition-colors"
-            style={{
-              backgroundColor: active ? color : '#666',
-              transformOrigin: 'center 12px',
-              transform: `translateX(-50%) rotate(${rotation}deg)`,
-              top: '2px',
-            }}
-          />
-          {/* Center dot */}
-          <div
-            className="absolute w-1 h-1 rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            style={{ backgroundColor: active ? color : '#444' }}
-          />
-        </div>
-      </div>
-
-      {/* Parameter value */}
-      <span
-        className={`text-[8px] tabular-nums font-mono ${active ? 'text-base-light' : 'text-muted'}`}
+      {/* Vertical progress bar on the right */}
+      <div
+        className="w-1.5 rounded-full ml-2 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, #0d0f12 0%, #1a1d24 100%)',
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
+        }}
       >
-        {Math.round(value)}
-      </span>
+        {/* Fill from bottom */}
+        <div
+          className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-150"
+          style={{
+            height: `${percentage}%`,
+            background: active
+              ? `linear-gradient(0deg, ${color} 0%, ${color}80 100%)`
+              : 'linear-gradient(0deg, #3a3d45 0%, #2a2d35 100%)',
+            boxShadow: active ? `0 0 6px ${color}` : 'none',
+          }}
+        />
+      </div>
     </div>
   )
 }

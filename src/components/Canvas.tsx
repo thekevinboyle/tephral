@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react'
 import * as THREE from 'three'
 import { useThree } from '../hooks/useThree'
 import { useVideoTexture } from '../hooks/useVideoTexture'
@@ -6,14 +6,25 @@ import { EffectPipeline } from '../effects/EffectPipeline'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useMediaStore } from '../stores/mediaStore'
 import { useRoutingStore } from '../stores/routingStore'
+import { useRecordingStore } from '../stores/recordingStore'
 import { OverlayContainer } from './overlays/OverlayContainer'
 
-export function Canvas() {
+export interface CanvasHandle {
+  getCanvas: () => HTMLCanvasElement | null
+}
+
+export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { renderer, frameIdRef } = useThree(containerRef)
   const [pipeline, setPipeline] = useState<EffectPipeline | null>(null)
   const mediaTexture = useVideoTexture()
   const { videoElement, imageElement } = useMediaStore()
+  const { previewTime } = useRecordingStore()
+
+  // Expose canvas element via ref
+  useImperativeHandle(ref, () => ({
+    getCanvas: () => renderer?.domElement ?? null
+  }), [renderer])
 
   const {
     enabled: glitchEnabled,
@@ -120,6 +131,16 @@ export function Canvas() {
     }
   }, [pipeline, mediaTexture, videoElement, imageElement])
 
+  // Handle preview time - seek video when hovering thumbnails
+  useEffect(() => {
+    if (!videoElement || previewTime === null) return
+
+    // Seek video to preview time
+    if (videoElement.readyState >= 2) { // HAVE_CURRENT_DATA
+      videoElement.currentTime = previewTime
+    }
+  }, [videoElement, previewTime])
+
   // Handle resize and render loop
   useEffect(() => {
     if (!pipeline || !renderer || !containerRef.current) return
@@ -157,4 +178,4 @@ export function Canvas() {
       <OverlayContainer containerRef={containerRef} />
     </div>
   )
-}
+})

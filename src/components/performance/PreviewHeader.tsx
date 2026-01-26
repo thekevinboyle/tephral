@@ -18,6 +18,7 @@ export function PreviewHeader() {
     stop,
     setCurrentTime,
     addThumbnail,
+    setShowExportModal,
   } = useRecordingStore()
 
   // Format time as MM:SS.mm
@@ -195,6 +196,12 @@ export function PreviewHeader() {
               className="px-2 py-1 text-xs uppercase border border-border hover:border-base-light text-muted hover:text-base-light transition-colors rounded"
             >
               ■
+            </button>
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="px-3 py-1 text-xs uppercase border border-accent-yellow text-accent-yellow hover:bg-accent-yellow hover:text-base-dark transition-colors rounded"
+            >
+              EXPORT
             </button>
           </>
         )}

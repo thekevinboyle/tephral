@@ -12,6 +12,15 @@ export interface Thumbnail {
   dataUrl: string
 }
 
+export type ExportFormat = 'webm' | 'mp4'
+export type ExportQuality = 'low' | 'med' | 'high'
+
+export const EXPORT_BITRATES: Record<ExportQuality, number> = {
+  low: 1_000_000,
+  med: 4_000_000,
+  high: 8_000_000,
+}
+
 interface RecordingState {
   isRecording: boolean
   isPreviewing: boolean
@@ -22,6 +31,14 @@ interface RecordingState {
   events: AutomationEvent[]
   thumbnails: Thumbnail[]
   source: 'webcam' | 'file' | null
+
+  // Export state
+  previewTime: number | null
+  isExporting: boolean
+  exportProgress: number
+  exportFormat: ExportFormat
+  exportQuality: ExportQuality
+  showExportModal: boolean
 
   startRecording: () => void
   stopRecording: () => void
@@ -38,6 +55,16 @@ interface RecordingState {
   seek: (time: number) => void
   setCurrentTime: (time: number) => void
 
+  // Export actions
+  setPreviewTime: (time: number | null) => void
+  setShowExportModal: (show: boolean) => void
+  setExportFormat: (format: ExportFormat) => void
+  setExportQuality: (quality: ExportQuality) => void
+  startExport: () => void
+  setExportProgress: (progress: number) => void
+  cancelExport: () => void
+  finishExport: () => void
+
   exportAutomation: () => string
 }
 
@@ -51,6 +78,14 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   events: [],
   thumbnails: [],
   source: null,
+
+  // Export state
+  previewTime: null,
+  isExporting: false,
+  exportProgress: 0,
+  exportFormat: 'webm',
+  exportQuality: 'med',
+  showExportModal: false,
 
   startRecording: () => set({
     isRecording: true,
@@ -102,6 +137,16 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   stop: () => set({ isPlaying: false, currentTime: 0 }),
   seek: (time) => set({ currentTime: Math.max(0, Math.min(time, get().duration)) }),
   setCurrentTime: (time) => set({ currentTime: time }),
+
+  // Export actions
+  setPreviewTime: (time) => set({ previewTime: time }),
+  setShowExportModal: (show) => set({ showExportModal: show }),
+  setExportFormat: (format) => set({ exportFormat: format }),
+  setExportQuality: (quality) => set({ exportQuality: quality }),
+  startExport: () => set({ isExporting: true, exportProgress: 0 }),
+  setExportProgress: (progress) => set({ exportProgress: progress }),
+  cancelExport: () => set({ isExporting: false, exportProgress: 0 }),
+  finishExport: () => set({ isExporting: false, exportProgress: 100, showExportModal: false }),
 
   exportAutomation: () => {
     const { duration, source, events } = get()

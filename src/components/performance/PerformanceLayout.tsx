@@ -1,4 +1,5 @@
-import { Canvas } from '../Canvas'
+import { useRef, useCallback } from 'react'
+import { Canvas, type CanvasHandle } from '../Canvas'
 import { PreviewHeader } from './PreviewHeader'
 import { SignalPathBar } from './SignalPathBar'
 import { ParameterPanel } from './ParameterPanel'
@@ -8,8 +9,58 @@ import { GraphicPanelV2 } from './GraphicPanelV2'
 import { XYPad } from './XYPad'
 import { MixControls } from './MixControls'
 import { ThumbnailFilmstrip } from './ThumbnailFilmstrip'
+import { ExportModal } from './ExportModal'
+import { useCanvasCapture } from '../../hooks/useCanvasCapture'
+import { useRecordingStore, type ExportFormat, type ExportQuality } from '../../stores/recordingStore'
 
 export function PerformanceLayout() {
+  const canvasRef = useRef<CanvasHandle>(null)
+  const canvasElementRef = useRef<HTMLCanvasElement | null>(null)
+
+  // Get canvas element from the Canvas component
+  const getCanvasElement = useCallback(() => {
+    if (!canvasElementRef.current && canvasRef.current) {
+      canvasElementRef.current = canvasRef.current.getCanvas()
+    }
+    return canvasElementRef.current
+  }, [])
+
+  // Create a ref object that useCanvasCapture can use
+  const captureRef = useRef<HTMLCanvasElement | null>(null)
+
+  // Update captureRef when canvas is available
+  const updateCaptureRef = useCallback(() => {
+    const canvas = getCanvasElement()
+    if (canvas) {
+      captureRef.current = canvas
+    }
+  }, [getCanvasElement])
+
+  const { startCapture, stopCapture, isFormatSupported } = useCanvasCapture(captureRef)
+  const { startExport, duration, play, stop } = useRecordingStore()
+
+  const handleExport = useCallback((format: ExportFormat, quality: ExportQuality) => {
+    updateCaptureRef()
+    if (!captureRef.current) {
+      console.error('Canvas not available for export')
+      return
+    }
+
+    startExport()
+
+    // Start playback and capture
+    stop() // Reset to beginning
+    const started = startCapture({ format, quality })
+
+    if (started) {
+      play()
+      // Stop capture after duration
+      setTimeout(() => {
+        stopCapture()
+      }, duration * 1000 + 500) // Add 500ms buffer
+    }
+  }, [updateCaptureRef, startExport, startCapture, stopCapture, play, stop, duration])
+
   return (
     <div
       className="w-screen h-screen flex flex-col overflow-hidden"
@@ -38,7 +89,7 @@ export function PerformanceLayout() {
 
         {/* Canvas */}
         <div className="w-full h-full">
-          <Canvas />
+          <Canvas ref={canvasRef} />
         </div>
 
         {/* Thumbnail filmstrip at bottom of preview */}
@@ -160,6 +211,9 @@ export function PerformanceLayout() {
           </div>
         </div>
       </div>
+
+      {/* Export modal */}
+      <ExportModal onExport={handleExport} isFormatSupported={isFormatSupported} />
     </div>
   )
 }

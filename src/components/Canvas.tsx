@@ -28,7 +28,9 @@ export function Canvas() {
     scanLines,
     noise,
     pixelate,
-    edgeDetection
+    edgeDetection,
+    wetMix,
+    bypassActive
   } = useGlitchEngineStore()
 
   const { effectOrder } = useRoutingStore()
@@ -64,6 +66,8 @@ export function Canvas() {
       noiseEnabled: glitchEnabled && noiseEnabled,
       pixelateEnabled: glitchEnabled && pixelateEnabled,
       edgeDetectionEnabled: glitchEnabled && edgeDetectionEnabled,
+      wetMix,
+      bypassActive,
     })
   }, [
     pipeline,
@@ -80,7 +84,9 @@ export function Canvas() {
     noise,
     pixelate,
     edgeDetection,
-    effectOrder
+    effectOrder,
+    wetMix,
+    bypassActive
   ])
 
   // Update input texture and video dimensions

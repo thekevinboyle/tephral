@@ -41,6 +41,10 @@ interface GlitchEngineState {
   pixelate: PixelateParams
   edgeDetection: EdgeDetectionParams
 
+  // Mix controls
+  wetMix: number        // 0-1, default 1 (100% wet)
+  bypassActive: boolean // true while kill switch held
+
   setEnabled: (enabled: boolean) => void
   setRGBSplitEnabled: (enabled: boolean) => void
   setBlockDisplaceEnabled: (enabled: boolean) => void
@@ -54,6 +58,8 @@ interface GlitchEngineState {
   updateNoise: (params: Partial<NoiseParams>) => void
   updatePixelate: (params: Partial<PixelateParams>) => void
   updateEdgeDetection: (params: Partial<EdgeDetectionParams>) => void
+  setWetMix: (value: number) => void
+  setBypassActive: (active: boolean) => void
   reset: () => void
 }
 
@@ -73,6 +79,9 @@ export const useGlitchEngineStore = create<GlitchEngineState>((set) => ({
   noise: { ...DEFAULT_NOISE_PARAMS },
   pixelate: { ...DEFAULT_PIXELATE_PARAMS },
   edgeDetection: { ...DEFAULT_EDGE_DETECTION_PARAMS },
+
+  wetMix: 1,
+  bypassActive: false,
 
   setEnabled: (enabled) => set({ enabled }),
   setRGBSplitEnabled: (enabled) => set({ rgbSplitEnabled: enabled }),
@@ -100,6 +109,9 @@ export const useGlitchEngineStore = create<GlitchEngineState>((set) => ({
   updateEdgeDetection: (params) => set((state) => ({
     edgeDetection: { ...state.edgeDetection, ...params }
   })),
+
+  setWetMix: (value) => set({ wetMix: Math.max(0, Math.min(1, value)) }),
+  setBypassActive: (active) => set({ bypassActive: active }),
 
   reset: () => set({
     enabled: true,

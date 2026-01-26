@@ -6,6 +6,7 @@ import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
 import { GraphicPanelV2 } from './GraphicPanelV2'
 import { XYPad } from './XYPad'
+import { MixControls } from './MixControls'
 
 export function PerformanceLayout() {
   return (
@@ -106,26 +107,44 @@ export function PerformanceLayout() {
         {/* Button grid - 50vw */}
         <PerformanceGrid />
 
-        {/* Right side - Graphic panel + XY Pad */}
-        <div className="flex-1 flex gap-3">
-          {/* Graphic panel */}
-          <div
-            className="flex-1 rounded-xl overflow-hidden"
-            style={{
-              background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
-              boxShadow: `
-                inset 0 1px 2px rgba(255,255,255,0.03),
-                0 0 0 1px #2a2d35
-              `,
-            }}
-          >
-            <GraphicPanelV2 />
+        {/* Right side - Graphic panel + XY Pad + Mix Controls */}
+        <div className="flex-1 flex flex-col gap-3">
+          {/* Top row: Graphic panel + XY Pad */}
+          <div className="flex-1 flex gap-3 min-h-0">
+            {/* Graphic panel */}
+            <div
+              className="flex-1 rounded-xl overflow-hidden"
+              style={{
+                background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
+                boxShadow: `
+                  inset 0 1px 2px rgba(255,255,255,0.03),
+                  0 0 0 1px #2a2d35
+                `,
+              }}
+            >
+              <GraphicPanelV2 />
+            </div>
+
+            {/* XY Pad */}
+            <div
+              className="flex-1 rounded-xl overflow-hidden relative"
+              style={{
+                background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
+                boxShadow: `
+                  inset 0 1px 2px rgba(255,255,255,0.03),
+                  0 0 0 1px #2a2d35
+                `,
+              }}
+            >
+              <XYPad />
+            </div>
           </div>
 
-          {/* XY Pad */}
+          {/* Bottom row: Mix Controls */}
           <div
-            className="flex-1 rounded-xl overflow-hidden relative"
+            className="flex-shrink-0 rounded-xl overflow-hidden"
             style={{
+              height: '80px',
               background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
               boxShadow: `
                 inset 0 1px 2px rgba(255,255,255,0.03),
@@ -133,7 +152,7 @@ export function PerformanceLayout() {
               `,
             }}
           >
-            <XYPad />
+            <MixControls />
           </div>
         </div>
       </div>

@@ -15,3 +15,6 @@ export type { PixelateParams } from './PixelateEffect'
 
 export { EdgeDetectionEffect, DEFAULT_EDGE_DETECTION_PARAMS } from './EdgeDetectionEffect'
 export type { EdgeDetectionParams } from './EdgeDetectionEffect'
+
+export { MixEffect, DEFAULT_MIX_PARAMS } from './MixEffect'
+export type { MixEffectParams } from './MixEffect'

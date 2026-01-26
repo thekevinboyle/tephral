@@ -1,50 +1,56 @@
 import { useRef, useEffect, useState } from 'react'
 import * as THREE from 'three'
 import { useThree } from '../hooks/useThree'
+import { useVideoTexture } from '../hooks/useVideoTexture'
 import { EffectPipeline } from '../effects/EffectPipeline'
 
 export function Canvas() {
   const containerRef = useRef<HTMLDivElement>(null)
   const { renderer, frameIdRef } = useThree(containerRef)
   const [pipeline, setPipeline] = useState<EffectPipeline | null>(null)
+  const mediaTexture = useVideoTexture()
 
-  // Initialize pipeline when renderer is ready
+  // Initialize pipeline
   useEffect(() => {
     if (!renderer) return
 
     const newPipeline = new EffectPipeline(renderer)
     setPipeline(newPipeline)
 
-    // Create test texture (checkerboard pattern)
-    const size = 256
-    const data = new Uint8Array(size * size * 4)
-    for (let i = 0; i < size; i++) {
-      for (let j = 0; j < size; j++) {
-        const idx = (i * size + j) * 4
-        const isLight = ((i >> 4) + (j >> 4)) % 2 === 0
-        const val = isLight ? 200 : 50
-        data[idx] = val
-        data[idx + 1] = val
-        data[idx + 2] = val
-        data[idx + 3] = 255
-      }
-    }
-    const texture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat)
-    texture.needsUpdate = true
-    newPipeline.setInputTexture(texture)
-
     return () => {
       newPipeline.dispose()
     }
   }, [renderer])
 
+  // Update input texture when media changes
+  useEffect(() => {
+    if (!pipeline) return
+
+    if (mediaTexture) {
+      pipeline.setInputTexture(mediaTexture)
+    } else {
+      // Show placeholder when no media
+      const size = 256
+      const data = new Uint8Array(size * size * 4)
+      for (let i = 0; i < size * size * 4; i += 4) {
+        data[i] = 20
+        data[i + 1] = 20
+        data[i + 2] = 20
+        data[i + 3] = 255
+      }
+      const placeholder = new THREE.DataTexture(data, size, size, THREE.RGBAFormat)
+      placeholder.needsUpdate = true
+      pipeline.setInputTexture(placeholder)
+    }
+  }, [pipeline, mediaTexture])
+
   // Render loop
   useEffect(() => {
-    if (!pipeline || !renderer) return
+    if (!pipeline || !renderer || !containerRef.current) return
 
     pipeline.setSize(
-      containerRef.current?.clientWidth || 800,
-      containerRef.current?.clientHeight || 600
+      containerRef.current.clientWidth,
+      containerRef.current.clientHeight
     )
 
     const animate = () => {

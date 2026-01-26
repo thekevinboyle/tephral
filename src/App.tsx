@@ -1,6 +1,7 @@
 import { Canvas } from './components/Canvas'
 import { MediaInputPanel } from './components/MediaInputPanel'
 import { GlitchEnginePanel } from './components/effects/GlitchEnginePanel'
+import { VisionPanel } from './components/effects/VisionPanel'
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <aside className="w-64 border-r border-muted p-2 flex flex-col gap-2 overflow-y-auto">
           <MediaInputPanel />
           <GlitchEnginePanel />
+          <VisionPanel />
         </aside>
 
         <main className="flex-1">

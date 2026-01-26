@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useMemo } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useDetectionStore } from '../../stores/detectionStore'
@@ -20,11 +20,39 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
   const { enabled, params } = useAsciiRenderStore()
   const { detections } = useDetectionStore()
 
+  // Calculate video display area (respecting aspect ratio)
+  const videoArea = useMemo(() => {
+    const videoWidth = videoElement?.videoWidth || imageElement?.naturalWidth || width
+    const videoHeight = videoElement?.videoHeight || imageElement?.naturalHeight || height
+
+    const canvasAspect = width / height
+    const videoAspect = videoWidth / videoHeight
+
+    let displayWidth: number
+    let displayHeight: number
+    let offsetX: number
+    let offsetY: number
+
+    if (videoAspect > canvasAspect) {
+      // Video is wider - fit to width
+      displayWidth = width
+      displayHeight = width / videoAspect
+      offsetX = 0
+      offsetY = (height - displayHeight) / 2
+    } else {
+      // Video is taller - fit to height
+      displayHeight = height
+      displayWidth = height * videoAspect
+      offsetX = (width - displayWidth) / 2
+      offsetY = 0
+    }
+
+    return { displayWidth, displayHeight, offsetX, offsetY }
+  }, [width, height, videoElement, imageElement])
+
   // Initialize renderer
   useEffect(() => {
     rendererRef.current = new AsciiRenderer(params)
-
-    // Create offscreen canvas for sampling video
     offscreenCanvasRef.current = document.createElement('canvas')
 
     return () => {
@@ -37,12 +65,11 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
     if (rendererRef.current) {
       rendererRef.current.updateParams(params)
 
-      // Reinitialize matrix columns when mode changes
       if (params.mode === 'matrix') {
-        rendererRef.current.initMatrix(width, height)
+        rendererRef.current.initMatrix(videoArea.displayWidth, videoArea.displayHeight)
       }
     }
-  }, [params, width, height])
+  }, [params, videoArea])
 
   // Render loop
   useEffect(() => {
@@ -67,26 +94,32 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
       const deltaTime = (now - lastFrameTimeRef.current) / 1000
       lastFrameTimeRef.current = now
 
-      // Get source
       const source = videoElement || imageElement
       if (!source) {
         animationFrameRef.current = requestAnimationFrame(render)
         return
       }
 
-      // Setup offscreen canvas
-      offscreen.width = Math.floor(width / params.resolution)
-      offscreen.height = Math.floor(height / params.resolution)
+      const { displayWidth, displayHeight, offsetX, offsetY } = videoArea
+
+      // Clear entire canvas
+      ctx.fillStyle = '#000000'
+      ctx.fillRect(0, 0, width, height)
+
+      // Setup offscreen canvas for sampling
+      const sampleWidth = Math.floor(displayWidth / params.resolution)
+      const sampleHeight = Math.floor(displayHeight / params.resolution)
+      offscreen.width = sampleWidth
+      offscreen.height = sampleHeight
 
       // Draw source to offscreen (downscaled)
-      offCtx.drawImage(source, 0, 0, offscreen.width, offscreen.height)
+      offCtx.drawImage(source, 0, 0, sampleWidth, sampleHeight)
 
-      // Get image data
       let imageData: ImageData | null = null
       try {
-        imageData = offCtx.getImageData(0, 0, offscreen.width, offscreen.height)
+        imageData = offCtx.getImageData(0, 0, sampleWidth, sampleHeight)
       } catch {
-        // CORS issues with some sources
+        // CORS issues
       }
 
       // Apply detection masking if enabled
@@ -98,7 +131,6 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
             const nx = x / imageData.width
             const ny = y / imageData.height
 
-            // Check if point is inside any detection
             const insideDetection = detections.some(det =>
               nx >= det.bbox.x &&
               nx <= det.bbox.x + det.bbox.width &&
@@ -125,12 +157,17 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
         imageData = maskedData
       }
 
-      // Render based on mode
+      // Save context, translate to video area, render, then restore
+      ctx.save()
+      ctx.translate(offsetX, offsetY)
+
       if (params.mode === 'matrix') {
-        renderer.renderMatrix(ctx, imageData, width, height, deltaTime)
+        renderer.renderMatrix(ctx, imageData, displayWidth, displayHeight, deltaTime)
       } else if (imageData) {
-        renderer.renderAscii(ctx, imageData, width, height)
+        renderer.renderAscii(ctx, imageData, displayWidth, displayHeight)
       }
+
+      ctx.restore()
 
       animationFrameRef.current = requestAnimationFrame(render)
     }
@@ -140,7 +177,7 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
     return () => {
       cancelAnimationFrame(animationFrameRef.current)
     }
-  }, [enabled, videoElement, imageElement, params, width, height, detections])
+  }, [enabled, videoElement, imageElement, params, width, height, videoArea, detections])
 
   if (!enabled) return null
 

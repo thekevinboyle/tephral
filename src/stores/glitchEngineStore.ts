@@ -24,6 +24,22 @@ import {
   DEFAULT_EDGE_DETECTION_PARAMS
 } from '../effects/glitch-engine/EdgeDetectionEffect'
 
+export interface GlitchSnapshot {
+  rgbSplitEnabled: boolean
+  rgbSplit: RGBSplitParams
+  blockDisplaceEnabled: boolean
+  blockDisplace: BlockDisplaceParams
+  scanLinesEnabled: boolean
+  scanLines: ScanLinesParams
+  noiseEnabled: boolean
+  noise: NoiseParams
+  pixelateEnabled: boolean
+  pixelate: PixelateParams
+  edgeDetectionEnabled: boolean
+  edgeDetection: EdgeDetectionParams
+  wetMix: number
+}
+
 interface GlitchEngineState {
   enabled: boolean
 
@@ -65,9 +81,11 @@ interface GlitchEngineState {
   setWetMix: (value: number) => void
   setBypassActive: (active: boolean) => void
   reset: () => void
+  getSnapshot: () => GlitchSnapshot
+  applySnapshot: (snapshot: GlitchSnapshot) => void
 }
 
-export const useGlitchEngineStore = create<GlitchEngineState>((set) => ({
+export const useGlitchEngineStore = create<GlitchEngineState>((set, get) => ({
   enabled: true,
 
   rgbSplitEnabled: true,
@@ -140,5 +158,40 @@ export const useGlitchEngineStore = create<GlitchEngineState>((set) => ({
     noise: { ...DEFAULT_NOISE_PARAMS },
     pixelate: { ...DEFAULT_PIXELATE_PARAMS },
     edgeDetection: { ...DEFAULT_EDGE_DETECTION_PARAMS },
+  }),
+
+  getSnapshot: () => {
+    const state = get()
+    return {
+      rgbSplitEnabled: state.rgbSplitEnabled,
+      rgbSplit: { ...state.rgbSplit },
+      blockDisplaceEnabled: state.blockDisplaceEnabled,
+      blockDisplace: { ...state.blockDisplace },
+      scanLinesEnabled: state.scanLinesEnabled,
+      scanLines: { ...state.scanLines },
+      noiseEnabled: state.noiseEnabled,
+      noise: { ...state.noise },
+      pixelateEnabled: state.pixelateEnabled,
+      pixelate: { ...state.pixelate },
+      edgeDetectionEnabled: state.edgeDetectionEnabled,
+      edgeDetection: { ...state.edgeDetection },
+      wetMix: state.wetMix,
+    }
+  },
+
+  applySnapshot: (snapshot) => set({
+    rgbSplitEnabled: snapshot.rgbSplitEnabled,
+    rgbSplit: { ...snapshot.rgbSplit },
+    blockDisplaceEnabled: snapshot.blockDisplaceEnabled,
+    blockDisplace: { ...snapshot.blockDisplace },
+    scanLinesEnabled: snapshot.scanLinesEnabled,
+    scanLines: { ...snapshot.scanLines },
+    noiseEnabled: snapshot.noiseEnabled,
+    noise: { ...snapshot.noise },
+    pixelateEnabled: snapshot.pixelateEnabled,
+    pixelate: { ...snapshot.pixelate },
+    edgeDetectionEnabled: snapshot.edgeDetectionEnabled,
+    edgeDetection: { ...snapshot.edgeDetection },
+    wetMix: snapshot.wetMix,
   }),
 }))

@@ -5,6 +5,7 @@ import { SignalPathBar } from './SignalPathBar'
 import { ParameterPanel } from './ParameterPanel'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
+import { CreativeToolsBar } from './CreativeToolsBar'
 import { GraphicPanelV2 } from './GraphicPanelV2'
 import { XYPad } from './XYPad'
 import { MixControls } from './MixControls'
@@ -64,7 +65,7 @@ export function PerformanceLayout() {
   return (
     <div
       className="w-screen h-screen flex flex-col overflow-hidden"
-      style={{ backgroundColor: '#141414' }}
+      style={{ backgroundColor: '#e5e5e5' }}
     >
       {/* Preview section (55vh) - Full width canvas */}
       <div
@@ -72,7 +73,7 @@ export function PerformanceLayout() {
         style={{
           height: 'calc(55vh - 12px)',
           backgroundColor: '#1a1a1a',
-          border: '1px solid #2a2a2a',
+          border: '1px solid #d0d0d0',
         }}
       >
         {/* Source selection overlay */}
@@ -95,8 +96,8 @@ export function PerformanceLayout() {
         style={{
           height: '5vh',
           minHeight: '32px',
-          backgroundColor: '#1a1a1a',
-          borderTop: '1px solid #2a2a2a',
+          backgroundColor: '#f0f0f0',
+          borderTop: '1px solid #d0d0d0',
         }}
       >
         <SignalPathBar />
@@ -108,7 +109,7 @@ export function PerformanceLayout() {
         style={{
           height: '12vh',
           minHeight: '80px',
-          borderTop: '1px solid #2a2a2a',
+          borderTop: '1px solid #d0d0d0',
         }}
       >
         <ParameterPanel />
@@ -120,7 +121,7 @@ export function PerformanceLayout() {
         style={{
           height: '4vh',
           minHeight: '40px',
-          borderTop: '1px solid #2a2a2a',
+          borderTop: '1px solid #d0d0d0',
         }}
       >
         <BankPanel />
@@ -130,12 +131,17 @@ export function PerformanceLayout() {
       <div
         className="flex-1 min-h-0 flex mx-3 mb-3 gap-3"
         style={{
-          borderTop: '1px solid #2a2a2a',
+          borderTop: '1px solid #d0d0d0',
           paddingTop: '12px',
         }}
       >
-        {/* Button grid - 50vw */}
-        <PerformanceGrid />
+        {/* Button grid with creative tools - 50vw */}
+        <div className="flex flex-col" style={{ width: '50vw' }}>
+          <CreativeToolsBar />
+          <div className="flex-1 min-h-0">
+            <PerformanceGrid />
+          </div>
+        </div>
 
         {/* Right side - Graphic panel + (XY Pad + Mix Controls) */}
         <div className="flex-1 flex gap-3">
@@ -143,8 +149,8 @@ export function PerformanceLayout() {
           <div
             className="flex-1 rounded-xl overflow-hidden"
             style={{
-              backgroundColor: '#1a1a1a',
-              border: '1px solid #2a2a2a',
+              backgroundColor: '#ffffff',
+              border: '1px solid #d0d0d0',
             }}
           >
             <GraphicPanelV2 />
@@ -156,8 +162,8 @@ export function PerformanceLayout() {
             <div
               className="flex-1 rounded-xl overflow-hidden relative"
               style={{
-                backgroundColor: '#1a1a1a',
-                border: '1px solid #2a2a2a',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d0d0d0',
               }}
             >
               <XYPad />
@@ -168,8 +174,8 @@ export function PerformanceLayout() {
               className="flex-shrink-0 rounded-xl overflow-hidden"
               style={{
                 height: '80px',
-                backgroundColor: '#1a1a1a',
-                border: '1px solid #2a2a2a',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d0d0d0',
               }}
             >
               <MixControls />

@@ -40,6 +40,11 @@ export const DEFAULT_STIPPLE_PARAMS: StippleParams = {
   breathe: false,
 }
 
+export interface StippleSnapshot {
+  enabled: boolean
+  params: StippleParams
+}
+
 interface StippleState {
   enabled: boolean
   params: StippleParams
@@ -47,9 +52,11 @@ interface StippleState {
   setEnabled: (enabled: boolean) => void
   updateParams: (params: Partial<StippleParams>) => void
   reset: () => void
+  getSnapshot: () => StippleSnapshot
+  applySnapshot: (snapshot: StippleSnapshot) => void
 }
 
-export const useStippleStore = create<StippleState>((set) => ({
+export const useStippleStore = create<StippleState>((set, get) => ({
   enabled: false,
   params: { ...DEFAULT_STIPPLE_PARAMS },
 
@@ -60,5 +67,15 @@ export const useStippleStore = create<StippleState>((set) => ({
   reset: () => set({
     enabled: false,
     params: { ...DEFAULT_STIPPLE_PARAMS },
+  }),
+
+  getSnapshot: () => ({
+    enabled: get().enabled,
+    params: { ...get().params },
+  }),
+
+  applySnapshot: (snapshot) => set({
+    enabled: snapshot.enabled,
+    params: { ...snapshot.params },
   }),
 }))

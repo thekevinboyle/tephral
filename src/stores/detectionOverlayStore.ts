@@ -39,6 +39,11 @@ export const DEFAULT_DETECTION_OVERLAY_PARAMS: DetectionOverlayParams = {
   glitchLabels: true,
 }
 
+export interface DetectionOverlaySnapshot {
+  enabled: boolean
+  params: DetectionOverlayParams
+}
+
 interface DetectionOverlayState {
   enabled: boolean
   params: DetectionOverlayParams
@@ -46,9 +51,11 @@ interface DetectionOverlayState {
   setEnabled: (enabled: boolean) => void
   updateParams: (params: Partial<DetectionOverlayParams>) => void
   reset: () => void
+  getSnapshot: () => DetectionOverlaySnapshot
+  applySnapshot: (snapshot: DetectionOverlaySnapshot) => void
 }
 
-export const useDetectionOverlayStore = create<DetectionOverlayState>((set) => ({
+export const useDetectionOverlayStore = create<DetectionOverlayState>((set, get) => ({
   enabled: false,
   params: { ...DEFAULT_DETECTION_OVERLAY_PARAMS },
 
@@ -59,5 +66,15 @@ export const useDetectionOverlayStore = create<DetectionOverlayState>((set) => (
   reset: () => set({
     enabled: false,
     params: { ...DEFAULT_DETECTION_OVERLAY_PARAMS },
+  }),
+
+  getSnapshot: () => ({
+    enabled: get().enabled,
+    params: { ...get().params },
+  }),
+
+  applySnapshot: (snapshot) => set({
+    enabled: snapshot.enabled,
+    params: { ...snapshot.params },
   }),
 }))

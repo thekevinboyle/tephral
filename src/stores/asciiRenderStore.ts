@@ -59,6 +59,11 @@ export const ASCII_CHAR_SETS: Record<AsciiMode, string> = {
   braille: ' ⠁⠂⠃⠄⠅⠆⠇⠈⠉⠊⠋⠌⠍⠎⠏⠐⠑⠒⠓⠔⠕⠖⠗⠘⠙⠚⠛⠜⠝⠞⠟⠠⠡⠢⠣⠤⠥⠦⠧⠨⠩⠪⠫⠬⠭⠮⠯⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿',
 }
 
+export interface AsciiSnapshot {
+  enabled: boolean
+  params: AsciiRenderParams
+}
+
 interface AsciiRenderState {
   enabled: boolean
   params: AsciiRenderParams
@@ -66,9 +71,11 @@ interface AsciiRenderState {
   setEnabled: (enabled: boolean) => void
   updateParams: (params: Partial<AsciiRenderParams>) => void
   reset: () => void
+  getSnapshot: () => AsciiSnapshot
+  applySnapshot: (snapshot: AsciiSnapshot) => void
 }
 
-export const useAsciiRenderStore = create<AsciiRenderState>((set) => ({
+export const useAsciiRenderStore = create<AsciiRenderState>((set, get) => ({
   enabled: false,
   params: { ...DEFAULT_ASCII_PARAMS },
 
@@ -79,5 +86,15 @@ export const useAsciiRenderStore = create<AsciiRenderState>((set) => ({
   reset: () => set({
     enabled: false,
     params: { ...DEFAULT_ASCII_PARAMS },
+  }),
+
+  getSnapshot: () => ({
+    enabled: get().enabled,
+    params: { ...get().params },
+  }),
+
+  applySnapshot: (snapshot) => set({
+    enabled: snapshot.enabled,
+    params: { ...snapshot.params },
   }),
 }))

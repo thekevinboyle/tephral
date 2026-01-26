@@ -59,6 +59,11 @@ export const DEFAULT_POINT_NETWORK_PARAMS: PointNetworkParams = {
   pulsePoints: true,
 }
 
+export interface PointNetworkSnapshot {
+  enabled: boolean
+  params: PointNetworkParams
+}
+
 interface PointNetworkState {
   enabled: boolean
   params: PointNetworkParams
@@ -66,9 +71,11 @@ interface PointNetworkState {
   setEnabled: (enabled: boolean) => void
   updateParams: (params: Partial<PointNetworkParams>) => void
   reset: () => void
+  getSnapshot: () => PointNetworkSnapshot
+  applySnapshot: (snapshot: PointNetworkSnapshot) => void
 }
 
-export const usePointNetworkStore = create<PointNetworkState>((set) => ({
+export const usePointNetworkStore = create<PointNetworkState>((set, get) => ({
   enabled: false,
   params: { ...DEFAULT_POINT_NETWORK_PARAMS },
 
@@ -79,5 +86,15 @@ export const usePointNetworkStore = create<PointNetworkState>((set) => ({
   reset: () => set({
     enabled: false,
     params: { ...DEFAULT_POINT_NETWORK_PARAMS },
+  }),
+
+  getSnapshot: () => ({
+    enabled: get().enabled,
+    params: { ...get().params },
+  }),
+
+  applySnapshot: (snapshot) => set({
+    enabled: snapshot.enabled,
+    params: { ...snapshot.params },
   }),
 }))

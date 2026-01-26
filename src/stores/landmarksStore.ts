@@ -41,6 +41,16 @@ export interface PoseLandmarks {
 
 export type LandmarkMode = 'off' | 'face' | 'hands' | 'pose' | 'holistic'
 
+export interface LandmarksSnapshot {
+  enabled: boolean
+  currentMode: LandmarkMode
+  minDetectionConfidence: number
+  minTrackingConfidence: number
+  maxFaces: number
+  maxHands: number
+  attachToDetections: boolean
+}
+
 interface LandmarksState {
   // Detection results
   faces: FaceLandmarks[]
@@ -76,9 +86,11 @@ interface LandmarksState {
   setMaxHands: (max: number) => void
   setAttachToDetections: (attach: boolean) => void
   reset: () => void
+  getSnapshot: () => LandmarksSnapshot
+  applySnapshot: (snapshot: LandmarksSnapshot) => void
 }
 
-export const useLandmarksStore = create<LandmarksState>((set) => ({
+export const useLandmarksStore = create<LandmarksState>((set, get) => ({
   faces: [],
   hands: [],
   poses: [],
@@ -117,5 +129,28 @@ export const useLandmarksStore = create<LandmarksState>((set) => ({
     currentMode: 'off',
     enabled: false,
     attachToDetections: false,
+  }),
+
+  getSnapshot: () => {
+    const state = get()
+    return {
+      enabled: state.enabled,
+      currentMode: state.currentMode,
+      minDetectionConfidence: state.minDetectionConfidence,
+      minTrackingConfidence: state.minTrackingConfidence,
+      maxFaces: state.maxFaces,
+      maxHands: state.maxHands,
+      attachToDetections: state.attachToDetections,
+    }
+  },
+
+  applySnapshot: (snapshot) => set({
+    enabled: snapshot.enabled,
+    currentMode: snapshot.currentMode,
+    minDetectionConfidence: snapshot.minDetectionConfidence,
+    minTrackingConfidence: snapshot.minTrackingConfidence,
+    maxFaces: snapshot.maxFaces,
+    maxHands: snapshot.maxHands,
+    attachToDetections: snapshot.attachToDetections,
   }),
 }))

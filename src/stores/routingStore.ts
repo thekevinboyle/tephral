@@ -1,11 +1,21 @@
 import { create } from 'zustand'
 import { EFFECTS } from '../config/effects'
+import { useGlitchEngineStore, type GlitchSnapshot } from './glitchEngineStore'
+import { useAsciiRenderStore, type AsciiSnapshot } from './asciiRenderStore'
+import { useStippleStore, type StippleSnapshot } from './stippleStore'
+import { useLandmarksStore, type LandmarksSnapshot } from './landmarksStore'
+import { usePointNetworkStore, type PointNetworkSnapshot } from './pointNetworkStore'
+import { useDetectionOverlayStore, type DetectionOverlaySnapshot } from './detectionOverlayStore'
 
 export interface RoutingPreset {
   name: string
   effectOrder: string[]
-  effectStates: Record<string, boolean>
-  effectParams: Record<string, Record<string, number>>
+  glitch: GlitchSnapshot
+  ascii: AsciiSnapshot
+  stipple: StippleSnapshot
+  landmarks: LandmarksSnapshot
+  pointNetwork: PointNetworkSnapshot
+  detectionOverlay: DetectionOverlaySnapshot
 }
 
 interface RoutingState {
@@ -20,6 +30,9 @@ interface RoutingState {
 
   // Clipboard for copy/paste
   clipboard: RoutingPreset | null
+
+  // Previous state for undo randomize
+  previousState: RoutingPreset | null
 
   // Actions
   reorderEffect: (fromIndex: number, toIndex: number) => void
@@ -36,9 +49,13 @@ interface RoutingState {
 
   setModified: (modified: boolean) => void
 
-  // For saving/loading full state (to be called by effect stores)
-  getCurrentState: () => Omit<RoutingPreset, 'name'>
-  applyPreset: (preset: RoutingPreset) => void
+  // Full state management
+  captureFullState: () => Omit<RoutingPreset, 'name'>
+  applyFullState: (preset: RoutingPreset) => void
+
+  // Randomization
+  randomize: () => void
+  undoRandomize: () => void
 }
 
 // Default effect order based on EFFECTS config
@@ -56,6 +73,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
   activePreset: null,
   isModified: false,
   clipboard: null,
+  previousState: null,
 
   reorderEffect: (fromIndex, toIndex) => {
     set((state) => {
@@ -76,11 +94,11 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
 
   savePreset: (presetIndex, name) => {
     const state = get()
-    const currentState = state.getCurrentState()
+    const fullState = state.captureFullState()
 
     const preset: RoutingPreset = {
       name: name || state.banks[state.activeBank][presetIndex]?.name || `Preset ${presetIndex + 1}`,
-      ...currentState,
+      ...fullState,
     }
 
     set((s) => {
@@ -102,7 +120,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
     const preset = state.banks[state.activeBank][presetIndex]
 
     if (preset) {
-      state.applyPreset(preset)
+      state.applyFullState(preset)
       set({ activePreset: presetIndex, isModified: false })
     }
   },
@@ -160,21 +178,144 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
     set({ isModified: modified })
   },
 
-  // This will be enhanced to gather state from all effect stores
-  getCurrentState: () => {
-    const state = get()
+  captureFullState: () => {
+    const glitch = useGlitchEngineStore.getState().getSnapshot()
+    const ascii = useAsciiRenderStore.getState().getSnapshot()
+    const stipple = useStippleStore.getState().getSnapshot()
+    const landmarks = useLandmarksStore.getState().getSnapshot()
+    const pointNetwork = usePointNetworkStore.getState().getSnapshot()
+    const detectionOverlay = useDetectionOverlayStore.getState().getSnapshot()
+
     return {
-      effectOrder: [...state.effectOrder],
-      effectStates: {},  // Will be populated by effect stores
-      effectParams: {},  // Will be populated by effect stores
+      effectOrder: [...get().effectOrder],
+      glitch,
+      ascii,
+      stipple,
+      landmarks,
+      pointNetwork,
+      detectionOverlay,
     }
   },
 
-  // This will be enhanced to apply state to all effect stores
-  applyPreset: (preset) => {
-    set({
-      effectOrder: [...preset.effectOrder],
-    })
-    // Effect states and params will be applied by individual stores
+  applyFullState: (preset) => {
+    useGlitchEngineStore.getState().applySnapshot(preset.glitch)
+    useAsciiRenderStore.getState().applySnapshot(preset.ascii)
+    useStippleStore.getState().applySnapshot(preset.stipple)
+    useLandmarksStore.getState().applySnapshot(preset.landmarks)
+    usePointNetworkStore.getState().applySnapshot(preset.pointNetwork)
+    useDetectionOverlayStore.getState().applySnapshot(preset.detectionOverlay)
+    set({ effectOrder: [...preset.effectOrder] })
+  },
+
+  randomize: () => {
+    const current = get().captureFullState()
+    set({ previousState: { name: '_previous', ...current } })
+
+    // Helper functions
+    const rand = (min: number, max: number) => min + Math.random() * (max - min)
+    const randInt = (min: number, max: number) => Math.floor(rand(min, max + 1))
+    const randBool = () => Math.random() > 0.5
+
+    // Shuffle effect order
+    const shuffled = [...current.effectOrder].sort(() => Math.random() - 0.5)
+
+    const randomized: RoutingPreset = {
+      name: '_random',
+      effectOrder: shuffled,
+      glitch: {
+        rgbSplitEnabled: randBool(),
+        rgbSplit: {
+          amount: rand(0, 2),
+          redOffsetX: rand(-0.05, 0.05),
+          redOffsetY: rand(-0.05, 0.05),
+          greenOffsetX: 0,
+          greenOffsetY: 0,
+          blueOffsetX: rand(-0.05, 0.05),
+          blueOffsetY: rand(-0.05, 0.05),
+        },
+        blockDisplaceEnabled: randBool(),
+        blockDisplace: {
+          blockSize: rand(0.02, 0.15),
+          displaceChance: rand(0.05, 0.3),
+          displaceDistance: rand(0, 0.1),
+          seed: randInt(0, 1000),
+          animated: randBool(),
+        },
+        scanLinesEnabled: randBool(),
+        scanLines: {
+          lineCount: randInt(50, 400),
+          lineOpacity: rand(0.1, 0.8),
+          lineFlicker: rand(0, 0.3),
+        },
+        noiseEnabled: randBool(),
+        noise: {
+          amount: rand(0, 0.5),
+          speed: rand(1, 30),
+        },
+        pixelateEnabled: randBool(),
+        pixelate: {
+          pixelSize: randInt(2, 24),
+        },
+        edgeDetectionEnabled: randBool(),
+        edgeDetection: {
+          threshold: rand(0.1, 0.9),
+          edgeColor: ['#00ff00', '#ff0066', '#00ffff', '#ffff00', '#ff00ff'][randInt(0, 4)],
+          mixAmount: rand(0.3, 1),
+        },
+        wetMix: rand(0.5, 1),
+      },
+      ascii: {
+        enabled: randBool(),
+        params: {
+          ...current.ascii.params,
+          fontSize: randInt(6, 16),
+          contrast: rand(0.8, 1.5),
+          mode: ['standard', 'matrix', 'blocks', 'braille'][randInt(0, 3)] as 'standard' | 'matrix' | 'blocks' | 'braille',
+        },
+      },
+      stipple: {
+        enabled: randBool(),
+        params: {
+          ...current.stipple.params,
+          particleSize: rand(1, 6),
+          density: rand(0.5, 2),
+          brightnessThreshold: rand(0.2, 0.8),
+        },
+      },
+      landmarks: {
+        ...current.landmarks,
+        enabled: randBool(),
+        currentMode: randBool() ? ['face', 'hands', 'pose', 'holistic'][randInt(0, 3)] as 'face' | 'hands' | 'pose' | 'holistic' : 'off',
+        minDetectionConfidence: rand(0.3, 0.8),
+      },
+      pointNetwork: {
+        enabled: randBool(),
+        params: {
+          ...current.pointNetwork.params,
+          pointRadius: rand(1, 8),
+          maxDistance: rand(0.05, 0.3),
+          lineWidth: rand(0.5, 3),
+        },
+      },
+      detectionOverlay: {
+        enabled: randBool(),
+        params: {
+          ...current.detectionOverlay.params,
+          boxLineWidth: randInt(1, 4),
+          boxStyle: ['solid', 'dashed', 'corners'][randInt(0, 2)] as 'solid' | 'dashed' | 'corners',
+        },
+      },
+    }
+
+    get().applyFullState(randomized)
+    set({ isModified: true })
+  },
+
+  undoRandomize: () => {
+    const prev = get().previousState
+    if (prev) {
+      get().applyFullState(prev)
+      set({ previousState: null, isModified: true })
+    }
   },
 }))

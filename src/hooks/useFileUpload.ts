@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { useMediaStore } from '../stores/mediaStore'
 
 const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-const SUPPORTED_VIDEO_TYPES = ['video/mp4', 'video/webm']
+const SUPPORTED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
 
 export function useFileUpload() {
   const {

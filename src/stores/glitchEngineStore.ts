@@ -45,6 +45,10 @@ interface GlitchEngineState {
   wetMix: number        // 0-1, default 1 (100% wet)
   bypassActive: boolean // true while kill switch held
 
+  // Per-effect bypass (double-click to mute)
+  effectBypassed: Record<string, boolean>
+  toggleEffectBypassed: (effectId: string) => void
+
   setEnabled: (enabled: boolean) => void
   setRGBSplitEnabled: (enabled: boolean) => void
   setBlockDisplaceEnabled: (enabled: boolean) => void
@@ -82,6 +86,15 @@ export const useGlitchEngineStore = create<GlitchEngineState>((set) => ({
 
   wetMix: 1,
   bypassActive: false,
+
+  effectBypassed: {},
+
+  toggleEffectBypassed: (effectId) => set((state) => ({
+    effectBypassed: {
+      ...state.effectBypassed,
+      [effectId]: !state.effectBypassed[effectId]
+    }
+  })),
 
   setEnabled: (enabled) => set({ enabled }),
   setRGBSplitEnabled: (enabled) => set({ rgbSplitEnabled: enabled }),

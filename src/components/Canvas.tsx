@@ -30,7 +30,8 @@ export function Canvas() {
     pixelate,
     edgeDetection,
     wetMix,
-    bypassActive
+    bypassActive,
+    effectBypassed
   } = useGlitchEngineStore()
 
   const { effectOrder } = useRoutingStore()
@@ -60,12 +61,12 @@ export function Canvas() {
 
     pipeline.updateEffects({
       effectOrder,
-      rgbSplitEnabled: glitchEnabled && rgbSplitEnabled,
-      blockDisplaceEnabled: glitchEnabled && blockDisplaceEnabled,
-      scanLinesEnabled: glitchEnabled && scanLinesEnabled,
-      noiseEnabled: glitchEnabled && noiseEnabled,
-      pixelateEnabled: glitchEnabled && pixelateEnabled,
-      edgeDetectionEnabled: glitchEnabled && edgeDetectionEnabled,
+      rgbSplitEnabled: glitchEnabled && rgbSplitEnabled && !effectBypassed['rgb_split'],
+      blockDisplaceEnabled: glitchEnabled && blockDisplaceEnabled && !effectBypassed['block_displace'],
+      scanLinesEnabled: glitchEnabled && scanLinesEnabled && !effectBypassed['scan_lines'],
+      noiseEnabled: glitchEnabled && noiseEnabled && !effectBypassed['noise'],
+      pixelateEnabled: glitchEnabled && pixelateEnabled && !effectBypassed['pixelate'],
+      edgeDetectionEnabled: glitchEnabled && edgeDetectionEnabled && !effectBypassed['edges'],
       wetMix,
       bypassActive,
     })
@@ -86,7 +87,8 @@ export function Canvas() {
     edgeDetection,
     effectOrder,
     wetMix,
-    bypassActive
+    bypassActive,
+    effectBypassed
   ])
 
   // Update input texture and video dimensions

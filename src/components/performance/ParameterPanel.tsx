@@ -38,6 +38,7 @@ interface ParameterSection {
 
 export function ParameterPanel() {
   const glitch = useGlitchEngineStore()
+  const { effectBypassed, toggleEffectBypassed } = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
   const landmarks = useLandmarksStore()
@@ -490,6 +491,8 @@ export function ParameterPanel() {
       {sortedSections.map((section, index) => {
         const isBeingDragged = dragIndex === index
         const isDropTarget = dragOverIndex === index && dragIndex !== null && dragIndex !== index
+        const isBypassed = effectBypassed[section.id] || false
+        const displayColor = isBypassed ? '#4b5563' : section.color
 
         return (
           <div
@@ -497,14 +500,17 @@ export function ParameterPanel() {
             onPointerDown={(e) => handlePointerDown(e, index)}
             onPointerMove={(e) => handlePointerMove(e, index)}
             onPointerUp={(e) => handlePointerUp(e, index)}
+            onDoubleClick={() => toggleEffectBypassed(section.id)}
             className="flex-shrink-0 flex flex-col transition-all rounded-lg select-none touch-none cursor-grab active:cursor-grabbing"
             style={{
-              background: selectedEffectId === section.id
+              background: isBypassed
+                ? 'linear-gradient(180deg, #1a1d24 0%, #13151a 100%)'
+                : selectedEffectId === section.id
                 ? `linear-gradient(180deg, ${section.color}15 0%, ${section.color}08 100%)`
                 : 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
               boxShadow: isBeingDragged
-                ? `0 8px 24px rgba(0,0,0,0.4), 0 0 0 2px ${section.color}`
-                : selectedEffectId === section.id
+                ? `0 8px 24px rgba(0,0,0,0.4), 0 0 0 2px ${displayColor}`
+                : selectedEffectId === section.id && !isBypassed
                 ? `
                   inset 0 1px 1px rgba(255,255,255,0.05),
                   inset 0 -1px 2px rgba(0,0,0,0.3),
@@ -520,10 +526,11 @@ export function ParameterPanel() {
               minWidth: '140px',
               padding: '12px',
               transform: isBeingDragged ? 'scale(1.05)' : 'scale(1)',
-              opacity: isBeingDragged ? 0.9 : 1,
+              opacity: isBypassed ? 0.5 : isBeingDragged ? 0.9 : 1,
               zIndex: isBeingDragged ? 10 : 1,
               marginLeft: isDropTarget ? '60px' : '0',
               transition: isBeingDragged ? 'none' : 'all 0.15s ease-out',
+              filter: isBypassed ? 'grayscale(100%)' : 'none',
             }}
           >
             {/* Section header with LED */}
@@ -531,13 +538,13 @@ export function ParameterPanel() {
               <div
                 className="w-2 h-2 rounded-full"
                 style={{
-                  backgroundColor: section.color,
-                  boxShadow: `0 0 8px ${section.color}`,
+                  backgroundColor: displayColor,
+                  boxShadow: isBypassed ? 'none' : `0 0 8px ${section.color}`,
                 }}
               />
               <span
                 className="text-[9px] font-semibold tracking-wider uppercase"
-                style={{ color: section.color }}
+                style={{ color: displayColor }}
               >
                 {section.label}
               </span>

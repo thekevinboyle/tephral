@@ -115,14 +115,21 @@ export class EffectPipeline {
 
     // Collect enabled effects in the specified order
     const effects: Effect[] = []
+    const effectIds: string[] = []
 
     for (const effectId of config.effectOrder) {
       if (enabledMap[effectId]) {
         const effect = this.getEffectById(effectId)
         if (effect) {
           effects.push(effect)
+          effectIds.push(effectId)
         }
       }
+    }
+
+    // Debug: log the effect order being applied
+    if (effects.length > 0) {
+      console.log('[EffectPipeline] Applying effect order:', effectIds.join(' → '))
     }
 
     // Add effect pass if there are effects

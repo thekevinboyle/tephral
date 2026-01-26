@@ -438,24 +438,31 @@ export function ParameterPanel() {
     } catch {}
 
     if (isDragging.current && dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
-      // Find the actual indices in effectOrder
+      // Get the effect IDs from the sorted visible sections
       const fromEffectId = sortedSections[dragIndex].id
       const fromOrderIndex = effectOrder.indexOf(fromEffectId)
 
-      // Calculate target index
+      // For the target, we need to figure out where in effectOrder to insert
       let toOrderIndex: number
       if (dragOverIndex >= sortedSections.length) {
+        // Dropping at the end - put after the last visible effect
         toOrderIndex = effectOrder.indexOf(sortedSections[sortedSections.length - 1].id) + 1
+      } else if (dragOverIndex === 0) {
+        // Dropping at the start - put before the first visible effect
+        toOrderIndex = effectOrder.indexOf(sortedSections[0].id)
       } else {
+        // Dropping in the middle - put at the position of the target effect
         toOrderIndex = effectOrder.indexOf(sortedSections[dragOverIndex].id)
       }
 
-      // Adjust if moving forward
-      if (toOrderIndex > fromOrderIndex) {
-        toOrderIndex--
+      // Only adjust if we're actually moving the item (not just hovering)
+      if (fromOrderIndex !== toOrderIndex && fromOrderIndex !== toOrderIndex - 1) {
+        // If moving forward in the array, account for the removal
+        if (fromOrderIndex < toOrderIndex) {
+          toOrderIndex--
+        }
+        reorderEffect(fromOrderIndex, toOrderIndex)
       }
-
-      reorderEffect(fromOrderIndex, toOrderIndex)
     } else if (!isDragging.current) {
       // It was a click, select the effect
       setSelectedEffect(sortedSections[index].id)

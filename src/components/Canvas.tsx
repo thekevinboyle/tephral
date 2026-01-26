@@ -19,9 +19,15 @@ export function Canvas() {
     rgbSplitEnabled,
     blockDisplaceEnabled,
     scanLinesEnabled,
+    noiseEnabled,
+    pixelateEnabled,
+    edgeDetectionEnabled,
     rgbSplit,
     blockDisplace,
-    scanLines
+    scanLines,
+    noise,
+    pixelate,
+    edgeDetection
   } = useGlitchEngineStore()
 
   // Initialize pipeline
@@ -43,11 +49,17 @@ export function Canvas() {
     pipeline.rgbSplit?.updateParams(rgbSplit)
     pipeline.blockDisplace?.updateParams(blockDisplace)
     pipeline.scanLines?.updateParams(scanLines)
+    pipeline.noise?.updateParams(noise)
+    pipeline.pixelate?.updateParams(pixelate)
+    pipeline.edgeDetection?.updateParams(edgeDetection)
 
     pipeline.updateEffects({
       rgbSplitEnabled: glitchEnabled && rgbSplitEnabled,
       blockDisplaceEnabled: glitchEnabled && blockDisplaceEnabled,
       scanLinesEnabled: glitchEnabled && scanLinesEnabled,
+      noiseEnabled: glitchEnabled && noiseEnabled,
+      pixelateEnabled: glitchEnabled && pixelateEnabled,
+      edgeDetectionEnabled: glitchEnabled && edgeDetectionEnabled,
     })
   }, [
     pipeline,
@@ -55,9 +67,15 @@ export function Canvas() {
     rgbSplitEnabled,
     blockDisplaceEnabled,
     scanLinesEnabled,
+    noiseEnabled,
+    pixelateEnabled,
+    edgeDetectionEnabled,
     rgbSplit,
     blockDisplace,
-    scanLines
+    scanLines,
+    noise,
+    pixelate,
+    edgeDetection
   ])
 
   // Update input texture and video dimensions

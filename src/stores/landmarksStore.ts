@@ -59,6 +59,7 @@ interface LandmarksState {
   minTrackingConfidence: number
   maxFaces: number
   maxHands: number
+  attachToDetections: boolean  // Render landmarks relative to detected objects
 
   // Actions
   setFaces: (faces: FaceLandmarks[]) => void
@@ -73,6 +74,7 @@ interface LandmarksState {
   setMinTrackingConfidence: (confidence: number) => void
   setMaxFaces: (max: number) => void
   setMaxHands: (max: number) => void
+  setAttachToDetections: (attach: boolean) => void
   reset: () => void
 }
 
@@ -91,6 +93,7 @@ export const useLandmarksStore = create<LandmarksState>((set) => ({
   minTrackingConfidence: 0.5,
   maxFaces: 1,
   maxHands: 2,
+  attachToDetections: false,
 
   setFaces: (faces) => set({ faces }),
   setHands: (hands) => set({ hands }),
@@ -104,6 +107,7 @@ export const useLandmarksStore = create<LandmarksState>((set) => ({
   setMinTrackingConfidence: (confidence) => set({ minTrackingConfidence: confidence }),
   setMaxFaces: (max) => set({ maxFaces: max }),
   setMaxHands: (max) => set({ maxHands: max }),
+  setAttachToDetections: (attach) => set({ attachToDetections: attach }),
   reset: () => set({
     faces: [],
     hands: [],
@@ -112,5 +116,6 @@ export const useLandmarksStore = create<LandmarksState>((set) => ({
     error: null,
     currentMode: 'off',
     enabled: false,
+    attachToDetections: false,
   }),
 }))

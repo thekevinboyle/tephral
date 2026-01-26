@@ -1,25 +1,18 @@
 import { create } from 'zustand'
 
-type TabId = 'source' | 'glitch' | 'vision' | 'export'
-
 interface UIState {
-  activeTab: TabId
-  drawerOpen: boolean
-  drawerHeight: number // percentage of viewport
+  // Selection state for graphic panel
+  selectedEffectId: string | null
+  selectedParamIndex: number
 
-  setActiveTab: (tab: TabId) => void
-  setDrawerOpen: (open: boolean) => void
-  setDrawerHeight: (height: number) => void
-  toggleDrawer: () => void
+  setSelectedEffect: (id: string | null) => void
+  setSelectedParamIndex: (index: number) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  activeTab: 'source',
-  drawerOpen: true,
-  drawerHeight: 40, // 40% of viewport
+  selectedEffectId: null,
+  selectedParamIndex: 0,
 
-  setActiveTab: (tab) => set({ activeTab: tab }),
-  setDrawerOpen: (open) => set({ drawerOpen: open }),
-  setDrawerHeight: (height) => set({ drawerHeight: Math.min(80, Math.max(20, height)) }),
-  toggleDrawer: () => set((state) => ({ drawerOpen: !state.drawerOpen })),
+  setSelectedEffect: (id) => set({ selectedEffectId: id, selectedParamIndex: 0 }),
+  setSelectedParamIndex: (index) => set({ selectedParamIndex: index }),
 }))

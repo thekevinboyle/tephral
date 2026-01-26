@@ -1,6 +1,13 @@
 import * as THREE from 'three'
 import { EffectComposer, RenderPass, EffectPass, Effect } from 'postprocessing'
-import { RGBSplitEffect, BlockDisplaceEffect, ScanLinesEffect } from './glitch-engine'
+import {
+  RGBSplitEffect,
+  BlockDisplaceEffect,
+  ScanLinesEffect,
+  NoiseEffect,
+  PixelateEffect,
+  EdgeDetectionEffect
+} from './glitch-engine'
 
 export class EffectPipeline {
   private composer: EffectComposer
@@ -13,6 +20,9 @@ export class EffectPipeline {
   rgbSplit: RGBSplitEffect | null = null
   blockDisplace: BlockDisplaceEffect | null = null
   scanLines: ScanLinesEffect | null = null
+  noise: NoiseEffect | null = null
+  pixelate: PixelateEffect | null = null
+  edgeDetection: EdgeDetectionEffect | null = null
 
   private effectPass: EffectPass | null = null
 
@@ -40,12 +50,18 @@ export class EffectPipeline {
     this.rgbSplit = new RGBSplitEffect()
     this.blockDisplace = new BlockDisplaceEffect()
     this.scanLines = new ScanLinesEffect()
+    this.noise = new NoiseEffect()
+    this.pixelate = new PixelateEffect()
+    this.edgeDetection = new EdgeDetectionEffect()
   }
 
   updateEffects(config: {
     rgbSplitEnabled: boolean
     blockDisplaceEnabled: boolean
     scanLinesEnabled: boolean
+    noiseEnabled: boolean
+    pixelateEnabled: boolean
+    edgeDetectionEnabled: boolean
   }) {
     // Remove existing effect pass
     if (this.effectPass) {
@@ -64,6 +80,15 @@ export class EffectPipeline {
     }
     if (config.scanLinesEnabled && this.scanLines) {
       effects.push(this.scanLines)
+    }
+    if (config.noiseEnabled && this.noise) {
+      effects.push(this.noise)
+    }
+    if (config.pixelateEnabled && this.pixelate) {
+      effects.push(this.pixelate)
+    }
+    if (config.edgeDetectionEnabled && this.edgeDetection) {
+      effects.push(this.edgeDetection)
     }
 
     // Add new effect pass if there are effects
@@ -122,5 +147,8 @@ export class EffectPipeline {
     this.rgbSplit?.dispose()
     this.blockDisplace?.dispose()
     this.scanLines?.dispose()
+    this.noise?.dispose()
+    this.pixelate?.dispose()
+    this.edgeDetection?.dispose()
   }
 }

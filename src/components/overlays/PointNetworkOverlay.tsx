@@ -1,6 +1,7 @@
 import { useRef, useEffect, useMemo } from 'react'
 import { useLandmarksStore } from '../../stores/landmarksStore'
 import { usePointNetworkStore } from '../../stores/pointNetworkStore'
+import { useDetectionStore } from '../../stores/detectionStore'
 import { useMediaStore } from '../../stores/mediaStore'
 import { calculateVideoArea } from '../../utils/videoArea'
 
@@ -37,8 +38,9 @@ function drawCurvedLine(
 
 export function PointNetworkOverlay({ width, height }: PointNetworkOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { faces, hands, poses } = useLandmarksStore()
+  const { faces, hands, poses, attachToDetections } = useLandmarksStore()
   const { enabled, params } = usePointNetworkStore()
+  const { detections } = useDetectionStore()
   const { videoElement, imageElement } = useMediaStore()
 
   // Calculate video display area
@@ -47,6 +49,17 @@ export function PointNetworkOverlay({ width, height }: PointNetworkOverlayProps)
     const videoHeight = videoElement?.videoHeight || imageElement?.naturalHeight || height
     return calculateVideoArea(width, height, videoWidth, videoHeight)
   }, [width, height, videoElement, imageElement])
+
+  // Helper to check if a point is inside any detection bounding box
+  const isInsideDetection = (x: number, y: number) => {
+    if (!attachToDetections || detections.length === 0) return true
+    return detections.some(det =>
+      x >= det.bbox.x &&
+      x <= det.bbox.x + det.bbox.width &&
+      y >= det.bbox.y &&
+      y <= det.bbox.y + det.bbox.height
+    )
+  }
 
   // Collect all points from landmarks
   const allPoints = useMemo(() => {
@@ -61,41 +74,50 @@ export function PointNetworkOverlay({ width, height }: PointNetworkOverlayProps)
       ]
       keyIndices.forEach(i => {
         if (face.points[i]) {
-          points.push({
-            x: face.points[i].point.x,
-            y: face.points[i].point.y,
-            id: face.points[i].id,
-            visibility: face.points[i].visibility,
-          })
+          const { x, y } = face.points[i].point
+          if (isInsideDetection(x, y)) {
+            points.push({
+              x,
+              y,
+              id: face.points[i].id,
+              visibility: face.points[i].visibility,
+            })
+          }
         }
       })
     })
 
     hands.forEach(hand => {
       hand.points.forEach(lm => {
-        points.push({
-          x: lm.point.x,
-          y: lm.point.y,
-          id: lm.id,
-        })
+        const { x, y } = lm.point
+        if (isInsideDetection(x, y)) {
+          points.push({
+            x,
+            y,
+            id: lm.id,
+          })
+        }
       })
     })
 
     poses.forEach(pose => {
       pose.points.forEach(lm => {
         if ((lm.visibility || 0) > 0.5) {
-          points.push({
-            x: lm.point.x,
-            y: lm.point.y,
-            id: lm.id,
-            visibility: lm.visibility,
-          })
+          const { x, y } = lm.point
+          if (isInsideDetection(x, y)) {
+            points.push({
+              x,
+              y,
+              id: lm.id,
+              visibility: lm.visibility,
+            })
+          }
         }
       })
     })
 
     return points
-  }, [faces, hands, poses])
+  }, [faces, hands, poses, attachToDetections, detections])
 
   // Calculate connections based on mode
   const connections = useMemo(() => {

@@ -3,12 +3,33 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
 
 @theme {
-  --color-base-dark: #0f0f0f;
-  --color-base-light: #f5f5f5;
+  /* Base */
+  --color-base-dark: #0a0a0a;
+  --color-base-darker: #1a1a1a;
+  --color-base-light: #f0f0f0;
+  --color-muted: #666666;
+  --color-border: #2a2a2a;
+
+  /* Glitch row - Cyan, Magenta, Electric Blue, Purple */
+  --color-glitch-cyan: #00d4ff;
+  --color-glitch-magenta: #ff00aa;
+  --color-glitch-blue: #4444ff;
+  --color-glitch-purple: #aa44ff;
+
+  /* Render row - Amber, Orange */
+  --color-render-amber: #ffaa00;
+  --color-render-orange: #ff6600;
+
+  /* Vision row - Lime, Teal */
+  --color-vision-lime: #88ff00;
+  --color-vision-teal: #00ffaa;
+
+  /* UI */
+  --color-record-red: #ff3333;
   --color-accent-yellow: #ffcc00;
   --color-accent-orange: #ff6600;
-  --color-muted: #666666;
-  --font-family-mono: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+
+  --font-family-mono: 'JetBrains Mono', 'Space Mono', monospace;
 }
 
 @layer base {
@@ -25,10 +46,6 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Brutalist: no rounded corners anywhere */
-  * {
-    border-radius: 0 !important;
-  }
 }
 
 @layer components {
@@ -48,5 +65,25 @@
     font-size: 0.875rem;
     font-family: var(--font-family-mono);
     color: var(--color-base-light);
+  }
+}
+
+@layer utilities {
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  @keyframes recording-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(255, 51, 51, 0);
+    }
+  }
+
+  .animate-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
   }
 }

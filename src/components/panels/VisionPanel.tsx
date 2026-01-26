@@ -87,7 +87,13 @@ export function VisionPanel() {
           <MinimalToggle
             label="Landmark Detection"
             pressed={landmarks.enabled}
-            onPressedChange={landmarks.setEnabled}
+            onPressedChange={(enabled) => {
+              landmarks.setEnabled(enabled)
+              // Auto-select face mode when enabling if no mode selected
+              if (enabled && landmarks.currentMode === 'off') {
+                landmarks.setCurrentMode('face')
+              }
+            }}
           />
           {landmarks.enabled && (
             <>
@@ -124,8 +130,17 @@ export function VisionPanel() {
           <MinimalToggle
             label="Bounding Boxes"
             pressed={overlay.enabled}
-            onPressedChange={overlay.setEnabled}
+            onPressedChange={(enabled) => {
+              overlay.setEnabled(enabled)
+              // Auto-enable detection when overlay is turned on
+              if (enabled && !detection.enabled) {
+                detection.setEnabled(true)
+              }
+            }}
           />
+          {!detection.enabled && overlay.enabled && (
+            <div className="text-xs text-accent-yellow">Enable Object Detection first</div>
+          )}
           {overlay.enabled && (
             <>
               <div className="flex gap-1 mt-2">
@@ -168,8 +183,20 @@ export function VisionPanel() {
           <MinimalToggle
             label="Point Network"
             pressed={network.enabled}
-            onPressedChange={network.setEnabled}
+            onPressedChange={(enabled) => {
+              network.setEnabled(enabled)
+              // Auto-enable landmarks when network is turned on
+              if (enabled && !landmarks.enabled) {
+                landmarks.setEnabled(true)
+                if (landmarks.currentMode === 'off') {
+                  landmarks.setCurrentMode('face')
+                }
+              }
+            }}
           />
+          {!landmarks.enabled && network.enabled && (
+            <div className="text-xs text-accent-yellow">Enable Landmark Detection first</div>
+          )}
           {network.enabled && (
             <>
               <MinimalToggle

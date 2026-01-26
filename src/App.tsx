@@ -5,15 +5,9 @@ import { GlitchPanel } from './components/panels/GlitchPanel'
 import { VisionPanel } from './components/panels/VisionPanel'
 import { ExportPanel } from './components/panels/ExportPanel'
 import { useUIStore } from './stores/uiStore'
-import { useObjectDetection } from './hooks/useObjectDetection'
-import { useLandmarkDetection } from './hooks/useLandmarkDetection'
 
 function App() {
   const { activeTab, drawerHeight } = useUIStore()
-
-  // Initialize ML hooks
-  useObjectDetection()
-  useLandmarkDetection()
 
   return (
     <div className="w-screen h-screen bg-black overflow-hidden">

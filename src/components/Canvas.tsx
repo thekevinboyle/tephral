@@ -4,6 +4,7 @@ import { useThree } from '../hooks/useThree'
 import { useVideoTexture } from '../hooks/useVideoTexture'
 import { EffectPipeline } from '../effects/EffectPipeline'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
+import { OverlayContainer } from './overlays/OverlayContainer'
 
 export function Canvas() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -101,7 +102,10 @@ export function Canvas() {
   return (
     <div
       ref={containerRef}
-      className="w-full h-full bg-black"
-    />
+      className="w-full h-full bg-black relative"
+    >
+      {/* Vision effect overlays */}
+      <OverlayContainer containerRef={containerRef} />
+    </div>
   )
 }

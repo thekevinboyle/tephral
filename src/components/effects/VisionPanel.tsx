@@ -104,18 +104,18 @@ export function VisionPanel() {
           />
           {landmarks.enabled && (
             <>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 {(['face', 'hands', 'pose', 'holistic'] as const).map(mode => (
                   <button
                     key={mode}
-                    className={`px-2 py-1 text-xs uppercase ${
+                    className={`px-2 py-1 text-xs uppercase border ${
                       landmarks.currentMode === mode
-                        ? 'bg-accent-yellow text-base-dark'
-                        : 'border border-muted hover:border-base-light'
+                        ? 'bg-accent-yellow text-base-dark border-accent-yellow'
+                        : 'border-muted text-muted hover:border-base-light hover:text-base-light'
                     }`}
                     onClick={() => landmarks.setCurrentMode(mode)}
                   >
-                    {mode}
+                    {mode === 'holistic' ? 'ALL' : mode}
                   </button>
                 ))}
               </div>
@@ -144,14 +144,14 @@ export function VisionPanel() {
           />
           {overlay.enabled && (
             <>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 {(['solid', 'dashed', 'corners'] as const).map(style => (
                   <button
                     key={style}
-                    className={`px-2 py-1 text-xs uppercase ${
+                    className={`px-2 py-1 text-xs uppercase border ${
                       overlay.params.boxStyle === style
-                        ? 'bg-accent-yellow text-base-dark'
-                        : 'border border-muted hover:border-base-light'
+                        ? 'bg-accent-yellow text-base-dark border-accent-yellow'
+                        : 'border-muted text-muted hover:border-base-light hover:text-base-light'
                     }`}
                     onClick={() => overlay.updateParams({ boxStyle: style })}
                   >
@@ -243,14 +243,14 @@ export function VisionPanel() {
           />
           {ascii.enabled && (
             <>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 {(['standard', 'matrix', 'blocks', 'braille'] as const).map(mode => (
                   <button
                     key={mode}
-                    className={`px-2 py-1 text-xs uppercase ${
+                    className={`px-2 py-1 text-xs uppercase border ${
                       ascii.params.mode === mode
-                        ? 'bg-accent-yellow text-base-dark'
-                        : 'border border-muted hover:border-base-light'
+                        ? 'bg-accent-yellow text-base-dark border-accent-yellow'
+                        : 'border-muted text-muted hover:border-base-light hover:text-base-light'
                     }`}
                     onClick={() => ascii.updateParams({ mode })}
                   >

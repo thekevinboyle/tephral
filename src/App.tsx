@@ -1,34 +1,37 @@
 import { Canvas } from './components/Canvas'
-import { MediaInputPanel } from './components/MediaInputPanel'
-import { GlitchEnginePanel } from './components/effects/GlitchEnginePanel'
-import { VisionPanel } from './components/effects/VisionPanel'
+import { BottomDrawer } from './components/ui/BottomDrawer'
+import { SourcePanel } from './components/panels/SourcePanel'
+import { GlitchPanel } from './components/panels/GlitchPanel'
+import { VisionPanel } from './components/panels/VisionPanel'
+import { ExportPanel } from './components/panels/ExportPanel'
+import { useUIStore } from './stores/uiStore'
+import { useObjectDetection } from './hooks/useObjectDetection'
+import { useLandmarkDetection } from './hooks/useLandmarkDetection'
 
 function App() {
+  const { activeTab, drawerHeight } = useUIStore()
+
+  // Initialize ML hooks
+  useObjectDetection()
+  useLandmarkDetection()
+
   return (
-    <div className="w-screen h-screen flex flex-col">
-      <header className="h-12 border-b border-muted flex items-center justify-between px-4">
-        <h1 className="text-sm font-bold uppercase tracking-widest">STRAND-TRACER</h1>
-        <div className="flex gap-2">
-          <button className="px-3 py-1 border border-muted text-xs uppercase hover:border-base-light">
-            CAPTURE
-          </button>
-          <button className="px-3 py-1 border border-muted text-xs uppercase hover:border-base-light">
-            EXPORT
-          </button>
-        </div>
-      </header>
-
-      <div className="flex-1 flex overflow-hidden">
-        <aside className="w-64 border-r border-muted p-2 flex flex-col gap-2 overflow-y-auto">
-          <MediaInputPanel />
-          <GlitchEnginePanel />
-          <VisionPanel />
-        </aside>
-
-        <main className="flex-1">
-          <Canvas />
-        </main>
+    <div className="w-screen h-screen bg-black overflow-hidden">
+      {/* Full-bleed canvas */}
+      <div
+        className="w-full transition-all duration-300"
+        style={{ height: `${100 - (drawerHeight * 0.6)}vh` }}
+      >
+        <Canvas />
       </div>
+
+      {/* Bottom drawer with controls */}
+      <BottomDrawer>
+        {activeTab === 'source' && <SourcePanel />}
+        {activeTab === 'glitch' && <GlitchPanel />}
+        {activeTab === 'vision' && <VisionPanel />}
+        {activeTab === 'export' && <ExportPanel />}
+      </BottomDrawer>
     </div>
   )
 }

@@ -478,10 +478,10 @@ export function ParameterPanel() {
       <div
         className="h-full flex items-center justify-center"
         style={{
-          background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
+          backgroundColor: '#f0f0f0',
         }}
       >
-        <span className="text-[10px] text-[#4b5563] uppercase tracking-wider">
+        <span className="text-[10px] text-[#999999] uppercase tracking-wider">
           No active effects — drag to reorder
         </span>
       </div>
@@ -492,7 +492,7 @@ export function ParameterPanel() {
     <div
       className="h-full flex items-stretch gap-3 overflow-x-auto px-4 py-3"
       style={{
-        background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
+        backgroundColor: '#f0f0f0',
       }}
     >
       {sortedSections.map((section, index) => {
@@ -510,26 +510,16 @@ export function ParameterPanel() {
             onDoubleClick={() => toggleEffectBypassed(section.id)}
             className="flex-shrink-0 flex flex-col transition-all rounded-lg select-none touch-none cursor-grab active:cursor-grabbing"
             style={{
-              background: isBypassed
-                ? 'linear-gradient(180deg, #1a1d24 0%, #13151a 100%)'
+              backgroundColor: isBypassed
+                ? '#e5e5e5'
                 : selectedEffectId === section.id
-                ? `linear-gradient(180deg, ${section.color}15 0%, ${section.color}08 100%)`
-                : 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
+                ? '#ffffff'
+                : '#ffffff',
               boxShadow: isBeingDragged
-                ? `0 8px 24px rgba(0,0,0,0.4), 0 0 0 2px ${displayColor}`
+                ? `0 8px 24px rgba(0,0,0,0.15), 0 0 0 2px ${displayColor}`
                 : selectedEffectId === section.id && !isBypassed
-                ? `
-                  inset 0 1px 1px rgba(255,255,255,0.05),
-                  inset 0 -1px 2px rgba(0,0,0,0.3),
-                  0 0 20px -4px ${section.color},
-                  0 0 0 1px ${section.color}40
-                `
-                : `
-                  inset 0 1px 1px rgba(255,255,255,0.03),
-                  inset 0 -1px 2px rgba(0,0,0,0.4),
-                  0 2px 4px rgba(0,0,0,0.2),
-                  0 0 0 1px #2a2d35
-                `,
+                ? `0 0 0 1px ${section.color}60, 0 2px 8px rgba(0,0,0,0.08)`
+                : '0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px #d0d0d0',
               minWidth: '140px',
               padding: '12px',
               transform: isBeingDragged ? 'scale(1.05)' : 'scale(1)',
@@ -551,12 +541,12 @@ export function ParameterPanel() {
               />
               <span
                 className="text-[9px] font-semibold tracking-wider uppercase"
-                style={{ color: displayColor }}
+                style={{ color: isBypassed ? '#999999' : '#1a1a1a' }}
               >
                 {section.label}
               </span>
               {/* Drag handle indicator */}
-              <div className="ml-auto flex gap-0.5 opacity-30">
+              <div className="ml-auto flex gap-0.5 opacity-30" style={{ color: '#999999' }}>
                 <div className="w-0.5 h-2 bg-current rounded-full" />
                 <div className="w-0.5 h-2 bg-current rounded-full" />
               </div>
@@ -566,8 +556,7 @@ export function ParameterPanel() {
             <div
               className="flex-1 flex items-center justify-center rounded-md mb-2"
               style={{
-                background: 'linear-gradient(180deg, #0d0f12 0%, #1a1d24 100%)',
-                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.4)',
+                backgroundColor: '#1a1a1a',
                 minHeight: '40px',
               }}
             >

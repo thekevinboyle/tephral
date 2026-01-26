@@ -21,11 +21,11 @@ export function BankPanel() {
   return (
     <div
       className="h-full flex items-center px-4 gap-6"
-      style={{ backgroundColor: '#1a1a1a' }}
+      style={{ backgroundColor: '#f0f0f0' }}
     >
       {/* Bank selector */}
       <div className="flex items-center gap-1">
-        <span className="text-[11px] font-medium mr-2" style={{ color: '#555555' }}>
+        <span className="text-[11px] font-medium mr-2" style={{ color: '#999999' }}>
           Bank
         </span>
         {BANK_LABELS.map((label, index) => (
@@ -34,9 +34,9 @@ export function BankPanel() {
             onClick={() => setActiveBank(index)}
             className="w-8 h-8 rounded-md text-[11px] font-medium transition-colors"
             style={{
-              backgroundColor: activeBank === index ? '#2a2a2a' : '#242424',
-              border: activeBank === index ? '1px solid #6366f140' : '1px solid #333333',
-              color: activeBank === index ? '#ffffff' : '#888888',
+              backgroundColor: activeBank === index ? '#ffffff' : '#f5f5f5',
+              border: activeBank === index ? '1px solid #6366f160' : '1px solid #d0d0d0',
+              color: activeBank === index ? '#1a1a1a' : '#666666',
             }}
           >
             {label}
@@ -45,7 +45,7 @@ export function BankPanel() {
       </div>
 
       {/* Divider */}
-      <div className="w-px h-6" style={{ backgroundColor: '#333333' }} />
+      <div className="w-px h-6" style={{ backgroundColor: '#d0d0d0' }} />
 
       {/* Preset slots */}
       <div className="flex items-center gap-2 flex-1">
@@ -60,21 +60,21 @@ export function BankPanel() {
               onClick={() => !isEmpty && loadPreset(index)}
               className="flex-1 max-w-[120px] h-8 rounded-md px-3 flex items-center justify-between transition-colors"
               style={{
-                backgroundColor: isActive ? '#2a2a2a' : '#242424',
-                border: isActive ? '1px solid #6366f140' : '1px solid #333333',
+                backgroundColor: isActive ? '#ffffff' : '#f5f5f5',
+                border: isActive ? '1px solid #6366f160' : '1px solid #d0d0d0',
                 opacity: isEmpty ? 0.5 : 1,
               }}
             >
               <div className="flex items-center gap-2">
                 <span
                   className="text-[11px] font-medium"
-                  style={{ color: isActive ? '#ffffff' : '#888888' }}
+                  style={{ color: isActive ? '#1a1a1a' : '#666666' }}
                 >
                   {index + 1}
                 </span>
                 <span
                   className="text-[10px] font-medium truncate"
-                  style={{ color: isActive ? '#888888' : '#555555' }}
+                  style={{ color: isActive ? '#666666' : '#999999' }}
                 >
                   {preset?.name || 'Empty'}
                 </span>
@@ -94,7 +94,7 @@ export function BankPanel() {
       </div>
 
       {/* Divider */}
-      <div className="w-px h-6" style={{ backgroundColor: '#333333' }} />
+      <div className="w-px h-6" style={{ backgroundColor: '#d0d0d0' }} />
 
       {/* Actions */}
       <div className="flex items-center gap-2">
@@ -103,9 +103,9 @@ export function BankPanel() {
           disabled={activePreset === null}
           className="h-8 px-3 rounded-md text-[11px] font-medium transition-colors"
           style={{
-            backgroundColor: '#242424',
-            border: '1px solid #333333',
-            color: activePreset !== null ? '#10b981' : '#555555',
+            backgroundColor: '#f5f5f5',
+            border: '1px solid #d0d0d0',
+            color: activePreset !== null ? '#10b981' : '#999999',
             opacity: activePreset === null ? 0.5 : 1,
           }}
         >
@@ -116,9 +116,9 @@ export function BankPanel() {
           disabled={activePreset === null}
           className="h-8 px-3 rounded-md text-[11px] font-medium transition-colors"
           style={{
-            backgroundColor: '#242424',
-            border: '1px solid #333333',
-            color: activePreset !== null ? '#888888' : '#555555',
+            backgroundColor: '#f5f5f5',
+            border: '1px solid #d0d0d0',
+            color: activePreset !== null ? '#666666' : '#999999',
             opacity: activePreset === null ? 0.5 : 1,
           }}
         >
@@ -129,9 +129,9 @@ export function BankPanel() {
           disabled={!clipboard || activePreset === null}
           className="h-8 px-3 rounded-md text-[11px] font-medium transition-colors"
           style={{
-            backgroundColor: '#242424',
-            border: '1px solid #333333',
-            color: clipboard ? '#888888' : '#555555',
+            backgroundColor: '#f5f5f5',
+            border: '1px solid #d0d0d0',
+            color: clipboard ? '#666666' : '#999999',
             opacity: !clipboard || activePreset === null ? 0.5 : 1,
           }}
         >

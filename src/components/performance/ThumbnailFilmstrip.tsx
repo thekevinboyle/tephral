@@ -56,8 +56,9 @@ export function ThumbnailFilmstrip() {
     <div
       className="absolute bottom-3 left-3 right-3 h-12 flex items-center gap-1 px-2 rounded-lg cursor-pointer"
       style={{
-        backgroundColor: 'rgba(26, 26, 26, 0.95)',
-        border: '1px solid #333333',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        border: '1px solid #d0d0d0',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
       }}
       onClick={handleBarClick}
     >
@@ -69,10 +70,10 @@ export function ThumbnailFilmstrip() {
             className="flex-shrink-0 h-8 w-8 rounded overflow-hidden transition-all duration-150"
             style={{
               border: hoveredIndex === i
-                ? '2px solid #ffcc00'
-                : '1px solid #444444',
+                ? '2px solid #6366f1'
+                : '1px solid #d0d0d0',
               boxShadow: hoveredIndex === i
-                ? '0 0 8px rgba(255, 204, 0, 0.4)'
+                ? '0 0 8px rgba(99, 102, 241, 0.4)'
                 : 'none',
               transform: hoveredIndex === i ? 'scale(1.1)' : 'scale(1)',
             }}
@@ -94,8 +95,8 @@ export function ThumbnailFilmstrip() {
             key={i}
             className="flex-shrink-0 h-8 w-8 rounded"
             style={{
-              border: '1px solid rgba(255, 51, 51, 0.3)',
-              backgroundColor: 'rgba(255, 51, 51, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
             }}
           />
         ))
@@ -110,10 +111,10 @@ export function ThumbnailFilmstrip() {
           className="absolute top-0 bottom-0 w-0.5 pointer-events-none"
           style={{
             left: `${playheadPercent}%`,
-            backgroundColor: previewTime !== null ? '#ff6600' : '#ffcc00',
+            backgroundColor: previewTime !== null ? '#f97316' : '#6366f1',
             boxShadow: previewTime !== null
-              ? '0 0 6px rgba(255, 102, 0, 0.6)'
-              : '0 0 4px rgba(255, 204, 0, 0.5)',
+              ? '0 0 6px rgba(249, 115, 22, 0.6)'
+              : '0 0 4px rgba(99, 102, 241, 0.5)',
           }}
         />
       )}
@@ -125,7 +126,7 @@ export function ThumbnailFilmstrip() {
           style={{
             left: `${playheadPercent}%`,
             transform: 'translateX(-50%)',
-            color: '#ffcc00',
+            color: '#6366f1',
             fontFamily: "'JetBrains Mono', monospace",
           }}
         >

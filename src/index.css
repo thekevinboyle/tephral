@@ -3,27 +3,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
-  /* Flat Design - Warm Neutral Backgrounds */
-  --color-bg-darker: #141414;
-  --color-bg-dark: #1a1a1a;
-  --color-bg-card: #242424;
-  --color-bg-card-hover: #2a2a2a;
+  /* Flat Design - Light Theme Backgrounds */
+  --color-bg-darker: #e5e5e5;
+  --color-bg-dark: #f0f0f0;
+  --color-bg-card: #ffffff;
+  --color-bg-card-hover: #f5f5f5;
 
   /* Text */
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #888888;
-  --color-text-muted: #555555;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
 
   /* Borders */
-  --color-border-subtle: #2a2a2a;
-  --color-border-default: #333333;
+  --color-border-subtle: #e0e0e0;
+  --color-border-default: #d0d0d0;
 
   /* Legacy aliases for compatibility */
-  --color-base-dark: #141414;
-  --color-base-darker: #1a1a1a;
-  --color-base-light: #ffffff;
-  --color-muted: #888888;
-  --color-border: #333333;
+  --color-base-dark: #f0f0f0;
+  --color-base-darker: #e5e5e5;
+  --color-base-light: #1a1a1a;
+  --color-muted: #666666;
+  --color-border: #d0d0d0;
 
   /* Effect colors (unchanged - used for LED indicators) */
   --color-glitch-cyan: #00d4ff;
@@ -61,7 +61,7 @@
   }
 
   body {
-    background-color: var(--color-bg-darker);
+    background-color: var(--color-bg-dark);
     color: var(--color-text-primary);
     font-family: var(--font-family-sans);
     font-weight: 400;

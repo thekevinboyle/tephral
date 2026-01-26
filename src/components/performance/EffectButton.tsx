@@ -94,8 +94,8 @@ export function EffectButton({
       onPointerUp={handlePointerUp}
       className="relative rounded-lg transition-colors duration-150 flex select-none touch-none cursor-pointer w-full h-full p-2"
       style={{
-        backgroundColor: active ? '#2a2a2a' : '#242424',
-        border: active ? `1px solid ${color}40` : '1px solid #333333',
+        backgroundColor: active ? '#f5f5f5' : '#ffffff',
+        border: active ? `1px solid ${color}60` : '1px solid #d0d0d0',
       }}
     >
       {/* Main content area */}
@@ -106,13 +106,13 @@ export function EffectButton({
           <div
             className="w-2 h-2 rounded-full transition-all duration-150 shrink-0"
             style={{
-              backgroundColor: active ? color : '#333333',
+              backgroundColor: active ? color : '#d0d0d0',
               boxShadow: active ? `0 0 8px ${color}` : 'none',
             }}
           />
           <span
             className="text-[11px] font-medium truncate"
-            style={{ color: active ? '#ffffff' : '#888888' }}
+            style={{ color: active ? '#1a1a1a' : '#666666' }}
           >
             {label}
           </span>
@@ -122,7 +122,7 @@ export function EffectButton({
         <span
           className="text-[11px] tabular-nums font-medium"
           style={{
-            color: active ? '#ffffff' : '#555555',
+            color: active ? '#1a1a1a' : '#999999',
             fontFamily: "'JetBrains Mono', monospace",
           }}
         >
@@ -134,7 +134,7 @@ export function EffectButton({
       <div
         className="w-1 rounded-full ml-2 relative overflow-hidden"
         style={{
-          backgroundColor: '#333333',
+          backgroundColor: '#e0e0e0',
         }}
       >
         {/* Fill from bottom */}
@@ -142,7 +142,7 @@ export function EffectButton({
           className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-150"
           style={{
             height: `${percentage}%`,
-            backgroundColor: active ? color : '#555555',
+            backgroundColor: active ? color : '#999999',
           }}
         />
       </div>

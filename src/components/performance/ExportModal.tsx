@@ -30,20 +30,21 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0, 0, 0, 0.8)' }}
+      style={{ background: 'rgba(0, 0, 0, 0.5)' }}
       onClick={() => !isExporting && setShowExportModal(false)}
     >
       <div
         className="rounded-xl p-6 min-w-[320px]"
         style={{
-          backgroundColor: '#1a1a1a',
-          border: '1px solid #333333',
+          backgroundColor: '#ffffff',
+          border: '1px solid #d0d0d0',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <h2
           className="text-[14px] font-medium mb-6"
-          style={{ color: '#ffffff' }}
+          style={{ color: '#1a1a1a' }}
         >
           Export Video
         </h2>
@@ -54,7 +55,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
             <div className="space-y-2">
               <div
                 className="flex justify-between text-[11px]"
-                style={{ color: '#888888' }}
+                style={{ color: '#666666' }}
               >
                 <span>Rendering...</span>
                 <span
@@ -66,13 +67,13 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
               </div>
               <div
                 className="h-2 rounded-full overflow-hidden"
-                style={{ backgroundColor: '#333333' }}
+                style={{ backgroundColor: '#e0e0e0' }}
               >
                 <div
                   className="h-full rounded-full transition-all duration-200"
                   style={{
                     width: `${exportProgress}%`,
-                    backgroundColor: '#ffaa00',
+                    backgroundColor: '#6366f1',
                   }}
                 />
               </div>
@@ -83,9 +84,9 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
               onClick={cancelExport}
               className="w-full py-2 text-[11px] font-medium rounded-md transition-colors"
               style={{
-                backgroundColor: '#242424',
-                border: '1px solid #333333',
-                color: '#888888',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #d0d0d0',
+                color: '#666666',
               }}
             >
               Cancel
@@ -97,7 +98,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
             <div className="space-y-2">
               <label
                 className="text-[11px] font-medium"
-                style={{ color: '#888888' }}
+                style={{ color: '#666666' }}
               >
                 Format
               </label>
@@ -107,9 +108,9 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
                   disabled={!webmSupported}
                   className="flex-1 py-2 text-[11px] font-medium rounded-md transition-colors"
                   style={{
-                    backgroundColor: exportFormat === 'webm' ? '#ffcc00' : '#242424',
-                    border: exportFormat === 'webm' ? '1px solid #ffcc00' : '1px solid #333333',
-                    color: exportFormat === 'webm' ? '#1a1a1a' : webmSupported ? '#888888' : '#555555',
+                    backgroundColor: exportFormat === 'webm' ? '#6366f1' : '#f5f5f5',
+                    border: exportFormat === 'webm' ? '1px solid #6366f1' : '1px solid #d0d0d0',
+                    color: exportFormat === 'webm' ? '#ffffff' : webmSupported ? '#666666' : '#999999',
                     opacity: webmSupported ? 1 : 0.5,
                     cursor: webmSupported ? 'pointer' : 'not-allowed',
                   }}
@@ -122,9 +123,9 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
                   disabled={!mp4Supported}
                   className="flex-1 py-2 text-[11px] font-medium rounded-md transition-colors"
                   style={{
-                    backgroundColor: exportFormat === 'mp4' ? '#ffcc00' : '#242424',
-                    border: exportFormat === 'mp4' ? '1px solid #ffcc00' : '1px solid #333333',
-                    color: exportFormat === 'mp4' ? '#1a1a1a' : mp4Supported ? '#888888' : '#555555',
+                    backgroundColor: exportFormat === 'mp4' ? '#6366f1' : '#f5f5f5',
+                    border: exportFormat === 'mp4' ? '1px solid #6366f1' : '1px solid #d0d0d0',
+                    color: exportFormat === 'mp4' ? '#ffffff' : mp4Supported ? '#666666' : '#999999',
                     opacity: mp4Supported ? 1 : 0.5,
                     cursor: mp4Supported ? 'pointer' : 'not-allowed',
                   }}
@@ -139,7 +140,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
             <div className="space-y-2">
               <label
                 className="text-[11px] font-medium"
-                style={{ color: '#888888' }}
+                style={{ color: '#666666' }}
               >
                 Quality
               </label>
@@ -150,9 +151,9 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
                     onClick={() => setExportQuality(q)}
                     className="flex-1 py-2 text-[11px] font-medium rounded-md transition-colors capitalize"
                     style={{
-                      backgroundColor: exportQuality === q ? '#ffcc00' : '#242424',
-                      border: exportQuality === q ? '1px solid #ffcc00' : '1px solid #333333',
-                      color: exportQuality === q ? '#1a1a1a' : '#888888',
+                      backgroundColor: exportQuality === q ? '#6366f1' : '#f5f5f5',
+                      border: exportQuality === q ? '1px solid #6366f1' : '1px solid #d0d0d0',
+                      color: exportQuality === q ? '#ffffff' : '#666666',
                     }}
                   >
                     {q}
@@ -161,7 +162,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
               </div>
               <div
                 className="text-[10px] text-right tabular-nums"
-                style={{ color: '#888888', fontFamily: "'JetBrains Mono', monospace" }}
+                style={{ color: '#666666', fontFamily: "'JetBrains Mono', monospace" }}
               >
                 {exportQuality === 'low' && '1 Mbps'}
                 {exportQuality === 'med' && '4 Mbps'}
@@ -175,9 +176,9 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
                 onClick={() => setShowExportModal(false)}
                 className="flex-1 py-2 text-[11px] font-medium rounded-md transition-colors"
                 style={{
-                  backgroundColor: '#242424',
-                  border: '1px solid #333333',
-                  color: '#888888',
+                  backgroundColor: '#f5f5f5',
+                  border: '1px solid #d0d0d0',
+                  color: '#666666',
                 }}
               >
                 Cancel
@@ -186,9 +187,9 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
                 onClick={handleExport}
                 className="flex-1 py-2 text-[11px] font-medium rounded-md transition-colors"
                 style={{
-                  backgroundColor: '#ffcc00',
-                  border: '1px solid #ffcc00',
-                  color: '#1a1a1a',
+                  backgroundColor: '#6366f1',
+                  border: '1px solid #6366f1',
+                  color: '#ffffff',
                 }}
               >
                 Export

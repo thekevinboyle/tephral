@@ -118,16 +118,16 @@ export function PreviewHeader() {
   return (
     <div
       className="flex items-center gap-2 px-4 py-2"
-      style={{ backgroundColor: 'rgba(26, 26, 26, 0.9)' }}
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
     >
       {/* Source buttons */}
       <button
         onClick={handleWebcam}
         className="px-3 py-1.5 text-[11px] font-medium rounded-md transition-colors"
         style={{
-          backgroundColor: source === 'webcam' ? '#2a2a2a' : '#242424',
-          border: source === 'webcam' ? '1px solid #ffcc00' : '1px solid #333333',
-          color: source === 'webcam' ? '#ffcc00' : '#888888',
+          backgroundColor: source === 'webcam' ? '#ffffff' : '#f5f5f5',
+          border: source === 'webcam' ? '1px solid #6366f1' : '1px solid #d0d0d0',
+          color: source === 'webcam' ? '#6366f1' : '#666666',
         }}
       >
         Cam
@@ -137,9 +137,9 @@ export function PreviewHeader() {
         onClick={() => fileInputRef.current?.click()}
         className="px-3 py-1.5 text-[11px] font-medium rounded-md transition-colors"
         style={{
-          backgroundColor: source === 'file' ? '#2a2a2a' : '#242424',
-          border: source === 'file' ? '1px solid #ffcc00' : '1px solid #333333',
-          color: source === 'file' ? '#ffcc00' : '#888888',
+          backgroundColor: source === 'file' ? '#ffffff' : '#f5f5f5',
+          border: source === 'file' ? '1px solid #6366f1' : '1px solid #d0d0d0',
+          color: source === 'file' ? '#6366f1' : '#666666',
         }}
       >
         File
@@ -164,9 +164,9 @@ export function PreviewHeader() {
           disabled={!hasSource}
           className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
           style={{
-            backgroundColor: isRecording ? '#ff3333' : hasSource ? '#333333' : '#242424',
-            border: '1px solid #444444',
-            boxShadow: isRecording ? '0 0 12px #ff3333' : 'none',
+            backgroundColor: isRecording ? '#ef4444' : hasSource ? '#f5f5f5' : '#e5e5e5',
+            border: '1px solid #d0d0d0',
+            boxShadow: isRecording ? '0 0 12px #ef4444' : 'none',
             opacity: hasSource ? 1 : 0.5,
             cursor: hasSource ? 'pointer' : 'not-allowed',
           }}
@@ -174,7 +174,7 @@ export function PreviewHeader() {
           <div
             className={`${isRecording ? 'w-3 h-3 rounded-sm' : 'w-3 h-3 rounded-full'}`}
             style={{
-              backgroundColor: isRecording ? '#ffffff' : '#ff3333',
+              backgroundColor: isRecording ? '#ffffff' : '#ef4444',
             }}
           />
         </button>
@@ -183,7 +183,7 @@ export function PreviewHeader() {
         <div
           className="text-[12px] tabular-nums min-w-[80px]"
           style={{
-            color: '#ffffff',
+            color: '#1a1a1a',
             fontFamily: "'JetBrains Mono', monospace",
           }}
         >
@@ -197,9 +197,9 @@ export function PreviewHeader() {
               onClick={isPlaying ? pause : play}
               className="px-2 py-1 text-[11px] font-medium rounded-md transition-colors"
               style={{
-                backgroundColor: '#242424',
-                border: '1px solid #333333',
-                color: '#888888',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #d0d0d0',
+                color: '#666666',
               }}
             >
               {isPlaying ? '⏸' : '▶'}
@@ -208,9 +208,9 @@ export function PreviewHeader() {
               onClick={stop}
               className="px-2 py-1 text-[11px] font-medium rounded-md transition-colors"
               style={{
-                backgroundColor: '#242424',
-                border: '1px solid #333333',
-                color: '#888888',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #d0d0d0',
+                color: '#666666',
               }}
             >
               ■
@@ -219,9 +219,9 @@ export function PreviewHeader() {
               onClick={() => setShowExportModal(true)}
               className="px-3 py-1 text-[11px] font-medium rounded-md transition-colors"
               style={{
-                backgroundColor: '#242424',
-                border: '1px solid #ffcc00',
-                color: '#ffcc00',
+                backgroundColor: '#f5f5f5',
+                border: '1px solid #6366f1',
+                color: '#6366f1',
               }}
             >
               Export
@@ -235,7 +235,7 @@ export function PreviewHeader() {
         <button
           onClick={reset}
           className="text-[11px] font-medium transition-colors ml-2"
-          style={{ color: '#888888' }}
+          style={{ color: '#666666' }}
         >
           Clear
         </button>

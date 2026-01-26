@@ -107,11 +107,11 @@ export function GraphicPanelV2() {
       const t = frameRef.current * 0.02
 
       // Clear with flat background
-      ctx.fillStyle = '#1a1a1a'
+      ctx.fillStyle = '#f5f5f5'
       ctx.fillRect(0, 0, w, h)
 
       // Grid lines
-      ctx.strokeStyle = '#2a2a2a'
+      ctx.strokeStyle = '#e0e0e0'
       ctx.lineWidth = 1
       for (let x = 0; x <= w; x += 20) {
         ctx.beginPath()
@@ -225,9 +225,9 @@ export function GraphicPanelV2() {
     return (
       <div
         className="h-full flex items-center justify-center"
-        style={{ backgroundColor: '#1a1a1a' }}
+        style={{ backgroundColor: '#ffffff' }}
       >
-        <span className="text-[11px] font-medium" style={{ color: '#555555' }}>
+        <span className="text-[11px] font-medium" style={{ color: '#999999' }}>
           Select an effect
         </span>
       </div>
@@ -237,14 +237,14 @@ export function GraphicPanelV2() {
   return (
     <div
       className="h-full flex flex-col"
-      style={{ backgroundColor: '#1a1a1a' }}
+      style={{ backgroundColor: '#ffffff' }}
     >
       {/* Header */}
       <div
         className="px-3 py-2 flex items-center justify-between"
-        style={{ borderBottom: '1px solid #2a2a2a' }}
+        style={{ borderBottom: '1px solid #e0e0e0' }}
       >
-        <span className="text-[11px] font-medium" style={{ color: '#ffffff' }}>
+        <span className="text-[11px] font-medium" style={{ color: '#1a1a1a' }}>
           {effect.label}
         </span>
         <div className="flex items-center gap-1">
@@ -263,8 +263,8 @@ export function GraphicPanelV2() {
         <div
           className="aspect-square w-full max-w-[200px] rounded-lg overflow-hidden"
           style={{
-            backgroundColor: '#141414',
-            border: '1px solid #2a2a2a',
+            backgroundColor: '#f5f5f5',
+            border: '1px solid #e0e0e0',
           }}
         >
           <canvas
@@ -279,7 +279,7 @@ export function GraphicPanelV2() {
       {/* Knobs */}
       <div
         className="px-3 py-3"
-        style={{ borderTop: '1px solid #2a2a2a' }}
+        style={{ borderTop: '1px solid #e0e0e0' }}
       >
         <div className="flex justify-around">
           {params.slice(0, 3).map((param) => (

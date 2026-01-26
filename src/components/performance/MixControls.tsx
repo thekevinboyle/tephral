@@ -22,7 +22,7 @@ export function MixControls() {
   return (
     <div
       className="h-full flex flex-col justify-center px-4 py-2 gap-2"
-      style={{ backgroundColor: '#1a1a1a' }}
+      style={{ backgroundColor: '#ffffff' }}
     >
       {/* Kill switch row */}
       <div className="flex justify-center">
@@ -33,10 +33,10 @@ export function MixControls() {
           onPointerCancel={handleBypassUp}
           className="px-4 py-2 rounded-md text-[11px] font-medium transition-all select-none touch-none"
           style={{
-            backgroundColor: bypassActive ? '#ef4444' : '#242424',
-            border: bypassActive ? '1px solid #ef4444' : '1px solid #333333',
+            backgroundColor: bypassActive ? '#ef4444' : '#f5f5f5',
+            border: bypassActive ? '1px solid #ef4444' : '1px solid #d0d0d0',
             boxShadow: bypassActive ? '0 0 12px #ef4444' : 'none',
-            color: bypassActive ? '#ffffff' : '#888888',
+            color: bypassActive ? '#ffffff' : '#666666',
           }}
         >
           Bypass
@@ -46,7 +46,7 @@ export function MixControls() {
       {/* Crossfader row */}
       <div className="flex items-center gap-3">
         {/* DRY label */}
-        <span className="text-[11px] font-medium w-8" style={{ color: '#888888' }}>
+        <span className="text-[11px] font-medium w-8" style={{ color: '#666666' }}>
           Dry
         </span>
 
@@ -55,7 +55,7 @@ export function MixControls() {
           {/* Track background */}
           <div
             className="absolute inset-x-0 h-[2px] rounded-full"
-            style={{ backgroundColor: '#333333' }}
+            style={{ backgroundColor: '#e0e0e0' }}
           />
 
           {/* Active track */}
@@ -63,7 +63,7 @@ export function MixControls() {
             className="absolute left-0 h-[2px] rounded-full"
             style={{
               width: `${thumbPosition}%`,
-              backgroundColor: '#888888',
+              backgroundColor: '#666666',
             }}
           />
 
@@ -83,15 +83,15 @@ export function MixControls() {
             className="absolute h-4 w-8 -translate-x-1/2 pointer-events-none rounded-md"
             style={{
               left: `${thumbPosition}%`,
-              backgroundColor: '#242424',
-              border: '1px solid #444444',
+              backgroundColor: '#f5f5f5',
+              border: '1px solid #d0d0d0',
             }}
           >
             {/* Thumb grip lines */}
             <div className="absolute inset-x-1.5 top-1/2 -translate-y-1/2 flex flex-col gap-[2px]">
-              <div className="h-px" style={{ backgroundColor: '#555555' }} />
-              <div className="h-px" style={{ backgroundColor: '#555555' }} />
-              <div className="h-px" style={{ backgroundColor: '#555555' }} />
+              <div className="h-px" style={{ backgroundColor: '#d0d0d0' }} />
+              <div className="h-px" style={{ backgroundColor: '#d0d0d0' }} />
+              <div className="h-px" style={{ backgroundColor: '#d0d0d0' }} />
             </div>
           </div>
 
@@ -100,14 +100,14 @@ export function MixControls() {
             className="absolute -top-5 -translate-x-1/2 pointer-events-none"
             style={{ left: `${thumbPosition}%` }}
           >
-            <span className="text-[10px] tabular-nums font-medium" style={{ color: '#888888', fontFamily: "'JetBrains Mono', monospace" }}>
+            <span className="text-[10px] tabular-nums font-medium" style={{ color: '#666666', fontFamily: "'JetBrains Mono', monospace" }}>
               {percentage}%
             </span>
           </div>
         </div>
 
         {/* WET label */}
-        <span className="text-[11px] font-medium w-8 text-right" style={{ color: '#888888' }}>
+        <span className="text-[11px] font-medium w-8 text-right" style={{ color: '#666666' }}>
           Wet
         </span>
       </div>

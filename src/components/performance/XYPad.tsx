@@ -107,7 +107,7 @@ export function XYPad() {
     <div className="h-full flex flex-col p-3">
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] font-medium" style={{ color: '#888888' }}>
+        <span className="text-[11px] font-medium" style={{ color: '#666666' }}>
           X/Y Pad
         </span>
         {currentEffect && (
@@ -124,11 +124,11 @@ export function XYPad() {
       <div className="flex-1 flex gap-2">
         {/* Y axis label */}
         <div className="flex flex-col justify-between items-center py-2">
-          <span className="text-[10px] font-medium rotate-180" style={{ writingMode: 'vertical-rl', color: '#555555' }}>
+          <span className="text-[10px] font-medium rotate-180" style={{ writingMode: 'vertical-rl', color: '#999999' }}>
             {mapping?.y || 'Y'}
           </span>
           {mapping && (
-            <span className="text-[10px] tabular-nums" style={{ color: '#888888', fontFamily: "'JetBrains Mono', monospace" }}>
+            <span className="text-[10px] tabular-nums" style={{ color: '#666666', fontFamily: "'JetBrains Mono', monospace" }}>
               {formatValue(1 - position.y, mapping.yRange)}
             </span>
           )}
@@ -140,8 +140,8 @@ export function XYPad() {
             ref={padRef}
             className="flex-1 relative rounded-lg cursor-crosshair touch-none"
             style={{
-              backgroundColor: '#1a1a1a',
-              border: '1px solid #333333',
+              backgroundColor: '#f5f5f5',
+              border: '1px solid #d0d0d0',
             }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -157,7 +157,7 @@ export function XYPad() {
                   className="absolute top-0 bottom-0 w-px"
                   style={{
                     left: `${pos * 100}%`,
-                    backgroundColor: '#2a2a2a',
+                    backgroundColor: '#e0e0e0',
                   }}
                 />
               ))}
@@ -168,7 +168,7 @@ export function XYPad() {
                   className="absolute left-0 right-0 h-px"
                   style={{
                     top: `${pos * 100}%`,
-                    backgroundColor: '#2a2a2a',
+                    backgroundColor: '#e0e0e0',
                   }}
                 />
               ))}
@@ -187,8 +187,8 @@ export function XYPad() {
               <div
                 className="absolute inset-0 rounded-full"
                 style={{
-                  backgroundColor: currentEffect?.color || '#888888',
-                  boxShadow: `0 0 8px ${currentEffect?.color || '#888888'}`,
+                  backgroundColor: currentEffect?.color || '#666666',
+                  boxShadow: `0 0 8px ${currentEffect?.color || '#666666'}`,
                 }}
               />
             </div>
@@ -196,11 +196,11 @@ export function XYPad() {
 
           {/* X axis label */}
           <div className="flex justify-between items-center mt-1 px-1">
-            <span className="text-[10px] font-medium" style={{ color: '#555555' }}>
+            <span className="text-[10px] font-medium" style={{ color: '#999999' }}>
               {mapping?.x || 'X'}
             </span>
             {mapping && (
-              <span className="text-[10px] tabular-nums" style={{ color: '#888888', fontFamily: "'JetBrains Mono', monospace" }}>
+              <span className="text-[10px] tabular-nums" style={{ color: '#666666', fontFamily: "'JetBrains Mono', monospace" }}>
                 {formatValue(position.x, mapping.xRange)}
               </span>
             )}
@@ -211,7 +211,7 @@ export function XYPad() {
       {/* No effect selected message */}
       {!selectedEffectId && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-[11px] font-medium" style={{ color: '#555555' }}>
+          <span className="text-[11px] font-medium" style={{ color: '#999999' }}>
             Select an effect
           </span>
         </div>

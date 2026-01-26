@@ -12,7 +12,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'rgb_split',
     label: 'RGB',
-    color: '#00d4ff', // glitch-cyan
+    color: '#0891b2', // muted cyan
     row: 'glitch',
     min: 0,
     max: 50,
@@ -20,7 +20,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'block_displace',
     label: 'BLOCK',
-    color: '#ff00aa', // glitch-magenta
+    color: '#a855f7', // muted purple
     row: 'glitch',
     min: 0,
     max: 100,
@@ -28,7 +28,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'scan_lines',
     label: 'SCAN',
-    color: '#4444ff', // glitch-blue
+    color: '#6366f1', // indigo
     row: 'glitch',
     min: 100,
     max: 1000,
@@ -36,7 +36,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'noise',
     label: 'NOISE',
-    color: '#aa44ff', // glitch-purple
+    color: '#8b5cf6', // violet
     row: 'glitch',
     min: 0,
     max: 100,
@@ -46,7 +46,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'ascii',
     label: 'ASCII',
-    color: '#ffaa00', // render-amber
+    color: '#d97706', // amber
     row: 'render',
     min: 6,
     max: 20,
@@ -54,7 +54,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'matrix',
     label: 'MATRIX',
-    color: '#00ff00', // matrix green
+    color: '#059669', // emerald
     row: 'render',
     min: 10,
     max: 300,
@@ -62,7 +62,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'stipple',
     label: 'STIPPLE',
-    color: '#ff6600', // render-orange
+    color: '#ea580c', // orange
     row: 'render',
     min: 1,
     max: 8,
@@ -70,7 +70,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'pixelate',
     label: 'PIXEL',
-    color: '#ff6600', // render-orange
+    color: '#dc2626', // red
     row: 'render',
     min: 2,
     max: 32,
@@ -80,7 +80,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'detect_boxes',
     label: 'DETECT',
-    color: '#88ff00', // vision-lime
+    color: '#65a30d', // lime
     row: 'overlay',
     min: 1,
     max: 6,
@@ -88,7 +88,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'attach_to_objects',
     label: 'ATTACH',
-    color: '#ffffff', // white - modifier
+    color: '#6b7280', // gray
     row: 'overlay',
     min: 10,
     max: 90,
@@ -96,7 +96,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'point_network',
     label: 'NETWORK',
-    color: '#00ffaa', // vision-teal
+    color: '#0d9488', // teal
     row: 'overlay',
     min: 1,
     max: 10,
@@ -104,7 +104,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'edges',
     label: 'EDGES',
-    color: '#00ffaa', // vision-teal
+    color: '#0284c7', // sky
     row: 'overlay',
     min: 10,
     max: 100,
@@ -114,7 +114,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'face_mesh',
     label: 'FACE',
-    color: '#ff3366', // pink
+    color: '#e11d48', // rose
     row: 'vision',
     min: 10,
     max: 90,
@@ -122,7 +122,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'hands',
     label: 'HANDS',
-    color: '#ff3366', // pink
+    color: '#db2777', // pink
     row: 'vision',
     min: 10,
     max: 90,
@@ -130,7 +130,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'pose',
     label: 'POSE',
-    color: '#3366ff', // blue
+    color: '#2563eb', // blue
     row: 'vision',
     min: 10,
     max: 90,
@@ -138,7 +138,7 @@ export const EFFECTS: EffectDefinition[] = [
   {
     id: 'holistic',
     label: 'HOLISTIC',
-    color: '#3366ff', // blue
+    color: '#7c3aed', // purple
     row: 'vision',
     min: 10,
     max: 90,

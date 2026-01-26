@@ -1,0 +1,116 @@
+import { create } from 'zustand'
+
+export interface Point2D {
+  x: number // normalized 0-1
+  y: number // normalized 0-1
+}
+
+export interface Point3D extends Point2D {
+  z: number // depth, normalized
+}
+
+export interface Landmark {
+  id: string
+  point: Point3D
+  visibility?: number // 0-1, how visible the point is
+}
+
+export interface FaceLandmarks {
+  id: string
+  points: Landmark[]     // 468 points for face mesh
+  boundingBox: {
+    x: number
+    y: number
+    width: number
+    height: number
+  }
+}
+
+export interface HandLandmarks {
+  id: string
+  handedness: 'Left' | 'Right'
+  points: Landmark[]     // 21 points per hand
+  confidence: number
+}
+
+export interface PoseLandmarks {
+  id: string
+  points: Landmark[]     // 33 points for body pose
+  worldPoints?: Landmark[] // 3D world coordinates
+}
+
+export type LandmarkMode = 'off' | 'face' | 'hands' | 'pose' | 'holistic'
+
+interface LandmarksState {
+  // Detection results
+  faces: FaceLandmarks[]
+  hands: HandLandmarks[]
+  poses: PoseLandmarks[]
+
+  // State
+  isRunning: boolean
+  modelLoaded: boolean
+  error: string | null
+  currentMode: LandmarkMode
+
+  // Settings
+  enabled: boolean
+  minDetectionConfidence: number
+  minTrackingConfidence: number
+  maxFaces: number
+  maxHands: number
+
+  // Actions
+  setFaces: (faces: FaceLandmarks[]) => void
+  setHands: (hands: HandLandmarks[]) => void
+  setPoses: (poses: PoseLandmarks[]) => void
+  setIsRunning: (running: boolean) => void
+  setModelLoaded: (loaded: boolean) => void
+  setError: (error: string | null) => void
+  setCurrentMode: (mode: LandmarkMode) => void
+  setEnabled: (enabled: boolean) => void
+  setMinDetectionConfidence: (confidence: number) => void
+  setMinTrackingConfidence: (confidence: number) => void
+  setMaxFaces: (max: number) => void
+  setMaxHands: (max: number) => void
+  reset: () => void
+}
+
+export const useLandmarksStore = create<LandmarksState>((set) => ({
+  faces: [],
+  hands: [],
+  poses: [],
+
+  isRunning: false,
+  modelLoaded: false,
+  error: null,
+  currentMode: 'off',
+
+  enabled: false,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5,
+  maxFaces: 1,
+  maxHands: 2,
+
+  setFaces: (faces) => set({ faces }),
+  setHands: (hands) => set({ hands }),
+  setPoses: (poses) => set({ poses }),
+  setIsRunning: (running) => set({ isRunning: running }),
+  setModelLoaded: (loaded) => set({ modelLoaded: loaded }),
+  setError: (error) => set({ error }),
+  setCurrentMode: (mode) => set({ currentMode: mode }),
+  setEnabled: (enabled) => set({ enabled }),
+  setMinDetectionConfidence: (confidence) => set({ minDetectionConfidence: confidence }),
+  setMinTrackingConfidence: (confidence) => set({ minTrackingConfidence: confidence }),
+  setMaxFaces: (max) => set({ maxFaces: max }),
+  setMaxHands: (max) => set({ maxHands: max }),
+  reset: () => set({
+    faces: [],
+    hands: [],
+    poses: [],
+    isRunning: false,
+    error: null,
+    currentMode: 'off',
+    enabled: false,
+  }),
+}))

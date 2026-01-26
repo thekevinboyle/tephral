@@ -43,17 +43,26 @@ export function GlitchPanel() {
                   label="Amount"
                   value={rgbSplit.amount}
                   min={0}
-                  max={50}
+                  max={5}
                   onChange={(v) => updateRGBSplit({ amount: v })}
-                  formatValue={(v) => v.toFixed(0)}
                 />
                 <MinimalSlider
-                  label="Angle"
-                  value={rgbSplit.angle}
-                  min={0}
-                  max={360}
-                  onChange={(v) => updateRGBSplit({ angle: v })}
-                  formatValue={(v) => `${v.toFixed(0)}°`}
+                  label="Red X"
+                  value={rgbSplit.redOffsetX}
+                  min={-0.05}
+                  max={0.05}
+                  step={0.001}
+                  onChange={(v) => updateRGBSplit({ redOffsetX: v })}
+                  formatValue={(v) => v.toFixed(3)}
+                />
+                <MinimalSlider
+                  label="Blue X"
+                  value={rgbSplit.blueOffsetX}
+                  min={-0.05}
+                  max={0.05}
+                  step={0.001}
+                  onChange={(v) => updateRGBSplit({ blueOffsetX: v })}
+                  formatValue={(v) => v.toFixed(3)}
                 />
               </div>
             )}
@@ -69,18 +78,36 @@ export function GlitchPanel() {
             {blockDisplaceEnabled && (
               <div className="mt-2 pl-2 border-l border-muted/20">
                 <MinimalSlider
-                  label="Amount"
-                  value={blockDisplace.amount}
+                  label="Block Size"
+                  value={blockDisplace.blockSize}
+                  min={0.01}
+                  max={0.2}
+                  step={0.01}
+                  onChange={(v) => updateBlockDisplace({ blockSize: v })}
+                  formatValue={(v) => v.toFixed(2)}
+                />
+                <MinimalSlider
+                  label="Chance"
+                  value={blockDisplace.displaceChance}
                   min={0}
-                  max={100}
-                  onChange={(v) => updateBlockDisplace({ amount: v })}
-                  formatValue={(v) => v.toFixed(0)}
+                  max={1}
+                  onChange={(v) => updateBlockDisplace({ displaceChance: v })}
+                />
+                <MinimalSlider
+                  label="Distance"
+                  value={blockDisplace.displaceDistance}
+                  min={0}
+                  max={0.1}
+                  step={0.005}
+                  onChange={(v) => updateBlockDisplace({ displaceDistance: v })}
+                  formatValue={(v) => v.toFixed(3)}
                 />
                 <MinimalSlider
                   label="Seed"
                   value={blockDisplace.seed}
                   min={0}
                   max={1000}
+                  step={1}
                   onChange={(v) => updateBlockDisplace({ seed: v })}
                   formatValue={(v) => v.toFixed(0)}
                 />
@@ -98,19 +125,27 @@ export function GlitchPanel() {
             {scanLinesEnabled && (
               <div className="mt-2 pl-2 border-l border-muted/20">
                 <MinimalSlider
-                  label="Count"
-                  value={scanLines.count}
+                  label="Line Count"
+                  value={scanLines.lineCount}
                   min={100}
                   max={1000}
-                  onChange={(v) => updateScanLines({ count: v })}
+                  step={10}
+                  onChange={(v) => updateScanLines({ lineCount: v })}
                   formatValue={(v) => v.toFixed(0)}
                 />
                 <MinimalSlider
-                  label="Intensity"
-                  value={scanLines.intensity}
+                  label="Opacity"
+                  value={scanLines.lineOpacity}
                   min={0}
-                  max={1}
-                  onChange={(v) => updateScanLines({ intensity: v })}
+                  max={0.5}
+                  onChange={(v) => updateScanLines({ lineOpacity: v })}
+                />
+                <MinimalSlider
+                  label="Flicker"
+                  value={scanLines.lineFlicker}
+                  min={0}
+                  max={0.3}
+                  onChange={(v) => updateScanLines({ lineFlicker: v })}
                 />
               </div>
             )}

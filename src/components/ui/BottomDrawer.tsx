@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useUIStore } from '../../stores/uiStore'
 import { TabBar } from './TabBar'
 import { ChevronUpIcon, ChevronDownIcon } from './Icons'

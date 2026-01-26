@@ -1,6 +1,8 @@
 import { useRef, useEffect, useMemo } from 'react'
 import { useLandmarksStore } from '../../stores/landmarksStore'
 import { usePointNetworkStore } from '../../stores/pointNetworkStore'
+import { useMediaStore } from '../../stores/mediaStore'
+import { calculateVideoArea } from '../../utils/videoArea'
 
 interface PointNetworkOverlayProps {
   width: number
@@ -37,6 +39,14 @@ export function PointNetworkOverlay({ width, height }: PointNetworkOverlayProps)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { faces, hands, poses } = useLandmarksStore()
   const { enabled, params } = usePointNetworkStore()
+  const { videoElement, imageElement } = useMediaStore()
+
+  // Calculate video display area
+  const videoArea = useMemo(() => {
+    const videoWidth = videoElement?.videoWidth || imageElement?.naturalWidth || width
+    const videoHeight = videoElement?.videoHeight || imageElement?.naturalHeight || height
+    return calculateVideoArea(width, height, videoWidth, videoHeight)
+  }, [width, height, videoElement, imageElement])
 
   // Collect all points from landmarks
   const allPoints = useMemo(() => {
@@ -142,6 +152,7 @@ export function PointNetworkOverlay({ width, height }: PointNetworkOverlayProps)
     ctx.clearRect(0, 0, width, height)
 
     const time = performance.now() / 1000
+    const { displayWidth, displayHeight, offsetX, offsetY } = videoArea
 
     // Draw lines
     if (params.showLines) {
@@ -149,10 +160,11 @@ export function PointNetworkOverlay({ width, height }: PointNetworkOverlayProps)
         const p1 = allPoints[i]
         const p2 = allPoints[j]
 
-        const x1 = p1.x * width
-        const y1 = p1.y * height
-        const x2 = p2.x * width
-        const y2 = p2.y * height
+        // Map normalized coordinates to video display area
+        const x1 = offsetX + p1.x * displayWidth
+        const y1 = offsetY + p1.y * displayHeight
+        const x2 = offsetX + p2.x * displayWidth
+        const y2 = offsetY + p2.y * displayHeight
 
         // Alternate colors
         ctx.strokeStyle = idx % 2 === 0 ? params.lineColor : params.lineColorSecondary
@@ -179,8 +191,9 @@ export function PointNetworkOverlay({ width, height }: PointNetworkOverlayProps)
     // Draw points
     if (params.showPoints) {
       allPoints.forEach((point, idx) => {
-        const x = point.x * width
-        const y = point.y * height
+        // Map normalized coordinates to video display area
+        const x = offsetX + point.x * displayWidth
+        const y = offsetY + point.y * displayHeight
 
         let radius = params.pointRadius
         if (params.pulsePoints) {
@@ -203,7 +216,7 @@ export function PointNetworkOverlay({ width, height }: PointNetworkOverlayProps)
         }
       })
     }
-  }, [allPoints, connections, enabled, params, width, height])
+  }, [allPoints, connections, enabled, params, width, height, videoArea])
 
   if (!enabled) return null
 

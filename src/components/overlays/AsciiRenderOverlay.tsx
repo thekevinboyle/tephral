@@ -3,6 +3,7 @@ import { useMediaStore } from '../../stores/mediaStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useDetectionStore } from '../../stores/detectionStore'
 import { AsciiRenderer } from '../../effects/vision/AsciiRenderEffect'
+import { calculateVideoArea } from '../../utils/videoArea'
 
 interface AsciiRenderOverlayProps {
   width: number
@@ -24,30 +25,7 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
   const videoArea = useMemo(() => {
     const videoWidth = videoElement?.videoWidth || imageElement?.naturalWidth || width
     const videoHeight = videoElement?.videoHeight || imageElement?.naturalHeight || height
-
-    const canvasAspect = width / height
-    const videoAspect = videoWidth / videoHeight
-
-    let displayWidth: number
-    let displayHeight: number
-    let offsetX: number
-    let offsetY: number
-
-    if (videoAspect > canvasAspect) {
-      // Video is wider - fit to width
-      displayWidth = width
-      displayHeight = width / videoAspect
-      offsetX = 0
-      offsetY = (height - displayHeight) / 2
-    } else {
-      // Video is taller - fit to height
-      displayHeight = height
-      displayWidth = height * videoAspect
-      offsetX = (width - displayWidth) / 2
-      offsetY = 0
-    }
-
-    return { displayWidth, displayHeight, offsetX, offsetY }
+    return calculateVideoArea(width, height, videoWidth, videoHeight)
   }, [width, height, videoElement, imageElement])
 
   // Initialize renderer

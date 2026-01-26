@@ -1,6 +1,8 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useMemo } from 'react'
 import { useDetectionStore } from '../../stores/detectionStore'
 import { useDetectionOverlayStore } from '../../stores/detectionOverlayStore'
+import { useMediaStore } from '../../stores/mediaStore'
+import { calculateVideoArea } from '../../utils/videoArea'
 
 interface DetectionOverlayProps {
   width: number
@@ -11,6 +13,14 @@ export function DetectionOverlay({ width, height }: DetectionOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { detections } = useDetectionStore()
   const { enabled, params } = useDetectionOverlayStore()
+  const { videoElement, imageElement } = useMediaStore()
+
+  // Calculate video display area
+  const videoArea = useMemo(() => {
+    const videoWidth = videoElement?.videoWidth || imageElement?.naturalWidth || width
+    const videoHeight = videoElement?.videoHeight || imageElement?.naturalHeight || height
+    return calculateVideoArea(width, height, videoWidth, videoHeight)
+  }, [width, height, videoElement, imageElement])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -23,12 +33,14 @@ export function DetectionOverlay({ width, height }: DetectionOverlayProps) {
     ctx.clearRect(0, 0, width, height)
 
     const time = performance.now() / 1000
+    const { displayWidth, displayHeight, offsetX, offsetY } = videoArea
 
     detections.forEach((detection, idx) => {
-      const x = detection.bbox.x * width
-      const y = detection.bbox.y * height
-      const w = detection.bbox.width * width
-      const h = detection.bbox.height * height
+      // Map normalized coordinates to video display area
+      const x = offsetX + detection.bbox.x * displayWidth
+      const y = offsetY + detection.bbox.y * displayHeight
+      const w = detection.bbox.width * displayWidth
+      const h = detection.bbox.height * displayHeight
 
       // Calculate pulse if animated
       let opacity = params.boxOpacity
@@ -107,7 +119,7 @@ export function DetectionOverlay({ width, height }: DetectionOverlayProps) {
         ctx.fillText(labelText, x + padding, y - padding)
       }
     })
-  }, [detections, enabled, params, width, height])
+  }, [detections, enabled, params, width, height, videoArea])
 
   if (!enabled) return null
 

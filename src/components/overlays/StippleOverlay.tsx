@@ -1,6 +1,7 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useMemo } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useStippleStore } from '../../stores/stippleStore'
+import { calculateVideoArea } from '../../utils/videoArea'
 
 interface Particle {
   x: number
@@ -24,6 +25,13 @@ export function StippleOverlay({ width, height }: StippleOverlayProps) {
   const { videoElement, imageElement } = useMediaStore()
   const { enabled, params } = useStippleStore()
 
+  // Calculate video display area (respecting aspect ratio)
+  const videoArea = useMemo(() => {
+    const videoWidth = videoElement?.videoWidth || imageElement?.naturalWidth || width
+    const videoHeight = videoElement?.videoHeight || imageElement?.naturalHeight || height
+    return calculateVideoArea(width, height, videoWidth, videoHeight)
+  }, [width, height, videoElement, imageElement])
+
   // Initialize offscreen canvas
   useEffect(() => {
     offscreenCanvasRef.current = document.createElement('canvas')
@@ -33,8 +41,8 @@ export function StippleOverlay({ width, height }: StippleOverlayProps) {
     }
   }, [])
 
-  // Generate particles from image
-  const generateParticles = (imageData: ImageData): Particle[] => {
+  // Generate particles from image - positions relative to video display area
+  const generateParticles = (imageData: ImageData, displayArea: typeof videoArea): Particle[] => {
     const particles: Particle[] = []
     const {
       density,
@@ -47,6 +55,7 @@ export function StippleOverlay({ width, height }: StippleOverlayProps) {
       monoColor,
     } = params
 
+    const { displayWidth, displayHeight, offsetX, offsetY } = displayArea
     const cellSize = 4 // Sample every N pixels
 
     for (let y = 0; y < imageData.height; y += cellSize) {
@@ -68,8 +77,9 @@ export function StippleOverlay({ width, height }: StippleOverlayProps) {
             const jitterX = (Math.random() - 0.5) * cellSize * jitter
             const jitterY = (Math.random() - 0.5) * cellSize * jitter
 
-            const px = (x + jitterX) / imageData.width * width
-            const py = (y + jitterY) / imageData.height * height
+            // Position relative to video display area
+            const px = offsetX + (x + jitterX) / imageData.width * displayWidth
+            const py = offsetY + (y + jitterY) / imageData.height * displayHeight
 
             const size = particleSize * (1 + (Math.random() - 0.5) * particleSizeVariation)
 
@@ -136,7 +146,7 @@ export function StippleOverlay({ width, height }: StippleOverlayProps) {
 
           try {
             const imageData = offCtx.getImageData(0, 0, offscreen.width, offscreen.height)
-            particlesRef.current = generateParticles(imageData)
+            particlesRef.current = generateParticles(imageData, videoArea)
           } catch {
             // CORS issues
           }
@@ -167,7 +177,7 @@ export function StippleOverlay({ width, height }: StippleOverlayProps) {
     return () => {
       cancelAnimationFrame(animationFrameRef.current)
     }
-  }, [enabled, videoElement, imageElement, params, width, height])
+  }, [enabled, videoElement, imageElement, params, width, height, videoArea])
 
   if (!enabled) return null
 

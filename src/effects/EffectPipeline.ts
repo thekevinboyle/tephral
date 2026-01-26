@@ -16,9 +16,16 @@ export class EffectPipeline {
 
   private effectPass: EffectPass | null = null
 
+  // Dimensions for aspect ratio
+  private canvasWidth = 1
+  private canvasHeight = 1
+  private videoWidth = 1
+  private videoHeight = 1
+
   constructor(renderer: THREE.WebGLRenderer) {
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
     this.quadScene = new THREE.Scene()
+    this.quadScene.background = new THREE.Color(0x000000)
 
     const geometry = new THREE.PlaneGeometry(2, 2)
     const material = new THREE.MeshBasicMaterial({ map: null })
@@ -72,8 +79,35 @@ export class EffectPipeline {
     ;(this.quad.material as THREE.MeshBasicMaterial).needsUpdate = true
   }
 
+  setVideoSize(width: number, height: number) {
+    this.videoWidth = width || 1
+    this.videoHeight = height || 1
+    this.updateQuadScale()
+  }
+
   setSize(width: number, height: number) {
+    this.canvasWidth = width || 1
+    this.canvasHeight = height || 1
     this.composer.setSize(width, height)
+    this.updateQuadScale()
+  }
+
+  private updateQuadScale() {
+    const canvasAspect = this.canvasWidth / this.canvasHeight
+    const videoAspect = this.videoWidth / this.videoHeight
+
+    let scaleX = 1
+    let scaleY = 1
+
+    if (videoAspect > canvasAspect) {
+      // Video is wider than canvas - fit to width, letterbox top/bottom
+      scaleY = canvasAspect / videoAspect
+    } else {
+      // Video is taller than canvas - fit to height, pillarbox left/right
+      scaleX = videoAspect / canvasAspect
+    }
+
+    this.quad.scale.set(scaleX, scaleY, 1)
   }
 
   render() {

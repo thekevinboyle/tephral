@@ -3,12 +3,23 @@ import * as THREE from 'three'
 import { useThree } from '../hooks/useThree'
 import { useVideoTexture } from '../hooks/useVideoTexture'
 import { EffectPipeline } from '../effects/EffectPipeline'
+import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 
 export function Canvas() {
   const containerRef = useRef<HTMLDivElement>(null)
   const { renderer, frameIdRef } = useThree(containerRef)
   const [pipeline, setPipeline] = useState<EffectPipeline | null>(null)
   const mediaTexture = useVideoTexture()
+
+  const {
+    enabled: glitchEnabled,
+    rgbSplitEnabled,
+    blockDisplaceEnabled,
+    scanLinesEnabled,
+    rgbSplit,
+    blockDisplace,
+    scanLines
+  } = useGlitchEngineStore()
 
   // Initialize pipeline
   useEffect(() => {
@@ -22,14 +33,37 @@ export function Canvas() {
     }
   }, [renderer])
 
-  // Update input texture when media changes
+  // Sync effect parameters
+  useEffect(() => {
+    if (!pipeline) return
+
+    pipeline.rgbSplit?.updateParams(rgbSplit)
+    pipeline.blockDisplace?.updateParams(blockDisplace)
+    pipeline.scanLines?.updateParams(scanLines)
+
+    pipeline.updateEffects({
+      rgbSplitEnabled: glitchEnabled && rgbSplitEnabled,
+      blockDisplaceEnabled: glitchEnabled && blockDisplaceEnabled,
+      scanLinesEnabled: glitchEnabled && scanLinesEnabled,
+    })
+  }, [
+    pipeline,
+    glitchEnabled,
+    rgbSplitEnabled,
+    blockDisplaceEnabled,
+    scanLinesEnabled,
+    rgbSplit,
+    blockDisplace,
+    scanLines
+  ])
+
+  // Update input texture
   useEffect(() => {
     if (!pipeline) return
 
     if (mediaTexture) {
       pipeline.setInputTexture(mediaTexture)
     } else {
-      // Show placeholder when no media
       const size = 256
       const data = new Uint8Array(size * size * 4)
       for (let i = 0; i < size * size * 4; i += 4) {

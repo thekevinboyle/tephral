@@ -1,14 +1,14 @@
 import { create } from 'zustand'
 import {
-  RGBSplitParams,
+  type RGBSplitParams,
   DEFAULT_RGB_SPLIT_PARAMS
 } from '../effects/glitch-engine/RGBSplitEffect'
 import {
-  BlockDisplaceParams,
+  type BlockDisplaceParams,
   DEFAULT_BLOCK_DISPLACE_PARAMS
 } from '../effects/glitch-engine/BlockDisplaceEffect'
 import {
-  ScanLinesParams,
+  type ScanLinesParams,
   DEFAULT_SCAN_LINES_PARAMS
 } from '../effects/glitch-engine/ScanLinesEffect'
 

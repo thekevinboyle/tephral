@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import { EffectComposer, RenderPass } from 'postprocessing'
+import { EffectComposer, RenderPass, EffectPass, Effect } from 'postprocessing'
+import { RGBSplitEffect, BlockDisplaceEffect, ScanLinesEffect } from './glitch-engine'
 
 export class EffectPipeline {
   private composer: EffectComposer
@@ -8,11 +9,17 @@ export class EffectPipeline {
   private quadScene: THREE.Scene
   private camera: THREE.OrthographicCamera
 
+  // Effect instances
+  rgbSplit: RGBSplitEffect | null = null
+  blockDisplace: BlockDisplaceEffect | null = null
+  scanLines: ScanLinesEffect | null = null
+
+  private effectPass: EffectPass | null = null
+
   constructor(renderer: THREE.WebGLRenderer) {
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
     this.quadScene = new THREE.Scene()
 
-    // Fullscreen quad for input texture
     const geometry = new THREE.PlaneGeometry(2, 2)
     const material = new THREE.MeshBasicMaterial({ map: null })
     this.quad = new THREE.Mesh(geometry, material)
@@ -21,6 +28,42 @@ export class EffectPipeline {
     this.composer = new EffectComposer(renderer)
     const renderPass = new RenderPass(this.quadScene, this.camera)
     this.composer.addPass(renderPass)
+
+    // Initialize effects
+    this.rgbSplit = new RGBSplitEffect()
+    this.blockDisplace = new BlockDisplaceEffect()
+    this.scanLines = new ScanLinesEffect()
+  }
+
+  updateEffects(config: {
+    rgbSplitEnabled: boolean
+    blockDisplaceEnabled: boolean
+    scanLinesEnabled: boolean
+  }) {
+    // Remove existing effect pass
+    if (this.effectPass) {
+      this.composer.removePass(this.effectPass)
+      this.effectPass = null
+    }
+
+    // Collect enabled effects
+    const effects: Effect[] = []
+
+    if (config.rgbSplitEnabled && this.rgbSplit) {
+      effects.push(this.rgbSplit)
+    }
+    if (config.blockDisplaceEnabled && this.blockDisplace) {
+      effects.push(this.blockDisplace)
+    }
+    if (config.scanLinesEnabled && this.scanLines) {
+      effects.push(this.scanLines)
+    }
+
+    // Add new effect pass if there are effects
+    if (effects.length > 0) {
+      this.effectPass = new EffectPass(this.camera, ...effects)
+      this.composer.addPass(this.effectPass)
+    }
   }
 
   setInputTexture(texture: THREE.Texture) {
@@ -42,5 +85,8 @@ export class EffectPipeline {
     this.composer.dispose()
     this.quad.geometry.dispose()
     ;(this.quad.material as THREE.Material).dispose()
+    this.rgbSplit?.dispose()
+    this.blockDisplace?.dispose()
+    this.scanLines?.dispose()
   }
 }

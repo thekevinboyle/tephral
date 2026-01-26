@@ -92,40 +92,27 @@ export function EffectButton({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      className="relative rounded-lg transition-all duration-150 flex select-none touch-none cursor-pointer w-full h-full p-2"
+      className="relative rounded-lg transition-colors duration-150 flex select-none touch-none cursor-pointer w-full h-full p-2"
       style={{
-        background: active
-          ? `linear-gradient(180deg, ${color}15 0%, ${color}08 100%)`
-          : 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
-        boxShadow: active
-          ? `
-            inset 0 1px 1px rgba(255,255,255,0.05),
-            inset 0 -1px 2px rgba(0,0,0,0.3),
-            0 0 20px -4px ${color},
-            0 0 40px -8px ${color}40
-          `
-          : `
-            inset 0 1px 1px rgba(255,255,255,0.03),
-            inset 0 -1px 2px rgba(0,0,0,0.4),
-            0 2px 4px rgba(0,0,0,0.2)
-          `,
-        border: active ? `1px solid ${color}40` : '1px solid #2a2d35',
+        backgroundColor: active ? '#2a2a2a' : '#242424',
+        border: active ? `1px solid ${color}40` : '1px solid #333333',
       }}
     >
       {/* Main content area */}
       <div className="flex-1 flex flex-col justify-between">
         {/* LED indicator + label */}
         <div className="flex items-center gap-1.5">
+          {/* LED - only this gets a glow when active */}
           <div
             className="w-2 h-2 rounded-full transition-all duration-150 shrink-0"
             style={{
-              backgroundColor: active ? color : '#2a2d35',
-              boxShadow: active ? `0 0 8px 2px ${color}` : 'inset 0 1px 2px rgba(0,0,0,0.5)',
+              backgroundColor: active ? color : '#333333',
+              boxShadow: active ? `0 0 8px ${color}` : 'none',
             }}
           />
           <span
-            className="text-[8px] uppercase tracking-wider truncate font-medium"
-            style={{ color: active ? color : '#6b7280' }}
+            className="text-[11px] font-medium truncate"
+            style={{ color: active ? '#ffffff' : '#888888' }}
           >
             {label}
           </span>
@@ -133,19 +120,21 @@ export function EffectButton({
 
         {/* Parameter value */}
         <span
-          className="text-[10px] tabular-nums font-medium"
-          style={{ color: active ? color : '#4b5563' }}
+          className="text-[11px] tabular-nums font-medium"
+          style={{
+            color: active ? '#ffffff' : '#555555',
+            fontFamily: "'JetBrains Mono', monospace",
+          }}
         >
           {Math.round(value)}
         </span>
       </div>
 
-      {/* Vertical progress bar on the right */}
+      {/* Vertical progress bar on the right - flat style */}
       <div
-        className="w-1.5 rounded-full ml-2 relative overflow-hidden"
+        className="w-1 rounded-full ml-2 relative overflow-hidden"
         style={{
-          background: 'linear-gradient(180deg, #0d0f12 0%, #1a1d24 100%)',
-          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
+          backgroundColor: '#333333',
         }}
       >
         {/* Fill from bottom */}
@@ -153,10 +142,7 @@ export function EffectButton({
           className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-150"
           style={{
             height: `${percentage}%`,
-            background: active
-              ? `linear-gradient(0deg, ${color} 0%, ${color}80 100%)`
-              : 'linear-gradient(0deg, #3a3d45 0%, #2a2d35 100%)',
-            boxShadow: active ? `0 0 6px ${color}` : 'none',
+            backgroundColor: active ? color : '#555555',
           }}
         />
       </div>

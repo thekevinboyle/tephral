@@ -70,24 +70,19 @@ export function SignalPathBar() {
         <div
           className="w-3 h-3 rounded-full"
           style={{
-            background: 'radial-gradient(ellipse at 30% 30%, #4a4d55 0%, #2a2d35 60%, #1a1d24 100%)',
-            boxShadow: `
-              inset 0 1px 2px rgba(255,255,255,0.1),
-              0 0 8px rgba(99, 102, 241, 0.3),
-              0 0 0 1px #2a2d35
-            `,
+            backgroundColor: '#333333',
+            border: '1px solid #444444',
           }}
         />
-        <span className="text-[9px] uppercase tracking-wider text-[#6b7280] font-medium">IN</span>
+        <span className="text-[11px] font-medium" style={{ color: '#888888' }}>
+          In
+        </span>
       </div>
 
       {/* Connector line */}
       <div
         className="flex-shrink-0 w-8 h-[2px] rounded-full"
-        style={{
-          background: 'linear-gradient(90deg, #6366f1 0%, #4b5563 100%)',
-          boxShadow: '0 0 4px rgba(99, 102, 241, 0.3)',
-        }}
+        style={{ backgroundColor: '#333333' }}
       />
 
       {/* Active effects */}
@@ -95,27 +90,28 @@ export function SignalPathBar() {
         <div
           className="px-3 py-1 rounded-md"
           style={{
-            background: 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
-            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)',
+            backgroundColor: '#242424',
+            border: '1px solid #333333',
           }}
         >
-          <span className="text-[9px] text-[#4b5563] uppercase tracking-wider">bypass</span>
+          <span className="text-[11px] font-medium" style={{ color: '#555555' }}>
+            Bypass
+          </span>
         </div>
       ) : (
         activeEffects.map((effect, index) => (
           <div key={effect.id} className="flex items-center gap-3">
             <button
               onClick={() => setSelectedEffect(effect.id)}
-              className="flex items-center gap-2 px-2 py-1 rounded-md transition-all"
+              className="flex items-center gap-2 px-2 py-1 rounded-md transition-colors"
               style={{
-                background: selectedEffectId === effect.id
-                  ? `linear-gradient(180deg, ${effect.color}20 0%, ${effect.color}10 100%)`
-                  : 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
-                boxShadow: selectedEffectId === effect.id
-                  ? `0 0 12px -2px ${effect.color}, 0 0 0 1px ${effect.color}50`
-                  : 'inset 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px #2a2d35',
+                backgroundColor: selectedEffectId === effect.id ? '#2a2a2a' : '#242424',
+                border: selectedEffectId === effect.id
+                  ? `1px solid ${effect.color}40`
+                  : '1px solid #333333',
               }}
             >
+              {/* LED indicator - only glow */}
               <div
                 className="w-2 h-2 rounded-full"
                 style={{
@@ -124,8 +120,8 @@ export function SignalPathBar() {
                 }}
               />
               <span
-                className="text-[9px] uppercase tracking-wider font-medium transition-colors"
-                style={{ color: selectedEffectId === effect.id ? effect.color : '#6b7280' }}
+                className="text-[11px] font-medium transition-colors"
+                style={{ color: selectedEffectId === effect.id ? '#ffffff' : '#888888' }}
               >
                 {effect.label}
               </span>
@@ -135,10 +131,7 @@ export function SignalPathBar() {
             {index < activeEffects.length - 1 && (
               <div
                 className="flex-shrink-0 w-6 h-[2px] rounded-full"
-                style={{
-                  background: `linear-gradient(90deg, ${effect.color} 0%, ${activeEffects[index + 1]?.color || '#4b5563'} 100%)`,
-                  boxShadow: `0 0 4px ${effect.color}40`,
-                }}
+                style={{ backgroundColor: '#333333' }}
               />
             )}
           </div>
@@ -148,12 +141,7 @@ export function SignalPathBar() {
       {/* Final connector */}
       <div
         className="flex-shrink-0 w-8 h-[2px] rounded-full"
-        style={{
-          background: activeEffects.length > 0
-            ? `linear-gradient(90deg, ${activeEffects[activeEffects.length - 1]?.color || '#4b5563'} 0%, #6366f1 100%)`
-            : 'linear-gradient(90deg, #4b5563 0%, #6366f1 100%)',
-          boxShadow: '0 0 4px rgba(99, 102, 241, 0.3)',
-        }}
+        style={{ backgroundColor: '#333333' }}
       />
 
       {/* Output node */}
@@ -161,15 +149,13 @@ export function SignalPathBar() {
         <div
           className="w-3 h-3 rounded-full"
           style={{
-            background: 'radial-gradient(ellipse at 30% 30%, #4a4d55 0%, #2a2d35 60%, #1a1d24 100%)',
-            boxShadow: `
-              inset 0 1px 2px rgba(255,255,255,0.1),
-              0 0 8px rgba(99, 102, 241, 0.3),
-              0 0 0 1px #2a2d35
-            `,
+            backgroundColor: '#333333',
+            border: '1px solid #444444',
           }}
         />
-        <span className="text-[9px] uppercase tracking-wider text-[#6b7280] font-medium">OUT</span>
+        <span className="text-[11px] font-medium" style={{ color: '#888888' }}>
+          Out
+        </span>
       </div>
     </div>
   )

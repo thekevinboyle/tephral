@@ -107,12 +107,12 @@ export function XYPad() {
     <div className="h-full flex flex-col p-3">
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[9px] uppercase tracking-wider text-[#6b7280] font-medium">
-          X/Y PAD
+        <span className="text-[11px] font-medium" style={{ color: '#888888' }}>
+          X/Y Pad
         </span>
         {currentEffect && (
           <span
-            className="text-[9px] uppercase tracking-wider font-medium"
+            className="text-[11px] font-medium"
             style={{ color: currentEffect.color }}
           >
             {currentEffect.label}
@@ -124,11 +124,11 @@ export function XYPad() {
       <div className="flex-1 flex gap-2">
         {/* Y axis label */}
         <div className="flex flex-col justify-between items-center py-2">
-          <span className="text-[8px] text-[#4b5563] uppercase tracking-wider rotate-180" style={{ writingMode: 'vertical-rl' }}>
+          <span className="text-[10px] font-medium rotate-180" style={{ writingMode: 'vertical-rl', color: '#555555' }}>
             {mapping?.y || 'Y'}
           </span>
           {mapping && (
-            <span className="text-[8px] text-[#6b7280] tabular-nums">
+            <span className="text-[10px] tabular-nums" style={{ color: '#888888', fontFamily: "'JetBrains Mono', monospace" }}>
               {formatValue(1 - position.y, mapping.yRange)}
             </span>
           )}
@@ -140,14 +140,8 @@ export function XYPad() {
             ref={padRef}
             className="flex-1 relative rounded-lg cursor-crosshair touch-none"
             style={{
-              background: `
-                linear-gradient(180deg, #0a0c0f 0%, #13151a 100%)
-              `,
-              boxShadow: `
-                inset 0 2px 4px rgba(0,0,0,0.5),
-                inset 0 -1px 2px rgba(255,255,255,0.02),
-                0 0 0 1px #2a2d35
-              `,
+              backgroundColor: '#1a1a1a',
+              border: '1px solid #333333',
             }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -163,7 +157,7 @@ export function XYPad() {
                   className="absolute top-0 bottom-0 w-px"
                   style={{
                     left: `${pos * 100}%`,
-                    background: 'rgba(99, 102, 241, 0.1)',
+                    backgroundColor: '#2a2a2a',
                   }}
                 />
               ))}
@@ -174,81 +168,39 @@ export function XYPad() {
                   className="absolute left-0 right-0 h-px"
                   style={{
                     top: `${pos * 100}%`,
-                    background: 'rgba(99, 102, 241, 0.1)',
+                    backgroundColor: '#2a2a2a',
                   }}
                 />
               ))}
             </div>
 
-            {/* Center crosshair */}
-            <div
-              className="absolute w-4 h-px"
-              style={{
-                left: 'calc(50% - 8px)',
-                top: '50%',
-                background: 'rgba(99, 102, 241, 0.3)',
-              }}
-            />
-            <div
-              className="absolute h-4 w-px"
-              style={{
-                left: '50%',
-                top: 'calc(50% - 8px)',
-                background: 'rgba(99, 102, 241, 0.3)',
-              }}
-            />
-
             {/* Position cursor */}
             <div
-              className="absolute w-5 h-5 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-transform"
+              className="absolute w-4 h-4 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-transform"
               style={{
                 left: `${position.x * 100}%`,
                 top: `${position.y * 100}%`,
                 transform: `translate(-50%, -50%) scale(${isPressed ? 1.2 : 1})`,
               }}
             >
-              {/* Outer ring */}
+              {/* Outer ring with glow */}
               <div
                 className="absolute inset-0 rounded-full"
                 style={{
-                  background: currentEffect?.color || '#6366f1',
-                  opacity: 0.3,
-                  boxShadow: `0 0 12px ${currentEffect?.color || '#6366f1'}`,
-                }}
-              />
-              {/* Inner dot */}
-              <div
-                className="absolute inset-1 rounded-full"
-                style={{
-                  background: `radial-gradient(ellipse at 30% 30%, ${currentEffect?.color || '#6366f1'} 0%, ${currentEffect?.color || '#6366f1'}80 100%)`,
-                  boxShadow: `
-                    0 0 8px ${currentEffect?.color || '#6366f1'},
-                    inset 0 1px 2px rgba(255,255,255,0.3)
-                  `,
+                  backgroundColor: currentEffect?.color || '#888888',
+                  boxShadow: `0 0 8px ${currentEffect?.color || '#888888'}`,
                 }}
               />
             </div>
-
-            {/* Touch trail effect when pressed */}
-            {isPressed && (
-              <div
-                className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 pointer-events-none rounded-full"
-                style={{
-                  left: `${position.x * 100}%`,
-                  top: `${position.y * 100}%`,
-                  background: `radial-gradient(circle, ${currentEffect?.color || '#6366f1'}20 0%, transparent 70%)`,
-                }}
-              />
-            )}
           </div>
 
           {/* X axis label */}
           <div className="flex justify-between items-center mt-1 px-1">
-            <span className="text-[8px] text-[#4b5563] uppercase tracking-wider">
+            <span className="text-[10px] font-medium" style={{ color: '#555555' }}>
               {mapping?.x || 'X'}
             </span>
             {mapping && (
-              <span className="text-[8px] text-[#6b7280] tabular-nums">
+              <span className="text-[10px] tabular-nums" style={{ color: '#888888', fontFamily: "'JetBrains Mono', monospace" }}>
                 {formatValue(position.x, mapping.xRange)}
               </span>
             )}
@@ -259,7 +211,7 @@ export function XYPad() {
       {/* No effect selected message */}
       {!selectedEffectId && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-[10px] text-[#4b5563] uppercase tracking-wider">
+          <span className="text-[11px] font-medium" style={{ color: '#555555' }}>
             Select an effect
           </span>
         </div>

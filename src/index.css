@@ -1,16 +1,31 @@
 @import "tailwindcss";
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
-  /* Base */
-  --color-base-dark: #0a0a0a;
-  --color-base-darker: #1a1a1a;
-  --color-base-light: #f0f0f0;
-  --color-muted: #666666;
-  --color-border: #2a2a2a;
+  /* Flat Design - Warm Neutral Backgrounds */
+  --color-bg-darker: #141414;
+  --color-bg-dark: #1a1a1a;
+  --color-bg-card: #242424;
+  --color-bg-card-hover: #2a2a2a;
 
-  /* Glitch row - Cyan, Magenta, Electric Blue, Purple */
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #888888;
+  --color-text-muted: #555555;
+
+  /* Borders */
+  --color-border-subtle: #2a2a2a;
+  --color-border-default: #333333;
+
+  /* Legacy aliases for compatibility */
+  --color-base-dark: #141414;
+  --color-base-darker: #1a1a1a;
+  --color-base-light: #ffffff;
+  --color-muted: #888888;
+  --color-border: #333333;
+
+  /* Effect colors (unchanged - used for LED indicators) */
   --color-glitch-cyan: #00d4ff;
   --color-glitch-magenta: #ff00aa;
   --color-glitch-blue: #4444ff;
@@ -29,7 +44,15 @@
   --color-accent-yellow: #ffcc00;
   --color-accent-orange: #ff6600;
 
-  --font-family-mono: 'JetBrains Mono', 'Space Mono', monospace;
+  /* Typography */
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-mono: 'JetBrains Mono', monospace;
+
+  /* Font sizes */
+  --text-xl: 18px;
+  --text-lg: 14px;
+  --text-md: 12px;
+  --text-sm: 11px;
 }
 
 @layer base {
@@ -38,33 +61,69 @@
   }
 
   body {
-    background-color: var(--color-base-dark);
-    color: var(--color-base-light);
-    font-family: var(--font-family-mono);
+    background-color: var(--color-bg-darker);
+    color: var(--color-text-primary);
+    font-family: var(--font-family-sans);
+    font-weight: 400;
     margin: 0;
     padding: 0;
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Monospace for values/numbers */
+  .tabular-nums {
+    font-family: var(--font-family-mono);
+    font-feature-settings: 'tnum';
+  }
 }
 
 @layer components {
   .panel {
-    border: 1px solid var(--color-muted);
-    padding: 1rem;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+    padding: 16px;
   }
 
   .label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-muted);
+    font-size: var(--text-md);
+    font-weight: 500;
+    color: var(--color-text-secondary);
   }
 
   .value {
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     font-family: var(--font-family-mono);
-    color: var(--color-base-light);
+    color: var(--color-text-primary);
+  }
+
+  /* Flat card styling */
+  .flat-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 8px;
+  }
+
+  .flat-card:hover {
+    background: var(--color-bg-card-hover);
+  }
+
+  /* Flat button */
+  .flat-button {
+    background: var(--color-bg-card);
+    border-radius: 6px;
+    color: var(--color-text-secondary);
+    border: none;
+    padding: 8px 12px;
+  }
+
+  .flat-button:hover {
+    background: var(--color-bg-card-hover);
+  }
+
+  .flat-button.active {
+    background: var(--color-text-primary);
+    color: var(--color-bg-dark);
   }
 }
 

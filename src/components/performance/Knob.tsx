@@ -16,7 +16,7 @@ export function Knob({
   value,
   min = 0,
   max = 100,
-  color = '#6366f1',
+  color = '#888888',
   size = 'md',
   onChange,
 }: KnobProps) {
@@ -51,13 +51,13 @@ export function Knob({
   const rotation = ((value - min) / (max - min)) * 270 - 135
 
   const dimensions = {
-    sm: { outer: 32, inner: 24, notch: 8 },
-    md: { outer: 44, inner: 34, notch: 12 },
+    sm: { outer: 32, indicator: 10 },
+    md: { outer: 40, indicator: 14 },
   }[size]
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      {/* Knob container */}
+    <div className="flex flex-col items-center gap-1.5">
+      {/* Flat knob container */}
       <div
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -65,82 +65,36 @@ export function Knob({
         className="relative cursor-pointer select-none touch-none"
         style={{ width: dimensions.outer, height: dimensions.outer }}
       >
-        {/* Outer ring / track */}
+        {/* Simple flat circle with 1px border */}
         <div
           className="absolute inset-0 rounded-full"
           style={{
-            background: 'linear-gradient(145deg, #1a1d24, #0d0f12)',
-            boxShadow: `
-              inset 0 2px 4px rgba(0,0,0,0.5),
-              inset 0 -1px 2px rgba(255,255,255,0.05),
-              0 2px 4px rgba(0,0,0,0.3)
-            `,
+            backgroundColor: '#242424',
+            border: '1px solid #333333',
           }}
         />
 
-        {/* Value arc */}
-        <svg
-          className="absolute inset-0"
-          viewBox="0 0 100 100"
-          style={{ transform: 'rotate(-135deg)' }}
-        >
-          <circle
-            cx="50"
-            cy="50"
-            r="46"
-            fill="none"
-            stroke="#2a2d35"
-            strokeWidth="3"
-            strokeDasharray="216.77 360"
-            strokeLinecap="round"
-          />
-          <circle
-            cx="50"
-            cy="50"
-            r="46"
-            fill="none"
-            stroke={color}
-            strokeWidth="3"
-            strokeDasharray={`${((value - min) / (max - min)) * 216.77} 360`}
-            strokeLinecap="round"
-            style={{ filter: `drop-shadow(0 0 3px ${color})` }}
-          />
-        </svg>
-
-        {/* Inner knob body */}
+        {/* Thin line indicator from center to edge */}
         <div
-          className="absolute rounded-full"
+          className="absolute"
           style={{
-            top: (dimensions.outer - dimensions.inner) / 2,
-            left: (dimensions.outer - dimensions.inner) / 2,
-            width: dimensions.inner,
-            height: dimensions.inner,
-            background: `radial-gradient(ellipse at 30% 20%, #4a4d55 0%, #2a2d35 50%, #1a1d24 100%)`,
-            boxShadow: `
-              inset 0 2px 4px rgba(255,255,255,0.1),
-              inset 0 -2px 4px rgba(0,0,0,0.3),
-              0 2px 6px rgba(0,0,0,0.3)
-            `,
+            width: 2,
+            height: dimensions.indicator,
+            top: 4,
+            left: '50%',
+            backgroundColor: color,
+            transform: `translateX(-50%) rotate(${rotation}deg)`,
+            transformOrigin: `center ${dimensions.outer / 2 - 4}px`,
+            borderRadius: 1,
           }}
-        >
-          {/* Notch indicator */}
-          <div
-            className="absolute left-1/2 rounded-full"
-            style={{
-              width: 2,
-              height: dimensions.notch,
-              top: 3,
-              backgroundColor: color,
-              transform: `translateX(-50%) rotate(${rotation}deg)`,
-              transformOrigin: `center ${dimensions.inner / 2 - 3}px`,
-              boxShadow: `0 0 4px ${color}`,
-            }}
-          />
-        </div>
+        />
       </div>
 
-      {/* Label */}
-      <span className="text-[8px] uppercase tracking-wider text-[#6b7280] font-medium">
+      {/* Label - mixed case, medium weight */}
+      <span
+        className="text-[11px] font-medium"
+        style={{ color: '#888888' }}
+      >
         {label}
       </span>
     </div>

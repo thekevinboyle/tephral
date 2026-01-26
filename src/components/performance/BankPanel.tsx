@@ -21,28 +21,22 @@ export function BankPanel() {
   return (
     <div
       className="h-full flex items-center px-4 gap-6"
-      style={{
-        background: 'linear-gradient(180deg, #13151a 0%, #1a1d24 100%)',
-      }}
+      style={{ backgroundColor: '#1a1a1a' }}
     >
       {/* Bank selector */}
       <div className="flex items-center gap-1">
-        <span className="text-[9px] uppercase tracking-wider text-[#4b5563] font-medium mr-2">
-          BANK
+        <span className="text-[11px] font-medium mr-2" style={{ color: '#555555' }}>
+          Bank
         </span>
         {BANK_LABELS.map((label, index) => (
           <button
             key={label}
             onClick={() => setActiveBank(index)}
-            className="w-8 h-8 rounded-md text-[11px] font-bold transition-all"
+            className="w-8 h-8 rounded-md text-[11px] font-medium transition-colors"
             style={{
-              background: activeBank === index
-                ? 'linear-gradient(180deg, #6366f120 0%, #6366f110 100%)'
-                : 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
-              boxShadow: activeBank === index
-                ? '0 0 12px -2px #6366f1, 0 0 0 1px #6366f150'
-                : 'inset 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px #2a2d35',
-              color: activeBank === index ? '#6366f1' : '#6b7280',
+              backgroundColor: activeBank === index ? '#2a2a2a' : '#242424',
+              border: activeBank === index ? '1px solid #6366f140' : '1px solid #333333',
+              color: activeBank === index ? '#ffffff' : '#888888',
             }}
           >
             {label}
@@ -51,7 +45,7 @@ export function BankPanel() {
       </div>
 
       {/* Divider */}
-      <div className="w-px h-6 bg-[#2a2d35]" />
+      <div className="w-px h-6" style={{ backgroundColor: '#333333' }} />
 
       {/* Preset slots */}
       <div className="flex items-center gap-2 flex-1">
@@ -64,29 +58,25 @@ export function BankPanel() {
             <button
               key={index}
               onClick={() => !isEmpty && loadPreset(index)}
-              className="flex-1 max-w-[120px] h-8 rounded-md px-3 flex items-center justify-between transition-all"
+              className="flex-1 max-w-[120px] h-8 rounded-md px-3 flex items-center justify-between transition-colors"
               style={{
-                background: isActive
-                  ? 'linear-gradient(180deg, #6366f120 0%, #6366f110 100%)'
-                  : 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
-                boxShadow: isActive
-                  ? '0 0 12px -2px #6366f1, 0 0 0 1px #6366f150'
-                  : 'inset 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px #2a2d35',
+                backgroundColor: isActive ? '#2a2a2a' : '#242424',
+                border: isActive ? '1px solid #6366f140' : '1px solid #333333',
                 opacity: isEmpty ? 0.5 : 1,
               }}
             >
               <div className="flex items-center gap-2">
                 <span
-                  className="text-[10px] font-medium"
-                  style={{ color: isActive ? '#6366f1' : '#6b7280' }}
+                  className="text-[11px] font-medium"
+                  style={{ color: isActive ? '#ffffff' : '#888888' }}
                 >
                   {index + 1}
                 </span>
                 <span
-                  className="text-[9px] uppercase tracking-wider truncate"
-                  style={{ color: isActive ? '#a5b4fc' : '#4b5563' }}
+                  className="text-[10px] font-medium truncate"
+                  style={{ color: isActive ? '#888888' : '#555555' }}
                 >
-                  {preset?.name || 'EMPTY'}
+                  {preset?.name || 'Empty'}
                 </span>
               </div>
               {showModified && (
@@ -104,48 +94,48 @@ export function BankPanel() {
       </div>
 
       {/* Divider */}
-      <div className="w-px h-6 bg-[#2a2d35]" />
+      <div className="w-px h-6" style={{ backgroundColor: '#333333' }} />
 
       {/* Actions */}
       <div className="flex items-center gap-2">
         <button
           onClick={() => activePreset !== null ? savePreset(activePreset) : null}
           disabled={activePreset === null}
-          className="h-8 px-3 rounded-md text-[9px] uppercase tracking-wider font-medium transition-all"
+          className="h-8 px-3 rounded-md text-[11px] font-medium transition-colors"
           style={{
-            background: 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
-            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px #2a2d35',
-            color: activePreset !== null ? '#10b981' : '#4b5563',
+            backgroundColor: '#242424',
+            border: '1px solid #333333',
+            color: activePreset !== null ? '#10b981' : '#555555',
             opacity: activePreset === null ? 0.5 : 1,
           }}
         >
-          SAVE
+          Save
         </button>
         <button
           onClick={copyPreset}
           disabled={activePreset === null}
-          className="h-8 px-3 rounded-md text-[9px] uppercase tracking-wider font-medium transition-all"
+          className="h-8 px-3 rounded-md text-[11px] font-medium transition-colors"
           style={{
-            background: 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
-            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px #2a2d35',
-            color: activePreset !== null ? '#6b7280' : '#4b5563',
+            backgroundColor: '#242424',
+            border: '1px solid #333333',
+            color: activePreset !== null ? '#888888' : '#555555',
             opacity: activePreset === null ? 0.5 : 1,
           }}
         >
-          COPY
+          Copy
         </button>
         <button
           onClick={() => activePreset !== null && clipboard && pastePreset(activePreset)}
           disabled={!clipboard || activePreset === null}
-          className="h-8 px-3 rounded-md text-[9px] uppercase tracking-wider font-medium transition-all"
+          className="h-8 px-3 rounded-md text-[11px] font-medium transition-colors"
           style={{
-            background: 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
-            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3), 0 0 0 1px #2a2d35',
-            color: clipboard ? '#6b7280' : '#4b5563',
+            backgroundColor: '#242424',
+            border: '1px solid #333333',
+            color: clipboard ? '#888888' : '#555555',
             opacity: !clipboard || activePreset === null ? 0.5 : 1,
           }}
         >
-          PASTE
+          Paste
         </button>
       </div>
     </div>

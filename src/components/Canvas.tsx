@@ -5,6 +5,7 @@ import { useVideoTexture } from '../hooks/useVideoTexture'
 import { EffectPipeline } from '../effects/EffectPipeline'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useMediaStore } from '../stores/mediaStore'
+import { useRoutingStore } from '../stores/routingStore'
 import { OverlayContainer } from './overlays/OverlayContainer'
 
 export function Canvas() {
@@ -30,6 +31,8 @@ export function Canvas() {
     edgeDetection
   } = useGlitchEngineStore()
 
+  const { effectOrder } = useRoutingStore()
+
   // Initialize pipeline
   useEffect(() => {
     if (!renderer) return
@@ -54,6 +57,7 @@ export function Canvas() {
     pipeline.edgeDetection?.updateParams(edgeDetection)
 
     pipeline.updateEffects({
+      effectOrder,
       rgbSplitEnabled: glitchEnabled && rgbSplitEnabled,
       blockDisplaceEnabled: glitchEnabled && blockDisplaceEnabled,
       scanLinesEnabled: glitchEnabled && scanLinesEnabled,
@@ -75,7 +79,8 @@ export function Canvas() {
     scanLines,
     noise,
     pixelate,
-    edgeDetection
+    edgeDetection,
+    effectOrder
   ])
 
   // Update input texture and video dimensions

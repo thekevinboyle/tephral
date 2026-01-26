@@ -55,7 +55,21 @@ export class EffectPipeline {
     this.edgeDetection = new EdgeDetectionEffect()
   }
 
+  // Map effect IDs to effect instances
+  private getEffectById(id: string): Effect | null {
+    switch (id) {
+      case 'rgb_split': return this.rgbSplit
+      case 'block_displace': return this.blockDisplace
+      case 'scan_lines': return this.scanLines
+      case 'noise': return this.noise
+      case 'pixelate': return this.pixelate
+      case 'edges': return this.edgeDetection
+      default: return null
+    }
+  }
+
   updateEffects(config: {
+    effectOrder: string[]
     rgbSplitEnabled: boolean
     blockDisplaceEnabled: boolean
     scanLinesEnabled: boolean
@@ -69,26 +83,26 @@ export class EffectPipeline {
       this.effectPass = null
     }
 
-    // Collect enabled effects
+    // Map effect IDs to enabled state
+    const enabledMap: Record<string, boolean> = {
+      rgb_split: config.rgbSplitEnabled,
+      block_displace: config.blockDisplaceEnabled,
+      scan_lines: config.scanLinesEnabled,
+      noise: config.noiseEnabled,
+      pixelate: config.pixelateEnabled,
+      edges: config.edgeDetectionEnabled,
+    }
+
+    // Collect enabled effects in the specified order
     const effects: Effect[] = []
 
-    if (config.rgbSplitEnabled && this.rgbSplit) {
-      effects.push(this.rgbSplit)
-    }
-    if (config.blockDisplaceEnabled && this.blockDisplace) {
-      effects.push(this.blockDisplace)
-    }
-    if (config.scanLinesEnabled && this.scanLines) {
-      effects.push(this.scanLines)
-    }
-    if (config.noiseEnabled && this.noise) {
-      effects.push(this.noise)
-    }
-    if (config.pixelateEnabled && this.pixelate) {
-      effects.push(this.pixelate)
-    }
-    if (config.edgeDetectionEnabled && this.edgeDetection) {
-      effects.push(this.edgeDetection)
+    for (const effectId of config.effectOrder) {
+      if (enabledMap[effectId]) {
+        const effect = this.getEffectById(effectId)
+        if (effect) {
+          effects.push(effect)
+        }
+      }
     }
 
     // Add new effect pass if there are effects

@@ -5,6 +5,7 @@ import { useLandmarksStore } from '../../stores/landmarksStore'
 import { usePointNetworkStore } from '../../stores/pointNetworkStore'
 import { useDetectionOverlayStore } from '../../stores/detectionOverlayStore'
 import { useUIStore } from '../../stores/uiStore'
+import { useRoutingStore } from '../../stores/routingStore'
 import { EFFECTS } from '../../config/effects'
 
 interface PathNode {
@@ -22,11 +23,9 @@ export function SignalPathBar() {
   const network = usePointNetworkStore()
   const overlay = useDetectionOverlayStore()
   const { selectedEffectId, setSelectedEffect } = useUIStore()
+  const { effectOrder } = useRoutingStore()
 
-  // Build list of active effects in order
-  const activeEffects: PathNode[] = []
-
-  // Check each effect and add if active
+  // Check each effect's enabled state
   const effectStates: Record<string, boolean> = {
     rgb_split: glitch.rgbSplitEnabled,
     block_displace: glitch.blockDisplaceEnabled,
@@ -45,14 +44,22 @@ export function SignalPathBar() {
     holistic: landmarks.enabled && landmarks.currentMode === 'holistic',
   }
 
-  EFFECTS.forEach((effect) => {
-    if (effectStates[effect.id]) {
-      activeEffects.push({
-        id: effect.id,
-        label: effect.label,
-        color: effect.color,
-        active: true,
-      })
+  // Build effects map for quick lookup
+  const effectsMap = new Map(EFFECTS.map(e => [e.id, e]))
+
+  // Build list of active effects in custom order
+  const activeEffects: PathNode[] = []
+  effectOrder.forEach((effectId) => {
+    if (effectStates[effectId]) {
+      const effect = effectsMap.get(effectId)
+      if (effect) {
+        activeEffects.push({
+          id: effect.id,
+          label: effect.label,
+          color: effect.color,
+          active: true,
+        })
+      }
     }
   })
 

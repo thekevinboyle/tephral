@@ -2,6 +2,7 @@ import { Canvas } from '../Canvas'
 import { PreviewHeader } from './PreviewHeader'
 import { SignalPathBar } from './SignalPathBar'
 import { ParameterPanel } from './ParameterPanel'
+import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
 import { GraphicPanelV2 } from './GraphicPanelV2'
 
@@ -69,19 +70,31 @@ export function PerformanceLayout() {
         <SignalPathBar />
       </div>
 
-      {/* Parameter strip (15vh) - horizontal scrollable */}
+      {/* Parameter strip (12vh) - horizontal scrollable, draggable */}
       <div
         className="flex-shrink-0 mx-3"
         style={{
-          height: '15vh',
-          minHeight: '100px',
+          height: '12vh',
+          minHeight: '80px',
           borderTop: '1px solid #2a2d35',
         }}
       >
         <ParameterPanel />
       </div>
 
-      {/* Bottom section (25vh) - Button grid + Graphic panel */}
+      {/* Bank panel (~4vh) - preset banks */}
+      <div
+        className="flex-shrink-0 mx-3"
+        style={{
+          height: '4vh',
+          minHeight: '40px',
+          borderTop: '1px solid #2a2d35',
+        }}
+      >
+        <BankPanel />
+      </div>
+
+      {/* Bottom section (~24vh) - Button grid + Graphic panel */}
       <div
         className="flex-1 min-h-0 flex mx-3 mb-3 gap-3"
         style={{

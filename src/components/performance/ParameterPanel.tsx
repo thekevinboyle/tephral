@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useState, useRef, useCallback } from 'react'
 import { Knob } from './Knob'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
@@ -6,6 +6,7 @@ import { useStippleStore } from '../../stores/stippleStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
 import { usePointNetworkStore } from '../../stores/pointNetworkStore'
 import { useUIStore } from '../../stores/uiStore'
+import { useRoutingStore } from '../../stores/routingStore'
 import { EFFECTS } from '../../config/effects'
 import {
   RGBSplitViz,
@@ -379,8 +380,92 @@ export function ParameterPanel() {
   }
 
   const { selectedEffectId, setSelectedEffect } = useUIStore()
+  const { effectOrder, reorderEffect } = useRoutingStore()
 
-  if (sections.length === 0) {
+  // Sort sections by effectOrder
+  const sortedSections = [...sections].sort((a, b) => {
+    const aIndex = effectOrder.indexOf(a.id)
+    const bIndex = effectOrder.indexOf(b.id)
+    return aIndex - bIndex
+  })
+
+  // Drag state
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const dragStartX = useRef<number>(0)
+  const dragStartTime = useRef<number>(0)
+  const isDragging = useRef(false)
+
+  const handlePointerDown = useCallback((e: React.PointerEvent, _index: number) => {
+    dragStartX.current = e.clientX
+    dragStartTime.current = Date.now()
+    isDragging.current = false
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }, [])
+
+  const handlePointerMove = useCallback((e: React.PointerEvent, index: number) => {
+    const deltaX = Math.abs(e.clientX - dragStartX.current)
+    const elapsed = Date.now() - dragStartTime.current
+
+    // Start drag after 150ms hold or 10px movement
+    if (!isDragging.current && (elapsed > 150 || deltaX > 10)) {
+      isDragging.current = true
+      setDragIndex(index)
+    }
+
+    if (isDragging.current) {
+      // Find which card we're over based on x position
+      const container = (e.currentTarget as HTMLElement).parentElement
+      if (container) {
+        const cards = Array.from(container.children) as HTMLElement[]
+        for (let i = 0; i < cards.length; i++) {
+          const rect = cards[i].getBoundingClientRect()
+          const midX = rect.left + rect.width / 2
+          if (e.clientX < midX) {
+            setDragOverIndex(i)
+            return
+          }
+        }
+        setDragOverIndex(cards.length)
+      }
+    }
+  }, [])
+
+  const handlePointerUp = useCallback((e: React.PointerEvent, index: number) => {
+    try {
+      ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+    } catch {}
+
+    if (isDragging.current && dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
+      // Find the actual indices in effectOrder
+      const fromEffectId = sortedSections[dragIndex].id
+      const fromOrderIndex = effectOrder.indexOf(fromEffectId)
+
+      // Calculate target index
+      let toOrderIndex: number
+      if (dragOverIndex >= sortedSections.length) {
+        toOrderIndex = effectOrder.indexOf(sortedSections[sortedSections.length - 1].id) + 1
+      } else {
+        toOrderIndex = effectOrder.indexOf(sortedSections[dragOverIndex].id)
+      }
+
+      // Adjust if moving forward
+      if (toOrderIndex > fromOrderIndex) {
+        toOrderIndex--
+      }
+
+      reorderEffect(fromOrderIndex, toOrderIndex)
+    } else if (!isDragging.current) {
+      // It was a click, select the effect
+      setSelectedEffect(sortedSections[index].id)
+    }
+
+    setDragIndex(null)
+    setDragOverIndex(null)
+    isDragging.current = false
+  }, [dragIndex, dragOverIndex, effectOrder, reorderEffect, setSelectedEffect, sortedSections])
+
+  if (sortedSections.length === 0) {
     return (
       <div
         className="h-full flex items-center justify-center"
@@ -389,7 +474,7 @@ export function ParameterPanel() {
         }}
       >
         <span className="text-[10px] text-[#4b5563] uppercase tracking-wider">
-          No active effects
+          No active effects — drag to reorder
         </span>
       </div>
     )
@@ -402,78 +487,97 @@ export function ParameterPanel() {
         background: 'linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%)',
       }}
     >
-      {sections.map((section) => (
-        <button
-          key={section.id}
-          onClick={() => setSelectedEffect(section.id)}
-          className="flex-shrink-0 flex flex-col transition-all rounded-lg"
-          style={{
-            background: selectedEffectId === section.id
-              ? `linear-gradient(180deg, ${section.color}15 0%, ${section.color}08 100%)`
-              : 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
-            boxShadow: selectedEffectId === section.id
-              ? `
-                inset 0 1px 1px rgba(255,255,255,0.05),
-                inset 0 -1px 2px rgba(0,0,0,0.3),
-                0 0 20px -4px ${section.color},
-                0 0 0 1px ${section.color}40
-              `
-              : `
-                inset 0 1px 1px rgba(255,255,255,0.03),
-                inset 0 -1px 2px rgba(0,0,0,0.4),
-                0 2px 4px rgba(0,0,0,0.2),
-                0 0 0 1px #2a2d35
-              `,
-            minWidth: '140px',
-            padding: '12px',
-          }}
-        >
-          {/* Section header with LED */}
-          <div className="flex items-center gap-2 mb-2">
-            <div
-              className="w-2 h-2 rounded-full"
-              style={{
-                backgroundColor: section.color,
-                boxShadow: `0 0 8px ${section.color}`,
-              }}
-            />
-            <span
-              className="text-[9px] font-semibold tracking-wider uppercase"
-              style={{ color: section.color }}
-            >
-              {section.label}
-            </span>
-          </div>
+      {sortedSections.map((section, index) => {
+        const isBeingDragged = dragIndex === index
+        const isDropTarget = dragOverIndex === index && dragIndex !== null && dragIndex !== index
 
-          {/* Visualizer */}
+        return (
           <div
-            className="flex-1 flex items-center justify-center rounded-md mb-2"
+            key={section.id}
+            onPointerDown={(e) => handlePointerDown(e, index)}
+            onPointerMove={(e) => handlePointerMove(e, index)}
+            onPointerUp={(e) => handlePointerUp(e, index)}
+            className="flex-shrink-0 flex flex-col transition-all rounded-lg select-none touch-none cursor-grab active:cursor-grabbing"
             style={{
-              background: 'linear-gradient(180deg, #0d0f12 0%, #1a1d24 100%)',
-              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.4)',
-              minHeight: '40px',
+              background: selectedEffectId === section.id
+                ? `linear-gradient(180deg, ${section.color}15 0%, ${section.color}08 100%)`
+                : 'linear-gradient(180deg, #1e2128 0%, #13151a 100%)',
+              boxShadow: isBeingDragged
+                ? `0 8px 24px rgba(0,0,0,0.4), 0 0 0 2px ${section.color}`
+                : selectedEffectId === section.id
+                ? `
+                  inset 0 1px 1px rgba(255,255,255,0.05),
+                  inset 0 -1px 2px rgba(0,0,0,0.3),
+                  0 0 20px -4px ${section.color},
+                  0 0 0 1px ${section.color}40
+                `
+                : `
+                  inset 0 1px 1px rgba(255,255,255,0.03),
+                  inset 0 -1px 2px rgba(0,0,0,0.4),
+                  0 2px 4px rgba(0,0,0,0.2),
+                  0 0 0 1px #2a2d35
+                `,
+              minWidth: '140px',
+              padding: '12px',
+              transform: isBeingDragged ? 'scale(1.05)' : 'scale(1)',
+              opacity: isBeingDragged ? 0.9 : 1,
+              zIndex: isBeingDragged ? 10 : 1,
+              marginLeft: isDropTarget ? '60px' : '0',
+              transition: isBeingDragged ? 'none' : 'all 0.15s ease-out',
             }}
           >
-            {section.visualizer}
-          </div>
-
-          {/* Knobs row */}
-          <div className="flex justify-around gap-3">
-            {section.params.map((param) => (
-              <Knob
-                key={param.label}
-                label={param.label}
-                value={param.value}
-                min={param.min}
-                max={param.max}
-                color={section.color}
-                size="sm"
-                onChange={param.onChange}
+            {/* Section header with LED */}
+            <div className="flex items-center gap-2 mb-2">
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{
+                  backgroundColor: section.color,
+                  boxShadow: `0 0 8px ${section.color}`,
+                }}
               />
-            ))}
+              <span
+                className="text-[9px] font-semibold tracking-wider uppercase"
+                style={{ color: section.color }}
+              >
+                {section.label}
+              </span>
+              {/* Drag handle indicator */}
+              <div className="ml-auto flex gap-0.5 opacity-30">
+                <div className="w-0.5 h-2 bg-current rounded-full" />
+                <div className="w-0.5 h-2 bg-current rounded-full" />
+              </div>
+            </div>
+
+            {/* Visualizer */}
+            <div
+              className="flex-1 flex items-center justify-center rounded-md mb-2"
+              style={{
+                background: 'linear-gradient(180deg, #0d0f12 0%, #1a1d24 100%)',
+                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.4)',
+                minHeight: '40px',
+              }}
+            >
+              {section.visualizer}
+            </div>
+
+            {/* Knobs row */}
+            <div className="flex justify-around gap-3">
+              {section.params.map((param) => (
+                <Knob
+                  key={param.label}
+                  label={param.label}
+                  value={param.value}
+                  min={param.min}
+                  max={param.max}
+                  color={section.color}
+                  size="sm"
+                  onChange={param.onChange}
+                />
+              ))}
+            </div>
           </div>
-        </button>
-      ))}
+        )
+      })}
     </div>
   )
 }

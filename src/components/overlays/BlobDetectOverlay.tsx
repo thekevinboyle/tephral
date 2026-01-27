@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react'
-import { useBlobDetectStore, type Blob } from '../../stores/blobDetectStore'
+import { useBlobDetectStore, type Blob, type TrailPoint } from '../../stores/blobDetectStore'
 import { useMediaStore } from '../../stores/mediaStore'
 import {
   BrightnessDetector,
@@ -22,7 +22,7 @@ export function BlobDetectOverlay({ width, height }: Props) {
   const trailSystem = useRef<TrailSystem | null>(null)
   const renderer = useRef<BlobRenderer | null>(null)
   const frameId = useRef<number>(0)
-  const trailsRef = useRef<typeof trails>([])
+  const trailsRef = useRef<TrailPoint[]>([])
 
   const { enabled, params, setBlobs, trails, setTrails, clearTrails } = useBlobDetectStore()
   const { videoElement, imageElement } = useMediaStore()
@@ -71,18 +71,31 @@ export function BlobDetectOverlay({ width, height }: Props) {
       return
     }
 
+    // Check if source has valid dimensions
+    const sourceWidth = videoElement?.videoWidth || imageElement?.naturalWidth || 0
+    const sourceHeight = videoElement?.videoHeight || imageElement?.naturalHeight || 0
+    if (sourceWidth === 0 || sourceHeight === 0) {
+      frameId.current = requestAnimationFrame(animate)
+      return
+    }
+
     // Select detector based on mode
     let blobs: Blob[] = []
-    switch (params.mode) {
-      case 'brightness':
-        blobs = brightnessDetector.current?.detect(source, params) || []
-        break
-      case 'motion':
-        blobs = motionDetector.current?.detect(source, params) || []
-        break
-      case 'color':
-        blobs = colorDetector.current?.detect(source, params) || []
-        break
+    try {
+      switch (params.mode) {
+        case 'brightness':
+          blobs = brightnessDetector.current?.detect(source, params) || []
+          break
+        case 'motion':
+          blobs = motionDetector.current?.detect(source, params) || []
+          break
+        case 'color':
+          blobs = colorDetector.current?.detect(source, params) || []
+          break
+      }
+    } catch (err) {
+      console.error('Blob detection error:', err)
+      blobs = []
     }
 
     setBlobs(blobs)

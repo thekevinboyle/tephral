@@ -292,6 +292,560 @@ function EffectParameters({ effectId }: { effectId: string }) {
         </div>
       )
 
+    case 'chromatic':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Intensity"
+            value={glitch.chromaticAberration.intensity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateChromaticAberration({ intensity: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="chromatic.intensity"
+          />
+          <SliderRow
+            label="Radial Amount"
+            value={glitch.chromaticAberration.radialAmount}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateChromaticAberration({ radialAmount: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="chromatic.radialAmount"
+          />
+          <SliderRow
+            label="Direction"
+            value={glitch.chromaticAberration.direction}
+            min={0}
+            max={360}
+            step={1}
+            onChange={(v) => glitch.updateChromaticAberration({ direction: v })}
+            format={(v) => `${v.toFixed(0)}°`}
+            paramId="chromatic.direction"
+          />
+          <SliderRow
+            label="Red Offset"
+            value={glitch.chromaticAberration.redOffset}
+            min={-0.05}
+            max={0.05}
+            step={0.001}
+            onChange={(v) => glitch.updateChromaticAberration({ redOffset: v })}
+            format={(v) => (v * 100).toFixed(1)}
+            paramId="chromatic.redOffset"
+          />
+          <SliderRow
+            label="Blue Offset"
+            value={glitch.chromaticAberration.blueOffset}
+            min={-0.05}
+            max={0.05}
+            step={0.001}
+            onChange={(v) => glitch.updateChromaticAberration({ blueOffset: v })}
+            format={(v) => (v * 100).toFixed(1)}
+            paramId="chromatic.blueOffset"
+          />
+        </div>
+      )
+
+    case 'vhs':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Tear Intensity"
+            value={glitch.vhsTracking.tearIntensity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateVHSTracking({ tearIntensity: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="vhs.tearIntensity"
+          />
+          <SliderRow
+            label="Tear Speed"
+            value={glitch.vhsTracking.tearSpeed}
+            min={0.1}
+            max={5}
+            step={0.1}
+            onChange={(v) => glitch.updateVHSTracking({ tearSpeed: v })}
+            paramId="vhs.tearSpeed"
+          />
+          <SliderRow
+            label="Head Switch Noise"
+            value={glitch.vhsTracking.headSwitchNoise}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateVHSTracking({ headSwitchNoise: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="vhs.headSwitchNoise"
+          />
+          <SliderRow
+            label="Color Bleed"
+            value={glitch.vhsTracking.colorBleed}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateVHSTracking({ colorBleed: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="vhs.colorBleed"
+          />
+          <SliderRow
+            label="Jitter"
+            value={glitch.vhsTracking.jitter}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateVHSTracking({ jitter: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="vhs.jitter"
+          />
+        </div>
+      )
+
+    case 'lens':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Curvature"
+            value={glitch.lensDistortion.curvature}
+            min={-1}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateLensDistortion({ curvature: v })}
+            format={(v) => v.toFixed(2)}
+            paramId="lens.curvature"
+          />
+          <SliderRow
+            label="Fresnel Rings"
+            value={glitch.lensDistortion.fresnelRings}
+            min={0}
+            max={20}
+            step={1}
+            onChange={(v) => glitch.updateLensDistortion({ fresnelRings: v })}
+            format={(v) => v.toFixed(0)}
+            paramId="lens.fresnelRings"
+          />
+          <SliderRow
+            label="Fresnel Intensity"
+            value={glitch.lensDistortion.fresnelIntensity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateLensDistortion({ fresnelIntensity: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="lens.fresnelIntensity"
+          />
+          <SliderRow
+            label="Fresnel Rainbow"
+            value={glitch.lensDistortion.fresnelRainbow}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateLensDistortion({ fresnelRainbow: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="lens.fresnelRainbow"
+          />
+          <SliderRow
+            label="Vignette"
+            value={glitch.lensDistortion.vignette}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateLensDistortion({ vignette: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="lens.vignette"
+          />
+          <SliderRow
+            label="Vignette Shape"
+            value={glitch.lensDistortion.vignetteShape}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateLensDistortion({ vignetteShape: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="lens.vignetteShape"
+          />
+          <SliderRow
+            label="Phosphor Glow"
+            value={glitch.lensDistortion.phosphorGlow}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateLensDistortion({ phosphorGlow: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="lens.phosphorGlow"
+          />
+        </div>
+      )
+
+    case 'dither':
+      return (
+        <div className="space-y-1">
+          <SelectRow
+            label="Mode"
+            value={glitch.dither.mode}
+            options={[
+              { value: 'ordered', label: 'Ordered' },
+              { value: 'halftone', label: 'Halftone' },
+              { value: 'newsprint', label: 'Newsprint' },
+            ]}
+            onChange={(v) => glitch.updateDither({ mode: v as 'ordered' | 'halftone' | 'newsprint' })}
+          />
+          <SliderRow
+            label="Intensity"
+            value={glitch.dither.intensity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateDither({ intensity: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="dither.intensity"
+          />
+          <SliderRow
+            label="Scale"
+            value={glitch.dither.scale}
+            min={1}
+            max={8}
+            step={1}
+            onChange={(v) => glitch.updateDither({ scale: v })}
+            format={(v) => v.toFixed(0)}
+            paramId="dither.scale"
+          />
+          <SliderRow
+            label="Color Depth"
+            value={glitch.dither.colorDepth}
+            min={2}
+            max={16}
+            step={1}
+            onChange={(v) => glitch.updateDither({ colorDepth: v })}
+            format={(v) => v.toFixed(0)}
+            paramId="dither.colorDepth"
+          />
+          <SliderRow
+            label="Angle"
+            value={glitch.dither.angle}
+            min={0}
+            max={180}
+            step={1}
+            onChange={(v) => glitch.updateDither({ angle: v })}
+            format={(v) => `${v.toFixed(0)}°`}
+            paramId="dither.angle"
+          />
+        </div>
+      )
+
+    case 'posterize':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Levels"
+            value={glitch.posterize.levels}
+            min={2}
+            max={16}
+            step={1}
+            onChange={(v) => glitch.updatePosterize({ levels: v })}
+            format={(v) => v.toFixed(0)}
+            paramId="posterize.levels"
+          />
+          <SelectRow
+            label="Mode"
+            value={glitch.posterize.mode}
+            options={[
+              { value: 'rgb', label: 'RGB' },
+              { value: 'hsl', label: 'HSL' },
+            ]}
+            onChange={(v) => glitch.updatePosterize({ mode: v as 'rgb' | 'hsl' })}
+          />
+          <SliderRow
+            label="Saturation Boost"
+            value={glitch.posterize.saturationBoost}
+            min={0}
+            max={2}
+            step={0.01}
+            onChange={(v) => glitch.updatePosterize({ saturationBoost: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="posterize.saturationBoost"
+          />
+          <SliderRow
+            label="Edge Contrast"
+            value={glitch.posterize.edgeContrast}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updatePosterize({ edgeContrast: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="posterize.edgeContrast"
+          />
+        </div>
+      )
+
+    case 'static_displace':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Intensity"
+            value={glitch.staticDisplacement.intensity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateStaticDisplacement({ intensity: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="static_displace.intensity"
+          />
+          <SliderRow
+            label="Scale"
+            value={glitch.staticDisplacement.scale}
+            min={1}
+            max={100}
+            step={1}
+            onChange={(v) => glitch.updateStaticDisplacement({ scale: v })}
+            format={(v) => v.toFixed(0)}
+            paramId="static_displace.scale"
+          />
+          <SliderRow
+            label="Speed"
+            value={glitch.staticDisplacement.speed}
+            min={0}
+            max={10}
+            step={0.1}
+            onChange={(v) => glitch.updateStaticDisplacement({ speed: v })}
+            paramId="static_displace.speed"
+          />
+          <SelectRow
+            label="Direction"
+            value={glitch.staticDisplacement.direction}
+            options={[
+              { value: 'both', label: 'Both' },
+              { value: 'horizontal', label: 'Horizontal' },
+              { value: 'vertical', label: 'Vertical' },
+            ]}
+            onChange={(v) => glitch.updateStaticDisplacement({ direction: v as 'both' | 'horizontal' | 'vertical' })}
+          />
+          <SelectRow
+            label="Noise Type"
+            value={glitch.staticDisplacement.noiseType}
+            options={[
+              { value: 'white', label: 'White' },
+              { value: 'perlin', label: 'Perlin' },
+            ]}
+            onChange={(v) => glitch.updateStaticDisplacement({ noiseType: v as 'white' | 'perlin' })}
+          />
+        </div>
+      )
+
+    case 'color_grade':
+      return (
+        <div className="space-y-1">
+          <SectionLabel label="Lift (Shadows)" />
+          <SliderRow
+            label="Red"
+            value={glitch.colorGrade.liftR}
+            min={-1}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ liftR: v })}
+            paramId="color_grade.liftR"
+          />
+          <SliderRow
+            label="Green"
+            value={glitch.colorGrade.liftG}
+            min={-1}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ liftG: v })}
+            paramId="color_grade.liftG"
+          />
+          <SliderRow
+            label="Blue"
+            value={glitch.colorGrade.liftB}
+            min={-1}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ liftB: v })}
+            paramId="color_grade.liftB"
+          />
+          <SectionLabel label="Gamma (Midtones)" />
+          <SliderRow
+            label="Red"
+            value={glitch.colorGrade.gammaR}
+            min={0.5}
+            max={2}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ gammaR: v })}
+            paramId="color_grade.gammaR"
+          />
+          <SliderRow
+            label="Green"
+            value={glitch.colorGrade.gammaG}
+            min={0.5}
+            max={2}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ gammaG: v })}
+            paramId="color_grade.gammaG"
+          />
+          <SliderRow
+            label="Blue"
+            value={glitch.colorGrade.gammaB}
+            min={0.5}
+            max={2}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ gammaB: v })}
+            paramId="color_grade.gammaB"
+          />
+          <SectionLabel label="Gain (Highlights)" />
+          <SliderRow
+            label="Red"
+            value={glitch.colorGrade.gainR}
+            min={0}
+            max={2}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ gainR: v })}
+            paramId="color_grade.gainR"
+          />
+          <SliderRow
+            label="Green"
+            value={glitch.colorGrade.gainG}
+            min={0}
+            max={2}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ gainG: v })}
+            paramId="color_grade.gainG"
+          />
+          <SliderRow
+            label="Blue"
+            value={glitch.colorGrade.gainB}
+            min={0}
+            max={2}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ gainB: v })}
+            paramId="color_grade.gainB"
+          />
+          <SectionLabel label="Global" />
+          <SliderRow
+            label="Saturation"
+            value={glitch.colorGrade.saturation}
+            min={0}
+            max={2}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ saturation: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="color_grade.saturation"
+          />
+          <SliderRow
+            label="Contrast"
+            value={glitch.colorGrade.contrast}
+            min={0}
+            max={2}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ contrast: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="color_grade.contrast"
+          />
+          <SliderRow
+            label="Brightness"
+            value={glitch.colorGrade.brightness}
+            min={-1}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ brightness: v })}
+            paramId="color_grade.brightness"
+          />
+          <SectionLabel label="Tint" />
+          <ColorRow
+            label="Tint Color"
+            value={glitch.colorGrade.tintColor}
+            onChange={(v) => glitch.updateColorGrade({ tintColor: v })}
+          />
+          <SliderRow
+            label="Tint Amount"
+            value={glitch.colorGrade.tintAmount}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateColorGrade({ tintAmount: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="color_grade.tintAmount"
+          />
+          <SelectRow
+            label="Tint Mode"
+            value={glitch.colorGrade.tintMode}
+            options={[
+              { value: 'overlay', label: 'Overlay' },
+              { value: 'multiply', label: 'Multiply' },
+              { value: 'screen', label: 'Screen' },
+            ]}
+            onChange={(v) => glitch.updateColorGrade({ tintMode: v as 'overlay' | 'multiply' | 'screen' })}
+          />
+        </div>
+      )
+
+    case 'feedback':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Decay"
+            value={glitch.feedbackLoop.decay}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => glitch.updateFeedbackLoop({ decay: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="feedback.decay"
+          />
+          <SliderRow
+            label="Offset X"
+            value={glitch.feedbackLoop.offsetX}
+            min={-0.1}
+            max={0.1}
+            step={0.001}
+            onChange={(v) => glitch.updateFeedbackLoop({ offsetX: v })}
+            format={(v) => (v * 100).toFixed(1)}
+            paramId="feedback.offsetX"
+          />
+          <SliderRow
+            label="Offset Y"
+            value={glitch.feedbackLoop.offsetY}
+            min={-0.1}
+            max={0.1}
+            step={0.001}
+            onChange={(v) => glitch.updateFeedbackLoop({ offsetY: v })}
+            format={(v) => (v * 100).toFixed(1)}
+            paramId="feedback.offsetY"
+          />
+          <SliderRow
+            label="Zoom"
+            value={glitch.feedbackLoop.zoom}
+            min={0.9}
+            max={1.1}
+            step={0.001}
+            onChange={(v) => glitch.updateFeedbackLoop({ zoom: v })}
+            format={(v) => `${(v * 100).toFixed(1)}%`}
+            paramId="feedback.zoom"
+          />
+          <SliderRow
+            label="Rotation"
+            value={glitch.feedbackLoop.rotation}
+            min={-10}
+            max={10}
+            step={0.1}
+            onChange={(v) => glitch.updateFeedbackLoop({ rotation: v })}
+            format={(v) => `${v.toFixed(1)}°`}
+            paramId="feedback.rotation"
+          />
+          <SliderRow
+            label="Hue Shift"
+            value={glitch.feedbackLoop.hueShift}
+            min={0}
+            max={60}
+            step={1}
+            onChange={(v) => glitch.updateFeedbackLoop({ hueShift: v })}
+            format={(v) => `${v.toFixed(0)}°`}
+            paramId="feedback.hueShift"
+          />
+        </div>
+      )
+
     case 'ascii':
     case 'matrix':
       return (

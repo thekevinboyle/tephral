@@ -66,17 +66,17 @@ export function TransportBar() {
       <button
         onClick={isRecording ? stopRecording : startRecording}
         disabled={!hasSource}
-        className="w-6 h-6 rounded-full flex items-center justify-center transition-all"
+        className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
         style={{
           backgroundColor: isRecording ? '#ef4444' : '#f5f5f5',
           border: '1px solid #d0d0d0',
-          boxShadow: isRecording ? '0 0 8px #ef4444' : 'none',
+          boxShadow: isRecording ? '0 0 10px #ef4444' : 'none',
           opacity: hasSource ? 1 : 0.5,
           cursor: hasSource ? 'pointer' : 'not-allowed',
         }}
       >
         <div
-          className={`${isRecording ? 'w-2 h-2 rounded-sm' : 'w-2.5 h-2.5 rounded-full'}`}
+          className={`${isRecording ? 'w-2.5 h-2.5 rounded-sm' : 'w-3 h-3 rounded-full'}`}
           style={{
             backgroundColor: isRecording ? '#ffffff' : '#ef4444',
           }}
@@ -85,9 +85,9 @@ export function TransportBar() {
 
       {/* Timecode */}
       <span
-        className="text-[12px] tabular-nums"
+        className="text-[14px] tabular-nums"
         style={{
-          color: '#666666',
+          color: '#444444',
           fontFamily: "'JetBrains Mono', monospace",
         }}
       >
@@ -98,7 +98,7 @@ export function TransportBar() {
       {hasSource && (
         <button
           onClick={reset}
-          className="text-[11px] font-medium transition-colors hover:text-gray-900"
+          className="text-[13px] font-medium transition-colors hover:text-gray-900"
           style={{ color: '#666666' }}
         >
           Clear

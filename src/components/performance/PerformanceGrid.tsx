@@ -175,13 +175,32 @@ export function PerformanceGrid() {
     }
   }
 
+  // Create 16 slots for 4x4 grid, padding with nulls if needed
+  const gridSlots = [...EFFECTS]
+  while (gridSlots.length < 16) {
+    gridSlots.push(null as unknown as typeof EFFECTS[0])
+  }
+
   return (
     <div
       className="h-full flex items-center justify-center p-3"
       style={{ width: '50vw' }}
     >
       <div className="grid grid-cols-4 grid-rows-4 gap-2 w-full h-full">
-        {EFFECTS.map((effect) => {
+        {gridSlots.map((effect, index) => {
+          if (!effect) {
+            // Empty placeholder cell
+            return (
+              <div
+                key={`empty-${index}`}
+                className="rounded-lg"
+                style={{
+                  backgroundColor: '#e5e5e5',
+                  border: '1px solid #d0d0d0',
+                }}
+              />
+            )
+          }
           const state = getEffectState(effect.id)
           return (
             <EffectButton

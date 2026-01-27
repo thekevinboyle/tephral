@@ -2,32 +2,26 @@ import { useState } from 'react'
 import { MinimalSlider } from '../ui/MinimalSlider'
 import { MinimalToggle } from '../ui/MinimalToggle'
 import {
-  useDetectionStore,
   useLandmarksStore,
-  useDetectionOverlayStore,
-  usePointNetworkStore,
+  useBlobDetectStore,
   useAsciiRenderStore,
   useStippleStore,
 } from '../../stores/visionStores'
 
-type VisionMode = 'detect' | 'landmarks' | 'overlay' | 'network' | 'ascii' | 'stipple'
+type VisionMode = 'blob' | 'landmarks' | 'ascii' | 'stipple'
 
 const modes: { id: VisionMode; label: string }[] = [
-  { id: 'detect', label: 'Detect' },
+  { id: 'blob', label: 'Detect' },
   { id: 'landmarks', label: 'Points' },
-  { id: 'overlay', label: 'Boxes' },
-  { id: 'network', label: 'Graph' },
   { id: 'ascii', label: 'ASCII' },
   { id: 'stipple', label: 'Dots' },
 ]
 
 export function VisionPanel() {
-  const [activeMode, setActiveMode] = useState<VisionMode>('detect')
+  const [activeMode, setActiveMode] = useState<VisionMode>('blob')
 
-  const detection = useDetectionStore()
+  const blobDetect = useBlobDetectStore()
   const landmarks = useLandmarksStore()
-  const overlay = useDetectionOverlayStore()
-  const network = usePointNetworkStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
 
@@ -50,31 +44,47 @@ export function VisionPanel() {
         ))}
       </div>
 
-      {/* Detection controls */}
-      {activeMode === 'detect' && (
+      {/* Blob Detection controls */}
+      {activeMode === 'blob' && (
         <div className="flex flex-col gap-2">
           <MinimalToggle
-            label="Object Detection"
-            pressed={detection.enabled}
-            onPressedChange={detection.setEnabled}
+            label="Blob Detection"
+            pressed={blobDetect.enabled}
+            onPressedChange={blobDetect.setEnabled}
           />
-          {detection.enabled && (
+          {blobDetect.enabled && (
             <>
+              <div className="flex gap-1 mt-2">
+                {(['brightness', 'motion', 'color'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => blobDetect.setMode(mode)}
+                    className={`px-2 py-1 text-xs uppercase transition-colors ${
+                      blobDetect.params.mode === mode
+                        ? 'bg-accent-yellow text-base-dark'
+                        : 'text-muted hover:text-base-light'
+                    }`}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
               <MinimalSlider
-                label="Confidence"
-                value={detection.minConfidence}
-                min={0.1}
-                max={0.9}
-                onChange={detection.setMinConfidence}
+                label="Threshold"
+                value={blobDetect.params.threshold}
+                min={0}
+                max={1}
+                onChange={(v) => blobDetect.updateParams({ threshold: v })}
               />
-              <MinimalSlider
-                label="Max Items"
-                value={detection.maxDetections}
-                min={1}
-                max={20}
-                step={1}
-                onChange={detection.setMaxDetections}
-                formatValue={(v) => v.toFixed(0)}
+              <MinimalToggle
+                label="Trails"
+                pressed={blobDetect.params.trailEnabled}
+                onPressedChange={(v) => blobDetect.updateParams({ trailEnabled: v })}
+              />
+              <MinimalToggle
+                label="Glow"
+                pressed={blobDetect.params.glowEnabled}
+                onPressedChange={(v) => blobDetect.updateParams({ glowEnabled: v })}
               />
             </>
           )}
@@ -118,111 +128,6 @@ export function VisionPanel() {
                 min={0.1}
                 max={0.9}
                 onChange={landmarks.setMinDetectionConfidence}
-              />
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Overlay controls */}
-      {activeMode === 'overlay' && (
-        <div className="flex flex-col gap-2">
-          <MinimalToggle
-            label="Bounding Boxes"
-            pressed={overlay.enabled}
-            onPressedChange={(enabled) => {
-              overlay.setEnabled(enabled)
-              // Auto-enable detection when overlay is turned on
-              if (enabled && !detection.enabled) {
-                detection.setEnabled(true)
-              }
-            }}
-          />
-          {!detection.enabled && overlay.enabled && (
-            <div className="text-xs text-accent-yellow">Enable Object Detection first</div>
-          )}
-          {overlay.enabled && (
-            <>
-              <div className="flex gap-1 mt-2">
-                {(['solid', 'dashed', 'corners'] as const).map(style => (
-                  <button
-                    key={style}
-                    onClick={() => overlay.updateParams({ boxStyle: style })}
-                    className={`px-2 py-1 text-xs uppercase transition-colors ${
-                      overlay.params.boxStyle === style
-                        ? 'bg-accent-yellow text-base-dark'
-                        : 'text-muted hover:text-base-light'
-                    }`}
-                  >
-                    {style}
-                  </button>
-                ))}
-              </div>
-              <MinimalSlider
-                label="Line Width"
-                value={overlay.params.boxLineWidth}
-                min={1}
-                max={6}
-                step={1}
-                onChange={(v) => overlay.updateParams({ boxLineWidth: v })}
-                formatValue={(v) => v.toFixed(0)}
-              />
-              <MinimalToggle
-                label="Show Labels"
-                pressed={overlay.params.showLabels}
-                onPressedChange={(v) => overlay.updateParams({ showLabels: v })}
-              />
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Network controls */}
-      {activeMode === 'network' && (
-        <div className="flex flex-col gap-2">
-          <MinimalToggle
-            label="Point Network"
-            pressed={network.enabled}
-            onPressedChange={(enabled) => {
-              network.setEnabled(enabled)
-              // Auto-enable landmarks when network is turned on
-              if (enabled && !landmarks.enabled) {
-                landmarks.setEnabled(true)
-                if (landmarks.currentMode === 'off') {
-                  landmarks.setCurrentMode('face')
-                }
-              }
-            }}
-          />
-          {!landmarks.enabled && network.enabled && (
-            <div className="text-xs text-accent-yellow">Enable Landmark Detection first</div>
-          )}
-          {network.enabled && (
-            <>
-              <MinimalToggle
-                label="Show Points"
-                pressed={network.params.showPoints}
-                onPressedChange={(v) => network.updateParams({ showPoints: v })}
-              />
-              <MinimalToggle
-                label="Show Lines"
-                pressed={network.params.showLines}
-                onPressedChange={(v) => network.updateParams({ showLines: v })}
-              />
-              <MinimalSlider
-                label="Point Size"
-                value={network.params.pointRadius}
-                min={1}
-                max={10}
-                onChange={(v) => network.updateParams({ pointRadius: v })}
-                formatValue={(v) => v.toFixed(0)}
-              />
-              <MinimalSlider
-                label="Max Dist"
-                value={network.params.maxDistance}
-                min={0.05}
-                max={0.5}
-                onChange={(v) => network.updateParams({ maxDistance: v })}
               />
             </>
           )}

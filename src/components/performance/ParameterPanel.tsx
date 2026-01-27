@@ -4,7 +4,7 @@ import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
-import { usePointNetworkStore } from '../../stores/pointNetworkStore'
+import { useBlobDetectStore } from '../../stores/blobDetectStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useRoutingStore } from '../../stores/routingStore'
 import { EFFECTS } from '../../config/effects'
@@ -42,7 +42,7 @@ export function ParameterPanel() {
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
   const landmarks = useLandmarksStore()
-  const network = usePointNetworkStore()
+  const blobDetect = useBlobDetectStore()
 
   // Build active effect sections
   const sections: ParameterSection[] = []
@@ -309,34 +309,34 @@ export function ParameterPanel() {
     })
   }
 
-  // Point Network
-  if (network.enabled) {
-    const color = '#00ffaa'
+  // Blob Detection
+  if (blobDetect.enabled) {
+    const color = '#65a30d'
     sections.push({
-      id: 'network',
-      label: 'NETWORK',
+      id: 'blob_detect',
+      label: 'DETECT',
       color,
       visualizer: (
         <NetworkViz
-          pointRadius={network.params.pointRadius}
-          maxDistance={network.params.maxDistance}
+          pointRadius={4}
+          maxDistance={blobDetect.params.threshold}
           color={color}
         />
       ),
       params: [
         {
-          label: 'Radius',
-          value: network.params.pointRadius,
-          min: 1,
-          max: 10,
-          onChange: (v) => network.updateParams({ pointRadius: v }),
+          label: 'Thresh',
+          value: blobDetect.params.threshold * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => blobDetect.updateParams({ threshold: v / 100 }),
         },
         {
-          label: 'MaxDst',
-          value: network.params.maxDistance * 100,
-          min: 5,
-          max: 50,
-          onChange: (v) => network.updateParams({ maxDistance: v / 100 }),
+          label: 'MinSize',
+          value: blobDetect.params.minSize * 100,
+          min: 0,
+          max: 20,
+          onChange: (v) => blobDetect.updateParams({ minSize: v / 100 }),
         },
       ],
     })

@@ -113,11 +113,8 @@ export class BlobRenderer {
     ctx.moveTo(pts[0].x, pts[0].y)
 
     for (let i = 1; i < pts.length - 1; i++) {
-      const p0 = pts[i - 1]
       const p1 = pts[i]
       const p2 = pts[i + 1]
-
-      const smoothness = params.lineSmoothness
 
       const midX = (p1.x + p2.x) / 2
       const midY = (p1.y + p2.y) / 2

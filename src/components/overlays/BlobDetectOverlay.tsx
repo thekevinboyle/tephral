@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react'
-import { useBlobDetectStore } from '../../stores/blobDetectStore'
+import { useBlobDetectStore, type Blob } from '../../stores/blobDetectStore'
 import { useMediaStore } from '../../stores/mediaStore'
 import {
   BrightnessDetector,
@@ -72,7 +72,7 @@ export function BlobDetectOverlay({ width, height }: Props) {
     }
 
     // Select detector based on mode
-    let blobs: typeof trails = []
+    let blobs: Blob[] = []
     switch (params.mode) {
       case 'brightness':
         blobs = brightnessDetector.current?.detect(source, params) || []

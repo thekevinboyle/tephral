@@ -17,7 +17,7 @@ interface ParamDef {
 }
 
 export function GraphicPanelV2() {
-  const { selectedEffectId, setSelectedEffectId } = useUIStore()
+  const { selectedEffectId, setSelectedEffect: setSelectedEffectId } = useUIStore()
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()

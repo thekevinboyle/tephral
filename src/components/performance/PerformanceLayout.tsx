@@ -1,6 +1,7 @@
 import { useRef, useCallback } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { PreviewHeader } from './PreviewHeader'
+import { TransportBar } from './TransportBar'
 import { ParameterPanel } from './ParameterPanel'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
@@ -100,7 +101,7 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Middle bar (5vh) - placeholder for future controls */}
+      {/* Transport bar (5vh) */}
       <div
         className="flex-shrink-0 mx-3"
         style={{
@@ -109,7 +110,9 @@ export function PerformanceLayout() {
           backgroundColor: '#f0f0f0',
           borderTop: '1px solid #d0d0d0',
         }}
-      />
+      >
+        <TransportBar />
+      </div>
 
       {/* Parameter strip (12vh) - horizontal scrollable, draggable */}
       <div

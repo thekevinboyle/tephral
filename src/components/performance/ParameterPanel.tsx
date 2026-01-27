@@ -47,7 +47,7 @@ interface ParameterSection {
 
 export function ParameterPanel() {
   const glitch = useGlitchEngineStore()
-  const { effectBypassed, soloEffectId, soloLatched, bypassActive, setBypassActive } = useGlitchEngineStore()
+  const { effectBypassed, toggleEffectBypassed, soloEffectId, soloLatched, bypassActive, setBypassActive } = useGlitchEngineStore()
 
   // Solo filtering: check if we're in solo mode
   const isSoloing = soloEffectId !== null
@@ -990,7 +990,7 @@ export function ParameterPanel() {
             onPointerDown={(e) => handlePointerDown(e, index)}
             onPointerMove={(e) => handlePointerMove(e, index)}
             onPointerUp={(e) => handlePointerUp(e, index)}
-            onDoubleClick={() => disableEffect(section.id)}
+            onDoubleClick={() => toggleEffectBypassed(section.id)}
             onDragOver={(e) => {
               if (sequencerDrag.isDragging) {
                 e.preventDefault()

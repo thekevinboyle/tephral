@@ -5,7 +5,7 @@ import { useBankStore } from '../../stores/bankStore'
 const BANK_LABELS = ['A', 'B', 'C', 'D']
 
 export function BankPanel() {
-  const { banks, activeBank, loadBank, saveBank } = useBankStore()
+  const { banks, activeBank, loadBank, saveBank, clearBank } = useBankStore()
 
   return (
     <div
@@ -26,6 +26,7 @@ export function BankPanel() {
               isActive={activeBank === index}
               onLoad={() => loadBank(index)}
               onSave={() => saveBank(index)}
+              onClear={() => clearBank(index)}
             />
           </div>
         ))}

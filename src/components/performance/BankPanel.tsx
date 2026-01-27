@@ -28,21 +28,12 @@ export function BankPanel() {
   const [previousState, setPreviousState] = useState<EffectState | null>(null)
   const { banks, activeBank, loadBank, saveBank, clearBank } = useBankStore()
   const glitch = useGlitchEngineStore()
-  const { bypassActive, setBypassActive } = glitch
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
   const blobDetect = useBlobDetectStore()
   const landmarks = useLandmarksStore()
 
   const hasPreviousState = previousState !== null
-
-  const handleBypassDown = useCallback(() => {
-    setBypassActive(true)
-  }, [setBypassActive])
-
-  const handleBypassUp = useCallback(() => {
-    setBypassActive(false)
-  }, [setBypassActive])
 
   // Capture current state
   const captureState = useCallback((): EffectState => {
@@ -148,24 +139,6 @@ export function BankPanel() {
     }
   }, [previousState, restoreState])
 
-  const handleClear = useCallback(() => {
-    // Save state before clearing
-    setPreviousState(captureState())
-
-    // Disable all effects
-    glitch.setRGBSplitEnabled(false)
-    glitch.setBlockDisplaceEnabled(false)
-    glitch.setScanLinesEnabled(false)
-    glitch.setNoiseEnabled(false)
-    glitch.setPixelateEnabled(false)
-    glitch.setEdgeDetectionEnabled(false)
-    ascii.setEnabled(false)
-    stipple.setEnabled(false)
-    blobDetect.setEnabled(false)
-    landmarks.setEnabled(false)
-    landmarks.setCurrentMode('off')
-  }, [captureState, glitch, ascii, stipple, blobDetect, landmarks])
-
   return (
     <div
       className="h-full flex items-center gap-2 px-2 py-1.5"
@@ -190,20 +163,6 @@ export function BankPanel() {
 
       {/* Action buttons */}
       <button
-        onClick={handleClear}
-        className="h-full px-4 rounded-lg text-[13px] font-medium transition-colors active:scale-95"
-        style={{
-          backgroundColor: '#f5f5f5',
-          border: '1px solid #d0d0d0',
-          color: '#666666',
-        }}
-        onPointerDown={(e) => (e.currentTarget.style.backgroundColor = '#e0e0e0')}
-        onPointerUp={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-        onPointerLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-      >
-        Clear
-      </button>
-      <button
         onClick={handleRandom}
         className="h-full px-4 rounded-lg text-[13px] font-medium transition-colors active:scale-95"
         style={{
@@ -211,9 +170,10 @@ export function BankPanel() {
           border: '1px solid #d0d0d0',
           color: '#666666',
         }}
-        onPointerDown={(e) => (e.currentTarget.style.backgroundColor = '#e0e0e0')}
-        onPointerUp={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-        onPointerLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onPointerDown={(e) => (e.currentTarget.style.backgroundColor = '#d8d8d8')}
+        onPointerUp={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
       >
         Random
       </button>
@@ -227,26 +187,12 @@ export function BankPanel() {
           color: hasPreviousState ? '#666666' : '#c0c0c0',
           cursor: hasPreviousState ? 'pointer' : 'not-allowed',
         }}
-        onPointerDown={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#e0e0e0')}
-        onPointerUp={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-        onPointerLeave={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onMouseEnter={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
+        onMouseLeave={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onPointerDown={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#d8d8d8')}
+        onPointerUp={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
       >
         Undo
-      </button>
-      <button
-        onPointerDown={handleBypassDown}
-        onPointerUp={handleBypassUp}
-        onPointerLeave={handleBypassUp}
-        onPointerCancel={handleBypassUp}
-        className="h-full px-4 rounded-lg text-[13px] font-medium transition-all select-none touch-none active:scale-95"
-        style={{
-          backgroundColor: bypassActive ? '#ef4444' : '#f5f5f5',
-          border: bypassActive ? '1px solid #ef4444' : '1px solid #d0d0d0',
-          boxShadow: bypassActive ? '0 0 12px #ef4444' : 'none',
-          color: bypassActive ? '#ffffff' : '#666666',
-        }}
-      >
-        Bypass
       </button>
     </div>
   )

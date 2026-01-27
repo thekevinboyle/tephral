@@ -37,7 +37,7 @@ interface ParameterSection {
 
 export function ParameterPanel() {
   const glitch = useGlitchEngineStore()
-  const { effectBypassed, toggleEffectBypassed, soloEffectId, soloLatched } = useGlitchEngineStore()
+  const { effectBypassed, toggleEffectBypassed, soloEffectId, soloLatched, bypassActive, setBypassActive } = useGlitchEngineStore()
 
   // Solo filtering: check if we're in solo mode
   const isSoloing = soloEffectId !== null
@@ -68,6 +68,30 @@ export function ParameterPanel() {
   const stipple = useStippleStore()
   const landmarks = useLandmarksStore()
   const blobDetect = useBlobDetectStore()
+
+  // Clear all effects
+  const handleClear = useCallback(() => {
+    glitch.setRGBSplitEnabled(false)
+    glitch.setBlockDisplaceEnabled(false)
+    glitch.setScanLinesEnabled(false)
+    glitch.setNoiseEnabled(false)
+    glitch.setPixelateEnabled(false)
+    glitch.setEdgeDetectionEnabled(false)
+    ascii.setEnabled(false)
+    stipple.setEnabled(false)
+    blobDetect.setEnabled(false)
+    landmarks.setEnabled(false)
+    landmarks.setCurrentMode('off')
+  }, [glitch, ascii, stipple, blobDetect, landmarks])
+
+  // Bypass handlers
+  const handleBypassDown = useCallback(() => {
+    setBypassActive(true)
+  }, [setBypassActive])
+
+  const handleBypassUp = useCallback(() => {
+    setBypassActive(false)
+  }, [setBypassActive])
 
   // Build active effect sections
   const sections: ParameterSection[] = []
@@ -539,22 +563,82 @@ export function ParameterPanel() {
     isDragging.current = false
   }, [dragIndex, dragOverIndex, effectOrder, reorderEffect, setSelectedEffect, sortedSections])
 
+  // Control buttons component (reused in both views)
+  const ControlButtons = () => (
+    <div
+      className="flex flex-col gap-2 rounded-lg"
+      style={{
+        backgroundColor: '#ffffff',
+        border: '1px solid #d0d0d0',
+        padding: '10px',
+        width: 'calc((100vw / 3 - 32px) / 4)',
+        flexShrink: 0,
+      }}
+    >
+      <button
+        onClick={handleClear}
+        className="flex-1 w-full rounded text-[11px] font-medium transition-colors active:scale-95"
+        style={{
+          backgroundColor: '#f5f5f5',
+          border: '1px solid #d0d0d0',
+          color: '#666666',
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onPointerDown={(e) => (e.currentTarget.style.backgroundColor = '#d8d8d8')}
+        onPointerUp={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
+      >
+        Clear
+      </button>
+      <button
+        onMouseEnter={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
+        onMouseLeave={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onPointerDown={(e) => {
+          handleBypassDown()
+          if (!bypassActive) e.currentTarget.style.backgroundColor = '#d8d8d8'
+        }}
+        onPointerUp={(e) => {
+          handleBypassUp()
+          e.currentTarget.style.backgroundColor = '#f5f5f5'
+        }}
+        onPointerLeave={(e) => {
+          handleBypassUp()
+          e.currentTarget.style.backgroundColor = '#f5f5f5'
+        }}
+        onPointerCancel={handleBypassUp}
+        className="flex-1 w-full rounded text-[11px] font-medium transition-all select-none touch-none active:scale-95"
+        style={{
+          backgroundColor: bypassActive ? '#ef4444' : '#f5f5f5',
+          border: bypassActive ? '1px solid #ef4444' : '1px solid #d0d0d0',
+          boxShadow: bypassActive ? '0 0 12px #ef4444' : 'none',
+          color: bypassActive ? '#ffffff' : '#666666',
+        }}
+      >
+        Bypass
+      </button>
+    </div>
+  )
+
   if (sortedSections.length === 0) {
     return (
       <div
-        className="h-full flex items-center justify-center"
+        className="h-full flex items-stretch gap-3 px-4 py-2"
       >
-        <span className="text-[10px] text-[#999999] uppercase tracking-wider">
-          No active effects — drag to reorder
-        </span>
+        <ControlButtons />
+        <div className="flex-1 flex items-center justify-center">
+          <span className="text-[10px] text-[#999999] uppercase tracking-wider">
+            No active effects — drag to reorder
+          </span>
+        </div>
       </div>
     )
   }
 
   return (
     <div
-      className="h-full flex items-stretch gap-3 overflow-x-auto px-4 py-3"
+      className="h-full flex items-stretch gap-3 overflow-x-auto px-4 py-2"
     >
+      <ControlButtons />
       {sortedSections.map((section, index) => {
         const isBeingDragged = dragIndex === index
         const isDropTarget = dragOverIndex === index && dragIndex !== null && dragIndex !== index
@@ -570,12 +654,12 @@ export function ParameterPanel() {
           return `0 0 20px rgba(${hexToRgb(section.color)}, ${shadowOpacity}), 0 0 40px rgba(${hexToRgb(section.color)}, ${shadowOpacity * 0.5})`
         }
 
-        // Border color based on state
-        const borderColor = isBeingDragged
-          ? displayColor
-          : selectedEffectId === section.id && !isBypassed
-          ? `${section.color}66`
-          : '#333333'
+        // Border color - keep consistent
+        const borderColor = isBeingDragged ? displayColor : '#d0d0d0'
+
+        // Selection glow as box-shadow instead of border change
+        const isSelected = selectedEffectId === section.id && !isBypassed
+        const selectionShadow = isSelected ? `inset 0 0 0 2px ${section.color}40` : ''
 
         const soloShadow = getSoloShadow()
 
@@ -594,11 +678,11 @@ export function ParameterPanel() {
             onPointerMove={(e) => handlePointerMove(e, index)}
             onPointerUp={(e) => handlePointerUp(e, index)}
             onDoubleClick={() => toggleEffectBypassed(section.id)}
-            className="flex-shrink-0 flex flex-col select-none touch-none cursor-grab active:cursor-grabbing group"
+            className="flex-shrink-0 flex flex-col select-none touch-none cursor-grab active:cursor-grabbing group rounded-lg"
             style={{
-              backgroundColor: isBypassed ? '#2a2a2a' : '#1a1a1a',
+              backgroundColor: isBypassed ? '#e5e5e5' : '#ffffff',
               border: `1px solid ${borderColor}`,
-              boxShadow: soloShadow || 'none',
+              boxShadow: [selectionShadow, soloShadow].filter(Boolean).join(', ') || 'none',
               minWidth: '120px',
               padding: '10px',
               transform: isBeingDragged ? 'scale(1.03)' : 'scale(1)',
@@ -606,8 +690,6 @@ export function ParameterPanel() {
               zIndex: isBeingDragged ? 10 : 1,
               marginLeft: isDropTarget ? '60px' : '0',
               transition: 'border-color 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.15s ease-out, opacity 0.15s ease-out, margin-left 0.15s ease-out',
-              clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%)',
-              borderRadius: '4px 0 4px 4px',
             }}
           >
             {/* Header row: LED, label, close button */}
@@ -615,14 +697,14 @@ export function ParameterPanel() {
               <div
                 className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                 style={{
-                  backgroundColor: isBypassed || isMuted ? '#444' : displayColor,
+                  backgroundColor: isBypassed || isMuted ? '#bbb' : displayColor,
                   boxShadow: isBypassed || isMuted ? 'none' : `0 0 6px ${section.color}`,
                 }}
               />
               <span
                 className="text-[8px] tracking-widest uppercase"
                 style={{
-                  color: isBypassed || isMuted ? '#444' : '#666',
+                  color: isBypassed || isMuted ? '#999' : '#666',
                   fontFamily: "'JetBrains Mono', monospace",
                 }}
               >
@@ -643,7 +725,7 @@ export function ParameterPanel() {
                   style={{
                     width: '10px',
                     height: '1.5px',
-                    backgroundColor: '#444',
+                    backgroundColor: '#999',
                     opacity: 0.3,
                   }}
                   onMouseEnter={(e) => {
@@ -653,7 +735,7 @@ export function ParameterPanel() {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.width = '10px'
-                    e.currentTarget.style.backgroundColor = '#444'
+                    e.currentTarget.style.backgroundColor = '#999'
                     e.currentTarget.style.opacity = '0.3'
                   }}
                 />
@@ -677,32 +759,31 @@ export function ParameterPanel() {
             </div>
 
             {/* Numeric readouts */}
-            <div className="mt-2">
+            <div className="mt-2 flex-1 flex flex-col justify-end">
               {/* Primary value - large, accent color */}
               <div
                 className="font-bold"
                 style={{
                   fontSize: '24px',
                   lineHeight: 1,
-                  color: isBypassed || isMuted ? '#444' : displayColor,
+                  color: isBypassed || isMuted ? '#bbb' : displayColor,
                   fontFamily: "'JetBrains Mono', monospace",
                 }}
               >
                 {primaryValue}
               </div>
-              {/* Secondary param - small, gray */}
-              {secondaryValue && (
-                <div
-                  style={{
-                    fontSize: '9px',
-                    color: '#555',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    marginTop: '2px',
-                  }}
-                >
-                  {secondaryValue}
-                </div>
-              )}
+              {/* Secondary param - small, gray (always reserve space) */}
+              <div
+                style={{
+                  fontSize: '9px',
+                  color: '#555',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  marginTop: '2px',
+                  minHeight: '12px',
+                }}
+              >
+                {secondaryValue || '\u00A0'}
+              </div>
             </div>
           </div>
         )

@@ -10,6 +10,7 @@ import { ThumbnailFilmstrip } from './ThumbnailFilmstrip'
 import { ExportModal } from './ExportModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { SequencerPanel } from '../sequencer/SequencerPanel'
+import { PresetLibraryPanel } from '../presets/PresetLibraryPanel'
 import { useCanvasCapture } from '../../hooks/useCanvasCapture'
 import { useRecordingStore, type ExportFormat, type ExportQuality } from '../../stores/recordingStore'
 
@@ -74,16 +75,16 @@ export function PerformanceLayout() {
           border: '1px solid #d0d0d0',
         }}
       >
-        {/* Left placeholder panel */}
+        {/* Preset Library Panel */}
         <div
-          className="flex-shrink-0 flex items-center justify-center"
+          className="flex-shrink-0"
           style={{
             width: '280px',
             backgroundColor: '#f5f5f5',
             borderRight: '1px solid #d0d0d0',
           }}
         >
-          <span className="text-[11px] text-gray-400">Timeline</span>
+          <PresetLibraryPanel canvasRef={captureRef} />
         </div>
 
         {/* Canvas area (center) */}

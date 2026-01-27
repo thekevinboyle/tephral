@@ -160,9 +160,8 @@ export class OrganicRenderer {
       const p3 = points[Math.min(points.length - 1, i + 2)];
 
       // Generate interpolated points for this segment
-      const numSegments = i === points.length - 2 ? SPLINE_SEGMENTS : SPLINE_SEGMENTS;
-      for (let j = 0; j <= (i === points.length - 2 ? numSegments : numSegments - 1); j++) {
-        const t = j / numSegments;
+      for (let j = 0; j <= (i === points.length - 2 ? SPLINE_SEGMENTS : SPLINE_SEGMENTS - 1); j++) {
+        const t = j / SPLINE_SEGMENTS;
 
         // Catmull-Rom basis functions
         const t2 = t * t;
@@ -173,16 +172,16 @@ export class OrganicRenderer {
         const x =
           0.5 *
           (2 * p1.x +
-            (-p0.x + p2.x) * t * tension * 2 +
-            (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 * tension * 2 +
-            (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3 * tension * 2);
+            (-p0.x + p2.x) * t * tension +
+            (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 * tension +
+            (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3 * tension);
 
         const y =
           0.5 *
           (2 * p1.y +
-            (-p0.y + p2.y) * t * tension * 2 +
-            (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 * tension * 2 +
-            (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3 * tension * 2);
+            (-p0.y + p2.y) * t * tension +
+            (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 * tension +
+            (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3 * tension);
 
         result.push({ x, y });
       }
@@ -192,25 +191,29 @@ export class OrganicRenderer {
   }
 
   /**
-   * Interpolate widths along the spline based on control point widths.
-   * @param controlPoints - Original control points with widths
+   * Interpolate widths and opacity along the spline based on control point values.
+   * @param controlPoints - Original control points with widths and optional opacity
    * @param splinePoints - Interpolated spline points
-   * @returns Spline points with interpolated widths
+   * @returns Spline points with interpolated widths and opacity
    */
   private interpolateWidths(
-    controlPoints: { x: number; y: number; width: number }[],
+    controlPoints: { x: number; y: number; width: number; opacity?: number }[],
     splinePoints: { x: number; y: number }[]
-  ): { x: number; y: number; width: number }[] {
+  ): { x: number; y: number; width: number; opacity: number }[] {
     if (controlPoints.length < 2 || splinePoints.length === 0) {
-      return splinePoints.map((p) => ({ ...p, width: controlPoints[0]?.width || 1 }));
+      return splinePoints.map((p) => ({
+        ...p,
+        width: controlPoints[0]?.width || 1,
+        opacity: controlPoints[0]?.opacity ?? 1,
+      }));
     }
 
-    const result: { x: number; y: number; width: number }[] = [];
+    const result: { x: number; y: number; width: number; opacity: number }[] = [];
     const totalSplinePoints = splinePoints.length;
 
     for (let i = 0; i < totalSplinePoints; i++) {
       // Calculate which segment this point belongs to
-      const t = i / (totalSplinePoints - 1);
+      const t = totalSplinePoints === 1 ? 0 : i / (totalSplinePoints - 1);
       const segmentFloat = t * (controlPoints.length - 1);
       const segmentIndex = Math.min(Math.floor(segmentFloat), controlPoints.length - 2);
       const localT = segmentFloat - segmentIndex;
@@ -220,9 +223,15 @@ export class OrganicRenderer {
       const w2 = controlPoints[segmentIndex + 1].width;
       const width = w1 + (w2 - w1) * localT;
 
+      // Interpolate opacity between control points
+      const o1 = controlPoints[segmentIndex].opacity ?? 1;
+      const o2 = controlPoints[segmentIndex + 1].opacity ?? 1;
+      const opacity = o1 + (o2 - o1) * localT;
+
       result.push({
         ...splinePoints[i],
         width,
+        opacity,
       });
     }
 
@@ -233,11 +242,11 @@ export class OrganicRenderer {
    * Draw a stroke with variable width using filled polygons.
    * Creates offset curves on both sides of the path and fills the resulting shape.
    * @param ctx - Canvas 2D rendering context
-   * @param points - Points with x, y, and width properties
+   * @param points - Points with x, y, width, and optional opacity properties
    */
   private drawVariableWidthStroke(
     ctx: CanvasRenderingContext2D,
-    points: { x: number; y: number; width: number }[]
+    points: { x: number; y: number; width: number; opacity?: number }[]
   ): void {
     if (points.length < 2) return;
 
@@ -328,6 +337,12 @@ export class OrganicRenderer {
     ctx.arc(firstPoint.x, firstPoint.y, firstPoint.width / 2, startAngle, startAngle + Math.PI);
 
     ctx.closePath();
+
+    // Apply average opacity from points
+    const avgOpacity =
+      points.reduce((sum, p) => sum + (p.opacity ?? 1), 0) / points.length;
+    ctx.globalAlpha = avgOpacity;
+
     ctx.fill();
   }
 
@@ -384,8 +399,9 @@ export class OrganicRenderer {
    * @param contours - Current tracked contours
    * @param timestamp - Current timestamp in milliseconds
    * @param trailLength - Trail duration in seconds
+   * @param style - Render style configuration
    */
-  updateTrails(contours: TrackedContour[], timestamp: number, trailLength: number): void {
+  updateTrails(contours: TrackedContour[], timestamp: number, trailLength: number, style: RenderStyle): void {
     const trailDurationMs = Math.min(trailLength * 1000, MAX_TRAIL_DURATION);
 
     // Track which contour IDs are currently active
@@ -401,7 +417,7 @@ export class OrganicRenderer {
       }
 
       // Calculate width based on velocity
-      const width = this.calculateWidth(contour.velocity, 3, 0.5); // Use reasonable defaults
+      const width = this.calculateWidth(contour.velocity, style.baseWidth, style.velocityResponse);
 
       // Add new point at the head (index 0)
       const newPoint: TrailPoint = {

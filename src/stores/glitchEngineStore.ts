@@ -88,7 +88,7 @@ interface GlitchEngineState {
 export const useGlitchEngineStore = create<GlitchEngineState>((set, get) => ({
   enabled: true,
 
-  rgbSplitEnabled: true,
+  rgbSplitEnabled: false,
   blockDisplaceEnabled: false,
   scanLinesEnabled: false,
   noiseEnabled: false,
@@ -146,7 +146,7 @@ export const useGlitchEngineStore = create<GlitchEngineState>((set, get) => ({
 
   reset: () => set({
     enabled: true,
-    rgbSplitEnabled: true,
+    rgbSplitEnabled: false,
     blockDisplaceEnabled: false,
     scanLinesEnabled: false,
     noiseEnabled: false,

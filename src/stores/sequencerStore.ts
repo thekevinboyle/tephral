@@ -65,6 +65,10 @@ interface SequencerState {
   // Undo for randomize
   previousStepsSnapshot: Track[] | null
 
+  // Audio reactive
+  audioReactive: boolean
+  audioLevel: number
+
   // Transport actions
   play: () => void
   stop: () => void
@@ -106,6 +110,10 @@ interface SequencerState {
   // Playback state
   advanceStep: () => void
   getCurrentValues: () => Map<string, number>
+
+  // Audio reactive actions
+  setAudioReactive: (active: boolean) => void
+  setAudioLevel: (level: number) => void
 }
 
 const TRACK_COLORS = [
@@ -167,6 +175,10 @@ export const useSequencerStore = create<SequencerState>((set, get) => ({
 
   // Undo
   previousStepsSnapshot: null,
+
+  // Audio reactive
+  audioReactive: false,
+  audioLevel: 0,
 
   // Transport actions
   play: () => set({ isPlaying: true }),
@@ -417,8 +429,18 @@ export const useSequencerStore = create<SequencerState>((set, get) => ({
   },
 
   getCurrentValues: () => {
-    const { tracks, routings, gateMode } = get()
+    const { tracks, routings, gateMode, audioReactive, audioLevel } = get()
     const values = new Map<string, number>()
+
+    // If audio reactive mode, use audio level directly for all routings
+    if (audioReactive) {
+      for (const routing of routings) {
+        const modulatedValue = audioLevel * routing.depth
+        const existing = values.get(routing.targetParam) ?? 0
+        values.set(routing.targetParam, Math.max(-1, Math.min(1, existing + modulatedValue)))
+      }
+      return values
+    }
 
     // Check for solo tracks
     const hasSolo = tracks.some((t) => t.solo)
@@ -461,4 +483,8 @@ export const useSequencerStore = create<SequencerState>((set, get) => ({
 
     return values
   },
+
+  // Audio reactive actions
+  setAudioReactive: (active) => set({ audioReactive: active }),
+  setAudioLevel: (level) => set({ audioLevel: level }),
 }))

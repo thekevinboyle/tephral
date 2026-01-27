@@ -113,28 +113,32 @@ export function TransportBar() {
   }, [isRecording, setCurrentTime, addThumbnail, videoElement])
 
   return (
-    <div className="h-full flex items-center gap-3 px-4">
+    <div className="h-full flex items-center gap-2 px-3 py-1.5">
       {/* Source buttons */}
       <button
         onClick={handleWebcam}
-        className="h-7 px-3 text-[11px] font-medium rounded transition-colors"
+        className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
         style={{
-          backgroundColor: source === 'webcam' ? '#333' : '#f5f5f5',
+          backgroundColor: source === 'webcam' ? '#333333' : '#f5f5f5',
           border: '1px solid #d0d0d0',
-          color: source === 'webcam' ? '#fff' : '#666',
+          color: source === 'webcam' ? '#ffffff' : '#666666',
         }}
+        onMouseEnter={(e) => source !== 'webcam' && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
+        onMouseLeave={(e) => source !== 'webcam' && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
       >
         Cam
       </button>
 
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="h-7 px-3 text-[11px] font-medium rounded transition-colors"
+        className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
         style={{
-          backgroundColor: source === 'file' ? '#333' : '#f5f5f5',
+          backgroundColor: source === 'file' ? '#333333' : '#f5f5f5',
           border: '1px solid #d0d0d0',
-          color: source === 'file' ? '#fff' : '#666',
+          color: source === 'file' ? '#ffffff' : '#666666',
         }}
+        onMouseEnter={(e) => source !== 'file' && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
+        onMouseLeave={(e) => source !== 'file' && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
       >
         File
       </button>
@@ -186,12 +190,14 @@ export function TransportBar() {
       {hasSource && (
         <button
           onClick={reset}
-          className="h-7 px-3 text-[11px] font-medium rounded transition-colors"
+          className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
           style={{
             backgroundColor: '#f5f5f5',
             border: '1px solid #d0d0d0',
-            color: '#666',
+            color: '#666666',
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
         >
           Clear
         </button>

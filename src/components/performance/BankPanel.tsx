@@ -27,7 +27,9 @@ interface EffectState {
 export function BankPanel() {
   const [previousState, setPreviousState] = useState<EffectState | null>(null)
   const [isRekt, setIsRekt] = useState(false)
+  const [isRektLocked, setIsRektLocked] = useState(false)
   const rektStateRef = useRef<EffectState | null>(null)
+  const rektPressTimeRef = useRef<number>(0)
   const { banks, activeBank, loadBank, saveBank, clearBank } = useBankStore()
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
@@ -142,8 +144,16 @@ export function BankPanel() {
   }, [previousState, restoreState])
 
   // REKT - CHAOS MODE - max out only ACTIVE effects
+  // Quick tap = toggle lock, hold = momentary
   const handleRektDown = useCallback(() => {
-    // Capture current state
+    rektPressTimeRef.current = Date.now()
+
+    // If already locked, pressing will unlock
+    if (isRektLocked) {
+      return // Handle in handleRektUp
+    }
+
+    // Capture current state and apply REKT
     rektStateRef.current = captureState()
     setIsRekt(true)
 
@@ -213,16 +223,33 @@ export function BankPanel() {
         jitter: 1,
       })
     }
-  }, [captureState, glitch, ascii, stipple])
+  }, [captureState, glitch, ascii, stipple, isRektLocked])
 
   const handleRektUp = useCallback(() => {
-    // Restore original state
-    if (rektStateRef.current) {
-      restoreState(rektStateRef.current)
-      rektStateRef.current = null
+    const pressDuration = Date.now() - rektPressTimeRef.current
+    const isQuickTap = pressDuration < 200
+
+    if (isRektLocked) {
+      // Currently locked - unlock and restore
+      if (rektStateRef.current) {
+        restoreState(rektStateRef.current)
+        rektStateRef.current = null
+      }
+      setIsRekt(false)
+      setIsRektLocked(false)
+    } else if (isQuickTap) {
+      // Quick tap - lock REKT on
+      setIsRektLocked(true)
+      // Keep isRekt true, don't restore
+    } else {
+      // Long press release - restore original state
+      if (rektStateRef.current) {
+        restoreState(rektStateRef.current)
+        rektStateRef.current = null
+      }
+      setIsRekt(false)
     }
-    setIsRekt(false)
-  }, [restoreState])
+  }, [restoreState, isRektLocked])
 
   return (
     <div
@@ -263,22 +290,6 @@ export function BankPanel() {
         Random
       </button>
       <button
-        onPointerDown={handleRektDown}
-        onPointerUp={handleRektUp}
-        onPointerLeave={handleRektUp}
-        onPointerCancel={handleRektUp}
-        className="h-full px-4 rounded-lg text-[13px] font-medium transition-all select-none touch-none"
-        style={{
-          backgroundColor: isRekt ? '#ef4444' : '#f5f5f5',
-          border: isRekt ? '1px solid #dc2626' : '1px solid #d0d0d0',
-          color: isRekt ? '#ffffff' : '#666666',
-          boxShadow: isRekt ? '0 0 12px rgba(239, 68, 68, 0.5)' : 'none',
-          transform: isRekt ? 'scale(1.05)' : 'scale(1)',
-        }}
-      >
-        REKT
-      </button>
-      <button
         onClick={handleUndo}
         disabled={!hasPreviousState}
         className="h-full px-4 rounded-lg text-[13px] font-medium transition-colors active:scale-95"
@@ -294,6 +305,23 @@ export function BankPanel() {
         onPointerUp={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
       >
         Undo
+      </button>
+      <button
+        onPointerDown={handleRektDown}
+        onPointerUp={handleRektUp}
+        onPointerLeave={isRektLocked ? undefined : handleRektUp}
+        onPointerCancel={isRektLocked ? undefined : handleRektUp}
+        className="h-full px-4 rounded-lg text-[13px] font-medium transition-all select-none touch-none"
+        style={{
+          backgroundColor: isRekt ? '#ef4444' : '#f5f5f5',
+          border: isRektLocked ? '2px solid #b91c1c' : isRekt ? '1px solid #dc2626' : '1px solid #d0d0d0',
+          color: isRekt ? '#ffffff' : '#666666',
+          boxShadow: isRekt ? '0 0 12px rgba(239, 68, 68, 0.5)' : 'none',
+          transform: isRekt ? 'scale(1.05)' : 'scale(1)',
+        }}
+        title={isRektLocked ? 'Click to unlock' : 'Hold or tap to lock'}
+      >
+        {isRektLocked ? 'REKT 🔒' : 'REKT'}
       </button>
     </div>
   )

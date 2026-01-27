@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useSequencerStore, type StepResolution, type StepMode } from '../../stores/sequencerStore'
 import { useSequencerPlayback } from '../../hooks/useSequencerPlayback'
+import { useAudioAnalysis } from '../../hooks/useAudioAnalysis'
 import { Track } from './Track'
 import { StepDetailPopup } from './StepDetailPopup'
 
@@ -22,6 +23,8 @@ export function SequencerPanel() {
     fillModeActive,
     previousStepsSnapshot,
     frozenState,
+    audioReactive,
+    audioLevel,
     play,
     stop,
     setBpm,
@@ -33,12 +36,16 @@ export function SequencerPanel() {
     undoRandomize,
     freeze,
     revert,
+    setAudioReactive,
   } = useSequencerStore()
 
   const [stepDetailOpen, setStepDetailOpen] = useState<{ trackId: string; stepIndex: number } | null>(null)
 
   // Initialize playback engine
   useSequencerPlayback()
+
+  // Initialize audio analysis
+  useAudioAnalysis()
 
   const handleOpenStepDetail = useCallback((trackId: string, stepIndex: number) => {
     setStepDetailOpen({ trackId, stepIndex })
@@ -143,6 +150,34 @@ export function SequencerPanel() {
           }}
         >
           {stepResolution}
+        </button>
+
+        {/* Audio Reactive Toggle */}
+        <button
+          onClick={() => setAudioReactive(!audioReactive)}
+          className="h-7 px-2 text-[11px] font-medium rounded flex items-center gap-1.5"
+          style={{
+            backgroundColor: audioReactive ? '#8b5cf6' : '#ffffff',
+            border: audioReactive ? '1px solid #7c3aed' : '1px solid #d0d0d0',
+            color: audioReactive ? '#ffffff' : '#666666',
+          }}
+          title="Audio reactive mode - modulates parameters based on audio input"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+            <line x1="12" y1="19" x2="12" y2="22" />
+          </svg>
+          {audioReactive && (
+            <div
+              className="w-1.5 h-3 rounded-sm"
+              style={{
+                backgroundColor: '#ffffff',
+                opacity: 0.3 + audioLevel * 0.7,
+                transform: `scaleY(${0.3 + audioLevel * 0.7})`,
+              }}
+            />
+          )}
         </button>
       </div>
 

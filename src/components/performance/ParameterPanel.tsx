@@ -570,14 +570,22 @@ export function ParameterPanel() {
           return `0 0 20px rgba(${hexToRgb(section.color)}, ${shadowOpacity}), 0 0 40px rgba(${hexToRgb(section.color)}, ${shadowOpacity * 0.5})`
         }
 
-        const baseShadow = isBeingDragged
-          ? `0 8px 24px rgba(0,0,0,0.15), 0 0 0 2px ${displayColor}`
+        // Border color based on state
+        const borderColor = isBeingDragged
+          ? displayColor
           : selectedEffectId === section.id && !isBypassed
-          ? `0 0 0 1px ${section.color}60, 0 2px 8px rgba(0,0,0,0.08)`
-          : '0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px #d0d0d0'
+          ? `${section.color}66`
+          : '#333333'
 
         const soloShadow = getSoloShadow()
-        const combinedShadow = soloShadow ? `${baseShadow}, ${soloShadow}` : baseShadow
+
+        // Get primary and secondary values from params
+        const primaryParam = section.params[0]
+        const secondaryParam = section.params[1]
+        const primaryValue = primaryParam ? Math.round(primaryParam.value) : 0
+        const secondaryValue = secondaryParam
+          ? `${secondaryParam.label.toLowerCase()}: ${Math.round(secondaryParam.value)}`
+          : null
 
         return (
           <div
@@ -586,62 +594,115 @@ export function ParameterPanel() {
             onPointerMove={(e) => handlePointerMove(e, index)}
             onPointerUp={(e) => handlePointerUp(e, index)}
             onDoubleClick={() => toggleEffectBypassed(section.id)}
-            className="flex-shrink-0 flex flex-col rounded-lg select-none touch-none cursor-grab active:cursor-grabbing"
+            className="flex-shrink-0 flex flex-col select-none touch-none cursor-grab active:cursor-grabbing group"
             style={{
-              backgroundColor: isBypassed
-                ? '#e5e5e5'
-                : selectedEffectId === section.id
-                ? '#ffffff'
-                : '#ffffff',
-              boxShadow: combinedShadow,
-              minWidth: '140px',
-              padding: '12px',
-              transform: isBeingDragged ? 'scale(1.05)' : 'scale(1)',
-              opacity: isBypassed || isMuted ? 0.5 : isBeingDragged ? 0.9 : 1,
+              backgroundColor: isBypassed ? '#2a2a2a' : '#1a1a1a',
+              border: `1px solid ${borderColor}`,
+              boxShadow: soloShadow || 'none',
+              minWidth: '120px',
+              padding: '10px',
+              transform: isBeingDragged ? 'scale(1.03)' : 'scale(1)',
+              opacity: isBypassed ? 0.6 : isMuted ? 0.5 : isBeingDragged ? 0.9 : 1,
               zIndex: isBeingDragged ? 10 : 1,
               marginLeft: isDropTarget ? '60px' : '0',
-              transition: 'box-shadow 0.15s ease-out, transform 0.15s ease-out, opacity 0.15s ease-out, margin-left 0.15s ease-out',
-              filter: isBypassed ? 'grayscale(100%)' : isMuted ? 'grayscale(50%)' : 'none',
+              transition: 'border-color 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.15s ease-out, opacity 0.15s ease-out, margin-left 0.15s ease-out',
+              clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%)',
+              borderRadius: '4px 0 4px 4px',
             }}
           >
-            {/* Section header with LED */}
-            <div className="flex items-center gap-2 mb-2">
+            {/* Header row: LED, label, close button */}
+            <div className="flex items-center gap-1.5 mb-2">
               <div
-                className="w-2 h-2 rounded-full"
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                 style={{
-                  backgroundColor: displayColor,
-                  boxShadow: isBypassed || isMuted ? 'none' : `0 0 8px ${section.color}`,
+                  backgroundColor: isBypassed || isMuted ? '#444' : displayColor,
+                  boxShadow: isBypassed || isMuted ? 'none' : `0 0 6px ${section.color}`,
                 }}
               />
               <span
-                className="text-[9px] font-semibold tracking-wider uppercase"
-                style={{ color: isBypassed || isMuted ? '#999999' : '#1a1a1a' }}
+                className="text-[8px] tracking-widest uppercase"
+                style={{
+                  color: isBypassed || isMuted ? '#444' : '#666',
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}
               >
                 {section.label}
               </span>
-              {/* Close button */}
+              {/* Close button - line style */}
               <button
                 onPointerDown={(e) => e.stopPropagation()}
                 onPointerUp={(e) => {
                   e.stopPropagation()
                   disableEffect(section.id)
                 }}
-                className="ml-auto w-4 h-4 flex items-center justify-center rounded hover:bg-gray-200 transition-colors"
-                style={{ color: '#999999' }}
+                className="ml-auto flex items-center justify-center transition-all"
+                style={{ width: '20px', height: '20px' }}
               >
-                <span className="text-xs leading-none">×</span>
+                <div
+                  className="transition-all group-hover:opacity-100"
+                  style={{
+                    width: '10px',
+                    height: '1.5px',
+                    backgroundColor: '#444',
+                    opacity: 0.3,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.width = '14px'
+                    e.currentTarget.style.backgroundColor = '#f44'
+                    e.currentTarget.style.opacity = '1'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.width = '10px'
+                    e.currentTarget.style.backgroundColor = '#444'
+                    e.currentTarget.style.opacity = '0.3'
+                  }}
+                />
               </button>
             </div>
 
-            {/* Visualizer */}
+            {/* Inset OLED screen - visualizer */}
             <div
-              className="flex-1 flex items-center justify-center rounded-md"
+              className="flex items-center justify-center"
               style={{
-                backgroundColor: '#1a1a1a',
-                minHeight: '40px',
+                backgroundColor: '#000',
+                border: '1px solid #333',
+                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
+                borderRadius: '2px',
+                minHeight: '50px',
+                margin: '0 -2px',
+                padding: '1px',
               }}
             >
               {section.visualizer}
+            </div>
+
+            {/* Numeric readouts */}
+            <div className="mt-2">
+              {/* Primary value - large, accent color */}
+              <div
+                className="font-bold"
+                style={{
+                  fontSize: '24px',
+                  lineHeight: 1,
+                  color: isBypassed || isMuted ? '#444' : displayColor,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}
+              >
+                {primaryValue}
+              </div>
+              {/* Secondary param - small, gray */}
+              {secondaryValue && (
+                <div
+                  style={{
+                    fontSize: '9px',
+                    color: '#555',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    marginTop: '2px',
+                  }}
+                >
+                  {secondaryValue}
+                </div>
+              )}
             </div>
           </div>
         )

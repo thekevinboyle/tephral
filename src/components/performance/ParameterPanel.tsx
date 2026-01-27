@@ -543,9 +543,6 @@ export function ParameterPanel() {
     return (
       <div
         className="h-full flex items-center justify-center"
-        style={{
-          backgroundColor: '#f0f0f0',
-        }}
       >
         <span className="text-[10px] text-[#999999] uppercase tracking-wider">
           No active effects — drag to reorder
@@ -557,9 +554,6 @@ export function ParameterPanel() {
   return (
     <div
       className="h-full flex items-stretch gap-3 overflow-x-auto px-4 py-3"
-      style={{
-        backgroundColor: '#f0f0f0',
-      }}
     >
       {sortedSections.map((section, index) => {
         const isBeingDragged = dragIndex === index

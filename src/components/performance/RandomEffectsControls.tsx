@@ -151,25 +151,31 @@ export function RandomEffectsControls() {
     <div className="flex gap-2 h-full w-full">
       <button
         onClick={handleRandom}
-        className="flex-1 h-full text-[14px] font-medium rounded-lg transition-colors"
+        className="flex-1 h-full text-[14px] font-medium rounded-lg transition-colors active:scale-95"
         style={{
           backgroundColor: '#f5f5f5',
           border: '1px solid #d0d0d0',
           color: '#666666',
         }}
+        onPointerDown={(e) => (e.currentTarget.style.backgroundColor = '#e0e0e0')}
+        onPointerUp={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onPointerLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
       >
         Random
       </button>
       <button
         onClick={handleStepBack}
         disabled={!hasPreviousState}
-        className="flex-1 h-full text-[14px] font-medium rounded-lg transition-colors"
+        className="flex-1 h-full text-[14px] font-medium rounded-lg transition-colors active:scale-95"
         style={{
           backgroundColor: hasPreviousState ? '#f5f5f5' : '#f0f0f0',
           border: '1px solid #d0d0d0',
           color: hasPreviousState ? '#666666' : '#c0c0c0',
           cursor: hasPreviousState ? 'pointer' : 'not-allowed',
         }}
+        onPointerDown={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#e0e0e0')}
+        onPointerUp={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onPointerLeave={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
       >
         Undo
       </button>

@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { EffectButton } from './EffectButton'
 import { EFFECTS } from '../../config/effects'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
@@ -5,6 +6,7 @@ import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useBlobDetectStore } from '../../stores/blobDetectStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
+import { useRoutingStore } from '../../stores/routingStore'
 
 export function PerformanceGrid() {
   // Glitch engine store
@@ -19,6 +21,16 @@ export function PerformanceGrid() {
   // Vision stores
   const landmarks = useLandmarksStore()
 
+  // Routing store for effect order
+  const { effectOrder, setEffectOrder } = useRoutingStore()
+
+  // Move an effect to the end of the chain when enabled
+  const moveToEndOfChain = useCallback((effectId: string) => {
+    const newOrder = effectOrder.filter(id => id !== effectId)
+    newOrder.push(effectId)
+    setEffectOrder(newOrder)
+  }, [effectOrder, setEffectOrder])
+
   // Check if an effect is soloed
   const isSoloing = soloEffectId !== null
 
@@ -29,49 +41,70 @@ export function PerformanceGrid() {
         return {
           active: glitch.rgbSplitEnabled,
           value: glitch.rgbSplit.amount,
-          onToggle: () => glitch.setRGBSplitEnabled(!glitch.rgbSplitEnabled),
+          onToggle: () => {
+            if (!glitch.rgbSplitEnabled) moveToEndOfChain(effectId)
+            glitch.setRGBSplitEnabled(!glitch.rgbSplitEnabled)
+          },
           onValueChange: (v: number) => glitch.updateRGBSplit({ amount: v }),
         }
       case 'block_displace':
         return {
           active: glitch.blockDisplaceEnabled,
-          value: glitch.blockDisplace.displaceDistance * 1000, // Scale for display (0-100)
-          onToggle: () => glitch.setBlockDisplaceEnabled(!glitch.blockDisplaceEnabled),
+          value: glitch.blockDisplace.displaceDistance * 1000,
+          onToggle: () => {
+            if (!glitch.blockDisplaceEnabled) moveToEndOfChain(effectId)
+            glitch.setBlockDisplaceEnabled(!glitch.blockDisplaceEnabled)
+          },
           onValueChange: (v: number) => glitch.updateBlockDisplace({ displaceDistance: v / 1000 }),
         }
       case 'scan_lines':
         return {
           active: glitch.scanLinesEnabled,
           value: glitch.scanLines.lineCount,
-          onToggle: () => glitch.setScanLinesEnabled(!glitch.scanLinesEnabled),
+          onToggle: () => {
+            if (!glitch.scanLinesEnabled) moveToEndOfChain(effectId)
+            glitch.setScanLinesEnabled(!glitch.scanLinesEnabled)
+          },
           onValueChange: (v: number) => glitch.updateScanLines({ lineCount: v }),
         }
       case 'noise':
         return {
           active: glitch.noiseEnabled,
-          value: glitch.noise.amount * 100, // Scale for display (0-100)
-          onToggle: () => glitch.setNoiseEnabled(!glitch.noiseEnabled),
+          value: glitch.noise.amount * 100,
+          onToggle: () => {
+            if (!glitch.noiseEnabled) moveToEndOfChain(effectId)
+            glitch.setNoiseEnabled(!glitch.noiseEnabled)
+          },
           onValueChange: (v: number) => glitch.updateNoise({ amount: v / 100 }),
         }
       case 'pixelate':
         return {
           active: glitch.pixelateEnabled,
           value: glitch.pixelate.pixelSize,
-          onToggle: () => glitch.setPixelateEnabled(!glitch.pixelateEnabled),
+          onToggle: () => {
+            if (!glitch.pixelateEnabled) moveToEndOfChain(effectId)
+            glitch.setPixelateEnabled(!glitch.pixelateEnabled)
+          },
           onValueChange: (v: number) => glitch.updatePixelate({ pixelSize: v }),
         }
       case 'edges':
         return {
           active: glitch.edgeDetectionEnabled,
-          value: glitch.edgeDetection.threshold * 100, // Scale for display (0-100)
-          onToggle: () => glitch.setEdgeDetectionEnabled(!glitch.edgeDetectionEnabled),
+          value: glitch.edgeDetection.threshold * 100,
+          onToggle: () => {
+            if (!glitch.edgeDetectionEnabled) moveToEndOfChain(effectId)
+            glitch.setEdgeDetectionEnabled(!glitch.edgeDetectionEnabled)
+          },
           onValueChange: (v: number) => glitch.updateEdgeDetection({ threshold: v / 100 }),
         }
       case 'blob_detect':
         return {
           active: blobDetect.enabled,
           value: blobDetect.params.threshold * 100,
-          onToggle: () => blobDetect.setEnabled(!blobDetect.enabled),
+          onToggle: () => {
+            if (!blobDetect.enabled) moveToEndOfChain(effectId)
+            blobDetect.setEnabled(!blobDetect.enabled)
+          },
           onValueChange: (v: number) => blobDetect.updateParams({ threshold: v / 100 }),
         }
       case 'ascii':
@@ -82,6 +115,7 @@ export function PerformanceGrid() {
             if (ascii.enabled && ascii.params.mode === 'standard') {
               ascii.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               ascii.setEnabled(true)
               ascii.updateParams({ mode: 'standard' })
             }
@@ -96,6 +130,7 @@ export function PerformanceGrid() {
             if (ascii.enabled && ascii.params.mode === 'matrix') {
               ascii.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               ascii.setEnabled(true)
               ascii.updateParams({ mode: 'matrix' })
             }
@@ -106,7 +141,10 @@ export function PerformanceGrid() {
         return {
           active: stipple.enabled,
           value: stipple.params.particleSize,
-          onToggle: () => stipple.setEnabled(!stipple.enabled),
+          onToggle: () => {
+            if (!stipple.enabled) moveToEndOfChain(effectId)
+            stipple.setEnabled(!stipple.enabled)
+          },
           onValueChange: (v: number) => stipple.updateParams({ particleSize: v }),
         }
       case 'face_mesh':
@@ -118,6 +156,7 @@ export function PerformanceGrid() {
               landmarks.setEnabled(false)
               landmarks.setCurrentMode('off')
             } else {
+              moveToEndOfChain(effectId)
               landmarks.setEnabled(true)
               landmarks.setCurrentMode('face')
             }
@@ -133,6 +172,7 @@ export function PerformanceGrid() {
               landmarks.setEnabled(false)
               landmarks.setCurrentMode('off')
             } else {
+              moveToEndOfChain(effectId)
               landmarks.setEnabled(true)
               landmarks.setCurrentMode('hands')
             }
@@ -148,6 +188,7 @@ export function PerformanceGrid() {
               landmarks.setEnabled(false)
               landmarks.setCurrentMode('off')
             } else {
+              moveToEndOfChain(effectId)
               landmarks.setEnabled(true)
               landmarks.setCurrentMode('pose')
             }
@@ -163,6 +204,7 @@ export function PerformanceGrid() {
               landmarks.setEnabled(false)
               landmarks.setCurrentMode('off')
             } else {
+              moveToEndOfChain(effectId)
               landmarks.setEnabled(true)
               landmarks.setCurrentMode('holistic')
             }
@@ -187,8 +229,7 @@ export function PerformanceGrid() {
 
   return (
     <div
-      className="h-full flex items-center justify-center p-3"
-      style={{ width: '50vw' }}
+      className="h-full w-full flex items-center justify-center p-3"
     >
       <div className="grid grid-cols-4 grid-rows-4 gap-2 w-full h-full">
         {gridSlots.map((effect, index) => {

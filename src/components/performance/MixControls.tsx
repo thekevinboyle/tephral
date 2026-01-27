@@ -30,7 +30,9 @@ export function MixControls() {
     } catch {}
   }, [])
 
-  const thumbPosition = wetMix * 100
+  // Constrain thumb position so it doesn't overlap labels
+  // Map 0-100% to ~7%-93% of track width (half thumb width padding on each side)
+  const thumbPosition = 7 + wetMix * 86
 
   return (
     <div
@@ -54,15 +56,16 @@ export function MixControls() {
         >
           {/* Track background */}
           <div
-            className="absolute inset-x-0 h-3 rounded-full"
-            style={{ backgroundColor: '#e5e5e5' }}
+            className="absolute h-3 rounded-full"
+            style={{ left: '7%', right: '7%', backgroundColor: '#e5e5e5' }}
           />
 
           {/* Active track */}
           <div
-            className="absolute left-0 h-3 rounded-full"
+            className="absolute h-3 rounded-full"
             style={{
-              width: `${thumbPosition}%`,
+              left: '7%',
+              width: `${wetMix * 86}%`,
               backgroundColor: '#999999',
             }}
           />

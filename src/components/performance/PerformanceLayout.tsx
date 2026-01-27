@@ -112,96 +112,95 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Transport bar (5vh) */}
+      {/* Transport bar */}
       <div
-        className="flex-shrink-0 mx-3"
+        className="flex-shrink-0 mx-3 mt-3 rounded-xl overflow-hidden"
         style={{
           height: '5vh',
           minHeight: '32px',
-          backgroundColor: '#f0f0f0',
-          borderTop: '1px solid #d0d0d0',
+          backgroundColor: '#ffffff',
+          border: '1px solid #d0d0d0',
         }}
       >
         <TransportBar />
       </div>
 
-      {/* Parameter strip (12vh) - horizontal scrollable, draggable */}
+      {/* Parameter strip - horizontal scrollable, draggable */}
       <div
-        className="flex-shrink-0 mx-3"
+        className="flex-shrink-0 mx-3 mt-3 rounded-xl overflow-hidden"
         style={{
           height: '12vh',
           minHeight: '80px',
-          borderTop: '1px solid #d0d0d0',
+          backgroundColor: '#f5f5f5',
+          border: '1px solid #d0d0d0',
         }}
       >
         <ParameterPanel />
       </div>
 
-      {/* Bank panel (~4vh) - preset banks */}
+      {/* Bottom section - 3 equal columns */}
       <div
-        className="flex-shrink-0 mx-3"
-        style={{
-          height: '4vh',
-          minHeight: '40px',
-          borderTop: '1px solid #d0d0d0',
-        }}
+        className="flex-1 min-h-0 flex mx-3 mt-3 mb-3 gap-3"
       >
-        <BankPanel />
-      </div>
-
-      {/* Bottom section (~24vh) - Button grid + Graphic panel */}
-      <div
-        className="flex-1 min-h-0 flex mx-3 mb-3 gap-3"
-        style={{
-          borderTop: '1px solid #d0d0d0',
-          paddingTop: '12px',
-        }}
-      >
-        {/* Button grid - 50vw */}
-        <div className="flex flex-col" style={{ width: '50vw' }}>
+        {/* Column 1: Banks + Button grid (unified container) */}
+        <div
+          className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #d0d0d0',
+          }}
+        >
+          {/* Bank row header */}
+          <div
+            className="flex-shrink-0"
+            style={{
+              height: '52px',
+              borderBottom: '1px solid #e5e5e5',
+            }}
+          >
+            <BankPanel />
+          </div>
+          {/* Grid */}
           <div className="flex-1 min-h-0">
             <PerformanceGrid />
           </div>
         </div>
 
-        {/* Right side - (XY Pad + Mix Controls) + Graphic panel */}
-        <div className="flex-1 flex gap-3">
-          {/* XY Pad + Mix Controls column */}
-          <div className="flex-1 flex flex-col gap-3">
-            {/* XY Pad */}
-            <div
-              className="flex-1 rounded-xl overflow-hidden relative"
-              style={{
-                backgroundColor: '#ffffff',
-                border: '1px solid #d0d0d0',
-              }}
-            >
-              <XYPad />
-            </div>
-
-            {/* Mix Controls */}
-            <div
-              className="flex-shrink-0 rounded-xl overflow-hidden"
-              style={{
-                height: '80px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #d0d0d0',
-              }}
-            >
-              <MixControls />
-            </div>
-          </div>
-
-          {/* Graphic panel */}
+        {/* Column 2: XY Pad + Mix Controls */}
+        <div className="flex-1 flex flex-col gap-3">
+          {/* XY Pad */}
           <div
-            className="flex-1 rounded-xl overflow-hidden"
+            className="flex-1 rounded-xl overflow-hidden relative"
             style={{
               backgroundColor: '#ffffff',
               border: '1px solid #d0d0d0',
             }}
           >
-            <GraphicPanelV2 />
+            <XYPad />
           </div>
+
+          {/* Mix Controls */}
+          <div
+            className="flex-shrink-0 rounded-xl overflow-hidden"
+            style={{
+              height: '80px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #d0d0d0',
+            }}
+          >
+            <MixControls />
+          </div>
+        </div>
+
+        {/* Column 3: Graphic panel */}
+        <div
+          className="flex-1 rounded-xl overflow-hidden"
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #d0d0d0',
+          }}
+        >
+          <GraphicPanelV2 />
         </div>
       </div>
 

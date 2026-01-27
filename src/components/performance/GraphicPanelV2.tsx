@@ -27,16 +27,6 @@ export function GraphicPanelV2() {
 
   const effect = EFFECTS.find((e) => e.id === selectedEffectId)
 
-  // Show full parameter editor for blob_detect
-  if (selectedEffectId === 'blob_detect') {
-    return (
-      <EffectParameterEditor
-        effectId={selectedEffectId}
-        onClose={() => setSelectedEffectId(null)}
-      />
-    )
-  }
-
   // Get parameters for selected effect
   const getParams = (): ParamDef[] => {
     switch (selectedEffectId) {
@@ -224,6 +214,16 @@ export function GraphicPanelV2() {
     draw()
     return () => cancelAnimationFrame(animationId)
   }, [selectedEffectId, glitch, ascii, stipple, landmarks, effect])
+
+  // Show full parameter editor for blob_detect (after all hooks)
+  if (selectedEffectId === 'blob_detect') {
+    return (
+      <EffectParameterEditor
+        effectId={selectedEffectId}
+        onClose={() => setSelectedEffectId(null)}
+      />
+    )
+  }
 
   if (!selectedEffectId || !effect) {
     return (

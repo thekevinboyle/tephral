@@ -8,7 +8,6 @@ import { PerformanceGrid } from './PerformanceGrid'
 import { GraphicPanelV2 } from './GraphicPanelV2'
 import { XYPad } from './XYPad'
 import { MixControls } from './MixControls'
-import { RandomEffectsControls } from './RandomEffectsControls'
 import { ThumbnailFilmstrip } from './ThumbnailFilmstrip'
 import { ExportModal } from './ExportModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
@@ -180,9 +179,6 @@ export function PerformanceLayout() {
 
           {/* XY Pad + Mix Controls column */}
           <div className="flex-1 flex flex-col gap-3">
-            {/* Random/Undo buttons */}
-            <RandomEffectsControls />
-
             {/* XY Pad */}
             <div
               className="flex-1 rounded-xl overflow-hidden relative"

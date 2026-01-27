@@ -715,6 +715,21 @@ export function ParameterPanel() {
   const { effectOrder, reorderEffect } = useRoutingStore()
   const { addRouting } = useSequencerStore()
 
+  // Keyboard shortcut: 0 key toggles bypass on selected effect
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
+      if (e.key === '0' && selectedEffectId) {
+        toggleEffectBypassed(selectedEffectId)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedEffectId, toggleEffectBypassed])
+
   // Track which card is being hovered during sequencer drag
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
 

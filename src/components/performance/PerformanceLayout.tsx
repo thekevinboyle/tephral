@@ -100,6 +100,17 @@ export function PerformanceLayout() {
         </div>
       </div>
 
+      {/* Middle bar (5vh) - placeholder for future controls */}
+      <div
+        className="flex-shrink-0 mx-3"
+        style={{
+          height: '5vh',
+          minHeight: '32px',
+          backgroundColor: '#f0f0f0',
+          borderTop: '1px solid #d0d0d0',
+        }}
+      />
+
       {/* Parameter strip (12vh) - horizontal scrollable, draggable */}
       <div
         className="flex-shrink-0 mx-3"

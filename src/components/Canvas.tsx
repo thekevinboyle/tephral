@@ -42,8 +42,16 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     edgeDetection,
     wetMix,
     bypassActive,
-    effectBypassed
+    effectBypassed,
+    soloEffectId,
   } = useGlitchEngineStore()
+
+  // Solo filtering: when soloing, only the soloed effect passes through
+  const isSoloing = soloEffectId !== null
+  const getEffectiveEnabled = (effectId: string, actualEnabled: boolean) => {
+    if (!isSoloing) return actualEnabled
+    return soloEffectId === effectId && actualEnabled
+  }
 
   const { effectOrder } = useRoutingStore()
 
@@ -72,12 +80,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
     pipeline.updateEffects({
       effectOrder,
-      rgbSplitEnabled: glitchEnabled && rgbSplitEnabled && !effectBypassed['rgb_split'],
-      blockDisplaceEnabled: glitchEnabled && blockDisplaceEnabled && !effectBypassed['block_displace'],
-      scanLinesEnabled: glitchEnabled && scanLinesEnabled && !effectBypassed['scan_lines'],
-      noiseEnabled: glitchEnabled && noiseEnabled && !effectBypassed['noise'],
-      pixelateEnabled: glitchEnabled && pixelateEnabled && !effectBypassed['pixelate'],
-      edgeDetectionEnabled: glitchEnabled && edgeDetectionEnabled && !effectBypassed['edges'],
+      rgbSplitEnabled: getEffectiveEnabled('rgb_split', glitchEnabled && rgbSplitEnabled && !effectBypassed['rgb_split']),
+      blockDisplaceEnabled: getEffectiveEnabled('block_displace', glitchEnabled && blockDisplaceEnabled && !effectBypassed['block_displace']),
+      scanLinesEnabled: getEffectiveEnabled('scan_lines', glitchEnabled && scanLinesEnabled && !effectBypassed['scan_lines']),
+      noiseEnabled: getEffectiveEnabled('noise', glitchEnabled && noiseEnabled && !effectBypassed['noise']),
+      pixelateEnabled: getEffectiveEnabled('pixelate', glitchEnabled && pixelateEnabled && !effectBypassed['pixelate']),
+      edgeDetectionEnabled: getEffectiveEnabled('edges', glitchEnabled && edgeDetectionEnabled && !effectBypassed['edges']),
       wetMix,
       bypassActive,
     })
@@ -99,7 +107,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     effectOrder,
     wetMix,
     bypassActive,
-    effectBypassed
+    effectBypassed,
+    soloEffectId,
   ])
 
   // Update input texture and video dimensions

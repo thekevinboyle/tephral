@@ -1,5 +1,4 @@
 import { type ReactNode, useState, useRef, useCallback } from 'react'
-import { Knob } from './Knob'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
@@ -38,7 +37,10 @@ interface ParameterSection {
 
 export function ParameterPanel() {
   const glitch = useGlitchEngineStore()
-  const { effectBypassed, toggleEffectBypassed } = useGlitchEngineStore()
+  const { effectBypassed, toggleEffectBypassed, soloEffectId, soloLatched } = useGlitchEngineStore()
+
+  // Solo filtering: check if we're in solo mode
+  const isSoloing = soloEffectId !== null
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
   const landmarks = useLandmarksStore()
@@ -383,6 +385,47 @@ export function ParameterPanel() {
   const { selectedEffectId, setSelectedEffect } = useUIStore()
   const { effectOrder, reorderEffect } = useRoutingStore()
 
+  // Function to disable an effect by ID
+  const disableEffect = useCallback((effectId: string) => {
+    switch (effectId) {
+      case 'rgb_split':
+        glitch.setRGBSplitEnabled(false)
+        break
+      case 'block_displace':
+        glitch.setBlockDisplaceEnabled(false)
+        break
+      case 'scan_lines':
+        glitch.setScanLinesEnabled(false)
+        break
+      case 'noise':
+        glitch.setNoiseEnabled(false)
+        break
+      case 'pixelate':
+        glitch.setPixelateEnabled(false)
+        break
+      case 'edges':
+        glitch.setEdgeDetectionEnabled(false)
+        break
+      case 'ascii':
+        ascii.setEnabled(false)
+        break
+      case 'stipple':
+        stipple.setEnabled(false)
+        break
+      case 'blob_detect':
+        blobDetect.setEnabled(false)
+        break
+      case 'landmarks':
+        landmarks.setEnabled(false)
+        landmarks.setCurrentMode('off')
+        break
+    }
+    // Clear selection if this effect was selected
+    if (selectedEffectId === effectId) {
+      setSelectedEffect(null)
+    }
+  }, [glitch, ascii, stipple, blobDetect, landmarks, selectedEffectId, setSelectedEffect])
+
   // Sort sections by effectOrder
   const sortedSections = [...sections].sort((a, b) => {
     const aIndex = effectOrder.indexOf(a.id)
@@ -499,7 +542,9 @@ export function ParameterPanel() {
         const isBeingDragged = dragIndex === index
         const isDropTarget = dragOverIndex === index && dragIndex !== null && dragIndex !== index
         const isBypassed = effectBypassed[section.id] || false
-        const displayColor = isBypassed ? '#4b5563' : section.color
+        const isSoloed = soloEffectId === section.id
+        const isMuted = isSoloing && !isSoloed
+        const displayColor = isBypassed || isMuted ? '#999999' : section.color
 
         return (
           <div
@@ -523,11 +568,11 @@ export function ParameterPanel() {
               minWidth: '140px',
               padding: '12px',
               transform: isBeingDragged ? 'scale(1.05)' : 'scale(1)',
-              opacity: isBypassed ? 0.5 : isBeingDragged ? 0.9 : 1,
+              opacity: isBypassed || isMuted ? 0.5 : isBeingDragged ? 0.9 : 1,
               zIndex: isBeingDragged ? 10 : 1,
               marginLeft: isDropTarget ? '60px' : '0',
               transition: isBeingDragged ? 'none' : 'all 0.15s ease-out',
-              filter: isBypassed ? 'grayscale(100%)' : 'none',
+              filter: isBypassed ? 'grayscale(100%)' : isMuted ? 'grayscale(50%)' : 'none',
             }}
           >
             {/* Section header with LED */}
@@ -536,47 +581,51 @@ export function ParameterPanel() {
                 className="w-2 h-2 rounded-full"
                 style={{
                   backgroundColor: displayColor,
-                  boxShadow: isBypassed ? 'none' : `0 0 8px ${section.color}`,
+                  boxShadow: isBypassed || isMuted ? 'none' : `0 0 8px ${section.color}`,
                 }}
               />
               <span
                 className="text-[9px] font-semibold tracking-wider uppercase"
-                style={{ color: isBypassed ? '#999999' : '#1a1a1a' }}
+                style={{ color: isBypassed || isMuted ? '#999999' : '#1a1a1a' }}
               >
                 {section.label}
               </span>
-              {/* Drag handle indicator */}
-              <div className="ml-auto flex gap-0.5 opacity-30" style={{ color: '#999999' }}>
-                <div className="w-0.5 h-2 bg-current rounded-full" />
-                <div className="w-0.5 h-2 bg-current rounded-full" />
-              </div>
+              {/* Solo badge */}
+              {isSoloed && (
+                <div
+                  className="px-1 py-0.5 rounded text-[8px] font-bold"
+                  style={{
+                    backgroundColor: soloLatched ? section.color : 'transparent',
+                    border: soloLatched ? 'none' : `1px solid ${section.color}`,
+                    color: soloLatched ? '#ffffff' : section.color,
+                  }}
+                >
+                  S
+                </div>
+              )}
+              {/* Close button */}
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerUp={(e) => {
+                  e.stopPropagation()
+                  disableEffect(section.id)
+                }}
+                className="ml-auto w-4 h-4 flex items-center justify-center rounded hover:bg-gray-200 transition-colors"
+                style={{ color: '#999999' }}
+              >
+                <span className="text-xs leading-none">×</span>
+              </button>
             </div>
 
             {/* Visualizer */}
             <div
-              className="flex-1 flex items-center justify-center rounded-md mb-2"
+              className="flex-1 flex items-center justify-center rounded-md"
               style={{
                 backgroundColor: '#1a1a1a',
                 minHeight: '40px',
               }}
             >
               {section.visualizer}
-            </div>
-
-            {/* Knobs row */}
-            <div className="flex justify-around gap-3">
-              {section.params.map((param) => (
-                <Knob
-                  key={param.label}
-                  label={param.label}
-                  value={param.value}
-                  min={param.min}
-                  max={param.max}
-                  color={section.color}
-                  size="sm"
-                  onChange={param.onChange}
-                />
-              ))}
             </div>
           </div>
         )

@@ -138,8 +138,10 @@ export class EffectPipeline {
       this.composer.addPass(this.effectPass)
     }
 
-    // Add mix effect pass for wet/dry control (only if not fully wet)
-    if (this.mixEffect && config.wetMix < 1) {
+    // Add mix effect pass for wet/dry control (only if not fully wet and we have an input texture)
+    if (this.mixEffect && config.wetMix < 1 && this.inputTexture) {
+      // Ensure originalTexture is set before adding the pass
+      this.mixEffect.setOriginalTexture(this.inputTexture)
       this.mixEffectPass = new EffectPass(this.camera, this.mixEffect)
       this.composer.addPass(this.mixEffectPass)
     }
@@ -198,6 +200,9 @@ export class EffectPipeline {
     // If bypass is active, render the original without effects
     if (this.bypassActive) {
       const renderer = this.composer.getRenderer()
+      // Must reset render target to screen (null) since composer uses internal buffers
+      renderer.setRenderTarget(null)
+      renderer.clear()
       renderer.render(this.quadScene, this.camera)
       return
     }

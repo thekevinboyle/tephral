@@ -6,7 +6,7 @@ import { useStippleStore } from '../../stores/stippleStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
 import { useBlobDetectStore } from '../../stores/blobDetectStore'
 import { EFFECTS } from '../../config/effects'
-import { SliderRow, ToggleRow, SelectRow } from './controls'
+import { SliderRow, ToggleRow, SelectRow, ColorRow } from './controls'
 
 export function ExpandedParameterPanel() {
   const { selectedEffectId } = useUIStore()
@@ -444,6 +444,19 @@ function EffectParameters({ effectId }: { effectId: string }) {
     case 'blob_detect':
       return (
         <div className="space-y-1">
+          {/* Presets */}
+          <div className="flex gap-1 mb-2">
+            {(['technical', 'neon', 'organic'] as const).map((preset) => (
+              <button
+                key={preset}
+                onClick={() => blobDetect.applyPreset(preset)}
+                className="flex-1 px-2 py-1.5 text-[10px] bg-gray-100 hover:bg-gray-200 rounded capitalize"
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+
           <SectionLabel label="Detection" />
           <SelectRow
             label="Mode"
@@ -488,7 +501,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 label="Decay"
                 value={blobDetect.params.decayRate}
                 min={0}
-                max={0.5}
+                max={1}
                 step={0.01}
                 onChange={(v) => blobDetect.updateParams({ decayRate: v })}
               />
@@ -508,22 +521,40 @@ function EffectParameters({ effectId }: { effectId: string }) {
               <SliderRow
                 label="Hue Range"
                 value={blobDetect.params.hueRange}
-                min={5}
-                max={90}
+                min={0}
+                max={180}
                 step={1}
                 onChange={(v) => blobDetect.updateParams({ hueRange: v })}
                 format={(v) => `±${v.toFixed(0)}°`}
+              />
+              <SliderRow
+                label="Min Saturation"
+                value={blobDetect.params.saturationMin}
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={(v) => blobDetect.updateParams({ saturationMin: v })}
+                format={(v) => `${(v * 100).toFixed(0)}%`}
               />
             </>
           )}
           <SliderRow
             label="Min Size"
             value={blobDetect.params.minSize}
-            min={0.005}
-            max={0.1}
-            step={0.005}
+            min={0.001}
+            max={0.2}
+            step={0.001}
             onChange={(v) => blobDetect.updateParams({ minSize: v })}
             format={(v) => `${(v * 100).toFixed(1)}%`}
+          />
+          <SliderRow
+            label="Max Size"
+            value={blobDetect.params.maxSize}
+            min={0.1}
+            max={1}
+            step={0.01}
+            onChange={(v) => blobDetect.updateParams({ maxSize: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
           />
           <SliderRow
             label="Max Blobs"
@@ -533,6 +564,15 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={1}
             onChange={(v) => blobDetect.updateParams({ maxBlobs: v })}
             format={(v) => v.toFixed(0)}
+          />
+          <SliderRow
+            label="Blur"
+            value={blobDetect.params.blurAmount}
+            min={0}
+            max={20}
+            step={1}
+            onChange={(v) => blobDetect.updateParams({ blurAmount: v })}
+            format={(v) => `${v.toFixed(0)}px`}
           />
 
           <SectionLabel label="Blob Style" />
@@ -546,29 +586,69 @@ function EffectParameters({ effectId }: { effectId: string }) {
             ]}
             onChange={(v) => blobDetect.updateParams({ blobStyle: v as 'circle' | 'box' | 'none' })}
           />
+          {blobDetect.params.blobStyle !== 'none' && (
+            <>
+              <ToggleRow
+                label="Fill"
+                value={blobDetect.params.blobFill}
+                onChange={(v) => blobDetect.updateParams({ blobFill: v })}
+              />
+              <ColorRow
+                label="Color"
+                value={blobDetect.params.blobColor}
+                onChange={(v) => blobDetect.updateParams({ blobColor: v })}
+              />
+              <SliderRow
+                label="Opacity"
+                value={blobDetect.params.blobOpacity}
+                min={0}
+                max={1}
+                step={0.05}
+                onChange={(v) => blobDetect.updateParams({ blobOpacity: v })}
+                format={(v) => `${(v * 100).toFixed(0)}%`}
+              />
+              {!blobDetect.params.blobFill && (
+                <SliderRow
+                  label="Line Width"
+                  value={blobDetect.params.blobLineWidth}
+                  min={1}
+                  max={6}
+                  step={0.5}
+                  onChange={(v) => blobDetect.updateParams({ blobLineWidth: v })}
+                  format={(v) => `${v.toFixed(1)}px`}
+                />
+              )}
+            </>
+          )}
+
+          <SectionLabel label="Glow" />
           <ToggleRow
-            label="Fill"
-            value={blobDetect.params.blobFill}
-            onChange={(v) => blobDetect.updateParams({ blobFill: v })}
-          />
-          <SliderRow
-            label="Opacity"
-            value={blobDetect.params.blobOpacity}
-            min={0}
-            max={1}
-            step={0.05}
-            onChange={(v) => blobDetect.updateParams({ blobOpacity: v })}
-            format={(v) => `${(v * 100).toFixed(0)}%`}
-          />
-          <ToggleRow
-            label="Glow"
+            label="Enable Glow"
             value={blobDetect.params.glowEnabled}
             onChange={(v) => blobDetect.updateParams({ glowEnabled: v })}
           />
+          {blobDetect.params.glowEnabled && (
+            <>
+              <SliderRow
+                label="Intensity"
+                value={blobDetect.params.glowIntensity}
+                min={0}
+                max={1}
+                step={0.05}
+                onChange={(v) => blobDetect.updateParams({ glowIntensity: v })}
+                format={(v) => `${(v * 100).toFixed(0)}%`}
+              />
+              <ColorRow
+                label="Glow Color"
+                value={blobDetect.params.glowColor}
+                onChange={(v) => blobDetect.updateParams({ glowColor: v })}
+              />
+            </>
+          )}
 
           <SectionLabel label="Trails" />
           <ToggleRow
-            label="Enabled"
+            label="Enable Trails"
             value={blobDetect.params.trailEnabled}
             onChange={(v) => blobDetect.updateParams({ trailEnabled: v })}
           />
@@ -584,15 +664,28 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 ]}
                 onChange={(v) => blobDetect.updateParams({ trailMode: v as 'fade' | 'fixed' | 'persistent' })}
               />
-              <SliderRow
-                label="Length"
-                value={blobDetect.params.trailLength}
-                min={10}
-                max={500}
-                step={10}
-                onChange={(v) => blobDetect.updateParams({ trailLength: v })}
-                format={(v) => v.toFixed(0)}
-              />
+              {blobDetect.params.trailMode === 'fade' && (
+                <SliderRow
+                  label="Fade Time"
+                  value={blobDetect.params.fadeTime}
+                  min={0.5}
+                  max={10}
+                  step={0.5}
+                  onChange={(v) => blobDetect.updateParams({ fadeTime: v })}
+                  format={(v) => `${v.toFixed(1)}s`}
+                />
+              )}
+              {blobDetect.params.trailMode === 'fixed' && (
+                <SliderRow
+                  label="Length"
+                  value={blobDetect.params.trailLength}
+                  min={10}
+                  max={500}
+                  step={10}
+                  onChange={(v) => blobDetect.updateParams({ trailLength: v })}
+                  format={(v) => v.toFixed(0)}
+                />
+              )}
               <SliderRow
                 label="Line Width"
                 value={blobDetect.params.lineWidth}
@@ -600,6 +693,12 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 max={10}
                 step={0.5}
                 onChange={(v) => blobDetect.updateParams({ lineWidth: v })}
+                format={(v) => `${v.toFixed(1)}px`}
+              />
+              <ColorRow
+                label="Line Color"
+                value={blobDetect.params.lineColor}
+                onChange={(v) => blobDetect.updateParams({ lineColor: v })}
               />
               <SliderRow
                 label="Smoothness"
@@ -610,6 +709,21 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 onChange={(v) => blobDetect.updateParams({ lineSmoothness: v })}
                 format={(v) => `${(v * 100).toFixed(0)}%`}
               />
+              <SliderRow
+                label="Opacity"
+                value={blobDetect.params.lineOpacity}
+                min={0}
+                max={1}
+                step={0.05}
+                onChange={(v) => blobDetect.updateParams({ lineOpacity: v })}
+                format={(v) => `${(v * 100).toFixed(0)}%`}
+              />
+              <button
+                onClick={() => blobDetect.clearTrails()}
+                className="w-full mt-2 py-1.5 text-[10px] bg-red-50 text-red-600 hover:bg-red-100 rounded"
+              >
+                Clear Trails
+              </button>
             </>
           )}
 
@@ -629,6 +743,20 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.01}
                 onChange={(v) => blobDetect.updateParams({ connectMaxDistance: v })}
                 format={(v) => `${(v * 100).toFixed(0)}%`}
+              />
+              <ColorRow
+                label="Line Color"
+                value={blobDetect.params.connectColor}
+                onChange={(v) => blobDetect.updateParams({ connectColor: v })}
+              />
+              <SliderRow
+                label="Line Width"
+                value={blobDetect.params.connectWidth}
+                min={1}
+                max={4}
+                step={0.5}
+                onChange={(v) => blobDetect.updateParams({ connectWidth: v })}
+                format={(v) => `${v.toFixed(1)}px`}
               />
               <SelectRow
                 label="Style"

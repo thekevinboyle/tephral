@@ -1,6 +1,10 @@
 import { useRef, useCallback } from 'react'
 import { useRecordingStore } from '../../stores/recordingStore'
 import { useUIStore } from '../../stores/uiStore'
+import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+
+const HOLD_THRESHOLD = 200    // ms before hold triggers solo
+const DOUBLE_CLICK_GAP = 300  // ms max between clicks for double-click
 
 interface EffectButtonProps {
   id: string
@@ -12,6 +16,8 @@ interface EffectButtonProps {
   max?: number
   onToggle: () => void
   onValueChange: (value: number) => void
+  isSoloed?: boolean
+  isMuted?: boolean
 }
 
 export function EffectButton({
@@ -24,6 +30,8 @@ export function EffectButton({
   max = 100,
   onToggle,
   onValueChange,
+  isSoloed = false,
+  isMuted = false,
 }: EffectButtonProps) {
   const dragStartY = useRef<number | null>(null)
   const dragStartValue = useRef<number>(0)
@@ -32,13 +40,36 @@ export function EffectButton({
   const isRecording = useRecordingStore((s) => s.isRecording)
   const setSelectedEffect = useUIStore((s) => s.setSelectedEffect)
 
+  // Solo state and actions
+  const { soloEffectId, soloLatched, setSolo, clearSolo } = useGlitchEngineStore()
+
+  // Gesture detection refs
+  const lastClickTime = useRef<number>(0)
+  const holdTimer = useRef<number | null>(null)
+  const isHolding = useRef(false)
+  const pointerDownTime = useRef<number>(0)
+
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault()
     dragStartY.current = e.clientY
     dragStartValue.current = value
     didDrag.current = false
+    isHolding.current = false
+    pointerDownTime.current = Date.now()
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-  }, [value])
+
+    // Start hold timer for solo
+    if (holdTimer.current) clearTimeout(holdTimer.current)
+    holdTimer.current = window.setTimeout(() => {
+      if (dragStartY.current !== null && !didDrag.current) {
+        isHolding.current = true
+        // Start momentary solo (only if effect is active)
+        if (active) {
+          setSolo(id, false)
+        }
+      }
+    }, HOLD_THRESHOLD)
+  }, [value, active, id, setSolo])
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (dragStartY.current === null) return
@@ -62,30 +93,71 @@ export function EffectButton({
       // Ignore
     }
 
+    // Clear hold timer
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current)
+      holdTimer.current = null
+    }
+
     const wasDrag = didDrag.current
+    const wasHolding = isHolding.current
+    const elapsed = Date.now() - pointerDownTime.current
+    const now = Date.now()
 
     // Record parameter change if we dragged
     if (wasDrag && isRecording) {
       addEvent({ effect: id, param: value })
     }
 
-    // Toggle if we didn't drag
+    // Handle solo/latch/toggle logic
     if (!wasDrag) {
-      onToggle()
-      // Set this effect as selected in the graphic panel
-      // If turning on, select it. If turning off, still select it to show its params
-      setSelectedEffect(id)
-      if (isRecording) {
-        addEvent({ effect: id, action: active ? 'off' : 'on', param: value })
+      if (wasHolding) {
+        // Was holding for momentary solo - end it (unless it got latched)
+        if (!soloLatched) {
+          clearSolo()
+        }
+      } else if (elapsed < HOLD_THRESHOLD) {
+        // Quick tap - check for double-click
+        const timeSinceLastClick = now - lastClickTime.current
+
+        if (timeSinceLastClick < DOUBLE_CLICK_GAP) {
+          // Double-click detected
+          if (soloEffectId === id && soloLatched) {
+            // Already latched on this effect - unlatch
+            clearSolo()
+          } else if (active) {
+            // Latch solo on this effect
+            setSolo(id, true)
+          }
+        } else {
+          // Single click
+          if (soloEffectId === id && soloLatched) {
+            // Clicking the latched solo effect - unlatch
+            clearSolo()
+          } else {
+            // Normal toggle
+            onToggle()
+            setSelectedEffect(id)
+            if (isRecording) {
+              addEvent({ effect: id, action: active ? 'off' : 'on', param: value })
+            }
+          }
+        }
+
+        lastClickTime.current = now
       }
     }
 
     dragStartY.current = null
     didDrag.current = false
-  }, [onToggle, isRecording, addEvent, id, active, value, setSelectedEffect])
+    isHolding.current = false
+  }, [onToggle, isRecording, addEvent, id, active, value, setSelectedEffect, soloEffectId, soloLatched, setSolo, clearSolo])
 
   // Value percentage for the progress bar
   const percentage = ((value - min) / (max - min)) * 100
+
+  // Determine display color based on muted state
+  const displayColor = isMuted ? '#999999' : color
 
   return (
     <div
@@ -95,9 +167,24 @@ export function EffectButton({
       className="relative rounded-lg transition-colors duration-150 flex select-none touch-none cursor-pointer w-full h-full p-2"
       style={{
         backgroundColor: active ? '#f5f5f5' : '#ffffff',
-        border: active ? `1px solid ${color}60` : '1px solid #d0d0d0',
+        border: isSoloed ? `2px solid ${color}` : active ? `1px solid ${color}60` : '1px solid #d0d0d0',
+        opacity: isMuted ? 0.5 : 1,
       }}
     >
+      {/* Solo badge */}
+      {isSoloed && (
+        <div
+          className="absolute top-1 right-1 px-1 py-0.5 rounded text-[8px] font-bold"
+          style={{
+            backgroundColor: soloLatched ? color : 'transparent',
+            border: soloLatched ? 'none' : `1px solid ${color}`,
+            color: soloLatched ? '#ffffff' : color,
+          }}
+        >
+          S
+        </div>
+      )}
+
       {/* Main content area */}
       <div className="flex-1 flex flex-col justify-between">
         {/* LED indicator + label */}
@@ -106,8 +193,8 @@ export function EffectButton({
           <div
             className="w-2 h-2 rounded-full transition-all duration-150 shrink-0"
             style={{
-              backgroundColor: active ? color : '#d0d0d0',
-              boxShadow: active ? `0 0 8px ${color}` : 'none',
+              backgroundColor: active ? displayColor : '#d0d0d0',
+              boxShadow: active && !isMuted ? `0 0 8px ${color}` : 'none',
             }}
           />
           <span
@@ -142,7 +229,7 @@ export function EffectButton({
           className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-150"
           style={{
             height: `${percentage}%`,
-            backgroundColor: active ? color : '#999999',
+            backgroundColor: active ? displayColor : '#999999',
           }}
         />
       </div>

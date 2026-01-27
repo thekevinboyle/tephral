@@ -65,6 +65,12 @@ interface GlitchEngineState {
   effectBypassed: Record<string, boolean>
   toggleEffectBypassed: (effectId: string) => void
 
+  // Solo state
+  soloEffectId: string | null    // which effect is soloed (null = no solo)
+  soloLatched: boolean           // true if latched, false if momentary
+  setSolo: (effectId: string | null, latched: boolean) => void
+  clearSolo: () => void
+
   setEnabled: (enabled: boolean) => void
   setRGBSplitEnabled: (enabled: boolean) => void
   setBlockDisplaceEnabled: (enabled: boolean) => void
@@ -113,6 +119,13 @@ export const useGlitchEngineStore = create<GlitchEngineState>((set, get) => ({
       [effectId]: !state.effectBypassed[effectId]
     }
   })),
+
+  // Solo state
+  soloEffectId: null,
+  soloLatched: false,
+
+  setSolo: (effectId, latched) => set({ soloEffectId: effectId, soloLatched: latched }),
+  clearSolo: () => set({ soloEffectId: null, soloLatched: false }),
 
   setEnabled: (enabled) => set({ enabled }),
   setRGBSplitEnabled: (enabled) => set({ rgbSplitEnabled: enabled }),

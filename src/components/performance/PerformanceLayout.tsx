@@ -5,10 +5,10 @@ import { TransportBar } from './TransportBar'
 import { ParameterPanel } from './ParameterPanel'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
-import { CreativeToolsBar } from './CreativeToolsBar'
 import { GraphicPanelV2 } from './GraphicPanelV2'
 import { XYPad } from './XYPad'
 import { MixControls } from './MixControls'
+import { RandomEffectsControls } from './RandomEffectsControls'
 import { ThumbnailFilmstrip } from './ThumbnailFilmstrip'
 import { ExportModal } from './ExportModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
@@ -68,7 +68,7 @@ export function PerformanceLayout() {
       className="w-screen h-screen flex flex-col overflow-hidden"
       style={{ backgroundColor: '#e5e5e5' }}
     >
-      {/* Preview section (55vh) - Canvas + Expanded Parameters */}
+      {/* Preview section (55vh) - 3 columns: Left placeholder, Canvas, Parameters */}
       <div
         className="flex-shrink-0 m-3 mb-0 flex rounded-xl overflow-hidden"
         style={{
@@ -76,7 +76,19 @@ export function PerformanceLayout() {
           border: '1px solid #d0d0d0',
         }}
       >
-        {/* Canvas area */}
+        {/* Left placeholder panel */}
+        <div
+          className="flex-shrink-0 flex items-center justify-center"
+          style={{
+            width: '280px',
+            backgroundColor: '#f5f5f5',
+            borderRight: '1px solid #d0d0d0',
+          }}
+        >
+          <span className="text-[11px] text-gray-400">Timeline</span>
+        </div>
+
+        {/* Canvas area (center) */}
         <div
           className="relative flex-1 min-w-0"
           style={{ backgroundColor: '#1a1a1a' }}
@@ -95,7 +107,7 @@ export function PerformanceLayout() {
           <ThumbnailFilmstrip />
         </div>
 
-        {/* Expanded Parameter Panel */}
+        {/* Expanded Parameter Panel (right) */}
         <div className="flex-shrink-0" style={{ width: '280px' }}>
           <ExpandedParameterPanel />
         </div>
@@ -146,9 +158,8 @@ export function PerformanceLayout() {
           paddingTop: '12px',
         }}
       >
-        {/* Button grid with creative tools - 50vw */}
+        {/* Button grid - 50vw */}
         <div className="flex flex-col" style={{ width: '50vw' }}>
-          <CreativeToolsBar />
           <div className="flex-1 min-h-0">
             <PerformanceGrid />
           </div>
@@ -169,6 +180,9 @@ export function PerformanceLayout() {
 
           {/* XY Pad + Mix Controls column */}
           <div className="flex-1 flex flex-col gap-3">
+            {/* Random/Undo buttons */}
+            <RandomEffectsControls />
+
             {/* XY Pad */}
             <div
               className="flex-1 rounded-xl overflow-hidden relative"

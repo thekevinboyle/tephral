@@ -9,6 +9,7 @@ import { useLandmarksStore } from '../../stores/landmarksStore'
 export function PerformanceGrid() {
   // Glitch engine store
   const glitch = useGlitchEngineStore()
+  const { soloEffectId } = useGlitchEngineStore()
 
   // Render stores
   const ascii = useAsciiRenderStore()
@@ -17,6 +18,9 @@ export function PerformanceGrid() {
 
   // Vision stores
   const landmarks = useLandmarksStore()
+
+  // Check if an effect is soloed
+  const isSoloing = soloEffectId !== null
 
   // Helper to get effect state
   const getEffectState = (effectId: string) => {
@@ -202,6 +206,8 @@ export function PerformanceGrid() {
             )
           }
           const state = getEffectState(effect.id)
+          const isSoloed = soloEffectId === effect.id
+          const isMuted = isSoloing && !isSoloed && state.active
           return (
             <EffectButton
               key={effect.id}
@@ -214,6 +220,8 @@ export function PerformanceGrid() {
               max={effect.max}
               onToggle={state.onToggle}
               onValueChange={state.onValueChange}
+              isSoloed={isSoloed}
+              isMuted={isMuted}
             />
           )
         })}

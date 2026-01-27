@@ -4,8 +4,7 @@ import { useGlitchEngineStore, type GlitchSnapshot } from './glitchEngineStore'
 import { useAsciiRenderStore, type AsciiSnapshot } from './asciiRenderStore'
 import { useStippleStore, type StippleSnapshot } from './stippleStore'
 import { useLandmarksStore, type LandmarksSnapshot } from './landmarksStore'
-import { usePointNetworkStore, type PointNetworkSnapshot } from './pointNetworkStore'
-import { useDetectionOverlayStore, type DetectionOverlaySnapshot } from './detectionOverlayStore'
+import { useBlobDetectStore, type BlobDetectSnapshot } from './blobDetectStore'
 
 export interface RoutingPreset {
   name: string
@@ -14,8 +13,7 @@ export interface RoutingPreset {
   ascii: AsciiSnapshot
   stipple: StippleSnapshot
   landmarks: LandmarksSnapshot
-  pointNetwork: PointNetworkSnapshot
-  detectionOverlay: DetectionOverlaySnapshot
+  blobDetect: BlobDetectSnapshot
 }
 
 interface RoutingState {
@@ -183,8 +181,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
     const ascii = useAsciiRenderStore.getState().getSnapshot()
     const stipple = useStippleStore.getState().getSnapshot()
     const landmarks = useLandmarksStore.getState().getSnapshot()
-    const pointNetwork = usePointNetworkStore.getState().getSnapshot()
-    const detectionOverlay = useDetectionOverlayStore.getState().getSnapshot()
+    const blobDetect = useBlobDetectStore.getState().getSnapshot()
 
     return {
       effectOrder: [...get().effectOrder],
@@ -192,8 +189,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
       ascii,
       stipple,
       landmarks,
-      pointNetwork,
-      detectionOverlay,
+      blobDetect,
     }
   },
 
@@ -202,8 +198,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
     useAsciiRenderStore.getState().applySnapshot(preset.ascii)
     useStippleStore.getState().applySnapshot(preset.stipple)
     useLandmarksStore.getState().applySnapshot(preset.landmarks)
-    usePointNetworkStore.getState().applySnapshot(preset.pointNetwork)
-    useDetectionOverlayStore.getState().applySnapshot(preset.detectionOverlay)
+    useBlobDetectStore.getState().applySnapshot(preset.blobDetect)
     set({ effectOrder: [...preset.effectOrder] })
   },
 
@@ -288,21 +283,21 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
         currentMode: randBool() ? ['face', 'hands', 'pose', 'holistic'][randInt(0, 3)] as 'face' | 'hands' | 'pose' | 'holistic' : 'off',
         minDetectionConfidence: rand(0.3, 0.8),
       },
-      pointNetwork: {
+      blobDetect: {
         enabled: randBool(),
         params: {
-          ...current.pointNetwork.params,
-          pointRadius: rand(1, 8),
-          maxDistance: rand(0.05, 0.3),
-          lineWidth: rand(0.5, 3),
-        },
-      },
-      detectionOverlay: {
-        enabled: randBool(),
-        params: {
-          ...current.detectionOverlay.params,
-          boxLineWidth: randInt(1, 4),
-          boxStyle: ['solid', 'dashed', 'corners'][randInt(0, 2)] as 'solid' | 'dashed' | 'corners',
+          ...current.blobDetect.params,
+          mode: ['brightness', 'motion', 'color'][randInt(0, 2)] as 'brightness' | 'motion' | 'color',
+          threshold: rand(0.3, 0.7),
+          sensitivity: rand(0.2, 0.8),
+          trailEnabled: randBool(),
+          trailMode: ['fade', 'fixed', 'persistent'][randInt(0, 2)] as 'fade' | 'fixed' | 'persistent',
+          glowEnabled: randBool(),
+          glowIntensity: rand(0.3, 0.8),
+          connectEnabled: randBool(),
+          blobStyle: ['circle', 'box', 'none'][randInt(0, 2)] as 'circle' | 'box' | 'none',
+          lineColor: ['#00ffff', '#ff00ff', '#ffff00', '#00ff00', '#ff3366'][randInt(0, 4)],
+          blobColor: ['#00ffff', '#ff00ff', '#ffff00', '#00ff00', '#ff3366'][randInt(0, 4)],
         },
       },
     }

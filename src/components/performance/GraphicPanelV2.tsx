@@ -4,9 +4,9 @@ import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
-import { usePointNetworkStore } from '../../stores/pointNetworkStore'
 import { EFFECTS } from '../../config/effects'
 import { Knob } from './Knob'
+import { EffectParameterEditor } from './EffectParameterEditor'
 
 interface ParamDef {
   label: string
@@ -17,12 +17,11 @@ interface ParamDef {
 }
 
 export function GraphicPanelV2() {
-  const { selectedEffectId } = useUIStore()
+  const { selectedEffectId, setSelectedEffect: setSelectedEffectId } = useUIStore()
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
   const landmarks = useLandmarksStore()
-  const network = usePointNetworkStore()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const frameRef = useRef(0)
 
@@ -71,11 +70,6 @@ export function GraphicPanelV2() {
         return [
           { label: 'Size', value: stipple.params.particleSize, min: 1, max: 8, onChange: (v) => stipple.updateParams({ particleSize: v }) },
           { label: 'Density', value: stipple.params.density * 100, min: 10, max: 300, onChange: (v) => stipple.updateParams({ density: v / 100 }) },
-        ]
-      case 'point_network':
-        return [
-          { label: 'Radius', value: network.params.pointRadius, min: 1, max: 10, onChange: (v) => network.updateParams({ pointRadius: v }) },
-          { label: 'Distance', value: network.params.maxDistance * 100, min: 5, max: 50, onChange: (v) => network.updateParams({ maxDistance: v / 100 }) },
         ]
       case 'face_mesh':
       case 'hands':
@@ -219,7 +213,17 @@ export function GraphicPanelV2() {
 
     draw()
     return () => cancelAnimationFrame(animationId)
-  }, [selectedEffectId, glitch, ascii, stipple, landmarks, network, effect])
+  }, [selectedEffectId, glitch, ascii, stipple, landmarks, effect])
+
+  // Show full parameter editor for blob_detect (after all hooks)
+  if (selectedEffectId === 'blob_detect') {
+    return (
+      <EffectParameterEditor
+        effectId={selectedEffectId}
+        onClose={() => setSelectedEffectId(null)}
+      />
+    )
+  }
 
   if (!selectedEffectId || !effect) {
     return (

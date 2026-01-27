@@ -2,8 +2,7 @@ import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
-import { usePointNetworkStore } from '../../stores/pointNetworkStore'
-import { useDetectionOverlayStore } from '../../stores/detectionOverlayStore'
+import { useBlobDetectStore } from '../../stores/blobDetectStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useRoutingStore } from '../../stores/routingStore'
 import { EFFECTS } from '../../config/effects'
@@ -20,8 +19,7 @@ export function SignalPathBar() {
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
   const landmarks = useLandmarksStore()
-  const network = usePointNetworkStore()
-  const overlay = useDetectionOverlayStore()
+  const blobDetect = useBlobDetectStore()
   const { selectedEffectId, setSelectedEffect } = useUIStore()
   const { effectOrder } = useRoutingStore()
 
@@ -36,8 +34,7 @@ export function SignalPathBar() {
     ascii: ascii.enabled && ascii.params.mode === 'standard',
     matrix: ascii.enabled && ascii.params.mode === 'matrix',
     stipple: stipple.enabled,
-    detect_boxes: overlay.enabled,
-    point_network: network.enabled,
+    blob_detect: blobDetect.enabled,
     face_mesh: landmarks.enabled && landmarks.currentMode === 'face',
     hands: landmarks.enabled && landmarks.currentMode === 'hands',
     pose: landmarks.enabled && landmarks.currentMode === 'pose',

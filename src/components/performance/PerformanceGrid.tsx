@@ -3,10 +3,8 @@ import { EFFECTS } from '../../config/effects'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
-import { useDetectionOverlayStore } from '../../stores/detectionOverlayStore'
-import { usePointNetworkStore } from '../../stores/pointNetworkStore'
+import { useBlobDetectStore } from '../../stores/blobDetectStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
-import { useDetectionStore } from '../../stores/detectionStore'
 
 export function PerformanceGrid() {
   // Glitch engine store
@@ -15,11 +13,9 @@ export function PerformanceGrid() {
   // Render stores
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
-  const overlay = useDetectionOverlayStore()
-  const detection = useDetectionStore()
+  const blobDetect = useBlobDetectStore()
 
   // Vision stores
-  const network = usePointNetworkStore()
   const landmarks = useLandmarksStore()
 
   // Helper to get effect state
@@ -67,19 +63,12 @@ export function PerformanceGrid() {
           onToggle: () => glitch.setEdgeDetectionEnabled(!glitch.edgeDetectionEnabled),
           onValueChange: (v: number) => glitch.updateEdgeDetection({ threshold: v / 100 }),
         }
-      case 'attach_to_objects':
+      case 'blob_detect':
         return {
-          active: landmarks.attachToDetections,
-          value: detection.minConfidence * 100,
-          onToggle: () => {
-            const newAttach = !landmarks.attachToDetections
-            landmarks.setAttachToDetections(newAttach)
-            // Auto-enable detection when turning on attach
-            if (newAttach && !detection.enabled) {
-              detection.setEnabled(true)
-            }
-          },
-          onValueChange: (v: number) => detection.setMinConfidence(v / 100),
+          active: blobDetect.enabled,
+          value: blobDetect.params.threshold * 100,
+          onToggle: () => blobDetect.setEnabled(!blobDetect.enabled),
+          onValueChange: (v: number) => blobDetect.updateParams({ threshold: v / 100 }),
         }
       case 'ascii':
         return {
@@ -115,37 +104,6 @@ export function PerformanceGrid() {
           value: stipple.params.particleSize,
           onToggle: () => stipple.setEnabled(!stipple.enabled),
           onValueChange: (v: number) => stipple.updateParams({ particleSize: v }),
-        }
-      case 'detect_boxes':
-        return {
-          active: overlay.enabled,
-          value: overlay.params.boxLineWidth,
-          onToggle: () => {
-            const newEnabled = !overlay.enabled
-            overlay.setEnabled(newEnabled)
-            // Auto-enable detection when turning on overlay
-            if (newEnabled && !detection.enabled) {
-              detection.setEnabled(true)
-            }
-          },
-          onValueChange: (v: number) => overlay.updateParams({ boxLineWidth: v }),
-        }
-      case 'point_network':
-        return {
-          active: network.enabled,
-          value: network.params.pointRadius,
-          onToggle: () => {
-            const newEnabled = !network.enabled
-            network.setEnabled(newEnabled)
-            // Auto-enable landmarks when turning on network
-            if (newEnabled && !landmarks.enabled) {
-              landmarks.setEnabled(true)
-              if (landmarks.currentMode === 'off') {
-                landmarks.setCurrentMode('face')
-              }
-            }
-          },
-          onValueChange: (v: number) => network.updateParams({ pointRadius: v }),
         }
       case 'face_mesh':
         return {

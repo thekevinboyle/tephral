@@ -4,7 +4,7 @@ import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
-import { usePointNetworkStore } from '../../stores/pointNetworkStore'
+import { useBlobDetectStore } from '../../stores/blobDetectStore'
 import { EFFECTS } from '../../config/effects'
 import {
   RGBSplitGraphic,
@@ -33,7 +33,7 @@ export function GraphicPanel() {
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
   const landmarks = useLandmarksStore()
-  const network = usePointNetworkStore()
+  const blobDetect = useBlobDetectStore()
 
   const dragStartY = useRef<number | null>(null)
   const dragStartValue = useRef<number>(0)
@@ -84,10 +84,10 @@ export function GraphicPanel() {
           { label: 'SIZE', value: stipple.params.particleSize, min: 1, max: 8, onChange: (v) => stipple.updateParams({ particleSize: v }) },
           { label: 'DENSITY', value: stipple.params.density * 100, min: 10, max: 300, onChange: (v) => stipple.updateParams({ density: v / 100 }) },
         ]
-      case 'point_network':
+      case 'blob_detect':
         return [
-          { label: 'RADIUS', value: network.params.pointRadius, min: 1, max: 10, onChange: (v) => network.updateParams({ pointRadius: v }) },
-          { label: 'MAX DIST', value: network.params.maxDistance * 100, min: 5, max: 50, onChange: (v) => network.updateParams({ maxDistance: v / 100 }) },
+          { label: 'THRESHOLD', value: blobDetect.params.threshold * 100, min: 0, max: 100, onChange: (v) => blobDetect.updateParams({ threshold: v / 100 }) },
+          { label: 'MIN SIZE', value: blobDetect.params.minSize * 100, min: 0, max: 20, onChange: (v) => blobDetect.updateParams({ minSize: v / 100 }) },
         ]
       case 'face_mesh':
       case 'hands':
@@ -153,8 +153,8 @@ export function GraphicPanel() {
         return <AsciiGraphic fontSize={ascii.params.fontSize} mode={ascii.params.mode} color={color} />
       case 'stipple':
         return <StippleGraphic size={stipple.params.particleSize} density={stipple.params.density} color={color} />
-      case 'point_network':
-        return <NetworkGraphic pointRadius={network.params.pointRadius} maxDistance={network.params.maxDistance} color={color} />
+      case 'blob_detect':
+        return <NetworkGraphic pointRadius={4} maxDistance={blobDetect.params.threshold} color={color} />
       case 'face_mesh':
       case 'hands':
       case 'pose':

@@ -78,28 +78,12 @@ export const EFFECTS: EffectDefinition[] = [
 
   // Row 3: Overlay effects (detection-based)
   {
-    id: 'detect_boxes',
+    id: 'blob_detect',
     label: 'DETECT',
     color: '#65a30d', // lime
     row: 'overlay',
-    min: 1,
-    max: 6,
-  },
-  {
-    id: 'attach_to_objects',
-    label: 'ATTACH',
-    color: '#6b7280', // gray
-    row: 'overlay',
-    min: 10,
-    max: 90,
-  },
-  {
-    id: 'point_network',
-    label: 'NETWORK',
-    color: '#0d9488', // teal
-    row: 'overlay',
-    min: 1,
-    max: 10,
+    min: 0,
+    max: 1,
   },
   {
     id: 'edges',

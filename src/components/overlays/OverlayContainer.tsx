@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
-import { DetectionOverlay } from './DetectionOverlay'
-import { PointNetworkOverlay } from './PointNetworkOverlay'
 import { AsciiRenderOverlay } from './AsciiRenderOverlay'
 import { StippleOverlay } from './StippleOverlay'
-import { useObjectDetection } from '../../hooks/useObjectDetection'
+import { BlobDetectOverlay } from './BlobDetectOverlay'
 import { useLandmarkDetection } from '../../hooks/useLandmarkDetection'
 
 interface OverlayContainerProps {
@@ -14,7 +12,6 @@ export function OverlayContainer({ containerRef }: OverlayContainerProps) {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
 
   // Initialize detection hooks
-  useObjectDetection()
   useLandmarkDetection()
 
   // Track container dimensions
@@ -47,11 +44,8 @@ export function OverlayContainer({ containerRef }: OverlayContainerProps) {
       {/* ASCII renders on top of stipple or original */}
       <AsciiRenderOverlay width={dimensions.width} height={dimensions.height} />
 
-      {/* Point network draws connecting lines */}
-      <PointNetworkOverlay width={dimensions.width} height={dimensions.height} />
-
-      {/* Detection boxes render on top */}
-      <DetectionOverlay width={dimensions.width} height={dimensions.height} />
+      {/* Blob detection with trails renders on top */}
+      <BlobDetectOverlay width={dimensions.width} height={dimensions.height} />
     </>
   )
 }

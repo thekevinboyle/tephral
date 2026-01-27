@@ -1,7 +1,7 @@
 import { useRef, useEffect, useMemo } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
-import { useDetectionStore } from '../../stores/detectionStore'
+import { useBlobDetectStore } from '../../stores/blobDetectStore'
 import { AsciiRenderer } from '../../effects/vision/AsciiRenderEffect'
 import { calculateVideoArea } from '../../utils/videoArea'
 
@@ -19,7 +19,7 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
 
   const { videoElement, imageElement } = useMediaStore()
   const { enabled, params } = useAsciiRenderStore()
-  const { detections } = useDetectionStore()
+  const { blobs } = useBlobDetectStore()
 
   // Calculate video display area (respecting aspect ratio)
   const videoArea = useMemo(() => {
@@ -100,8 +100,8 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
         // CORS issues
       }
 
-      // Apply detection masking if enabled
-      if (params.maskToDetections && detections.length > 0 && imageData) {
+      // Apply blob masking if enabled
+      if (params.maskToDetections && blobs.length > 0 && imageData) {
         const maskedData = new ImageData(imageData.width, imageData.height)
 
         for (let y = 0; y < imageData.height; y++) {
@@ -109,16 +109,16 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
             const nx = x / imageData.width
             const ny = y / imageData.height
 
-            const insideDetection = detections.some(det =>
-              nx >= det.bbox.x &&
-              nx <= det.bbox.x + det.bbox.width &&
-              ny >= det.bbox.y &&
-              ny <= det.bbox.y + det.bbox.height
+            const insideBlob = blobs.some(blob =>
+              nx >= blob.x - blob.width / 2 &&
+              nx <= blob.x + blob.width / 2 &&
+              ny >= blob.y - blob.height / 2 &&
+              ny <= blob.y + blob.height / 2
             )
 
             const idx = (y * imageData.width + x) * 4
 
-            if (insideDetection) {
+            if (insideBlob) {
               maskedData.data[idx] = imageData.data[idx]
               maskedData.data[idx + 1] = imageData.data[idx + 1]
               maskedData.data[idx + 2] = imageData.data[idx + 2]
@@ -155,7 +155,7 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
     return () => {
       cancelAnimationFrame(animationFrameRef.current)
     }
-  }, [enabled, videoElement, imageElement, params, width, height, videoArea, detections])
+  }, [enabled, videoElement, imageElement, params, width, height, videoArea, blobs])
 
   if (!enabled) return null
 

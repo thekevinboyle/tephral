@@ -75,7 +75,7 @@ export function MixControls() {
             step={0.01}
             value={wetMix}
             onChange={handleFaderChange}
-            className="absolute inset-0 w-full opacity-0 cursor-pointer z-10"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           />
 
           {/* Thumb */}

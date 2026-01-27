@@ -107,7 +107,7 @@ export function PerformanceLayout() {
         </div>
 
         {/* Expanded Parameter Panel (right) */}
-        <div className="flex-shrink-0" style={{ width: '280px' }}>
+        <div className="flex-shrink-0" style={{ width: '340px' }}>
           <ExpandedParameterPanel />
         </div>
       </div>
@@ -166,8 +166,20 @@ export function PerformanceLayout() {
           </div>
         </div>
 
-        {/* Column 2: XY Pad + Mix Controls */}
-        <div className="flex-1 flex flex-col gap-3">
+        {/* Column 2: Sequencer */}
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{
+            flex: '1.5',
+            backgroundColor: '#ffffff',
+            border: '1px solid #d0d0d0',
+          }}
+        >
+          <SequencerPanel />
+        </div>
+
+        {/* Column 3: XY Pad + Mix Controls */}
+        <div className="flex flex-col gap-3" style={{ flex: '0.7' }}>
           {/* XY Pad */}
           <div
             className="flex-1 rounded-xl overflow-hidden relative"
@@ -190,17 +202,6 @@ export function PerformanceLayout() {
           >
             <MixControls />
           </div>
-        </div>
-
-        {/* Column 3: Sequencer */}
-        <div
-          className="flex-1 rounded-xl overflow-hidden"
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
-          }}
-        >
-          <SequencerPanel />
         </div>
       </div>
 

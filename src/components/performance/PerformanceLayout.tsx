@@ -1,7 +1,6 @@
 import { useRef, useCallback } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { PreviewHeader } from './PreviewHeader'
-import { SignalPathBar } from './SignalPathBar'
 import { ParameterPanel } from './ParameterPanel'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
@@ -99,19 +98,6 @@ export function PerformanceLayout() {
         <div className="flex-shrink-0" style={{ width: '280px' }}>
           <ExpandedParameterPanel />
         </div>
-      </div>
-
-      {/* Signal path bar (5vh) */}
-      <div
-        className="flex-shrink-0 mx-3"
-        style={{
-          height: '5vh',
-          minHeight: '32px',
-          backgroundColor: '#f0f0f0',
-          borderTop: '1px solid #d0d0d0',
-        }}
-      >
-        <SignalPathBar />
       </div>
 
       {/* Parameter strip (12vh) - horizontal scrollable, draggable */}

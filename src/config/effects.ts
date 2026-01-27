@@ -45,7 +45,7 @@ export const EFFECTS: EffectDefinition[] = [
   // ═══════════════════════════════════════════════════════════════
 
   // Row 1: Detection
-  { id: 'blob_detect', label: 'DETECT', color: '#10b981', row: 'vision', page: 1, min: 0, max: 100 },
+  { id: 'contour', label: 'CONTOUR', color: '#10b981', row: 'vision', page: 1, min: 0, max: 100 },
   { id: 'face_mesh', label: 'FACE', color: '#14b8a6', row: 'vision', page: 1, min: 10, max: 90 },
   { id: 'hands', label: 'HANDS', color: '#06b6d4', row: 'vision', page: 1, min: 10, max: 90 },
   { id: 'pose', label: 'POSE', color: '#0ea5e9', row: 'vision', page: 1, min: 10, max: 90 },

@@ -185,6 +185,11 @@ export class EffectPipeline {
     }
 
     this.quad.scale.set(scaleX, scaleY, 1)
+
+    // Update MixEffect with the quad scale for proper dry/wet blending
+    if (this.mixEffect) {
+      this.mixEffect.setQuadScale(scaleX, scaleY)
+    }
   }
 
   render() {

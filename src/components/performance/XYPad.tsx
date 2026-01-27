@@ -166,11 +166,11 @@ export function XYPad() {
     <div className="h-full flex flex-col p-3">
       {/* Header with parameter selectors */}
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] font-medium" style={{ color: '#999' }}>X:</span>
+        <span className="text-[11px] font-medium" style={{ color: '#666' }}>X:</span>
         <select
           value={xParamId}
           onChange={(e) => setXParamId(e.target.value)}
-          className="flex-1 h-6 text-[10px] rounded px-1"
+          className="flex-1 h-6 text-[11px] rounded px-1"
           style={{
             backgroundColor: '#f5f5f5',
             border: '1px solid #d0d0d0',
@@ -186,11 +186,11 @@ export function XYPad() {
           ))}
         </select>
 
-        <span className="text-[10px] font-medium" style={{ color: '#999' }}>Y:</span>
+        <span className="text-[11px] font-medium" style={{ color: '#666' }}>Y:</span>
         <select
           value={yParamId}
           onChange={(e) => setYParamId(e.target.value)}
-          className="flex-1 h-6 text-[10px] rounded px-1"
+          className="flex-1 h-6 text-[11px] rounded px-1"
           style={{
             backgroundColor: '#f5f5f5',
             border: '1px solid #d0d0d0',
@@ -210,11 +210,11 @@ export function XYPad() {
       {/* Pad container */}
       <div className="flex-1 flex gap-2">
         {/* Y axis label */}
-        <div className="flex flex-col justify-between items-center py-2 w-8">
-          <span className="text-[9px] font-medium rotate-180 truncate" style={{ writingMode: 'vertical-rl', color: '#999' }}>
+        <div className="flex flex-col justify-between items-center py-2 w-10">
+          <span className="text-[11px] font-medium rotate-180 truncate" style={{ writingMode: 'vertical-rl', color: '#666' }}>
             {yParam?.label || 'Y'}
           </span>
-          <span className="text-[9px] tabular-nums" style={{ color: '#666', fontFamily: "'JetBrains Mono', monospace" }}>
+          <span className="text-[11px] tabular-nums" style={{ color: '#444', fontFamily: "'JetBrains Mono', monospace" }}>
             {formatValue(1 - position.y, yParam)}
           </span>
         </div>
@@ -273,10 +273,10 @@ export function XYPad() {
 
           {/* X axis label */}
           <div className="flex justify-between items-center mt-1 px-1">
-            <span className="text-[9px] font-medium truncate" style={{ color: '#999' }}>
+            <span className="text-[11px] font-medium truncate" style={{ color: '#666' }}>
               {xParam?.label || 'X'}
             </span>
-            <span className="text-[9px] tabular-nums" style={{ color: '#666', fontFamily: "'JetBrains Mono', monospace" }}>
+            <span className="text-[11px] tabular-nums" style={{ color: '#444', fontFamily: "'JetBrains Mono', monospace" }}>
               {formatValue(position.x, xParam)}
             </span>
           </div>

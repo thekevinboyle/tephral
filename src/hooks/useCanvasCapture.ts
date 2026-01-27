@@ -105,7 +105,7 @@ function downloadBlob(blob: Blob, format: ExportFormat) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `strand-tracer-${Date.now()}.${format}`
+  a.download = `tephral-${Date.now()}.${format}`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

@@ -20,6 +20,14 @@ import {
   NetworkViz,
   StippleViz,
   FaceMeshViz,
+  ChromaticViz,
+  VHSViz,
+  LensViz,
+  DitherViz,
+  PosterizeViz,
+  StaticDisplaceViz,
+  ColorGradeViz,
+  FeedbackViz,
 } from './visualizers'
 
 interface ParameterSection {
@@ -79,6 +87,14 @@ export function ParameterPanel() {
     glitch.setNoiseEnabled(false)
     glitch.setPixelateEnabled(false)
     glitch.setEdgeDetectionEnabled(false)
+    glitch.setChromaticAberrationEnabled(false)
+    glitch.setVHSTrackingEnabled(false)
+    glitch.setLensDistortionEnabled(false)
+    glitch.setDitherEnabled(false)
+    glitch.setPosterizeEnabled(false)
+    glitch.setStaticDisplacementEnabled(false)
+    glitch.setColorGradeEnabled(false)
+    glitch.setFeedbackLoopEnabled(false)
     ascii.setEnabled(false)
     stipple.setEnabled(false)
     blobDetect.setEnabled(false)
@@ -294,6 +310,270 @@ export function ParameterPanel() {
     })
   }
 
+  // Chromatic Aberration
+  if (glitch.chromaticAberrationEnabled) {
+    const effect = EFFECTS.find(e => e.id === 'chromatic')
+    const color = effect?.color || '#ff6b6b'
+    sections.push({
+      id: 'chromatic',
+      label: 'CHROMA',
+      color,
+      visualizer: (
+        <ChromaticViz
+          intensity={glitch.chromaticAberration.intensity * 100}
+          color={color}
+        />
+      ),
+      params: [
+        {
+          label: 'Intens',
+          value: glitch.chromaticAberration.intensity * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => glitch.updateChromaticAberration({ intensity: v / 100 }),
+        },
+        {
+          label: 'Radial',
+          value: glitch.chromaticAberration.radialAmount * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => glitch.updateChromaticAberration({ radialAmount: v / 100 }),
+        },
+      ],
+    })
+  }
+
+  // VHS Tracking
+  if (glitch.vhsTrackingEnabled) {
+    const effect = EFFECTS.find(e => e.id === 'vhs')
+    const color = effect?.color || '#a855f7'
+    sections.push({
+      id: 'vhs',
+      label: 'VHS',
+      color,
+      visualizer: (
+        <VHSViz
+          tearIntensity={glitch.vhsTracking.tearIntensity * 100}
+          color={color}
+        />
+      ),
+      params: [
+        {
+          label: 'Tear',
+          value: glitch.vhsTracking.tearIntensity * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => glitch.updateVHSTracking({ tearIntensity: v / 100 }),
+        },
+        {
+          label: 'Bleed',
+          value: glitch.vhsTracking.colorBleed * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => glitch.updateVHSTracking({ colorBleed: v / 100 }),
+        },
+      ],
+    })
+  }
+
+  // Lens Distortion
+  if (glitch.lensDistortionEnabled) {
+    const effect = EFFECTS.find(e => e.id === 'lens')
+    const color = effect?.color || '#06b6d4'
+    sections.push({
+      id: 'lens',
+      label: 'LENS',
+      color,
+      visualizer: (
+        <LensViz
+          curvature={glitch.lensDistortion.curvature}
+          color={color}
+        />
+      ),
+      params: [
+        {
+          label: 'Curve',
+          value: glitch.lensDistortion.curvature * 100,
+          min: -100,
+          max: 100,
+          onChange: (v) => glitch.updateLensDistortion({ curvature: v / 100 }),
+        },
+        {
+          label: 'Vign',
+          value: glitch.lensDistortion.vignette * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => glitch.updateLensDistortion({ vignette: v / 100 }),
+        },
+      ],
+    })
+  }
+
+  // Dither
+  if (glitch.ditherEnabled) {
+    const effect = EFFECTS.find(e => e.id === 'dither')
+    const color = effect?.color || '#f472b6'
+    sections.push({
+      id: 'dither',
+      label: 'DITHER',
+      color,
+      visualizer: (
+        <DitherViz
+          intensity={glitch.dither.intensity * 100}
+          color={color}
+        />
+      ),
+      params: [
+        {
+          label: 'Intens',
+          value: glitch.dither.intensity * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => glitch.updateDither({ intensity: v / 100 }),
+        },
+        {
+          label: 'Depth',
+          value: glitch.dither.colorDepth,
+          min: 2,
+          max: 16,
+          onChange: (v) => glitch.updateDither({ colorDepth: v }),
+        },
+      ],
+    })
+  }
+
+  // Posterize
+  if (glitch.posterizeEnabled) {
+    const effect = EFFECTS.find(e => e.id === 'posterize')
+    const color = effect?.color || '#f59e0b'
+    sections.push({
+      id: 'posterize',
+      label: 'POSTER',
+      color,
+      visualizer: (
+        <PosterizeViz
+          levels={glitch.posterize.levels}
+          color={color}
+        />
+      ),
+      params: [
+        {
+          label: 'Levels',
+          value: glitch.posterize.levels,
+          min: 2,
+          max: 16,
+          onChange: (v) => glitch.updatePosterize({ levels: v }),
+        },
+        {
+          label: 'Sat',
+          value: glitch.posterize.saturationBoost * 100,
+          min: 0,
+          max: 200,
+          onChange: (v) => glitch.updatePosterize({ saturationBoost: v / 100 }),
+        },
+      ],
+    })
+  }
+
+  // Static Displacement
+  if (glitch.staticDisplacementEnabled) {
+    const effect = EFFECTS.find(e => e.id === 'static_displace')
+    const color = effect?.color || '#ec4899'
+    sections.push({
+      id: 'static_displace',
+      label: 'STATIC',
+      color,
+      visualizer: (
+        <StaticDisplaceViz
+          intensity={glitch.staticDisplacement.intensity * 100}
+          color={color}
+        />
+      ),
+      params: [
+        {
+          label: 'Intens',
+          value: glitch.staticDisplacement.intensity * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => glitch.updateStaticDisplacement({ intensity: v / 100 }),
+        },
+        {
+          label: 'Scale',
+          value: glitch.staticDisplacement.scale,
+          min: 1,
+          max: 100,
+          onChange: (v) => glitch.updateStaticDisplacement({ scale: v }),
+        },
+      ],
+    })
+  }
+
+  // Color Grade
+  if (glitch.colorGradeEnabled) {
+    const effect = EFFECTS.find(e => e.id === 'color_grade')
+    const color = effect?.color || '#84cc16'
+    sections.push({
+      id: 'color_grade',
+      label: 'GRADE',
+      color,
+      visualizer: (
+        <ColorGradeViz
+          saturation={glitch.colorGrade.saturation * 100}
+          color={color}
+        />
+      ),
+      params: [
+        {
+          label: 'Sat',
+          value: glitch.colorGrade.saturation * 100,
+          min: 0,
+          max: 200,
+          onChange: (v) => glitch.updateColorGrade({ saturation: v / 100 }),
+        },
+        {
+          label: 'Bright',
+          value: (glitch.colorGrade.brightness + 1) * 50,
+          min: 0,
+          max: 100,
+          onChange: (v) => glitch.updateColorGrade({ brightness: v / 50 - 1 }),
+        },
+      ],
+    })
+  }
+
+  // Feedback Loop
+  if (glitch.feedbackLoopEnabled) {
+    const effect = EFFECTS.find(e => e.id === 'feedback')
+    const color = effect?.color || '#8b5cf6'
+    sections.push({
+      id: 'feedback',
+      label: 'FEEDBACK',
+      color,
+      visualizer: (
+        <FeedbackViz
+          decay={glitch.feedbackLoop.decay * 100}
+          color={color}
+        />
+      ),
+      params: [
+        {
+          label: 'Decay',
+          value: glitch.feedbackLoop.decay * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => glitch.updateFeedbackLoop({ decay: v / 100 }),
+        },
+        {
+          label: 'Zoom',
+          value: glitch.feedbackLoop.zoom * 100,
+          min: 90,
+          max: 110,
+          onChange: (v) => glitch.updateFeedbackLoop({ zoom: v / 100 }),
+        },
+      ],
+    })
+  }
+
   // ASCII
   if (ascii.enabled) {
     const color = ascii.params.mode === 'matrix' ? '#88ff00' : '#ffaa00'
@@ -458,6 +738,30 @@ export function ParameterPanel() {
         break
       case 'edges':
         glitch.setEdgeDetectionEnabled(false)
+        break
+      case 'chromatic':
+        glitch.setChromaticAberrationEnabled(false)
+        break
+      case 'vhs':
+        glitch.setVHSTrackingEnabled(false)
+        break
+      case 'lens':
+        glitch.setLensDistortionEnabled(false)
+        break
+      case 'dither':
+        glitch.setDitherEnabled(false)
+        break
+      case 'posterize':
+        glitch.setPosterizeEnabled(false)
+        break
+      case 'static_displace':
+        glitch.setStaticDisplacementEnabled(false)
+        break
+      case 'color_grade':
+        glitch.setColorGradeEnabled(false)
+        break
+      case 'feedback':
+        glitch.setFeedbackLoopEnabled(false)
         break
       case 'ascii':
         ascii.setEnabled(false)

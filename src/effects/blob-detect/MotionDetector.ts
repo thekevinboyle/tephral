@@ -11,7 +11,7 @@ export class MotionDetector {
     this.ctx = this.canvas.getContext('2d')!
   }
 
-  detect(source: HTMLVideoElement | HTMLImageElement, params: BlobDetectParams): Blob[] {
+  detect(source: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement, params: BlobDetectParams): Blob[] {
     const { sensitivity, minSize, maxSize, maxBlobs, blurAmount } = params
 
     this.ctx.filter = blurAmount > 0 ? `blur(${blurAmount}px)` : 'none'

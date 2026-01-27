@@ -15,7 +15,7 @@ export function useAudioAnalysis() {
   const getAmplitude = useCallback((): number => {
     if (!analyserRef.current || !dataArrayRef.current) return 0
 
-    analyserRef.current.getByteFrequencyData(dataArrayRef.current)
+    analyserRef.current.getByteFrequencyData(dataArrayRef.current as Uint8Array<ArrayBuffer>)
 
     // Calculate average amplitude
     let sum = 0

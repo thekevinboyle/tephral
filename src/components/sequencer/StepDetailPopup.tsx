@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect, useState } from 'react'
+import { useCallback, useRef, useEffect } from 'react'
 import { useSequencerStore, type Step, type RatchetDivision, type VelocityCurve } from '../../stores/sequencerStore'
 
 interface StepDetailPopupProps {

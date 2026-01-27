@@ -10,7 +10,7 @@ export class BrightnessDetector {
     this.ctx = this.canvas.getContext('2d')!
   }
 
-  detect(source: HTMLVideoElement | HTMLImageElement, params: BlobDetectParams): Blob[] {
+  detect(source: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement, params: BlobDetectParams): Blob[] {
     const { threshold, invert, minSize, maxSize, maxBlobs, blurAmount } = params
 
     // Draw source to small canvas for performance

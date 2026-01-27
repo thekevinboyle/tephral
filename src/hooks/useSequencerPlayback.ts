@@ -18,7 +18,6 @@ export function useSequencerPlayback() {
     bpm,
     stepResolution,
     gateMode,
-    tracks,
     routings,
     advanceStep,
     getCurrentValues,

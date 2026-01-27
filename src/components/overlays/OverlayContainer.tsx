@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AsciiRenderOverlay } from './AsciiRenderOverlay'
 import { StippleOverlay } from './StippleOverlay'
-import { BlobDetectOverlay } from './BlobDetectOverlay'
+import { ContourOverlay } from './ContourOverlay'
 import { useLandmarkDetection } from '../../hooks/useLandmarkDetection'
 
 interface OverlayContainerProps {
@@ -45,8 +45,8 @@ export function OverlayContainer({ containerRef, glCanvas }: OverlayContainerPro
       {/* ASCII renders on top of stipple or original */}
       <AsciiRenderOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
 
-      {/* Blob detection with trails renders on top */}
-      <BlobDetectOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
+      {/* Contour tracking overlay renders on top */}
+      <ContourOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
     </>
   )
 }

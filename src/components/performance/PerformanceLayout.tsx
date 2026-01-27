@@ -5,11 +5,11 @@ import { TransportBar } from './TransportBar'
 import { ParameterPanel } from './ParameterPanel'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
-import { GraphicPanelV2 } from './GraphicPanelV2'
 import { XYPad } from './XYPad'
 import { MixControls } from './MixControls'
 import { ThumbnailFilmstrip } from './ThumbnailFilmstrip'
 import { ExportModal } from './ExportModal'
+import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { SequencerPanel } from '../sequencer/SequencerPanel'
 import { useCanvasCapture } from '../../hooks/useCanvasCapture'
 import { useRecordingStore, type ExportFormat, type ExportQuality } from '../../stores/recordingStore'
@@ -106,9 +106,9 @@ export function PerformanceLayout() {
           <ThumbnailFilmstrip />
         </div>
 
-        {/* Sequencer Panel (right) */}
+        {/* Expanded Parameter Panel (right) */}
         <div className="flex-shrink-0" style={{ width: '280px' }}>
-          <SequencerPanel />
+          <ExpandedParameterPanel />
         </div>
       </div>
 
@@ -192,7 +192,7 @@ export function PerformanceLayout() {
           </div>
         </div>
 
-        {/* Column 3: Graphic panel */}
+        {/* Column 3: Sequencer */}
         <div
           className="flex-1 rounded-xl overflow-hidden"
           style={{
@@ -200,7 +200,7 @@ export function PerformanceLayout() {
             border: '1px solid #d0d0d0',
           }}
         >
-          <GraphicPanelV2 />
+          <SequencerPanel />
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect, useState } from 'react'
 import { useRecordingStore } from '../../stores/recordingStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
@@ -159,32 +159,49 @@ export function EffectButton({
   // Determine display color based on muted state
   const displayColor = isMuted ? '#999999' : color
 
+  // Flashing state for latched solo
+  const [flashOn, setFlashOn] = useState(true)
+  useEffect(() => {
+    if (isSoloed && soloLatched) {
+      const interval = setInterval(() => {
+        setFlashOn((prev) => !prev)
+      }, 400) // Flash every 400ms
+      return () => clearInterval(interval)
+    } else {
+      setFlashOn(true)
+    }
+  }, [isSoloed, soloLatched])
+
+  // Backlit shadow for solo states
+  const getSoloShadow = () => {
+    if (!isSoloed) return 'none'
+    const shadowOpacity = soloLatched && !flashOn ? 0.2 : 0.6
+    return `0 0 20px rgba(${hexToRgb(color)}, ${shadowOpacity}), 0 0 40px rgba(${hexToRgb(color)}, ${shadowOpacity * 0.5})`
+  }
+
+  // Helper to convert hex to rgb values
+  function hexToRgb(hex: string): string {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    if (result) {
+      return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
+    }
+    return '255, 255, 255'
+  }
+
   return (
     <div
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      className="relative rounded-lg transition-colors duration-150 flex select-none touch-none cursor-pointer w-full h-full p-2"
+      className="relative rounded-lg flex select-none touch-none cursor-pointer w-full h-full p-2"
       style={{
         backgroundColor: active ? '#f5f5f5' : '#ffffff',
         border: isSoloed ? `2px solid ${color}` : active ? `1px solid ${color}60` : '1px solid #d0d0d0',
         opacity: isMuted ? 0.5 : 1,
+        boxShadow: getSoloShadow(),
+        transition: 'box-shadow 0.15s ease-out, border 0.15s ease-out, background-color 0.15s ease-out',
       }}
     >
-      {/* Solo badge */}
-      {isSoloed && (
-        <div
-          className="absolute top-1 right-1 px-1 py-0.5 rounded text-[8px] font-bold"
-          style={{
-            backgroundColor: soloLatched ? color : 'transparent',
-            border: soloLatched ? 'none' : `1px solid ${color}`,
-            color: soloLatched ? '#ffffff' : color,
-          }}
-        >
-          S
-        </div>
-      )}
-
       {/* Main content area */}
       <div className="flex-1 flex flex-col justify-between">
         {/* LED indicator + label */}

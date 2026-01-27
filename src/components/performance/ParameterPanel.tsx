@@ -1,4 +1,4 @@
-import { type ReactNode, useState, useRef, useCallback } from 'react'
+import { type ReactNode, useState, useRef, useCallback, useEffect } from 'react'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
@@ -41,6 +41,29 @@ export function ParameterPanel() {
 
   // Solo filtering: check if we're in solo mode
   const isSoloing = soloEffectId !== null
+
+  // Flashing state for latched solo
+  const [flashOn, setFlashOn] = useState(true)
+  useEffect(() => {
+    if (isSoloing && soloLatched) {
+      const interval = setInterval(() => {
+        setFlashOn((prev) => !prev)
+      }, 400)
+      return () => clearInterval(interval)
+    } else {
+      setFlashOn(true)
+    }
+  }, [isSoloing, soloLatched])
+
+  // Helper to convert hex to rgb values
+  function hexToRgb(hex: string): string {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    if (result) {
+      return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
+    }
+    return '255, 255, 255'
+  }
+
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
   const landmarks = useLandmarksStore()
@@ -546,6 +569,22 @@ export function ParameterPanel() {
         const isMuted = isSoloing && !isSoloed
         const displayColor = isBypassed || isMuted ? '#999999' : section.color
 
+        // Calculate backlit shadow for soloed card
+        const getSoloShadow = () => {
+          if (!isSoloed) return ''
+          const shadowOpacity = soloLatched && !flashOn ? 0.2 : 0.6
+          return `0 0 20px rgba(${hexToRgb(section.color)}, ${shadowOpacity}), 0 0 40px rgba(${hexToRgb(section.color)}, ${shadowOpacity * 0.5})`
+        }
+
+        const baseShadow = isBeingDragged
+          ? `0 8px 24px rgba(0,0,0,0.15), 0 0 0 2px ${displayColor}`
+          : selectedEffectId === section.id && !isBypassed
+          ? `0 0 0 1px ${section.color}60, 0 2px 8px rgba(0,0,0,0.08)`
+          : '0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px #d0d0d0'
+
+        const soloShadow = getSoloShadow()
+        const combinedShadow = soloShadow ? `${baseShadow}, ${soloShadow}` : baseShadow
+
         return (
           <div
             key={section.id}
@@ -553,25 +592,21 @@ export function ParameterPanel() {
             onPointerMove={(e) => handlePointerMove(e, index)}
             onPointerUp={(e) => handlePointerUp(e, index)}
             onDoubleClick={() => toggleEffectBypassed(section.id)}
-            className="flex-shrink-0 flex flex-col transition-all rounded-lg select-none touch-none cursor-grab active:cursor-grabbing"
+            className="flex-shrink-0 flex flex-col rounded-lg select-none touch-none cursor-grab active:cursor-grabbing"
             style={{
               backgroundColor: isBypassed
                 ? '#e5e5e5'
                 : selectedEffectId === section.id
                 ? '#ffffff'
                 : '#ffffff',
-              boxShadow: isBeingDragged
-                ? `0 8px 24px rgba(0,0,0,0.15), 0 0 0 2px ${displayColor}`
-                : selectedEffectId === section.id && !isBypassed
-                ? `0 0 0 1px ${section.color}60, 0 2px 8px rgba(0,0,0,0.08)`
-                : '0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px #d0d0d0',
+              boxShadow: combinedShadow,
               minWidth: '140px',
               padding: '12px',
               transform: isBeingDragged ? 'scale(1.05)' : 'scale(1)',
               opacity: isBypassed || isMuted ? 0.5 : isBeingDragged ? 0.9 : 1,
               zIndex: isBeingDragged ? 10 : 1,
               marginLeft: isDropTarget ? '60px' : '0',
-              transition: isBeingDragged ? 'none' : 'all 0.15s ease-out',
+              transition: 'box-shadow 0.15s ease-out, transform 0.15s ease-out, opacity 0.15s ease-out, margin-left 0.15s ease-out',
               filter: isBypassed ? 'grayscale(100%)' : isMuted ? 'grayscale(50%)' : 'none',
             }}
           >
@@ -590,19 +625,6 @@ export function ParameterPanel() {
               >
                 {section.label}
               </span>
-              {/* Solo badge */}
-              {isSoloed && (
-                <div
-                  className="px-1 py-0.5 rounded text-[8px] font-bold"
-                  style={{
-                    backgroundColor: soloLatched ? section.color : 'transparent',
-                    border: soloLatched ? 'none' : `1px solid ${section.color}`,
-                    color: soloLatched ? '#ffffff' : section.color,
-                  }}
-                >
-                  S
-                </div>
-              )}
               {/* Close button */}
               <button
                 onPointerDown={(e) => e.stopPropagation()}

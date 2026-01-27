@@ -148,10 +148,10 @@ export function RandomEffectsControls() {
   const hasPreviousState = previousState !== null
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 h-full w-full">
       <button
         onClick={handleRandom}
-        className="flex-1 py-1.5 text-[11px] font-medium rounded-md transition-colors"
+        className="flex-1 h-full text-[14px] font-medium rounded-lg transition-colors"
         style={{
           backgroundColor: '#f5f5f5',
           border: '1px solid #d0d0d0',
@@ -163,7 +163,7 @@ export function RandomEffectsControls() {
       <button
         onClick={handleStepBack}
         disabled={!hasPreviousState}
-        className="flex-1 py-1.5 text-[11px] font-medium rounded-md transition-colors"
+        className="flex-1 h-full text-[14px] font-medium rounded-lg transition-colors"
         style={{
           backgroundColor: hasPreviousState ? '#f5f5f5' : '#f0f0f0',
           border: '1px solid #d0d0d0',

@@ -164,19 +164,8 @@ export function PerformanceLayout() {
           </div>
         </div>
 
-        {/* Right side - Graphic panel + (XY Pad + Mix Controls) */}
+        {/* Right side - (XY Pad + Mix Controls) + Graphic panel */}
         <div className="flex-1 flex gap-3">
-          {/* Graphic panel */}
-          <div
-            className="flex-1 rounded-xl overflow-hidden"
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #d0d0d0',
-            }}
-          >
-            <GraphicPanelV2 />
-          </div>
-
           {/* XY Pad + Mix Controls column */}
           <div className="flex-1 flex flex-col gap-3">
             {/* XY Pad */}
@@ -201,6 +190,17 @@ export function PerformanceLayout() {
             >
               <MixControls />
             </div>
+          </div>
+
+          {/* Graphic panel */}
+          <div
+            className="flex-1 rounded-xl overflow-hidden"
+            style={{
+              backgroundColor: '#ffffff',
+              border: '1px solid #d0d0d0',
+            }}
+          >
+            <GraphicPanelV2 />
           </div>
         </div>
       </div>

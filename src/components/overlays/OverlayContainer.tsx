@@ -6,9 +6,10 @@ import { useLandmarkDetection } from '../../hooks/useLandmarkDetection'
 
 interface OverlayContainerProps {
   containerRef: React.RefObject<HTMLDivElement | null>
+  glCanvas: HTMLCanvasElement | null
 }
 
-export function OverlayContainer({ containerRef }: OverlayContainerProps) {
+export function OverlayContainer({ containerRef, glCanvas }: OverlayContainerProps) {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
 
   // Initialize detection hooks
@@ -39,13 +40,13 @@ export function OverlayContainer({ containerRef }: OverlayContainerProps) {
   return (
     <>
       {/* Stipple renders first (replaces background) */}
-      <StippleOverlay width={dimensions.width} height={dimensions.height} />
+      <StippleOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
 
       {/* ASCII renders on top of stipple or original */}
-      <AsciiRenderOverlay width={dimensions.width} height={dimensions.height} />
+      <AsciiRenderOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
 
       {/* Blob detection with trails renders on top */}
-      <BlobDetectOverlay width={dimensions.width} height={dimensions.height} />
+      <BlobDetectOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
     </>
   )
 }

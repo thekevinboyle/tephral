@@ -184,7 +184,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       className="w-full h-full bg-black relative"
     >
       {/* Vision effect overlays */}
-      <OverlayContainer containerRef={containerRef} />
+      <OverlayContainer containerRef={containerRef} glCanvas={renderer?.domElement ?? null} />
     </div>
   )
 })

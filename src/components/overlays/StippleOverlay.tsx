@@ -14,9 +14,10 @@ interface Particle {
 interface StippleOverlayProps {
   width: number
   height: number
+  glCanvas: HTMLCanvasElement | null
 }
 
-export function StippleOverlay({ width, height }: StippleOverlayProps) {
+export function StippleOverlay({ width, height, glCanvas }: StippleOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const particlesRef = useRef<Particle[]>([])
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -131,13 +132,15 @@ export function StippleOverlay({ width, height }: StippleOverlayProps) {
       ctx.fillStyle = params.backgroundColor
       ctx.fillRect(0, 0, width, height)
 
-      const source = videoElement || imageElement
+      // Prefer WebGL canvas (has effects applied), fallback to original source
+      const source = glCanvas || videoElement || imageElement
 
       if (source) {
         // Update particles periodically
         if (now - lastUpdateTime > updateInterval || particlesRef.current.length === 0) {
-          const srcWidth = videoElement?.videoWidth || imageElement?.naturalWidth || width
-          const srcHeight = videoElement?.videoHeight || imageElement?.naturalHeight || height
+          // Use glCanvas dimensions if available, otherwise video/image dimensions
+          const srcWidth = glCanvas?.width || videoElement?.videoWidth || imageElement?.naturalWidth || width
+          const srcHeight = glCanvas?.height || videoElement?.videoHeight || imageElement?.naturalHeight || height
 
           offscreen.width = Math.min(srcWidth, 256) // Limit resolution
           offscreen.height = Math.min(srcHeight, 256)
@@ -177,7 +180,7 @@ export function StippleOverlay({ width, height }: StippleOverlayProps) {
     return () => {
       cancelAnimationFrame(animationFrameRef.current)
     }
-  }, [enabled, videoElement, imageElement, params, width, height, videoArea])
+  }, [enabled, videoElement, imageElement, glCanvas, params, width, height, videoArea])
 
   if (!enabled) return null
 

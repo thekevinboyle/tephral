@@ -8,9 +8,10 @@ import { calculateVideoArea } from '../../utils/videoArea'
 interface AsciiRenderOverlayProps {
   width: number
   height: number
+  glCanvas?: HTMLCanvasElement | null
 }
 
-export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
+export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rendererRef = useRef<AsciiRenderer | null>(null)
   const lastFrameTimeRef = useRef<number>(0)
@@ -72,7 +73,8 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
       const deltaTime = (now - lastFrameTimeRef.current) / 1000
       lastFrameTimeRef.current = now
 
-      const source = videoElement || imageElement
+      // Prefer WebGL canvas (has effects applied), fallback to original source
+      const source = glCanvas || videoElement || imageElement
       if (!source) {
         animationFrameRef.current = requestAnimationFrame(render)
         return
@@ -155,7 +157,7 @@ export function AsciiRenderOverlay({ width, height }: AsciiRenderOverlayProps) {
     return () => {
       cancelAnimationFrame(animationFrameRef.current)
     }
-  }, [enabled, videoElement, imageElement, params, width, height, videoArea, blobs])
+  }, [enabled, videoElement, imageElement, glCanvas, params, width, height, videoArea, blobs])
 
   if (!enabled) return null
 

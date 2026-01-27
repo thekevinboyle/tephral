@@ -12,9 +12,10 @@ import {
 interface Props {
   width: number
   height: number
+  glCanvas?: HTMLCanvasElement | null
 }
 
-export function BlobDetectOverlay({ width, height }: Props) {
+export function BlobDetectOverlay({ width, height, glCanvas }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const brightnessDetector = useRef<BrightnessDetector | null>(null)
   const motionDetector = useRef<MotionDetector | null>(null)
@@ -65,15 +66,16 @@ export function BlobDetectOverlay({ width, height }: Props) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const source = videoElement || imageElement
+    // Prefer WebGL canvas (has effects applied), fallback to original source
+    const source = glCanvas || videoElement || imageElement
     if (!source) {
       frameId.current = requestAnimationFrame(animate)
       return
     }
 
     // Check if source has valid dimensions
-    const sourceWidth = videoElement?.videoWidth || imageElement?.naturalWidth || 0
-    const sourceHeight = videoElement?.videoHeight || imageElement?.naturalHeight || 0
+    const sourceWidth = glCanvas?.width || videoElement?.videoWidth || imageElement?.naturalWidth || 0
+    const sourceHeight = glCanvas?.height || videoElement?.videoHeight || imageElement?.naturalHeight || 0
     if (sourceWidth === 0 || sourceHeight === 0) {
       frameId.current = requestAnimationFrame(animate)
       return
@@ -120,7 +122,7 @@ export function BlobDetectOverlay({ width, height }: Props) {
     renderer.current?.render(ctx, blobs, newTrails, params, width, height, timestamp)
 
     frameId.current = requestAnimationFrame(animate)
-  }, [enabled, params, videoElement, imageElement, width, height, setBlobs, setTrails])
+  }, [enabled, params, videoElement, imageElement, glCanvas, width, height, setBlobs, setTrails])
 
   // Animation loop
   useEffect(() => {

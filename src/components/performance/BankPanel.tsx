@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useRef } from 'react'
 import { BankButton } from './BankButton'
 import { useBankStore } from '../../stores/bankStore'
 import { useGlitchEngineStore, type GlitchSnapshot } from '../../stores/glitchEngineStore'
@@ -26,6 +26,8 @@ interface EffectState {
 
 export function BankPanel() {
   const [previousState, setPreviousState] = useState<EffectState | null>(null)
+  const [isRekt, setIsRekt] = useState(false)
+  const rektStateRef = useRef<EffectState | null>(null)
   const { banks, activeBank, loadBank, saveBank, clearBank } = useBankStore()
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
@@ -139,6 +141,89 @@ export function BankPanel() {
     }
   }, [previousState, restoreState])
 
+  // REKT - CHAOS MODE - max out only ACTIVE effects
+  const handleRektDown = useCallback(() => {
+    // Capture current state
+    rektStateRef.current = captureState()
+    setIsRekt(true)
+
+    // Only boost effects that are already enabled - but make them EXTREME
+
+    if (glitch.rgbSplitEnabled) {
+      glitch.updateRGBSplit({
+        amount: 4,
+        redOffsetX: 0.04,
+        redOffsetY: -0.03,
+        greenOffsetX: -0.03,
+        greenOffsetY: 0.04,
+        blueOffsetX: 0.02,
+        blueOffsetY: -0.04,
+      })
+    }
+
+    if (glitch.blockDisplaceEnabled) {
+      glitch.updateBlockDisplace({
+        blockSize: 0.12,
+        displaceDistance: 0.2,
+        displaceChance: 1,
+        seed: Math.random() * 1000,
+      })
+    }
+
+    if (glitch.scanLinesEnabled) {
+      glitch.updateScanLines({
+        lineCount: 500,
+        lineOpacity: 1,
+        lineFlicker: 1,
+      })
+    }
+
+    if (glitch.noiseEnabled) {
+      glitch.updateNoise({
+        amount: 0.8,
+        speed: 50,
+      })
+    }
+
+    if (glitch.pixelateEnabled) {
+      glitch.updatePixelate({
+        pixelSize: 32,
+      })
+    }
+
+    if (glitch.edgeDetectionEnabled) {
+      glitch.updateEdgeDetection({
+        threshold: 0.05,
+        mixAmount: 1,
+      })
+    }
+
+    if (ascii.enabled) {
+      ascii.updateParams({
+        fontSize: 20,
+        contrast: 3,
+        resolution: 4,
+      })
+    }
+
+    if (stipple.enabled) {
+      stipple.updateParams({
+        particleSize: 8,
+        density: 4,
+        jitter: 1,
+      })
+    }
+  }, [captureState, glitch, ascii, stipple])
+
+  const handleRektUp = useCallback(() => {
+    // Restore original state
+    if (rektStateRef.current) {
+      restoreState(rektStateRef.current)
+      rektStateRef.current = null
+    }
+    setIsRekt(false)
+  }, [restoreState])
+
   return (
     <div
       className="h-full flex items-center gap-2 px-2 py-1.5"
@@ -176,6 +261,22 @@ export function BankPanel() {
         onPointerUp={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
       >
         Random
+      </button>
+      <button
+        onPointerDown={handleRektDown}
+        onPointerUp={handleRektUp}
+        onPointerLeave={handleRektUp}
+        onPointerCancel={handleRektUp}
+        className="h-full px-4 rounded-lg text-[13px] font-medium transition-all select-none touch-none"
+        style={{
+          backgroundColor: isRekt ? '#ef4444' : '#f5f5f5',
+          border: isRekt ? '1px solid #dc2626' : '1px solid #d0d0d0',
+          color: isRekt ? '#ffffff' : '#666666',
+          boxShadow: isRekt ? '0 0 12px rgba(239, 68, 68, 0.5)' : 'none',
+          transform: isRekt ? 'scale(1.05)' : 'scale(1)',
+        }}
+      >
+        REKT
       </button>
       <button
         onClick={handleUndo}

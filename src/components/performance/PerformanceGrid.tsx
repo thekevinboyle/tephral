@@ -4,7 +4,7 @@ import { getEffectsForPage, PAGE_NAMES } from '../../config/effects'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
-import { useBlobDetectStore } from '../../stores/blobDetectStore'
+import { useContourStore } from '../../stores/contourStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -19,7 +19,7 @@ export function PerformanceGrid() {
   const stipple = useStippleStore()
 
   // Vision stores
-  const blobDetect = useBlobDetectStore()
+  const contour = useContourStore()
   const landmarks = useLandmarksStore()
 
   // Routing store for effect order
@@ -208,14 +208,12 @@ export function PerformanceGrid() {
       // ═══════════════════════════════════════════════════════════════
       // PAGE 1: VISION EFFECTS
       // ═══════════════════════════════════════════════════════════════
-      case 'blob_detect':
+      case 'contour':
         return {
-          active: blobDetect.enabled,
-          value: blobDetect.params.threshold * 100,
-          onToggle: () => {
-            blobDetect.setEnabled(!blobDetect.enabled)
-          },
-          onValueChange: (v: number) => blobDetect.updateParams({ threshold: v / 100 }),
+          active: contour.enabled,
+          value: contour.params.threshold * 100,
+          onToggle: () => contour.setEnabled(!contour.enabled),
+          onValueChange: (v: number) => contour.updateParams({ threshold: v / 100 }),
         }
       case 'face_mesh':
         return {

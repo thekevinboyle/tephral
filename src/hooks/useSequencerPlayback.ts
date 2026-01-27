@@ -31,6 +31,7 @@ export function useSequencerPlayback() {
   const lastStepTime = useRef<number>(0)
   const animationFrameId = useRef<number | null>(null)
   const previousValues = useRef<Map<string, number>>(new Map())
+  const previousRoutingIds = useRef<Set<string>>(new Set())
 
   // Calculate ms per step based on BPM and resolution
   const getMsPerStep = useCallback(() => {
@@ -122,6 +123,23 @@ export function useSequencerPlayback() {
 
     animationFrameId.current = requestAnimationFrame(playbackLoop)
   }, [isPlaying, getMsPerStep, advanceStep, getCurrentValues, applyModulation])
+
+  // Track routing removals, clear cached values, and reset params to base
+  useEffect(() => {
+    const currentRoutingIds = new Set(routings.map(r => r.id))
+    const remainingParams = new Set(routings.map(r => r.targetParam))
+
+    // Find params that no longer have routings and reset them
+    previousValues.current.forEach((_, param) => {
+      if (!remainingParams.has(param)) {
+        previousValues.current.delete(param)
+        // Reset the parameter to base value (modulation = 0)
+        applyModulation(param, 0)
+      }
+    })
+
+    previousRoutingIds.current = currentRoutingIds
+  }, [routings, applyModulation])
 
   // Start/stop playback
   useEffect(() => {

@@ -72,6 +72,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             max={2}
             step={0.01}
             onChange={(v) => glitch.updateRGBSplit({ amount: v })}
+            paramId="rgb_split.amount"
           />
           <SliderRow
             label="Red X"
@@ -81,6 +82,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ redOffsetX: v })}
             format={(v) => (v * 100).toFixed(1)}
+            paramId="rgb_split.redOffsetX"
           />
           <SliderRow
             label="Red Y"
@@ -90,6 +92,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ redOffsetY: v })}
             format={(v) => (v * 100).toFixed(1)}
+            paramId="rgb_split.redOffsetY"
           />
           <SliderRow
             label="Green X"
@@ -99,6 +102,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ greenOffsetX: v })}
             format={(v) => (v * 100).toFixed(1)}
+            paramId="rgb_split.greenOffsetX"
           />
           <SliderRow
             label="Green Y"
@@ -108,6 +112,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ greenOffsetY: v })}
             format={(v) => (v * 100).toFixed(1)}
+            paramId="rgb_split.greenOffsetY"
           />
           <SliderRow
             label="Blue X"
@@ -117,6 +122,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ blueOffsetX: v })}
             format={(v) => (v * 100).toFixed(1)}
+            paramId="rgb_split.blueOffsetX"
           />
           <SliderRow
             label="Blue Y"
@@ -126,6 +132,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ blueOffsetY: v })}
             format={(v) => (v * 100).toFixed(1)}
+            paramId="rgb_split.blueOffsetY"
           />
         </div>
       )
@@ -141,6 +148,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.01}
             onChange={(v) => glitch.updateBlockDisplace({ blockSize: v })}
             format={(v) => (v * 100).toFixed(0)}
+            paramId="block_displace.blockSize"
           />
           <SliderRow
             label="Chance"
@@ -150,6 +158,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.01}
             onChange={(v) => glitch.updateBlockDisplace({ displaceChance: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="block_displace.displaceChance"
           />
           <SliderRow
             label="Distance"
@@ -159,6 +168,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.001}
             onChange={(v) => glitch.updateBlockDisplace({ displaceDistance: v })}
             format={(v) => (v * 100).toFixed(1)}
+            paramId="block_displace.displaceDistance"
           />
           <SliderRow
             label="Seed"
@@ -168,6 +178,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={1}
             onChange={(v) => glitch.updateBlockDisplace({ seed: v })}
             format={(v) => v.toFixed(0)}
+            paramId="block_displace.seed"
           />
           <ToggleRow
             label="Animated"
@@ -188,6 +199,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={10}
             onChange={(v) => glitch.updateScanLines({ lineCount: v })}
             format={(v) => v.toFixed(0)}
+            paramId="scan_lines.lineCount"
           />
           <SliderRow
             label="Opacity"
@@ -197,6 +209,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.01}
             onChange={(v) => glitch.updateScanLines({ lineOpacity: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="scan_lines.lineOpacity"
           />
           <SliderRow
             label="Flicker"
@@ -206,6 +219,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.01}
             onChange={(v) => glitch.updateScanLines({ lineFlicker: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="scan_lines.lineFlicker"
           />
         </div>
       )
@@ -221,6 +235,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.01}
             onChange={(v) => glitch.updateNoise({ amount: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="noise.amount"
           />
           <SliderRow
             label="Speed"
@@ -230,6 +245,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={1}
             onChange={(v) => glitch.updateNoise({ speed: v })}
             format={(v) => v.toFixed(0)}
+            paramId="noise.speed"
           />
         </div>
       )
@@ -245,6 +261,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={1}
             onChange={(v) => glitch.updatePixelate({ pixelSize: v })}
             format={(v) => `${v.toFixed(0)}px`}
+            paramId="pixelate.pixelSize"
           />
         </div>
       )
@@ -260,6 +277,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.01}
             onChange={(v) => glitch.updateEdgeDetection({ threshold: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="edges.threshold"
           />
           <SliderRow
             label="Mix"
@@ -269,6 +287,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.01}
             onChange={(v) => glitch.updateEdgeDetection({ mixAmount: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="edges.mixAmount"
           />
         </div>
       )
@@ -296,6 +315,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={1}
             onChange={(v) => ascii.updateParams({ fontSize: v })}
             format={(v) => `${v.toFixed(0)}px`}
+            paramId="ascii.fontSize"
           />
           <SliderRow
             label="Resolution"
@@ -305,6 +325,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={1}
             onChange={(v) => ascii.updateParams({ resolution: v })}
             format={(v) => v.toFixed(0)}
+            paramId="ascii.resolution"
           />
           <SliderRow
             label="Contrast"
@@ -313,6 +334,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             max={2}
             step={0.05}
             onChange={(v) => ascii.updateParams({ contrast: v })}
+            paramId="ascii.contrast"
           />
           <SelectRow
             label="Color"
@@ -338,6 +360,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 max={3}
                 step={0.1}
                 onChange={(v) => ascii.updateParams({ matrixSpeed: v })}
+                paramId="ascii.matrixSpeed"
               />
               <SliderRow
                 label="Density"
@@ -347,6 +370,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.05}
                 onChange={(v) => ascii.updateParams({ matrixDensity: v })}
                 format={(v) => `${(v * 100).toFixed(0)}%`}
+                paramId="ascii.matrixDensity"
               />
               <SliderRow
                 label="Trail"
@@ -356,6 +380,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={1}
                 onChange={(v) => ascii.updateParams({ matrixTrailLength: v })}
                 format={(v) => v.toFixed(0)}
+                paramId="ascii.matrixTrailLength"
               />
             </>
           )}
@@ -377,6 +402,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             max={8}
             step={0.5}
             onChange={(v) => stipple.updateParams({ particleSize: v })}
+            paramId="stipple.particleSize"
           />
           <SliderRow
             label="Variation"
@@ -386,6 +412,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.1}
             onChange={(v) => stipple.updateParams({ particleSizeVariation: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="stipple.particleSizeVariation"
           />
           <SliderRow
             label="Density"
@@ -394,6 +421,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             max={3}
             step={0.1}
             onChange={(v) => stipple.updateParams({ density: v })}
+            paramId="stipple.density"
           />
           <SliderRow
             label="Threshold"
@@ -403,6 +431,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.01}
             onChange={(v) => stipple.updateParams({ brightnessThreshold: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="stipple.brightnessThreshold"
           />
           <SliderRow
             label="Jitter"
@@ -412,6 +441,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.05}
             onChange={(v) => stipple.updateParams({ jitter: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="stipple.jitter"
           />
           <SelectRow
             label="Color"
@@ -478,6 +508,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.01}
                 onChange={(v) => blobDetect.updateParams({ threshold: v })}
                 format={(v) => `${(v * 100).toFixed(0)}%`}
+                paramId="blob_detect.threshold"
               />
               <ToggleRow
                 label="Invert"
@@ -496,6 +527,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.01}
                 onChange={(v) => blobDetect.updateParams({ sensitivity: v })}
                 format={(v) => `${(v * 100).toFixed(0)}%`}
+                paramId="blob_detect.sensitivity"
               />
               <SliderRow
                 label="Decay"
@@ -504,6 +536,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 max={1}
                 step={0.01}
                 onChange={(v) => blobDetect.updateParams({ decayRate: v })}
+                paramId="blob_detect.decayRate"
               />
             </>
           )}
@@ -517,6 +550,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={1}
                 onChange={(v) => blobDetect.updateParams({ targetHue: v })}
                 format={(v) => `${v.toFixed(0)}°`}
+                paramId="blob_detect.targetHue"
               />
               <SliderRow
                 label="Hue Range"
@@ -526,6 +560,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={1}
                 onChange={(v) => blobDetect.updateParams({ hueRange: v })}
                 format={(v) => `±${v.toFixed(0)}°`}
+                paramId="blob_detect.hueRange"
               />
               <SliderRow
                 label="Min Saturation"
@@ -535,6 +570,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.01}
                 onChange={(v) => blobDetect.updateParams({ saturationMin: v })}
                 format={(v) => `${(v * 100).toFixed(0)}%`}
+                paramId="blob_detect.saturationMin"
               />
             </>
           )}
@@ -546,6 +582,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.001}
             onChange={(v) => blobDetect.updateParams({ minSize: v })}
             format={(v) => `${(v * 100).toFixed(1)}%`}
+            paramId="blob_detect.minSize"
           />
           <SliderRow
             label="Max Size"
@@ -555,6 +592,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.01}
             onChange={(v) => blobDetect.updateParams({ maxSize: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="blob_detect.maxSize"
           />
           <SliderRow
             label="Max Blobs"
@@ -564,6 +602,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={1}
             onChange={(v) => blobDetect.updateParams({ maxBlobs: v })}
             format={(v) => v.toFixed(0)}
+            paramId="blob_detect.maxBlobs"
           />
           <SliderRow
             label="Blur"
@@ -573,6 +612,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={1}
             onChange={(v) => blobDetect.updateParams({ blurAmount: v })}
             format={(v) => `${v.toFixed(0)}px`}
+            paramId="blob_detect.blurAmount"
           />
 
           <SectionLabel label="Blob Style" />
@@ -606,6 +646,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.05}
                 onChange={(v) => blobDetect.updateParams({ blobOpacity: v })}
                 format={(v) => `${(v * 100).toFixed(0)}%`}
+                paramId="blob_detect.blobOpacity"
               />
               {!blobDetect.params.blobFill && (
                 <SliderRow
@@ -616,6 +657,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                   step={0.5}
                   onChange={(v) => blobDetect.updateParams({ blobLineWidth: v })}
                   format={(v) => `${v.toFixed(1)}px`}
+                  paramId="blob_detect.blobLineWidth"
                 />
               )}
             </>
@@ -637,6 +679,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.05}
                 onChange={(v) => blobDetect.updateParams({ glowIntensity: v })}
                 format={(v) => `${(v * 100).toFixed(0)}%`}
+                paramId="blob_detect.glowIntensity"
               />
               <ColorRow
                 label="Glow Color"
@@ -673,6 +716,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                   step={0.5}
                   onChange={(v) => blobDetect.updateParams({ fadeTime: v })}
                   format={(v) => `${v.toFixed(1)}s`}
+                  paramId="blob_detect.fadeTime"
                 />
               )}
               {blobDetect.params.trailMode === 'fixed' && (
@@ -684,6 +728,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                   step={10}
                   onChange={(v) => blobDetect.updateParams({ trailLength: v })}
                   format={(v) => v.toFixed(0)}
+                  paramId="blob_detect.trailLength"
                 />
               )}
               <SliderRow
@@ -694,6 +739,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.5}
                 onChange={(v) => blobDetect.updateParams({ lineWidth: v })}
                 format={(v) => `${v.toFixed(1)}px`}
+                paramId="blob_detect.lineWidth"
               />
               <ColorRow
                 label="Line Color"
@@ -708,6 +754,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.1}
                 onChange={(v) => blobDetect.updateParams({ lineSmoothness: v })}
                 format={(v) => `${(v * 100).toFixed(0)}%`}
+                paramId="blob_detect.lineSmoothness"
               />
               <SliderRow
                 label="Opacity"
@@ -717,6 +764,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.05}
                 onChange={(v) => blobDetect.updateParams({ lineOpacity: v })}
                 format={(v) => `${(v * 100).toFixed(0)}%`}
+                paramId="blob_detect.lineOpacity"
               />
               <button
                 onClick={() => blobDetect.clearTrails()}
@@ -743,6 +791,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.01}
                 onChange={(v) => blobDetect.updateParams({ connectMaxDistance: v })}
                 format={(v) => `${(v * 100).toFixed(0)}%`}
+                paramId="blob_detect.connectMaxDistance"
               />
               <ColorRow
                 label="Line Color"
@@ -757,6 +806,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
                 step={0.5}
                 onChange={(v) => blobDetect.updateParams({ connectWidth: v })}
                 format={(v) => `${v.toFixed(1)}px`}
+                paramId="blob_detect.connectWidth"
               />
               <SelectRow
                 label="Style"
@@ -798,6 +848,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.05}
             onChange={(v) => landmarks.setMinDetectionConfidence(v)}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="landmarks.minDetectionConfidence"
           />
           <SliderRow
             label="Tracking"
@@ -807,6 +858,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.05}
             onChange={(v) => landmarks.setMinTrackingConfidence(v)}
             format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="landmarks.minTrackingConfidence"
           />
           {(landmarks.currentMode === 'face' || landmarks.currentMode === 'holistic') && (
             <SliderRow
@@ -817,6 +869,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
               step={1}
               onChange={(v) => landmarks.setMaxFaces(v)}
               format={(v) => v.toFixed(0)}
+              paramId="landmarks.maxFaces"
             />
           )}
           {(landmarks.currentMode === 'hands' || landmarks.currentMode === 'holistic') && (
@@ -828,6 +881,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
               step={1}
               onChange={(v) => landmarks.setMaxHands(v)}
               format={(v) => v.toFixed(0)}
+              paramId="landmarks.maxHands"
             />
           )}
           <ToggleRow

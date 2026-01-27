@@ -3,7 +3,7 @@ import type { BankSnapshot } from './bankStore'
 import { useGlitchEngineStore } from './glitchEngineStore'
 import { useAsciiRenderStore } from './asciiRenderStore'
 import { useStippleStore } from './stippleStore'
-import { useBlobDetectStore } from './blobDetectStore'
+import { useContourStore } from './contourStore'
 import { useLandmarksStore } from './landmarksStore'
 import { useRoutingStore } from './routingStore'
 
@@ -166,7 +166,7 @@ function captureCurrentEffects(): BankSnapshot {
   const glitchState = useGlitchEngineStore.getState()
   const asciiState = useAsciiRenderStore.getState()
   const stippleState = useStippleStore.getState()
-  const blobDetectState = useBlobDetectStore.getState()
+  const contourState = useContourStore.getState()
   const landmarksState = useLandmarksStore.getState()
   const routingState = useRoutingStore.getState()
 
@@ -209,9 +209,9 @@ function captureCurrentEffects(): BankSnapshot {
       enabled: stippleState.enabled,
       params: { ...stippleState.params },
     },
-    blobDetect: {
-      enabled: blobDetectState.enabled,
-      params: { ...blobDetectState.params },
+    contour: {
+      enabled: contourState.enabled,
+      params: { ...contourState.params },
     },
     landmarks: {
       enabled: landmarksState.enabled,
@@ -266,9 +266,9 @@ function applyEffects(effects: BankSnapshot): void {
     params: { ...effects.stipple.params },
   })
 
-  useBlobDetectStore.setState({
-    enabled: effects.blobDetect.enabled,
-    params: { ...effects.blobDetect.params },
+  useContourStore.setState({
+    enabled: effects.contour.enabled,
+    params: { ...effects.contour.params },
   })
 
   useLandmarksStore.setState({

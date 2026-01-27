@@ -4,14 +4,14 @@ import { useBankStore } from '../../stores/bankStore'
 import { useGlitchEngineStore, type GlitchSnapshot } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
-import { useBlobDetectStore } from '../../stores/blobDetectStore'
+import { useContourStore } from '../../stores/contourStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
 
 const BANK_LABELS = ['A', 'B', 'C', 'D']
 
 const RANDOMIZABLE_EFFECTS = [
   'rgb_split', 'block_displace', 'scan_lines', 'noise',
-  'pixelate', 'edges', 'blob_detect', 'ascii', 'matrix', 'stipple',
+  'pixelate', 'edges', 'contour', 'ascii', 'matrix', 'stipple',
 ] as const
 
 interface EffectState {
@@ -19,7 +19,7 @@ interface EffectState {
   asciiEnabled: boolean
   asciiMode: 'standard' | 'matrix' | 'blocks' | 'braille'
   stippleEnabled: boolean
-  blobDetectEnabled: boolean
+  contourEnabled: boolean
   landmarksEnabled: boolean
   landmarksMode: 'off' | 'face' | 'hands' | 'pose' | 'holistic'
 }
@@ -34,7 +34,7 @@ export function BankPanel() {
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
-  const blobDetect = useBlobDetectStore()
+  const contour = useContourStore()
   const landmarks = useLandmarksStore()
 
   const hasPreviousState = previousState !== null
@@ -46,11 +46,11 @@ export function BankPanel() {
       asciiEnabled: ascii.enabled,
       asciiMode: ascii.params.mode,
       stippleEnabled: stipple.enabled,
-      blobDetectEnabled: blobDetect.enabled,
+      contourEnabled: contour.enabled,
       landmarksEnabled: landmarks.enabled,
       landmarksMode: landmarks.currentMode,
     }
-  }, [glitch, ascii, stipple, blobDetect, landmarks])
+  }, [glitch, ascii, stipple, contour, landmarks])
 
   // Restore state
   const restoreState = useCallback((state: EffectState) => {
@@ -60,10 +60,10 @@ export function BankPanel() {
       ascii.updateParams({ mode: state.asciiMode })
     }
     stipple.setEnabled(state.stippleEnabled)
-    blobDetect.setEnabled(state.blobDetectEnabled)
+    contour.setEnabled(state.contourEnabled)
     landmarks.setEnabled(state.landmarksEnabled)
     landmarks.setCurrentMode(state.landmarksMode)
-  }, [glitch, ascii, stipple, blobDetect, landmarks])
+  }, [glitch, ascii, stipple, contour, landmarks])
 
   const handleRandom = useCallback(() => {
     setPreviousState(captureState())
@@ -77,7 +77,7 @@ export function BankPanel() {
     glitch.setEdgeDetectionEnabled(false)
     ascii.setEnabled(false)
     stipple.setEnabled(false)
-    blobDetect.setEnabled(false)
+    contour.setEnabled(false)
     landmarks.setEnabled(false)
     landmarks.setCurrentMode('off')
 
@@ -118,8 +118,8 @@ export function BankPanel() {
           glitch.setEdgeDetectionEnabled(true)
           glitch.updateEdgeDetection({ threshold: 0.2 + Math.random() * 0.6 })
           break
-        case 'blob_detect':
-          blobDetect.setEnabled(true)
+        case 'contour':
+          contour.setEnabled(true)
           break
         case 'ascii':
           ascii.setEnabled(true)
@@ -134,7 +134,7 @@ export function BankPanel() {
           break
       }
     })
-  }, [captureState, glitch, ascii, stipple, blobDetect, landmarks])
+  }, [captureState, glitch, ascii, stipple, contour, landmarks])
 
   const handleUndo = useCallback(() => {
     if (previousState) {

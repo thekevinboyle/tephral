@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import {
-  useBlobDetectStore,
+  useContourStore,
   type DetectionMode,
-  type TrailMode,
-  type BlobStyle,
-  type ConnectStyle,
+  type FadeMode,
   type StylePreset
-} from '../../stores/blobDetectStore'
+} from '../../stores/contourStore'
 
 interface CollapsibleSectionProps {
   title: string
@@ -24,7 +22,7 @@ function CollapsibleSection({ title, children, defaultOpen = true }: Collapsible
         className="w-full flex items-center justify-between py-2 px-3 text-left hover:bg-gray-50"
       >
         <span className="text-xs font-medium uppercase text-gray-600">{title}</span>
-        <span className="text-gray-400">{open ? '−' : '+'}</span>
+        <span className="text-gray-400">{open ? '-' : '+'}</span>
       </button>
       {open && <div className="px-3 pb-3">{children}</div>}
     </div>
@@ -144,9 +142,9 @@ interface Props {
 }
 
 export function EffectParameterEditor({ effectId, onClose }: Props) {
-  const { enabled, params, setEnabled, updateParams, setMode, applyPreset, clearTrails } = useBlobDetectStore()
+  const { enabled, params, setEnabled, updateParams, applyPreset } = useContourStore()
 
-  if (effectId !== 'blob_detect') {
+  if (effectId !== 'contour') {
     return (
       <div className="h-full flex items-center justify-center text-gray-400 text-sm">
         No parameters for this effect
@@ -159,14 +157,14 @@ export function EffectParameterEditor({ effectId, onClose }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium">DETECT</span>
-          <span className="text-[10px] text-gray-400 capitalize">· {params.mode}</span>
+          <span className="text-xs font-medium">CONTOUR</span>
+          <span className="text-[10px] text-gray-400 capitalize">- {params.mode}</span>
         </div>
         <button
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600 text-lg"
         >
-          ×
+          x
         </button>
       </div>
 
@@ -175,7 +173,7 @@ export function EffectParameterEditor({ effectId, onClose }: Props) {
         {/* Enable toggle */}
         <div className="px-3 py-2 border-b border-gray-200">
           <ToggleRow
-            label="Enable Detection"
+            label="Enable Contour"
             checked={enabled}
             onChange={setEnabled}
           />
@@ -185,7 +183,7 @@ export function EffectParameterEditor({ effectId, onClose }: Props) {
         <div className="px-3 py-2 border-b border-gray-200">
           <div className="text-[10px] text-gray-500 mb-2">Style Presets</div>
           <div className="flex gap-1">
-            {(['technical', 'neon', 'organic'] as StylePreset[]).map((preset) => (
+            {(['technical', 'neon', 'brush', 'minimal'] as StylePreset[]).map((preset) => (
               <button
                 key={preset}
                 onClick={() => applyPreset(preset)}
@@ -204,311 +202,134 @@ export function EffectParameterEditor({ effectId, onClose }: Props) {
             value={params.mode}
             options={[
               { value: 'brightness', label: 'Bright' },
-              { value: 'motion', label: 'Motion' },
+              { value: 'edge', label: 'Edge' },
               { value: 'color', label: 'Color' },
+              { value: 'motion', label: 'Motion' },
             ]}
-            onChange={setMode}
+            onChange={(mode) => updateParams({ mode })}
           />
 
-          {params.mode === 'brightness' && (
-            <>
-              <SliderRow
-                label="Threshold"
-                value={params.threshold}
-                min={0}
-                max={1}
-                onChange={(v) => updateParams({ threshold: v })}
-              />
-              <ToggleRow
-                label="Invert"
-                checked={params.invert}
-                onChange={(v) => updateParams({ invert: v })}
-              />
-            </>
-          )}
-
-          {params.mode === 'motion' && (
-            <>
-              <SliderRow
-                label="Sensitivity"
-                value={params.sensitivity}
-                min={0}
-                max={1}
-                onChange={(v) => updateParams({ sensitivity: v })}
-              />
-              <SliderRow
-                label="Decay"
-                value={params.decayRate}
-                min={0}
-                max={1}
-                onChange={(v) => updateParams({ decayRate: v })}
-              />
-            </>
-          )}
-
-          {params.mode === 'color' && (
-            <>
-              <SliderRow
-                label="Target Hue"
-                value={params.targetHue}
-                min={0}
-                max={360}
-                step={1}
-                onChange={(v) => updateParams({ targetHue: v })}
-                format={(v) => `${Math.round(v)}°`}
-              />
-              <SliderRow
-                label="Hue Range"
-                value={params.hueRange}
-                min={0}
-                max={180}
-                step={1}
-                onChange={(v) => updateParams({ hueRange: v })}
-                format={(v) => `±${Math.round(v)}°`}
-              />
-              <SliderRow
-                label="Min Sat"
-                value={params.saturationMin}
-                min={0}
-                max={1}
-                onChange={(v) => updateParams({ saturationMin: v })}
-              />
-            </>
-          )}
+          <SliderRow
+            label="Threshold"
+            value={params.threshold}
+            min={0}
+            max={1}
+            onChange={(v) => updateParams({ threshold: v })}
+          />
 
           <SliderRow
             label="Min Size"
             value={params.minSize}
             min={0.001}
-            max={0.2}
+            max={0.5}
             onChange={(v) => updateParams({ minSize: v })}
           />
+
+          {params.mode === 'color' && (
+            <>
+              <ColorRow
+                label="Target Color"
+                value={params.targetColor}
+                onChange={(v) => updateParams({ targetColor: v })}
+              />
+              <SliderRow
+                label="Color Range"
+                value={params.colorRange}
+                min={0}
+                max={1}
+                onChange={(v) => updateParams({ colorRange: v })}
+              />
+            </>
+          )}
+        </CollapsibleSection>
+
+        {/* Smoothing */}
+        <CollapsibleSection title="Smoothing">
           <SliderRow
-            label="Max Size"
-            value={params.maxSize}
-            min={0.1}
-            max={1}
-            onChange={(v) => updateParams({ maxSize: v })}
-          />
-          <SliderRow
-            label="Max Blobs"
-            value={params.maxBlobs}
-            min={1}
-            max={50}
-            step={1}
-            onChange={(v) => updateParams({ maxBlobs: v })}
-            format={(v) => Math.round(v).toString()}
-          />
-          <SliderRow
-            label="Blur"
-            value={params.blurAmount}
+            label="Position"
+            value={params.positionSmoothing}
             min={0}
-            max={20}
-            step={1}
-            onChange={(v) => updateParams({ blurAmount: v })}
-            format={(v) => `${Math.round(v)}px`}
+            max={1}
+            onChange={(v) => updateParams({ positionSmoothing: v })}
+          />
+          <SliderRow
+            label="Simplify"
+            value={params.contourSimplification}
+            min={0}
+            max={1}
+            onChange={(v) => updateParams({ contourSimplification: v })}
           />
         </CollapsibleSection>
 
-        {/* Trails */}
-        <CollapsibleSection title="Trails">
-          <ToggleRow
-            label="Enable Trails"
-            checked={params.trailEnabled}
-            onChange={(v) => updateParams({ trailEnabled: v })}
+        {/* Line Style */}
+        <CollapsibleSection title="Line Style">
+          <SliderRow
+            label="Width"
+            value={params.baseWidth}
+            min={1}
+            max={10}
+            step={0.5}
+            onChange={(v) => updateParams({ baseWidth: v })}
+            format={(v) => `${v.toFixed(1)}px`}
           />
-
-          {params.trailEnabled && (
-            <>
-              <SelectRow<TrailMode>
-                label="Mode"
-                value={params.trailMode}
-                options={[
-                  { value: 'fade', label: 'Fade' },
-                  { value: 'fixed', label: 'Fixed' },
-                  { value: 'persistent', label: 'Persist' },
-                ]}
-                onChange={(v) => updateParams({ trailMode: v })}
-              />
-
-              {params.trailMode === 'fade' && (
-                <SliderRow
-                  label="Fade Time"
-                  value={params.fadeTime}
-                  min={0.5}
-                  max={10}
-                  onChange={(v) => updateParams({ fadeTime: v })}
-                  format={(v) => `${v.toFixed(1)}s`}
-                />
-              )}
-
-              {params.trailMode === 'fixed' && (
-                <SliderRow
-                  label="Length"
-                  value={params.trailLength}
-                  min={10}
-                  max={500}
-                  step={10}
-                  onChange={(v) => updateParams({ trailLength: v })}
-                  format={(v) => Math.round(v).toString()}
-                />
-              )}
-
-              <SliderRow
-                label="Line Width"
-                value={params.lineWidth}
-                min={1}
-                max={10}
-                step={0.5}
-                onChange={(v) => updateParams({ lineWidth: v })}
-                format={(v) => `${v.toFixed(1)}px`}
-              />
-              <ColorRow
-                label="Line Color"
-                value={params.lineColor}
-                onChange={(v) => updateParams({ lineColor: v })}
-              />
-              <SliderRow
-                label="Smoothness"
-                value={params.lineSmoothness}
-                min={0}
-                max={1}
-                onChange={(v) => updateParams({ lineSmoothness: v })}
-              />
-              <SliderRow
-                label="Opacity"
-                value={params.lineOpacity}
-                min={0}
-                max={1}
-                onChange={(v) => updateParams({ lineOpacity: v })}
-              />
-
-              <button
-                onClick={clearTrails}
-                className="w-full mt-2 py-1.5 text-[10px] bg-red-50 text-red-600 hover:bg-red-100 rounded"
-              >
-                Clear Trails
-              </button>
-            </>
-          )}
-        </CollapsibleSection>
-
-        {/* Blob Visuals */}
-        <CollapsibleSection title="Blobs">
-          <SelectRow<BlobStyle>
-            label="Style"
-            value={params.blobStyle}
-            options={[
-              { value: 'circle', label: 'Circle' },
-              { value: 'box', label: 'Box' },
-              { value: 'none', label: 'None' },
-            ]}
-            onChange={(v) => updateParams({ blobStyle: v })}
+          <SliderRow
+            label="Velocity"
+            value={params.velocityResponse}
+            min={0}
+            max={1}
+            onChange={(v) => updateParams({ velocityResponse: v })}
           />
-
-          {params.blobStyle !== 'none' && (
-            <>
-              <ToggleRow
-                label="Fill"
-                checked={params.blobFill}
-                onChange={(v) => updateParams({ blobFill: v })}
-              />
-              <ColorRow
-                label="Color"
-                value={params.blobColor}
-                onChange={(v) => updateParams({ blobColor: v })}
-              />
-              <SliderRow
-                label="Opacity"
-                value={params.blobOpacity}
-                min={0}
-                max={1}
-                onChange={(v) => updateParams({ blobOpacity: v })}
-              />
-              {!params.blobFill && (
-                <SliderRow
-                  label="Line Width"
-                  value={params.blobLineWidth}
-                  min={1}
-                  max={6}
-                  step={0.5}
-                  onChange={(v) => updateParams({ blobLineWidth: v })}
-                  format={(v) => `${v.toFixed(1)}px`}
-                />
-              )}
-            </>
-          )}
+          <SliderRow
+            label="Taper"
+            value={params.taperAmount}
+            min={0}
+            max={1}
+            onChange={(v) => updateParams({ taperAmount: v })}
+          />
+          <ColorRow
+            label="Color"
+            value={params.color}
+            onChange={(v) => updateParams({ color: v })}
+          />
         </CollapsibleSection>
 
         {/* Glow */}
         <CollapsibleSection title="Glow" defaultOpen={false}>
-          <ToggleRow
-            label="Enable Glow"
-            checked={params.glowEnabled}
-            onChange={(v) => updateParams({ glowEnabled: v })}
+          <SliderRow
+            label="Intensity"
+            value={params.glowIntensity}
+            min={0}
+            max={1}
+            onChange={(v) => updateParams({ glowIntensity: v })}
           />
-
-          {params.glowEnabled && (
-            <>
-              <SliderRow
-                label="Intensity"
-                value={params.glowIntensity}
-                min={0}
-                max={1}
-                onChange={(v) => updateParams({ glowIntensity: v })}
-              />
-              <ColorRow
-                label="Color"
-                value={params.glowColor}
-                onChange={(v) => updateParams({ glowColor: v })}
-              />
-            </>
-          )}
+          <ColorRow
+            label="Color"
+            value={params.glowColor}
+            onChange={(v) => updateParams({ glowColor: v })}
+          />
         </CollapsibleSection>
 
-        {/* Connections */}
-        <CollapsibleSection title="Connections" defaultOpen={false}>
-          <ToggleRow
-            label="Connect Blobs"
-            checked={params.connectEnabled}
-            onChange={(v) => updateParams({ connectEnabled: v })}
+        {/* Trails */}
+        <CollapsibleSection title="Trails" defaultOpen={false}>
+          <SliderRow
+            label="Length"
+            value={params.trailLength}
+            min={0}
+            max={5}
+            step={0.1}
+            onChange={(v) => updateParams({ trailLength: v })}
+            format={(v) => `${v.toFixed(1)}s`}
           />
-
-          {params.connectEnabled && (
-            <>
-              <SliderRow
-                label="Max Distance"
-                value={params.connectMaxDistance}
-                min={0.05}
-                max={0.5}
-                onChange={(v) => updateParams({ connectMaxDistance: v })}
-              />
-              <ColorRow
-                label="Color"
-                value={params.connectColor}
-                onChange={(v) => updateParams({ connectColor: v })}
-              />
-              <SliderRow
-                label="Width"
-                value={params.connectWidth}
-                min={1}
-                max={4}
-                step={0.5}
-                onChange={(v) => updateParams({ connectWidth: v })}
-                format={(v) => `${v.toFixed(1)}px`}
-              />
-              <SelectRow<ConnectStyle>
-                label="Style"
-                value={params.connectStyle}
-                options={[
-                  { value: 'solid', label: 'Solid' },
-                  { value: 'dashed', label: 'Dashed' },
-                  { value: 'curved', label: 'Curved' },
-                ]}
-                onChange={(v) => updateParams({ connectStyle: v })}
-              />
-            </>
-          )}
+          <SelectRow<FadeMode>
+            label="Mode"
+            value={params.fadeMode}
+            options={[
+              { value: 'fade', label: 'Fade' },
+              { value: 'fixed', label: 'Fixed' },
+              { value: 'persistent', label: 'Persist' },
+            ]}
+            onChange={(v) => updateParams({ fadeMode: v })}
+          />
         </CollapsibleSection>
       </div>
     </div>

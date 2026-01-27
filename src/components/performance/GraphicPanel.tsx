@@ -4,7 +4,7 @@ import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
-import { useBlobDetectStore } from '../../stores/blobDetectStore'
+import { useContourStore } from '../../stores/contourStore'
 import { EFFECTS } from '../../config/effects'
 import {
   RGBSplitGraphic,
@@ -33,7 +33,7 @@ export function GraphicPanel() {
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
   const landmarks = useLandmarksStore()
-  const blobDetect = useBlobDetectStore()
+  const contour = useContourStore()
 
   const dragStartY = useRef<number | null>(null)
   const dragStartValue = useRef<number>(0)
@@ -84,10 +84,10 @@ export function GraphicPanel() {
           { label: 'SIZE', value: stipple.params.particleSize, min: 1, max: 8, onChange: (v) => stipple.updateParams({ particleSize: v }) },
           { label: 'DENSITY', value: stipple.params.density * 100, min: 10, max: 300, onChange: (v) => stipple.updateParams({ density: v / 100 }) },
         ]
-      case 'blob_detect':
+      case 'contour':
         return [
-          { label: 'THRESHOLD', value: blobDetect.params.threshold * 100, min: 0, max: 100, onChange: (v) => blobDetect.updateParams({ threshold: v / 100 }) },
-          { label: 'MIN SIZE', value: blobDetect.params.minSize * 100, min: 0, max: 20, onChange: (v) => blobDetect.updateParams({ minSize: v / 100 }) },
+          { label: 'THRESHOLD', value: contour.params.threshold * 100, min: 0, max: 100, onChange: (v) => contour.updateParams({ threshold: v / 100 }) },
+          { label: 'WIDTH', value: contour.params.baseWidth, min: 1, max: 10, onChange: (v) => contour.updateParams({ baseWidth: v }) },
         ]
       case 'face_mesh':
       case 'hands':
@@ -153,8 +153,8 @@ export function GraphicPanel() {
         return <AsciiGraphic fontSize={ascii.params.fontSize} mode={ascii.params.mode} color={color} />
       case 'stipple':
         return <StippleGraphic size={stipple.params.particleSize} density={stipple.params.density} color={color} />
-      case 'blob_detect':
-        return <NetworkGraphic pointRadius={4} maxDistance={blobDetect.params.threshold} color={color} />
+      case 'contour':
+        return <NetworkGraphic pointRadius={4} maxDistance={contour.params.threshold} color={color} />
       case 'face_mesh':
       case 'hands':
       case 'pose':

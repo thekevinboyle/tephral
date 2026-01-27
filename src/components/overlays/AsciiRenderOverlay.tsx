@@ -1,7 +1,6 @@
 import { useRef, useEffect, useMemo } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
-import { useBlobDetectStore } from '../../stores/blobDetectStore'
 import { AsciiRenderer } from '../../effects/vision/AsciiRenderEffect'
 import { calculateVideoArea } from '../../utils/videoArea'
 
@@ -20,7 +19,6 @@ export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverl
 
   const { videoElement, imageElement } = useMediaStore()
   const { enabled, params } = useAsciiRenderStore()
-  const { blobs } = useBlobDetectStore()
 
   // Calculate video display area (respecting aspect ratio)
   const videoArea = useMemo(() => {
@@ -102,41 +100,6 @@ export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverl
         // CORS issues
       }
 
-      // Apply blob masking if enabled
-      if (params.maskToDetections && blobs.length > 0 && imageData) {
-        const maskedData = new ImageData(imageData.width, imageData.height)
-
-        for (let y = 0; y < imageData.height; y++) {
-          for (let x = 0; x < imageData.width; x++) {
-            const nx = x / imageData.width
-            const ny = y / imageData.height
-
-            const insideBlob = blobs.some(blob =>
-              nx >= blob.x - blob.width / 2 &&
-              nx <= blob.x + blob.width / 2 &&
-              ny >= blob.y - blob.height / 2 &&
-              ny <= blob.y + blob.height / 2
-            )
-
-            const idx = (y * imageData.width + x) * 4
-
-            if (insideBlob) {
-              maskedData.data[idx] = imageData.data[idx]
-              maskedData.data[idx + 1] = imageData.data[idx + 1]
-              maskedData.data[idx + 2] = imageData.data[idx + 2]
-              maskedData.data[idx + 3] = 255
-            } else {
-              maskedData.data[idx] = 0
-              maskedData.data[idx + 1] = 0
-              maskedData.data[idx + 2] = 0
-              maskedData.data[idx + 3] = 255
-            }
-          }
-        }
-
-        imageData = maskedData
-      }
-
       // Save context, translate to video area, render, then restore
       ctx.save()
       ctx.translate(offsetX, offsetY)
@@ -157,7 +120,7 @@ export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverl
     return () => {
       cancelAnimationFrame(animationFrameRef.current)
     }
-  }, [enabled, videoElement, imageElement, glCanvas, params, width, height, videoArea, blobs])
+  }, [enabled, videoElement, imageElement, glCanvas, params, width, height, videoArea])
 
   if (!enabled) return null
 

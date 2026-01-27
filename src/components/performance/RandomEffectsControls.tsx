@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { useGlitchEngineStore, type GlitchSnapshot } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
-import { useBlobDetectStore } from '../../stores/blobDetectStore'
+import { useContourStore } from '../../stores/contourStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
 
 // Effect IDs that can be randomized
@@ -13,7 +13,7 @@ const RANDOMIZABLE_EFFECTS = [
   'noise',
   'pixelate',
   'edges',
-  'blob_detect',
+  'contour',
   'ascii',
   'matrix',
   'stipple',
@@ -24,7 +24,7 @@ interface EffectState {
   asciiEnabled: boolean
   asciiMode: 'standard' | 'matrix' | 'blocks' | 'braille'
   stippleEnabled: boolean
-  blobDetectEnabled: boolean
+  contourEnabled: boolean
   landmarksEnabled: boolean
   landmarksMode: 'off' | 'face' | 'hands' | 'pose' | 'holistic'
 }
@@ -35,7 +35,7 @@ export function RandomEffectsControls() {
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
-  const blobDetect = useBlobDetectStore()
+  const contour = useContourStore()
   const landmarks = useLandmarksStore()
 
   // Capture current state
@@ -45,11 +45,11 @@ export function RandomEffectsControls() {
       asciiEnabled: ascii.enabled,
       asciiMode: ascii.params.mode,
       stippleEnabled: stipple.enabled,
-      blobDetectEnabled: blobDetect.enabled,
+      contourEnabled: contour.enabled,
       landmarksEnabled: landmarks.enabled,
       landmarksMode: landmarks.currentMode,
     }
-  }, [glitch, ascii, stipple, blobDetect, landmarks])
+  }, [glitch, ascii, stipple, contour, landmarks])
 
   // Restore state
   const restoreState = useCallback((state: EffectState) => {
@@ -59,10 +59,10 @@ export function RandomEffectsControls() {
       ascii.updateParams({ mode: state.asciiMode })
     }
     stipple.setEnabled(state.stippleEnabled)
-    blobDetect.setEnabled(state.blobDetectEnabled)
+    contour.setEnabled(state.contourEnabled)
     landmarks.setEnabled(state.landmarksEnabled)
     landmarks.setCurrentMode(state.landmarksMode)
-  }, [glitch, ascii, stipple, blobDetect, landmarks])
+  }, [glitch, ascii, stipple, contour, landmarks])
 
   // Randomize effects
   const handleRandom = useCallback(() => {
@@ -78,7 +78,7 @@ export function RandomEffectsControls() {
     glitch.setEdgeDetectionEnabled(false)
     ascii.setEnabled(false)
     stipple.setEnabled(false)
-    blobDetect.setEnabled(false)
+    contour.setEnabled(false)
     landmarks.setEnabled(false)
     landmarks.setCurrentMode('off')
 
@@ -119,8 +119,8 @@ export function RandomEffectsControls() {
           glitch.setEdgeDetectionEnabled(true)
           glitch.updateEdgeDetection({ threshold: 0.2 + Math.random() * 0.6 })
           break
-        case 'blob_detect':
-          blobDetect.setEnabled(true)
+        case 'contour':
+          contour.setEnabled(true)
           break
         case 'ascii':
           ascii.setEnabled(true)
@@ -135,7 +135,7 @@ export function RandomEffectsControls() {
           break
       }
     })
-  }, [captureState, glitch, ascii, stipple, blobDetect, landmarks])
+  }, [captureState, glitch, ascii, stipple, contour, landmarks])
 
   // Step back to previous state
   const handleStepBack = useCallback(() => {

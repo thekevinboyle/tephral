@@ -3,24 +3,24 @@ import { MinimalSlider } from '../ui/MinimalSlider'
 import { MinimalToggle } from '../ui/MinimalToggle'
 import {
   useLandmarksStore,
-  useBlobDetectStore,
+  useContourStore,
   useAsciiRenderStore,
   useStippleStore,
 } from '../../stores/visionStores'
 
-type VisionMode = 'blob' | 'landmarks' | 'ascii' | 'stipple'
+type VisionMode = 'contour' | 'landmarks' | 'ascii' | 'stipple'
 
 const modes: { id: VisionMode; label: string }[] = [
-  { id: 'blob', label: 'Detect' },
+  { id: 'contour', label: 'Contour' },
   { id: 'landmarks', label: 'Points' },
   { id: 'ascii', label: 'ASCII' },
   { id: 'stipple', label: 'Dots' },
 ]
 
 export function VisionPanel() {
-  const [activeMode, setActiveMode] = useState<VisionMode>('blob')
+  const [activeMode, setActiveMode] = useState<VisionMode>('contour')
 
-  const blobDetect = useBlobDetectStore()
+  const contour = useContourStore()
   const landmarks = useLandmarksStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
@@ -44,23 +44,23 @@ export function VisionPanel() {
         ))}
       </div>
 
-      {/* Blob Detection controls */}
-      {activeMode === 'blob' && (
+      {/* Contour Tracking controls */}
+      {activeMode === 'contour' && (
         <div className="flex flex-col gap-2">
           <MinimalToggle
-            label="Blob Detection"
-            pressed={blobDetect.enabled}
-            onPressedChange={blobDetect.setEnabled}
+            label="Contour Tracking"
+            pressed={contour.enabled}
+            onPressedChange={contour.setEnabled}
           />
-          {blobDetect.enabled && (
+          {contour.enabled && (
             <>
               <div className="flex gap-1 mt-2">
-                {(['brightness', 'motion', 'color'] as const).map(mode => (
+                {(['brightness', 'edge', 'color', 'motion'] as const).map(mode => (
                   <button
                     key={mode}
-                    onClick={() => blobDetect.setMode(mode)}
+                    onClick={() => contour.updateParams({ mode })}
                     className={`px-2 py-1 text-xs uppercase transition-colors ${
-                      blobDetect.params.mode === mode
+                      contour.params.mode === mode
                         ? 'bg-accent-yellow text-base-dark'
                         : 'text-muted hover:text-base-light'
                     }`}
@@ -71,20 +71,24 @@ export function VisionPanel() {
               </div>
               <MinimalSlider
                 label="Threshold"
-                value={blobDetect.params.threshold}
+                value={contour.params.threshold}
                 min={0}
                 max={1}
-                onChange={(v) => blobDetect.updateParams({ threshold: v })}
+                onChange={(v) => contour.updateParams({ threshold: v })}
               />
-              <MinimalToggle
-                label="Trails"
-                pressed={blobDetect.params.trailEnabled}
-                onPressedChange={(v) => blobDetect.updateParams({ trailEnabled: v })}
+              <MinimalSlider
+                label="Trail Length"
+                value={contour.params.trailLength}
+                min={0}
+                max={5}
+                onChange={(v) => contour.updateParams({ trailLength: v })}
               />
-              <MinimalToggle
+              <MinimalSlider
                 label="Glow"
-                pressed={blobDetect.params.glowEnabled}
-                onPressedChange={(v) => blobDetect.updateParams({ glowEnabled: v })}
+                value={contour.params.glowIntensity}
+                min={0}
+                max={1}
+                onChange={(v) => contour.updateParams({ glowIntensity: v })}
               />
             </>
           )}

@@ -10,8 +10,8 @@ export type {
   LandmarkMode,
 } from './landmarksStore'
 
-export { useBlobDetectStore, DEFAULT_BLOB_DETECT_PARAMS } from './blobDetectStore'
-export type { BlobDetectParams } from './blobDetectStore'
+export { useContourStore, DEFAULT_CONTOUR_PARAMS } from './contourStore'
+export type { ContourParams } from './contourStore'
 
 export { useAsciiRenderStore, DEFAULT_ASCII_PARAMS, ASCII_CHAR_SETS } from './asciiRenderStore'
 export type { AsciiRenderParams, AsciiMode } from './asciiRenderStore'

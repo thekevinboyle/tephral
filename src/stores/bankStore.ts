@@ -17,13 +17,13 @@ import type {
 } from '../effects/glitch-engine'
 import type { AsciiRenderParams } from './asciiRenderStore'
 import type { StippleParams } from './stippleStore'
-import type { BlobDetectParams } from './blobDetectStore'
+import type { ContourParams } from './contourStore'
 import type { LandmarkMode } from './landmarksStore'
 
 import { useGlitchEngineStore } from './glitchEngineStore'
 import { useAsciiRenderStore } from './asciiRenderStore'
 import { useStippleStore } from './stippleStore'
-import { useBlobDetectStore } from './blobDetectStore'
+import { useContourStore } from './contourStore'
 import { useLandmarksStore } from './landmarksStore'
 import { useRoutingStore } from './routingStore'
 
@@ -65,7 +65,7 @@ export interface BankSnapshot {
   // Vision effects
   ascii: { enabled: boolean; params: AsciiRenderParams }
   stipple: { enabled: boolean; params: StippleParams }
-  blobDetect: { enabled: boolean; params: BlobDetectParams }
+  contour: { enabled: boolean; params: ContourParams }
   landmarks: { enabled: boolean; mode: LandmarkMode }
   // Chain order
   effectOrder: string[]
@@ -94,7 +94,7 @@ export const useBankStore = create<BankState>((set, get) => ({
     const glitchState = useGlitchEngineStore.getState()
     const asciiState = useAsciiRenderStore.getState()
     const stippleState = useStippleStore.getState()
-    const blobDetectState = useBlobDetectStore.getState()
+    const contourState = useContourStore.getState()
     const landmarksState = useLandmarksStore.getState()
     const routingState = useRoutingStore.getState()
 
@@ -138,9 +138,9 @@ export const useBankStore = create<BankState>((set, get) => ({
         enabled: stippleState.enabled,
         params: { ...stippleState.params },
       },
-      blobDetect: {
-        enabled: blobDetectState.enabled,
-        params: { ...blobDetectState.params },
+      contour: {
+        enabled: contourState.enabled,
+        params: { ...contourState.params },
       },
       landmarks: {
         enabled: landmarksState.enabled,
@@ -214,10 +214,10 @@ export const useBankStore = create<BankState>((set, get) => ({
       params: { ...snapshot.stipple.params },
     })
 
-    // Apply to blob detect store
-    useBlobDetectStore.setState({
-      enabled: snapshot.blobDetect.enabled,
-      params: { ...snapshot.blobDetect.params },
+    // Apply to contour store
+    useContourStore.setState({
+      enabled: snapshot.contour.enabled,
+      params: { ...snapshot.contour.params },
     })
 
     // Apply to landmarks store

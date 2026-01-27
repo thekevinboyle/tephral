@@ -4,7 +4,12 @@ import { useGlitchEngineStore, type GlitchSnapshot } from './glitchEngineStore'
 import { useAsciiRenderStore, type AsciiSnapshot } from './asciiRenderStore'
 import { useStippleStore, type StippleSnapshot } from './stippleStore'
 import { useLandmarksStore, type LandmarksSnapshot } from './landmarksStore'
-import { useBlobDetectStore, type BlobDetectSnapshot } from './blobDetectStore'
+import { useContourStore, type ContourParams } from './contourStore'
+
+export interface ContourSnapshot {
+  enabled: boolean
+  params: ContourParams
+}
 
 export interface RoutingPreset {
   name: string
@@ -13,7 +18,7 @@ export interface RoutingPreset {
   ascii: AsciiSnapshot
   stipple: StippleSnapshot
   landmarks: LandmarksSnapshot
-  blobDetect: BlobDetectSnapshot
+  contour: ContourSnapshot
 }
 
 interface RoutingState {
@@ -181,7 +186,11 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
     const ascii = useAsciiRenderStore.getState().getSnapshot()
     const stipple = useStippleStore.getState().getSnapshot()
     const landmarks = useLandmarksStore.getState().getSnapshot()
-    const blobDetect = useBlobDetectStore.getState().getSnapshot()
+    const contourState = useContourStore.getState()
+    const contour: ContourSnapshot = {
+      enabled: contourState.enabled,
+      params: { ...contourState.params },
+    }
 
     return {
       effectOrder: [...get().effectOrder],
@@ -189,7 +198,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
       ascii,
       stipple,
       landmarks,
-      blobDetect,
+      contour,
     }
   },
 
@@ -198,7 +207,10 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
     useAsciiRenderStore.getState().applySnapshot(preset.ascii)
     useStippleStore.getState().applySnapshot(preset.stipple)
     useLandmarksStore.getState().applySnapshot(preset.landmarks)
-    useBlobDetectStore.getState().applySnapshot(preset.blobDetect)
+    useContourStore.setState({
+      enabled: preset.contour.enabled,
+      params: { ...preset.contour.params },
+    })
     set({ effectOrder: [...preset.effectOrder] })
   },
 
@@ -353,21 +365,19 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
         currentMode: randBool() ? ['face', 'hands', 'pose', 'holistic'][randInt(0, 3)] as 'face' | 'hands' | 'pose' | 'holistic' : 'off',
         minDetectionConfidence: rand(0.3, 0.8),
       },
-      blobDetect: {
+      contour: {
         enabled: randBool(),
         params: {
-          ...current.blobDetect.params,
-          mode: ['brightness', 'motion', 'color'][randInt(0, 2)] as 'brightness' | 'motion' | 'color',
+          ...current.contour.params,
+          mode: ['brightness', 'edge', 'color', 'motion'][randInt(0, 3)] as 'brightness' | 'edge' | 'color' | 'motion',
           threshold: rand(0.3, 0.7),
-          sensitivity: rand(0.2, 0.8),
-          trailEnabled: randBool(),
-          trailMode: ['fade', 'fixed', 'persistent'][randInt(0, 2)] as 'fade' | 'fixed' | 'persistent',
-          glowEnabled: randBool(),
-          glowIntensity: rand(0.3, 0.8),
-          connectEnabled: randBool(),
-          blobStyle: ['circle', 'box', 'none'][randInt(0, 2)] as 'circle' | 'box' | 'none',
-          lineColor: ['#00ffff', '#ff00ff', '#ffff00', '#00ff00', '#ff3366'][randInt(0, 4)],
-          blobColor: ['#00ffff', '#ff00ff', '#ffff00', '#00ff00', '#ff3366'][randInt(0, 4)],
+          baseWidth: rand(1, 6),
+          velocityResponse: rand(0, 1),
+          taperAmount: rand(0, 1),
+          glowIntensity: rand(0, 1),
+          trailLength: rand(0, 3),
+          color: ['#00ffff', '#ff00ff', '#ffff00', '#00ff00', '#ff3366'][randInt(0, 4)],
+          glowColor: ['#00ffff', '#ff00ff', '#ffff00', '#00ff00', '#ff3366'][randInt(0, 4)],
         },
       },
     }

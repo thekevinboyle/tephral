@@ -3,7 +3,7 @@ import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
-import { useBlobDetectStore } from '../../stores/blobDetectStore'
+import { useContourStore } from '../../stores/contourStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useSequencerStore } from '../../stores/sequencerStore'
@@ -77,7 +77,7 @@ export function ParameterPanel() {
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
   const landmarks = useLandmarksStore()
-  const blobDetect = useBlobDetectStore()
+  const contour = useContourStore()
 
   // Clear all effects
   const handleClear = useCallback(() => {
@@ -97,10 +97,10 @@ export function ParameterPanel() {
     glitch.setFeedbackLoopEnabled(false)
     ascii.setEnabled(false)
     stipple.setEnabled(false)
-    blobDetect.setEnabled(false)
+    contour.setEnabled(false)
     landmarks.setEnabled(false)
     landmarks.setCurrentMode('off')
-  }, [glitch, ascii, stipple, blobDetect, landmarks])
+  }, [glitch, ascii, stipple, contour, landmarks])
 
   // Bypass handlers
   const handleBypassDown = useCallback(() => {
@@ -640,34 +640,34 @@ export function ParameterPanel() {
     })
   }
 
-  // Blob Detection
-  if (blobDetect.enabled) {
+  // Contour Tracking
+  if (contour.enabled) {
     const color = '#65a30d'
     sections.push({
-      id: 'blob_detect',
-      label: 'DETECT',
+      id: 'contour',
+      label: 'CONTOUR',
       color,
       visualizer: (
         <NetworkViz
           pointRadius={4}
-          maxDistance={blobDetect.params.threshold}
+          maxDistance={contour.params.threshold}
           color={color}
         />
       ),
       params: [
         {
           label: 'Thresh',
-          value: blobDetect.params.threshold * 100,
+          value: contour.params.threshold * 100,
           min: 0,
           max: 100,
-          onChange: (v) => blobDetect.updateParams({ threshold: v / 100 }),
+          onChange: (v) => contour.updateParams({ threshold: v / 100 }),
         },
         {
-          label: 'MinSize',
-          value: blobDetect.params.minSize * 100,
-          min: 0,
-          max: 20,
-          onChange: (v) => blobDetect.updateParams({ minSize: v / 100 }),
+          label: 'Width',
+          value: contour.params.baseWidth,
+          min: 1,
+          max: 10,
+          onChange: (v) => contour.updateParams({ baseWidth: v }),
         },
       ],
     })
@@ -784,8 +784,8 @@ export function ParameterPanel() {
       case 'stipple':
         stipple.setEnabled(false)
         break
-      case 'blob_detect':
-        blobDetect.setEnabled(false)
+      case 'contour':
+        contour.setEnabled(false)
         break
       case 'landmarks':
         landmarks.setEnabled(false)
@@ -796,7 +796,7 @@ export function ParameterPanel() {
     if (selectedEffectId === effectId) {
       setSelectedEffect(null)
     }
-  }, [glitch, ascii, stipple, blobDetect, landmarks, selectedEffectId, setSelectedEffect])
+  }, [glitch, ascii, stipple, contour, landmarks, selectedEffectId, setSelectedEffect])
 
   // Sort sections by effectOrder
   const sortedSections = [...sections].sort((a, b) => {

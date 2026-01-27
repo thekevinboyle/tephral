@@ -215,8 +215,8 @@ export function GraphicPanelV2() {
     return () => cancelAnimationFrame(animationId)
   }, [selectedEffectId, glitch, ascii, stipple, landmarks, effect])
 
-  // Show full parameter editor for blob_detect (after all hooks)
-  if (selectedEffectId === 'blob_detect') {
+  // Show full parameter editor for contour (after all hooks)
+  if (selectedEffectId === 'contour') {
     return (
       <EffectParameterEditor
         effectId={selectedEffectId}

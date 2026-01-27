@@ -1,6 +1,5 @@
 import { useRef, useCallback } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
-import { PreviewHeader } from './PreviewHeader'
 import { TransportBar } from './TransportBar'
 import { ParameterPanel } from './ParameterPanel'
 import { BankPanel } from './BankPanel'
@@ -92,11 +91,6 @@ export function PerformanceLayout() {
           className="relative flex-1 min-w-0"
           style={{ backgroundColor: '#1a1a1a' }}
         >
-          {/* Source selection overlay */}
-          <div className="absolute top-0 left-0 right-0 z-10">
-            <PreviewHeader />
-          </div>
-
           {/* Canvas */}
           <div className="w-full h-full">
             <Canvas ref={canvasRef} />

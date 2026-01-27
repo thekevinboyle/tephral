@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useRecordingStore } from '../../stores/recordingStore'
 
 export function TransportBar() {
-  const { source, reset, videoElement } = useMediaStore()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { source, reset, videoElement, setVideoElement, setImageElement, setSource } = useMediaStore()
   const {
     isRecording,
     currentTime,
@@ -12,6 +13,7 @@ export function TransportBar() {
     stopRecording,
     setCurrentTime,
     addThumbnail,
+    setSource: setRecordingSource,
   } = useRecordingStore()
 
   const hasSource = source !== 'none'
@@ -22,6 +24,56 @@ export function TransportBar() {
     const secs = Math.floor(seconds % 60)
     const ms = Math.floor((seconds % 1) * 100)
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`
+  }
+
+  // File select handler
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const url = URL.createObjectURL(file)
+
+    if (file.type.startsWith('video/')) {
+      const video = document.createElement('video')
+      video.src = url
+      video.loop = true
+      video.muted = true
+      video.playsInline = true
+      video.onloadeddata = () => {
+        setVideoElement(video)
+        setSource('file')
+        setRecordingSource('file')
+        video.play()
+      }
+    } else if (file.type.startsWith('image/')) {
+      const img = new Image()
+      img.src = url
+      img.onload = () => {
+        setImageElement(img)
+        setSource('file')
+        setRecordingSource('file')
+      }
+    }
+  }
+
+  // Webcam handler
+  const handleWebcam = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 1280, height: 720 },
+      })
+      const video = document.createElement('video')
+      video.srcObject = stream
+      video.playsInline = true
+      video.onloadeddata = () => {
+        setVideoElement(video)
+        setSource('webcam')
+        setRecordingSource('webcam')
+        video.play()
+      }
+    } catch (err) {
+      console.error('Webcam error:', err)
+    }
   }
 
   // Recording timer
@@ -61,7 +113,43 @@ export function TransportBar() {
   }, [isRecording, setCurrentTime, addThumbnail, videoElement])
 
   return (
-    <div className="h-full flex items-center gap-4 px-4">
+    <div className="h-full flex items-center gap-3 px-4">
+      {/* Source buttons */}
+      <button
+        onClick={handleWebcam}
+        className="h-7 px-3 text-[11px] font-medium rounded transition-colors"
+        style={{
+          backgroundColor: source === 'webcam' ? '#333' : '#f5f5f5',
+          border: '1px solid #d0d0d0',
+          color: source === 'webcam' ? '#fff' : '#666',
+        }}
+      >
+        Cam
+      </button>
+
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        className="h-7 px-3 text-[11px] font-medium rounded transition-colors"
+        style={{
+          backgroundColor: source === 'file' ? '#333' : '#f5f5f5',
+          border: '1px solid #d0d0d0',
+          color: source === 'file' ? '#fff' : '#666',
+        }}
+      >
+        File
+      </button>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {/* Divider */}
+      <div className="w-px h-5 bg-gray-300" />
+
       {/* Record button */}
       <button
         onClick={isRecording ? stopRecording : startRecording}
@@ -98,8 +186,12 @@ export function TransportBar() {
       {hasSource && (
         <button
           onClick={reset}
-          className="text-[13px] font-medium transition-colors hover:text-gray-900"
-          style={{ color: '#666666' }}
+          className="h-7 px-3 text-[11px] font-medium rounded transition-colors"
+          style={{
+            backgroundColor: '#f5f5f5',
+            border: '1px solid #d0d0d0',
+            color: '#666',
+          }}
         >
           Clear
         </button>

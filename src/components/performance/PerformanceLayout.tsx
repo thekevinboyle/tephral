@@ -11,6 +11,7 @@ import { XYPad } from './XYPad'
 import { MixControls } from './MixControls'
 import { ThumbnailFilmstrip } from './ThumbnailFilmstrip'
 import { ExportModal } from './ExportModal'
+import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { useCanvasCapture } from '../../hooks/useCanvasCapture'
 import { useRecordingStore, type ExportFormat, type ExportQuality } from '../../stores/recordingStore'
 
@@ -67,27 +68,37 @@ export function PerformanceLayout() {
       className="w-screen h-screen flex flex-col overflow-hidden"
       style={{ backgroundColor: '#e5e5e5' }}
     >
-      {/* Preview section (55vh) - Full width canvas */}
+      {/* Preview section (55vh) - Canvas + Expanded Parameters */}
       <div
-        className="relative flex-shrink-0 m-3 mb-0 rounded-xl overflow-hidden"
+        className="flex-shrink-0 m-3 mb-0 flex rounded-xl overflow-hidden"
         style={{
           height: 'calc(55vh - 12px)',
-          backgroundColor: '#1a1a1a',
           border: '1px solid #d0d0d0',
         }}
       >
-        {/* Source selection overlay */}
-        <div className="absolute top-0 left-0 right-0 z-10">
-          <PreviewHeader />
+        {/* Canvas area */}
+        <div
+          className="relative flex-1 min-w-0"
+          style={{ backgroundColor: '#1a1a1a' }}
+        >
+          {/* Source selection overlay */}
+          <div className="absolute top-0 left-0 right-0 z-10">
+            <PreviewHeader />
+          </div>
+
+          {/* Canvas */}
+          <div className="w-full h-full">
+            <Canvas ref={canvasRef} />
+          </div>
+
+          {/* Thumbnail filmstrip at bottom of preview */}
+          <ThumbnailFilmstrip />
         </div>
 
-        {/* Canvas */}
-        <div className="w-full h-full">
-          <Canvas ref={canvasRef} />
+        {/* Expanded Parameter Panel */}
+        <div className="flex-shrink-0" style={{ width: '280px' }}>
+          <ExpandedParameterPanel />
         </div>
-
-        {/* Thumbnail filmstrip at bottom of preview */}
-        <ThumbnailFilmstrip />
       </div>
 
       {/* Signal path bar (5vh) */}

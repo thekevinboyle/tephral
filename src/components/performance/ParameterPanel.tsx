@@ -6,6 +6,8 @@ import { useLandmarksStore } from '../../stores/landmarksStore'
 import { useBlobDetectStore } from '../../stores/blobDetectStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useRoutingStore } from '../../stores/routingStore'
+import { useSequencerStore } from '../../stores/sequencerStore'
+import { RoutingIndicators } from '../sequencer/RoutingIndicator'
 import { EFFECTS } from '../../config/effects'
 import {
   RGBSplitViz,
@@ -429,8 +431,12 @@ export function ParameterPanel() {
     })
   }
 
-  const { selectedEffectId, setSelectedEffect } = useUIStore()
+  const { selectedEffectId, setSelectedEffect, sequencerDrag } = useUIStore()
   const { effectOrder, reorderEffect } = useRoutingStore()
+  const { addRouting } = useSequencerStore()
+
+  // Track which card is being hovered during sequencer drag
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null)
 
   // Function to disable an effect by ID
   const disableEffect = useCallback((effectId: string) => {
@@ -671,6 +677,9 @@ export function ParameterPanel() {
           ? `${secondaryParam.label.toLowerCase()}: ${Math.round(secondaryParam.value)}`
           : null
 
+        // Check if this card is a sequencer drop target
+        const isSequencerDropTarget = dropTargetId === section.id && sequencerDrag.isDragging
+
         return (
           <div
             key={section.id}
@@ -678,21 +687,45 @@ export function ParameterPanel() {
             onPointerMove={(e) => handlePointerMove(e, index)}
             onPointerUp={(e) => handlePointerUp(e, index)}
             onDoubleClick={() => toggleEffectBypassed(section.id)}
+            onDragOver={(e) => {
+              if (sequencerDrag.isDragging) {
+                e.preventDefault()
+                e.dataTransfer.dropEffect = 'link'
+                setDropTargetId(section.id)
+              }
+            }}
+            onDragLeave={() => {
+              if (sequencerDrag.isDragging) {
+                setDropTargetId(null)
+              }
+            }}
+            onDrop={(e) => {
+              e.preventDefault()
+              const trackId = e.dataTransfer.getData('sequencer-track')
+              if (trackId && section.params[0]) {
+                // Create routing to primary parameter
+                const targetParam = `${section.id}.${section.params[0].label.toLowerCase()}`
+                addRouting(trackId, targetParam, 0.5)
+              }
+              setDropTargetId(null)
+            }}
             className="flex-shrink-0 flex flex-col select-none touch-none cursor-grab active:cursor-grabbing group rounded-lg"
             style={{
-              backgroundColor: isBypassed ? '#e5e5e5' : '#ffffff',
-              border: `1px solid ${borderColor}`,
-              boxShadow: [selectionShadow, soloShadow].filter(Boolean).join(', ') || 'none',
+              backgroundColor: isBypassed ? '#e5e5e5' : isSequencerDropTarget ? '#f0fff0' : '#ffffff',
+              border: `1px solid ${isSequencerDropTarget ? sequencerDrag.trackColor || '#4ade80' : borderColor}`,
+              boxShadow: isSequencerDropTarget
+                ? `0 0 12px ${sequencerDrag.trackColor || '#4ade80'}40`
+                : [selectionShadow, soloShadow].filter(Boolean).join(', ') || 'none',
               minWidth: '120px',
               padding: '10px',
-              transform: isBeingDragged ? 'scale(1.03)' : 'scale(1)',
+              transform: isBeingDragged ? 'scale(1.03)' : isSequencerDropTarget ? 'scale(1.02)' : 'scale(1)',
               opacity: isBypassed ? 0.6 : isMuted ? 0.5 : isBeingDragged ? 0.9 : 1,
               zIndex: isBeingDragged ? 10 : 1,
               marginLeft: isDropTarget ? '60px' : '0',
-              transition: 'border-color 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.15s ease-out, opacity 0.15s ease-out, margin-left 0.15s ease-out',
+              transition: 'border-color 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.15s ease-out, opacity 0.15s ease-out, margin-left 0.15s ease-out, background-color 0.15s ease-out',
             }}
           >
-            {/* Header row: LED, label, close button */}
+            {/* Header row: LED, label, routing indicators, close button */}
             <div className="flex items-center gap-1.5 mb-2">
               <div
                 className="w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -710,6 +743,10 @@ export function ParameterPanel() {
               >
                 {section.label}
               </span>
+              {/* Routing indicators with click-to-edit */}
+              <div className="ml-auto mr-2">
+                <RoutingIndicators effectId={section.id} />
+              </div>
               {/* Close button - line style */}
               <button
                 onPointerDown={(e) => e.stopPropagation()}

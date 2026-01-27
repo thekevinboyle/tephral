@@ -10,7 +10,7 @@ import { XYPad } from './XYPad'
 import { MixControls } from './MixControls'
 import { ThumbnailFilmstrip } from './ThumbnailFilmstrip'
 import { ExportModal } from './ExportModal'
-import { ExpandedParameterPanel } from './ExpandedParameterPanel'
+import { SequencerPanel } from '../sequencer/SequencerPanel'
 import { useCanvasCapture } from '../../hooks/useCanvasCapture'
 import { useRecordingStore, type ExportFormat, type ExportQuality } from '../../stores/recordingStore'
 
@@ -106,9 +106,9 @@ export function PerformanceLayout() {
           <ThumbnailFilmstrip />
         </div>
 
-        {/* Expanded Parameter Panel (right) */}
+        {/* Sequencer Panel (right) */}
         <div className="flex-shrink-0" style={{ width: '280px' }}>
-          <ExpandedParameterPanel />
+          <SequencerPanel />
         </div>
       </div>
 

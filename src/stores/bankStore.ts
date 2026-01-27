@@ -6,6 +6,14 @@ import type {
   NoiseParams,
   PixelateParams,
   EdgeDetectionParams,
+  ChromaticAberrationParams,
+  VHSTrackingParams,
+  LensDistortionParams,
+  DitherParams,
+  PosterizeParams,
+  StaticDisplacementParams,
+  ColorGradeParams,
+  FeedbackLoopParams,
 } from '../effects/glitch-engine'
 import type { AsciiRenderParams } from './asciiRenderStore'
 import type { StippleParams } from './stippleStore'
@@ -37,6 +45,22 @@ export interface BankSnapshot {
     pixelate: PixelateParams
     edgeDetectionEnabled: boolean
     edgeDetection: EdgeDetectionParams
+    chromaticAberrationEnabled: boolean
+    chromaticAberration: ChromaticAberrationParams
+    vhsTrackingEnabled: boolean
+    vhsTracking: VHSTrackingParams
+    lensDistortionEnabled: boolean
+    lensDistortion: LensDistortionParams
+    ditherEnabled: boolean
+    dither: DitherParams
+    posterizeEnabled: boolean
+    posterize: PosterizeParams
+    staticDisplacementEnabled: boolean
+    staticDisplacement: StaticDisplacementParams
+    colorGradeEnabled: boolean
+    colorGrade: ColorGradeParams
+    feedbackLoopEnabled: boolean
+    feedbackLoop: FeedbackLoopParams
   }
   // Vision effects
   ascii: { enabled: boolean; params: AsciiRenderParams }
@@ -89,6 +113,22 @@ export const useBankStore = create<BankState>((set, get) => ({
         pixelate: { ...glitchState.pixelate },
         edgeDetectionEnabled: glitchState.edgeDetectionEnabled,
         edgeDetection: { ...glitchState.edgeDetection },
+        chromaticAberrationEnabled: glitchState.chromaticAberrationEnabled,
+        chromaticAberration: { ...glitchState.chromaticAberration },
+        vhsTrackingEnabled: glitchState.vhsTrackingEnabled,
+        vhsTracking: { ...glitchState.vhsTracking },
+        lensDistortionEnabled: glitchState.lensDistortionEnabled,
+        lensDistortion: { ...glitchState.lensDistortion },
+        ditherEnabled: glitchState.ditherEnabled,
+        dither: { ...glitchState.dither },
+        posterizeEnabled: glitchState.posterizeEnabled,
+        posterize: { ...glitchState.posterize },
+        staticDisplacementEnabled: glitchState.staticDisplacementEnabled,
+        staticDisplacement: { ...glitchState.staticDisplacement },
+        colorGradeEnabled: glitchState.colorGradeEnabled,
+        colorGrade: { ...glitchState.colorGrade },
+        feedbackLoopEnabled: glitchState.feedbackLoopEnabled,
+        feedbackLoop: { ...glitchState.feedbackLoop },
       },
       ascii: {
         enabled: asciiState.enabled,
@@ -144,6 +184,22 @@ export const useBankStore = create<BankState>((set, get) => ({
       pixelate: { ...snapshot.glitch.pixelate },
       edgeDetectionEnabled: snapshot.glitch.edgeDetectionEnabled,
       edgeDetection: { ...snapshot.glitch.edgeDetection },
+      chromaticAberrationEnabled: snapshot.glitch.chromaticAberrationEnabled ?? false,
+      chromaticAberration: snapshot.glitch.chromaticAberration ? { ...snapshot.glitch.chromaticAberration } : useGlitchEngineStore.getState().chromaticAberration,
+      vhsTrackingEnabled: snapshot.glitch.vhsTrackingEnabled ?? false,
+      vhsTracking: snapshot.glitch.vhsTracking ? { ...snapshot.glitch.vhsTracking } : useGlitchEngineStore.getState().vhsTracking,
+      lensDistortionEnabled: snapshot.glitch.lensDistortionEnabled ?? false,
+      lensDistortion: snapshot.glitch.lensDistortion ? { ...snapshot.glitch.lensDistortion } : useGlitchEngineStore.getState().lensDistortion,
+      ditherEnabled: snapshot.glitch.ditherEnabled ?? false,
+      dither: snapshot.glitch.dither ? { ...snapshot.glitch.dither } : useGlitchEngineStore.getState().dither,
+      posterizeEnabled: snapshot.glitch.posterizeEnabled ?? false,
+      posterize: snapshot.glitch.posterize ? { ...snapshot.glitch.posterize } : useGlitchEngineStore.getState().posterize,
+      staticDisplacementEnabled: snapshot.glitch.staticDisplacementEnabled ?? false,
+      staticDisplacement: snapshot.glitch.staticDisplacement ? { ...snapshot.glitch.staticDisplacement } : useGlitchEngineStore.getState().staticDisplacement,
+      colorGradeEnabled: snapshot.glitch.colorGradeEnabled ?? false,
+      colorGrade: snapshot.glitch.colorGrade ? { ...snapshot.glitch.colorGrade } : useGlitchEngineStore.getState().colorGrade,
+      feedbackLoopEnabled: snapshot.glitch.feedbackLoopEnabled ?? false,
+      feedbackLoop: snapshot.glitch.feedbackLoop ? { ...snapshot.glitch.feedbackLoop } : useGlitchEngineStore.getState().feedbackLoop,
     })
 
     // Apply to ascii render store

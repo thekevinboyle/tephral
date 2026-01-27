@@ -7,7 +7,15 @@ import {
   NoiseEffect,
   PixelateEffect,
   EdgeDetectionEffect,
-  MixEffect
+  MixEffect,
+  ChromaticAberrationEffect,
+  VHSTrackingEffect,
+  LensDistortionEffect,
+  DitherEffect,
+  PosterizeEffect,
+  StaticDisplacementEffect,
+  ColorGradeEffect,
+  FeedbackLoopEffect,
 } from './glitch-engine'
 
 export class EffectPipeline {
@@ -25,6 +33,14 @@ export class EffectPipeline {
   pixelate: PixelateEffect | null = null
   edgeDetection: EdgeDetectionEffect | null = null
   mixEffect: MixEffect | null = null
+  chromaticAberration: ChromaticAberrationEffect | null = null
+  vhsTracking: VHSTrackingEffect | null = null
+  lensDistortion: LensDistortionEffect | null = null
+  dither: DitherEffect | null = null
+  posterize: PosterizeEffect | null = null
+  staticDisplacement: StaticDisplacementEffect | null = null
+  colorGrade: ColorGradeEffect | null = null
+  feedbackLoop: FeedbackLoopEffect | null = null
 
   private effectPass: EffectPass | null = null
   private mixEffectPass: EffectPass | null = null
@@ -58,17 +74,33 @@ export class EffectPipeline {
     this.pixelate = new PixelateEffect()
     this.edgeDetection = new EdgeDetectionEffect()
     this.mixEffect = new MixEffect()
+    this.chromaticAberration = new ChromaticAberrationEffect()
+    this.vhsTracking = new VHSTrackingEffect()
+    this.lensDistortion = new LensDistortionEffect()
+    this.dither = new DitherEffect()
+    this.posterize = new PosterizeEffect()
+    this.staticDisplacement = new StaticDisplacementEffect()
+    this.colorGrade = new ColorGradeEffect()
+    this.feedbackLoop = new FeedbackLoopEffect()
   }
 
   // Map effect IDs to effect instances
   private getEffectById(id: string): Effect | null {
     switch (id) {
       case 'rgb_split': return this.rgbSplit
+      case 'chromatic': return this.chromaticAberration
+      case 'posterize': return this.posterize
+      case 'color_grade': return this.colorGrade
       case 'block_displace': return this.blockDisplace
-      case 'scan_lines': return this.scanLines
-      case 'noise': return this.noise
+      case 'static_displace': return this.staticDisplacement
       case 'pixelate': return this.pixelate
+      case 'lens': return this.lensDistortion
+      case 'scan_lines': return this.scanLines
+      case 'vhs': return this.vhsTracking
+      case 'noise': return this.noise
+      case 'dither': return this.dither
       case 'edges': return this.edgeDetection
+      case 'feedback': return this.feedbackLoop
       default: return null
     }
   }
@@ -76,11 +108,19 @@ export class EffectPipeline {
   updateEffects(config: {
     effectOrder: string[]
     rgbSplitEnabled: boolean
+    chromaticAberrationEnabled: boolean
+    posterizeEnabled: boolean
+    colorGradeEnabled: boolean
     blockDisplaceEnabled: boolean
-    scanLinesEnabled: boolean
-    noiseEnabled: boolean
+    staticDisplacementEnabled: boolean
     pixelateEnabled: boolean
+    lensDistortionEnabled: boolean
+    scanLinesEnabled: boolean
+    vhsTrackingEnabled: boolean
+    noiseEnabled: boolean
+    ditherEnabled: boolean
     edgeDetectionEnabled: boolean
+    feedbackLoopEnabled: boolean
     wetMix: number
     bypassActive: boolean
   }) {
@@ -106,11 +146,19 @@ export class EffectPipeline {
     // Map effect IDs to enabled state
     const enabledMap: Record<string, boolean> = {
       rgb_split: config.rgbSplitEnabled,
+      chromatic: config.chromaticAberrationEnabled,
+      posterize: config.posterizeEnabled,
+      color_grade: config.colorGradeEnabled,
       block_displace: config.blockDisplaceEnabled,
-      scan_lines: config.scanLinesEnabled,
-      noise: config.noiseEnabled,
+      static_displace: config.staticDisplacementEnabled,
       pixelate: config.pixelateEnabled,
+      lens: config.lensDistortionEnabled,
+      scan_lines: config.scanLinesEnabled,
+      vhs: config.vhsTrackingEnabled,
+      noise: config.noiseEnabled,
+      dither: config.ditherEnabled,
       edges: config.edgeDetectionEnabled,
+      feedback: config.feedbackLoopEnabled,
     }
 
     // Collect enabled effects in the specified order
@@ -221,5 +269,13 @@ export class EffectPipeline {
     this.pixelate?.dispose()
     this.edgeDetection?.dispose()
     this.mixEffect?.dispose()
+    this.chromaticAberration?.dispose()
+    this.vhsTracking?.dispose()
+    this.lensDistortion?.dispose()
+    this.dither?.dispose()
+    this.posterize?.dispose()
+    this.staticDisplacement?.dispose()
+    this.colorGrade?.dispose()
+    this.feedbackLoop?.dispose()
   }
 }

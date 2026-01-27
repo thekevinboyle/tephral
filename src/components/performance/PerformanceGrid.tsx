@@ -4,8 +4,6 @@ import { EFFECTS } from '../../config/effects'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
-import { useBlobDetectStore } from '../../stores/blobDetectStore'
-import { useLandmarksStore } from '../../stores/landmarksStore'
 import { useRoutingStore } from '../../stores/routingStore'
 
 export function PerformanceGrid() {
@@ -16,10 +14,6 @@ export function PerformanceGrid() {
   // Render stores
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
-  const blobDetect = useBlobDetectStore()
-
-  // Vision stores
-  const landmarks = useLandmarksStore()
 
   // Routing store for effect order
   const { effectOrder, setEffectOrder } = useRoutingStore()
@@ -97,45 +91,95 @@ export function PerformanceGrid() {
           },
           onValueChange: (v: number) => glitch.updateEdgeDetection({ threshold: v / 100 }),
         }
-      case 'blob_detect':
+      case 'chromatic':
         return {
-          active: blobDetect.enabled,
-          value: blobDetect.params.threshold * 100,
+          active: glitch.chromaticAberrationEnabled,
+          value: glitch.chromaticAberration.intensity * 100,
           onToggle: () => {
-            if (!blobDetect.enabled) moveToEndOfChain(effectId)
-            blobDetect.setEnabled(!blobDetect.enabled)
+            if (!glitch.chromaticAberrationEnabled) moveToEndOfChain(effectId)
+            glitch.setChromaticAberrationEnabled(!glitch.chromaticAberrationEnabled)
           },
-          onValueChange: (v: number) => blobDetect.updateParams({ threshold: v / 100 }),
+          onValueChange: (v: number) => glitch.updateChromaticAberration({ intensity: v / 100 }),
+        }
+      case 'posterize':
+        return {
+          active: glitch.posterizeEnabled,
+          value: glitch.posterize.levels,
+          onToggle: () => {
+            if (!glitch.posterizeEnabled) moveToEndOfChain(effectId)
+            glitch.setPosterizeEnabled(!glitch.posterizeEnabled)
+          },
+          onValueChange: (v: number) => glitch.updatePosterize({ levels: v }),
+        }
+      case 'color_grade':
+        return {
+          active: glitch.colorGradeEnabled,
+          value: glitch.colorGrade.saturation * 100,
+          onToggle: () => {
+            if (!glitch.colorGradeEnabled) moveToEndOfChain(effectId)
+            glitch.setColorGradeEnabled(!glitch.colorGradeEnabled)
+          },
+          onValueChange: (v: number) => glitch.updateColorGrade({ saturation: v / 100 }),
+        }
+      case 'static_displace':
+        return {
+          active: glitch.staticDisplacementEnabled,
+          value: glitch.staticDisplacement.intensity * 100,
+          onToggle: () => {
+            if (!glitch.staticDisplacementEnabled) moveToEndOfChain(effectId)
+            glitch.setStaticDisplacementEnabled(!glitch.staticDisplacementEnabled)
+          },
+          onValueChange: (v: number) => glitch.updateStaticDisplacement({ intensity: v / 100 }),
+        }
+      case 'lens':
+        return {
+          active: glitch.lensDistortionEnabled,
+          value: glitch.lensDistortion.curvature * 100,
+          onToggle: () => {
+            if (!glitch.lensDistortionEnabled) moveToEndOfChain(effectId)
+            glitch.setLensDistortionEnabled(!glitch.lensDistortionEnabled)
+          },
+          onValueChange: (v: number) => glitch.updateLensDistortion({ curvature: v / 100 }),
+        }
+      case 'vhs':
+        return {
+          active: glitch.vhsTrackingEnabled,
+          value: glitch.vhsTracking.tearIntensity * 100,
+          onToggle: () => {
+            if (!glitch.vhsTrackingEnabled) moveToEndOfChain(effectId)
+            glitch.setVHSTrackingEnabled(!glitch.vhsTrackingEnabled)
+          },
+          onValueChange: (v: number) => glitch.updateVHSTracking({ tearIntensity: v / 100 }),
+        }
+      case 'dither':
+        return {
+          active: glitch.ditherEnabled,
+          value: glitch.dither.colorDepth,
+          onToggle: () => {
+            if (!glitch.ditherEnabled) moveToEndOfChain(effectId)
+            glitch.setDitherEnabled(!glitch.ditherEnabled)
+          },
+          onValueChange: (v: number) => glitch.updateDither({ colorDepth: v }),
+        }
+      case 'feedback':
+        return {
+          active: glitch.feedbackLoopEnabled,
+          value: glitch.feedbackLoop.decay * 100,
+          onToggle: () => {
+            if (!glitch.feedbackLoopEnabled) moveToEndOfChain(effectId)
+            glitch.setFeedbackLoopEnabled(!glitch.feedbackLoopEnabled)
+          },
+          onValueChange: (v: number) => glitch.updateFeedbackLoop({ decay: v / 100 }),
         }
       case 'ascii':
         return {
-          active: ascii.enabled && ascii.params.mode === 'standard',
+          active: ascii.enabled,
           value: ascii.params.fontSize,
           onToggle: () => {
-            if (ascii.enabled && ascii.params.mode === 'standard') {
-              ascii.setEnabled(false)
-            } else {
-              moveToEndOfChain(effectId)
-              ascii.setEnabled(true)
-              ascii.updateParams({ mode: 'standard' })
-            }
+            if (!ascii.enabled) moveToEndOfChain(effectId)
+            ascii.setEnabled(!ascii.enabled)
           },
           onValueChange: (v: number) => ascii.updateParams({ fontSize: v }),
-        }
-      case 'matrix':
-        return {
-          active: ascii.enabled && ascii.params.mode === 'matrix',
-          value: ascii.params.matrixSpeed * 100,
-          onToggle: () => {
-            if (ascii.enabled && ascii.params.mode === 'matrix') {
-              ascii.setEnabled(false)
-            } else {
-              moveToEndOfChain(effectId)
-              ascii.setEnabled(true)
-              ascii.updateParams({ mode: 'matrix' })
-            }
-          },
-          onValueChange: (v: number) => ascii.updateParams({ matrixSpeed: v / 100 }),
         }
       case 'stipple':
         return {
@@ -146,70 +190,6 @@ export function PerformanceGrid() {
             stipple.setEnabled(!stipple.enabled)
           },
           onValueChange: (v: number) => stipple.updateParams({ particleSize: v }),
-        }
-      case 'face_mesh':
-        return {
-          active: landmarks.enabled && landmarks.currentMode === 'face',
-          value: landmarks.minDetectionConfidence * 100,
-          onToggle: () => {
-            if (landmarks.enabled && landmarks.currentMode === 'face') {
-              landmarks.setEnabled(false)
-              landmarks.setCurrentMode('off')
-            } else {
-              moveToEndOfChain(effectId)
-              landmarks.setEnabled(true)
-              landmarks.setCurrentMode('face')
-            }
-          },
-          onValueChange: (v: number) => landmarks.setMinDetectionConfidence(v / 100),
-        }
-      case 'hands':
-        return {
-          active: landmarks.enabled && landmarks.currentMode === 'hands',
-          value: landmarks.minDetectionConfidence * 100,
-          onToggle: () => {
-            if (landmarks.enabled && landmarks.currentMode === 'hands') {
-              landmarks.setEnabled(false)
-              landmarks.setCurrentMode('off')
-            } else {
-              moveToEndOfChain(effectId)
-              landmarks.setEnabled(true)
-              landmarks.setCurrentMode('hands')
-            }
-          },
-          onValueChange: (v: number) => landmarks.setMinDetectionConfidence(v / 100),
-        }
-      case 'pose':
-        return {
-          active: landmarks.enabled && landmarks.currentMode === 'pose',
-          value: landmarks.minDetectionConfidence * 100,
-          onToggle: () => {
-            if (landmarks.enabled && landmarks.currentMode === 'pose') {
-              landmarks.setEnabled(false)
-              landmarks.setCurrentMode('off')
-            } else {
-              moveToEndOfChain(effectId)
-              landmarks.setEnabled(true)
-              landmarks.setCurrentMode('pose')
-            }
-          },
-          onValueChange: (v: number) => landmarks.setMinDetectionConfidence(v / 100),
-        }
-      case 'holistic':
-        return {
-          active: landmarks.enabled && landmarks.currentMode === 'holistic',
-          value: landmarks.minDetectionConfidence * 100,
-          onToggle: () => {
-            if (landmarks.enabled && landmarks.currentMode === 'holistic') {
-              landmarks.setEnabled(false)
-              landmarks.setCurrentMode('off')
-            } else {
-              moveToEndOfChain(effectId)
-              landmarks.setEnabled(true)
-              landmarks.setCurrentMode('holistic')
-            }
-          },
-          onValueChange: (v: number) => landmarks.setMinDetectionConfidence(v / 100),
         }
       default:
         return {

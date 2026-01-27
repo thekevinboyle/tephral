@@ -184,6 +184,22 @@ function captureCurrentEffects(): BankSnapshot {
       pixelate: { ...glitchState.pixelate },
       edgeDetectionEnabled: glitchState.edgeDetectionEnabled,
       edgeDetection: { ...glitchState.edgeDetection },
+      chromaticAberrationEnabled: glitchState.chromaticAberrationEnabled,
+      chromaticAberration: { ...glitchState.chromaticAberration },
+      vhsTrackingEnabled: glitchState.vhsTrackingEnabled,
+      vhsTracking: { ...glitchState.vhsTracking },
+      lensDistortionEnabled: glitchState.lensDistortionEnabled,
+      lensDistortion: { ...glitchState.lensDistortion },
+      ditherEnabled: glitchState.ditherEnabled,
+      dither: { ...glitchState.dither },
+      posterizeEnabled: glitchState.posterizeEnabled,
+      posterize: { ...glitchState.posterize },
+      staticDisplacementEnabled: glitchState.staticDisplacementEnabled,
+      staticDisplacement: { ...glitchState.staticDisplacement },
+      colorGradeEnabled: glitchState.colorGradeEnabled,
+      colorGrade: { ...glitchState.colorGrade },
+      feedbackLoopEnabled: glitchState.feedbackLoopEnabled,
+      feedbackLoop: { ...glitchState.feedbackLoop },
     },
     ascii: {
       enabled: asciiState.enabled,
@@ -208,6 +224,7 @@ function captureCurrentEffects(): BankSnapshot {
 
 // Apply effects from a preset
 function applyEffects(effects: BankSnapshot): void {
+  const currentState = useGlitchEngineStore.getState()
   useGlitchEngineStore.setState({
     rgbSplitEnabled: effects.glitch.rgbSplitEnabled,
     rgbSplit: { ...effects.glitch.rgbSplit },
@@ -221,6 +238,22 @@ function applyEffects(effects: BankSnapshot): void {
     pixelate: { ...effects.glitch.pixelate },
     edgeDetectionEnabled: effects.glitch.edgeDetectionEnabled,
     edgeDetection: { ...effects.glitch.edgeDetection },
+    chromaticAberrationEnabled: effects.glitch.chromaticAberrationEnabled ?? false,
+    chromaticAberration: effects.glitch.chromaticAberration ? { ...effects.glitch.chromaticAberration } : currentState.chromaticAberration,
+    vhsTrackingEnabled: effects.glitch.vhsTrackingEnabled ?? false,
+    vhsTracking: effects.glitch.vhsTracking ? { ...effects.glitch.vhsTracking } : currentState.vhsTracking,
+    lensDistortionEnabled: effects.glitch.lensDistortionEnabled ?? false,
+    lensDistortion: effects.glitch.lensDistortion ? { ...effects.glitch.lensDistortion } : currentState.lensDistortion,
+    ditherEnabled: effects.glitch.ditherEnabled ?? false,
+    dither: effects.glitch.dither ? { ...effects.glitch.dither } : currentState.dither,
+    posterizeEnabled: effects.glitch.posterizeEnabled ?? false,
+    posterize: effects.glitch.posterize ? { ...effects.glitch.posterize } : currentState.posterize,
+    staticDisplacementEnabled: effects.glitch.staticDisplacementEnabled ?? false,
+    staticDisplacement: effects.glitch.staticDisplacement ? { ...effects.glitch.staticDisplacement } : currentState.staticDisplacement,
+    colorGradeEnabled: effects.glitch.colorGradeEnabled ?? false,
+    colorGrade: effects.glitch.colorGrade ? { ...effects.glitch.colorGrade } : currentState.colorGrade,
+    feedbackLoopEnabled: effects.glitch.feedbackLoopEnabled ?? false,
+    feedbackLoop: effects.glitch.feedbackLoop ? { ...effects.glitch.feedbackLoop } : currentState.feedbackLoop,
   })
 
   useAsciiRenderStore.setState({

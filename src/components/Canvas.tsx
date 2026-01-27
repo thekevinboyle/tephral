@@ -29,17 +29,33 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   const {
     enabled: glitchEnabled,
     rgbSplitEnabled,
+    chromaticAberrationEnabled,
+    posterizeEnabled,
+    colorGradeEnabled,
     blockDisplaceEnabled,
-    scanLinesEnabled,
-    noiseEnabled,
+    staticDisplacementEnabled,
     pixelateEnabled,
+    lensDistortionEnabled,
+    scanLinesEnabled,
+    vhsTrackingEnabled,
+    noiseEnabled,
+    ditherEnabled,
     edgeDetectionEnabled,
+    feedbackLoopEnabled,
     rgbSplit,
+    chromaticAberration,
+    posterize,
+    colorGrade,
     blockDisplace,
-    scanLines,
-    noise,
+    staticDisplacement,
     pixelate,
+    lensDistortion,
+    scanLines,
+    vhsTracking,
+    noise,
+    dither,
     edgeDetection,
+    feedbackLoop,
     wetMix,
     bypassActive,
     effectBypassed,
@@ -72,20 +88,36 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     if (!pipeline) return
 
     pipeline.rgbSplit?.updateParams(rgbSplit)
+    pipeline.chromaticAberration?.updateParams(chromaticAberration)
+    pipeline.posterize?.updateParams(posterize)
+    pipeline.colorGrade?.updateParams(colorGrade)
     pipeline.blockDisplace?.updateParams(blockDisplace)
-    pipeline.scanLines?.updateParams(scanLines)
-    pipeline.noise?.updateParams(noise)
+    pipeline.staticDisplacement?.updateParams(staticDisplacement)
     pipeline.pixelate?.updateParams(pixelate)
+    pipeline.lensDistortion?.updateParams(lensDistortion)
+    pipeline.scanLines?.updateParams(scanLines)
+    pipeline.vhsTracking?.updateParams(vhsTracking)
+    pipeline.noise?.updateParams(noise)
+    pipeline.dither?.updateParams(dither)
     pipeline.edgeDetection?.updateParams(edgeDetection)
+    pipeline.feedbackLoop?.updateParams(feedbackLoop)
 
     pipeline.updateEffects({
       effectOrder,
       rgbSplitEnabled: getEffectiveEnabled('rgb_split', glitchEnabled && rgbSplitEnabled && !effectBypassed['rgb_split']),
+      chromaticAberrationEnabled: getEffectiveEnabled('chromatic', glitchEnabled && chromaticAberrationEnabled && !effectBypassed['chromatic']),
+      posterizeEnabled: getEffectiveEnabled('posterize', glitchEnabled && posterizeEnabled && !effectBypassed['posterize']),
+      colorGradeEnabled: getEffectiveEnabled('color_grade', glitchEnabled && colorGradeEnabled && !effectBypassed['color_grade']),
       blockDisplaceEnabled: getEffectiveEnabled('block_displace', glitchEnabled && blockDisplaceEnabled && !effectBypassed['block_displace']),
-      scanLinesEnabled: getEffectiveEnabled('scan_lines', glitchEnabled && scanLinesEnabled && !effectBypassed['scan_lines']),
-      noiseEnabled: getEffectiveEnabled('noise', glitchEnabled && noiseEnabled && !effectBypassed['noise']),
+      staticDisplacementEnabled: getEffectiveEnabled('static_displace', glitchEnabled && staticDisplacementEnabled && !effectBypassed['static_displace']),
       pixelateEnabled: getEffectiveEnabled('pixelate', glitchEnabled && pixelateEnabled && !effectBypassed['pixelate']),
+      lensDistortionEnabled: getEffectiveEnabled('lens', glitchEnabled && lensDistortionEnabled && !effectBypassed['lens']),
+      scanLinesEnabled: getEffectiveEnabled('scan_lines', glitchEnabled && scanLinesEnabled && !effectBypassed['scan_lines']),
+      vhsTrackingEnabled: getEffectiveEnabled('vhs', glitchEnabled && vhsTrackingEnabled && !effectBypassed['vhs']),
+      noiseEnabled: getEffectiveEnabled('noise', glitchEnabled && noiseEnabled && !effectBypassed['noise']),
+      ditherEnabled: getEffectiveEnabled('dither', glitchEnabled && ditherEnabled && !effectBypassed['dither']),
       edgeDetectionEnabled: getEffectiveEnabled('edges', glitchEnabled && edgeDetectionEnabled && !effectBypassed['edges']),
+      feedbackLoopEnabled: getEffectiveEnabled('feedback', glitchEnabled && feedbackLoopEnabled && !effectBypassed['feedback']),
       wetMix,
       bypassActive,
     })
@@ -93,17 +125,33 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     pipeline,
     glitchEnabled,
     rgbSplitEnabled,
+    chromaticAberrationEnabled,
+    posterizeEnabled,
+    colorGradeEnabled,
     blockDisplaceEnabled,
-    scanLinesEnabled,
-    noiseEnabled,
+    staticDisplacementEnabled,
     pixelateEnabled,
+    lensDistortionEnabled,
+    scanLinesEnabled,
+    vhsTrackingEnabled,
+    noiseEnabled,
+    ditherEnabled,
     edgeDetectionEnabled,
+    feedbackLoopEnabled,
     rgbSplit,
+    chromaticAberration,
+    posterize,
+    colorGrade,
     blockDisplace,
-    scanLines,
-    noise,
+    staticDisplacement,
     pixelate,
+    lensDistortion,
+    scanLines,
+    vhsTracking,
+    noise,
+    dither,
     edgeDetection,
+    feedbackLoop,
     effectOrder,
     wetMix,
     bypassActive,

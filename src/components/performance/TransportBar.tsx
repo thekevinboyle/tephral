@@ -206,17 +206,6 @@ export function TransportBar() {
         />
       </button>
 
-      {/* Timecode */}
-      <span
-        className="text-[14px] tabular-nums"
-        style={{
-          color: '#444444',
-          fontFamily: "'JetBrains Mono', monospace",
-        }}
-      >
-        {formatTime(isRecording ? currentTime : duration)}
-      </span>
-
       {/* Divider */}
       <div className="w-px h-5 bg-gray-300" />
 

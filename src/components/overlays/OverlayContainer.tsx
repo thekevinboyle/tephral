@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { AsciiRenderOverlay } from './AsciiRenderOverlay'
 import { StippleOverlay } from './StippleOverlay'
-import { ContourOverlay } from './ContourOverlay'
+import { VisionTrackingOverlay } from './VisionTrackingOverlay'
+import { AcidOverlay } from './AcidOverlay'
 import { useLandmarkDetection } from '../../hooks/useLandmarkDetection'
 
 interface OverlayContainerProps {
@@ -45,8 +46,11 @@ export function OverlayContainer({ containerRef, glCanvas }: OverlayContainerPro
       {/* ASCII renders on top of stipple or original */}
       <AsciiRenderOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
 
-      {/* Contour tracking overlay renders on top */}
-      <ContourOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
+      {/* Vision tracking overlay renders on top */}
+      <VisionTrackingOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
+
+      {/* Acid effects overlay (renders after vision tracking) */}
+      <AcidOverlay sourceCanvas={glCanvas} width={dimensions.width} height={dimensions.height} />
     </>
   )
 }

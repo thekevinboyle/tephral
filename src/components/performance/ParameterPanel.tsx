@@ -1675,7 +1675,7 @@ export function ParameterPanel() {
             }}
           >
             {/* Header row: LED, label, routing indicators, close button */}
-            <div className="flex items-center gap-1.5 mb-2">
+            <div className="flex items-center gap-1.5 mb-1.5">
               <div
                 className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                 style={{
@@ -1745,7 +1745,7 @@ export function ParameterPanel() {
             </div>
 
             {/* Numeric readouts */}
-            <div className="mt-2 flex-1 flex flex-col justify-end">
+            <div className="mt-1.5 flex-1 flex flex-col justify-end">
               {/* Primary value - large, accent color */}
               <div
                 className="font-bold"
@@ -1761,11 +1761,11 @@ export function ParameterPanel() {
               {/* Secondary param - small, gray (always reserve space) */}
               <div
                 style={{
-                  fontSize: '12px',
+                  fontSize: '11px',
                   color: '#555',
                   fontFamily: "'JetBrains Mono', monospace",
-                  marginTop: '2px',
-                  minHeight: '12px',
+                  marginTop: '1px',
+                  minHeight: '11px',
                 }}
               >
                 {secondaryValue || '\u00A0'}

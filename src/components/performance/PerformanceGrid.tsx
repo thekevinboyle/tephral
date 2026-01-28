@@ -376,9 +376,9 @@ export function PerformanceGrid() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col p-3">
+    <div className="h-full w-full flex flex-col p-2">
       {/* Page navigation */}
-      <div className="flex items-center justify-between mb-2 px-1">
+      <div className="flex items-center justify-between mb-1.5 px-1">
         <button
           onClick={() => setGridPage(Math.max(0, gridPage - 1))}
           disabled={gridPage === 0}
@@ -417,7 +417,7 @@ export function PerformanceGrid() {
       </div>
 
       {/* Effect grid */}
-      <div className="flex-1 min-h-0 grid grid-cols-4 gap-2" style={{ gridTemplateRows: 'repeat(4, 1fr)' }}>
+      <div className="flex-1 min-h-0 grid grid-cols-4 gap-1.5" style={{ gridTemplateRows: 'repeat(4, 1fr)' }}>
         {gridSlots.map((effect, index) => {
           if (!effect) {
             // Empty placeholder cell

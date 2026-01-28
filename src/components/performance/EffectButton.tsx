@@ -193,7 +193,7 @@ export function EffectButton({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      className="relative rounded-lg flex select-none touch-none cursor-pointer w-full h-full p-2"
+      className="relative rounded-lg flex select-none touch-none cursor-pointer w-full h-full p-1.5 overflow-hidden"
       style={{
         backgroundColor: active ? '#f5f5f5' : '#ffffff',
         border: isSoloed ? `2px solid ${color}` : active ? `1px solid ${color}60` : '1px solid #d0d0d0',
@@ -205,17 +205,17 @@ export function EffectButton({
       {/* Main content area */}
       <div className="flex-1 flex flex-col justify-between">
         {/* LED indicator + label */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           {/* LED - only this gets a glow when active */}
           <div
-            className="w-2 h-2 rounded-full transition-all duration-150 shrink-0"
+            className="w-1.5 h-1.5 rounded-full transition-all duration-150 shrink-0"
             style={{
               backgroundColor: active ? displayColor : '#d0d0d0',
-              boxShadow: active && !isMuted ? `0 0 8px ${color}` : 'none',
+              boxShadow: active && !isMuted ? `0 0 6px ${color}` : 'none',
             }}
           />
           <span
-            className="text-[14px] font-medium truncate"
+            className="text-[12px] font-medium truncate"
             style={{ color: active ? '#1a1a1a' : '#666666' }}
           >
             {label}
@@ -224,7 +224,7 @@ export function EffectButton({
 
         {/* Parameter value */}
         <span
-          className="text-[14px] tabular-nums font-medium"
+          className="text-[13px] tabular-nums font-medium"
           style={{
             color: active ? '#1a1a1a' : '#999999',
             fontFamily: "'JetBrains Mono', monospace",

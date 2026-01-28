@@ -1863,43 +1863,43 @@ function EffectParameters({ effectId }: { effectId: string }) {
         <div className="space-y-1">
           <SliderRow
             label="Threshold"
-            value={acid.thgridParams.threshold}
+            value={acid.thGridParams.threshold}
             min={0}
             max={255}
             step={5}
-            onChange={(v) => acid.updateThgridParams({ threshold: v })}
+            onChange={(v) => acid.updateThGridParams({ threshold: v })}
             format={(v) => v.toFixed(0)}
             paramId="acid_thgrid.threshold"
           />
           <SliderRow
             label="Grid Size"
-            value={acid.thgridParams.gridSize}
+            value={acid.thGridParams.gridSize}
             min={16}
             max={128}
             step={8}
-            onChange={(v) => acid.updateThgridParams({ gridSize: v })}
+            onChange={(v) => acid.updateThGridParams({ gridSize: v })}
             format={(v) => `${v.toFixed(0)}px`}
             paramId="acid_thgrid.gridSize"
           />
           <SliderRow
             label="Line Width"
-            value={acid.thgridParams.lineWidth}
+            value={acid.thGridParams.lineWidth}
             min={1}
             max={4}
             step={0.5}
-            onChange={(v) => acid.updateThgridParams({ lineWidth: v })}
+            onChange={(v) => acid.updateThGridParams({ lineWidth: v })}
             format={(v) => `${v.toFixed(1)}px`}
             paramId="acid_thgrid.lineWidth"
           />
           <ToggleRow
             label="Invert"
-            value={acid.thgridParams.invert}
-            onChange={(v) => acid.updateThgridParams({ invert: v })}
+            value={acid.thGridParams.invert}
+            onChange={(v) => acid.updateThGridParams({ invert: v })}
           />
           <ToggleRow
             label="Corner Marks"
-            value={acid.thgridParams.cornerMarks}
-            onChange={(v) => acid.updateThgridParams({ cornerMarks: v })}
+            value={acid.thGridParams.cornerMarks}
+            onChange={(v) => acid.updateThGridParams({ cornerMarks: v })}
           />
           <SectionLabel label="Global" />
           <ToggleRow
@@ -2139,8 +2139,8 @@ function FilterButtonGrid({ value, onChange }: { value: string; onChange: (v: Bo
   return (
     <div className="grid grid-cols-4 gap-1 py-1">
       {BOX_FILTER_OPTIONS.map((opt) => {
-        const actualValue = opt.value === 'gray' ? 'grayscale' : opt.value === 'sat' ? 'saturate' : opt.value
-        const isActive = value === actualValue || (opt.value === 'gray' && value === 'grayscale') || (opt.value === 'sat' && value === 'saturate')
+        const actualValue = opt.value === 'gray' ? 'grayscale' : opt.value
+        const isActive = value === actualValue || (opt.value === 'gray' && value === 'grayscale')
         return (
           <button
             key={opt.value}

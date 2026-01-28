@@ -28,7 +28,7 @@ export interface IconsParams {
 export interface ContourParams {
   levels: number
   lineWidth: number
-  smooth: boolean
+  smooth: number
   animate: boolean
 }
 
@@ -51,7 +51,7 @@ export interface SliceParams {
   sliceCount: number
   direction: 'horizontal' | 'vertical' | 'both'
   offset: number
-  wave: number
+  wave: boolean
 }
 
 export interface ThGridParams {
@@ -66,7 +66,7 @@ export interface CloudParams {
   density: number
   depthScale: number
   perspective: number
-  rotate: number
+  rotate: boolean
 }
 
 export interface LedParams {
@@ -118,7 +118,7 @@ export const DEFAULT_ICONS_PARAMS: IconsParams = {
 export const DEFAULT_CONTOUR_PARAMS: ContourParams = {
   levels: 8,
   lineWidth: 1,
-  smooth: true,
+  smooth: 0.5,
   animate: false,
 }
 
@@ -141,7 +141,7 @@ export const DEFAULT_SLICE_PARAMS: SliceParams = {
   sliceCount: 20,
   direction: 'horizontal',
   offset: 0,
-  wave: 0,
+  wave: true,
 }
 
 export const DEFAULT_THGRID_PARAMS: ThGridParams = {
@@ -156,7 +156,7 @@ export const DEFAULT_CLOUD_PARAMS: CloudParams = {
   density: 5000,
   depthScale: 1.0,
   perspective: 0.5,
-  rotate: 0,
+  rotate: false,
 }
 
 export const DEFAULT_LED_PARAMS: LedParams = {

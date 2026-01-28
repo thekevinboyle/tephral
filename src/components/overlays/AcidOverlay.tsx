@@ -9,13 +9,13 @@ import { useAcidStore } from '../../stores/acidStore'
 
 // Canvas 2D effects
 import { renderDots } from './acid/dotsEffect'
-import { renderGlyph } from './acid/glyphEffect'
+import { renderGlyphs } from './acid/glyphEffect'
 import { renderIcons } from './acid/iconsEffect'
 import { renderContour } from './acid/contourEffect'
 import { renderDecomp } from './acid/decompEffect'
 import { renderMirror } from './acid/mirrorEffect'
 import { renderSlice } from './acid/sliceEffect'
-import { renderThgrid } from './acid/thgridEffect'
+import { renderThGrid } from './acid/thgridEffect'
 import { renderLed } from './acid/ledEffect'
 
 // WebGL effects
@@ -148,7 +148,7 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     }
 
     if (currentStore.glyphEnabled) {
-      renderGlyph(sourceCtx, ctx, currentWidth, currentHeight, currentStore.glyphParams)
+      renderGlyphs(sourceCtx, ctx, currentWidth, currentHeight, currentStore.glyphParams)
     }
 
     if (currentStore.iconsEnabled) {
@@ -172,7 +172,7 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     }
 
     if (currentStore.thGridEnabled) {
-      renderThgrid(sourceCtx, ctx, currentWidth, currentHeight, currentStore.thGridParams)
+      renderThGrid(sourceCtx, ctx, currentWidth, currentHeight, currentStore.thGridParams)
     }
 
     if (currentStore.ledEnabled) {

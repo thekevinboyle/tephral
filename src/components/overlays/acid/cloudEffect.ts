@@ -242,7 +242,7 @@ export class CloudEffect {
   private renderFallback(
     sourceCanvas: HTMLCanvasElement,
     params: CloudParams,
-    time: number
+    _time: number
   ): void {
     // Simple Canvas 2D fallback
     const ctx = this.canvas?.getContext('2d')

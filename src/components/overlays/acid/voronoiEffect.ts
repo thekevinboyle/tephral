@@ -352,7 +352,6 @@ export class VoronoiEffect {
 
         for (let y = 1; y < height - 1; y += 2) {
           for (let x = 1; x < width - 1; x += 2) {
-            const idx = (y * width + x) * 4
             const idxL = (y * width + x - 1) * 4
             const idxR = (y * width + x + 1) * 4
             const idxT = ((y - 1) * width + x) * 4

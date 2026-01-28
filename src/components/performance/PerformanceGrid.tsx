@@ -312,10 +312,10 @@ export function PerformanceGrid() {
         }
       case 'acid_thgrid':
         return {
-          active: acid.thgridEnabled,
-          value: acid.thgridParams.threshold,
-          onToggle: () => acid.setThgridEnabled(!acid.thgridEnabled),
-          onValueChange: (v: number) => acid.updateThgridParams({ threshold: v }),
+          active: acid.thGridEnabled,
+          value: acid.thGridParams.threshold,
+          onToggle: () => acid.setThGridEnabled(!acid.thGridEnabled),
+          onValueChange: (v: number) => acid.updateThGridParams({ threshold: v }),
         }
       case 'acid_cloud':
         return {

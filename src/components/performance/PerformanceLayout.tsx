@@ -105,19 +105,28 @@ export function PerformanceLayout() {
 
         {/* Canvas area (center) */}
         <div
-          className="relative flex-1 min-w-0"
+          className="relative flex-1 min-w-0 flex flex-col"
           style={{ backgroundColor: '#1a1a1a' }}
         >
           {/* Canvas */}
-          <div className="w-full h-full">
+          <div className="flex-1 min-h-0 relative">
             <Canvas ref={canvasRef} />
+            {/* Preview mode tabs */}
+            <PreviewTabs />
+            {/* Thumbnail filmstrip at bottom of preview */}
+            <ThumbnailFilmstrip />
           </div>
 
-          {/* Preview mode tabs */}
-          <PreviewTabs />
-
-          {/* Thumbnail filmstrip at bottom of preview */}
-          <ThumbnailFilmstrip />
+          {/* Transport bar at bottom of preview */}
+          <div
+            className="flex-shrink-0"
+            style={{
+              backgroundColor: '#ffffff',
+              borderTop: '1px solid #d0d0d0',
+            }}
+          >
+            <TransportBar />
+          </div>
         </div>
 
         {/* Expanded Parameter Panel (right) */}
@@ -126,32 +135,17 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Transport + Parameter strip - combined row */}
+      {/* Parameter strip */}
       <div
-        className="flex-shrink-0 mx-3 mt-3 flex gap-3"
-        style={{ height: '8vh', minHeight: '60px' }}
+        className="flex-shrink-0 mx-3 mt-3 rounded-xl overflow-hidden"
+        style={{
+          height: '8vh',
+          minHeight: '60px',
+          backgroundColor: '#f5f5f5',
+          border: '1px solid #d0d0d0',
+        }}
       >
-        {/* Transport bar (left half) */}
-        <div
-          className="flex-1 rounded-xl overflow-hidden"
-          style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
-          }}
-        >
-          <TransportBar />
-        </div>
-
-        {/* Parameter strip (right half) */}
-        <div
-          className="flex-1 rounded-xl overflow-hidden"
-          style={{
-            backgroundColor: '#f5f5f5',
-            border: '1px solid #d0d0d0',
-          }}
-        >
-          <ParameterPanel />
-        </div>
+        <ParameterPanel />
       </div>
 
       {/* Bottom section - 3 equal columns */}

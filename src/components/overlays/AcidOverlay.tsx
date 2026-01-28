@@ -36,6 +36,10 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
   const slitCanvasRef = useRef<HTMLCanvasElement>(null)
   const voronoiCanvasRef = useRef<HTMLCanvasElement>(null)
 
+  // Offscreen canvas for reading WebGL pixels (can't use getContext('2d') on WebGL canvas)
+  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const offscreenCtxRef = useRef<CanvasRenderingContext2D | null>(null)
+
   // WebGL effect instances
   const cloudEffectRef = useRef<CloudEffect | null>(null)
   const slitEffectRef = useRef<SlitEffect | null>(null)
@@ -125,12 +129,28 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     const currentStore = storeRef.current
     const { width: currentWidth, height: currentHeight } = sizeRef.current
 
-    // Get source context for reading pixels
-    const sourceCtx = source.getContext('2d')
+    // Create or resize offscreen canvas for reading WebGL pixels
+    if (!offscreenCanvasRef.current) {
+      offscreenCanvasRef.current = document.createElement('canvas')
+      offscreenCtxRef.current = offscreenCanvasRef.current.getContext('2d')
+    }
+
+    const offscreenCanvas = offscreenCanvasRef.current
+    const sourceCtx = offscreenCtxRef.current
+
     if (!sourceCtx) {
       frameIdRef.current = requestAnimationFrame(renderFrame)
       return
     }
+
+    // Resize offscreen canvas if needed
+    if (offscreenCanvas.width !== currentWidth || offscreenCanvas.height !== currentHeight) {
+      offscreenCanvas.width = currentWidth
+      offscreenCanvas.height = currentHeight
+    }
+
+    // Copy WebGL canvas to offscreen 2D canvas for pixel reading
+    sourceCtx.drawImage(source, 0, 0, currentWidth, currentHeight)
 
     // Handle background based on preserveVideo setting
     if (!currentStore.preserveVideo) {

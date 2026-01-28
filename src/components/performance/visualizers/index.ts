@@ -16,3 +16,19 @@ export { PosterizeViz } from './PosterizeViz'
 export { StaticDisplaceViz } from './StaticDisplaceViz'
 export { ColorGradeViz } from './ColorGradeViz'
 export { FeedbackViz } from './FeedbackViz'
+
+// Acid visualizers
+export {
+  DotsViz,
+  GlyphViz,
+  IconsViz,
+  ContourViz,
+  DecompViz,
+  MirrorViz,
+  SliceViz,
+  ThGridViz,
+  CloudViz,
+  LedViz,
+  SlitViz,
+  VoronoiViz,
+} from './acid'

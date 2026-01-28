@@ -28,7 +28,21 @@ import {
   StaticDisplaceViz,
   ColorGradeViz,
   FeedbackViz,
+  // Acid visualizers
+  DotsViz,
+  GlyphViz,
+  IconsViz,
+  ContourViz,
+  DecompViz,
+  MirrorViz,
+  SliceViz,
+  ThGridViz,
+  CloudViz,
+  LedViz,
+  SlitViz,
+  VoronoiViz,
 } from './visualizers'
+import { useAcidStore } from '../../stores/acidStore'
 
 interface ParameterSection {
   id: string
@@ -78,6 +92,7 @@ export function ParameterPanel() {
   const stipple = useStippleStore()
   const landmarks = useLandmarksStore()
   const contour = useContourStore()
+  const acid = useAcidStore()
 
   // Clear all effects
   const handleClear = useCallback(() => {
@@ -100,7 +115,20 @@ export function ParameterPanel() {
     contour.setEnabled(false)
     landmarks.setEnabled(false)
     landmarks.setCurrentMode('off')
-  }, [glitch, ascii, stipple, contour, landmarks])
+    // Clear acid effects
+    acid.setDotsEnabled(false)
+    acid.setGlyphEnabled(false)
+    acid.setIconsEnabled(false)
+    acid.setContourEnabled(false)
+    acid.setDecompEnabled(false)
+    acid.setMirrorEnabled(false)
+    acid.setSliceEnabled(false)
+    acid.setThGridEnabled(false)
+    acid.setCloudEnabled(false)
+    acid.setLedEnabled(false)
+    acid.setSlitEnabled(false)
+    acid.setVoronoiEnabled(false)
+  }, [glitch, ascii, stipple, contour, landmarks, acid])
 
   // Bypass handlers
   const handleBypassDown = useCallback(() => {
@@ -711,6 +739,334 @@ export function ParameterPanel() {
     })
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // ACID EFFECTS
+  // ═══════════════════════════════════════════════════════════════
+
+  // Dots
+  if (acid.dotsEnabled) {
+    const color = '#e5e5e5'
+    sections.push({
+      id: 'acid_dots',
+      label: 'DOTS',
+      color,
+      visualizer: <DotsViz gridSize={acid.dotsParams.gridSize} color={color} />,
+      params: [
+        {
+          label: 'Grid',
+          value: acid.dotsParams.gridSize,
+          min: 4,
+          max: 32,
+          onChange: (v) => acid.updateDotsParams({ gridSize: v }),
+        },
+        {
+          label: 'Scale',
+          value: acid.dotsParams.dotScale * 100,
+          min: 20,
+          max: 150,
+          onChange: (v) => acid.updateDotsParams({ dotScale: v / 100 }),
+        },
+      ],
+    })
+  }
+
+  // Glyph
+  if (acid.glyphEnabled) {
+    const color = '#d4d4d4'
+    sections.push({
+      id: 'acid_glyph',
+      label: 'GLYPH',
+      color,
+      visualizer: <GlyphViz fontSize={acid.glyphParams.gridSize} color={color} />,
+      params: [
+        {
+          label: 'Grid',
+          value: acid.glyphParams.gridSize,
+          min: 8,
+          max: 24,
+          onChange: (v) => acid.updateGlyphParams({ gridSize: v }),
+        },
+        {
+          label: 'Density',
+          value: acid.glyphParams.density * 100,
+          min: 30,
+          max: 100,
+          onChange: (v) => acid.updateGlyphParams({ density: v / 100 }),
+        },
+      ],
+    })
+  }
+
+  // Icons
+  if (acid.iconsEnabled) {
+    const color = '#c4c4c4'
+    sections.push({
+      id: 'acid_icons',
+      label: 'ICONS',
+      color,
+      visualizer: <IconsViz iconSize={acid.iconsParams.gridSize} color={color} />,
+      params: [
+        {
+          label: 'Grid',
+          value: acid.iconsParams.gridSize,
+          min: 16,
+          max: 64,
+          onChange: (v) => acid.updateIconsParams({ gridSize: v }),
+        },
+        {
+          label: 'Rotate',
+          value: acid.iconsParams.rotation,
+          min: 0,
+          max: 360,
+          onChange: (v) => acid.updateIconsParams({ rotation: v }),
+        },
+      ],
+    })
+  }
+
+  // Contour
+  if (acid.contourEnabled) {
+    const color = '#b4b4b4'
+    sections.push({
+      id: 'acid_contour',
+      label: 'CONTOUR',
+      color,
+      visualizer: <ContourViz levels={acid.contourParams.levels} color={color} />,
+      params: [
+        {
+          label: 'Levels',
+          value: acid.contourParams.levels,
+          min: 4,
+          max: 20,
+          onChange: (v) => acid.updateContourParams({ levels: v }),
+        },
+        {
+          label: 'Width',
+          value: acid.contourParams.lineWidth,
+          min: 1,
+          max: 5,
+          onChange: (v) => acid.updateContourParams({ lineWidth: v }),
+        },
+      ],
+    })
+  }
+
+  // Decomp
+  if (acid.decompEnabled) {
+    const color = '#94a3b8'
+    sections.push({
+      id: 'acid_decomp',
+      label: 'DECOMP',
+      color,
+      visualizer: <DecompViz minSize={acid.decompParams.minBlock} color={color} />,
+      params: [
+        {
+          label: 'Min',
+          value: acid.decompParams.minBlock,
+          min: 2,
+          max: 32,
+          onChange: (v) => acid.updateDecompParams({ minBlock: v }),
+        },
+        {
+          label: 'Max',
+          value: acid.decompParams.maxBlock,
+          min: 16,
+          max: 128,
+          onChange: (v) => acid.updateDecompParams({ maxBlock: v }),
+        },
+      ],
+    })
+  }
+
+  // Mirror
+  if (acid.mirrorEnabled) {
+    const color = '#7dd3fc'
+    sections.push({
+      id: 'acid_mirror',
+      label: 'MIRROR',
+      color,
+      visualizer: <MirrorViz segments={acid.mirrorParams.segments} color={color} />,
+      params: [
+        {
+          label: 'Segs',
+          value: acid.mirrorParams.segments,
+          min: 2,
+          max: 8,
+          onChange: (v) => acid.updateMirrorParams({ segments: v }),
+        },
+        {
+          label: 'Rotate',
+          value: acid.mirrorParams.rotation,
+          min: 0,
+          max: 360,
+          onChange: (v) => acid.updateMirrorParams({ rotation: v }),
+        },
+      ],
+    })
+  }
+
+  // Slice
+  if (acid.sliceEnabled) {
+    const color = '#67e8f9'
+    sections.push({
+      id: 'acid_slice',
+      label: 'SLICE',
+      color,
+      visualizer: <SliceViz sliceCount={acid.sliceParams.sliceCount} color={color} />,
+      params: [
+        {
+          label: 'Count',
+          value: acid.sliceParams.sliceCount,
+          min: 4,
+          max: 64,
+          onChange: (v) => acid.updateSliceParams({ sliceCount: v }),
+        },
+        {
+          label: 'Offset',
+          value: acid.sliceParams.offset,
+          min: 0,
+          max: 100,
+          onChange: (v) => acid.updateSliceParams({ offset: v }),
+        },
+      ],
+    })
+  }
+
+  // ThGrid
+  if (acid.thGridEnabled) {
+    const color = '#a5f3fc'
+    sections.push({
+      id: 'acid_thgrid',
+      label: 'THGRID',
+      color,
+      visualizer: <ThGridViz threshold={acid.thGridParams.threshold} color={color} />,
+      params: [
+        {
+          label: 'Thresh',
+          value: acid.thGridParams.threshold,
+          min: 0,
+          max: 255,
+          onChange: (v) => acid.updateThGridParams({ threshold: v }),
+        },
+        {
+          label: 'Grid',
+          value: acid.thGridParams.gridSize,
+          min: 2,
+          max: 16,
+          onChange: (v) => acid.updateThGridParams({ gridSize: v }),
+        },
+      ],
+    })
+  }
+
+  // Cloud
+  if (acid.cloudEnabled) {
+    const color = '#f0abfc'
+    sections.push({
+      id: 'acid_cloud',
+      label: 'CLOUD',
+      color,
+      visualizer: <CloudViz density={acid.cloudParams.density} color={color} />,
+      params: [
+        {
+          label: 'Density',
+          value: acid.cloudParams.density / 1000,
+          min: 1,
+          max: 50,
+          onChange: (v) => acid.updateCloudParams({ density: v * 1000 }),
+        },
+        {
+          label: 'Depth',
+          value: acid.cloudParams.depthScale * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => acid.updateCloudParams({ depthScale: v / 100 }),
+        },
+      ],
+    })
+  }
+
+  // LED
+  if (acid.ledEnabled) {
+    const color = '#c084fc'
+    sections.push({
+      id: 'acid_led',
+      label: 'LED',
+      color,
+      visualizer: <LedViz pixelSize={acid.ledParams.gridSize} color={color} />,
+      params: [
+        {
+          label: 'Grid',
+          value: acid.ledParams.gridSize,
+          min: 4,
+          max: 16,
+          onChange: (v) => acid.updateLedParams({ gridSize: v }),
+        },
+        {
+          label: 'Dot',
+          value: acid.ledParams.dotSize * 100,
+          min: 30,
+          max: 100,
+          onChange: (v) => acid.updateLedParams({ dotSize: v / 100 }),
+        },
+      ],
+    })
+  }
+
+  // Slit
+  if (acid.slitEnabled) {
+    const color = '#a78bfa'
+    sections.push({
+      id: 'acid_slit',
+      label: 'SLIT',
+      color,
+      visualizer: <SlitViz speed={acid.slitParams.speed} color={color} />,
+      params: [
+        {
+          label: 'Speed',
+          value: acid.slitParams.speed * 10,
+          min: 1,
+          max: 50,
+          onChange: (v) => acid.updateSlitParams({ speed: v / 10 }),
+        },
+        {
+          label: 'Blend',
+          value: acid.slitParams.blend * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => acid.updateSlitParams({ blend: v / 100 }),
+        },
+      ],
+    })
+  }
+
+  // Voronoi
+  if (acid.voronoiEnabled) {
+    const color = '#818cf8'
+    sections.push({
+      id: 'acid_voronoi',
+      label: 'VORONOI',
+      color,
+      visualizer: <VoronoiViz cellCount={acid.voronoiParams.cellCount} color={color} />,
+      params: [
+        {
+          label: 'Cells',
+          value: acid.voronoiParams.cellCount,
+          min: 16,
+          max: 256,
+          onChange: (v) => acid.updateVoronoiParams({ cellCount: v }),
+        },
+        {
+          label: 'Edges',
+          value: acid.voronoiParams.showEdges ? 1 : 0,
+          min: 0,
+          max: 1,
+          onChange: (v) => acid.updateVoronoiParams({ showEdges: v > 0.5 }),
+        },
+      ],
+    })
+  }
+
   const { selectedEffectId, setSelectedEffect, sequencerDrag } = useUIStore()
   const { effectOrder, reorderEffect } = useRoutingStore()
   const { addRouting } = useSequencerStore()
@@ -791,12 +1147,49 @@ export function ParameterPanel() {
         landmarks.setEnabled(false)
         landmarks.setCurrentMode('off')
         break
+      // Acid effects
+      case 'acid_dots':
+        acid.setDotsEnabled(false)
+        break
+      case 'acid_glyph':
+        acid.setGlyphEnabled(false)
+        break
+      case 'acid_icons':
+        acid.setIconsEnabled(false)
+        break
+      case 'acid_contour':
+        acid.setContourEnabled(false)
+        break
+      case 'acid_decomp':
+        acid.setDecompEnabled(false)
+        break
+      case 'acid_mirror':
+        acid.setMirrorEnabled(false)
+        break
+      case 'acid_slice':
+        acid.setSliceEnabled(false)
+        break
+      case 'acid_thgrid':
+        acid.setThGridEnabled(false)
+        break
+      case 'acid_cloud':
+        acid.setCloudEnabled(false)
+        break
+      case 'acid_led':
+        acid.setLedEnabled(false)
+        break
+      case 'acid_slit':
+        acid.setSlitEnabled(false)
+        break
+      case 'acid_voronoi':
+        acid.setVoronoiEnabled(false)
+        break
     }
     // Clear selection if this effect was selected
     if (selectedEffectId === effectId) {
       setSelectedEffect(null)
     }
-  }, [glitch, ascii, stipple, contour, landmarks, selectedEffectId, setSelectedEffect])
+  }, [glitch, ascii, stipple, contour, landmarks, acid, selectedEffectId, setSelectedEffect])
 
   // Sort sections by effectOrder
   const sortedSections = [...sections].sort((a, b) => {

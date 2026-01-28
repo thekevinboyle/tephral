@@ -34,6 +34,7 @@ export function useAutomationPlayback() {
   const lastFrameTime = useRef<number>(0)
   const lastAppliedIndex = useRef<number>(-1)
   const videoStartTime = useRef<number>(0) // Video time when playback started
+  const wasPlaying = useRef<boolean>(false) // Track previous playing state
 
   // Reset all effects to disabled state
   const resetEffects = useCallback(() => {
@@ -160,16 +161,19 @@ export function useAutomationPlayback() {
       }
 
       animationFrameId.current = requestAnimationFrame(playbackLoop)
+      wasPlaying.current = true
     } else {
       if (animationFrameId.current !== null) {
         cancelAnimationFrame(animationFrameId.current)
         animationFrameId.current = null
       }
 
-      // Pause video when playback stops
-      if (source === 'file' && videoElement) {
+      // Only pause video when transitioning from playing to not playing
+      // (not on every render where isPlaying is false)
+      if (wasPlaying.current && source === 'file' && videoElement) {
         videoElement.pause()
       }
+      wasPlaying.current = false
     }
 
     return () => {

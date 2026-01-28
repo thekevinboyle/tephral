@@ -185,8 +185,10 @@ export function SequencerPanel() {
       <div className="flex-1 overflow-y-auto">
         {tracks.length === 0 ? (
           <div
-            className="flex items-center justify-center h-full text-[14px]"
+            className="flex items-center justify-center h-full text-[14px] cursor-pointer"
             style={{ color: '#999999' }}
+            onDoubleClick={addTrack}
+            title="Double-click to add a track"
           >
             No tracks yet
           </div>

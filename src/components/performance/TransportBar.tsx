@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useRecordingStore } from '../../stores/recordingStore'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
@@ -8,34 +8,106 @@ export function TransportBar() {
   const { source, reset, videoElement, setVideoElement, setImageElement, setSource } = useMediaStore()
   const {
     isRecording,
-    isPlaying,
-    currentTime,
-    duration,
+    isPlaying: isRecordingPlaying,
+    currentTime: recordingTime,
+    duration: recordingDuration,
     startRecording,
     stopRecording,
     setCurrentTime,
     addThumbnail,
     setSource: setRecordingSource,
-    play,
-    pause,
-    stop,
-    seek,
+    play: playRecording,
+    pause: pauseRecording,
+    stop: stopRecording2,
+    seek: seekRecording,
     setShowExportModal,
     clearRecording,
   } = useRecordingStore()
 
   const { resetEffects } = useAutomationPlayback()
 
-  const hasSource = source !== 'none'
-  const hasRecording = duration > 0 && !isRecording
+  // Source video playback state
+  const [sourceVideoTime, setSourceVideoTime] = useState(0)
+  const [sourceVideoDuration, setSourceVideoDuration] = useState(0)
+  const [isSourcePlaying, setIsSourcePlaying] = useState(false)
 
-  // Handle play with reset
-  const handlePlay = () => {
-    if (currentTime === 0) {
-      resetEffects()
+  const hasSource = source !== 'none'
+  const hasRecording = recordingDuration > 0 && !isRecording
+  const hasSourceVideo = source === 'file' && videoElement && sourceVideoDuration > 0
+
+  // Determine which mode we're in: recording playback or source video playback
+  const isRecordingMode = hasRecording
+  const isPlaying = isRecordingMode ? isRecordingPlaying : isSourcePlaying
+  const currentTime = isRecordingMode ? recordingTime : sourceVideoTime
+  const duration = isRecordingMode ? recordingDuration : sourceVideoDuration
+
+  // Track source video time
+  useEffect(() => {
+    if (!videoElement || source !== 'file') return
+
+    const handleTimeUpdate = () => {
+      setSourceVideoTime(videoElement.currentTime)
     }
-    play()
-  }
+
+    const handleDurationChange = () => {
+      if (videoElement.duration && isFinite(videoElement.duration)) {
+        setSourceVideoDuration(videoElement.duration)
+      }
+    }
+
+    const handlePlay = () => setIsSourcePlaying(true)
+    const handlePause = () => setIsSourcePlaying(false)
+
+    videoElement.addEventListener('timeupdate', handleTimeUpdate)
+    videoElement.addEventListener('durationchange', handleDurationChange)
+    videoElement.addEventListener('loadedmetadata', handleDurationChange)
+    videoElement.addEventListener('play', handlePlay)
+    videoElement.addEventListener('pause', handlePause)
+
+    // Initialize duration if already loaded
+    if (videoElement.duration && isFinite(videoElement.duration)) {
+      setSourceVideoDuration(videoElement.duration)
+    }
+    setIsSourcePlaying(!videoElement.paused)
+
+    return () => {
+      videoElement.removeEventListener('timeupdate', handleTimeUpdate)
+      videoElement.removeEventListener('durationchange', handleDurationChange)
+      videoElement.removeEventListener('loadedmetadata', handleDurationChange)
+      videoElement.removeEventListener('play', handlePlay)
+      videoElement.removeEventListener('pause', handlePause)
+    }
+  }, [videoElement, source])
+
+  // Handle play/pause
+  const handlePlayPause = useCallback(() => {
+    if (isRecordingMode) {
+      if (isRecordingPlaying) {
+        pauseRecording()
+      } else {
+        if (recordingTime === 0) {
+          resetEffects()
+        }
+        playRecording()
+      }
+    } else if (videoElement) {
+      if (videoElement.paused) {
+        videoElement.play().catch(console.error)
+      } else {
+        videoElement.pause()
+      }
+    }
+  }, [isRecordingMode, isRecordingPlaying, pauseRecording, recordingTime, resetEffects, playRecording, videoElement])
+
+  // Handle stop
+  const handleStop = useCallback(() => {
+    if (isRecordingMode) {
+      stopRecording2()
+    } else if (videoElement) {
+      videoElement.pause()
+      videoElement.currentTime = 0
+    }
+  }, [isRecordingMode, stopRecording2, videoElement])
 
   // Handle timeline click to seek
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -43,11 +115,17 @@ export function TransportBar() {
     const x = e.clientX - rect.left
     const percentage = x / rect.width
     const seekTime = percentage * duration
-    seek(seekTime)
+
+    if (isRecordingMode) {
+      seekRecording(seekTime)
+    } else if (videoElement) {
+      videoElement.currentTime = seekTime
+    }
   }
 
   // Calculate progress percentage
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  const hasPlayableContent = hasRecording || hasSourceVideo
 
   // Format time as MM:SS.mm
   const formatTime = (seconds: number) => {
@@ -67,15 +145,17 @@ export function TransportBar() {
     if (file.type.startsWith('video/')) {
       const video = document.createElement('video')
       video.src = url
-      video.loop = true
+      video.loop = false
       video.muted = true
       video.playsInline = true
-      video.onloadeddata = () => {
+      video.autoplay = true
+      video.oncanplaythrough = () => {
         setVideoElement(video)
         setSource('file')
         setRecordingSource('file')
-        video.play()
+        video.play().catch(err => console.error('Video play error:', err))
       }
+      video.load()
     } else if (file.type.startsWith('image/')) {
       const img = new Image()
       img.src = url
@@ -211,12 +291,12 @@ export function TransportBar() {
 
       {/* Play/Pause button */}
       <button
-        onClick={isPlaying ? pause : handlePlay}
-        disabled={!hasRecording}
+        onClick={handlePlayPause}
+        disabled={!hasPlayableContent}
         className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
         style={{
-          opacity: hasRecording ? 1 : 0.4,
-          cursor: hasRecording ? 'pointer' : 'default',
+          opacity: hasPlayableContent ? 1 : 0.4,
+          cursor: hasPlayableContent ? 'pointer' : 'default',
         }}
         title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
       >
@@ -234,12 +314,12 @@ export function TransportBar() {
 
       {/* Stop button */}
       <button
-        onClick={stop}
-        disabled={!hasRecording}
+        onClick={handleStop}
+        disabled={!hasPlayableContent}
         className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
         style={{
-          opacity: hasRecording ? 1 : 0.4,
-          cursor: hasRecording ? 'pointer' : 'default',
+          opacity: hasPlayableContent ? 1 : 0.4,
+          cursor: hasPlayableContent ? 'pointer' : 'default',
         }}
         title="Stop (Escape)"
       >
@@ -251,11 +331,11 @@ export function TransportBar() {
       {/* Timeline */}
       <div
         className="h-2 bg-gray-200 rounded-full relative overflow-hidden group"
-        onClick={hasRecording ? handleTimelineClick : undefined}
+        onClick={hasPlayableContent ? handleTimelineClick : undefined}
         style={{
           width: '200px',
-          cursor: hasRecording ? 'pointer' : 'default',
-          opacity: hasRecording ? 1 : 0.5,
+          cursor: hasPlayableContent ? 'pointer' : 'default',
+          opacity: hasPlayableContent ? 1 : 0.5,
         }}
       >
         {/* Progress fill */}
@@ -264,7 +344,7 @@ export function TransportBar() {
           style={{ width: `${progress}%` }}
         />
         {/* Playhead */}
-        {hasRecording && (
+        {hasPlayableContent && (
           <div
             className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
             style={{ left: `calc(${progress}% - 5px)` }}
@@ -276,7 +356,7 @@ export function TransportBar() {
       <span
         className="text-[12px] tabular-nums"
         style={{
-          color: hasRecording ? '#666666' : '#aaaaaa',
+          color: hasPlayableContent ? '#666666' : '#aaaaaa',
           fontFamily: "'JetBrains Mono', monospace",
         }}
       >

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useRecordingStore, type AutomationEvent } from '../stores/recordingStore'
+import { useMediaStore } from '../stores/mediaStore'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useAcidStore } from '../stores/acidStore'
 import { useAsciiRenderStore } from '../stores/asciiRenderStore'
@@ -12,12 +13,15 @@ export function useAutomationPlayback() {
     currentTime,
     duration,
     events,
+    source,
     setCurrentTime,
     stop,
     pause,
     play,
     seek,
   } = useRecordingStore()
+
+  const { videoElement } = useMediaStore()
 
   const glitch = useGlitchEngineStore()
   const acid = useAcidStore()
@@ -28,6 +32,7 @@ export function useAutomationPlayback() {
   const animationFrameId = useRef<number | null>(null)
   const lastFrameTime = useRef<number>(0)
   const lastAppliedIndex = useRef<number>(-1)
+  const videoStartTime = useRef<number>(0) // Video time when playback started
 
   // Reset all effects to disabled state
   const resetEffects = useCallback(() => {
@@ -103,12 +108,17 @@ export function useAutomationPlayback() {
   const playbackLoop = useCallback((timestamp: number) => {
     if (!isPlaying) return
 
-    // Calculate delta time
-    const deltaMs = timestamp - lastFrameTime.current
-    lastFrameTime.current = timestamp
+    let newTime: number
 
-    // Advance current time
-    const newTime = currentTime + deltaMs / 1000
+    // For file sources, use video's currentTime as source of truth for perfect sync
+    if (source === 'file' && videoElement) {
+      newTime = videoElement.currentTime
+    } else {
+      // For webcam or other sources, calculate time from delta
+      const deltaMs = timestamp - lastFrameTime.current
+      lastFrameTime.current = timestamp
+      newTime = currentTime + deltaMs / 1000
+    }
 
     if (newTime >= duration) {
       // Reached end of recording
@@ -129,7 +139,7 @@ export function useAutomationPlayback() {
     }
 
     animationFrameId.current = requestAnimationFrame(playbackLoop)
-  }, [isPlaying, currentTime, duration, events, setCurrentTime, stop, applyEvent])
+  }, [isPlaying, currentTime, duration, events, setCurrentTime, stop, applyEvent, source, videoElement])
 
   // Start/stop playback
   useEffect(() => {
@@ -137,11 +147,27 @@ export function useAutomationPlayback() {
       lastFrameTime.current = performance.now()
       // Find starting index based on current time
       lastAppliedIndex.current = events.findIndex(e => e.t > currentTime) - 1
+
+      // Sync video playback for file sources
+      if (source === 'file' && videoElement) {
+        // Seek video to match current playback time
+        videoElement.currentTime = currentTime
+        videoStartTime.current = currentTime
+        videoElement.play().catch(() => {
+          // Ignore autoplay errors
+        })
+      }
+
       animationFrameId.current = requestAnimationFrame(playbackLoop)
     } else {
       if (animationFrameId.current !== null) {
         cancelAnimationFrame(animationFrameId.current)
         animationFrameId.current = null
+      }
+
+      // Pause video when playback stops
+      if (source === 'file' && videoElement) {
+        videoElement.pause()
       }
     }
 
@@ -150,7 +176,7 @@ export function useAutomationPlayback() {
         cancelAnimationFrame(animationFrameId.current)
       }
     }
-  }, [isPlaying, playbackLoop, events, currentTime])
+  }, [isPlaying, playbackLoop, events, currentTime, source, videoElement])
 
   // Reset effects and event index when seeking to beginning
   useEffect(() => {
@@ -158,6 +184,14 @@ export function useAutomationPlayback() {
       lastAppliedIndex.current = -1
     }
   }, [currentTime, isPlaying])
+
+  // Sync video when seeking (for file sources)
+  useEffect(() => {
+    if (source === 'file' && videoElement && !isPlaying) {
+      // Seek video to match the current time when not playing
+      videoElement.currentTime = currentTime
+    }
+  }, [currentTime, source, videoElement, isPlaying])
 
   // Keyboard shortcuts
   useEffect(() => {

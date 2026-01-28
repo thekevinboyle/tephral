@@ -48,9 +48,15 @@ import {
   MotionViz,
   FaceTrackViz,
   HandsTrackViz,
+  // Overlay visualizers
+  TextureViz,
+  DataViz,
 } from './visualizers'
 import { useAcidStore } from '../../stores/acidStore'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
+import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
+import { useDataOverlayStore } from '../../stores/dataOverlayStore'
+import { TEXTURE_LIBRARY } from '../overlays/TextureOverlay'
 
 interface ParameterSection {
   id: string
@@ -103,6 +109,8 @@ export function ParameterPanel() {
   const contour = useContourStore()
   const acid = useAcidStore()
   const vision = useVisionTrackingStore()
+  const textureOverlay = useTextureOverlayStore()
+  const dataOverlay = useDataOverlayStore()
 
   // Clear all effects
   const handleClear = useCallback(() => {
@@ -145,7 +153,10 @@ export function ParameterPanel() {
     vision.setMotionEnabled(false)
     vision.setFaceEnabled(false)
     vision.setHandsEnabled(false)
-  }, [glitch, ascii, stipple, contour, landmarks, acid, vision])
+    // Clear overlay effects
+    textureOverlay.setEnabled(false)
+    dataOverlay.setEnabled(false)
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay])
 
   // Bypass handlers
   const handleBypassDown = useCallback(() => {
@@ -1285,6 +1296,75 @@ export function ParameterPanel() {
     })
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // OVERLAY EFFECTS
+  // ═══════════════════════════════════════════════════════════════
+
+  // Texture Overlay
+  if (textureOverlay.enabled) {
+    const textureName = TEXTURE_LIBRARY[textureOverlay.textureId as keyof typeof TEXTURE_LIBRARY]?.name || textureOverlay.textureId
+    sections.push({
+      id: 'texture_overlay',
+      label: 'TEXTURE',
+      color: '#a3a3a3',
+      visualizer: <TextureViz opacity={textureOverlay.opacity} blendMode={textureOverlay.blendMode} />,
+      params: [
+        {
+          label: 'Opacity',
+          value: textureOverlay.opacity * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => textureOverlay.setOpacity(v / 100),
+          paramId: 'texture_overlay.opacity',
+        },
+        {
+          label: 'Scale',
+          value: textureOverlay.scale * 100,
+          min: 50,
+          max: 300,
+          onChange: (v) => textureOverlay.setScale(v / 100),
+          paramId: 'texture_overlay.scale',
+        },
+      ],
+    })
+  }
+
+  // Data Overlay
+  if (dataOverlay.enabled) {
+    const templateNames: Record<string, string> = {
+      watermark: 'WATERMARK',
+      statsBar: 'STATS BAR',
+      titleCard: 'TITLE',
+      socialCard: 'SOCIAL',
+    }
+    const visibleFieldCount = dataOverlay.fields.filter(f => f.visible).length
+
+    sections.push({
+      id: 'data_overlay',
+      label: templateNames[dataOverlay.template] || 'DATA',
+      color: '#60a5fa',
+      visualizer: <DataViz template={dataOverlay.template} fieldCount={visibleFieldCount} />,
+      params: [
+        {
+          label: 'Size',
+          value: dataOverlay.style.fontSize,
+          min: 12,
+          max: 48,
+          onChange: (v) => dataOverlay.setStyle({ fontSize: v }),
+          paramId: 'data_overlay.fontSize',
+        },
+        {
+          label: 'Opacity',
+          value: dataOverlay.style.opacity * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => dataOverlay.setStyle({ opacity: v / 100 }),
+          paramId: 'data_overlay.opacity',
+        },
+      ],
+    })
+  }
+
   const { selectedEffectId, setSelectedEffect, sequencerDrag } = useUIStore()
   const { effectOrder, reorderEffect } = useRoutingStore()
   const { addRouting } = useSequencerStore()
@@ -1421,12 +1501,19 @@ export function ParameterPanel() {
       case 'track_hands':
         vision.setHandsEnabled(false)
         break
+      // Overlay effects
+      case 'texture_overlay':
+        textureOverlay.setEnabled(false)
+        break
+      case 'data_overlay':
+        dataOverlay.setEnabled(false)
+        break
     }
     // Clear selection if this effect was selected
     if (selectedEffectId === effectId) {
       setSelectedEffect(null)
     }
-  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, selectedEffectId, setSelectedEffect])
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, selectedEffectId, setSelectedEffect])
 
   // Sort sections by effectOrder
   const sortedSections = [...sections].sort((a, b) => {

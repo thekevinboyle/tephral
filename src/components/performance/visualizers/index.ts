@@ -42,3 +42,7 @@ export {
   FaceTrackViz,
   HandsTrackViz,
 } from './vision'
+
+// Overlay visualizers
+export { TextureViz } from './TextureViz'
+export { DataViz } from './DataViz'

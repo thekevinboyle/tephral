@@ -1,12 +1,14 @@
 import { useEffect, useRef } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useRecordingStore } from '../../stores/recordingStore'
+import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 
 export function TransportBar() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { source, reset, videoElement, setVideoElement, setImageElement, setSource } = useMediaStore()
   const {
     isRecording,
+    isPlaying,
     currentTime,
     duration,
     startRecording,
@@ -14,9 +16,38 @@ export function TransportBar() {
     setCurrentTime,
     addThumbnail,
     setSource: setRecordingSource,
+    play,
+    pause,
+    stop,
+    seek,
+    setShowExportModal,
+    clearRecording,
   } = useRecordingStore()
 
+  const { resetEffects } = useAutomationPlayback()
+
   const hasSource = source !== 'none'
+  const hasRecording = duration > 0 && !isRecording
+
+  // Handle play with reset
+  const handlePlay = () => {
+    if (currentTime === 0) {
+      resetEffects()
+    }
+    play()
+  }
+
+  // Handle timeline click to seek
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const percentage = x / rect.width
+    const seekTime = percentage * duration
+    seek(seekTime)
+  }
+
+  // Calculate progress percentage
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
   // Format time as MM:SS.mm
   const formatTime = (seconds: number) => {
@@ -186,8 +217,8 @@ export function TransportBar() {
         {formatTime(isRecording ? currentTime : duration)}
       </span>
 
-      {/* Clear button */}
-      {hasSource && (
+      {/* Clear source button */}
+      {hasSource && !hasRecording && (
         <button
           onClick={reset}
           className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
@@ -201,6 +232,102 @@ export function TransportBar() {
         >
           Clear
         </button>
+      )}
+
+      {/* Playback controls - only show when recording exists */}
+      {hasRecording && (
+        <>
+          {/* Divider */}
+          <div className="w-px h-5 bg-gray-300" />
+
+          {/* Play/Pause button */}
+          <button
+            onClick={isPlaying ? pause : handlePlay}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-gray-100"
+            title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
+          >
+            {isPlaying ? (
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="#333">
+                <rect x="3" y="2" width="4" height="12" rx="1" />
+                <rect x="9" y="2" width="4" height="12" rx="1" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="#333">
+                <path d="M4 2l10 6-10 6V2z" />
+              </svg>
+            )}
+          </button>
+
+          {/* Stop button */}
+          <button
+            onClick={stop}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-gray-100"
+            title="Stop (Escape)"
+          >
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="#333">
+              <rect x="2" y="2" width="10" height="10" rx="1" />
+            </svg>
+          </button>
+
+          {/* Timeline */}
+          <div
+            className="flex-1 h-2 bg-gray-200 rounded-full cursor-pointer relative overflow-hidden group min-w-[100px]"
+            onClick={handleTimelineClick}
+          >
+            {/* Progress fill */}
+            <div
+              className="absolute inset-y-0 left-0 bg-blue-500 rounded-full"
+              style={{ width: `${progress}%` }}
+            />
+            {/* Playhead */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ left: `calc(${progress}% - 5px)` }}
+            />
+          </div>
+
+          {/* Playback timecode */}
+          <span
+            className="text-[12px] tabular-nums min-w-[100px] text-right"
+            style={{
+              color: '#666666',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </span>
+
+          {/* Export button */}
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
+            style={{
+              backgroundColor: '#3b82f6',
+              border: '1px solid #2563eb',
+              color: '#ffffff',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#3b82f6')}
+          >
+            Export
+          </button>
+
+          {/* Clear recording button */}
+          <button
+            onClick={clearRecording}
+            className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
+            style={{
+              backgroundColor: '#f5f5f5',
+              border: '1px solid #d0d0d0',
+              color: '#666666',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fee2e2')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+            title="Clear recording"
+          >
+            Clear
+          </button>
+        </>
       )}
     </div>
   )

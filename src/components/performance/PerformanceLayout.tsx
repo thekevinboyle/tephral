@@ -1,7 +1,6 @@
 import { useRef, useCallback } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { TransportBar } from './TransportBar'
-import { PreviewControls } from './PreviewControls'
 import { ParameterPanel } from './ParameterPanel'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
@@ -123,29 +122,17 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Transport bar */}
+      {/* Transport bar (includes playback controls when recording exists) */}
       <div
         className="flex-shrink-0 mx-3 mt-3 rounded-xl overflow-hidden"
         style={{
           height: '5vh',
-          minHeight: '32px',
-          backgroundColor: '#ffffff',
-          border: '1px solid #d0d0d0',
-        }}
-      >
-        <TransportBar />
-      </div>
-
-      {/* Preview controls - only shows when recording exists */}
-      <div
-        className="flex-shrink-0 mx-3 mt-2 rounded-xl overflow-hidden"
-        style={{
           minHeight: '40px',
           backgroundColor: '#ffffff',
           border: '1px solid #d0d0d0',
         }}
       >
-        <PreviewControls />
+        <TransportBar />
       </div>
 
       {/* Parameter strip - horizontal scrollable, draggable */}

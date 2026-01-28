@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useCallback } from 'react'
 import { useRecordingStore } from '../../stores/recordingStore'
 
 export function ThumbnailFilmstrip() {
@@ -7,127 +7,147 @@ export function ThumbnailFilmstrip() {
     currentTime,
     duration,
     isRecording,
+    isPlaying,
     previewTime,
     setPreviewTime,
     seek,
-    play,
+    pause,
   } = useRecordingStore()
 
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const isDragging = useRef(false)
 
   // Show filmstrip only when we have thumbnails or are recording
-  if (thumbnails.length === 0 && !isRecording) return null
+  if (thumbnails.length === 0 && !isRecording && duration === 0) return null
 
-  // Handle thumbnail hover - set preview time
-  const handleThumbnailEnter = (time: number, index: number) => {
-    if (isRecording) return // Disable hover preview during recording
-    setPreviewTime(time)
-    setHoveredIndex(index)
-  }
+  // Calculate time from mouse position
+  const getTimeFromPosition = useCallback((clientX: number) => {
+    if (!trackRef.current || duration === 0) return 0
+    const rect = trackRef.current.getBoundingClientRect()
+    const x = clientX - rect.left
+    const percentage = Math.max(0, Math.min(1, x / rect.width))
+    return percentage * duration
+  }, [duration])
 
-  const handleThumbnailLeave = () => {
-    setPreviewTime(null)
-    setHoveredIndex(null)
-  }
+  // Handle scrub start
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (isRecording || duration === 0) return
+    e.preventDefault()
+    isDragging.current = true
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
 
-  // Handle thumbnail click - jump and play
-  const handleThumbnailClick = (time: number, e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (isRecording) return
+    // Pause playback while scrubbing
+    if (isPlaying) {
+      pause()
+    }
+
+    const time = getTimeFromPosition(e.clientX)
     seek(time)
-    play()
+    setPreviewTime(time)
   }
 
-  // Handle click on empty area - seek by position
-  const handleBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (duration === 0) return
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const percentage = x / rect.width
-    seek(percentage * duration)
-    play()
+  // Handle scrub move
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging.current) return
+    const time = getTimeFromPosition(e.clientX)
+    seek(time)
+    setPreviewTime(time)
+  }
+
+  // Handle scrub end
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDragging.current) return
+    isDragging.current = false
+    try {
+      ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+    } catch {
+      // Ignore
+    }
+    setPreviewTime(null)
   }
 
   // Calculate playhead position
   const displayTime = previewTime !== null ? previewTime : currentTime
-  const timelinePlayheadPercent = duration > 0 ? (displayTime / duration) * 100 : 0
+  const playheadPercent = duration > 0 ? (displayTime / duration) * 100 : 0
 
   return (
     <div
-      className="absolute bottom-3 left-3 right-3 h-12 flex items-center gap-2 px-3 rounded-lg"
+      ref={trackRef}
+      className="absolute bottom-3 left-3 right-3 h-14 rounded-lg overflow-hidden touch-none select-none"
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        border: '1px solid #d0d0d0',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        backgroundColor: '#1a1a1a',
+        border: '1px solid #333',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+        cursor: duration > 0 ? 'ew-resize' : 'default',
       }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
     >
-      {/* Thumbnail frames - fixed width area on left */}
-      <div className="flex items-center gap-1 flex-shrink-0">
+      {/* Thumbnail frames filling the width */}
+      <div className="absolute inset-0 flex">
         {thumbnails.length > 0 ? (
           thumbnails.map((thumb, i) => (
             <div
               key={i}
-              className="flex-shrink-0 h-8 w-8 rounded overflow-hidden transition-all duration-150 cursor-pointer"
+              className="h-full flex-1 min-w-0"
               style={{
-                border: hoveredIndex === i
-                  ? '2px solid #6366f1'
-                  : '1px solid #d0d0d0',
-                boxShadow: hoveredIndex === i
-                  ? '0 0 8px rgba(99, 102, 241, 0.4)'
-                  : 'none',
-                transform: hoveredIndex === i ? 'scale(1.1)' : 'scale(1)',
-              }}
-              onMouseEnter={() => handleThumbnailEnter(thumb.time, i)}
-              onMouseLeave={handleThumbnailLeave}
-              onClick={(e) => handleThumbnailClick(thumb.time, e)}
-            >
-              <img
-                src={thumb.dataUrl}
-                alt={`Frame ${i}`}
-                className="w-full h-full object-cover pointer-events-none"
-              />
-            </div>
-          ))
-        ) : isRecording ? (
-          // Recording placeholder frames
-          Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex-shrink-0 h-8 w-8 rounded"
-              style={{
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                backgroundImage: `url(${thumb.dataUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
               }}
             />
           ))
-        ) : null}
-      </div>
-
-      {/* Timeline track - aligned with transport bar timeline */}
-      <div
-        className="flex-1 h-2 bg-gray-200 rounded-full cursor-pointer relative overflow-hidden group"
-        onClick={handleBarClick}
-      >
-        {/* Progress fill */}
-        <div
-          className="absolute inset-y-0 left-0 bg-blue-500 rounded-full"
-          style={{ width: `${timelinePlayheadPercent}%` }}
-        />
-        {/* Playhead */}
-        {duration > 0 && (
+        ) : isRecording ? (
+          // Recording - show pulsing placeholder
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ left: `calc(${timelinePlayheadPercent}% - 5px)` }}
-          />
+            className="flex-1 flex items-center justify-center"
+            style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)' }}
+          >
+            <div
+              className="w-3 h-3 rounded-full bg-red-500"
+              style={{ animation: 'pulse 1.5s ease-in-out infinite' }}
+            />
+          </div>
+        ) : (
+          // Empty state
+          <div className="flex-1 flex items-center justify-center text-gray-500 text-xs">
+            No recording
+          </div>
         )}
       </div>
 
-      {/* Preview time indicator */}
+      {/* Playhead */}
+      {duration > 0 && (
+        <div
+          className="absolute top-0 bottom-0 w-0.5 pointer-events-none"
+          style={{
+            left: `${playheadPercent}%`,
+            backgroundColor: '#ffffff',
+            boxShadow: '0 0 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 255, 255, 0.3)',
+          }}
+        >
+          {/* Playhead handle - top */}
+          <div
+            className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-3 h-1.5 rounded-b"
+            style={{ backgroundColor: '#ffffff' }}
+          />
+          {/* Playhead handle - bottom */}
+          <div
+            className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-3 h-1.5 rounded-t"
+            style={{ backgroundColor: '#ffffff' }}
+          />
+        </div>
+      )}
+
+      {/* Time indicator while scrubbing */}
       {previewTime !== null && (
         <div
-          className="text-[11px] tabular-nums flex-shrink-0"
+          className="absolute top-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[11px] tabular-nums"
           style={{
-            color: '#f97316',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            color: '#ffffff',
             fontFamily: "'JetBrains Mono', monospace",
           }}
         >
@@ -141,5 +161,6 @@ export function ThumbnailFilmstrip() {
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60)
   const secs = Math.floor(seconds % 60)
-  return `${mins}:${secs.toString().padStart(2, '0')}`
+  const ms = Math.floor((seconds % 1) * 10)
+  return `${mins}:${secs.toString().padStart(2, '0')}.${ms}`
 }

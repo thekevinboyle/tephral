@@ -50,83 +50,84 @@ export function ThumbnailFilmstrip() {
 
   // Calculate playhead position
   const displayTime = previewTime !== null ? previewTime : currentTime
-  const playheadPercent = duration > 0 ? (displayTime / duration) * 100 : 0
+  const timelinePlayheadPercent = duration > 0 ? (displayTime / duration) * 100 : 0
 
   return (
     <div
-      className="absolute bottom-3 left-3 right-3 h-12 flex items-center gap-1 px-2 rounded-lg cursor-pointer"
+      className="absolute bottom-3 left-3 right-3 h-12 flex items-center gap-2 px-3 rounded-lg"
       style={{
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         border: '1px solid #d0d0d0',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
       }}
-      onClick={handleBarClick}
     >
-      {/* Thumbnail frames */}
-      {thumbnails.length > 0 ? (
-        thumbnails.map((thumb, i) => (
-          <div
-            key={i}
-            className="flex-shrink-0 h-8 w-8 rounded overflow-hidden transition-all duration-150"
-            style={{
-              border: hoveredIndex === i
-                ? '2px solid #6366f1'
-                : '1px solid #d0d0d0',
-              boxShadow: hoveredIndex === i
-                ? '0 0 8px rgba(99, 102, 241, 0.4)'
-                : 'none',
-              transform: hoveredIndex === i ? 'scale(1.1)' : 'scale(1)',
-            }}
-            onMouseEnter={() => handleThumbnailEnter(thumb.time, i)}
-            onMouseLeave={handleThumbnailLeave}
-            onClick={(e) => handleThumbnailClick(thumb.time, e)}
-          >
-            <img
-              src={thumb.dataUrl}
-              alt={`Frame ${i}`}
-              className="w-full h-full object-cover pointer-events-none"
+      {/* Thumbnail frames - fixed width area on left */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {thumbnails.length > 0 ? (
+          thumbnails.map((thumb, i) => (
+            <div
+              key={i}
+              className="flex-shrink-0 h-8 w-8 rounded overflow-hidden transition-all duration-150 cursor-pointer"
+              style={{
+                border: hoveredIndex === i
+                  ? '2px solid #6366f1'
+                  : '1px solid #d0d0d0',
+                boxShadow: hoveredIndex === i
+                  ? '0 0 8px rgba(99, 102, 241, 0.4)'
+                  : 'none',
+                transform: hoveredIndex === i ? 'scale(1.1)' : 'scale(1)',
+              }}
+              onMouseEnter={() => handleThumbnailEnter(thumb.time, i)}
+              onMouseLeave={handleThumbnailLeave}
+              onClick={(e) => handleThumbnailClick(thumb.time, e)}
+            >
+              <img
+                src={thumb.dataUrl}
+                alt={`Frame ${i}`}
+                className="w-full h-full object-cover pointer-events-none"
+              />
+            </div>
+          ))
+        ) : isRecording ? (
+          // Recording placeholder frames
+          Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex-shrink-0 h-8 w-8 rounded"
+              style={{
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              }}
             />
-          </div>
-        ))
-      ) : isRecording ? (
-        // Recording placeholder frames
-        Array.from({ length: 8 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex-shrink-0 h-8 w-8 rounded"
-            style={{
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            }}
-          />
-        ))
-      ) : null}
+          ))
+        ) : null}
+      </div>
 
-      {/* Spacer to fill remaining space */}
-      <div className="flex-1" />
-
-      {/* Playhead indicator */}
-      {duration > 0 && (
+      {/* Timeline track - aligned with transport bar timeline */}
+      <div
+        className="flex-1 h-2 bg-gray-200 rounded-full cursor-pointer relative overflow-hidden group"
+        onClick={handleBarClick}
+      >
+        {/* Progress fill */}
         <div
-          className="absolute top-0 bottom-0 w-0.5 pointer-events-none"
-          style={{
-            left: `${playheadPercent}%`,
-            backgroundColor: previewTime !== null ? '#f97316' : '#6366f1',
-            boxShadow: previewTime !== null
-              ? '0 0 6px rgba(249, 115, 22, 0.6)'
-              : '0 0 4px rgba(99, 102, 241, 0.5)',
-          }}
+          className="absolute inset-y-0 left-0 bg-blue-500 rounded-full"
+          style={{ width: `${timelinePlayheadPercent}%` }}
         />
-      )}
+        {/* Playhead */}
+        {duration > 0 && (
+          <div
+            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{ left: `calc(${timelinePlayheadPercent}% - 5px)` }}
+          />
+        )}
+      </div>
 
       {/* Preview time indicator */}
       {previewTime !== null && (
         <div
-          className="absolute -top-6 text-[13px] tabular-nums pointer-events-none"
+          className="text-[11px] tabular-nums flex-shrink-0"
           style={{
-            left: `${playheadPercent}%`,
-            transform: 'translateX(-50%)',
-            color: '#6366f1',
+            color: '#f97316',
             fontFamily: "'JetBrains Mono', monospace",
           }}
         >

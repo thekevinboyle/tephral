@@ -3,6 +3,8 @@ import { AsciiRenderOverlay } from './AsciiRenderOverlay'
 import { StippleOverlay } from './StippleOverlay'
 import { VisionTrackingOverlay } from './VisionTrackingOverlay'
 import { AcidOverlay } from './AcidOverlay'
+import { TextureOverlay } from './TextureOverlay'
+import { DataOverlay } from './DataOverlay'
 import { useLandmarkDetection } from '../../hooks/useLandmarkDetection'
 
 interface OverlayContainerProps {
@@ -51,6 +53,12 @@ export function OverlayContainer({ containerRef, glCanvas }: OverlayContainerPro
 
       {/* Acid effects overlay (renders after vision tracking) */}
       <AcidOverlay sourceCanvas={glCanvas} width={dimensions.width} height={dimensions.height} />
+
+      {/* Texture overlay (film grain, dust, etc.) */}
+      <TextureOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
+
+      {/* Data overlay (text, watermarks) - always renders last so text is never obscured */}
+      <DataOverlay width={dimensions.width} height={dimensions.height} />
     </>
   )
 }

@@ -279,6 +279,11 @@ function EffectParameters({ effectId }: { effectId: string }) {
             format={(v) => `${(v * 100).toFixed(0)}%`}
             paramId="edges.threshold"
           />
+          <ColorRow
+            label="Edge Color"
+            value={glitch.edgeDetection.edgeColor}
+            onChange={(v) => glitch.updateEdgeDetection({ edgeColor: v })}
+          />
           <SliderRow
             label="Mix"
             value={glitch.edgeDetection.mixAmount}

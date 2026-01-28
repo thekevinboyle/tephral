@@ -4,8 +4,8 @@ import { getEffectsForPage, PAGE_NAMES } from '../../config/effects'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
-import { useContourStore } from '../../stores/contourStore'
-import { useLandmarksStore } from '../../stores/landmarksStore'
+import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
+import { useAcidStore } from '../../stores/acidStore'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useUIStore } from '../../stores/uiStore'
 
@@ -18,9 +18,11 @@ export function PerformanceGrid() {
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
 
-  // Vision stores
-  const contour = useContourStore()
-  const landmarks = useLandmarksStore()
+  // Vision store
+  const visionTracking = useVisionTrackingStore()
+
+  // Acid store
+  const acid = useAcidStore()
 
   // Routing store for effect order
   const { effectOrder, setEffectOrder } = useRoutingStore()
@@ -206,59 +208,142 @@ export function PerformanceGrid() {
         }
 
       // ═══════════════════════════════════════════════════════════════
-      // PAGE 1: VISION EFFECTS
+      // PAGE 1: VISION TRACKING EFFECTS
       // ═══════════════════════════════════════════════════════════════
-      case 'contour':
+
+      // Blob tracking modes
+      case 'track_bright':
         return {
-          active: contour.enabled,
-          value: contour.params.threshold * 100,
-          onToggle: () => contour.setEnabled(!contour.enabled),
-          onValueChange: (v: number) => contour.updateParams({ threshold: v / 100 }),
+          active: visionTracking.brightEnabled,
+          value: visionTracking.brightParams.threshold,
+          onToggle: () => visionTracking.setBrightEnabled(!visionTracking.brightEnabled),
+          onValueChange: (v: number) => visionTracking.updateBrightParams({ threshold: v }),
         }
-      case 'face_mesh':
+      case 'track_edge':
         return {
-          active: landmarks.enabled && landmarks.currentMode === 'face',
-          value: landmarks.minDetectionConfidence * 100,
-          onToggle: () => {
-            if (landmarks.currentMode === 'face' && landmarks.enabled) {
-              landmarks.setEnabled(false)
-              landmarks.setCurrentMode('off')
-            } else {
-              landmarks.setEnabled(true)
-              landmarks.setCurrentMode('face')
-            }
-          },
-          onValueChange: (v: number) => landmarks.setMinDetectionConfidence(v / 100),
+          active: visionTracking.edgeEnabled,
+          value: visionTracking.edgeParams.threshold,
+          onToggle: () => visionTracking.setEdgeEnabled(!visionTracking.edgeEnabled),
+          onValueChange: (v: number) => visionTracking.updateEdgeParams({ threshold: v }),
         }
-      case 'hands':
+      case 'track_color':
         return {
-          active: landmarks.enabled && landmarks.currentMode === 'hands',
-          value: landmarks.minDetectionConfidence * 100,
-          onToggle: () => {
-            if (landmarks.currentMode === 'hands' && landmarks.enabled) {
-              landmarks.setEnabled(false)
-              landmarks.setCurrentMode('off')
-            } else {
-              landmarks.setEnabled(true)
-              landmarks.setCurrentMode('hands')
-            }
-          },
-          onValueChange: (v: number) => landmarks.setMinDetectionConfidence(v / 100),
+          active: visionTracking.colorEnabled,
+          value: visionTracking.colorParams.colorRange * 100,
+          onToggle: () => visionTracking.setColorEnabled(!visionTracking.colorEnabled),
+          onValueChange: (v: number) => visionTracking.updateColorParams({ colorRange: v / 100 }),
         }
-      case 'pose':
+      case 'track_motion':
         return {
-          active: landmarks.enabled && landmarks.currentMode === 'pose',
-          value: landmarks.minDetectionConfidence * 100,
-          onToggle: () => {
-            if (landmarks.currentMode === 'pose' && landmarks.enabled) {
-              landmarks.setEnabled(false)
-              landmarks.setCurrentMode('off')
-            } else {
-              landmarks.setEnabled(true)
-              landmarks.setCurrentMode('pose')
-            }
-          },
-          onValueChange: (v: number) => landmarks.setMinDetectionConfidence(v / 100),
+          active: visionTracking.motionEnabled,
+          value: visionTracking.motionParams.sensitivity,
+          onToggle: () => visionTracking.setMotionEnabled(!visionTracking.motionEnabled),
+          onValueChange: (v: number) => visionTracking.updateMotionParams({ sensitivity: v }),
+        }
+
+      // Skin-tone based tracking modes
+      case 'track_face':
+        return {
+          active: visionTracking.faceEnabled,
+          value: visionTracking.faceParams.threshold,
+          onToggle: () => visionTracking.setFaceEnabled(!visionTracking.faceEnabled),
+          onValueChange: (v: number) => visionTracking.updateFaceParams({ threshold: v }),
+        }
+      case 'track_hands':
+        return {
+          active: visionTracking.handsEnabled,
+          value: visionTracking.handsParams.threshold,
+          onToggle: () => visionTracking.setHandsEnabled(!visionTracking.handsEnabled),
+          onValueChange: (v: number) => visionTracking.updateHandsParams({ threshold: v }),
+        }
+
+      // ═══════════════════════════════════════════════════════════════
+      // PAGE 2: ACID EFFECTS
+      // ═══════════════════════════════════════════════════════════════
+
+      case 'acid_dots':
+        return {
+          active: acid.dotsEnabled,
+          value: acid.dotsParams.gridSize,
+          onToggle: () => acid.setDotsEnabled(!acid.dotsEnabled),
+          onValueChange: (v: number) => acid.updateDotsParams({ gridSize: v }),
+        }
+      case 'acid_glyph':
+        return {
+          active: acid.glyphEnabled,
+          value: acid.glyphParams.gridSize,
+          onToggle: () => acid.setGlyphEnabled(!acid.glyphEnabled),
+          onValueChange: (v: number) => acid.updateGlyphParams({ gridSize: v }),
+        }
+      case 'acid_icons':
+        return {
+          active: acid.iconsEnabled,
+          value: acid.iconsParams.gridSize,
+          onToggle: () => acid.setIconsEnabled(!acid.iconsEnabled),
+          onValueChange: (v: number) => acid.updateIconsParams({ gridSize: v }),
+        }
+      case 'acid_contour':
+        return {
+          active: acid.contourEnabled,
+          value: acid.contourParams.levels,
+          onToggle: () => acid.setContourEnabled(!acid.contourEnabled),
+          onValueChange: (v: number) => acid.updateContourParams({ levels: v }),
+        }
+      case 'acid_decomp':
+        return {
+          active: acid.decompEnabled,
+          value: acid.decompParams.minBlock,
+          onToggle: () => acid.setDecompEnabled(!acid.decompEnabled),
+          onValueChange: (v: number) => acid.updateDecompParams({ minBlock: v }),
+        }
+      case 'acid_mirror':
+        return {
+          active: acid.mirrorEnabled,
+          value: acid.mirrorParams.segments,
+          onToggle: () => acid.setMirrorEnabled(!acid.mirrorEnabled),
+          onValueChange: (v: number) => acid.updateMirrorParams({ segments: v }),
+        }
+      case 'acid_slice':
+        return {
+          active: acid.sliceEnabled,
+          value: acid.sliceParams.sliceCount,
+          onToggle: () => acid.setSliceEnabled(!acid.sliceEnabled),
+          onValueChange: (v: number) => acid.updateSliceParams({ sliceCount: v }),
+        }
+      case 'acid_thgrid':
+        return {
+          active: acid.thgridEnabled,
+          value: acid.thgridParams.threshold,
+          onToggle: () => acid.setThgridEnabled(!acid.thgridEnabled),
+          onValueChange: (v: number) => acid.updateThgridParams({ threshold: v }),
+        }
+      case 'acid_cloud':
+        return {
+          active: acid.cloudEnabled,
+          value: acid.cloudParams.density,
+          onToggle: () => acid.setCloudEnabled(!acid.cloudEnabled),
+          onValueChange: (v: number) => acid.updateCloudParams({ density: v }),
+        }
+      case 'acid_led':
+        return {
+          active: acid.ledEnabled,
+          value: acid.ledParams.gridSize,
+          onToggle: () => acid.setLedEnabled(!acid.ledEnabled),
+          onValueChange: (v: number) => acid.updateLedParams({ gridSize: v }),
+        }
+      case 'acid_slit':
+        return {
+          active: acid.slitEnabled,
+          value: acid.slitParams.speed,
+          onToggle: () => acid.setSlitEnabled(!acid.slitEnabled),
+          onValueChange: (v: number) => acid.updateSlitParams({ speed: v }),
+        }
+      case 'acid_voronoi':
+        return {
+          active: acid.voronoiEnabled,
+          value: acid.voronoiParams.cellCount,
+          onToggle: () => acid.setVoronoiEnabled(!acid.voronoiEnabled),
+          onValueChange: (v: number) => acid.updateVoronoiParams({ cellCount: v }),
         }
 
       // Reserved / empty slots

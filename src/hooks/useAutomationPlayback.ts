@@ -10,6 +10,7 @@ import { useVisionTrackingStore } from '../stores/visionTrackingStore'
 export function useAutomationPlayback() {
   const {
     isPlaying,
+    isRecording,
     currentTime,
     duration,
     events,
@@ -187,11 +188,11 @@ export function useAutomationPlayback() {
 
   // Sync video when seeking (for file sources)
   useEffect(() => {
-    if (source === 'file' && videoElement && !isPlaying) {
+    if (source === 'file' && videoElement && !isPlaying && !isRecording) {
       // Seek video to match the current time when not playing
       videoElement.currentTime = currentTime
     }
-  }, [currentTime, source, videoElement, isPlaying])
+  }, [currentTime, source, videoElement, isPlaying, isRecording])
 
   // Keyboard shortcuts
   useEffect(() => {

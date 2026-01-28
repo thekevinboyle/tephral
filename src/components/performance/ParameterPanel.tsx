@@ -56,7 +56,6 @@ import { useAcidStore } from '../../stores/acidStore'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
-import { TEXTURE_LIBRARY } from '../overlays/TextureOverlay'
 
 interface ParameterSection {
   id: string
@@ -1302,7 +1301,6 @@ export function ParameterPanel() {
 
   // Texture Overlay
   if (textureOverlay.enabled) {
-    const textureName = TEXTURE_LIBRARY[textureOverlay.textureId as keyof typeof TEXTURE_LIBRARY]?.name || textureOverlay.textureId
     sections.push({
       id: 'texture_overlay',
       label: 'TEXTURE',

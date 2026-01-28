@@ -17,10 +17,7 @@ export function ThumbnailFilmstrip() {
   const trackRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
 
-  // Show filmstrip only when we have thumbnails or are recording
-  if (thumbnails.length === 0 && !isRecording && duration === 0) return null
-
-  // Calculate time from mouse position
+  // Calculate time from mouse position - MUST be before any early returns
   const getTimeFromPosition = useCallback((clientX: number) => {
     if (!trackRef.current || duration === 0) return 0
     const rect = trackRef.current.getBoundingClientRect()
@@ -28,6 +25,9 @@ export function ThumbnailFilmstrip() {
     const percentage = Math.max(0, Math.min(1, x / rect.width))
     return percentage * duration
   }, [duration])
+
+  // Show filmstrip only when we have thumbnails or are recording
+  if (thumbnails.length === 0 && !isRecording && duration === 0) return null
 
   // Handle scrub start
   const handlePointerDown = (e: React.PointerEvent) => {

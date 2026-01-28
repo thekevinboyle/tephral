@@ -103,6 +103,11 @@ export function TransportBar() {
   const handleStop = useCallback(() => {
     if (isRecordingMode) {
       stopRecording2()
+      // Also pause the video element when stopping recorded playback
+      if (videoElement) {
+        videoElement.pause()
+        videoElement.currentTime = 0
+      }
     } else if (videoElement) {
       videoElement.pause()
       videoElement.currentTime = 0
@@ -145,7 +150,7 @@ export function TransportBar() {
     if (file.type.startsWith('video/')) {
       const video = document.createElement('video')
       video.src = url
-      video.loop = false
+      video.loop = true
       video.muted = true
       video.playsInline = true
       video.autoplay = true
@@ -204,15 +209,22 @@ export function TransportBar() {
     // Capture thumbnails every 2 seconds
     if (videoElement) {
       thumbnailInterval = window.setInterval(() => {
-        const canvas = document.createElement('canvas')
-        canvas.width = 64
-        canvas.height = 64
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          ctx.drawImage(videoElement, 0, 0, 64, 64)
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
-          const time = (performance.now() - startTime) / 1000
-          addThumbnail({ time, dataUrl })
+        try {
+          // Check if video has data before trying to capture
+          if (videoElement.readyState < 2) return // HAVE_CURRENT_DATA
+
+          const canvas = document.createElement('canvas')
+          canvas.width = 64
+          canvas.height = 64
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(videoElement, 0, 0, 64, 64)
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
+            const time = (performance.now() - startTime) / 1000
+            addThumbnail({ time, dataUrl })
+          }
+        } catch (err) {
+          console.warn('Failed to capture thumbnail:', err)
         }
       }, 2000)
     }

@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { TransportBar } from './TransportBar'
 import { ParameterPanel } from './ParameterPanel'
@@ -8,11 +8,12 @@ import { XYPad } from './XYPad'
 import { MixControls } from './MixControls'
 import { ThumbnailFilmstrip } from './ThumbnailFilmstrip'
 import { PreviewTabs } from './PreviewTabs'
+import { RecordedVideoOverlay } from './RecordedVideoOverlay'
 import { ExportModal } from './ExportModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { SequencerPanel } from '../sequencer/SequencerPanel'
 import { PresetLibraryPanel } from '../presets/PresetLibraryPanel'
-import { useCanvasCapture } from '../../hooks/useCanvasCapture'
+import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useRecordingStore, type ExportFormat, type ExportQuality } from '../../stores/recordingStore'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 
@@ -21,70 +22,60 @@ export function PerformanceLayout() {
   const canvasElementRef = useRef<HTMLCanvasElement | null>(null)
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
-  const { resetEffects } = useAutomationPlayback()
+  useAutomationPlayback()
 
-  // Get canvas element from the Canvas component
-  const getCanvasElement = useCallback(() => {
-    if (!canvasElementRef.current && canvasRef.current) {
-      canvasElementRef.current = canvasRef.current.getCanvas()
-    }
-    return canvasElementRef.current
-  }, [])
-
-  // Create a ref object that useCanvasCapture can use
+  // Create a ref object that useRecordingCapture can use
   const captureRef = useRef<HTMLCanvasElement | null>(null)
 
-  // Update captureRef when canvas is available
-  const updateCaptureRef = useCallback(() => {
-    const canvas = getCanvasElement()
-    if (canvas) {
-      captureRef.current = canvas
+  // Keep captureRef in sync with the canvas element
+  useEffect(() => {
+    const checkCanvas = () => {
+      if (canvasRef.current) {
+        const canvas = canvasRef.current.getCanvas()
+        if (canvas) {
+          captureRef.current = canvas
+          canvasElementRef.current = canvas
+        }
+      }
     }
-  }, [getCanvasElement])
+    // Check immediately and also on a short interval until we get it
+    checkCanvas()
+    const interval = setInterval(checkCanvas, 100)
+    return () => clearInterval(interval)
+  }, [])
 
-  const { startCapture, stopCapture, isFormatSupported } = useCanvasCapture(captureRef)
-  const { startExport, setExportProgress, duration, play, stop } = useRecordingStore()
+  // Use recording capture hook - captures canvas during recording
+  useRecordingCapture(captureRef)
 
-  const handleExport = useCallback((format: ExportFormat, quality: ExportQuality) => {
-    updateCaptureRef()
-    if (!captureRef.current) {
-      console.error('Canvas not available for export')
+  const { recordedVideoBlob, finishExport } = useRecordingStore()
+
+  // Export handler - now just downloads the already-recorded video
+  const handleExport = useCallback((format: ExportFormat, _quality: ExportQuality) => {
+    if (!recordedVideoBlob) {
+      console.error('No recorded video to export')
       return
     }
 
-    // Reset to beginning and reset all effects
-    stop()
-    resetEffects()
-    startExport()
+    // Create download link for the recorded video
+    const url = URL.createObjectURL(recordedVideoBlob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `tephral-export.${format === 'mp4' ? 'mp4' : 'webm'}`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
 
-    // Start playback FIRST - this immediately applies initial events (t=0)
-    // The video stays paused until we explicitly play it
-    setTimeout(() => {
-      console.log('[Export] Starting playback to apply effects')
-      // Seek video to beginning but don't play yet
-      play() // This applies initial effects immediately
+    finishExport()
+    console.log('[Export] Downloaded recorded video')
+  }, [recordedVideoBlob, finishExport])
 
-      // Wait for React to re-render with effects applied, then start capture
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          console.log('[Export] Starting capture after effects applied')
-          const started = startCapture({
-            format,
-            quality,
-            onProgress: (progress) => setExportProgress(progress),
-          })
-
-          if (started) {
-            // Stop capture after duration (with buffer for encoding)
-            setTimeout(() => {
-              stopCapture()
-              stop()
-            }, duration * 1000 + 500)
-          }
-        })
-      })
-    }, 100)
-  }, [updateCaptureRef, startExport, setExportProgress, startCapture, stopCapture, play, stop, duration, resetEffects])
+  // Check if export format is supported (webm always supported since we record in webm)
+  const isFormatSupported = useCallback((format: ExportFormat) => {
+    // We always record in webm, so webm is always supported
+    // MP4 would require transcoding which we don't support yet
+    return format === 'webm'
+  }, [])
 
   return (
     <div
@@ -119,6 +110,8 @@ export function PerformanceLayout() {
           {/* Canvas */}
           <div className="flex-1 min-h-0 relative">
             <Canvas ref={canvasRef} />
+            {/* Recorded video overlay - shows when in recorded mode */}
+            <RecordedVideoOverlay />
             {/* Preview mode tabs */}
             <PreviewTabs />
             {/* Thumbnail filmstrip at bottom of preview */}

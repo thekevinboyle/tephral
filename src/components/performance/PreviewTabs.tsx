@@ -1,11 +1,10 @@
 import { useRecordingStore } from '../../stores/recordingStore'
-import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 
 export function PreviewTabs() {
-  const { previewMode, setPreviewMode, duration, play, stop, seek } = useRecordingStore()
-  const { resetEffects } = useAutomationPlayback()
+  const { previewMode, setPreviewMode, recordedVideoUrl, play, stop, seek } = useRecordingStore()
 
-  const hasRecording = duration > 0
+  // Has recording if we have a recorded video blob
+  const hasRecording = !!recordedVideoUrl
 
   const handleSourceClick = () => {
     if (previewMode === 'source') return
@@ -16,7 +15,6 @@ export function PreviewTabs() {
   const handleRecordedClick = () => {
     if (previewMode === 'recorded' || !hasRecording) return
     stop()
-    resetEffects()
     seek(0)
     setPreviewMode('recorded')
     // Small delay to ensure state is set before play

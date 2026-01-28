@@ -32,6 +32,11 @@ interface RecordingState {
   thumbnails: Thumbnail[]
   source: 'webcam' | 'file' | null
 
+  // Recorded video blob (captured during recording with effects)
+  recordedVideoBlob: Blob | null
+  recordedVideoUrl: string | null
+  setRecordedVideo: (blob: Blob) => void
+
   // Preview mode state
   previewMode: 'source' | 'recorded'
   setPreviewMode: (mode: 'source' | 'recorded') => void
@@ -83,6 +88,18 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   thumbnails: [],
   source: null,
 
+  // Recorded video blob
+  recordedVideoBlob: null,
+  recordedVideoUrl: null,
+  setRecordedVideo: (blob: Blob) => {
+    // Revoke old URL if exists
+    const oldUrl = get().recordedVideoUrl
+    if (oldUrl) URL.revokeObjectURL(oldUrl)
+
+    const url = URL.createObjectURL(blob)
+    set({ recordedVideoBlob: blob, recordedVideoUrl: url })
+  },
+
   // Preview mode state
   previewMode: 'source',
   setPreviewMode: (mode) => set({ previewMode: mode }),
@@ -102,6 +119,8 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     currentTime: 0,
     events: initialEvents || [],
     thumbnails: [],
+    recordedVideoBlob: null,
+    recordedVideoUrl: null,
   }),
 
   stopRecording: () => {

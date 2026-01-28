@@ -77,9 +77,10 @@ export function PerformanceLayout() {
       >
         {/* Preset Library Panel */}
         <div
-          className="flex-shrink-0"
+          className="flex-shrink-0 hidden lg:block"
           style={{
-            width: '280px',
+            width: '240px',
+            minWidth: '200px',
             backgroundColor: '#f5f5f5',
             borderRight: '1px solid #d0d0d0',
           }}
@@ -102,7 +103,7 @@ export function PerformanceLayout() {
         </div>
 
         {/* Expanded Parameter Panel (right) */}
-        <div className="flex-shrink-0" style={{ width: '340px' }}>
+        <div className="flex-shrink-0 hidden md:block" style={{ width: '280px', minWidth: '240px' }}>
           <ExpandedParameterPanel />
         </div>
       </div>
@@ -133,14 +134,17 @@ export function PerformanceLayout() {
         <ParameterPanel />
       </div>
 
-      {/* Bottom section - 3 equal columns */}
+      {/* Bottom section - 3 columns with responsive proportions */}
       <div
-        className="flex-1 min-h-0 flex mx-3 mt-3 mb-3 gap-3"
+        className="flex-1 min-h-0 flex mx-3 mt-3 mb-3 gap-2"
       >
         {/* Column 1: Banks + Button grid (unified container) */}
         <div
-          className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
+          className="min-h-0 flex flex-col rounded-xl overflow-hidden"
           style={{
+            flex: '1 1 260px',
+            minWidth: '220px',
+            maxWidth: '320px',
             backgroundColor: '#ffffff',
             border: '1px solid #d0d0d0',
           }}
@@ -149,7 +153,7 @@ export function PerformanceLayout() {
           <div
             className="flex-shrink-0"
             style={{
-              height: '52px',
+              height: '48px',
               borderBottom: '1px solid #e5e5e5',
             }}
           >
@@ -163,9 +167,9 @@ export function PerformanceLayout() {
 
         {/* Column 2: Sequencer */}
         <div
-          className="rounded-xl overflow-hidden"
+          className="rounded-xl overflow-hidden min-w-0"
           style={{
-            flex: '1.5',
+            flex: '2 1 300px',
             backgroundColor: '#ffffff',
             border: '1px solid #d0d0d0',
           }}
@@ -174,7 +178,14 @@ export function PerformanceLayout() {
         </div>
 
         {/* Column 3: XY Pad + Mix Controls */}
-        <div className="flex flex-col gap-3" style={{ flex: '0.7' }}>
+        <div
+          className="flex flex-col gap-2"
+          style={{
+            flex: '1 1 200px',
+            minWidth: '180px',
+            maxWidth: '280px',
+          }}
+        >
           {/* XY Pad */}
           <div
             className="flex-1 rounded-xl overflow-hidden relative"
@@ -190,7 +201,7 @@ export function PerformanceLayout() {
           <div
             className="flex-shrink-0 rounded-xl overflow-hidden"
             style={{
-              height: '80px',
+              height: '70px',
               backgroundColor: '#ffffff',
               border: '1px solid #d0d0d0',
             }}

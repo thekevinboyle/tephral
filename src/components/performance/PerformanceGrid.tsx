@@ -394,7 +394,7 @@ export function PerformanceGrid() {
             <button
               key={index}
               onClick={() => setGridPage(index)}
-              className={`px-2 py-0.5 text-[12px] font-medium uppercase tracking-wider rounded transition-colors ${
+              className={`px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded transition-colors ${
                 gridPage === index
                   ? 'bg-gray-800 text-white'
                   : 'text-gray-400 hover:text-gray-600'
@@ -417,7 +417,7 @@ export function PerformanceGrid() {
       </div>
 
       {/* Effect grid */}
-      <div className="flex-1 grid grid-cols-4 grid-rows-4 gap-2">
+      <div className="flex-1 grid grid-cols-4 grid-rows-4 gap-1">
         {gridSlots.map((effect, index) => {
           if (!effect) {
             // Empty placeholder cell

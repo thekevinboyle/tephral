@@ -109,7 +109,7 @@ export function SliderRow({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <span className="text-[14px] text-gray-500 w-20 shrink-0 flex items-center gap-1">
+      <span className="text-[13px] text-gray-500 w-24 shrink-0 flex items-center gap-1 whitespace-nowrap">
         {hasRouting && firstRouting && routingTrack && (
           <span
             className="w-3 h-3 flex-shrink-0 cursor-ns-resize hover:scale-110 transition-transform flex items-center justify-center rounded-full"

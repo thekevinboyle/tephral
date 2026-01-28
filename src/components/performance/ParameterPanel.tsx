@@ -64,6 +64,7 @@ interface ParameterSection {
     max: number
     onChange: (v: number) => void
     format?: (v: number) => string
+    paramId?: string  // e.g., 'rgb_split.amount' for sequencer routing
   }[]
 }
 
@@ -774,6 +775,7 @@ export function ParameterPanel() {
           min: 0,
           max: 255,
           onChange: (v) => vision.updateBrightParams({ threshold: v }),
+          paramId: 'track_bright.threshold',
         },
         {
           label: 'MinSize',
@@ -781,6 +783,7 @@ export function ParameterPanel() {
           min: 5,
           max: 100,
           onChange: (v) => vision.updateBrightParams({ minSize: v }),
+          paramId: 'track_bright.minSize',
         },
       ],
     })
@@ -801,6 +804,7 @@ export function ParameterPanel() {
           min: 0,
           max: 255,
           onChange: (v) => vision.updateEdgeParams({ threshold: v }),
+          paramId: 'track_edge.threshold',
         },
         {
           label: 'MinSize',
@@ -808,6 +812,7 @@ export function ParameterPanel() {
           min: 5,
           max: 100,
           onChange: (v) => vision.updateEdgeParams({ minSize: v }),
+          paramId: 'track_edge.minSize',
         },
       ],
     })
@@ -828,6 +833,7 @@ export function ParameterPanel() {
           min: 5,
           max: 100,
           onChange: (v) => vision.updateColorParams({ colorRange: v / 100 }),
+          paramId: 'track_color.colorRange',
         },
         {
           label: 'MinSize',
@@ -835,6 +841,7 @@ export function ParameterPanel() {
           min: 5,
           max: 100,
           onChange: (v) => vision.updateColorParams({ minSize: v }),
+          paramId: 'track_color.minSize',
         },
       ],
     })
@@ -855,6 +862,7 @@ export function ParameterPanel() {
           min: 5,
           max: 100,
           onChange: (v) => vision.updateMotionParams({ sensitivity: v }),
+          paramId: 'track_motion.sensitivity',
         },
         {
           label: 'MinSize',
@@ -862,6 +870,7 @@ export function ParameterPanel() {
           min: 5,
           max: 100,
           onChange: (v) => vision.updateMotionParams({ minSize: v }),
+          paramId: 'track_motion.minSize',
         },
       ],
     })
@@ -882,6 +891,7 @@ export function ParameterPanel() {
           min: 10,
           max: 90,
           onChange: (v) => vision.updateFaceParams({ threshold: v }),
+          paramId: 'track_face.threshold',
         },
         {
           label: 'MinSize',
@@ -889,6 +899,7 @@ export function ParameterPanel() {
           min: 20,
           max: 150,
           onChange: (v) => vision.updateFaceParams({ minSize: v }),
+          paramId: 'track_face.minSize',
         },
       ],
     })
@@ -909,6 +920,7 @@ export function ParameterPanel() {
           min: 10,
           max: 90,
           onChange: (v) => vision.updateHandsParams({ threshold: v }),
+          paramId: 'track_hands.threshold',
         },
         {
           label: 'MinSize',
@@ -916,6 +928,7 @@ export function ParameterPanel() {
           min: 10,
           max: 80,
           onChange: (v) => vision.updateHandsParams({ minSize: v }),
+          paramId: 'track_hands.minSize',
         },
       ],
     })
@@ -940,6 +953,7 @@ export function ParameterPanel() {
           min: 4,
           max: 32,
           onChange: (v) => acid.updateDotsParams({ gridSize: v }),
+          paramId: 'acid_dots.gridSize',
         },
         {
           label: 'Scale',
@@ -947,6 +961,7 @@ export function ParameterPanel() {
           min: 20,
           max: 150,
           onChange: (v) => acid.updateDotsParams({ dotScale: v / 100 }),
+          paramId: 'acid_dots.dotScale',
         },
       ],
     })
@@ -967,6 +982,7 @@ export function ParameterPanel() {
           min: 8,
           max: 24,
           onChange: (v) => acid.updateGlyphParams({ gridSize: v }),
+          paramId: 'acid_glyph.gridSize',
         },
         {
           label: 'Density',
@@ -974,6 +990,7 @@ export function ParameterPanel() {
           min: 30,
           max: 100,
           onChange: (v) => acid.updateGlyphParams({ density: v / 100 }),
+          paramId: 'acid_glyph.density',
         },
       ],
     })
@@ -994,6 +1011,7 @@ export function ParameterPanel() {
           min: 16,
           max: 64,
           onChange: (v) => acid.updateIconsParams({ gridSize: v }),
+          paramId: 'acid_icons.gridSize',
         },
         {
           label: 'Rotate',
@@ -1001,6 +1019,7 @@ export function ParameterPanel() {
           min: 0,
           max: 360,
           onChange: (v) => acid.updateIconsParams({ rotation: v }),
+          paramId: 'acid_icons.rotation',
         },
       ],
     })
@@ -1021,6 +1040,7 @@ export function ParameterPanel() {
           min: 4,
           max: 20,
           onChange: (v) => acid.updateContourParams({ levels: v }),
+          paramId: 'acid_contour.levels',
         },
         {
           label: 'Width',
@@ -1028,6 +1048,7 @@ export function ParameterPanel() {
           min: 1,
           max: 5,
           onChange: (v) => acid.updateContourParams({ lineWidth: v }),
+          paramId: 'acid_contour.lineWidth',
         },
       ],
     })
@@ -1048,6 +1069,7 @@ export function ParameterPanel() {
           min: 2,
           max: 32,
           onChange: (v) => acid.updateDecompParams({ minBlock: v }),
+          paramId: 'acid_decomp.minBlock',
         },
         {
           label: 'Max',
@@ -1055,6 +1077,7 @@ export function ParameterPanel() {
           min: 16,
           max: 128,
           onChange: (v) => acid.updateDecompParams({ maxBlock: v }),
+          paramId: 'acid_decomp.maxBlock',
         },
       ],
     })
@@ -1075,6 +1098,7 @@ export function ParameterPanel() {
           min: 2,
           max: 8,
           onChange: (v) => acid.updateMirrorParams({ segments: v }),
+          paramId: 'acid_mirror.segments',
         },
         {
           label: 'Rotate',
@@ -1082,6 +1106,7 @@ export function ParameterPanel() {
           min: 0,
           max: 360,
           onChange: (v) => acid.updateMirrorParams({ rotation: v }),
+          paramId: 'acid_mirror.rotation',
         },
       ],
     })
@@ -1102,6 +1127,7 @@ export function ParameterPanel() {
           min: 4,
           max: 64,
           onChange: (v) => acid.updateSliceParams({ sliceCount: v }),
+          paramId: 'acid_slice.sliceCount',
         },
         {
           label: 'Offset',
@@ -1109,6 +1135,7 @@ export function ParameterPanel() {
           min: 0,
           max: 100,
           onChange: (v) => acid.updateSliceParams({ offset: v }),
+          paramId: 'acid_slice.offset',
         },
       ],
     })
@@ -1129,6 +1156,7 @@ export function ParameterPanel() {
           min: 0,
           max: 255,
           onChange: (v) => acid.updateThGridParams({ threshold: v }),
+          paramId: 'acid_thgrid.threshold',
         },
         {
           label: 'Grid',
@@ -1136,6 +1164,7 @@ export function ParameterPanel() {
           min: 2,
           max: 16,
           onChange: (v) => acid.updateThGridParams({ gridSize: v }),
+          paramId: 'acid_thgrid.gridSize',
         },
       ],
     })
@@ -1156,6 +1185,7 @@ export function ParameterPanel() {
           min: 1,
           max: 50,
           onChange: (v) => acid.updateCloudParams({ density: v * 1000 }),
+          paramId: 'acid_cloud.density',
         },
         {
           label: 'Depth',
@@ -1163,6 +1193,7 @@ export function ParameterPanel() {
           min: 0,
           max: 100,
           onChange: (v) => acid.updateCloudParams({ depthScale: v / 100 }),
+          paramId: 'acid_cloud.depthScale',
         },
       ],
     })
@@ -1183,6 +1214,7 @@ export function ParameterPanel() {
           min: 4,
           max: 16,
           onChange: (v) => acid.updateLedParams({ gridSize: v }),
+          paramId: 'acid_led.gridSize',
         },
         {
           label: 'Dot',
@@ -1190,6 +1222,7 @@ export function ParameterPanel() {
           min: 30,
           max: 100,
           onChange: (v) => acid.updateLedParams({ dotSize: v / 100 }),
+          paramId: 'acid_led.dotSize',
         },
       ],
     })
@@ -1210,6 +1243,7 @@ export function ParameterPanel() {
           min: 1,
           max: 50,
           onChange: (v) => acid.updateSlitParams({ speed: v / 10 }),
+          paramId: 'acid_slit.speed',
         },
         {
           label: 'Blend',
@@ -1217,6 +1251,7 @@ export function ParameterPanel() {
           min: 0,
           max: 100,
           onChange: (v) => acid.updateSlitParams({ blend: v / 100 }),
+          paramId: 'acid_slit.blend',
         },
       ],
     })
@@ -1237,6 +1272,7 @@ export function ParameterPanel() {
           min: 16,
           max: 256,
           onChange: (v) => acid.updateVoronoiParams({ cellCount: v }),
+          paramId: 'acid_voronoi.cellCount',
         },
         {
           label: 'Edges',
@@ -1616,8 +1652,8 @@ export function ParameterPanel() {
               e.preventDefault()
               const trackId = e.dataTransfer.getData('sequencer-track')
               if (trackId && section.params[0]) {
-                // Create routing to primary parameter
-                const targetParam = `${section.id}.${section.params[0].label.toLowerCase()}`
+                // Create routing to primary parameter (use paramId if available, otherwise construct from label)
+                const targetParam = section.params[0].paramId || `${section.id}.${section.params[0].label.toLowerCase()}`
                 addRouting(trackId, targetParam, 0.5)
               }
               setDropTargetId(null)

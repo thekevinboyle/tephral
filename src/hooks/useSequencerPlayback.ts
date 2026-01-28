@@ -3,6 +3,8 @@ import { useSequencerStore } from '../stores/sequencerStore'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../stores/asciiRenderStore'
 import { useStippleStore } from '../stores/stippleStore'
+import { useAcidStore } from '../stores/acidStore'
+import { useVisionTrackingStore } from '../stores/visionTrackingStore'
 
 // Resolution to milliseconds per step
 const RESOLUTION_MS: Record<string, number> = {
@@ -26,6 +28,8 @@ export function useSequencerPlayback() {
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
+  const acid = useAcidStore()
+  const vision = useVisionTrackingStore()
 
   const lastStepTime = useRef<number>(0)
   const animationFrameId = useRef<number | null>(null)
@@ -96,8 +100,104 @@ export function useSequencerPlayback() {
           stipple.updateParams({ particleSize: 2 + value * 4 })
         }
         break
+
+      // ============================================================================
+      // ACID Effects
+      // ============================================================================
+      case 'acid_dots':
+        if (paramName === 'gridSize') acid.updateDotsParams({ gridSize: 8 + Math.floor(value * 24) })
+        if (paramName === 'dotScale') acid.updateDotsParams({ dotScale: 0.3 + value * 0.7 })
+        if (paramName === 'threshold') acid.updateDotsParams({ threshold: value })
+        break
+      case 'acid_glyph':
+        if (paramName === 'gridSize') acid.updateGlyphParams({ gridSize: 6 + Math.floor(value * 18) })
+        if (paramName === 'density') acid.updateGlyphParams({ density: value })
+        break
+      case 'acid_icons':
+        if (paramName === 'gridSize') acid.updateIconsParams({ gridSize: 16 + Math.floor(value * 48) })
+        if (paramName === 'rotation') acid.updateIconsParams({ rotation: value * 360 })
+        break
+      case 'acid_contour':
+        if (paramName === 'levels') acid.updateContourParams({ levels: 2 + Math.floor(value * 14) })
+        if (paramName === 'lineWidth') acid.updateContourParams({ lineWidth: 1 + value * 3 })
+        if (paramName === 'smooth') acid.updateContourParams({ smooth: value })
+        break
+      case 'acid_decomp':
+        if (paramName === 'minBlock') acid.updateDecompParams({ minBlock: 2 + Math.floor(value * 14) })
+        if (paramName === 'maxBlock') acid.updateDecompParams({ maxBlock: 32 + Math.floor(value * 96) })
+        if (paramName === 'threshold') acid.updateDecompParams({ threshold: value * 0.5 })
+        break
+      case 'acid_mirror':
+        if (paramName === 'segments') acid.updateMirrorParams({ segments: 2 + Math.floor(value * 10) })
+        if (paramName === 'centerX') acid.updateMirrorParams({ centerX: value })
+        if (paramName === 'centerY') acid.updateMirrorParams({ centerY: value })
+        if (paramName === 'rotation') acid.updateMirrorParams({ rotation: value * 360 })
+        break
+      case 'acid_slice':
+        if (paramName === 'sliceCount') acid.updateSliceParams({ sliceCount: 5 + Math.floor(value * 45) })
+        if (paramName === 'offset') acid.updateSliceParams({ offset: value })
+        break
+      case 'acid_thgrid':
+        if (paramName === 'threshold') acid.updateThGridParams({ threshold: value })
+        if (paramName === 'gridSize') acid.updateThGridParams({ gridSize: 4 + Math.floor(value * 28) })
+        if (paramName === 'lineWidth') acid.updateThGridParams({ lineWidth: 1 + value * 3 })
+        break
+      case 'acid_cloud':
+        if (paramName === 'density') acid.updateCloudParams({ density: 1000 + Math.floor(value * 9000) })
+        if (paramName === 'depthScale') acid.updateCloudParams({ depthScale: 0.5 + value * 1.5 })
+        if (paramName === 'perspective') acid.updateCloudParams({ perspective: value })
+        break
+      case 'acid_led':
+        if (paramName === 'gridSize') acid.updateLedParams({ gridSize: 4 + Math.floor(value * 20) })
+        if (paramName === 'dotSize') acid.updateLedParams({ dotSize: 0.3 + value * 0.7 })
+        if (paramName === 'brightness') acid.updateLedParams({ brightness: 0.5 + value * 0.5 })
+        if (paramName === 'bleed') acid.updateLedParams({ bleed: value * 0.5 })
+        break
+      case 'acid_slit':
+        if (paramName === 'slitPosition') acid.updateSlitParams({ slitPosition: value })
+        if (paramName === 'speed') acid.updateSlitParams({ speed: 0.5 + value * 1.5 })
+        if (paramName === 'blend') acid.updateSlitParams({ blend: value })
+        break
+      case 'acid_voronoi':
+        if (paramName === 'cellCount') acid.updateVoronoiParams({ cellCount: 20 + Math.floor(value * 180) })
+        break
+
+      // ============================================================================
+      // Vision Tracking Effects
+      // ============================================================================
+      case 'track_bright':
+        if (paramName === 'threshold') vision.updateBrightParams({ threshold: Math.floor(value * 255) })
+        if (paramName === 'minSize') vision.updateBrightParams({ minSize: 10 + Math.floor(value * 90) })
+        if (paramName === 'maxBlobs') vision.updateBrightParams({ maxBlobs: 5 + Math.floor(value * 45) })
+        break
+      case 'track_edge':
+        if (paramName === 'threshold') vision.updateEdgeParams({ threshold: Math.floor(value * 255) })
+        if (paramName === 'minSize') vision.updateEdgeParams({ minSize: 10 + Math.floor(value * 90) })
+        if (paramName === 'maxBlobs') vision.updateEdgeParams({ maxBlobs: 5 + Math.floor(value * 45) })
+        break
+      case 'track_color':
+        if (paramName === 'threshold') vision.updateColorParams({ threshold: Math.floor(value * 255) })
+        if (paramName === 'minSize') vision.updateColorParams({ minSize: 10 + Math.floor(value * 90) })
+        if (paramName === 'maxBlobs') vision.updateColorParams({ maxBlobs: 5 + Math.floor(value * 45) })
+        if (paramName === 'colorRange') vision.updateColorParams({ colorRange: 0.1 + value * 0.5 })
+        break
+      case 'track_motion':
+        if (paramName === 'threshold') vision.updateMotionParams({ threshold: Math.floor(value * 255) })
+        if (paramName === 'minSize') vision.updateMotionParams({ minSize: 10 + Math.floor(value * 90) })
+        if (paramName === 'sensitivity') vision.updateMotionParams({ sensitivity: 10 + Math.floor(value * 90) })
+        break
+      case 'track_face':
+        if (paramName === 'threshold') vision.updateFaceParams({ threshold: Math.floor(value * 100) })
+        if (paramName === 'minSize') vision.updateFaceParams({ minSize: 20 + Math.floor(value * 80) })
+        if (paramName === 'maxBlobs') vision.updateFaceParams({ maxBlobs: 1 + Math.floor(value * 9) })
+        break
+      case 'track_hands':
+        if (paramName === 'threshold') vision.updateHandsParams({ threshold: Math.floor(value * 100) })
+        if (paramName === 'minSize') vision.updateHandsParams({ minSize: 10 + Math.floor(value * 40) })
+        if (paramName === 'maxBlobs') vision.updateHandsParams({ maxBlobs: 2 + Math.floor(value * 18) })
+        break
     }
-  }, [gateMode, glitch, ascii, stipple])
+  }, [gateMode, glitch, ascii, stipple, acid, vision])
 
   // Main playback loop
   const playbackLoop = useCallback((timestamp: number) => {

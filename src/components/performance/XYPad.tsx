@@ -2,6 +2,8 @@ import { useRef, useState, useCallback, useEffect } from 'react'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
+import { useAcidStore } from '../../stores/acidStore'
+import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useUIStore } from '../../stores/uiStore'
 
 interface XYPosition {
@@ -60,6 +62,101 @@ const AVAILABLE_PARAMS: ParamConfig[] = [
   { id: 'stipple.density', label: 'Stipple Density', group: 'Stipple', range: [0.1, 3] },
   { id: 'stipple.brightnessThreshold', label: 'Stipple Thresh', group: 'Stipple', range: [0, 1] },
   { id: 'stipple.jitter', label: 'Stipple Jitter', group: 'Stipple', range: [0, 1] },
+
+  // ============================================================================
+  // ACID Effects
+  // ============================================================================
+
+  // Dots
+  { id: 'acid_dots.gridSize', label: 'Dots Grid', group: 'ACID Dots', range: [4, 32], step: 1 },
+  { id: 'acid_dots.dotScale', label: 'Dots Scale', group: 'ACID Dots', range: [0.1, 1] },
+  { id: 'acid_dots.threshold', label: 'Dots Thresh', group: 'ACID Dots', range: [0, 1] },
+
+  // Glyph
+  { id: 'acid_glyph.gridSize', label: 'Glyph Grid', group: 'ACID Glyph', range: [4, 24], step: 1 },
+  { id: 'acid_glyph.density', label: 'Glyph Density', group: 'ACID Glyph', range: [0, 1] },
+
+  // Icons
+  { id: 'acid_icons.gridSize', label: 'Icons Grid', group: 'ACID Icons', range: [16, 64], step: 1 },
+  { id: 'acid_icons.rotation', label: 'Icons Rot', group: 'ACID Icons', range: [0, 360], step: 1 },
+
+  // Contour
+  { id: 'acid_contour.levels', label: 'Contour Lvls', group: 'ACID Contour', range: [2, 16], step: 1 },
+  { id: 'acid_contour.lineWidth', label: 'Contour Width', group: 'ACID Contour', range: [1, 4] },
+  { id: 'acid_contour.smooth', label: 'Contour Smooth', group: 'ACID Contour', range: [0, 1] },
+
+  // Decomp
+  { id: 'acid_decomp.minBlock', label: 'Decomp Min', group: 'ACID Decomp', range: [2, 16], step: 1 },
+  { id: 'acid_decomp.maxBlock', label: 'Decomp Max', group: 'ACID Decomp', range: [32, 128], step: 1 },
+  { id: 'acid_decomp.threshold', label: 'Decomp Thresh', group: 'ACID Decomp', range: [0, 0.5] },
+
+  // Mirror
+  { id: 'acid_mirror.segments', label: 'Mirror Segs', group: 'ACID Mirror', range: [2, 12], step: 1 },
+  { id: 'acid_mirror.centerX', label: 'Mirror X', group: 'ACID Mirror', range: [0, 1] },
+  { id: 'acid_mirror.centerY', label: 'Mirror Y', group: 'ACID Mirror', range: [0, 1] },
+  { id: 'acid_mirror.rotation', label: 'Mirror Rot', group: 'ACID Mirror', range: [0, 360], step: 1 },
+
+  // Slice
+  { id: 'acid_slice.sliceCount', label: 'Slice Count', group: 'ACID Slice', range: [5, 50], step: 1 },
+  { id: 'acid_slice.offset', label: 'Slice Offset', group: 'ACID Slice', range: [0, 1] },
+
+  // ThGrid
+  { id: 'acid_thgrid.threshold', label: 'ThGrid Thresh', group: 'ACID ThGrid', range: [0, 1] },
+  { id: 'acid_thgrid.gridSize', label: 'ThGrid Size', group: 'ACID ThGrid', range: [4, 32], step: 1 },
+  { id: 'acid_thgrid.lineWidth', label: 'ThGrid Width', group: 'ACID ThGrid', range: [1, 4] },
+
+  // Cloud
+  { id: 'acid_cloud.density', label: 'Cloud Density', group: 'ACID Cloud', range: [1000, 10000], step: 100 },
+  { id: 'acid_cloud.depthScale', label: 'Cloud Depth', group: 'ACID Cloud', range: [0.5, 2] },
+  { id: 'acid_cloud.perspective', label: 'Cloud Persp', group: 'ACID Cloud', range: [0, 1] },
+
+  // LED
+  { id: 'acid_led.gridSize', label: 'LED Grid', group: 'ACID LED', range: [4, 24], step: 1 },
+  { id: 'acid_led.dotSize', label: 'LED Dot', group: 'ACID LED', range: [0.3, 1] },
+  { id: 'acid_led.brightness', label: 'LED Bright', group: 'ACID LED', range: [0.5, 1] },
+  { id: 'acid_led.bleed', label: 'LED Bleed', group: 'ACID LED', range: [0, 0.5] },
+
+  // Slit
+  { id: 'acid_slit.slitPosition', label: 'Slit Pos', group: 'ACID Slit', range: [0, 1] },
+  { id: 'acid_slit.speed', label: 'Slit Speed', group: 'ACID Slit', range: [0.5, 2] },
+  { id: 'acid_slit.blend', label: 'Slit Blend', group: 'ACID Slit', range: [0, 1] },
+
+  // Voronoi
+  { id: 'acid_voronoi.cellCount', label: 'Voronoi Cells', group: 'ACID Voronoi', range: [20, 200], step: 1 },
+
+  // ============================================================================
+  // Vision Tracking Effects
+  // ============================================================================
+
+  // Bright tracking
+  { id: 'track_bright.threshold', label: 'Bright Thresh', group: 'Vision Bright', range: [0, 255], step: 1 },
+  { id: 'track_bright.minSize', label: 'Bright MinSize', group: 'Vision Bright', range: [10, 100], step: 1 },
+  { id: 'track_bright.maxBlobs', label: 'Bright MaxBlobs', group: 'Vision Bright', range: [5, 50], step: 1 },
+
+  // Edge tracking
+  { id: 'track_edge.threshold', label: 'Edge Thresh', group: 'Vision Edge', range: [0, 255], step: 1 },
+  { id: 'track_edge.minSize', label: 'Edge MinSize', group: 'Vision Edge', range: [10, 100], step: 1 },
+  { id: 'track_edge.maxBlobs', label: 'Edge MaxBlobs', group: 'Vision Edge', range: [5, 50], step: 1 },
+
+  // Color tracking
+  { id: 'track_color.threshold', label: 'Color Thresh', group: 'Vision Color', range: [0, 255], step: 1 },
+  { id: 'track_color.minSize', label: 'Color MinSize', group: 'Vision Color', range: [10, 100], step: 1 },
+  { id: 'track_color.colorRange', label: 'Color Range', group: 'Vision Color', range: [0.1, 0.6] },
+
+  // Motion tracking
+  { id: 'track_motion.threshold', label: 'Motion Thresh', group: 'Vision Motion', range: [0, 255], step: 1 },
+  { id: 'track_motion.minSize', label: 'Motion MinSize', group: 'Vision Motion', range: [10, 100], step: 1 },
+  { id: 'track_motion.sensitivity', label: 'Motion Sens', group: 'Vision Motion', range: [10, 100], step: 1 },
+
+  // Face tracking
+  { id: 'track_face.threshold', label: 'Face Thresh', group: 'Vision Face', range: [0, 100], step: 1 },
+  { id: 'track_face.minSize', label: 'Face MinSize', group: 'Vision Face', range: [20, 100], step: 1 },
+  { id: 'track_face.maxBlobs', label: 'Face MaxBlobs', group: 'Vision Face', range: [1, 10], step: 1 },
+
+  // Hands tracking
+  { id: 'track_hands.threshold', label: 'Hands Thresh', group: 'Vision Hands', range: [0, 100], step: 1 },
+  { id: 'track_hands.minSize', label: 'Hands MinSize', group: 'Vision Hands', range: [10, 50], step: 1 },
+  { id: 'track_hands.maxBlobs', label: 'Hands MaxBlobs', group: 'Vision Hands', range: [2, 20], step: 1 },
 ]
 
 // Default X/Y mappings for each effect when selected
@@ -80,6 +177,28 @@ const EFFECT_DEFAULT_PARAMS: Record<string, { x: string; y: string }> = {
   dither: { x: 'pixelate.pixelSize', y: 'noise.amount' },
   static_displace: { x: 'block_displace.displaceDistance', y: 'noise.amount' },
   feedback: { x: 'noise.amount', y: 'edges.threshold' },
+
+  // ACID effects
+  acid_dots: { x: 'acid_dots.gridSize', y: 'acid_dots.dotScale' },
+  acid_glyph: { x: 'acid_glyph.gridSize', y: 'acid_glyph.density' },
+  acid_icons: { x: 'acid_icons.gridSize', y: 'acid_icons.rotation' },
+  acid_contour: { x: 'acid_contour.levels', y: 'acid_contour.lineWidth' },
+  acid_decomp: { x: 'acid_decomp.minBlock', y: 'acid_decomp.threshold' },
+  acid_mirror: { x: 'acid_mirror.segments', y: 'acid_mirror.rotation' },
+  acid_slice: { x: 'acid_slice.sliceCount', y: 'acid_slice.offset' },
+  acid_thgrid: { x: 'acid_thgrid.threshold', y: 'acid_thgrid.gridSize' },
+  acid_cloud: { x: 'acid_cloud.density', y: 'acid_cloud.perspective' },
+  acid_led: { x: 'acid_led.gridSize', y: 'acid_led.brightness' },
+  acid_slit: { x: 'acid_slit.slitPosition', y: 'acid_slit.speed' },
+  acid_voronoi: { x: 'acid_voronoi.cellCount', y: 'acid_voronoi.cellCount' },
+
+  // Vision tracking effects
+  track_bright: { x: 'track_bright.threshold', y: 'track_bright.minSize' },
+  track_edge: { x: 'track_edge.threshold', y: 'track_edge.minSize' },
+  track_color: { x: 'track_color.threshold', y: 'track_color.colorRange' },
+  track_motion: { x: 'track_motion.threshold', y: 'track_motion.sensitivity' },
+  track_face: { x: 'track_face.threshold', y: 'track_face.minSize' },
+  track_hands: { x: 'track_hands.threshold', y: 'track_hands.minSize' },
 }
 
 export function XYPad() {
@@ -92,6 +211,8 @@ export function XYPad() {
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
+  const acid = useAcidStore()
+  const vision = useVisionTrackingStore()
   const { selectedEffectId } = useUIStore()
 
   // Auto-assign X/Y params when an effect is selected
@@ -139,8 +260,66 @@ export function XYPad() {
       case 'stipple':
         stipple.updateParams({ [paramName]: value })
         break
+
+      // ACID effects
+      case 'acid_dots':
+        acid.updateDotsParams({ [paramName]: value })
+        break
+      case 'acid_glyph':
+        acid.updateGlyphParams({ [paramName]: value })
+        break
+      case 'acid_icons':
+        acid.updateIconsParams({ [paramName]: value })
+        break
+      case 'acid_contour':
+        acid.updateContourParams({ [paramName]: value })
+        break
+      case 'acid_decomp':
+        acid.updateDecompParams({ [paramName]: value })
+        break
+      case 'acid_mirror':
+        acid.updateMirrorParams({ [paramName]: value })
+        break
+      case 'acid_slice':
+        acid.updateSliceParams({ [paramName]: value })
+        break
+      case 'acid_thgrid':
+        acid.updateThGridParams({ [paramName]: value })
+        break
+      case 'acid_cloud':
+        acid.updateCloudParams({ [paramName]: value })
+        break
+      case 'acid_led':
+        acid.updateLedParams({ [paramName]: value })
+        break
+      case 'acid_slit':
+        acid.updateSlitParams({ [paramName]: value })
+        break
+      case 'acid_voronoi':
+        acid.updateVoronoiParams({ [paramName]: value })
+        break
+
+      // Vision tracking effects
+      case 'track_bright':
+        vision.updateBrightParams({ [paramName]: value })
+        break
+      case 'track_edge':
+        vision.updateEdgeParams({ [paramName]: value })
+        break
+      case 'track_color':
+        vision.updateColorParams({ [paramName]: value })
+        break
+      case 'track_motion':
+        vision.updateMotionParams({ [paramName]: value })
+        break
+      case 'track_face':
+        vision.updateFaceParams({ [paramName]: value })
+        break
+      case 'track_hands':
+        vision.updateHandsParams({ [paramName]: value })
+        break
     }
-  }, [glitch, ascii, stipple])
+  }, [glitch, ascii, stipple, acid, vision])
 
   // Update both X and Y parameters
   const updateParams = useCallback((x: number, y: number) => {

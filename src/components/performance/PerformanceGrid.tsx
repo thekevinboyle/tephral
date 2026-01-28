@@ -8,6 +8,8 @@ import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useAcidStore } from '../../stores/acidStore'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useUIStore } from '../../stores/uiStore'
+import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
+import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 
 export function PerformanceGrid() {
   // Glitch engine store
@@ -23,6 +25,10 @@ export function PerformanceGrid() {
 
   // Acid store
   const acid = useAcidStore()
+
+  // Texture and Data overlay stores
+  const textureOverlay = useTextureOverlayStore()
+  const dataOverlay = useDataOverlayStore()
 
   // Routing store for effect order
   const { effectOrder, setEffectOrder } = useRoutingStore()
@@ -344,6 +350,154 @@ export function PerformanceGrid() {
           value: acid.voronoiParams.cellCount,
           onToggle: () => acid.setVoronoiEnabled(!acid.voronoiEnabled),
           onValueChange: (v: number) => acid.updateVoronoiParams({ cellCount: v }),
+        }
+
+      // ═══════════════════════════════════════════════════════════════
+      // PAGE 3: OVERLAY EFFECTS
+      // ═══════════════════════════════════════════════════════════════
+
+      // Texture overlays
+      case 'texture_grain':
+        return {
+          active: textureOverlay.enabled && textureOverlay.textureId === 'grain_fine',
+          value: textureOverlay.opacity * 100,
+          onToggle: () => {
+            if (textureOverlay.enabled && textureOverlay.textureId === 'grain_fine') {
+              textureOverlay.setEnabled(false)
+            } else {
+              textureOverlay.setTextureId('grain_fine')
+              textureOverlay.setEnabled(true)
+            }
+          },
+          onValueChange: (v: number) => textureOverlay.setOpacity(v / 100),
+        }
+      case 'texture_dust':
+        return {
+          active: textureOverlay.enabled && textureOverlay.textureId === 'dust',
+          value: textureOverlay.opacity * 100,
+          onToggle: () => {
+            if (textureOverlay.enabled && textureOverlay.textureId === 'dust') {
+              textureOverlay.setEnabled(false)
+            } else {
+              textureOverlay.setTextureId('dust')
+              textureOverlay.setEnabled(true)
+            }
+          },
+          onValueChange: (v: number) => textureOverlay.setOpacity(v / 100),
+        }
+      case 'texture_leak':
+        return {
+          active: textureOverlay.enabled && textureOverlay.textureId === 'vignette',
+          value: textureOverlay.opacity * 100,
+          onToggle: () => {
+            if (textureOverlay.enabled && textureOverlay.textureId === 'vignette') {
+              textureOverlay.setEnabled(false)
+            } else {
+              textureOverlay.setTextureId('vignette')
+              textureOverlay.setEnabled(true)
+            }
+          },
+          onValueChange: (v: number) => textureOverlay.setOpacity(v / 100),
+        }
+      case 'texture_paper':
+        return {
+          active: textureOverlay.enabled && textureOverlay.textureId === 'paper',
+          value: textureOverlay.opacity * 100,
+          onToggle: () => {
+            if (textureOverlay.enabled && textureOverlay.textureId === 'paper') {
+              textureOverlay.setEnabled(false)
+            } else {
+              textureOverlay.setTextureId('paper')
+              textureOverlay.setEnabled(true)
+            }
+          },
+          onValueChange: (v: number) => textureOverlay.setOpacity(v / 100),
+        }
+      case 'texture_canvas':
+        return {
+          active: textureOverlay.enabled && textureOverlay.textureId === 'canvas',
+          value: textureOverlay.opacity * 100,
+          onToggle: () => {
+            if (textureOverlay.enabled && textureOverlay.textureId === 'canvas') {
+              textureOverlay.setEnabled(false)
+            } else {
+              textureOverlay.setTextureId('canvas')
+              textureOverlay.setEnabled(true)
+            }
+          },
+          onValueChange: (v: number) => textureOverlay.setOpacity(v / 100),
+        }
+      case 'texture_vhs':
+        return {
+          active: textureOverlay.enabled && textureOverlay.textureId === 'vhs_noise',
+          value: textureOverlay.opacity * 100,
+          onToggle: () => {
+            if (textureOverlay.enabled && textureOverlay.textureId === 'vhs_noise') {
+              textureOverlay.setEnabled(false)
+            } else {
+              textureOverlay.setTextureId('vhs_noise')
+              textureOverlay.setEnabled(true)
+            }
+          },
+          onValueChange: (v: number) => textureOverlay.setOpacity(v / 100),
+        }
+
+      // Data overlays
+      case 'data_watermark':
+        return {
+          active: dataOverlay.enabled && dataOverlay.template === 'watermark',
+          value: dataOverlay.style.fontSize,
+          onToggle: () => {
+            if (dataOverlay.enabled && dataOverlay.template === 'watermark') {
+              dataOverlay.setEnabled(false)
+            } else {
+              dataOverlay.setTemplate('watermark')
+              dataOverlay.setEnabled(true)
+            }
+          },
+          onValueChange: (v: number) => dataOverlay.setStyle({ fontSize: v }),
+        }
+      case 'data_stats':
+        return {
+          active: dataOverlay.enabled && dataOverlay.template === 'statsBar',
+          value: dataOverlay.style.fontSize,
+          onToggle: () => {
+            if (dataOverlay.enabled && dataOverlay.template === 'statsBar') {
+              dataOverlay.setEnabled(false)
+            } else {
+              dataOverlay.setTemplate('statsBar')
+              dataOverlay.setEnabled(true)
+            }
+          },
+          onValueChange: (v: number) => dataOverlay.setStyle({ fontSize: v }),
+        }
+      case 'data_title':
+        return {
+          active: dataOverlay.enabled && dataOverlay.template === 'titleCard',
+          value: dataOverlay.style.fontSize,
+          onToggle: () => {
+            if (dataOverlay.enabled && dataOverlay.template === 'titleCard') {
+              dataOverlay.setEnabled(false)
+            } else {
+              dataOverlay.setTemplate('titleCard')
+              dataOverlay.setEnabled(true)
+            }
+          },
+          onValueChange: (v: number) => dataOverlay.setStyle({ fontSize: v }),
+        }
+      case 'data_social':
+        return {
+          active: dataOverlay.enabled && dataOverlay.template === 'socialCard',
+          value: dataOverlay.style.fontSize,
+          onToggle: () => {
+            if (dataOverlay.enabled && dataOverlay.template === 'socialCard') {
+              dataOverlay.setEnabled(false)
+            } else {
+              dataOverlay.setTemplate('socialCard')
+              dataOverlay.setEnabled(true)
+            }
+          },
+          onValueChange: (v: number) => dataOverlay.setStyle({ fontSize: v }),
         }
 
       // Reserved / empty slots

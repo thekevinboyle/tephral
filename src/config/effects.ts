@@ -9,7 +9,7 @@ export interface EffectDefinition {
 }
 
 // Page names for UI
-export const PAGE_NAMES = ['VISION', 'ACID', 'GLITCH', 'RESERVED']
+export const PAGE_NAMES = ['VISION', 'ACID', 'GLITCH', 'OVERLAY']
 
 export const EFFECTS: EffectDefinition[] = [
   // ═══════════════════════════════════════════════════════════════
@@ -95,20 +95,28 @@ export const EFFECTS: EffectDefinition[] = [
   { id: 'stipple', label: 'STIPPLE', color: '#92400e', row: 'render', page: 2, min: 1, max: 8 },
 
   // ═══════════════════════════════════════════════════════════════
-  // PAGE 3: RESERVED
+  // PAGE 3: OVERLAY (Texture & Data Overlays)
   // ═══════════════════════════════════════════════════════════════
-  { id: 'reserved_3_1', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
-  { id: 'reserved_3_2', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
-  { id: 'reserved_3_3', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
-  { id: 'reserved_3_4', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
-  { id: 'reserved_3_5', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
-  { id: 'reserved_3_6', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
-  { id: 'reserved_3_7', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
-  { id: 'reserved_3_8', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
-  { id: 'reserved_3_9', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
-  { id: 'reserved_3_10', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
+
+  // Row 1: Textures
+  { id: 'texture_grain', label: 'Grain', color: '#a3a3a3', row: 'texture', page: 3, min: 0, max: 100 },
+  { id: 'texture_dust', label: 'Dust', color: '#8b8b8b', row: 'texture', page: 3, min: 0, max: 100 },
+  { id: 'texture_leak', label: 'Leak', color: '#f97316', row: 'texture', page: 3, min: 0, max: 100 },
+  { id: 'texture_paper', label: 'Paper', color: '#d4c4a8', row: 'texture', page: 3, min: 0, max: 100 },
+
+  // Row 2: More textures + Data
+  { id: 'texture_canvas', label: 'Canvas', color: '#c9b896', row: 'texture', page: 3, min: 0, max: 100 },
+  { id: 'texture_vhs', label: 'VHS', color: '#a855f7', row: 'texture', page: 3, min: 0, max: 100 },
+  { id: 'data_watermark', label: 'Watermark', color: '#60a5fa', row: 'render', page: 3, min: 12, max: 48 },
+  { id: 'data_stats', label: 'Stats', color: '#34d399', row: 'render', page: 3, min: 12, max: 48 },
+
+  // Row 3: Data templates
+  { id: 'data_title', label: 'Title', color: '#fbbf24', row: 'render', page: 3, min: 12, max: 48 },
+  { id: 'data_social', label: 'Social', color: '#f472b6', row: 'render', page: 3, min: 12, max: 48 },
   { id: 'reserved_3_11', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
   { id: 'reserved_3_12', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
+
+  // Row 4: Reserved for expansion
   { id: 'reserved_3_13', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
   { id: 'reserved_3_14', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
   { id: 'reserved_3_15', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },

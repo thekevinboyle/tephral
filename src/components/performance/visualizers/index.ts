@@ -32,3 +32,13 @@ export {
   SlitViz,
   VoronoiViz,
 } from './acid'
+
+// Vision tracking visualizers
+export {
+  BrightViz,
+  EdgeTrackViz,
+  ColorTrackViz,
+  MotionViz,
+  FaceTrackViz,
+  HandsTrackViz,
+} from './vision'

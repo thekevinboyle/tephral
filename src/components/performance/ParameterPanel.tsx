@@ -41,8 +41,16 @@ import {
   LedViz,
   SlitViz,
   VoronoiViz,
+  // Vision tracking visualizers
+  BrightViz,
+  EdgeTrackViz,
+  ColorTrackViz,
+  MotionViz,
+  FaceTrackViz,
+  HandsTrackViz,
 } from './visualizers'
 import { useAcidStore } from '../../stores/acidStore'
+import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 
 interface ParameterSection {
   id: string
@@ -93,6 +101,7 @@ export function ParameterPanel() {
   const landmarks = useLandmarksStore()
   const contour = useContourStore()
   const acid = useAcidStore()
+  const vision = useVisionTrackingStore()
 
   // Clear all effects
   const handleClear = useCallback(() => {
@@ -128,7 +137,14 @@ export function ParameterPanel() {
     acid.setLedEnabled(false)
     acid.setSlitEnabled(false)
     acid.setVoronoiEnabled(false)
-  }, [glitch, ascii, stipple, contour, landmarks, acid])
+    // Clear vision tracking effects
+    vision.setBrightEnabled(false)
+    vision.setEdgeEnabled(false)
+    vision.setColorEnabled(false)
+    vision.setMotionEnabled(false)
+    vision.setFaceEnabled(false)
+    vision.setHandsEnabled(false)
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision])
 
   // Bypass handlers
   const handleBypassDown = useCallback(() => {
@@ -740,6 +756,172 @@ export function ParameterPanel() {
   }
 
   // ═══════════════════════════════════════════════════════════════
+  // VISION TRACKING EFFECTS
+  // ═══════════════════════════════════════════════════════════════
+
+  // Bright tracking
+  if (vision.brightEnabled) {
+    const color = '#eab308'
+    sections.push({
+      id: 'track_bright',
+      label: 'BRIGHT',
+      color,
+      visualizer: <BrightViz threshold={vision.brightParams.threshold} color={color} />,
+      params: [
+        {
+          label: 'Thresh',
+          value: vision.brightParams.threshold,
+          min: 0,
+          max: 255,
+          onChange: (v) => vision.updateBrightParams({ threshold: v }),
+        },
+        {
+          label: 'MinSize',
+          value: vision.brightParams.minSize,
+          min: 5,
+          max: 100,
+          onChange: (v) => vision.updateBrightParams({ minSize: v }),
+        },
+      ],
+    })
+  }
+
+  // Edge tracking
+  if (vision.edgeEnabled) {
+    const color = '#06b6d4'
+    sections.push({
+      id: 'track_edge',
+      label: 'EDGE',
+      color,
+      visualizer: <EdgeTrackViz threshold={vision.edgeParams.threshold} color={color} />,
+      params: [
+        {
+          label: 'Thresh',
+          value: vision.edgeParams.threshold,
+          min: 0,
+          max: 255,
+          onChange: (v) => vision.updateEdgeParams({ threshold: v }),
+        },
+        {
+          label: 'MinSize',
+          value: vision.edgeParams.minSize,
+          min: 5,
+          max: 100,
+          onChange: (v) => vision.updateEdgeParams({ minSize: v }),
+        },
+      ],
+    })
+  }
+
+  // Color tracking
+  if (vision.colorEnabled) {
+    const color = '#ec4899'
+    sections.push({
+      id: 'track_color',
+      label: 'COLOR',
+      color,
+      visualizer: <ColorTrackViz targetColor={vision.colorParams.targetColor} color={color} />,
+      params: [
+        {
+          label: 'Range',
+          value: vision.colorParams.colorRange * 100,
+          min: 5,
+          max: 100,
+          onChange: (v) => vision.updateColorParams({ colorRange: v / 100 }),
+        },
+        {
+          label: 'MinSize',
+          value: vision.colorParams.minSize,
+          min: 5,
+          max: 100,
+          onChange: (v) => vision.updateColorParams({ minSize: v }),
+        },
+      ],
+    })
+  }
+
+  // Motion tracking
+  if (vision.motionEnabled) {
+    const color = '#22c55e'
+    sections.push({
+      id: 'track_motion',
+      label: 'MOTION',
+      color,
+      visualizer: <MotionViz sensitivity={vision.motionParams.sensitivity} color={color} />,
+      params: [
+        {
+          label: 'Sens',
+          value: vision.motionParams.sensitivity,
+          min: 5,
+          max: 100,
+          onChange: (v) => vision.updateMotionParams({ sensitivity: v }),
+        },
+        {
+          label: 'MinSize',
+          value: vision.motionParams.minSize,
+          min: 5,
+          max: 100,
+          onChange: (v) => vision.updateMotionParams({ minSize: v }),
+        },
+      ],
+    })
+  }
+
+  // Face tracking
+  if (vision.faceEnabled) {
+    const color = '#f97316'
+    sections.push({
+      id: 'track_face',
+      label: 'FACE',
+      color,
+      visualizer: <FaceTrackViz threshold={vision.faceParams.threshold} color={color} />,
+      params: [
+        {
+          label: 'Sens',
+          value: vision.faceParams.threshold,
+          min: 10,
+          max: 90,
+          onChange: (v) => vision.updateFaceParams({ threshold: v }),
+        },
+        {
+          label: 'MinSize',
+          value: vision.faceParams.minSize,
+          min: 20,
+          max: 150,
+          onChange: (v) => vision.updateFaceParams({ minSize: v }),
+        },
+      ],
+    })
+  }
+
+  // Hands tracking
+  if (vision.handsEnabled) {
+    const color = '#a855f7'
+    sections.push({
+      id: 'track_hands',
+      label: 'HANDS',
+      color,
+      visualizer: <HandsTrackViz threshold={vision.handsParams.threshold} color={color} />,
+      params: [
+        {
+          label: 'Sens',
+          value: vision.handsParams.threshold,
+          min: 10,
+          max: 90,
+          onChange: (v) => vision.updateHandsParams({ threshold: v }),
+        },
+        {
+          label: 'MinSize',
+          value: vision.handsParams.minSize,
+          min: 10,
+          max: 80,
+          onChange: (v) => vision.updateHandsParams({ minSize: v }),
+        },
+      ],
+    })
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   // ACID EFFECTS
   // ═══════════════════════════════════════════════════════════════
 
@@ -1184,12 +1366,31 @@ export function ParameterPanel() {
       case 'acid_voronoi':
         acid.setVoronoiEnabled(false)
         break
+      // Vision tracking effects
+      case 'track_bright':
+        vision.setBrightEnabled(false)
+        break
+      case 'track_edge':
+        vision.setEdgeEnabled(false)
+        break
+      case 'track_color':
+        vision.setColorEnabled(false)
+        break
+      case 'track_motion':
+        vision.setMotionEnabled(false)
+        break
+      case 'track_face':
+        vision.setFaceEnabled(false)
+        break
+      case 'track_hands':
+        vision.setHandsEnabled(false)
+        break
     }
     // Clear selection if this effect was selected
     if (selectedEffectId === effectId) {
       setSelectedEffect(null)
     }
-  }, [glitch, ascii, stipple, contour, landmarks, acid, selectedEffectId, setSelectedEffect])
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, selectedEffectId, setSelectedEffect])
 
   // Sort sections by effectOrder
   const sortedSections = [...sections].sort((a, b) => {

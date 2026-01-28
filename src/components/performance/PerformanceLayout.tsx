@@ -139,8 +139,8 @@ export function PerformanceLayout() {
       <div
         className="flex-shrink-0 mx-3 mt-3 rounded-xl overflow-hidden"
         style={{
-          height: '8vh',
-          minHeight: '60px',
+          height: '12vh',
+          minHeight: '100px',
           backgroundColor: '#f5f5f5',
           border: '1px solid #d0d0d0',
         }}

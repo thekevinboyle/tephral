@@ -5,7 +5,7 @@
  */
 
 import { useRef, useEffect, useCallback } from 'react'
-import { useTextureOverlayStore, BlendMode } from '../../stores/textureOverlayStore'
+import { useTextureOverlayStore, type BlendMode } from '../../stores/textureOverlayStore'
 
 // ============================================================================
 // Texture Library

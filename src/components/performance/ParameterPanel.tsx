@@ -1518,21 +1518,20 @@ export function ParameterPanel() {
     isDragging.current = false
   }, [dragIndex, dragOverIndex, effectOrder, reorderEffect, setSelectedEffect, sortedSections])
 
-  // Control buttons component (reused in both views)
+  // Control buttons component (compact horizontal layout)
   const ControlButtons = () => (
     <div
-      className="flex flex-col gap-2 rounded-lg"
+      className="flex gap-2 rounded-lg items-center"
       style={{
         backgroundColor: '#ffffff',
         border: '1px solid #d0d0d0',
-        padding: '10px',
-        width: 'calc((100vw / 3 - 32px) / 4)',
+        padding: '8px 12px',
         flexShrink: 0,
       }}
     >
       <button
         onClick={handleClear}
-        className="flex-1 w-full rounded text-[14px] font-medium transition-colors active:scale-95"
+        className="px-3 py-1.5 rounded text-[11px] font-medium transition-colors active:scale-95"
         style={{
           backgroundColor: '#f5f5f5',
           border: '1px solid #d0d0d0',
@@ -1540,8 +1539,6 @@ export function ParameterPanel() {
         }}
         onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-        onPointerDown={(e) => (e.currentTarget.style.backgroundColor = '#d8d8d8')}
-        onPointerUp={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
       >
         Clear
       </button>
@@ -1561,7 +1558,7 @@ export function ParameterPanel() {
           e.currentTarget.style.backgroundColor = '#f5f5f5'
         }}
         onPointerCancel={handleBypassUp}
-        className="flex-1 w-full rounded text-[14px] font-medium transition-all select-none touch-none active:scale-95"
+        className="px-3 py-1.5 rounded text-[11px] font-medium transition-all select-none touch-none active:scale-95"
         style={{
           backgroundColor: bypassActive ? '#ef4444' : '#f5f5f5',
           border: bypassActive ? '1px solid #ef4444' : '1px solid #d0d0d0',
@@ -1618,13 +1615,9 @@ export function ParameterPanel() {
 
         const soloShadow = getSoloShadow()
 
-        // Get primary and secondary values from params
+        // Get primary value from params
         const primaryParam = section.params[0]
-        const secondaryParam = section.params[1]
         const primaryValue = primaryParam ? Math.round(primaryParam.value) : 0
-        const secondaryValue = secondaryParam
-          ? `${secondaryParam.label.toLowerCase()}: ${Math.round(secondaryParam.value)}`
-          : null
 
         // Check if this card is a sequencer drop target
         const isSequencerDropTarget = dropTargetId === section.id && sequencerDrag.isDragging
@@ -1652,21 +1645,19 @@ export function ParameterPanel() {
               e.preventDefault()
               const trackId = e.dataTransfer.getData('sequencer-track')
               if (trackId && section.params[0]) {
-                // Create routing to primary parameter (use paramId if available, otherwise construct from label)
                 const targetParam = section.params[0].paramId || `${section.id}.${section.params[0].label.toLowerCase()}`
                 addRouting(trackId, targetParam, 0.5)
               }
               setDropTargetId(null)
             }}
-            className="flex-shrink-0 flex flex-col select-none touch-none cursor-grab active:cursor-grabbing group rounded-lg"
+            className="flex-shrink-0 flex items-center gap-2 select-none touch-none cursor-grab active:cursor-grabbing group rounded-lg"
             style={{
               backgroundColor: isBypassed ? '#e5e5e5' : isSequencerDropTarget ? '#f0fff0' : '#ffffff',
               border: `1px solid ${isSequencerDropTarget ? sequencerDrag.trackColor || '#4ade80' : borderColor}`,
               boxShadow: isSequencerDropTarget
                 ? `0 0 12px ${sequencerDrag.trackColor || '#4ade80'}40`
                 : [selectionShadow, soloShadow].filter(Boolean).join(', ') || 'none',
-              minWidth: '120px',
-              padding: '10px',
+              padding: '8px 10px',
               transform: isBeingDragged ? 'scale(1.03)' : isSequencerDropTarget ? 'scale(1.02)' : 'scale(1)',
               opacity: isBypassed ? 0.6 : isMuted ? 0.5 : isBeingDragged ? 0.9 : 1,
               zIndex: isBeingDragged ? 10 : 1,
@@ -1674,103 +1665,91 @@ export function ParameterPanel() {
               transition: 'border-color 0.15s ease-out, box-shadow 0.15s ease-out, transform 0.15s ease-out, opacity 0.15s ease-out, margin-left 0.15s ease-out, background-color 0.15s ease-out',
             }}
           >
-            {/* Header row: LED, label, routing indicators, close button */}
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <div
-                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{
-                  backgroundColor: isBypassed || isMuted ? '#bbb' : displayColor,
-                  boxShadow: isBypassed || isMuted ? 'none' : `0 0 6px ${section.color}`,
-                }}
-              />
-              <span
-                className="text-[14px] tracking-widest uppercase"
-                style={{
-                  color: isBypassed || isMuted ? '#999' : '#666',
-                  fontFamily: "'JetBrains Mono', monospace",
-                }}
-              >
-                {section.label}
-              </span>
-              {/* Routing indicators with click-to-edit */}
-              <div className="ml-auto mr-2">
-                <RoutingIndicators effectId={section.id} />
-              </div>
-              {/* Close button - line style */}
-              <button
-                onPointerDown={(e) => e.stopPropagation()}
-                onPointerUp={(e) => {
-                  e.stopPropagation()
-                  disableEffect(section.id)
-                }}
-                className="ml-auto flex items-center justify-center transition-all"
-                style={{ width: '20px', height: '20px' }}
-              >
-                <div
-                  className="transition-all group-hover:opacity-100"
-                  style={{
-                    width: '10px',
-                    height: '1.5px',
-                    backgroundColor: '#999',
-                    opacity: 0.3,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.width = '14px'
-                    e.currentTarget.style.backgroundColor = '#f44'
-                    e.currentTarget.style.opacity = '1'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.width = '10px'
-                    e.currentTarget.style.backgroundColor = '#999'
-                    e.currentTarget.style.opacity = '0.3'
-                  }}
-                />
-              </button>
-            </div>
-
-            {/* Inset OLED screen - visualizer */}
+            {/* LED indicator */}
             <div
-              className="flex items-center justify-center"
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{
+                backgroundColor: isBypassed || isMuted ? '#bbb' : displayColor,
+                boxShadow: isBypassed || isMuted ? 'none' : `0 0 6px ${section.color}`,
+              }}
+            />
+
+            {/* Label */}
+            <span
+              className="text-[11px] tracking-wider uppercase flex-shrink-0"
+              style={{
+                color: isBypassed || isMuted ? '#999' : '#555',
+                fontFamily: "'JetBrains Mono', monospace",
+                minWidth: '50px',
+              }}
+            >
+              {section.label}
+            </span>
+
+            {/* Mini visualizer */}
+            <div
+              className="flex items-center justify-center flex-shrink-0"
               style={{
                 backgroundColor: '#000',
                 border: '1px solid #333',
-                boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
                 borderRadius: '2px',
-                minHeight: '50px',
-                margin: '0 -2px',
-                padding: '1px',
+                width: '32px',
+                height: '32px',
+                overflow: 'hidden',
               }}
             >
-              {section.visualizer}
+              <div style={{ transform: 'scale(0.5)', transformOrigin: 'center' }}>
+                {section.visualizer}
+              </div>
             </div>
 
-            {/* Numeric readouts */}
-            <div className="mt-1.5 flex-1 flex flex-col justify-end">
-              {/* Primary value - large, accent color */}
-              <div
-                className="font-bold"
+            {/* Value display */}
+            <div className="flex items-baseline gap-1 flex-shrink-0">
+              <span
+                className="font-bold text-[16px]"
                 style={{
-                  fontSize: '24px',
-                  lineHeight: 1,
                   color: isBypassed || isMuted ? '#bbb' : displayColor,
                   fontFamily: "'JetBrains Mono', monospace",
                 }}
               >
                 {primaryValue}
-              </div>
-              {/* Secondary param - small, gray (always reserve space) */}
-              <div
+              </span>
+              <span
+                className="text-[9px]"
                 style={{
-                  fontSize: '11px',
-                  color: '#555',
+                  color: '#888',
                   fontFamily: "'JetBrains Mono', monospace",
-                  marginTop: '1px',
-                  minHeight: '11px',
                 }}
               >
-                {secondaryValue || '\u00A0'}
-              </div>
+                {primaryParam?.label.toLowerCase()}
+              </span>
             </div>
+
+            {/* Routing indicators */}
+            <div className="flex-shrink-0">
+              <RoutingIndicators effectId={section.id} />
+            </div>
+
+            {/* Close button */}
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onPointerUp={(e) => {
+                e.stopPropagation()
+                disableEffect(section.id)
+              }}
+              className="flex items-center justify-center flex-shrink-0 opacity-30 hover:opacity-100 transition-opacity"
+              style={{ width: '16px', height: '16px' }}
+            >
+              <div
+                style={{
+                  width: '8px',
+                  height: '1.5px',
+                  backgroundColor: '#999',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f44')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#999')}
+              />
+            </button>
           </div>
         )
       })}

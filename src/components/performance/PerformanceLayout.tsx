@@ -126,30 +126,32 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Transport bar (includes playback controls when recording exists) */}
+      {/* Transport + Parameter strip - combined row */}
       <div
-        className="flex-shrink-0 mx-3 mt-3 rounded-xl overflow-hidden"
-        style={{
-          height: '5vh',
-          minHeight: '40px',
-          backgroundColor: '#ffffff',
-          border: '1px solid #d0d0d0',
-        }}
+        className="flex-shrink-0 mx-3 mt-3 flex gap-3"
+        style={{ height: '8vh', minHeight: '60px' }}
       >
-        <TransportBar />
-      </div>
+        {/* Transport bar (left half) */}
+        <div
+          className="flex-1 rounded-xl overflow-hidden"
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #d0d0d0',
+          }}
+        >
+          <TransportBar />
+        </div>
 
-      {/* Parameter strip - horizontal scrollable, draggable */}
-      <div
-        className="flex-shrink-0 mx-3 mt-3 rounded-xl overflow-hidden"
-        style={{
-          height: '12vh',
-          minHeight: '80px',
-          backgroundColor: '#f5f5f5',
-          border: '1px solid #d0d0d0',
-        }}
-      >
-        <ParameterPanel />
+        {/* Parameter strip (right half) */}
+        <div
+          className="flex-1 rounded-xl overflow-hidden"
+          style={{
+            backgroundColor: '#f5f5f5',
+            border: '1px solid #d0d0d0',
+          }}
+        >
+          <ParameterPanel />
+        </div>
       </div>
 
       {/* Bottom section - 3 equal columns */}

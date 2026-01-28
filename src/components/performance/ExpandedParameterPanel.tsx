@@ -5,8 +5,13 @@ import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useAcidStore } from '../../stores/acidStore'
+import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
+import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { EFFECTS } from '../../config/effects'
 import { SliderRow, ToggleRow, SelectRow, ColorRow } from './controls'
+import { TEXTURE_LIBRARY, type TextureId } from '../overlays/TextureOverlay'
+import type { BlendMode } from '../../stores/textureOverlayStore'
+import type { Template, FontFamily, WatermarkPosition } from '../../stores/dataOverlayStore'
 
 export function ExpandedParameterPanel() {
   const { selectedEffectId } = useUIStore()
@@ -49,6 +54,8 @@ export function ExpandedParameterPanel() {
       {/* Parameters - scrollable */}
       <div className="flex-1 overflow-y-auto px-3 py-2">
         <EffectParameters effectId={effectId} />
+        <TextureOverlaySection />
+        <DataOverlaySection />
       </div>
     </div>
   )
@@ -2155,6 +2162,324 @@ function FilterButtonGrid({ value, onChange }: { value: string; onChange: (v: Bo
           </button>
         )
       })}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TEXTURE OVERLAY SECTION
+// ═══════════════════════════════════════════════════════════════
+
+const BLEND_MODE_OPTIONS: { value: BlendMode; label: string }[] = [
+  { value: 'multiply', label: 'Multiply' },
+  { value: 'screen', label: 'Screen' },
+  { value: 'overlay', label: 'Overlay' },
+  { value: 'softLight', label: 'Soft Lt' },
+]
+
+function TextureOverlaySection() {
+  const textureOverlay = useTextureOverlayStore()
+
+  if (!textureOverlay.enabled) return null
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-300">
+      <div className="text-[13px] font-semibold text-gray-600 uppercase tracking-wide mb-3">
+        Texture Overlay
+      </div>
+
+      {/* Texture Picker Grid */}
+      <div className="mb-3">
+        <div className="text-[12px] text-gray-500 mb-1.5">Texture</div>
+        <div className="grid grid-cols-3 gap-1">
+          {(Object.keys(TEXTURE_LIBRARY) as TextureId[]).map((textureId) => {
+            const texture = TEXTURE_LIBRARY[textureId]
+            const isSelected = textureOverlay.textureId === textureId
+            return (
+              <button
+                key={textureId}
+                onClick={() => textureOverlay.setTextureId(textureId)}
+                className={`px-2 py-1.5 text-[11px] rounded transition-colors truncate ${
+                  isSelected
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title={texture.name}
+              >
+                {texture.name}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Blend Mode */}
+      <div className="mb-3">
+        <div className="text-[12px] text-gray-500 mb-1.5">Blend Mode</div>
+        <div className="grid grid-cols-4 gap-1">
+          {BLEND_MODE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => textureOverlay.setBlendMode(opt.value)}
+              className={`px-1 py-1.5 text-[11px] font-medium rounded transition-colors ${
+                textureOverlay.blendMode === opt.value
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Opacity */}
+      <SliderRow
+        label="Opacity"
+        value={textureOverlay.opacity}
+        min={0}
+        max={1}
+        step={0.01}
+        onChange={(v) => textureOverlay.setOpacity(v)}
+        format={(v) => `${(v * 100).toFixed(0)}%`}
+        paramId="texture_overlay.opacity"
+      />
+
+      {/* Scale */}
+      <SliderRow
+        label="Scale"
+        value={textureOverlay.scale}
+        min={0.5}
+        max={3}
+        step={0.1}
+        onChange={(v) => textureOverlay.setScale(v)}
+        format={(v) => `${(v * 100).toFixed(0)}%`}
+        paramId="texture_overlay.scale"
+      />
+
+      {/* Animation */}
+      <div className="flex items-center gap-3 mt-2">
+        <ToggleRow
+          label="Animate"
+          value={textureOverlay.animated}
+          onChange={(v) => textureOverlay.setAnimated(v)}
+        />
+      </div>
+      {textureOverlay.animated && (
+        <SliderRow
+          label="Speed"
+          value={textureOverlay.animationSpeed}
+          min={0.1}
+          max={2}
+          step={0.1}
+          onChange={(v) => textureOverlay.setAnimationSpeed(v)}
+          format={(v) => `${v.toFixed(1)}x`}
+          paramId="texture_overlay.animationSpeed"
+        />
+      )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA OVERLAY SECTION
+// ═══════════════════════════════════════════════════════════════
+
+const TEMPLATE_OPTIONS: { value: Template; label: string }[] = [
+  { value: 'watermark', label: 'Watermark' },
+  { value: 'statsBar', label: 'Stats' },
+  { value: 'titleCard', label: 'Title' },
+  { value: 'socialCard', label: 'Social' },
+]
+
+const FONT_OPTIONS: { value: FontFamily; label: string }[] = [
+  { value: 'mono', label: 'Mono' },
+  { value: 'sans', label: 'Sans' },
+  { value: 'serif', label: 'Serif' },
+]
+
+const POSITION_OPTIONS: { value: WatermarkPosition; label: string }[] = [
+  { value: 'top-left', label: 'TL' },
+  { value: 'top-right', label: 'TR' },
+  { value: 'bottom-left', label: 'BL' },
+  { value: 'bottom-right', label: 'BR' },
+]
+
+function DataOverlaySection() {
+  const dataOverlay = useDataOverlayStore()
+
+  if (!dataOverlay.enabled) return null
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-300">
+      <div className="text-[13px] font-semibold text-gray-600 uppercase tracking-wide mb-3">
+        Data Overlay
+      </div>
+
+      {/* Template Picker */}
+      <div className="mb-3">
+        <div className="text-[12px] text-gray-500 mb-1.5">Template</div>
+        <div className="grid grid-cols-4 gap-1">
+          {TEMPLATE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => dataOverlay.setTemplate(opt.value)}
+              className={`px-1 py-1.5 text-[11px] font-medium rounded transition-colors ${
+                dataOverlay.template === opt.value
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Fields */}
+      <div className="mb-3">
+        <div className="text-[12px] text-gray-500 mb-1.5 font-semibold uppercase">Fields</div>
+        <div className="space-y-1.5">
+          {dataOverlay.fields.map((field) => (
+            <div key={field.id} className="flex items-center gap-2">
+              {/* Visibility toggle */}
+              <button
+                onClick={() => dataOverlay.toggleFieldVisibility(field.id)}
+                className={`w-5 h-5 flex items-center justify-center rounded text-[12px] ${
+                  field.visible
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-gray-100 text-gray-400'
+                }`}
+                title={field.visible ? 'Hide field' : 'Show field'}
+              >
+                {field.visible ? (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                )}
+              </button>
+
+              {/* Label */}
+              <span className="text-[12px] text-gray-600 w-16 flex-shrink-0">
+                {field.label}:
+              </span>
+
+              {/* Value input or auto badge */}
+              {field.isAuto ? (
+                <div className="flex-1 flex items-center gap-2">
+                  <span className="text-[12px] text-gray-400 italic">
+                    {field.value || '(auto)'}
+                  </span>
+                  <span className="text-[10px] bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded uppercase">
+                    auto
+                  </span>
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={field.value}
+                  onChange={(e) => dataOverlay.setFieldValue(field.id, e.target.value)}
+                  placeholder={field.label}
+                  className="flex-1 text-[12px] px-2 py-1 rounded border border-gray-200 bg-white text-gray-700 focus:outline-none focus:border-gray-400"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Style Section */}
+      <div className="mb-3">
+        <div className="text-[12px] text-gray-500 mb-1.5 font-semibold uppercase">Style</div>
+
+        {/* Font Family */}
+        <div className="mb-2">
+          <div className="text-[11px] text-gray-400 mb-1">Font</div>
+          <div className="grid grid-cols-3 gap-1">
+            {FONT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => dataOverlay.setStyle({ font: opt.value })}
+                className={`px-2 py-1 text-[11px] font-medium rounded transition-colors ${
+                  dataOverlay.style.font === opt.value
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Font Size */}
+        <SliderRow
+          label="Size"
+          value={dataOverlay.style.fontSize}
+          min={12}
+          max={48}
+          step={1}
+          onChange={(v) => dataOverlay.setStyle({ fontSize: v })}
+          format={(v) => `${v.toFixed(0)}px`}
+          paramId="data_overlay.fontSize"
+        />
+
+        {/* Color */}
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[12px] text-gray-600 w-16">Color:</span>
+          <input
+            type="text"
+            value={dataOverlay.style.color}
+            onChange={(e) => dataOverlay.setStyle({ color: e.target.value })}
+            className="w-20 text-[12px] px-2 py-1 rounded border border-gray-200 bg-white text-gray-700 font-mono focus:outline-none focus:border-gray-400"
+          />
+          <input
+            type="color"
+            value={dataOverlay.style.color}
+            onChange={(e) => dataOverlay.setStyle({ color: e.target.value })}
+            className="w-6 h-6 rounded border border-gray-200 cursor-pointer"
+          />
+        </div>
+
+        {/* Opacity */}
+        <SliderRow
+          label="Opacity"
+          value={dataOverlay.style.opacity}
+          min={0}
+          max={1}
+          step={0.01}
+          onChange={(v) => dataOverlay.setStyle({ opacity: v })}
+          format={(v) => `${(v * 100).toFixed(0)}%`}
+          paramId="data_overlay.opacity"
+        />
+      </div>
+
+      {/* Position (only for watermark template) */}
+      {dataOverlay.template === 'watermark' && (
+        <div className="mb-3">
+          <div className="text-[12px] text-gray-500 mb-1.5">Position</div>
+          <div className="grid grid-cols-4 gap-1">
+            {POSITION_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => dataOverlay.setWatermarkPosition(opt.value)}
+                className={`px-2 py-1.5 text-[11px] font-medium rounded transition-colors ${
+                  dataOverlay.watermarkPosition === opt.value
+                    ? 'bg-gray-800 text-white'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

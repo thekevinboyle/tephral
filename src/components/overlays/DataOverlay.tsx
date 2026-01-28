@@ -386,9 +386,6 @@ export function DataOverlay(_props: DataOverlayProps) {
     glitchStore.feedbackLoopEnabled,
   ])
 
-  // Don't render if not enabled
-  if (!store.enabled) return null
-
   const templateProps: TemplateProps = {
     fields: store.fields,
     style: store.style,
@@ -396,6 +393,9 @@ export function DataOverlay(_props: DataOverlayProps) {
     duration,
     effectCount,
   }
+
+  // Don't render content if not enabled
+  if (!store.enabled) return null
 
   return (
     <div

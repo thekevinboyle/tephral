@@ -95,6 +95,34 @@ const FRAGMENT_SHADER = `
     );
   }
 
+  // Organic noise function (simplex-inspired)
+  vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+
+  float snoise(vec2 v) {
+    const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                        -0.577350269189626, 0.024390243902439);
+    vec2 i  = floor(v + dot(v, C.yy));
+    vec2 x0 = v - i + dot(i, C.xx);
+    vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+    vec4 x12 = x0.xyxy + C.xxzz;
+    x12.xy -= i1;
+    i = mod289(i);
+    vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+    vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+    m = m*m; m = m*m;
+    vec3 x = 2.0 * fract(p * C.www) - 1.0;
+    vec3 h = abs(x) - 0.5;
+    vec3 ox = floor(x + 0.5);
+    vec3 a0 = x - ox;
+    m *= 1.79284291400159 - 0.85373472095314 * (a0*a0 + h*h);
+    vec3 g;
+    g.x = a0.x * x0.x + h.x * x0.y;
+    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+    return 130.0 * dot(m, g);
+  }
+
   void main() {
     // Sample source (video) at original coordinates
     vec4 sourceColor = texture2D(u_source, v_texCoord);
@@ -105,10 +133,27 @@ const FRAGMENT_SHADER = `
     // Scale from center
     textureUV = (textureUV - 0.5) / u_scale + 0.5;
 
-    // Procedural UV animation - shift coordinates over time
-    float animOffset = u_time * u_animationSpeed * 0.05;
-    textureUV.x += animOffset;
-    textureUV.y += animOffset * 0.7; // Slight diagonal movement
+    // Organic UV animation using layered sine waves and noise
+    float t = u_time * u_animationSpeed;
+
+    // Layer 1: Slow drifting movement
+    float drift1 = sin(t * 0.3) * 0.02;
+    float drift2 = cos(t * 0.23) * 0.015;
+
+    // Layer 2: Faster subtle oscillation
+    float osc1 = sin(t * 0.7 + textureUV.y * 2.0) * 0.008;
+    float osc2 = cos(t * 0.5 + textureUV.x * 2.0) * 0.006;
+
+    // Layer 3: Noise-based organic movement
+    float noiseVal = snoise(vec2(t * 0.2, t * 0.15)) * 0.01;
+
+    // Combine all layers
+    textureUV.x += drift1 + osc1 + noiseVal;
+    textureUV.y += drift2 + osc2 + noiseVal * 0.7;
+
+    // Subtle breathing scale effect
+    float breathe = 1.0 + sin(t * 0.4) * 0.02;
+    textureUV = (textureUV - 0.5) * breathe + 0.5;
 
     // Wrap UV coordinates for seamless tiling
     textureUV = fract(textureUV);
@@ -492,16 +537,17 @@ export function TextureOverlay({ width, height, glCanvas }: TextureOverlayProps)
     }
   }, [])
 
-  // Don't render if not enabled
-  if (!store.enabled) return null
-
+  // Always render canvas but hide when disabled (so WebGL stays initialized)
   return (
     <canvas
       ref={canvasRef}
       width={width}
       height={height}
       className="absolute inset-0 pointer-events-none"
-      style={{ zIndex: 20 }}
+      style={{
+        zIndex: 20,
+        display: store.enabled ? 'block' : 'none'
+      }}
     />
   )
 }

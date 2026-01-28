@@ -1,7 +1,8 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
+import { useUIStore } from '../../stores/uiStore'
 
 interface XYPosition {
   x: number
@@ -61,6 +62,26 @@ const AVAILABLE_PARAMS: ParamConfig[] = [
   { id: 'stipple.jitter', label: 'Stipple Jitter', group: 'Stipple', range: [0, 1] },
 ]
 
+// Default X/Y mappings for each effect when selected
+const EFFECT_DEFAULT_PARAMS: Record<string, { x: string; y: string }> = {
+  rgb_split: { x: 'rgb_split.amount', y: 'rgb_split.redOffsetX' },
+  block_displace: { x: 'block_displace.displaceDistance', y: 'block_displace.displaceChance' },
+  scan_lines: { x: 'scan_lines.lineCount', y: 'scan_lines.lineOpacity' },
+  noise: { x: 'noise.amount', y: 'noise.speed' },
+  pixelate: { x: 'pixelate.pixelSize', y: 'noise.amount' },
+  edges: { x: 'edges.threshold', y: 'edges.mixAmount' },
+  ascii: { x: 'ascii.fontSize', y: 'ascii.contrast' },
+  stipple: { x: 'stipple.particleSize', y: 'stipple.density' },
+  chromatic: { x: 'rgb_split.amount', y: 'rgb_split.redOffsetX' },
+  posterize: { x: 'pixelate.pixelSize', y: 'noise.amount' },
+  color_grade: { x: 'noise.amount', y: 'edges.threshold' },
+  vhs: { x: 'scan_lines.lineCount', y: 'noise.amount' },
+  lens: { x: 'block_displace.displaceDistance', y: 'pixelate.pixelSize' },
+  dither: { x: 'pixelate.pixelSize', y: 'noise.amount' },
+  static_displace: { x: 'block_displace.displaceDistance', y: 'noise.amount' },
+  feedback: { x: 'noise.amount', y: 'edges.threshold' },
+}
+
 export function XYPad() {
   const padRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<XYPosition>({ x: 0.5, y: 0.5 })
@@ -71,6 +92,16 @@ export function XYPad() {
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
+  const { selectedEffectId } = useUIStore()
+
+  // Auto-assign X/Y params when an effect is selected
+  useEffect(() => {
+    if (selectedEffectId && EFFECT_DEFAULT_PARAMS[selectedEffectId]) {
+      const defaults = EFFECT_DEFAULT_PARAMS[selectedEffectId]
+      setXParamId(defaults.x)
+      setYParamId(defaults.y)
+    }
+  }, [selectedEffectId])
 
   const xParam = AVAILABLE_PARAMS.find(p => p.id === xParamId)
   const yParam = AVAILABLE_PARAMS.find(p => p.id === yParamId)

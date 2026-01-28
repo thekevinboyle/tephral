@@ -7,6 +7,7 @@ import { PerformanceGrid } from './PerformanceGrid'
 import { XYPad } from './XYPad'
 import { MixControls } from './MixControls'
 import { ThumbnailFilmstrip } from './ThumbnailFilmstrip'
+import { PreviewTabs } from './PreviewTabs'
 import { ExportModal } from './ExportModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { SequencerPanel } from '../sequencer/SequencerPanel'
@@ -111,6 +112,9 @@ export function PerformanceLayout() {
           <div className="w-full h-full">
             <Canvas ref={canvasRef} />
           </div>
+
+          {/* Preview mode tabs */}
+          <PreviewTabs />
 
           {/* Thumbnail filmstrip at bottom of preview */}
           <ThumbnailFilmstrip />

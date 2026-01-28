@@ -32,6 +32,10 @@ interface RecordingState {
   thumbnails: Thumbnail[]
   source: 'webcam' | 'file' | null
 
+  // Preview mode state
+  previewMode: 'source' | 'recorded'
+  setPreviewMode: (mode: 'source' | 'recorded') => void
+
   // Export state
   previewTime: number | null
   isExporting: boolean
@@ -78,6 +82,10 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   events: [],
   thumbnails: [],
   source: null,
+
+  // Preview mode state
+  previewMode: 'source',
+  setPreviewMode: (mode) => set({ previewMode: mode }),
 
   // Export state
   previewTime: null,

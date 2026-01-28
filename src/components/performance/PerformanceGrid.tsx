@@ -417,7 +417,7 @@ export function PerformanceGrid() {
       </div>
 
       {/* Effect grid */}
-      <div className="flex-1 grid grid-cols-4 grid-rows-4 gap-2">
+      <div className="flex-1 min-h-0 grid grid-cols-4 gap-2" style={{ gridTemplateRows: 'repeat(4, 1fr)' }}>
         {gridSlots.map((effect, index) => {
           if (!effect) {
             // Empty placeholder cell

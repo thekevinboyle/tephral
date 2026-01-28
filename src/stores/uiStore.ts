@@ -18,10 +18,6 @@ interface UIState {
   // Sequencer routing drag state
   sequencerDrag: SequencerDragState
 
-  // Drawer state for responsive panels
-  leftDrawerOpen: boolean
-  rightDrawerOpen: boolean
-
   setSelectedEffect: (id: string | null) => void
   setSelectedParamIndex: (index: number) => void
 
@@ -33,12 +29,6 @@ interface UIState {
   // Sequencer drag actions
   startSequencerDrag: (trackId: string, trackColor: string) => void
   endSequencerDrag: () => void
-
-  // Drawer actions
-  setLeftDrawerOpen: (open: boolean) => void
-  setRightDrawerOpen: (open: boolean) => void
-  toggleLeftDrawer: () => void
-  toggleRightDrawer: () => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -51,9 +41,6 @@ export const useUIStore = create<UIState>((set) => ({
     trackId: null,
     trackColor: null,
   },
-
-  leftDrawerOpen: false,
-  rightDrawerOpen: false,
 
   setSelectedEffect: (id) => set({ selectedEffectId: id, selectedParamIndex: 0 }),
   setSelectedParamIndex: (index) => set({ selectedParamIndex: index }),
@@ -68,9 +55,4 @@ export const useUIStore = create<UIState>((set) => ({
   endSequencerDrag: () => set({
     sequencerDrag: { isDragging: false, trackId: null, trackColor: null },
   }),
-
-  setLeftDrawerOpen: (open) => set({ leftDrawerOpen: open }),
-  setRightDrawerOpen: (open) => set({ rightDrawerOpen: open }),
-  toggleLeftDrawer: () => set((s) => ({ leftDrawerOpen: !s.leftDrawerOpen })),
-  toggleRightDrawer: () => set((s) => ({ rightDrawerOpen: !s.rightDrawerOpen })),
 }))

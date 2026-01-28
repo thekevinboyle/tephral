@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react'
+import { useRef, useCallback } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { TransportBar } from './TransportBar'
 import { ParameterPanel } from './ParameterPanel'
@@ -11,12 +11,8 @@ import { ExportModal } from './ExportModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { SequencerPanel } from '../sequencer/SequencerPanel'
 import { PresetLibraryPanel } from '../presets/PresetLibraryPanel'
-import { SlideDrawer } from '../ui/SlideDrawer'
-import { DrawerTrigger } from '../ui/DrawerTrigger'
 import { useCanvasCapture } from '../../hooks/useCanvasCapture'
 import { useRecordingStore, type ExportFormat, type ExportQuality } from '../../stores/recordingStore'
-import { useUIStore } from '../../stores/uiStore'
-import { useDrawerShortcuts } from '../../hooks/useDrawerShortcuts'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
@@ -44,30 +40,6 @@ export function PerformanceLayout() {
   const { startCapture, stopCapture, isFormatSupported } = useCanvasCapture(captureRef)
   const { startExport, duration, play, stop } = useRecordingStore()
 
-  // Drawer state for responsive panels
-  const {
-    leftDrawerOpen,
-    rightDrawerOpen,
-    setLeftDrawerOpen,
-    setRightDrawerOpen,
-    toggleLeftDrawer,
-    toggleRightDrawer,
-  } = useUIStore()
-
-  useDrawerShortcuts()
-
-  // Close drawers when resizing back to large breakpoint
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1280) {
-        setLeftDrawerOpen(false)
-        setRightDrawerOpen(false)
-      }
-    }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [setLeftDrawerOpen, setRightDrawerOpen])
-
   const handleExport = useCallback((format: ExportFormat, quality: ExportQuality) => {
     updateCaptureRef()
     if (!captureRef.current) {
@@ -93,7 +65,7 @@ export function PerformanceLayout() {
   return (
     <div
       className="w-screen h-screen flex flex-col overflow-hidden"
-      style={{ backgroundColor: '#e5e5e5', minWidth: '1024px' }}
+      style={{ backgroundColor: '#e5e5e5' }}
     >
       {/* Preview section (55vh) - 3 columns: Left placeholder, Canvas, Parameters */}
       <div
@@ -103,9 +75,9 @@ export function PerformanceLayout() {
           border: '1px solid #d0d0d0',
         }}
       >
-        {/* Preset Library Panel - visible on xl, drawer on smaller */}
+        {/* Preset Library Panel */}
         <div
-          className="flex-shrink-0 hidden xl:block"
+          className="flex-shrink-0"
           style={{
             width: '280px',
             backgroundColor: '#f5f5f5',
@@ -120,22 +92,6 @@ export function PerformanceLayout() {
           className="relative flex-1 min-w-0"
           style={{ backgroundColor: '#1a1a1a' }}
         >
-          {/* Drawer triggers - visible only when panels are hidden */}
-          <div className="xl:hidden">
-            <DrawerTrigger side="left" onClick={toggleLeftDrawer} icon="folder" />
-          </div>
-          <div className="xl:hidden">
-            <DrawerTrigger side="right" onClick={toggleRightDrawer} icon="sliders" />
-          </div>
-
-          {/* Slide-out drawers */}
-          <SlideDrawer open={leftDrawerOpen} onClose={() => setLeftDrawerOpen(false)} side="left">
-            <PresetLibraryPanel canvasRef={captureRef} />
-          </SlideDrawer>
-          <SlideDrawer open={rightDrawerOpen} onClose={() => setRightDrawerOpen(false)} side="right">
-            <ExpandedParameterPanel />
-          </SlideDrawer>
-
           {/* Canvas */}
           <div className="w-full h-full">
             <Canvas ref={canvasRef} />
@@ -145,8 +101,8 @@ export function PerformanceLayout() {
           <ThumbnailFilmstrip />
         </div>
 
-        {/* Expanded Parameter Panel - visible on xl, drawer on smaller */}
-        <div className="flex-shrink-0 hidden xl:block" style={{ width: '340px' }}>
+        {/* Expanded Parameter Panel (right) */}
+        <div className="flex-shrink-0" style={{ width: '340px' }}>
           <ExpandedParameterPanel />
         </div>
       </div>
@@ -177,16 +133,14 @@ export function PerformanceLayout() {
         <ParameterPanel />
       </div>
 
-      {/* Bottom section - 3 columns with min-widths */}
+      {/* Bottom section - 3 equal columns */}
       <div
-        className="flex-1 min-h-0 flex mx-3 mt-3 mb-3 gap-3 overflow-x-auto"
+        className="flex-1 min-h-0 flex mx-3 mt-3 mb-3 gap-3"
       >
         {/* Column 1: Banks + Button grid (unified container) */}
         <div
-          className="min-h-0 flex flex-col rounded-xl overflow-hidden"
+          className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
           style={{
-            flex: '1 1 280px',
-            minWidth: '280px',
             backgroundColor: '#ffffff',
             border: '1px solid #d0d0d0',
           }}
@@ -211,8 +165,7 @@ export function PerformanceLayout() {
         <div
           className="rounded-xl overflow-hidden"
           style={{
-            flex: '1.5 1 200px',
-            minWidth: '200px',
+            flex: '1.5',
             backgroundColor: '#ffffff',
             border: '1px solid #d0d0d0',
           }}
@@ -221,24 +174,16 @@ export function PerformanceLayout() {
         </div>
 
         {/* Column 3: XY Pad + Mix Controls */}
-        <div
-          className="flex flex-col gap-3"
-          style={{
-            flex: '0.8 1 180px',
-            minWidth: '180px',
-          }}
-        >
-          {/* XY Pad - maintains square aspect */}
+        <div className="flex flex-col gap-3" style={{ flex: '0.7' }}>
+          {/* XY Pad */}
           <div
-            className="flex-1 rounded-xl overflow-hidden relative flex items-center justify-center"
+            className="flex-1 rounded-xl overflow-hidden relative"
             style={{
               backgroundColor: '#ffffff',
               border: '1px solid #d0d0d0',
             }}
           >
-            <div className="w-full h-full" style={{ aspectRatio: '1', maxHeight: '100%', maxWidth: '100%' }}>
-              <XYPad />
-            </div>
+            <XYPad />
           </div>
 
           {/* Mix Controls */}

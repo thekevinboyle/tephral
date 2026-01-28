@@ -52,7 +52,7 @@ export function TransportControls() {
 
       {/* Record button */}
       <button
-        onClick={isRecording ? stopRecording : startRecording}
+        onClick={isRecording ? stopRecording : () => startRecording()}
         disabled={!hasSource}
         className={`
           w-8 h-8 rounded-full flex items-center justify-center transition-all

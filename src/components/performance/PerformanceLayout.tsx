@@ -57,24 +57,32 @@ export function PerformanceLayout() {
     resetEffects()
     startExport()
 
-    // Small delay to ensure state is reset before capture begins
+    // Start playback FIRST - this immediately applies initial events (t=0)
+    // The video stays paused until we explicitly play it
     setTimeout(() => {
-      const started = startCapture({
-        format,
-        quality,
-        onProgress: (progress) => setExportProgress(progress),
+      console.log('[Export] Starting playback to apply effects')
+      // Seek video to beginning but don't play yet
+      play() // This applies initial effects immediately
+
+      // Wait for React to re-render with effects applied, then start capture
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          console.log('[Export] Starting capture after effects applied')
+          const started = startCapture({
+            format,
+            quality,
+            onProgress: (progress) => setExportProgress(progress),
+          })
+
+          if (started) {
+            // Stop capture after duration (with buffer for encoding)
+            setTimeout(() => {
+              stopCapture()
+              stop()
+            }, duration * 1000 + 500)
+          }
+        })
       })
-
-      if (started) {
-        // Start playback - automation will replay automatically
-        play()
-
-        // Stop capture after duration (with buffer for encoding)
-        setTimeout(() => {
-          stopCapture()
-          stop()
-        }, duration * 1000 + 500)
-      }
     }, 100)
   }, [updateCaptureRef, startExport, setExportProgress, startCapture, stopCapture, play, stop, duration, resetEffects])
 

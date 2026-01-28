@@ -132,8 +132,10 @@ export function useAutomationPlayback() {
 
     // Find and apply all events up to current time
     for (let i = lastAppliedIndex.current + 1; i < events.length; i++) {
-      if (events[i].t <= newTime) {
-        applyEvent(events[i])
+      const event = events[i]
+      if (!event) break // Guard against undefined
+      if (event.t <= newTime) {
+        applyEvent(event)
         lastAppliedIndex.current = i
       } else {
         break
@@ -149,6 +151,19 @@ export function useAutomationPlayback() {
       lastFrameTime.current = performance.now()
       // Find starting index based on current time
       lastAppliedIndex.current = events.findIndex(e => e.t > currentTime) - 1
+
+      // IMMEDIATELY apply all events up to current time (including t=0 events)
+      // This ensures effects are applied before any capture starts
+      console.log('[Playback] Starting playback, events:', events, 'currentTime:', currentTime)
+      for (let i = 0; i < events.length; i++) {
+        if (events[i].t <= currentTime) {
+          console.log('[Playback] Applying event:', events[i])
+          applyEvent(events[i])
+          lastAppliedIndex.current = i
+        } else {
+          break
+        }
+      }
 
       // Sync video playback for file sources
       if (source === 'file' && videoElement) {

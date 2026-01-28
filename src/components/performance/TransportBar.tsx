@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
-import { useRecordingStore } from '../../stores/recordingStore'
+import { useRecordingStore, type AutomationEvent } from '../../stores/recordingStore'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
+import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
+import { useStippleStore } from '../../stores/stippleStore'
+import { useAcidStore } from '../../stores/acidStore'
+
+// Note: We use getState() in handleStartRecording to get fresh state at call time
 
 export function TransportBar() {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -25,6 +31,55 @@ export function TransportBar() {
   } = useRecordingStore()
 
   const { resetEffects } = useAutomationPlayback()
+
+  // Capture initial effect state and start recording
+  // Use getState() to get current state at call time (not stale closure state)
+  const handleStartRecording = useCallback(() => {
+    const initialEvents: AutomationEvent[] = []
+
+    // Get current state from stores at call time
+    const glitch = useGlitchEngineStore.getState()
+    const ascii = useAsciiRenderStore.getState()
+    const stipple = useStippleStore.getState()
+    const acid = useAcidStore.getState()
+
+    // Capture glitch effects that are currently enabled
+    if (glitch.rgbSplitEnabled) initialEvents.push({ t: 0, effect: 'rgb_split', action: 'on' })
+    if (glitch.blockDisplaceEnabled) initialEvents.push({ t: 0, effect: 'block_displace', action: 'on' })
+    if (glitch.scanLinesEnabled) initialEvents.push({ t: 0, effect: 'scan_lines', action: 'on' })
+    if (glitch.noiseEnabled) initialEvents.push({ t: 0, effect: 'noise', action: 'on' })
+    if (glitch.pixelateEnabled) initialEvents.push({ t: 0, effect: 'pixelate', action: 'on' })
+    if (glitch.edgeDetectionEnabled) initialEvents.push({ t: 0, effect: 'edges', action: 'on' })
+    if (glitch.chromaticAberrationEnabled) initialEvents.push({ t: 0, effect: 'chromatic', action: 'on' })
+    if (glitch.vhsTrackingEnabled) initialEvents.push({ t: 0, effect: 'vhs', action: 'on' })
+    if (glitch.lensDistortionEnabled) initialEvents.push({ t: 0, effect: 'lens', action: 'on' })
+    if (glitch.ditherEnabled) initialEvents.push({ t: 0, effect: 'dither', action: 'on' })
+    if (glitch.posterizeEnabled) initialEvents.push({ t: 0, effect: 'posterize', action: 'on' })
+    if (glitch.staticDisplacementEnabled) initialEvents.push({ t: 0, effect: 'static_displace', action: 'on' })
+    if (glitch.colorGradeEnabled) initialEvents.push({ t: 0, effect: 'color_grade', action: 'on' })
+    if (glitch.feedbackLoopEnabled) initialEvents.push({ t: 0, effect: 'feedback', action: 'on' })
+
+    // Capture render effects
+    if (ascii.enabled) initialEvents.push({ t: 0, effect: 'ascii', action: 'on' })
+    if (stipple.enabled) initialEvents.push({ t: 0, effect: 'stipple', action: 'on' })
+
+    // Capture acid effects
+    if (acid.dotsEnabled) initialEvents.push({ t: 0, effect: 'acid_dots', action: 'on' })
+    if (acid.glyphEnabled) initialEvents.push({ t: 0, effect: 'acid_glyph', action: 'on' })
+    if (acid.iconsEnabled) initialEvents.push({ t: 0, effect: 'acid_icons', action: 'on' })
+    if (acid.contourEnabled) initialEvents.push({ t: 0, effect: 'acid_contour', action: 'on' })
+    if (acid.decompEnabled) initialEvents.push({ t: 0, effect: 'acid_decomp', action: 'on' })
+    if (acid.mirrorEnabled) initialEvents.push({ t: 0, effect: 'acid_mirror', action: 'on' })
+    if (acid.sliceEnabled) initialEvents.push({ t: 0, effect: 'acid_slice', action: 'on' })
+    if (acid.thGridEnabled) initialEvents.push({ t: 0, effect: 'acid_thgrid', action: 'on' })
+    if (acid.cloudEnabled) initialEvents.push({ t: 0, effect: 'acid_cloud', action: 'on' })
+    if (acid.ledEnabled) initialEvents.push({ t: 0, effect: 'acid_led', action: 'on' })
+    if (acid.slitEnabled) initialEvents.push({ t: 0, effect: 'acid_slit', action: 'on' })
+    if (acid.voronoiEnabled) initialEvents.push({ t: 0, effect: 'acid_voronoi', action: 'on' })
+
+    console.log('[Recording] Starting with initial events:', initialEvents)
+    startRecording(initialEvents)
+  }, [startRecording])
 
   // Source video playback state
   const [sourceVideoTime, setSourceVideoTime] = useState(0)
@@ -279,7 +334,7 @@ export function TransportBar() {
 
       {/* Record button */}
       <button
-        onClick={isRecording ? stopRecording : startRecording}
+        onClick={isRecording ? stopRecording : handleStartRecording}
         disabled={!hasSource}
         className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
         style={{

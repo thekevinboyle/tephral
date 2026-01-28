@@ -44,7 +44,7 @@ interface RecordingState {
   exportQuality: ExportQuality
   showExportModal: boolean
 
-  startRecording: () => void
+  startRecording: (initialEvents?: AutomationEvent[]) => void
   stopRecording: () => void
   addEvent: (event: Omit<AutomationEvent, 't'>) => void
   addThumbnail: (thumbnail: Thumbnail) => void
@@ -95,12 +95,12 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   exportQuality: 'med',
   showExportModal: false,
 
-  startRecording: () => set({
+  startRecording: (initialEvents?: AutomationEvent[]) => set({
     isRecording: true,
     isPlaying: false,
     startTime: performance.now(),
     currentTime: 0,
-    events: [],
+    events: initialEvents || [],
     thumbnails: [],
   }),
 

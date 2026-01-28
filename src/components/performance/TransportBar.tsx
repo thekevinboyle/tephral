@@ -144,7 +144,7 @@ export function TransportBar() {
   }, [isRecording, setCurrentTime, addThumbnail, videoElement])
 
   return (
-    <div className="h-full flex items-center gap-2 px-3 py-1.5">
+    <div className="h-full flex items-center gap-4 px-4 py-1.5">
       {/* Source buttons */}
       <button
         onClick={handleWebcam}
@@ -250,9 +250,10 @@ export function TransportBar() {
 
       {/* Timeline */}
       <div
-        className="flex-1 h-2 bg-gray-200 rounded-full relative overflow-hidden group min-w-[100px]"
+        className="h-2 bg-gray-200 rounded-full relative overflow-hidden group"
         onClick={hasRecording ? handleTimelineClick : undefined}
         style={{
+          width: '200px',
           cursor: hasRecording ? 'pointer' : 'default',
           opacity: hasRecording ? 1 : 0.5,
         }}
@@ -273,7 +274,7 @@ export function TransportBar() {
 
       {/* Playback timecode */}
       <span
-        className="text-[12px] tabular-nums min-w-[100px] text-right"
+        className="text-[12px] tabular-nums"
         style={{
           color: hasRecording ? '#666666' : '#aaaaaa',
           fontFamily: "'JetBrains Mono', monospace",
@@ -281,6 +282,9 @@ export function TransportBar() {
       >
         {formatTime(currentTime)} / {formatTime(duration)}
       </span>
+
+      {/* Spacer */}
+      <div className="flex-1" />
 
       {/* Export button */}
       <button

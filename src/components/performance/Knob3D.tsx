@@ -144,7 +144,7 @@ export function Knob3D({
       </div>
 
       {/* Label */}
-      <span className="text-[9px] uppercase tracking-wider text-[#6b7280] font-medium">
+      <span className="text-[12px] uppercase tracking-wider text-[#6b7280] font-medium">
         {label}
       </span>
     </div>

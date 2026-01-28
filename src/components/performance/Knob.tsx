@@ -92,7 +92,7 @@ export function Knob({
 
       {/* Label - mixed case, medium weight */}
       <span
-        className="text-[11px] font-medium"
+        className="text-[14px] font-medium"
         style={{ color: '#666666' }}
       >
         {label}

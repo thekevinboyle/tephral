@@ -42,7 +42,7 @@ interface SliderRowProps {
 function SliderRow({ label, value, min, max, step = 0.01, onChange, format }: SliderRowProps) {
   return (
     <div className="flex items-center gap-2 py-1">
-      <span className="text-[10px] text-gray-500 w-20 shrink-0">{label}</span>
+      <span className="text-[13px] text-gray-500 w-20 shrink-0">{label}</span>
       <input
         type="range"
         min={min}
@@ -52,7 +52,7 @@ function SliderRow({ label, value, min, max, step = 0.01, onChange, format }: Sl
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="flex-1 h-1 accent-lime-500"
       />
-      <span className="text-[10px] text-gray-600 w-10 text-right tabular-nums">
+      <span className="text-[13px] text-gray-600 w-10 text-right tabular-nums">
         {format ? format(value) : value.toFixed(2)}
       </span>
     </div>
@@ -68,7 +68,7 @@ interface ToggleRowProps {
 function ToggleRow({ label, checked, onChange }: ToggleRowProps) {
   return (
     <div className="flex items-center justify-between py-1">
-      <span className="text-[10px] text-gray-500">{label}</span>
+      <span className="text-[13px] text-gray-500">{label}</span>
       <button
         onClick={() => onChange(!checked)}
         className={`w-8 h-4 rounded-full transition-colors ${
@@ -95,13 +95,13 @@ interface SelectRowProps<T extends string> {
 function SelectRow<T extends string>({ label, value, options, onChange }: SelectRowProps<T>) {
   return (
     <div className="flex items-center gap-2 py-1">
-      <span className="text-[10px] text-gray-500 w-20 shrink-0">{label}</span>
+      <span className="text-[13px] text-gray-500 w-20 shrink-0">{label}</span>
       <div className="flex-1 flex gap-1">
         {options.map((opt) => (
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
-            className={`flex-1 px-2 py-1 text-[9px] rounded transition-colors ${
+            className={`flex-1 px-2 py-1 text-[12px] rounded transition-colors ${
               value === opt.value
                 ? 'bg-lime-500 text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -124,14 +124,14 @@ interface ColorRowProps {
 function ColorRow({ label, value, onChange }: ColorRowProps) {
   return (
     <div className="flex items-center gap-2 py-1">
-      <span className="text-[10px] text-gray-500 w-20 shrink-0">{label}</span>
+      <span className="text-[13px] text-gray-500 w-20 shrink-0">{label}</span>
       <input
         type="color"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-6 h-6 rounded border border-gray-200 cursor-pointer"
       />
-      <span className="text-[10px] text-gray-400">{value}</span>
+      <span className="text-[13px] text-gray-400">{value}</span>
     </div>
   )
 }
@@ -158,7 +158,7 @@ export function EffectParameterEditor({ effectId, onClose }: Props) {
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium">CONTOUR</span>
-          <span className="text-[10px] text-gray-400 capitalize">- {params.mode}</span>
+          <span className="text-[13px] text-gray-400 capitalize">- {params.mode}</span>
         </div>
         <button
           onClick={onClose}
@@ -181,13 +181,13 @@ export function EffectParameterEditor({ effectId, onClose }: Props) {
 
         {/* Presets */}
         <div className="px-3 py-2 border-b border-gray-200">
-          <div className="text-[10px] text-gray-500 mb-2">Style Presets</div>
+          <div className="text-[13px] text-gray-500 mb-2">Style Presets</div>
           <div className="flex gap-1">
             {(['technical', 'neon', 'brush', 'minimal'] as StylePreset[]).map((preset) => (
               <button
                 key={preset}
                 onClick={() => applyPreset(preset)}
-                className="flex-1 px-2 py-1.5 text-[10px] bg-gray-100 hover:bg-gray-200 rounded capitalize"
+                className="flex-1 px-2 py-1.5 text-[13px] bg-gray-100 hover:bg-gray-200 rounded capitalize"
               >
                 {preset}
               </button>

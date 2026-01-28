@@ -215,7 +215,7 @@ export function EffectButton({
             }}
           />
           <span
-            className="text-[11px] font-medium truncate"
+            className="text-[14px] font-medium truncate"
             style={{ color: active ? '#1a1a1a' : '#666666' }}
           >
             {label}
@@ -224,7 +224,7 @@ export function EffectButton({
 
         {/* Parameter value */}
         <span
-          className="text-[11px] tabular-nums font-medium"
+          className="text-[14px] tabular-nums font-medium"
           style={{
             color: active ? '#1a1a1a' : '#999999',
             fontFamily: "'JetBrains Mono', monospace",

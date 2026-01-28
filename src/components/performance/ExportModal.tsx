@@ -54,7 +54,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
             {/* Progress bar */}
             <div className="space-y-2">
               <div
-                className="flex justify-between text-[11px]"
+                className="flex justify-between text-[14px]"
                 style={{ color: '#666666' }}
               >
                 <span>Rendering...</span>
@@ -82,7 +82,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
             {/* Cancel button */}
             <button
               onClick={cancelExport}
-              className="w-full py-2 text-[11px] font-medium rounded-md transition-colors"
+              className="w-full py-2 text-[14px] font-medium rounded-md transition-colors"
               style={{
                 backgroundColor: '#f5f5f5',
                 border: '1px solid #d0d0d0',
@@ -97,7 +97,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
             {/* Format selection */}
             <div className="space-y-2">
               <label
-                className="text-[11px] font-medium"
+                className="text-[14px] font-medium"
                 style={{ color: '#666666' }}
               >
                 Format
@@ -106,7 +106,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
                 <button
                   onClick={() => webmSupported && setExportFormat('webm')}
                   disabled={!webmSupported}
-                  className="flex-1 py-2 text-[11px] font-medium rounded-md transition-colors"
+                  className="flex-1 py-2 text-[14px] font-medium rounded-md transition-colors"
                   style={{
                     backgroundColor: exportFormat === 'webm' ? '#6366f1' : '#f5f5f5',
                     border: exportFormat === 'webm' ? '1px solid #6366f1' : '1px solid #d0d0d0',
@@ -121,7 +121,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
                 <button
                   onClick={() => mp4Supported && setExportFormat('mp4')}
                   disabled={!mp4Supported}
-                  className="flex-1 py-2 text-[11px] font-medium rounded-md transition-colors"
+                  className="flex-1 py-2 text-[14px] font-medium rounded-md transition-colors"
                   style={{
                     backgroundColor: exportFormat === 'mp4' ? '#6366f1' : '#f5f5f5',
                     border: exportFormat === 'mp4' ? '1px solid #6366f1' : '1px solid #d0d0d0',
@@ -139,7 +139,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
             {/* Quality selection */}
             <div className="space-y-2">
               <label
-                className="text-[11px] font-medium"
+                className="text-[14px] font-medium"
                 style={{ color: '#666666' }}
               >
                 Quality
@@ -149,7 +149,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
                   <button
                     key={q}
                     onClick={() => setExportQuality(q)}
-                    className="flex-1 py-2 text-[11px] font-medium rounded-md transition-colors capitalize"
+                    className="flex-1 py-2 text-[14px] font-medium rounded-md transition-colors capitalize"
                     style={{
                       backgroundColor: exportQuality === q ? '#6366f1' : '#f5f5f5',
                       border: exportQuality === q ? '1px solid #6366f1' : '1px solid #d0d0d0',
@@ -161,7 +161,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
                 ))}
               </div>
               <div
-                className="text-[10px] text-right tabular-nums"
+                className="text-[13px] text-right tabular-nums"
                 style={{ color: '#666666', fontFamily: "'JetBrains Mono', monospace" }}
               >
                 {exportQuality === 'low' && '1 Mbps'}
@@ -174,7 +174,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => setShowExportModal(false)}
-                className="flex-1 py-2 text-[11px] font-medium rounded-md transition-colors"
+                className="flex-1 py-2 text-[14px] font-medium rounded-md transition-colors"
                 style={{
                   backgroundColor: '#f5f5f5',
                   border: '1px solid #d0d0d0',
@@ -185,7 +185,7 @@ export function ExportModal({ onExport, isFormatSupported }: ExportModalProps) {
               </button>
               <button
                 onClick={handleExport}
-                className="flex-1 py-2 text-[11px] font-medium rounded-md transition-colors"
+                className="flex-1 py-2 text-[14px] font-medium rounded-md transition-colors"
                 style={{
                   backgroundColor: '#6366f1',
                   border: '1px solid #6366f1',

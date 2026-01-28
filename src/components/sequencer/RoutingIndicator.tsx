@@ -164,14 +164,14 @@ export function RoutingIndicator({ routing, trackColor, trackName }: RoutingIndi
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: trackColor }}
             />
-            <span className="text-[10px] font-medium" style={{ color: '#333' }}>
+            <span className="text-[13px] font-medium" style={{ color: '#333' }}>
               {trackName}
             </span>
           </div>
 
           {/* Depth slider */}
           <div className="mb-2">
-            <div className="flex justify-between text-[9px] mb-1" style={{ color: '#999' }}>
+            <div className="flex justify-between text-[12px] mb-1" style={{ color: '#999' }}>
               <span>Depth</span>
               <span>{Math.round(routing.depth * 100)}%</span>
             </div>
@@ -192,7 +192,7 @@ export function RoutingIndicator({ routing, trackColor, trackName }: RoutingIndi
           {/* Remove button */}
           <button
             onClick={handleRemove}
-            className="w-full py-1 text-[9px] rounded"
+            className="w-full py-1 text-[12px] rounded"
             style={{
               backgroundColor: '#fff5f5',
               border: '1px solid #ffcccc',

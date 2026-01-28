@@ -1,9 +1,6 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect } from 'react'
 import { useContourStore } from '../../stores/contourStore'
 import { useMediaStore } from '../../stores/mediaStore'
-import { MarchingSquares } from '../../effects/contour/MarchingSquares'
-import { ContourTracker } from '../../effects/contour/ContourTracker'
-import { OrganicRenderer, type RenderStyle } from '../../effects/contour/OrganicRenderer'
 
 interface Props {
   width: number
@@ -11,29 +8,55 @@ interface Props {
   glCanvas?: HTMLCanvasElement | null
 }
 
-// Downsampled resolution for contour extraction (performance optimization)
-const DOWNSAMPLE_WIDTH = 320
-const DOWNSAMPLE_HEIGHT = 180
+interface Blob {
+  id: number
+  x: number
+  y: number
+  width: number
+  height: number
+  centerX: number
+  centerY: number
+  area: number
+  value: number // tracking value for display
+}
+
+// Downsampled resolution for blob detection
+const DOWNSAMPLE_WIDTH = 160
+const DOWNSAMPLE_HEIGHT = 90
+
+// Target frame rate
+const TARGET_FPS = 20
+const FRAME_INTERVAL = 1000 / TARGET_FPS
 
 export function ContourOverlay({ width, height, glCanvas }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const offscreenRef = useRef<HTMLCanvasElement | null>(null)
   const offscreenCtxRef = useRef<CanvasRenderingContext2D | null>(null)
-  const marchingSquares = useRef<MarchingSquares | null>(null)
-  const tracker = useRef<ContourTracker | null>(null)
-  const renderer = useRef<OrganicRenderer | null>(null)
-  const frameId = useRef<number>(0)
+  const frameIdRef = useRef<number>(0)
+  const lastFrameTimeRef = useRef<number>(0)
+  const isRunningRef = useRef<boolean>(false)
+  const blobIdCounter = useRef<number>(0)
+  const trackedBlobs = useRef<Map<number, Blob>>(new Map())
 
+  // Use refs to avoid recreating animation callback
+  const paramsRef = useRef(useContourStore.getState().params)
+  const videoElementRef = useRef<HTMLVideoElement | null>(null)
+  const imageElementRef = useRef<HTMLImageElement | null>(null)
+  const glCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const sizeRef = useRef({ width, height })
+
+  // Sync refs with props/state
   const { enabled, params } = useContourStore()
   const { videoElement, imageElement } = useMediaStore()
 
+  paramsRef.current = params
+  videoElementRef.current = videoElement
+  imageElementRef.current = imageElement
+  glCanvasRef.current = glCanvas ?? null
+  sizeRef.current = { width, height }
+
   // Initialize on mount
   useEffect(() => {
-    marchingSquares.current = new MarchingSquares()
-    tracker.current = new ContourTracker({ smoothing: params.positionSmoothing })
-    renderer.current = new OrganicRenderer()
-
-    // Create offscreen canvas for downsampling
     offscreenRef.current = document.createElement('canvas')
     offscreenRef.current.width = DOWNSAMPLE_WIDTH
     offscreenRef.current.height = DOWNSAMPLE_HEIGHT
@@ -42,128 +65,320 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
     })
 
     return () => {
-      if (frameId.current) cancelAnimationFrame(frameId.current)
-      // Clean up
+      isRunningRef.current = false
+      if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current)
       offscreenRef.current = null
       offscreenCtxRef.current = null
-      marchingSquares.current = null
-      tracker.current = null
-      renderer.current = null
     }
   }, [])
 
-  // Update smoothing when param changes
-  useEffect(() => {
-    tracker.current?.setSmoothing(params.positionSmoothing)
-  }, [params.positionSmoothing])
-
-  // Clear trails when disabled
+  // Clear when disabled
   useEffect(() => {
     if (!enabled) {
-      renderer.current?.clearTrails()
-      tracker.current?.clear()
+      trackedBlobs.current.clear()
+      blobIdCounter.current = 0
     }
   }, [enabled])
 
-  const animate = useCallback(() => {
-    if (!canvasRef.current || !enabled) return
+  // Detect blobs using connected component labeling
+  function detectBlobs(
+    imageData: ImageData,
+    threshold: number,
+    minSize: number
+  ): Blob[] {
+    const w = imageData.width
+    const h = imageData.height
+    const data = imageData.data
+    const labels = new Int32Array(w * h)
+    const parent: number[] = []
+    let nextLabel = 1
 
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const offscreenCtx = offscreenCtxRef.current
-    const offscreen = offscreenRef.current
-    if (!offscreenCtx || !offscreen) return
-
-    // Prefer WebGL canvas (has effects applied), fallback to original source
-    const source = glCanvas || videoElement || imageElement
-    if (!source) {
-      frameId.current = requestAnimationFrame(animate)
-      return
+    // Helper to get luminance
+    const getLuminance = (i: number) => {
+      const r = data[i * 4]
+      const g = data[i * 4 + 1]
+      const b = data[i * 4 + 2]
+      return 0.299 * r + 0.587 * g + 0.114 * b
     }
 
-    // Check if source has valid dimensions
-    const sourceWidth = glCanvas?.width || videoElement?.videoWidth || imageElement?.naturalWidth || 0
-    const sourceHeight = glCanvas?.height || videoElement?.videoHeight || imageElement?.naturalHeight || 0
-    if (sourceWidth === 0 || sourceHeight === 0) {
-      frameId.current = requestAnimationFrame(animate)
-      return
+    // Union-find helpers
+    const find = (x: number): number => {
+      if (parent[x] !== x) parent[x] = find(parent[x])
+      return parent[x]
+    }
+    const union = (a: number, b: number) => {
+      const ra = find(a)
+      const rb = find(b)
+      if (ra !== rb) parent[rb] = ra
     }
 
-    const timestamp = performance.now()
+    // First pass: label connected components
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = y * w + x
+        const lum = getLuminance(idx)
 
-    // Clear main canvas
-    ctx.clearRect(0, 0, width, height)
+        if (lum >= threshold) {
+          const left = x > 0 ? labels[idx - 1] : 0
+          const up = y > 0 ? labels[idx - w] : 0
 
-    try {
-      // 1. Draw source to offscreen canvas (downsampled)
-      offscreenCtx.drawImage(source, 0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
-
-      // 2. Get image data
-      const imageData = offscreenCtx.getImageData(0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
-
-      // 3. Convert threshold from 0-1 to 0-255 for marching squares
-      const threshold255 = params.threshold * 255
-
-      // 4. Run marching squares to extract contours
-      let contours = marchingSquares.current!.extract(
-        imageData.data as unknown as Uint8Array,
-        DOWNSAMPLE_WIDTH,
-        DOWNSAMPLE_HEIGHT,
-        threshold255
-      )
-
-      // 5. Simplify each contour based on contourSimplification param
-      // epsilon scales with simplification value (0.1 multiplier for reasonable range)
-      const epsilon = params.contourSimplification * 0.1
-      if (epsilon > 0) {
-        contours = contours.map(contour => ({
-          ...contour,
-          points: marchingSquares.current!.simplify(contour.points, epsilon),
-        }))
+          if (left === 0 && up === 0) {
+            // New label
+            labels[idx] = nextLabel
+            parent[nextLabel] = nextLabel
+            nextLabel++
+          } else if (left !== 0 && up === 0) {
+            labels[idx] = left
+          } else if (left === 0 && up !== 0) {
+            labels[idx] = up
+          } else {
+            // Both neighbors labeled - union them
+            labels[idx] = left
+            if (left !== up) union(left, up)
+          }
+        }
       }
-
-      // 6. Filter by minimum size (area)
-      contours = contours.filter(c => c.area >= params.minSize)
-
-      // 7. Update tracker with new contours
-      const trackedContours = tracker.current!.update(contours, timestamp)
-
-      // 8. Build RenderStyle from params
-      const style: RenderStyle = {
-        color: params.color,
-        baseWidth: params.baseWidth,
-        velocityResponse: params.velocityResponse,
-        taperAmount: params.taperAmount,
-        glowIntensity: params.glowIntensity,
-        glowColor: params.glowColor,
-      }
-
-      // 9. Update trails
-      renderer.current!.updateTrails(trackedContours, timestamp, params.trailLength, style)
-
-      // 10. Render to main canvas
-      renderer.current!.render(ctx, trackedContours, style, width, height, timestamp)
-
-    } catch (err) {
-      console.error('Contour extraction error:', err)
     }
 
-    // Request next frame
-    frameId.current = requestAnimationFrame(animate)
-  }, [enabled, params, videoElement, imageElement, glCanvas, width, height])
+    // Second pass: collect blob stats
+    const blobStats = new Map<number, { minX: number; maxX: number; minY: number; maxY: number; count: number }>()
 
-  // Animation loop
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = y * w + x
+        const label = labels[idx]
+        if (label > 0) {
+          const root = find(label)
+          if (!blobStats.has(root)) {
+            blobStats.set(root, { minX: x, maxX: x, minY: y, maxY: y, count: 1 })
+          } else {
+            const stats = blobStats.get(root)!
+            stats.minX = Math.min(stats.minX, x)
+            stats.maxX = Math.max(stats.maxX, x)
+            stats.minY = Math.min(stats.minY, y)
+            stats.maxY = Math.max(stats.maxY, y)
+            stats.count++
+          }
+        }
+      }
+    }
+
+    // Convert to blob objects
+    const blobs: Blob[] = []
+    blobStats.forEach((stats, label) => {
+      if (stats.count >= minSize) {
+        const blobW = (stats.maxX - stats.minX + 1) / w
+        const blobH = (stats.maxY - stats.minY + 1) / h
+        blobs.push({
+          id: label,
+          x: stats.minX / w,
+          y: stats.minY / h,
+          width: blobW,
+          height: blobH,
+          centerX: (stats.minX + stats.maxX) / 2 / w,
+          centerY: (stats.minY + stats.maxY) / 2 / h,
+          area: stats.count,
+          value: 0, // will be assigned during tracking
+        })
+      }
+    })
+
+    return blobs
+  }
+
+  // Match and track blobs across frames
+  function trackBlobs(newBlobs: Blob[]): Blob[] {
+    const tracked = trackedBlobs.current
+    const matched = new Set<number>()
+    const result: Blob[] = []
+
+    // Match new blobs to existing tracked blobs by proximity
+    for (const blob of newBlobs) {
+      let bestMatch: number | null = null
+      let bestDist = 0.15 // max distance threshold for matching
+
+      tracked.forEach((existingBlob, id) => {
+        if (matched.has(id)) return
+        const dx = blob.centerX - existingBlob.centerX
+        const dy = blob.centerY - existingBlob.centerY
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist < bestDist) {
+          bestDist = dist
+          bestMatch = id
+        }
+      })
+
+      if (bestMatch !== null) {
+        // Update existing blob
+        matched.add(bestMatch)
+        const existingBlob = tracked.get(bestMatch)!
+        blob.id = bestMatch
+        blob.value = existingBlob.value + (1 / 7) // increment tracking value
+        tracked.set(bestMatch, blob)
+        result.push(blob)
+      } else {
+        // New blob
+        const newId = blobIdCounter.current++
+        blob.id = newId
+        blob.value = newId * (1 / 7) // assign initial value based on ID
+        tracked.set(newId, blob)
+        result.push(blob)
+      }
+    }
+
+    // Remove unmatched old blobs (with some persistence)
+    const toRemove: number[] = []
+    tracked.forEach((_, id) => {
+      if (!matched.has(id) && !newBlobs.some(b => b.id === id)) {
+        toRemove.push(id)
+      }
+    })
+    toRemove.forEach(id => tracked.delete(id))
+
+    return result
+  }
+
+  // Single animation loop
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled) {
+      isRunningRef.current = false
+      return
+    }
 
-    frameId.current = requestAnimationFrame(animate)
+    isRunningRef.current = true
+
+    const animate = (timestamp: number) => {
+      if (!isRunningRef.current) return
+
+      // Frame rate limiting
+      const elapsed = timestamp - lastFrameTimeRef.current
+      if (elapsed < FRAME_INTERVAL) {
+        frameIdRef.current = requestAnimationFrame(animate)
+        return
+      }
+      lastFrameTimeRef.current = timestamp
+
+      const canvas = canvasRef.current
+      if (!canvas) {
+        frameIdRef.current = requestAnimationFrame(animate)
+        return
+      }
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        frameIdRef.current = requestAnimationFrame(animate)
+        return
+      }
+
+      const offscreenCtx = offscreenCtxRef.current
+      const offscreen = offscreenRef.current
+      if (!offscreenCtx || !offscreen) {
+        frameIdRef.current = requestAnimationFrame(animate)
+        return
+      }
+
+      const currentParams = paramsRef.current
+      const currentWidth = sizeRef.current.width
+      const currentHeight = sizeRef.current.height
+
+      const source = glCanvasRef.current || videoElementRef.current || imageElementRef.current
+      if (!source) {
+        frameIdRef.current = requestAnimationFrame(animate)
+        return
+      }
+
+      const sourceWidth = glCanvasRef.current?.width ||
+        videoElementRef.current?.videoWidth ||
+        imageElementRef.current?.naturalWidth || 0
+      const sourceHeight = glCanvasRef.current?.height ||
+        videoElementRef.current?.videoHeight ||
+        imageElementRef.current?.naturalHeight || 0
+
+      if (sourceWidth === 0 || sourceHeight === 0) {
+        frameIdRef.current = requestAnimationFrame(animate)
+        return
+      }
+
+      // Clear canvas
+      ctx.clearRect(0, 0, currentWidth, currentHeight)
+
+      try {
+        // Downsample source
+        offscreenCtx.drawImage(source, 0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
+        const imageData = offscreenCtx.getImageData(0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
+
+        // Detect blobs
+        const threshold255 = currentParams.threshold * 255
+        const minPixels = currentParams.minSize * 10 // scale minSize to pixel count
+        let blobs = detectBlobs(imageData, threshold255, minPixels)
+
+        // Limit blob count
+        if (blobs.length > 30) {
+          blobs = blobs.sort((a, b) => b.area - a.area).slice(0, 30)
+        }
+
+        // Track blobs
+        const trackedBlobList = trackBlobs(blobs)
+
+        // Get style colors
+        const boxColor = currentParams.color || 'rgba(255, 200, 100, 0.8)'
+        const lineColor = currentParams.glowColor || 'rgba(255, 255, 255, 0.7)'
+
+        // Draw connecting lines between nearby blobs
+        ctx.strokeStyle = lineColor
+        ctx.lineWidth = 1
+        for (let i = 0; i < trackedBlobList.length; i++) {
+          for (let j = i + 1; j < trackedBlobList.length; j++) {
+            const a = trackedBlobList[i]
+            const b = trackedBlobList[j]
+            const dx = a.centerX - b.centerX
+            const dy = a.centerY - b.centerY
+            const dist = Math.sqrt(dx * dx + dy * dy)
+
+            // Connect blobs within a certain distance
+            if (dist < 0.4) {
+              ctx.beginPath()
+              ctx.moveTo(a.centerX * currentWidth, a.centerY * currentHeight)
+              ctx.lineTo(b.centerX * currentWidth, b.centerY * currentHeight)
+              ctx.stroke()
+            }
+          }
+        }
+
+        // Draw bounding boxes and labels
+        ctx.strokeStyle = boxColor
+        ctx.lineWidth = 1.5
+        ctx.font = '11px monospace'
+        ctx.fillStyle = boxColor
+
+        for (const blob of trackedBlobList) {
+          const x = blob.x * currentWidth
+          const y = blob.y * currentHeight
+          const w = blob.width * currentWidth
+          const h = blob.height * currentHeight
+
+          // Draw box
+          ctx.strokeRect(x, y, w, h)
+
+          // Draw tracking value label
+          const label = blob.value.toFixed(4)
+          ctx.fillText(label, x + 4, y + h - 4)
+        }
+
+      } catch (err) {
+        console.error('Blob detection error:', err)
+      }
+
+      frameIdRef.current = requestAnimationFrame(animate)
+    }
+
+    frameIdRef.current = requestAnimationFrame(animate)
 
     return () => {
-      if (frameId.current) cancelAnimationFrame(frameId.current)
+      isRunningRef.current = false
+      if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current)
     }
-  }, [enabled, animate])
+  }, [enabled])
 
   if (!enabled) return null
 

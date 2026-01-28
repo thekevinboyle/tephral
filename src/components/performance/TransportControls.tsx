@@ -41,7 +41,7 @@ export function TransportControls() {
     <div className="flex items-center gap-4 px-4 py-2 bg-base-dark border-b border-border">
       {/* Source indicator */}
       <div className="flex items-center gap-2">
-        <span className="text-[10px] uppercase text-muted">SRC</span>
+        <span className="text-[13px] uppercase text-muted">SRC</span>
         <span className="text-xs text-base-light uppercase">
           {source === 'none' ? 'NONE' : source}
         </span>

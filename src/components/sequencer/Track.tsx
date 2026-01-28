@@ -142,7 +142,7 @@ export function Track({ track, onOpenStepDetail }: TrackProps) {
             onChange={(e) => setEditName(e.target.value)}
             onBlur={handleNameSubmit}
             onKeyDown={handleNameKeyDown}
-            className="w-full text-[10px] px-1 py-0.5 rounded"
+            className="w-full text-[13px] px-1 py-0.5 rounded"
             style={{
               backgroundColor: '#f5f5f5',
               border: '1px solid #d0d0d0',
@@ -150,7 +150,7 @@ export function Track({ track, onOpenStepDetail }: TrackProps) {
           />
         ) : (
           <span
-            className="text-[10px] font-medium truncate cursor-text"
+            className="text-[13px] font-medium truncate cursor-text"
             style={{ color: '#666666' }}
             onDoubleClick={handleNameDoubleClick}
             title="Double-click to rename"
@@ -183,7 +183,7 @@ export function Track({ track, onOpenStepDetail }: TrackProps) {
       {/* Length */}
       <button
         onClick={handleLengthClick}
-        className="w-6 text-[9px] font-mono text-center rounded hover:bg-gray-100"
+        className="w-6 text-[12px] font-mono text-center rounded hover:bg-gray-100"
         style={{ color: '#999999' }}
         title="Click to change length"
       >
@@ -193,7 +193,7 @@ export function Track({ track, onOpenStepDetail }: TrackProps) {
       {/* Mode override */}
       <button
         onClick={handleModeClick}
-        className="w-5 text-[10px] font-mono text-center rounded hover:bg-gray-100"
+        className="w-5 text-[13px] font-mono text-center rounded hover:bg-gray-100"
         style={{ color: track.modeOverride ? '#333333' : '#cccccc' }}
         title={track.modeOverride ? `Mode: ${track.modeOverride}` : 'Using global mode'}
       >
@@ -203,7 +203,7 @@ export function Track({ track, onOpenStepDetail }: TrackProps) {
       {/* Solo toggle */}
       <button
         onClick={handleSoloClick}
-        className="w-5 h-5 text-[10px] font-medium rounded"
+        className="w-5 h-5 text-[13px] font-medium rounded"
         style={{
           backgroundColor: track.solo ? track.color : 'transparent',
           color: track.solo ? '#ffffff' : '#cccccc',

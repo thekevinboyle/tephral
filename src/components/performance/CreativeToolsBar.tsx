@@ -10,7 +10,7 @@ export function CreativeToolsBar() {
     >
       <button
         onClick={randomize}
-        className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors hover:bg-white"
+        className="px-3 py-1.5 rounded-md text-[14px] font-medium transition-colors hover:bg-white"
         style={{
           backgroundColor: '#ffffff',
           border: '1px solid #d0d0d0',
@@ -23,7 +23,7 @@ export function CreativeToolsBar() {
       <button
         onClick={undoRandomize}
         disabled={!previousState}
-        className="px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+        className="px-3 py-1.5 rounded-md text-[14px] font-medium transition-colors"
         style={{
           backgroundColor: previousState ? '#ffffff' : '#f5f5f5',
           border: '1px solid #d0d0d0',

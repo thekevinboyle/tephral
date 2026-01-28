@@ -150,7 +150,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center" style={{ backgroundColor: '#f5f5f5' }}>
-        <span className="text-[11px]" style={{ color: '#999999' }}>
+        <span className="text-[14px]" style={{ color: '#999999' }}>
           Loading presets...
         </span>
       </div>
@@ -168,21 +168,11 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
         style={{ borderBottom: '1px solid #d0d0d0' }}
       >
         <span
-          className="text-[10px] font-semibold uppercase tracking-wider"
+          className="text-[13px] font-semibold uppercase tracking-wider"
           style={{ color: '#999999' }}
         >
           Presets
         </span>
-        <button
-          onClick={handleNewPreset}
-          className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-gray-200"
-          title="Save current state as preset"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
       </div>
 
       {/* Search */}
@@ -200,7 +190,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search..."
-            className="flex-1 text-[11px] bg-transparent outline-none"
+            className="flex-1 text-[14px] bg-transparent outline-none"
             style={{ color: '#333333' }}
           />
           {searchQuery && (
@@ -223,7 +213,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
           // Search results (flat list)
           <div className="py-2">
             {displayPresets.length === 0 ? (
-              <div className="text-center text-[11px] py-4" style={{ color: '#999999' }}>
+              <div className="text-center text-[14px] py-4" style={{ color: '#999999' }}>
                 No presets found
               </div>
             ) : (
@@ -252,7 +242,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
                       </div>
                     )}
                   </div>
-                  <span className="text-[11px] truncate" style={{ color: '#333' }}>
+                  <span className="text-[14px] truncate" style={{ color: '#333' }}>
                     {preset.name}
                   </span>
                 </div>
@@ -277,8 +267,21 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
         style={{ borderTop: '1px solid #d0d0d0' }}
       >
         <button
+          onClick={handleNewPreset}
+          className="flex-1 h-7 text-[13px] font-medium rounded transition-colors"
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #d0d0d0',
+            color: '#666666',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
+        >
+          Save
+        </button>
+        <button
           onClick={handleImport}
-          className="flex-1 h-7 text-[10px] font-medium rounded transition-colors"
+          className="flex-1 h-7 text-[13px] font-medium rounded transition-colors"
           style={{
             backgroundColor: '#ffffff',
             border: '1px solid #d0d0d0',
@@ -292,7 +295,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
         <button
           onClick={handleExportAll}
           disabled={presets.length === 0}
-          className="flex-1 h-7 text-[10px] font-medium rounded transition-colors"
+          className="flex-1 h-7 text-[13px] font-medium rounded transition-colors"
           style={{
             backgroundColor: presets.length > 0 ? '#ffffff' : '#f5f5f5',
             border: '1px solid #d0d0d0',
@@ -338,7 +341,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
             style={{ backgroundColor: '#ffffff', minWidth: '240px' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-[11px] font-medium mb-2" style={{ color: '#333' }}>
+            <div className="text-[14px] font-medium mb-2" style={{ color: '#333' }}>
               Rename {renameState.type === 'preset' ? 'Preset' : 'Folder'}
             </div>
             <input
@@ -350,20 +353,20 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
                 if (e.key === 'Enter') handleRenameSubmit()
                 if (e.key === 'Escape') setRenameState(null)
               }}
-              className="w-full px-2 py-1.5 text-[11px] rounded outline-none"
+              className="w-full px-2 py-1.5 text-[14px] rounded outline-none"
               style={{ border: '1px solid #d0d0d0', color: '#333' }}
             />
             <div className="flex gap-2 mt-3">
               <button
                 onClick={() => setRenameState(null)}
-                className="flex-1 h-7 text-[10px] rounded"
+                className="flex-1 h-7 text-[13px] rounded"
                 style={{ backgroundColor: '#f5f5f5', color: '#666' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleRenameSubmit}
-                className="flex-1 h-7 text-[10px] rounded"
+                className="flex-1 h-7 text-[13px] rounded"
                 style={{ backgroundColor: '#333', color: '#fff' }}
               >
                 Save

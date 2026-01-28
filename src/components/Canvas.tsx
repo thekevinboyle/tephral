@@ -226,11 +226,36 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     }
   }, [pipeline, renderer, frameIdRef])
 
+  const hasMedia = videoElement || imageElement
+
   return (
     <div
       ref={containerRef}
       className="w-full h-full bg-black relative"
     >
+      {/* Empty state when no media loaded */}
+      {!hasMedia && (
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none"
+          style={{ backgroundColor: '#f5f5f5' }}
+        >
+          <h1
+            className="text-4xl font-light tracking-[0.3em] select-none"
+            style={{
+              color: '#999',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            TEPHRAL
+          </h1>
+          <p
+            className="mt-4 text-sm tracking-wider"
+            style={{ color: '#bbb' }}
+          >
+            Load media to begin
+          </p>
+        </div>
+      )}
       {/* Vision effect overlays */}
       <OverlayContainer containerRef={containerRef} glCanvas={renderer?.domElement ?? null} />
     </div>

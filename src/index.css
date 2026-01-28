@@ -106,10 +106,12 @@
   --font-family-mono: 'JetBrains Mono', monospace;
 
   /* Font sizes */
-  --text-xl: 18px;
-  --text-lg: 14px;
-  --text-md: 12px;
-  --text-sm: 11px;
+  --text-2xl: 28px;
+  --text-xl: 22px;
+  --text-lg: 18px;
+  --text-md: 15px;
+  --text-sm: 13px;
+  --text-xs: 11px;
 }
 
 @layer base {
@@ -121,6 +123,7 @@
     background-color: var(--color-bg-dark);
     color: var(--color-text-primary);
     font-family: var(--font-family-sans);
+    font-size: 15px;
     font-weight: 400;
     margin: 0;
     padding: 0;
@@ -149,7 +152,7 @@
   }
 
   .value {
-    font-size: var(--text-sm);
+    font-size: var(--text-md);
     font-family: var(--font-family-mono);
     color: var(--color-text-primary);
   }

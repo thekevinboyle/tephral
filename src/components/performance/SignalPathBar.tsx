@@ -71,7 +71,7 @@ export function SignalPathBar() {
             border: '1px solid #d0d0d0',
           }}
         />
-        <span className="text-[11px] font-medium" style={{ color: '#666666' }}>
+        <span className="text-[14px] font-medium" style={{ color: '#666666' }}>
           In
         </span>
       </div>
@@ -91,7 +91,7 @@ export function SignalPathBar() {
             border: '1px solid #d0d0d0',
           }}
         >
-          <span className="text-[11px] font-medium" style={{ color: '#999999' }}>
+          <span className="text-[14px] font-medium" style={{ color: '#999999' }}>
             Bypass
           </span>
         </div>
@@ -117,7 +117,7 @@ export function SignalPathBar() {
                 }}
               />
               <span
-                className="text-[11px] font-medium transition-colors"
+                className="text-[14px] font-medium transition-colors"
                 style={{ color: selectedEffectId === effect.id ? '#1a1a1a' : '#666666' }}
               >
                 {effect.label}
@@ -150,7 +150,7 @@ export function SignalPathBar() {
             border: '1px solid #d0d0d0',
           }}
         />
-        <span className="text-[11px] font-medium" style={{ color: '#666666' }}>
+        <span className="text-[14px] font-medium" style={{ color: '#666666' }}>
           Out
         </span>
       </div>

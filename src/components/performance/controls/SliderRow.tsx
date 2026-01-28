@@ -109,7 +109,7 @@ export function SliderRow({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <span className="text-[11px] text-gray-500 w-20 shrink-0 flex items-center gap-1">
+      <span className="text-[14px] text-gray-500 w-20 shrink-0 flex items-center gap-1">
         {hasRouting && firstRouting && routingTrack && (
           <span
             className="w-3 h-3 flex-shrink-0 cursor-ns-resize hover:scale-110 transition-transform flex items-center justify-center rounded-full"
@@ -158,7 +158,7 @@ export function SliderRow({
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="flex-1 h-1 accent-gray-700 cursor-pointer"
       />
-      <span className="text-[11px] text-gray-600 w-10 text-right tabular-nums">
+      <span className="text-[14px] text-gray-600 w-10 text-right tabular-nums">
         {displayValue}
       </span>
     </div>

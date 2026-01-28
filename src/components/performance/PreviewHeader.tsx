@@ -63,7 +63,7 @@ export function PreviewHeader() {
       {/* Source buttons */}
       <button
         onClick={handleWebcam}
-        className="px-3 py-1.5 text-[11px] font-medium rounded-md transition-colors"
+        className="px-3 py-1.5 text-[14px] font-medium rounded-md transition-colors"
         style={{
           backgroundColor: source === 'webcam' ? '#ffffff' : '#f5f5f5',
           border: source === 'webcam' ? '1px solid #6366f1' : '1px solid #d0d0d0',
@@ -75,7 +75,7 @@ export function PreviewHeader() {
 
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="px-3 py-1.5 text-[11px] font-medium rounded-md transition-colors"
+        className="px-3 py-1.5 text-[14px] font-medium rounded-md transition-colors"
         style={{
           backgroundColor: source === 'file' ? '#ffffff' : '#f5f5f5',
           border: source === 'file' ? '1px solid #6366f1' : '1px solid #d0d0d0',

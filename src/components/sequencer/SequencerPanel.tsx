@@ -86,7 +86,7 @@ export function SequencerPanel() {
       >
         {/* Title */}
         <span
-          className="text-[10px] font-semibold uppercase tracking-wider"
+          className="text-[13px] font-semibold uppercase tracking-wider"
           style={{ color: '#999999' }}
         >
           Sequencer
@@ -129,7 +129,7 @@ export function SequencerPanel() {
           type="number"
           value={bpm}
           onChange={handleBpmChange}
-          className="w-12 h-7 text-center text-[11px] font-mono rounded"
+          className="w-12 h-7 text-center text-[14px] font-mono rounded"
           style={{
             backgroundColor: '#ffffff',
             border: '1px solid #d0d0d0',
@@ -142,7 +142,7 @@ export function SequencerPanel() {
         {/* Resolution */}
         <button
           onClick={handleResolutionCycle}
-          className="h-7 px-2 text-[11px] font-mono rounded"
+          className="h-7 px-2 text-[14px] font-mono rounded"
           style={{
             backgroundColor: '#ffffff',
             border: '1px solid #d0d0d0',
@@ -155,7 +155,7 @@ export function SequencerPanel() {
         {/* Audio Reactive Toggle */}
         <button
           onClick={() => setAudioReactive(!audioReactive)}
-          className="h-7 px-2 text-[11px] font-medium rounded flex items-center gap-1.5"
+          className="h-7 px-2 text-[14px] font-medium rounded flex items-center gap-1.5"
           style={{
             backgroundColor: audioReactive ? '#8b5cf6' : '#ffffff',
             border: audioReactive ? '1px solid #7c3aed' : '1px solid #d0d0d0',
@@ -185,7 +185,7 @@ export function SequencerPanel() {
       <div className="flex-1 overflow-y-auto">
         {tracks.length === 0 ? (
           <div
-            className="flex items-center justify-center h-full text-[11px]"
+            className="flex items-center justify-center h-full text-[14px]"
             style={{ color: '#999999' }}
           >
             No tracks yet
@@ -210,7 +210,7 @@ export function SequencerPanel() {
       >
         <button
           onClick={addTrack}
-          className="w-full h-8 text-[11px] font-medium rounded transition-colors"
+          className="w-full h-8 text-[14px] font-medium rounded transition-colors"
           style={{
             backgroundColor: '#ffffff',
             border: '1px solid #d0d0d0',
@@ -237,7 +237,7 @@ export function SequencerPanel() {
           <select
             value={globalMode}
             onChange={(e) => setGlobalMode(e.target.value as StepMode)}
-            className="flex-1 h-7 px-2 text-[10px] rounded"
+            className="flex-1 h-7 px-2 text-[13px] rounded"
             style={{
               backgroundColor: '#f5f5f5',
               border: '1px solid #d0d0d0',
@@ -252,7 +252,7 @@ export function SequencerPanel() {
           {/* Fill button */}
           <button
             onClick={() => setFillModeActive(!fillModeActive)}
-            className="h-7 px-3 text-[10px] font-medium rounded transition-colors"
+            className="h-7 px-3 text-[13px] font-medium rounded transition-colors"
             style={{
               backgroundColor: fillModeActive ? '#4ade80' : '#f5f5f5',
               border: fillModeActive ? '1px solid #4ade80' : '1px solid #d0d0d0',
@@ -273,7 +273,7 @@ export function SequencerPanel() {
                 randomizeAllTracks()
               }
             }}
-            className="h-7 px-3 text-[10px] font-medium rounded transition-colors"
+            className="h-7 px-3 text-[13px] font-medium rounded transition-colors"
             style={{
               backgroundColor: '#f5f5f5',
               border: '1px solid #d0d0d0',
@@ -311,7 +311,7 @@ export function SequencerPanel() {
           {/* Freeze button */}
           <button
             onClick={freeze}
-            className="flex-1 h-7 text-[10px] font-medium rounded transition-colors flex items-center justify-center gap-1"
+            className="flex-1 h-7 text-[13px] font-medium rounded transition-colors flex items-center justify-center gap-1"
             style={{
               backgroundColor: frozenState ? '#e0f2fe' : '#f5f5f5',
               border: frozenState ? '1px solid #38bdf8' : '1px solid #d0d0d0',
@@ -334,7 +334,7 @@ export function SequencerPanel() {
           <button
             onClick={revert}
             disabled={!frozenState}
-            className="flex-1 h-7 text-[10px] font-medium rounded transition-colors"
+            className="flex-1 h-7 text-[13px] font-medium rounded transition-colors"
             style={{
               backgroundColor: frozenState ? '#f5f5f5' : '#fafafa',
               border: '1px solid #d0d0d0',

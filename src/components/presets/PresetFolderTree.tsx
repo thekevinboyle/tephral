@@ -80,7 +80,7 @@ function FolderNode({
 
         {/* Folder name */}
         <span
-          className="flex-1 text-[11px] font-medium truncate"
+          className="flex-1 text-[14px] font-medium truncate"
           style={{ color: '#555555' }}
         >
           {folder.name}
@@ -88,7 +88,7 @@ function FolderNode({
 
         {/* Preset count */}
         <span
-          className="text-[10px]"
+          className="text-[13px]"
           style={{ color: '#999999' }}
         >
           {folderPresets.length}

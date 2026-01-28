@@ -1496,7 +1496,7 @@ export function ParameterPanel() {
     >
       <button
         onClick={handleClear}
-        className="flex-1 w-full rounded text-[11px] font-medium transition-colors active:scale-95"
+        className="flex-1 w-full rounded text-[14px] font-medium transition-colors active:scale-95"
         style={{
           backgroundColor: '#f5f5f5',
           border: '1px solid #d0d0d0',
@@ -1525,7 +1525,7 @@ export function ParameterPanel() {
           e.currentTarget.style.backgroundColor = '#f5f5f5'
         }}
         onPointerCancel={handleBypassUp}
-        className="flex-1 w-full rounded text-[11px] font-medium transition-all select-none touch-none active:scale-95"
+        className="flex-1 w-full rounded text-[14px] font-medium transition-all select-none touch-none active:scale-95"
         style={{
           backgroundColor: bypassActive ? '#ef4444' : '#f5f5f5',
           border: bypassActive ? '1px solid #ef4444' : '1px solid #d0d0d0',
@@ -1545,7 +1545,7 @@ export function ParameterPanel() {
       >
         <ControlButtons />
         <div className="flex-1 flex items-center justify-center">
-          <span className="text-[10px] text-[#999999] uppercase tracking-wider">
+          <span className="text-[13px] text-[#999999] uppercase tracking-wider">
             No active effects — drag to reorder
           </span>
         </div>
@@ -1648,7 +1648,7 @@ export function ParameterPanel() {
                 }}
               />
               <span
-                className="text-[8px] tracking-widest uppercase"
+                className="text-[14px] tracking-widest uppercase"
                 style={{
                   color: isBypassed || isMuted ? '#999' : '#666',
                   fontFamily: "'JetBrains Mono', monospace",
@@ -1725,7 +1725,7 @@ export function ParameterPanel() {
               {/* Secondary param - small, gray (always reserve space) */}
               <div
                 style={{
-                  fontSize: '9px',
+                  fontSize: '12px',
                   color: '#555',
                   fontFamily: "'JetBrains Mono', monospace",
                   marginTop: '2px',

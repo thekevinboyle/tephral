@@ -25,7 +25,7 @@ export function ExpandedParameterPanel() {
   if (!effectId || !effect) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50 border-l border-gray-200">
-        <span className="text-[11px] text-gray-400">Select an effect</span>
+        <span className="text-[14px] text-gray-400">Select an effect</span>
       </div>
     )
   }
@@ -41,7 +41,7 @@ export function ExpandedParameterPanel() {
             boxShadow: `0 0 6px ${effect.color}`,
           }}
         />
-        <span className="text-[11px] font-semibold text-gray-700 uppercase tracking-wide">
+        <span className="text-[14px] font-semibold text-gray-700 uppercase tracking-wide">
           {effect.label}
         </span>
       </div>
@@ -2107,7 +2107,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
 
     default:
       return (
-        <div className="text-[11px] text-gray-400 py-4 text-center">
+        <div className="text-[14px] text-gray-400 py-4 text-center">
           No parameters available
         </div>
       )
@@ -2116,7 +2116,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide pt-3 pb-1 border-t border-gray-200 mt-2 first:mt-0 first:border-0 first:pt-0">
+    <div className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide pt-3 pb-1 border-t border-gray-200 mt-2 first:mt-0 first:border-0 first:pt-0">
       {label}
     </div>
   )
@@ -2145,7 +2145,7 @@ function FilterButtonGrid({ value, onChange }: { value: string; onChange: (v: Bo
           <button
             key={opt.value}
             onClick={() => onChange(actualValue as BoxFilterValue)}
-            className={`px-1 py-1.5 text-[9px] font-medium uppercase rounded transition-colors ${
+            className={`px-1 py-1.5 text-[12px] font-medium uppercase rounded transition-colors ${
               isActive
                 ? 'bg-gray-800 text-white'
                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'

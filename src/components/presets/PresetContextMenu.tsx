@@ -117,7 +117,7 @@ export function PresetContextMenu({
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
-            <span className="text-[11px]">Move to</span>
+            <span className="text-[14px]">Move to</span>
           </div>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="9 18 15 12 9 6" />
@@ -143,7 +143,7 @@ export function PresetContextMenu({
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
               </svg>
-              <span className="text-[11px]">{folder.name}</span>
+              <span className="text-[14px]">{folder.name}</span>
             </div>
           ))}
         </div>
@@ -189,7 +189,7 @@ function MenuItem({ children, onClick, danger }: MenuItemProps) {
       onClick={onClick}
     >
       {children}
-      {typeof children === 'string' && <span className="text-[11px]">{children}</span>}
+      {typeof children === 'string' && <span className="text-[14px]">{children}</span>}
     </div>
   )
 }

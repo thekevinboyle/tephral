@@ -64,7 +64,7 @@ export function PresetRow({ preset, onLoad, onContextMenu }: PresetRowProps) {
 
       {/* Name */}
       <span
-        className="flex-1 text-[11px] truncate"
+        className="flex-1 text-[14px] truncate"
         style={{ color: '#333333' }}
       >
         {preset.name}

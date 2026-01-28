@@ -168,7 +168,7 @@ export function GraphicPanel() {
   if (!selectedEffectId || !effect) {
     return (
       <div className="h-full flex items-center justify-center" style={{ backgroundColor: '#ffffff', borderLeft: '1px solid #e0e0e0' }}>
-        <span className="text-[10px] uppercase tracking-wider" style={{ color: '#999999' }}>
+        <span className="text-[13px] uppercase tracking-wider" style={{ color: '#999999' }}>
           Select effect
         </span>
       </div>
@@ -188,7 +188,7 @@ export function GraphicPanel() {
         className="px-3 py-2 text-center"
         style={{ borderBottom: '1px solid #e0e0e0' }}
       >
-        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#1a1a1a' }}>
+        <span className="text-[13px] font-bold uppercase tracking-wider" style={{ color: '#1a1a1a' }}>
           {effect.label}
         </span>
       </div>
@@ -210,13 +210,13 @@ export function GraphicPanel() {
             className="w-full flex items-center justify-between py-0.5 group"
           >
             <span
-              className="text-[9px] uppercase tracking-wider"
+              className="text-[12px] uppercase tracking-wider"
               style={{ color: index === selectedParamIndex ? effect.color : '#999999' }}
             >
               {index === selectedParamIndex && '▸ '}{param.label}
             </span>
             <span
-              className="text-[10px] font-mono tabular-nums"
+              className="text-[13px] font-mono tabular-nums"
               style={{ color: index === selectedParamIndex ? effect.color : '#666666' }}
             >
               {Math.round(param.value)}

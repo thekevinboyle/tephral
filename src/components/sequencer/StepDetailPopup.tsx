@@ -96,7 +96,7 @@ export function StepDetailPopup({ trackId, stepIndex, onClose }: StepDetailPopup
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: track.color }}
             />
-            <span className="text-[11px] font-semibold" style={{ color: '#333' }}>
+            <span className="text-[14px] font-semibold" style={{ color: '#333' }}>
               Step {stepIndex + 1}
             </span>
           </div>
@@ -162,7 +162,7 @@ export function StepDetailPopup({ trackId, stepIndex, onClose }: StepDetailPopup
           <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: '12px' }}>
             {/* Ratchet Division */}
             <div className="mb-2">
-              <span className="text-[10px] uppercase" style={{ color: '#999' }}>
+              <span className="text-[13px] uppercase" style={{ color: '#999' }}>
                 Ratchet
               </span>
               <div className="flex gap-1 mt-1">
@@ -170,7 +170,7 @@ export function StepDetailPopup({ trackId, stepIndex, onClose }: StepDetailPopup
                   <button
                     key={div}
                     onClick={() => handleUpdate({ ratchetDivision: div })}
-                    className="flex-1 h-6 text-[10px] rounded transition-colors"
+                    className="flex-1 h-6 text-[13px] rounded transition-colors"
                     style={{
                       backgroundColor: step.ratchetDivision === div ? track.color : '#f5f5f5',
                       color: step.ratchetDivision === div ? '#fff' : '#666',
@@ -197,7 +197,7 @@ export function StepDetailPopup({ trackId, stepIndex, onClose }: StepDetailPopup
 
             {/* Velocity Curve */}
             <div className="mb-2">
-              <span className="text-[10px] uppercase" style={{ color: '#999' }}>
+              <span className="text-[13px] uppercase" style={{ color: '#999' }}>
                 Velocity Curve
               </span>
               <div className="flex gap-1 mt-1">
@@ -205,7 +205,7 @@ export function StepDetailPopup({ trackId, stepIndex, onClose }: StepDetailPopup
                   <button
                     key={value}
                     onClick={() => handleUpdate({ velocityCurve: value })}
-                    className="flex-1 h-6 text-[11px] font-mono rounded transition-colors"
+                    className="flex-1 h-6 text-[14px] font-mono rounded transition-colors"
                     style={{
                       backgroundColor: step.velocityCurve === value ? track.color : '#f5f5f5',
                       color: step.velocityCurve === value ? '#fff' : '#666',
@@ -240,7 +240,7 @@ export function StepDetailPopup({ trackId, stepIndex, onClose }: StepDetailPopup
         >
           <button
             onClick={handleCopy}
-            className="flex-1 h-7 text-[10px] font-medium rounded"
+            className="flex-1 h-7 text-[13px] font-medium rounded"
             style={{
               backgroundColor: '#f5f5f5',
               border: '1px solid #e5e5e5',
@@ -252,7 +252,7 @@ export function StepDetailPopup({ trackId, stepIndex, onClose }: StepDetailPopup
           <button
             onClick={handlePaste}
             disabled={!stepClipboard}
-            className="flex-1 h-7 text-[10px] font-medium rounded"
+            className="flex-1 h-7 text-[13px] font-medium rounded"
             style={{
               backgroundColor: stepClipboard ? '#f5f5f5' : '#fafafa',
               border: '1px solid #e5e5e5',
@@ -264,7 +264,7 @@ export function StepDetailPopup({ trackId, stepIndex, onClose }: StepDetailPopup
           </button>
           <button
             onClick={handleReset}
-            className="flex-1 h-7 text-[10px] font-medium rounded"
+            className="flex-1 h-7 text-[13px] font-medium rounded"
             style={{
               backgroundColor: '#fff5f5',
               border: '1px solid #ffcccc',
@@ -294,7 +294,7 @@ function SliderRow({ label, value, min, max, onChange, format, color }: SliderRo
 
   return (
     <div className="flex items-center gap-2 mb-2">
-      <span className="text-[10px] w-20 flex-shrink-0" style={{ color: '#999' }}>
+      <span className="text-[13px] w-20 flex-shrink-0" style={{ color: '#999' }}>
         {label}
       </span>
       <div className="flex-1 relative h-4 flex items-center">
@@ -319,7 +319,7 @@ function SliderRow({ label, value, min, max, onChange, format, color }: SliderRo
           className="absolute inset-0 w-full opacity-0 cursor-pointer"
         />
       </div>
-      <span className="text-[10px] w-10 text-right font-mono" style={{ color: '#666' }}>
+      <span className="text-[13px] w-10 text-right font-mono" style={{ color: '#666' }}>
         {format ? format(value) : value.toFixed(2)}
       </span>
     </div>

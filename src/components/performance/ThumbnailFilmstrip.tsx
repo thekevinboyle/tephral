@@ -122,7 +122,7 @@ export function ThumbnailFilmstrip() {
       {/* Preview time indicator */}
       {previewTime !== null && (
         <div
-          className="absolute -top-6 text-[10px] tabular-nums pointer-events-none"
+          className="absolute -top-6 text-[13px] tabular-nums pointer-events-none"
           style={{
             left: `${playheadPercent}%`,
             transform: 'translateX(-50%)',

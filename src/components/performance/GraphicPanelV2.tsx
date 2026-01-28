@@ -231,7 +231,7 @@ export function GraphicPanelV2() {
         className="h-full flex items-center justify-center"
         style={{ backgroundColor: '#ffffff' }}
       >
-        <span className="text-[11px] font-medium" style={{ color: '#999999' }}>
+        <span className="text-[14px] font-medium" style={{ color: '#999999' }}>
           Select an effect
         </span>
       </div>
@@ -248,7 +248,7 @@ export function GraphicPanelV2() {
         className="px-3 py-2 flex items-center justify-between"
         style={{ borderBottom: '1px solid #e0e0e0' }}
       >
-        <span className="text-[11px] font-medium" style={{ color: '#1a1a1a' }}>
+        <span className="text-[14px] font-medium" style={{ color: '#1a1a1a' }}>
           {effect.label}
         </span>
         <div className="flex items-center gap-1">

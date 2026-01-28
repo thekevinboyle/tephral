@@ -1,5 +1,8 @@
 import { useRef, useCallback } from 'react'
 import { useRecordingStore, EXPORT_BITRATES, type ExportFormat, type ExportQuality } from '../stores/recordingStore'
+import { useDataOverlayStore } from '../stores/dataOverlayStore'
+import { useGlitchEngineStore } from '../stores/glitchEngineStore'
+import { renderDataOverlayToCanvas } from '../components/overlays/DataOverlay'
 
 interface CaptureOptions {
   format: ExportFormat
@@ -22,10 +25,47 @@ function getMimeType(format: ExportFormat): string | null {
   return null
 }
 
+// Helper to count enabled effects for the data overlay
+function countEnabledEffects(glitchStore: {
+  rgbSplitEnabled: boolean
+  blockDisplaceEnabled: boolean
+  scanLinesEnabled: boolean
+  noiseEnabled: boolean
+  pixelateEnabled: boolean
+  edgeDetectionEnabled: boolean
+  chromaticAberrationEnabled: boolean
+  vhsTrackingEnabled: boolean
+  lensDistortionEnabled: boolean
+  ditherEnabled: boolean
+  posterizeEnabled: boolean
+  staticDisplacementEnabled: boolean
+  colorGradeEnabled: boolean
+  feedbackLoopEnabled: boolean
+}): number {
+  let count = 0
+  if (glitchStore.rgbSplitEnabled) count++
+  if (glitchStore.blockDisplaceEnabled) count++
+  if (glitchStore.scanLinesEnabled) count++
+  if (glitchStore.noiseEnabled) count++
+  if (glitchStore.pixelateEnabled) count++
+  if (glitchStore.edgeDetectionEnabled) count++
+  if (glitchStore.chromaticAberrationEnabled) count++
+  if (glitchStore.vhsTrackingEnabled) count++
+  if (glitchStore.lensDistortionEnabled) count++
+  if (glitchStore.ditherEnabled) count++
+  if (glitchStore.posterizeEnabled) count++
+  if (glitchStore.staticDisplacementEnabled) count++
+  if (glitchStore.colorGradeEnabled) count++
+  if (glitchStore.feedbackLoopEnabled) count++
+  return count
+}
+
 export function useCanvasCapture(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const progressIntervalRef = useRef<number | null>(null)
+  const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const animationFrameRef = useRef<number | null>(null)
 
   const { finishExport, cancelExport, duration } = useRecordingStore()
 
@@ -34,7 +74,8 @@ export function useCanvasCapture(canvasRef: React.RefObject<HTMLCanvasElement | 
   }, [])
 
   const startCapture = useCallback((options: CaptureOptions): boolean => {
-    if (!canvasRef.current) {
+    const sourceCanvas = canvasRef.current
+    if (!sourceCanvas) {
       console.error('Canvas ref not available')
       return false
     }
@@ -45,7 +86,52 @@ export function useCanvasCapture(canvasRef: React.RefObject<HTMLCanvasElement | 
       return false
     }
 
-    const stream = canvasRef.current.captureStream(30) // 30 FPS
+    // Create or reuse composite canvas for capturing with overlays
+    if (!compositeCanvasRef.current) {
+      compositeCanvasRef.current = document.createElement('canvas')
+    }
+    const compositeCanvas = compositeCanvasRef.current
+    compositeCanvas.width = sourceCanvas.width
+    compositeCanvas.height = sourceCanvas.height
+
+    const compositeCtx = compositeCanvas.getContext('2d')
+    if (!compositeCtx) {
+      console.error('Failed to get composite canvas context')
+      return false
+    }
+
+    // Start compositing loop that draws source canvas + data overlay
+    const compositeFrame = () => {
+      // Copy source canvas
+      compositeCtx.drawImage(sourceCanvas, 0, 0)
+
+      // Get current state from stores and draw data overlay
+      const dataOverlayState = useDataOverlayStore.getState()
+      const glitchState = useGlitchEngineStore.getState()
+      const recordingState = useRecordingStore.getState()
+
+      if (dataOverlayState.enabled) {
+        const effectCount = countEnabledEffects(glitchState)
+        renderDataOverlayToCanvas(
+          compositeCtx,
+          dataOverlayState,
+          compositeCanvas.width,
+          compositeCanvas.height,
+          {
+            duration: recordingState.duration,
+            effectCount,
+          }
+        )
+      }
+
+      animationFrameRef.current = requestAnimationFrame(compositeFrame)
+    }
+
+    // Start the compositing loop
+    compositeFrame()
+
+    // Capture stream from composite canvas (not source)
+    const stream = compositeCanvas.captureStream(30) // 30 FPS
     const bitrate = EXPORT_BITRATES[options.quality]
 
     try {
@@ -55,6 +141,11 @@ export function useCanvasCapture(canvasRef: React.RefObject<HTMLCanvasElement | 
       })
     } catch (e) {
       console.error('Failed to create MediaRecorder:', e)
+      // Clean up animation frame on error
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = null
+      }
       return false
     }
 
@@ -67,6 +158,12 @@ export function useCanvasCapture(canvasRef: React.RefObject<HTMLCanvasElement | 
     }
 
     mediaRecorderRef.current.onstop = () => {
+      // Stop the compositing loop
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = null
+      }
+
       const blob = new Blob(chunksRef.current, { type: mimeType })
       downloadBlob(blob, options.format)
       finishExport()
@@ -74,6 +171,11 @@ export function useCanvasCapture(canvasRef: React.RefObject<HTMLCanvasElement | 
 
     mediaRecorderRef.current.onerror = (e) => {
       console.error('MediaRecorder error:', e)
+      // Stop the compositing loop on error
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = null
+      }
       cancelExport()
     }
 
@@ -101,6 +203,12 @@ export function useCanvasCapture(canvasRef: React.RefObject<HTMLCanvasElement | 
       progressIntervalRef.current = null
     }
 
+    // Stop compositing loop (also stopped in onstop handler, but be safe)
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = null
+    }
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop()
     }
@@ -111,6 +219,12 @@ export function useCanvasCapture(canvasRef: React.RefObject<HTMLCanvasElement | 
     if (progressIntervalRef.current !== null) {
       clearInterval(progressIntervalRef.current)
       progressIntervalRef.current = null
+    }
+
+    // Stop compositing loop
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = null
     }
 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {

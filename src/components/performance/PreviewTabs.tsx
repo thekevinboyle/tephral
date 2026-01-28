@@ -25,18 +25,19 @@ export function PreviewTabs() {
 
   return (
     <div
-      className="absolute top-3 left-3 flex gap-1 rounded-full px-1 py-1 z-20"
+      className="absolute top-3 left-3 flex gap-0.5 rounded-lg p-0.5 z-20"
       style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(8px)',
+        backgroundColor: '#f5f5f5',
+        border: '1px solid #d0d0d0',
       }}
     >
       <button
         onClick={handleSourceClick}
-        className="px-3 py-1 rounded-full text-xs font-medium transition-colors"
+        className="px-3 py-1 rounded-md text-xs font-medium transition-colors"
         style={{
-          backgroundColor: previewMode === 'source' ? 'rgba(255,255,255,0.15)' : 'transparent',
-          color: previewMode === 'source' ? '#ffffff' : '#888888',
+          backgroundColor: previewMode === 'source' ? '#ffffff' : 'transparent',
+          color: previewMode === 'source' ? '#333333' : '#888888',
+          boxShadow: previewMode === 'source' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
         }}
       >
         Source
@@ -44,11 +45,11 @@ export function PreviewTabs() {
       <button
         onClick={handleRecordedClick}
         disabled={!hasRecording}
-        className="px-3 py-1 rounded-full text-xs font-medium transition-colors"
+        className="px-3 py-1 rounded-md text-xs font-medium transition-colors"
         style={{
-          backgroundColor: previewMode === 'recorded' ? 'rgba(255,255,255,0.15)' : 'transparent',
-          color: previewMode === 'recorded' ? '#ffffff' : hasRecording ? '#888888' : '#555555',
-          opacity: hasRecording ? 1 : 0.5,
+          backgroundColor: previewMode === 'recorded' ? '#ffffff' : 'transparent',
+          color: previewMode === 'recorded' ? '#333333' : hasRecording ? '#888888' : '#bbbbbb',
+          boxShadow: previewMode === 'recorded' ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
           cursor: hasRecording ? 'pointer' : 'not-allowed',
         }}
       >

@@ -164,11 +164,11 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-2"
+        className="flex items-center justify-between px-3 py-2"
         style={{ borderBottom: '1px solid #d0d0d0' }}
       >
         <span
-          className="text-[12px] font-semibold uppercase tracking-wider"
+          className="text-[13px] font-semibold uppercase tracking-wider"
           style={{ color: '#999999' }}
         >
           Presets

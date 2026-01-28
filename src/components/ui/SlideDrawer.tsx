@@ -29,7 +29,7 @@ export function SlideDrawer({ open, onClose, side, children }: SlideDrawerProps)
 
       {/* Drawer */}
       <div
-        className={`absolute top-0 bottom-0 w-80 z-50 transition-transform duration-300 overflow-hidden ${
+        className={`absolute top-0 bottom-0 w-80 z-50 transition-transform duration-300 ${
           side === 'left' ? 'left-0 border-r' : 'right-0 border-l'
         } ${
           open
@@ -43,9 +43,7 @@ export function SlideDrawer({ open, onClose, side, children }: SlideDrawerProps)
           borderColor: '#d0d0d0',
         }}
       >
-        <div className="h-full overflow-auto">
-          {children}
-        </div>
+        {children}
       </div>
     </>
   )

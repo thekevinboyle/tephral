@@ -1761,14 +1761,11 @@ export function ParameterPanel() {
               {/* Secondary param - small, gray (always reserve space) */}
               <div
                 style={{
-                  fontSize: '10px',
+                  fontSize: '12px',
                   color: '#555',
                   fontFamily: "'JetBrains Mono', monospace",
                   marginTop: '2px',
-                  minHeight: '10px',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  minHeight: '12px',
                 }}
               >
                 {secondaryValue || '\u00A0'}

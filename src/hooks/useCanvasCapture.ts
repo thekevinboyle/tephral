@@ -4,6 +4,7 @@ import { useRecordingStore, EXPORT_BITRATES, type ExportFormat, type ExportQuali
 interface CaptureOptions {
   format: ExportFormat
   quality: ExportQuality
+  onProgress?: (progress: number) => void
 }
 
 // Check if a mime type is supported
@@ -24,8 +25,9 @@ function getMimeType(format: ExportFormat): string | null {
 export function useCanvasCapture(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const progressIntervalRef = useRef<number | null>(null)
 
-  const { finishExport, cancelExport } = useRecordingStore()
+  const { finishExport, cancelExport, duration } = useRecordingStore()
 
   const isFormatSupported = useCallback((format: ExportFormat): boolean => {
     return getMimeType(format) !== null
@@ -76,16 +78,41 @@ export function useCanvasCapture(canvasRef: React.RefObject<HTMLCanvasElement | 
     }
 
     mediaRecorderRef.current.start(100) // Collect data every 100ms
+
+    // Start progress tracking if callback provided
+    if (options.onProgress && duration > 0) {
+      const startTime = Date.now()
+      const expectedDurationMs = duration * 1000
+
+      progressIntervalRef.current = window.setInterval(() => {
+        const elapsed = Date.now() - startTime
+        const progress = Math.min(99, (elapsed / expectedDurationMs) * 100)
+        options.onProgress?.(progress)
+      }, 100)
+    }
+
     return true
-  }, [canvasRef, finishExport, cancelExport])
+  }, [canvasRef, finishExport, cancelExport, duration])
 
   const stopCapture = useCallback(() => {
+    // Clear progress tracking
+    if (progressIntervalRef.current !== null) {
+      clearInterval(progressIntervalRef.current)
+      progressIntervalRef.current = null
+    }
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop()
     }
   }, [])
 
   const cancelCapture = useCallback(() => {
+    // Clear progress tracking
+    if (progressIntervalRef.current !== null) {
+      clearInterval(progressIntervalRef.current)
+      progressIntervalRef.current = null
+    }
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop()
     }

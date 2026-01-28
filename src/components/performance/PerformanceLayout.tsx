@@ -1,6 +1,7 @@
 import { useRef, useCallback } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { TransportBar } from './TransportBar'
+import { PreviewControls } from './PreviewControls'
 import { ParameterPanel } from './ParameterPanel'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
@@ -13,10 +14,14 @@ import { SequencerPanel } from '../sequencer/SequencerPanel'
 import { PresetLibraryPanel } from '../presets/PresetLibraryPanel'
 import { useCanvasCapture } from '../../hooks/useCanvasCapture'
 import { useRecordingStore, type ExportFormat, type ExportQuality } from '../../stores/recordingStore'
+import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
   const canvasElementRef = useRef<HTMLCanvasElement | null>(null)
+
+  // Initialize automation playback (handles keyboard shortcuts and event replay)
+  const { resetEffects } = useAutomationPlayback()
 
   // Get canvas element from the Canvas component
   const getCanvasElement = useCallback(() => {
@@ -38,7 +43,7 @@ export function PerformanceLayout() {
   }, [getCanvasElement])
 
   const { startCapture, stopCapture, isFormatSupported } = useCanvasCapture(captureRef)
-  const { startExport, duration, play, stop } = useRecordingStore()
+  const { startExport, setExportProgress, duration, play, stop } = useRecordingStore()
 
   const handleExport = useCallback((format: ExportFormat, quality: ExportQuality) => {
     updateCaptureRef()
@@ -47,20 +52,31 @@ export function PerformanceLayout() {
       return
     }
 
+    // Reset to beginning and reset all effects
+    stop()
+    resetEffects()
     startExport()
 
-    // Start playback and capture
-    stop() // Reset to beginning
-    const started = startCapture({ format, quality })
+    // Small delay to ensure state is reset before capture begins
+    setTimeout(() => {
+      const started = startCapture({
+        format,
+        quality,
+        onProgress: (progress) => setExportProgress(progress),
+      })
 
-    if (started) {
-      play()
-      // Stop capture after duration
-      setTimeout(() => {
-        stopCapture()
-      }, duration * 1000 + 500) // Add 500ms buffer
-    }
-  }, [updateCaptureRef, startExport, startCapture, stopCapture, play, stop, duration])
+      if (started) {
+        // Start playback - automation will replay automatically
+        play()
+
+        // Stop capture after duration (with buffer for encoding)
+        setTimeout(() => {
+          stopCapture()
+          stop()
+        }, duration * 1000 + 500)
+      }
+    }, 100)
+  }, [updateCaptureRef, startExport, setExportProgress, startCapture, stopCapture, play, stop, duration, resetEffects])
 
   return (
     <div
@@ -118,6 +134,18 @@ export function PerformanceLayout() {
         }}
       >
         <TransportBar />
+      </div>
+
+      {/* Preview controls - only shows when recording exists */}
+      <div
+        className="flex-shrink-0 mx-3 mt-2 rounded-xl overflow-hidden"
+        style={{
+          minHeight: '40px',
+          backgroundColor: '#ffffff',
+          border: '1px solid #d0d0d0',
+        }}
+      >
+        <PreviewControls />
       </div>
 
       {/* Parameter strip - horizontal scrollable, draggable */}

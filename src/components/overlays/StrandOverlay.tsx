@@ -7,7 +7,10 @@ import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { renderBeachStatic } from './strand/beachStaticEffect'
 import { renderHandprints } from './strand/handprintsEffect'
+import { renderStrandWeb } from './strand/strandWebEffect'
+import { renderTarSpread } from './strand/tarSpreadEffect'
 import { renderTimefall } from './strand/timefallEffect'
+import { renderUmbilical } from './strand/umbilicalEffect'
 import { renderVoidOut } from './strand/voidOutEffect'
 
 interface StrandOverlayProps {
@@ -101,6 +104,14 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
 
       if (currentStore.voidOutEnabled) {
         renderVoidOut(sourceCtx, ctx, w, h, currentStore.voidOutParams, deltaTime)
+      }
+
+      if (currentStore.strandWebEnabled) {
+        renderStrandWeb(sourceCtx, ctx, w, h, currentStore.strandWebParams, timeSeconds)
+      }
+
+      if (currentStore.umbilicalEnabled) {
+        renderUmbilical(ctx, w, h, currentStore.umbilicalParams, timeSeconds)
       }
     }
 

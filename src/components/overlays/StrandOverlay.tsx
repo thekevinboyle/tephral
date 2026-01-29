@@ -5,6 +5,7 @@
 
 import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
+import { renderBeachStatic } from './strand/beachStaticEffect'
 
 interface StrandOverlayProps {
   sourceCanvas: HTMLCanvasElement | null
@@ -14,6 +15,8 @@ interface StrandOverlayProps {
 
 export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const offscreenCtxRef = useRef<CanvasRenderingContext2D | null>(null)
   const frameIdRef = useRef<number>(0)
   const isRunningRef = useRef<boolean>(false)
   const storeRef = useRef(useStrandStore.getState())
@@ -43,7 +46,7 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
     store.seamEnabled ||
     store.extinctionEnabled
 
-  const renderFrame = useCallback((_time: number) => {
+  const renderFrame = useCallback((time: number) => {
     if (!isRunningRef.current) return
 
     const canvas = canvasRef.current
@@ -56,11 +59,31 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
     }
 
     const { width: w, height: h } = sizeRef.current
+    const currentStore = storeRef.current
+    const timeSeconds = time * 0.001
 
     // Clear canvas
     ctx.clearRect(0, 0, w, h)
 
-    // TODO: Render effects here - will be implemented in Task 5+
+    // Create offscreen canvas for reading source
+    if (!offscreenCanvasRef.current) {
+      offscreenCanvasRef.current = document.createElement('canvas')
+      offscreenCtxRef.current = offscreenCanvasRef.current.getContext('2d')
+    }
+    const offscreen = offscreenCanvasRef.current
+    const sourceCtx = offscreenCtxRef.current
+
+    if (offscreen && sourceCtx) {
+      if (offscreen.width !== w || offscreen.height !== h) {
+        offscreen.width = w
+        offscreen.height = h
+      }
+      sourceCtx.drawImage(source, 0, 0, w, h)
+
+      if (currentStore.beachStaticEnabled) {
+        renderBeachStatic(sourceCtx, ctx, w, h, currentStore.beachStaticParams, timeSeconds)
+      }
+    }
 
     frameIdRef.current = requestAnimationFrame(renderFrame)
   }, [])

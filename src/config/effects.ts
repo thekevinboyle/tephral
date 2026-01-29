@@ -9,7 +9,7 @@ export interface EffectDefinition {
 }
 
 // Page names for UI
-export const PAGE_NAMES = ['VISION', 'ACID', 'GLITCH', 'OVERLAY']
+export const PAGE_NAMES = ['VISION', 'ACID', 'GLITCH', 'OVERLAY', 'STRAND']
 
 export const EFFECTS: EffectDefinition[] = [
   // ═══════════════════════════════════════════════════════════════
@@ -123,8 +123,39 @@ export const EFFECTS: EffectDefinition[] = [
   { id: 'reserved_3_16', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
 ]
 
+// ═══════════════════════════════════════════════════════════════
+// PAGE 4: STRAND (Death Stranding-inspired)
+// ═══════════════════════════════════════════════════════════════
+
+export const STRAND_EFFECTS: EffectDefinition[] = [
+  // Row 1: Chiral/BT (black/orange)
+  { id: 'strand_handprints', label: 'HANDPRINTS', color: '#1a1a1a', row: 'render', page: 4, min: 1, max: 20 },
+  { id: 'strand_tar', label: 'TAR', color: '#ff6b35', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'strand_timefall', label: 'TIMEFALL', color: '#4a5568', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'strand_voidout', label: 'VOID OUT', color: '#ff6b35', row: 'render', page: 4, min: 0, max: 100 },
+
+  // Row 2: Strand/Connection (cyan)
+  { id: 'strand_web', label: 'STRAND WEB', color: '#00d4ff', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'strand_bridge', label: 'BRIDGE', color: '#00d4ff', row: 'render', page: 4, min: 8, max: 64 },
+  { id: 'strand_path', label: 'CHIRAL PATH', color: '#00d4ff', row: 'render', page: 4, min: 10, max: 200 },
+  { id: 'strand_umbilical', label: 'UMBILICAL', color: '#00d4ff', row: 'render', page: 4, min: 2, max: 12 },
+
+  // Row 3: Chiralium/Tech (gold)
+  { id: 'strand_odradek', label: 'ODRADEK', color: '#ffd700', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'strand_chiralium', label: 'CHIRALIUM', color: '#ffd700', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'strand_beach', label: 'BEACH', color: '#ffd700', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'strand_dooms', label: 'DOOMS', color: '#ffd700', row: 'render', page: 4, min: 0, max: 100 },
+
+  // Row 4: Atmosphere (purple)
+  { id: 'strand_cloud', label: 'CHIRAL CLOUD', color: '#7b68ee', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'strand_bbpod', label: 'BB POD', color: '#7b68ee', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'strand_seam', label: 'SEAM', color: '#7b68ee', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'strand_extinction', label: 'EXTINCTION', color: '#7b68ee', row: 'render', page: 4, min: 0, max: 100 },
+]
+
 // Get effects for a specific page
 export const getEffectsForPage = (page: number): EffectDefinition[] => {
+  if (page === 4) return STRAND_EFFECTS
   return EFFECTS.filter(e => e.page === page)
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useRecordingStore, type AutomationEvent } from '../../stores/recordingStore'
+import { useClipStore } from '../../stores/clipStore'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
@@ -24,11 +25,10 @@ export function TransportBar() {
     setSource: setRecordingSource,
     play: playRecording,
     pause: pauseRecording,
-    stop: stopRecording2,
     seek: seekRecording,
-    setShowExportModal,
-    clearRecording,
   } = useRecordingStore()
+
+  const { clips, clearAllClips } = useClipStore()
 
   const { resetEffects } = useAutomationPlayback()
 
@@ -153,21 +153,6 @@ export function TransportBar() {
       }
     }
   }, [isRecordingMode, isRecordingPlaying, pauseRecording, recordingTime, resetEffects, playRecording, videoElement])
-
-  // Handle stop
-  const handleStop = useCallback(() => {
-    if (isRecordingMode) {
-      stopRecording2()
-      // Also pause the video element when stopping recorded playback
-      if (videoElement) {
-        videoElement.pause()
-        videoElement.currentTime = 0
-      }
-    } else if (videoElement) {
-      videoElement.pause()
-      videoElement.currentTime = 0
-    }
-  }, [isRecordingMode, stopRecording2, videoElement])
 
   // Handle timeline click to seek
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -379,22 +364,6 @@ export function TransportBar() {
         )}
       </button>
 
-      {/* Stop button */}
-      <button
-        onClick={handleStop}
-        disabled={!hasPlayableContent}
-        className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-        style={{
-          opacity: hasPlayableContent ? 1 : 0.4,
-          cursor: hasPlayableContent ? 'pointer' : 'default',
-        }}
-        title="Stop (Escape)"
-      >
-        <svg width="12" height="12" viewBox="0 0 14 14" fill="#333">
-          <rect x="2" y="2" width="10" height="10" rx="1" />
-        </svg>
-      </button>
-
       {/* Timeline */}
       <div
         className="h-2 bg-gray-200 rounded-full relative overflow-hidden group"
@@ -433,38 +402,21 @@ export function TransportBar() {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Export button */}
-      <button
-        onClick={() => setShowExportModal(true)}
-        disabled={!hasRecording}
-        className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
-        style={{
-          backgroundColor: hasRecording ? '#3b82f6' : '#9ca3af',
-          border: `1px solid ${hasRecording ? '#2563eb' : '#9ca3af'}`,
-          color: '#ffffff',
-          cursor: hasRecording ? 'pointer' : 'not-allowed',
-        }}
-        onMouseEnter={(e) => hasRecording && (e.currentTarget.style.backgroundColor = '#2563eb')}
-        onMouseLeave={(e) => hasRecording && (e.currentTarget.style.backgroundColor = '#3b82f6')}
-      >
-        Export
-      </button>
-
       {/* Clear button */}
       <button
-        onClick={hasRecording ? clearRecording : reset}
-        disabled={!hasSource && !hasRecording}
+        onClick={clips.length > 0 ? clearAllClips : reset}
+        disabled={!hasSource && clips.length === 0}
         className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
         style={{
           backgroundColor: '#f5f5f5',
           border: '1px solid #d0d0d0',
           color: '#666666',
-          opacity: (hasSource || hasRecording) ? 1 : 0.5,
-          cursor: (hasSource || hasRecording) ? 'pointer' : 'not-allowed',
+          opacity: (hasSource || clips.length > 0) ? 1 : 0.5,
+          cursor: (hasSource || clips.length > 0) ? 'pointer' : 'not-allowed',
         }}
-        onMouseEnter={(e) => (hasSource || hasRecording) && (e.currentTarget.style.backgroundColor = hasRecording ? '#fee2e2' : '#e8e8e8')}
+        onMouseEnter={(e) => (hasSource || clips.length > 0) && (e.currentTarget.style.backgroundColor = clips.length > 0 ? '#fee2e2' : '#e8e8e8')}
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-        title={hasRecording ? 'Clear recording' : 'Clear source'}
+        title={clips.length > 0 ? 'Clear all clips' : 'Clear source'}
       >
         Clear
       </button>

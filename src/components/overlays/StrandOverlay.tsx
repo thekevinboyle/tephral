@@ -7,6 +7,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { renderBeachStatic } from './strand/beachStaticEffect'
 import { renderBridgeLink } from './strand/bridgeLinkEffect'
+import { renderChiralCloud } from './strand/chiralCloudEffect'
 import { renderChiralium } from './strand/chiraliumEffect'
 import { renderChiralPath } from './strand/chiralPathEffect'
 import { renderDooms } from './strand/doomsEffect'
@@ -144,6 +145,10 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
 
       if (currentStore.odradekEnabled) {
         renderOdradek(sourceCtx, ctx, w, h, currentStore.odradekParams, timeSeconds, deltaTime)
+      }
+
+      if (currentStore.chiralCloudEnabled) {
+        renderChiralCloud(sourceCtx, ctx, w, h, currentStore.chiralCloudParams, timeSeconds)
       }
 
       if (currentStore.extinctionEnabled) {

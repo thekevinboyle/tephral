@@ -7,8 +7,11 @@ import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { renderBeachStatic } from './strand/beachStaticEffect'
 import { renderBridgeLink } from './strand/bridgeLinkEffect'
+import { renderChiralium } from './strand/chiraliumEffect'
+import { renderChiralPath } from './strand/chiralPathEffect'
 import { renderDooms } from './strand/doomsEffect'
 import { renderHandprints } from './strand/handprintsEffect'
+import { renderOdradek } from './strand/odradekEffect'
 import { renderStrandWeb } from './strand/strandWebEffect'
 import { renderTarSpread } from './strand/tarSpreadEffect'
 import { renderTimefall } from './strand/timefallEffect'
@@ -126,6 +129,18 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
 
       if (currentStore.doomsEnabled) {
         renderDooms(sourceCtx, ctx, w, h, currentStore.doomsParams, timeSeconds)
+      }
+
+      if (currentStore.chiralPathEnabled) {
+        renderChiralPath(sourceCtx, ctx, w, h, currentStore.chiralPathParams, deltaTime)
+      }
+
+      if (currentStore.chiraliumEnabled) {
+        renderChiralium(sourceCtx, ctx, w, h, currentStore.chiraliumParams, timeSeconds)
+      }
+
+      if (currentStore.odradekEnabled) {
+        renderOdradek(sourceCtx, ctx, w, h, currentStore.odradekParams, timeSeconds, deltaTime)
       }
     }
 

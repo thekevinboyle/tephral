@@ -103,7 +103,7 @@ export const useClipStore = create<ClipState>((set, get) => ({
   exportResolution: '1080p',
   exportQuality: 'high',
   exportFrameRate: 30,
-  exportFormat: 'mp4',
+  exportFormat: 'webm',  // webm is instant (no FFmpeg needed)
 
   addClip: async (blob: Blob, duration: number) => {
     const id = generateUUID()

@@ -11,6 +11,9 @@ export function PreviewHeader() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Reset file input so the same file can be selected again
+    e.target.value = ''
+
     const url = URL.createObjectURL(file)
 
     if (file.type.startsWith('video/')) {

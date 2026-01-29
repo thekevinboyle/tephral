@@ -14,7 +14,10 @@ export function SourcePanel() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) uploadFile(file)
+    if (file) {
+      e.target.value = '' // Reset so same file can be selected again
+      uploadFile(file)
+    }
   }
 
   return (

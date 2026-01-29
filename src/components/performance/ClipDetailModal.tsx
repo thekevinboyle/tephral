@@ -190,7 +190,11 @@ export function ClipDetailModal() {
 
         {/* Close button - always enabled, cancels operation if busy */}
         <button
-          onClick={handleClose}
+          onClick={(e) => {
+            e.stopPropagation()
+            cancel()
+            selectClip(null)
+          }}
           aria-label="Close"
           className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-gray-600"
           style={{
@@ -312,7 +316,10 @@ export function ClipDetailModal() {
 
             {/* Cancel button */}
             <button
-              onClick={cancel}
+              onClick={() => {
+                cancel()
+                selectClip(null)
+              }}
               className="w-full py-2 text-[14px] font-medium rounded-md transition-colors"
               style={{
                 backgroundColor: '#333',

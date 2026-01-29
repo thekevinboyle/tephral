@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { FFmpeg } from '@ffmpeg/ffmpeg'
-import { fetchFile, toBlobURL } from '@ffmpeg/util'
+import { fetchFile } from '@ffmpeg/util'
 import type { ExportResolution, ExportQuality, ExportFrameRate, ExportFormat } from '../stores/clipStore'
 
 interface TranscodeOptions {
@@ -28,6 +28,7 @@ export function useVideoTranscode() {
   const [progress, setProgress] = useState(0)
   const ffmpegRef = useRef<FFmpeg | null>(null)
   const cancelledRef = useRef(false) // Track if operation was cancelled
+  const abortControllerRef = useRef<AbortController | null>(null) // For cancelling fetches
 
   const loadFFmpeg = useCallback(async () => {
     if (ffmpegRef.current) return ffmpegRef.current
@@ -47,13 +48,48 @@ export function useVideoTranscode() {
       setProgress(Math.round(progress * 100))
     })
 
+    // Create abort controller for this load operation
+    abortControllerRef.current = new AbortController()
+    const { signal } = abortControllerRef.current
+
+    // Helper to fetch with timeout
+    const fetchWithTimeout = async (url: string, type: string, timeoutMs = 60000) => {
+      const timeoutId = setTimeout(() => {
+        if (!signal.aborted) {
+          abortControllerRef.current?.abort()
+        }
+      }, timeoutMs)
+
+      try {
+        console.log(`[FFmpeg] Fetching ${url}...`)
+        const response = await fetch(url, { signal })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const blob = await response.blob()
+        clearTimeout(timeoutId)
+        return URL.createObjectURL(new Blob([blob], { type }))
+      } catch (error) {
+        clearTimeout(timeoutId)
+        if (error instanceof Error && error.name === 'AbortError') {
+          if (cancelledRef.current) {
+            throw new Error('Operation cancelled')
+          }
+          throw new Error('FFmpeg download timed out. Please try again.')
+        }
+        throw error
+      }
+    }
+
     try {
-      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm'
-      console.log('[FFmpeg] Fetching core files from unpkg...')
-      await ffmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-      })
+      // Use jsDelivr as primary CDN (often faster/more reliable than unpkg)
+      const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm'
+      console.log('[FFmpeg] Fetching core files from jsdelivr...')
+
+      const [coreURL, wasmURL] = await Promise.all([
+        fetchWithTimeout(`${baseURL}/ffmpeg-core.js`, 'text/javascript', 30000),
+        fetchWithTimeout(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm', 120000),
+      ])
+
+      await ffmpeg.load({ coreURL, wasmURL })
       console.log('[FFmpeg] Loaded successfully')
     } catch (error) {
       console.error('[FFmpeg] Failed to load:', error)
@@ -141,6 +177,12 @@ export function useVideoTranscode() {
   const cancel = useCallback(() => {
     console.log('[FFmpeg] Cancel requested')
     cancelledRef.current = true
+
+    // Abort any ongoing fetch operations
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
 
     // Terminate FFmpeg if it exists
     if (ffmpegRef.current) {

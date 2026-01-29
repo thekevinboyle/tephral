@@ -6,6 +6,7 @@
 import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { renderBeachStatic } from './strand/beachStaticEffect'
+import { renderBridgeLink } from './strand/bridgeLinkEffect'
 import { renderHandprints } from './strand/handprintsEffect'
 import { renderStrandWeb } from './strand/strandWebEffect'
 import { renderTarSpread } from './strand/tarSpreadEffect'
@@ -94,6 +95,10 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
         renderHandprints(ctx, w, h, currentStore.handprintsParams, timeSeconds, deltaTime)
       }
 
+      if (currentStore.tarSpreadEnabled) {
+        renderTarSpread(sourceCtx, ctx, w, h, currentStore.tarSpreadParams, deltaTime)
+      }
+
       if (currentStore.timefallEnabled) {
         renderTimefall(sourceCtx, ctx, w, h, currentStore.timefallParams, deltaTime)
       }
@@ -112,6 +117,10 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
 
       if (currentStore.umbilicalEnabled) {
         renderUmbilical(ctx, w, h, currentStore.umbilicalParams, timeSeconds)
+      }
+
+      if (currentStore.bridgeLinkEnabled) {
+        renderBridgeLink(sourceCtx, ctx, w, h, currentStore.bridgeLinkParams, timeSeconds)
       }
     }
 

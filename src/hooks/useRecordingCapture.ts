@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useRecordingStore, EXPORT_BITRATES } from '../stores/recordingStore'
+import { useClipStore } from '../stores/clipStore'
 
 /**
  * Hook that captures the canvas to video during recording.
@@ -9,12 +10,14 @@ import { useRecordingStore, EXPORT_BITRATES } from '../stores/recordingStore'
 export function useRecordingCapture(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const startTimeRef = useRef<number>(0)
 
   const {
     isRecording,
     exportQuality,
-    setRecordedVideo,
   } = useRecordingStore()
+
+  const addClip = useClipStore((state) => state.addClip)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -23,6 +26,7 @@ export function useRecordingCapture(canvasRef: React.RefObject<HTMLCanvasElement
     if (isRecording) {
       // Start recording
       chunksRef.current = []
+      startTimeRef.current = performance.now()
 
       // Get supported mime type
       const mimeTypes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
@@ -57,8 +61,9 @@ export function useRecordingCapture(canvasRef: React.RefObject<HTMLCanvasElement
         mediaRecorderRef.current.onstop = () => {
           if (chunksRef.current.length > 0) {
             const blob = new Blob(chunksRef.current, { type: mimeType })
-            setRecordedVideo(blob)
-            console.log('[Recording] Video captured, size:', blob.size)
+            const duration = (performance.now() - startTimeRef.current) / 1000
+            addClip(blob, duration)
+            console.log('[Recording] Video captured, size:', blob.size, 'duration:', duration)
           }
         }
 
@@ -80,5 +85,5 @@ export function useRecordingCapture(canvasRef: React.RefObject<HTMLCanvasElement
         mediaRecorderRef.current.stop()
       }
     }
-  }, [isRecording, canvasRef, exportQuality, setRecordedVideo])
+  }, [isRecording, canvasRef, exportQuality, addClip])
 }

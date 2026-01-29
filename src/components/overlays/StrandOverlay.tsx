@@ -7,6 +7,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { renderBeachStatic } from './strand/beachStaticEffect'
 import { renderBridgeLink } from './strand/bridgeLinkEffect'
+import { renderDooms } from './strand/doomsEffect'
 import { renderHandprints } from './strand/handprintsEffect'
 import { renderStrandWeb } from './strand/strandWebEffect'
 import { renderTarSpread } from './strand/tarSpreadEffect'
@@ -121,6 +122,10 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
 
       if (currentStore.bridgeLinkEnabled) {
         renderBridgeLink(sourceCtx, ctx, w, h, currentStore.bridgeLinkParams, timeSeconds)
+      }
+
+      if (currentStore.doomsEnabled) {
+        renderDooms(sourceCtx, ctx, w, h, currentStore.doomsParams, timeSeconds)
       }
     }
 

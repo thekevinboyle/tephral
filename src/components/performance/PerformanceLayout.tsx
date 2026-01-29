@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { TransportBar } from './TransportBar'
 import { ParameterPanel } from './ParameterPanel'
@@ -16,7 +16,9 @@ import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
-  const canvasElementRef = useRef<HTMLCanvasElement | null>(null)
+  // Use state so that when canvas becomes available, it triggers a re-render
+  // which allows useRecordingCapture to properly initialize
+  const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null)
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
   useAutomationPlayback()
@@ -29,9 +31,9 @@ export function PerformanceLayout() {
     const checkCanvas = () => {
       if (canvasRef.current) {
         const canvas = canvasRef.current.getCanvas()
-        if (canvas) {
+        if (canvas && canvas !== captureRef.current) {
           captureRef.current = canvas
-          canvasElementRef.current = canvas
+          setCanvasElement(canvas) // Trigger re-render when canvas is found
         }
       }
     }
@@ -42,7 +44,8 @@ export function PerformanceLayout() {
   }, [])
 
   // Use recording capture hook - captures canvas during recording
-  useRecordingCapture(captureRef)
+  // Pass canvasElement as a dependency hint so hook re-runs when canvas is available
+  useRecordingCapture(captureRef, canvasElement)
 
   return (
     <div

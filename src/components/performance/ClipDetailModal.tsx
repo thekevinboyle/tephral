@@ -35,7 +35,7 @@ export function ClipDetailModal() {
   } = useClipStore()
 
   // Get transcode hook
-  const { transcode, isTranscoding, progress, cancel } = useVideoTranscode()
+  const { transcode, isTranscoding, isLoading, progress, cancel } = useVideoTranscode()
 
   // Find selected clip
   const selectedClip = clips.find(c => c.id === selectedClipId)
@@ -134,16 +134,20 @@ export function ClipDetailModal() {
     }
   }, [selectedClipId, removeClip])
 
-  const handleClose = useCallback(() => {
-    if (!isTranscoding) {
-      selectClip(null)
-    }
-  }, [isTranscoding, selectClip])
+  const isBusy = isLoading || isTranscoding
 
-  // Escape key handler
+  const handleClose = useCallback(() => {
+    if (isBusy) {
+      // Cancel the operation first, then close
+      cancel()
+    }
+    selectClip(null)
+  }, [isBusy, cancel, selectClip])
+
+  // Escape key handler - always works, cancels operation if busy
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isTranscoding) {
+      if (e.key === 'Escape') {
         handleClose()
       }
     }
@@ -152,7 +156,7 @@ export function ClipDetailModal() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [handleClose, isTranscoding])
+  }, [handleClose])
 
   // Don't render if no clip is selected
   if (!selectedClip) return null
@@ -184,16 +188,14 @@ export function ClipDetailModal() {
           Clip Details
         </h2>
 
-        {/* Close button */}
+        {/* Close button - always enabled, cancels operation if busy */}
         <button
           onClick={handleClose}
-          disabled={isTranscoding}
           aria-label="Close"
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors"
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-gray-600"
           style={{
             backgroundColor: '#333',
-            color: isTranscoding ? '#666' : '#999',
-            cursor: isTranscoding ? 'not-allowed' : 'pointer',
+            color: '#999',
           }}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -265,7 +267,7 @@ export function ClipDetailModal() {
         </div>
 
         {/* Transcoding progress or export options */}
-        {isTranscoding ? (
+        {(isLoading || isTranscoding) ? (
           <div className="space-y-4">
             {/* Progress bar */}
             <div className="space-y-2">
@@ -273,25 +275,38 @@ export function ClipDetailModal() {
                 className="flex justify-between text-[14px]"
                 style={{ color: '#999' }}
               >
-                <span>Transcoding...</span>
-                <span
-                  className="tabular-nums"
-                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
-                >
-                  {progress}%
-                </span>
+                <span>{isLoading ? 'Loading FFmpeg...' : 'Transcoding...'}</span>
+                {!isLoading && (
+                  <span
+                    className="tabular-nums"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    {progress}%
+                  </span>
+                )}
               </div>
               <div
                 className="h-2 rounded-full overflow-hidden"
                 style={{ backgroundColor: '#333' }}
               >
-                <div
-                  className="h-full rounded-full transition-all duration-200"
-                  style={{
-                    width: `${progress}%`,
-                    backgroundColor: '#3b82f6',
-                  }}
-                />
+                {isLoading ? (
+                  /* Indeterminate loading bar */
+                  <div
+                    className="h-full rounded-full animate-pulse"
+                    style={{
+                      width: '30%',
+                      backgroundColor: '#3b82f6',
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="h-full rounded-full transition-all duration-200"
+                    style={{
+                      width: `${progress}%`,
+                      backgroundColor: '#3b82f6',
+                    }}
+                  />
+                )}
               </div>
             </div>
 

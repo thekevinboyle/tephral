@@ -6,8 +6,14 @@ import { useClipStore } from '../stores/clipStore'
  * Hook that captures the canvas to video during recording.
  * When recording starts, it begins capturing the canvas with effects.
  * When recording stops, it saves the video blob to the store.
+ *
+ * @param canvasRef - Ref to the canvas element to capture
+ * @param canvasElement - The actual canvas element (used as dependency to trigger re-runs)
  */
-export function useRecordingCapture(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
+export function useRecordingCapture(
+  canvasRef: React.RefObject<HTMLCanvasElement | null>,
+  canvasElement: HTMLCanvasElement | null = null
+) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const startTimeRef = useRef<number>(0)
@@ -21,7 +27,10 @@ export function useRecordingCapture(canvasRef: React.RefObject<HTMLCanvasElement
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas) {
+      console.log('[Recording] Canvas not available yet')
+      return
+    }
 
     if (isRecording) {
       // Start recording
@@ -85,5 +94,5 @@ export function useRecordingCapture(canvasRef: React.RefObject<HTMLCanvasElement
         mediaRecorderRef.current.stop()
       }
     }
-  }, [isRecording, canvasRef, exportQuality, addClip])
+  }, [isRecording, canvasRef, canvasElement, exportQuality, addClip])
 }

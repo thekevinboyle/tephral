@@ -317,7 +317,7 @@ export function TransportBar() {
       {/* Divider */}
       <div className="w-px h-5 bg-gray-300" />
 
-      {/* Record button */}
+      {/* Record/Stop button - toggles between record (red circle) and stop (white square) */}
       <button
         onClick={isRecording ? stopRecording : handleStartRecording}
         disabled={!hasSource}
@@ -329,13 +329,15 @@ export function TransportBar() {
           opacity: hasSource ? 1 : 0.5,
           cursor: hasSource ? 'pointer' : 'not-allowed',
         }}
+        title={isRecording ? 'Stop Recording' : 'Start Recording'}
       >
-        <div
-          className={`${isRecording ? 'w-2.5 h-2.5 rounded-sm' : 'w-3 h-3 rounded-full'}`}
-          style={{
-            backgroundColor: isRecording ? '#ffffff' : '#ef4444',
-          }}
-        />
+        {isRecording ? (
+          /* Stop icon - white square */
+          <div className="w-3 h-3 bg-white" />
+        ) : (
+          /* Record icon - red circle */
+          <div className="w-3 h-3 rounded-full bg-red-500" />
+        )}
       </button>
 
       {/* Divider */}

@@ -20,7 +20,7 @@ export function ClipBin() {
   if (clips.length === 0) {
     return (
       <div
-        className="absolute bottom-3 left-3 right-3 h-16 rounded-lg flex items-center justify-center"
+        className="absolute bottom-3 left-3 right-3 h-16 rounded-lg flex items-center justify-center z-20"
         style={{
           backgroundColor: 'rgba(26, 26, 26, 0.6)',
           border: '1px solid rgba(51, 51, 51, 0.5)',
@@ -33,7 +33,7 @@ export function ClipBin() {
 
   return (
     <div
-      className="absolute bottom-3 left-3 right-3 rounded-lg overflow-hidden"
+      className="absolute bottom-3 left-3 right-3 rounded-lg overflow-hidden z-20"
       style={{
         backgroundColor: 'rgba(26, 26, 26, 0.85)',
         border: '1px solid #333',

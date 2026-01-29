@@ -10,6 +10,7 @@ import { useRoutingStore } from '../../stores/routingStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
+import { useStrandStore } from '../../stores/strandStore'
 
 export function PerformanceGrid() {
   // Glitch engine store
@@ -29,6 +30,9 @@ export function PerformanceGrid() {
   // Texture and Data overlay stores
   const textureOverlay = useTextureOverlayStore()
   const dataOverlay = useDataOverlayStore()
+
+  // Strand store
+  const strand = useStrandStore()
 
   // Routing store for effect order
   const { effectOrder, setEffectOrder } = useRoutingStore()
@@ -500,6 +504,123 @@ export function PerformanceGrid() {
           onValueChange: (v: number) => dataOverlay.setStyle({ fontSize: v }),
         }
 
+      // ═══════════════════════════════════════════════════════════════
+      // PAGE 4: STRAND EFFECTS
+      // ═══════════════════════════════════════════════════════════════
+
+      case 'strand_handprints':
+        return {
+          active: strand.handprintsEnabled,
+          value: strand.handprintsParams.density,
+          onToggle: () => strand.setHandprintsEnabled(!strand.handprintsEnabled),
+          onValueChange: (v: number) => strand.updateHandprintsParams({ density: v }),
+        }
+      case 'strand_tar':
+        return {
+          active: strand.tarSpreadEnabled,
+          value: strand.tarSpreadParams.coverage * 100,
+          onToggle: () => strand.setTarSpreadEnabled(!strand.tarSpreadEnabled),
+          onValueChange: (v: number) => strand.updateTarSpreadParams({ coverage: v / 100 }),
+        }
+      case 'strand_timefall':
+        return {
+          active: strand.timefallEnabled,
+          value: strand.timefallParams.intensity * 100,
+          onToggle: () => strand.setTimefallEnabled(!strand.timefallEnabled),
+          onValueChange: (v: number) => strand.updateTimefallParams({ intensity: v / 100 }),
+        }
+      case 'strand_voidout':
+        return {
+          active: strand.voidOutEnabled,
+          value: strand.voidOutParams.distortAmount * 100,
+          onToggle: () => strand.setVoidOutEnabled(!strand.voidOutEnabled),
+          onValueChange: (v: number) => strand.updateVoidOutParams({ distortAmount: v / 100 }),
+        }
+      case 'strand_web':
+        return {
+          active: strand.strandWebEnabled,
+          value: strand.strandWebParams.glowIntensity * 100,
+          onToggle: () => strand.setStrandWebEnabled(!strand.strandWebEnabled),
+          onValueChange: (v: number) => strand.updateStrandWebParams({ glowIntensity: v / 100 }),
+        }
+      case 'strand_bridge':
+        return {
+          active: strand.bridgeLinkEnabled,
+          value: strand.bridgeLinkParams.gridSize,
+          onToggle: () => strand.setBridgeLinkEnabled(!strand.bridgeLinkEnabled),
+          onValueChange: (v: number) => strand.updateBridgeLinkParams({ gridSize: v }),
+        }
+      case 'strand_path':
+        return {
+          active: strand.chiralPathEnabled,
+          value: strand.chiralPathParams.particleCount,
+          onToggle: () => strand.setChiralPathEnabled(!strand.chiralPathEnabled),
+          onValueChange: (v: number) => strand.updateChiralPathParams({ particleCount: v }),
+        }
+      case 'strand_umbilical':
+        return {
+          active: strand.umbilicalEnabled,
+          value: strand.umbilicalParams.tendrilCount,
+          onToggle: () => strand.setUmbilicalEnabled(!strand.umbilicalEnabled),
+          onValueChange: (v: number) => strand.updateUmbilicalParams({ tendrilCount: v }),
+        }
+      case 'strand_odradek':
+        return {
+          active: strand.odradekEnabled,
+          value: strand.odradekParams.sweepSpeed * 100,
+          onToggle: () => strand.setOdradekEnabled(!strand.odradekEnabled),
+          onValueChange: (v: number) => strand.updateOdradekParams({ sweepSpeed: v / 100 }),
+        }
+      case 'strand_chiralium':
+        return {
+          active: strand.chiraliumEnabled,
+          value: strand.chiraliumParams.density * 100,
+          onToggle: () => strand.setChiraliumEnabled(!strand.chiraliumEnabled),
+          onValueChange: (v: number) => strand.updateChiraliumParams({ density: v / 100 }),
+        }
+      case 'strand_beach':
+        return {
+          active: strand.beachStaticEnabled,
+          value: strand.beachStaticParams.grainAmount * 100,
+          onToggle: () => strand.setBeachStaticEnabled(!strand.beachStaticEnabled),
+          onValueChange: (v: number) => strand.updateBeachStaticParams({ grainAmount: v / 100 }),
+        }
+      case 'strand_dooms':
+        return {
+          active: strand.doomsEnabled,
+          value: strand.doomsParams.haloSize * 100,
+          onToggle: () => strand.setDoomsEnabled(!strand.doomsEnabled),
+          onValueChange: (v: number) => strand.updateDoomsParams({ haloSize: v / 100 }),
+        }
+      case 'strand_cloud':
+        return {
+          active: strand.chiralCloudEnabled,
+          value: strand.chiralCloudParams.density * 100,
+          onToggle: () => strand.setChiralCloudEnabled(!strand.chiralCloudEnabled),
+          onValueChange: (v: number) => strand.updateChiralCloudParams({ density: v / 100 }),
+        }
+      case 'strand_bbpod':
+        return {
+          active: strand.bbPodEnabled,
+          value: strand.bbPodParams.vignetteSize * 100,
+          onToggle: () => strand.setBBPodEnabled(!strand.bbPodEnabled),
+          onValueChange: (v: number) => strand.updateBBPodParams({ vignetteSize: v / 100 }),
+        }
+      case 'strand_seam':
+        return {
+          active: strand.seamEnabled,
+          value: strand.seamParams.riftWidth * 100,
+          onToggle: () => strand.setSeamEnabled(!strand.seamEnabled),
+          onValueChange: (v: number) => strand.updateSeamParams({ riftWidth: v / 100 }),
+        }
+      case 'strand_extinction':
+        return {
+          active: strand.extinctionEnabled,
+          value: strand.extinctionParams.coverage * 100,
+          onToggle: () => strand.setExtinctionEnabled(!strand.extinctionEnabled),
+          onValueChange: (v: number) => strand.updateExtinctionParams({ coverage: v / 100 }),
+        }
+
       // Reserved / empty slots
       default:
         if (effectId.startsWith('reserved')) {
@@ -560,8 +681,8 @@ export function PerformanceGrid() {
         </div>
 
         <button
-          onClick={() => setGridPage(Math.min(3, gridPage + 1))}
-          disabled={gridPage === 3}
+          onClick={() => setGridPage(Math.min(4, gridPage + 1))}
+          disabled={gridPage === 4}
           className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

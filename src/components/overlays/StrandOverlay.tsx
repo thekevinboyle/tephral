@@ -19,6 +19,7 @@ import { renderTimefall } from './strand/timefallEffect'
 import { renderUmbilical } from './strand/umbilicalEffect'
 import { renderVoidOut } from './strand/voidOutEffect'
 import { renderBBPod } from './strand/bbPodEffect'
+import { renderSeam } from './strand/seamEffect'
 
 interface StrandOverlayProps {
   sourceCanvas: HTMLCanvasElement | null
@@ -147,6 +148,14 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
 
       if (currentStore.extinctionEnabled) {
         renderExtinction(sourceCtx, ctx, w, h, currentStore.extinctionParams, deltaTime)
+      }
+
+      if (currentStore.bbPodEnabled) {
+        renderBBPod(ctx, w, h, currentStore.bbPodParams, timeSeconds)
+      }
+
+      if (currentStore.seamEnabled) {
+        renderSeam(sourceCtx, ctx, w, h, currentStore.seamParams, timeSeconds)
       }
     }
 

@@ -7,7 +7,6 @@ import { PerformanceGrid } from './PerformanceGrid'
 import { XYPad } from './XYPad'
 import { MixControls } from './MixControls'
 import { ClipBin } from './ClipBin'
-import { PreviewTabs } from './PreviewTabs'
 import { ClipDetailModal } from './ClipDetailModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { SequencerPanel } from '../sequencer/SequencerPanel'
@@ -78,8 +77,6 @@ export function PerformanceLayout() {
           {/* Canvas */}
           <div className="flex-1 min-h-0 relative">
             <Canvas ref={canvasRef} />
-            {/* Preview mode tabs */}
-            <PreviewTabs />
             {/* Clip bin at bottom of preview */}
             <ClipBin />
           </div>

@@ -6,6 +6,7 @@
 import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { renderBeachStatic } from './strand/beachStaticEffect'
+import { renderHandprints } from './strand/handprintsEffect'
 
 interface StrandOverlayProps {
   sourceCanvas: HTMLCanvasElement | null
@@ -19,6 +20,7 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
   const offscreenCtxRef = useRef<CanvasRenderingContext2D | null>(null)
   const frameIdRef = useRef<number>(0)
   const isRunningRef = useRef<boolean>(false)
+  const lastTimeRef = useRef<number>(0)
   const storeRef = useRef(useStrandStore.getState())
   const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const sizeRef = useRef({ width, height })
@@ -79,6 +81,13 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
         offscreen.height = h
       }
       sourceCtx.drawImage(source, 0, 0, w, h)
+
+      const deltaTime = lastTimeRef.current ? timeSeconds - lastTimeRef.current : 0.016
+      lastTimeRef.current = timeSeconds
+
+      if (currentStore.handprintsEnabled) {
+        renderHandprints(ctx, w, h, currentStore.handprintsParams, timeSeconds, deltaTime)
+      }
 
       if (currentStore.beachStaticEnabled) {
         renderBeachStatic(sourceCtx, ctx, w, h, currentStore.beachStaticParams, timeSeconds)

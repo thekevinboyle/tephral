@@ -7,6 +7,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { renderBeachStatic } from './strand/beachStaticEffect'
 import { renderHandprints } from './strand/handprintsEffect'
+import { renderTimefall } from './strand/timefallEffect'
 import { renderVoidOut } from './strand/voidOutEffect'
 
 interface StrandOverlayProps {
@@ -88,6 +89,10 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
 
       if (currentStore.handprintsEnabled) {
         renderHandprints(ctx, w, h, currentStore.handprintsParams, timeSeconds, deltaTime)
+      }
+
+      if (currentStore.timefallEnabled) {
+        renderTimefall(sourceCtx, ctx, w, h, currentStore.timefallParams, deltaTime)
       }
 
       if (currentStore.beachStaticEnabled) {

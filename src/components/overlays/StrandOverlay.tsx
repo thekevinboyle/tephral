@@ -7,6 +7,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { renderBeachStatic } from './strand/beachStaticEffect'
 import { renderHandprints } from './strand/handprintsEffect'
+import { renderVoidOut } from './strand/voidOutEffect'
 
 interface StrandOverlayProps {
   sourceCanvas: HTMLCanvasElement | null
@@ -91,6 +92,10 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
 
       if (currentStore.beachStaticEnabled) {
         renderBeachStatic(sourceCtx, ctx, w, h, currentStore.beachStaticParams, timeSeconds)
+      }
+
+      if (currentStore.voidOutEnabled) {
+        renderVoidOut(sourceCtx, ctx, w, h, currentStore.voidOutParams, deltaTime)
       }
     }
 

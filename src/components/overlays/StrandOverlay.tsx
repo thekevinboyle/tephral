@@ -10,6 +10,7 @@ import { renderBridgeLink } from './strand/bridgeLinkEffect'
 import { renderChiralium } from './strand/chiraliumEffect'
 import { renderChiralPath } from './strand/chiralPathEffect'
 import { renderDooms } from './strand/doomsEffect'
+import { renderExtinction } from './strand/extinctionEffect'
 import { renderHandprints } from './strand/handprintsEffect'
 import { renderOdradek } from './strand/odradekEffect'
 import { renderStrandWeb } from './strand/strandWebEffect'
@@ -17,6 +18,7 @@ import { renderTarSpread } from './strand/tarSpreadEffect'
 import { renderTimefall } from './strand/timefallEffect'
 import { renderUmbilical } from './strand/umbilicalEffect'
 import { renderVoidOut } from './strand/voidOutEffect'
+import { renderBBPod } from './strand/bbPodEffect'
 
 interface StrandOverlayProps {
   sourceCanvas: HTMLCanvasElement | null
@@ -141,6 +143,10 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
 
       if (currentStore.odradekEnabled) {
         renderOdradek(sourceCtx, ctx, w, h, currentStore.odradekParams, timeSeconds, deltaTime)
+      }
+
+      if (currentStore.extinctionEnabled) {
+        renderExtinction(sourceCtx, ctx, w, h, currentStore.extinctionParams, deltaTime)
       }
     }
 

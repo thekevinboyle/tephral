@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEPHRAL — Real-Time Video Destruction</title>
+  <meta name="description" content="64 GPU-accelerated effects. Death Stranding aesthetic. Runs entirely in your browser.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/animations.css">
+</head>
+<body class="scanlines noise">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- NAVIGATION -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <nav class="nav" id="nav">
+    <div class="nav__container">
+      <a href="#" class="nav__logo glitch-text" data-text="TEPHRAL">TEPHRAL</a>
+      <a href="/" class="btn btn-primary nav__cta">LAUNCH</a>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- HERO -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero__content">
+      <h1 class="hero__headline heading-xl typewriter">REAL-TIME VIDEO DESTRUCTION</h1>
+      <div class="hero__divider"></div>
+      <p class="hero__subhead fade-up">
+        64 GPU-accelerated effects. Death Stranding aesthetic.<br>
+        Runs entirely in your browser. No uploads. No waiting.
+      </p>
+      <div class="hero__ctas fade-up">
+        <a href="/" class="btn btn-primary">LAUNCH APP</a>
+        <a href="#effects" class="btn btn-secondary">SCROLL TO EXPLORE <span class="arrow">↓</span></a>
+      </div>
+    </div>
+    <div class="hero__screenshot parallax">
+      <div class="screenshot">
+        <img src="assets/screenshots/hero.png" alt="Tephral interface with multiple effects active">
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- EFFECT PAGES -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="section" id="effects">
+    <div class="section__header">
+      <span class="section__number glitch-text" data-text="01">01</span>
+      <span class="section__divider">———</span>
+      <span class="section__title">EFFECT PAGES</span>
+    </div>
+
+    <div class="effects-grid">
+      <div class="card effect-card" data-category="vision">
+        <h3 class="card__title glitch-hover">VISION</h3>
+        <p class="card__desc">AI-powered tracking</p>
+        <ul class="card__list">
+          <li>BRIGHT</li>
+          <li>EDGE</li>
+          <li>FACE</li>
+          <li>HANDS</li>
+        </ul>
+      </div>
+
+      <div class="card effect-card" data-category="acid">
+        <h3 class="card__title glitch-hover">ACID</h3>
+        <p class="card__desc">Data destruction</p>
+        <ul class="card__list">
+          <li>DOTS</li>
+          <li>DECOMP</li>
+          <li>VORONOI</li>
+          <li>LED</li>
+        </ul>
+      </div>
+
+      <div class="card effect-card" data-category="glitch">
+        <h3 class="card__title glitch-hover">GLITCH</h3>
+        <p class="card__desc">Digital corruption</p>
+        <ul class="card__list">
+          <li>RGB</li>
+          <li>BLOCK</li>
+          <li>VHS</li>
+          <li>FEEDBACK</li>
+        </ul>
+      </div>
+
+      <div class="card effect-card" data-category="overlay">
+        <h3 class="card__title glitch-hover">OVERLAY</h3>
+        <p class="card__desc">Textures & overlays</p>
+        <ul class="card__list">
+          <li>GRAIN</li>
+          <li>DUST</li>
+          <li>VHS</li>
+          <li>WATERMARK</li>
+        </ul>
+      </div>
+
+      <div class="card effect-card" data-category="strand">
+        <h3 class="card__title glitch-hover">STRAND</h3>
+        <p class="card__desc">Death Stranding</p>
+        <ul class="card__list">
+          <li>HANDPRINT</li>
+          <li>VOID OUT</li>
+          <li>UMBILICAL</li>
+          <li>ODRADEK</li>
+        </ul>
+      </div>
+    </div>
+
+    <svg class="strand-connections" aria-hidden="true">
+      <path class="strand-line" d=""></path>
+    </svg>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- PRODUCT SHOTS -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="section" id="interface">
+    <div class="section__header">
+      <span class="section__number glitch-text" data-text="02">02</span>
+      <span class="section__divider">———</span>
+      <span class="section__title">INTERFACE</span>
+    </div>
+
+    <div class="screenshots-hero">
+      <div class="screenshot screenshot--large parallax">
+        <img src="assets/screenshots/hero.png" alt="Performance grid with 16 effect buttons">
+        <span class="screenshot__caption">Performance grid with 16 effect buttons per page</span>
+      </div>
+    </div>
+
+    <div class="screenshots-grid">
+      <div class="screenshot">
+        <img src="assets/screenshots/sequencer.png" alt="Sequencer panel">
+        <span class="screenshot__caption">64-step sequencer with parameter automation</span>
+      </div>
+      <div class="screenshot">
+        <img src="assets/screenshots/params.png" alt="Expanded parameters">
+        <span class="screenshot__caption">Expanded parameter controls with modulation routing</span>
+      </div>
+      <div class="screenshot">
+        <img src="assets/screenshots/presets.png" alt="Preset library">
+        <span class="screenshot__caption">Preset library with folder organization</span>
+      </div>
+      <div class="screenshot">
+        <img src="assets/screenshots/inspector.png" alt="Inspector panel">
+        <span class="screenshot__caption">Dynamic inspector for tracks, effects, and routing</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- CAPABILITIES -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="section" id="capabilities">
+    <div class="section__header">
+      <span class="section__number glitch-text" data-text="03">03</span>
+      <span class="section__divider">———</span>
+      <span class="section__title">CAPABILITIES</span>
+    </div>
+
+    <div class="capabilities-table">
+      <div class="capability-row">
+        <div class="capability-row__main">
+          <h3 class="capability-row__title">SEQUENCER</h3>
+          <p class="capability-row__desc">Automate any parameter with multi-track sequencer</p>
+        </div>
+        <ul class="capability-row__features">
+          <li>64-step tracks</li>
+          <li>Parameter automation</li>
+          <li>Drag-to-route</li>
+        </ul>
+      </div>
+
+      <div class="capability-row">
+        <div class="capability-row__main">
+          <h3 class="capability-row__title">AI TRACKING</h3>
+          <p class="capability-row__desc">Effects respond to faces, hands, and motion</p>
+        </div>
+        <ul class="capability-row__features">
+          <li>Face detection</li>
+          <li>Hand landmarks</li>
+          <li>Motion vectors</li>
+        </ul>
+      </div>
+
+      <div class="capability-row">
+        <div class="capability-row__main">
+          <h3 class="capability-row__title">RECORDING</h3>
+          <p class="capability-row__desc">Capture sessions directly to file</p>
+        </div>
+        <ul class="capability-row__features">
+          <li>Live canvas capture</li>
+          <li>WebM/MP4 export</li>
+          <li>No server upload</li>
+        </ul>
+      </div>
+
+      <div class="capability-row">
+        <div class="capability-row__main">
+          <h3 class="capability-row__title">PRESETS</h3>
+          <p class="capability-row__desc">Save and recall effect configurations</p>
+        </div>
+        <ul class="capability-row__features">
+          <li>Folder organization</li>
+          <li>Import/export JSON</li>
+          <li>Bank system (A-D)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- TECHNICAL -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="section" id="technical">
+    <div class="section__header">
+      <span class="section__number glitch-text" data-text="04">04</span>
+      <span class="section__divider">———</span>
+      <span class="section__title">TECHNICAL</span>
+    </div>
+
+    <div class="tech-cards">
+      <div class="tech-card">
+        <div class="tech-card__icon">⚡</div>
+        <h3 class="tech-card__title">GPU POWERED</h3>
+        <p class="tech-card__desc">WebGL 2 shaders</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-card__icon">🌐</div>
+        <h3 class="tech-card__title">BROWSER BASED</h3>
+        <p class="tech-card__desc">No app install</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-card__icon">🔒</div>
+        <h3 class="tech-card__title">PRIVATE FIRST</h3>
+        <p class="tech-card__desc">No server uploads</p>
+      </div>
+      <div class="tech-card">
+        <div class="tech-card__icon">✨</div>
+        <h3 class="tech-card__title">ZERO CONFIG</h3>
+        <p class="tech-card__desc">Works out of box</p>
+      </div>
+    </div>
+
+    <div class="tech-stack">
+      <p class="tech-stack__row">
+        <span class="tech-stack__label">STACK:</span>
+        <span class="tech-stack__items">React — Three.js — GLSL — MediaPipe</span>
+      </p>
+      <p class="tech-stack__row">
+        <span class="tech-stack__label">INPUTS:</span>
+        <span class="tech-stack__items">Webcam — File — Screen — URL</span>
+      </p>
+      <p class="tech-stack__row">
+        <span class="tech-stack__label">OUTPUTS:</span>
+        <span class="tech-stack__items">WebM — MP4 — PNG — GIF</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- DOCUMENTATION -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="section" id="docs">
+    <div class="section__header">
+      <span class="section__number glitch-text" data-text="05">05</span>
+      <span class="section__divider">———</span>
+      <span class="section__title">DOCUMENTATION</span>
+    </div>
+
+    <div class="docs-grid">
+      <div class="docs-block">
+        <h3 class="docs-block__title">KEYBOARD SHORTCUTS</h3>
+        <table class="shortcuts-table">
+          <tr>
+            <td><kbd>SPACE</kbd></td>
+            <td>Play / Pause</td>
+          </tr>
+          <tr>
+            <td><kbd>R</kbd></td>
+            <td>Start / Stop recording</td>
+          </tr>
+          <tr>
+            <td><kbd>1-5</kbd></td>
+            <td>Switch effect page</td>
+          </tr>
+          <tr>
+            <td><kbd>SHIFT</kbd></td>
+            <td>Hold + click for info panel</td>
+          </tr>
+          <tr>
+            <td><kbd>ESC</kbd></td>
+            <td>Clear selection</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="docs-block">
+        <h3 class="docs-block__title">HOW TO USE</h3>
+        <ol class="how-to-list">
+          <li><span class="step-num">01</span> Select input source</li>
+          <li><span class="step-num">02</span> Click effect buttons to toggle</li>
+          <li><span class="step-num">03</span> Drag up/down to adjust intensity</li>
+          <li><span class="step-num">04</span> Use sequencer to automate</li>
+          <li><span class="step-num">05</span> Save presets to recall setups</li>
+          <li><span class="step-num">06</span> Hit record to capture</li>
+        </ol>
+      </div>
+
+      <div class="docs-block">
+        <h3 class="docs-block__title">TIPS</h3>
+        <ul class="tips-list">
+          <li>Double-click effect to solo</li>
+          <li>Drag track handle to parameter slider</li>
+          <li>Click routing indicator to inspect</li>
+          <li>Right-click presets for context menu</li>
+          <li>Use bank buttons (A-D) for quick switching</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- FOOTER -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <footer class="footer" id="footer">
+    <a href="/" class="btn btn-primary btn-fullwidth footer__cta">LAUNCH APP</a>
+
+    <div class="footer__info">
+      <p class="footer__brand glitch-text" data-text="TEPHRAL">TEPHRAL</p>
+      <p class="footer__tagline">Real-time video destruction toolkit</p>
+      <p class="footer__credits">Built with React, Three.js, and GLSL</p>
+      <p class="footer__credits">Inspired by Death Stranding</p>
+      <p class="footer__copy">© 2026</p>
+    </div>
+  </footer>
+
+  <!-- Cursor trail container -->
+  <div class="cursor-trail" id="cursorTrail"></div>
+
+  <!-- Scripts -->
+  <script src="scripts/main.js"></script>
+  <script src="scripts/cursor.js"></script>
+  <script src="scripts/glitch.js"></script>
+</body>
+</html>

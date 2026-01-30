@@ -1,13 +1,14 @@
 import { useCallback, useRef, useState } from 'react'
 import { useSequencerStore, type Track } from '../../stores/sequencerStore'
+import { useUIStore } from '../../stores/uiStore'
 
 interface StepGridProps {
   track: Track
-  onOpenStepDetail?: (trackId: string, stepIndex: number) => void
 }
 
-export function StepGrid({ track, onOpenStepDetail }: StepGridProps) {
+export function StepGrid({ track }: StepGridProps) {
   const { toggleStep, isPlaying } = useSequencerStore()
+  const { selectStep } = useUIStore()
   const [isDragging, setIsDragging] = useState(false)
   const [dragValue, setDragValue] = useState<boolean | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -15,12 +16,12 @@ export function StepGrid({ track, onOpenStepDetail }: StepGridProps) {
   const visibleSteps = track.steps.slice(0, track.length)
 
   const handleStepClick = useCallback((stepIndex: number, e: React.MouseEvent) => {
-    if (e.shiftKey && onOpenStepDetail) {
-      onOpenStepDetail(track.id, stepIndex)
+    if (e.shiftKey) {
+      selectStep(track.id, stepIndex)
     } else {
       toggleStep(track.id, stepIndex)
     }
-  }, [track.id, toggleStep, onOpenStepDetail])
+  }, [track.id, toggleStep, selectStep])
 
   const handleMouseDown = useCallback((stepIndex: number, e: React.MouseEvent) => {
     if (e.shiftKey) return // Don't start drag on shift+click

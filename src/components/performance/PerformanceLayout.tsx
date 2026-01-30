@@ -60,7 +60,7 @@ export function PerformanceLayout() {
           border: '1px solid #d0d0d0',
         }}
       >
-        {/* Preset Library Panel */}
+        {/* Left sidebar: Preset Library + Info Panel */}
         <div
           className="flex-shrink-0"
           style={{

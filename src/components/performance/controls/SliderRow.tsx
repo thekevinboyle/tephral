@@ -26,7 +26,7 @@ export function SliderRow({
   paramId,
 }: SliderRowProps) {
   const displayValue = format ? format(value) : value.toFixed(1)
-  const { sequencerDrag } = useUIStore()
+  const { sequencerDrag, selectRouting } = useUIStore()
   const { addRouting, routings, tracks, updateRoutingDepth, removeRouting } = useSequencerStore()
   const [isDropTarget, setIsDropTarget] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -103,6 +103,7 @@ export function SliderRow({
 
   // Routing indicator drag
   const isDraggingDepth = useRef(false)
+  const didDragDepth = useRef(false)
   const dragStartY = useRef(0)
   const dragStartDepth = useRef(0)
 
@@ -111,6 +112,7 @@ export function SliderRow({
     e.preventDefault()
     e.stopPropagation()
     isDraggingDepth.current = true
+    didDragDepth.current = false
     dragStartY.current = e.clientY
     dragStartDepth.current = firstRouting.depth
     ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
@@ -120,17 +122,26 @@ export function SliderRow({
     if (!isDraggingDepth.current || !firstRouting) return
     e.stopPropagation()
     const deltaY = dragStartY.current - e.clientY
-    const deltaDepth = deltaY / 50
-    const newDepth = Math.max(-1, Math.min(1, dragStartDepth.current + deltaDepth))
-    updateRoutingDepth(firstRouting.id, newDepth)
+    if (Math.abs(deltaY) > 3) {
+      didDragDepth.current = true
+      const deltaDepth = deltaY / 50
+      const newDepth = Math.max(-1, Math.min(1, dragStartDepth.current + deltaDepth))
+      updateRoutingDepth(firstRouting.id, newDepth)
+    }
   }, [firstRouting, updateRoutingDepth])
 
   const handleIndicatorPointerUp = useCallback((e: React.PointerEvent) => {
+    const wasDrag = didDragDepth.current
     isDraggingDepth.current = false
+    didDragDepth.current = false
     try {
       ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
     } catch {}
-  }, [])
+    // If it was a click (not a drag), select the routing for info panel
+    if (!wasDrag && firstRouting) {
+      selectRouting(firstRouting.id)
+    }
+  }, [firstRouting, selectRouting])
 
   const handleIndicatorDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()

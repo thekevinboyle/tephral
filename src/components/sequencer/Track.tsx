@@ -5,7 +5,6 @@ import { StepGrid } from './StepGrid'
 
 interface TrackProps {
   track: TrackType
-  onOpenStepDetail?: (trackId: string, stepIndex: number) => void
 }
 
 const MODE_LABELS: Record<StepMode, string> = {
@@ -17,7 +16,7 @@ const MODE_LABELS: Record<StepMode, string> = {
 
 const MODE_ORDER: StepMode[] = ['forward', 'backward', 'pendulum', 'random']
 
-export function Track({ track, onOpenStepDetail }: TrackProps) {
+export function Track({ track }: TrackProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(track.name)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -32,9 +31,24 @@ export function Track({ track, onOpenStepDetail }: TrackProps) {
     clearTrack,
   } = useSequencerStore()
 
-  const { startSequencerDrag, endSequencerDrag } = useUIStore()
+  const { startSequencerDrag, endSequencerDrag, infoPanelSelection, selectTrack, clearInfoPanelSelection } = useUIStore()
   const routings = getRoutingsForTrack(track.id)
   const [isRoutingDrag, setIsRoutingDrag] = useState(false)
+  const isSelected = infoPanelSelection?.type === 'track' && infoPanelSelection.trackId === track.id
+
+  const handleTrackClick = useCallback((e: React.MouseEvent) => {
+    // Don't select if clicking on buttons or inputs
+    const target = e.target as HTMLElement
+    if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.closest('button')) {
+      return
+    }
+    // Toggle selection
+    if (isSelected) {
+      clearInfoPanelSelection()
+    } else {
+      selectTrack(track.id)
+    }
+  }, [track.id, isSelected, selectTrack, clearInfoPanelSelection])
 
   const handleNameDoubleClick = useCallback(() => {
     setEditName(track.name)
@@ -96,12 +110,12 @@ export function Track({ track, onOpenStepDetail }: TrackProps) {
 
   return (
     <div
-      className="flex items-center gap-2 px-2 py-1.5 rounded group"
+      className="flex items-center gap-2 px-2 py-1.5 rounded group cursor-pointer"
       style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #e5e5e5',
+        backgroundColor: isSelected ? `${track.color}10` : '#ffffff',
+        border: `1px solid ${isSelected ? track.color : '#e5e5e5'}`,
       }}
-      onClick={fillModeActive ? handleFillClick : undefined}
+      onClick={fillModeActive ? handleFillClick : handleTrackClick}
     >
       {/* Drag handle for routing */}
       <div
@@ -174,10 +188,7 @@ export function Track({ track, onOpenStepDetail }: TrackProps) {
 
       {/* Step grid */}
       <div className="flex-1 min-w-0">
-        <StepGrid
-          track={track}
-          onOpenStepDetail={onOpenStepDetail}
-        />
+        <StepGrid track={track} />
       </div>
 
       {/* Length */}

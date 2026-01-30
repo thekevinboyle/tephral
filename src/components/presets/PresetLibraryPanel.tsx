@@ -4,6 +4,7 @@ import type { Preset, Folder } from '../../stores/presetLibraryStore'
 import { PresetFolderTree } from './PresetFolderTree'
 import { PresetContextMenu, FolderContextMenu } from './PresetContextMenu'
 import { importFile, openImportDialog, exportPack, captureThumbnail } from '../../utils/presetIO'
+import { InfoPanel } from '../panels/InfoPanel'
 
 interface ContextMenuState {
   type: 'preset' | 'folder'
@@ -33,6 +34,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [renameState, setRenameState] = useState<{ id: string; type: 'preset' | 'folder'; name: string } | null>(null)
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const renameInputRef = useRef<HTMLInputElement>(null)
 
   // Load presets on mount
@@ -164,8 +166,9 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-3 py-2"
-        style={{ borderBottom: '1px solid #d0d0d0' }}
+        className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-100 transition-colors"
+        style={{ borderBottom: isCollapsed ? 'none' : '1px solid #d0d0d0' }}
+        onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <span
           className="text-[13px] font-semibold uppercase tracking-wider"
@@ -173,8 +176,22 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
         >
           Presets
         </span>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="#999"
+          strokeWidth="1.5"
+          className="transition-transform"
+          style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+        >
+          <path d="M3 4.5L6 7.5L9 4.5" />
+        </svg>
       </div>
 
+      {!isCollapsed && (
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
       {/* Search */}
       <div className="px-2 py-2" style={{ borderBottom: '1px solid #e5e5e5' }}>
         <div
@@ -308,6 +325,12 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
           Export All
         </button>
       </div>
+
+        </div>
+      )}
+
+      {/* Info Panel */}
+      <InfoPanel />
 
       {/* Context menus */}
       {contextMenu?.type === 'preset' && (

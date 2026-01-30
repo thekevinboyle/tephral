@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { Preset } from '../../stores/presetLibraryStore'
+import { useUIStore } from '../../stores/uiStore'
 
 interface PresetRowProps {
   preset: Preset
@@ -9,10 +10,17 @@ interface PresetRowProps {
 
 export function PresetRow({ preset, onLoad, onContextMenu }: PresetRowProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const selectPreset = useUIStore((s) => s.selectPreset)
 
-  const handleClick = useCallback(() => {
-    onLoad()
-  }, [onLoad])
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (e.shiftKey) {
+      // Shift+click = select for info panel
+      selectPreset(preset.id)
+    } else {
+      // Normal click = load preset
+      onLoad()
+    }
+  }, [onLoad, selectPreset, preset.id])
 
   const handleContextMenu = useCallback(
     (e: React.MouseEvent) => {

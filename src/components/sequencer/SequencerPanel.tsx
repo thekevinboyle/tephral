@@ -1,9 +1,8 @@
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { useSequencerStore, type StepResolution, type StepMode } from '../../stores/sequencerStore'
 import { useSequencerPlayback } from '../../hooks/useSequencerPlayback'
 import { useAudioAnalysis } from '../../hooks/useAudioAnalysis'
 import { Track } from './Track'
-import { StepDetailPopup } from './StepDetailPopup'
 
 const RESOLUTION_OPTIONS: StepResolution[] = ['1/4', '1/8', '1/16', '1/32']
 const MODE_OPTIONS: { value: StepMode; label: string }[] = [
@@ -39,21 +38,11 @@ export function SequencerPanel() {
     setAudioReactive,
   } = useSequencerStore()
 
-  const [stepDetailOpen, setStepDetailOpen] = useState<{ trackId: string; stepIndex: number } | null>(null)
-
   // Initialize playback engine
   useSequencerPlayback()
 
   // Initialize audio analysis
   useAudioAnalysis()
-
-  const handleOpenStepDetail = useCallback((trackId: string, stepIndex: number) => {
-    setStepDetailOpen({ trackId, stepIndex })
-  }, [])
-
-  const handleCloseStepDetail = useCallback(() => {
-    setStepDetailOpen(null)
-  }, [])
 
   const handleBpmChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10)
@@ -195,11 +184,7 @@ export function SequencerPanel() {
         ) : (
           <div className="p-2 space-y-1">
             {tracks.map((track) => (
-              <Track
-                key={track.id}
-                track={track}
-                onOpenStepDetail={handleOpenStepDetail}
-              />
+              <Track key={track.id} track={track} />
             ))}
           </div>
         )}
@@ -352,14 +337,6 @@ export function SequencerPanel() {
         </div>
       </div>
 
-      {/* Step detail popup */}
-      {stepDetailOpen && (
-        <StepDetailPopup
-          trackId={stepDetailOpen.trackId}
-          stepIndex={stepDetailOpen.stepIndex}
-          onClose={handleCloseStepDetail}
-        />
-      )}
     </div>
   )
 }

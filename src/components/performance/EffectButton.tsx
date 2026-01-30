@@ -39,6 +39,7 @@ export function EffectButton({
   const addEvent = useRecordingStore((s) => s.addEvent)
   const isRecording = useRecordingStore((s) => s.isRecording)
   const setSelectedEffect = useUIStore((s) => s.setSelectedEffect)
+  const selectEffectForInfoPanel = useUIStore((s) => s.selectEffect)
 
   // Solo state and actions
   const { soloEffectId, soloLatched, setSolo, clearSolo } = useGlitchEngineStore()
@@ -109,6 +110,15 @@ export function EffectButton({
       addEvent({ effect: id, param: value })
     }
 
+    // Shift+click = select for info panel
+    if (!wasDrag && e.shiftKey && elapsed < HOLD_THRESHOLD) {
+      selectEffectForInfoPanel(id)
+      dragStartY.current = null
+      didDrag.current = false
+      isHolding.current = false
+      return
+    }
+
     // Handle solo/latch/toggle logic
     if (!wasDrag) {
       if (wasHolding) {
@@ -151,7 +161,7 @@ export function EffectButton({
     dragStartY.current = null
     didDrag.current = false
     isHolding.current = false
-  }, [onToggle, isRecording, addEvent, id, active, value, setSelectedEffect, soloEffectId, soloLatched, setSolo, clearSolo])
+  }, [onToggle, isRecording, addEvent, id, active, value, setSelectedEffect, selectEffectForInfoPanel, soloEffectId, soloLatched, setSolo, clearSolo])
 
   // Value percentage for the progress bar
   const percentage = ((value - min) / (max - min)) * 100

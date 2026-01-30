@@ -290,8 +290,9 @@ export function TransportBar() {
         </span>
         <button
           onClick={handleWebcam}
-        className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
+        className="h-7 rounded-md text-[12px] font-medium transition-colors active:scale-95"
         style={{
+          width: '48px',
           backgroundColor: source === 'webcam' ? 'var(--text-primary)' : 'var(--bg-surface)',
           border: '1px solid var(--border)',
           color: source === 'webcam' ? 'var(--bg-surface)' : 'var(--text-muted)',
@@ -304,8 +305,9 @@ export function TransportBar() {
 
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
+        className="h-7 rounded-md text-[12px] font-medium transition-colors active:scale-95"
         style={{
+          width: '48px',
           backgroundColor: source === 'file' ? 'var(--text-primary)' : 'var(--bg-surface)',
           border: '1px solid var(--border)',
           color: source === 'file' ? 'var(--bg-surface)' : 'var(--text-muted)',

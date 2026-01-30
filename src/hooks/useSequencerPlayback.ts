@@ -5,6 +5,7 @@ import { useAsciiRenderStore } from '../stores/asciiRenderStore'
 import { useStippleStore } from '../stores/stippleStore'
 import { useAcidStore } from '../stores/acidStore'
 import { useVisionTrackingStore } from '../stores/visionTrackingStore'
+import { useStrandStore } from '../stores/strandStore'
 
 // Resolution to milliseconds per step
 const RESOLUTION_MS: Record<string, number> = {
@@ -30,6 +31,7 @@ export function useSequencerPlayback() {
   const stipple = useStippleStore()
   const acid = useAcidStore()
   const vision = useVisionTrackingStore()
+  const strand = useStrandStore()
 
   const lastStepTime = useRef<number>(0)
   const animationFrameId = useRef<number | null>(null)
@@ -196,8 +198,92 @@ export function useSequencerPlayback() {
         if (paramName === 'minSize') vision.updateHandsParams({ minSize: 10 + Math.floor(value * 40) })
         if (paramName === 'maxBlobs') vision.updateHandsParams({ maxBlobs: 2 + Math.floor(value * 18) })
         break
+
+      // ============================================================================
+      // STRAND Effects
+      // ============================================================================
+      case 'strand_handprints':
+        if (paramName === 'density') strand.updateHandprintsParams({ density: 1 + Math.floor(value * 19) })
+        if (paramName === 'fadeSpeed') strand.updateHandprintsParams({ fadeSpeed: 0.1 + value * 1.9 })
+        if (paramName === 'size') strand.updateHandprintsParams({ size: 0.5 + value * 2.5 })
+        break
+      case 'strand_tar':
+        if (paramName === 'spreadSpeed') strand.updateTarSpreadParams({ spreadSpeed: value })
+        if (paramName === 'threshold') strand.updateTarSpreadParams({ threshold: value })
+        if (paramName === 'coverage') strand.updateTarSpreadParams({ coverage: value })
+        break
+      case 'strand_timefall':
+        if (paramName === 'intensity') strand.updateTimefallParams({ intensity: value })
+        if (paramName === 'streakCount') strand.updateTimefallParams({ streakCount: 10 + Math.floor(value * 490) })
+        if (paramName === 'ageAmount') strand.updateTimefallParams({ ageAmount: value })
+        break
+      case 'strand_voidout':
+        if (paramName === 'speed') strand.updateVoidOutParams({ speed: 0.1 + value * 1.9 })
+        if (paramName === 'distortAmount') strand.updateVoidOutParams({ distortAmount: value })
+        if (paramName === 'ringWidth') strand.updateVoidOutParams({ ringWidth: 0.01 + value * 0.29 })
+        break
+      case 'strand_web':
+        if (paramName === 'threshold') strand.updateStrandWebParams({ threshold: value })
+        if (paramName === 'maxConnections') strand.updateStrandWebParams({ maxConnections: 1 + Math.floor(value * 9) })
+        if (paramName === 'glowIntensity') strand.updateStrandWebParams({ glowIntensity: value })
+        break
+      case 'strand_bridge':
+        if (paramName === 'gridSize') strand.updateBridgeLinkParams({ gridSize: 8 + Math.floor(value * 56) })
+        if (paramName === 'edgeSensitivity') strand.updateBridgeLinkParams({ edgeSensitivity: value })
+        if (paramName === 'opacity') strand.updateBridgeLinkParams({ opacity: value })
+        break
+      case 'strand_path':
+        if (paramName === 'particleCount') strand.updateChiralPathParams({ particleCount: 10 + Math.floor(value * 190) })
+        if (paramName === 'trailLength') strand.updateChiralPathParams({ trailLength: 5 + Math.floor(value * 45) })
+        if (paramName === 'flowSpeed') strand.updateChiralPathParams({ flowSpeed: 0.1 + value * 2.9 })
+        break
+      case 'strand_umbilical':
+        if (paramName === 'tendrilCount') strand.updateUmbilicalParams({ tendrilCount: 2 + Math.floor(value * 10) })
+        if (paramName === 'reachDistance') strand.updateUmbilicalParams({ reachDistance: 0.1 + value * 0.9 })
+        if (paramName === 'pulseSpeed') strand.updateUmbilicalParams({ pulseSpeed: 0.1 + value * 2.9 })
+        break
+      case 'strand_odradek':
+        if (paramName === 'sweepSpeed') strand.updateOdradekParams({ sweepSpeed: 0.1 + value * 2.9 })
+        if (paramName === 'revealDuration') strand.updateOdradekParams({ revealDuration: 0.1 + value * 0.9 })
+        if (paramName === 'pingIntensity') strand.updateOdradekParams({ pingIntensity: value })
+        break
+      case 'strand_chiralium':
+        if (paramName === 'threshold') strand.updateChiraliumParams({ threshold: value })
+        if (paramName === 'density') strand.updateChiraliumParams({ density: value })
+        if (paramName === 'shimmer') strand.updateChiraliumParams({ shimmer: value })
+        break
+      case 'strand_beach':
+        if (paramName === 'grainAmount') strand.updateBeachStaticParams({ grainAmount: value })
+        if (paramName === 'invertProbability') strand.updateBeachStaticParams({ invertProbability: value * 0.5 })
+        if (paramName === 'flickerSpeed') strand.updateBeachStaticParams({ flickerSpeed: 0.1 + value * 2.9 })
+        break
+      case 'strand_dooms':
+        if (paramName === 'haloSize') strand.updateDoomsParams({ haloSize: 0.1 + value * 0.9 })
+        if (paramName === 'pulseSpeed') strand.updateDoomsParams({ pulseSpeed: 0.1 + value * 1.9 })
+        if (paramName === 'sensitivity') strand.updateDoomsParams({ sensitivity: value })
+        break
+      case 'strand_cloud':
+        if (paramName === 'density') strand.updateChiralCloudParams({ density: value })
+        if (paramName === 'responsiveness') strand.updateChiralCloudParams({ responsiveness: value })
+        if (paramName === 'tint') strand.updateChiralCloudParams({ tint: value })
+        break
+      case 'strand_bbpod':
+        if (paramName === 'vignetteSize') strand.updateBBPodParams({ vignetteSize: 0.5 + value * 0.5 })
+        if (paramName === 'tintStrength') strand.updateBBPodParams({ tintStrength: value })
+        if (paramName === 'causticAmount') strand.updateBBPodParams({ causticAmount: value })
+        break
+      case 'strand_seam':
+        if (paramName === 'riftWidth') strand.updateSeamParams({ riftWidth: 0.01 + value * 0.19 })
+        if (paramName === 'parallaxAmount') strand.updateSeamParams({ parallaxAmount: value * 0.5 })
+        if (paramName === 'edgeDistort') strand.updateSeamParams({ edgeDistort: value })
+        break
+      case 'strand_extinction':
+        if (paramName === 'erosionSpeed') strand.updateExtinctionParams({ erosionSpeed: 0.1 + value * 0.9 })
+        if (paramName === 'decayStages') strand.updateExtinctionParams({ decayStages: 1 + Math.floor(value * 4) })
+        if (paramName === 'coverage') strand.updateExtinctionParams({ coverage: value })
+        break
     }
-  }, [gateMode, glitch, ascii, stipple, acid, vision])
+  }, [gateMode, glitch, ascii, stipple, acid, vision, strand])
 
   // Main playback loop
   const playbackLoop = useCallback((timestamp: number) => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useUIStore } from '../../stores/uiStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
@@ -2666,33 +2666,91 @@ function SizeButtonGrid({
   presets: readonly number[]
   onChange: (v: number) => void
 }) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
   // Find closest preset index
   const activeIndex = presets.reduce((closest, preset, index) => {
     return Math.abs(preset - value) < Math.abs(presets[closest] - value) ? index : closest
   }, 0)
 
+  const updateFromPosition = useCallback((clientX: number) => {
+    if (!trackRef.current) return
+    const rect = trackRef.current.getBoundingClientRect()
+    const padding = 16
+    const trackWidth = rect.width - padding * 2
+    const x = Math.max(0, Math.min(trackWidth, clientX - rect.left - padding))
+    const ratio = x / trackWidth
+    // Map ratio to preset index
+    const index = Math.round(ratio * (presets.length - 1))
+    const clampedIndex = Math.max(0, Math.min(presets.length - 1, index))
+    onChange(presets[clampedIndex])
+  }, [presets, onChange])
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    updateFromPosition(e.clientX)
+  }, [updateFromPosition])
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging) return
+    updateFromPosition(e.clientX)
+  }, [isDragging, updateFromPosition])
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    setIsDragging(false)
+    try {
+      ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+    } catch {}
+  }, [])
+
+  // Normalized position for thumb (0-1)
+  const normalizedPosition = activeIndex / (SIZE_PRESETS.length - 1)
+
   return (
     <div className="flex items-center gap-2 py-1.5">
       <span className="text-[14px] text-gray-500 w-20 shrink-0">{label}</span>
-      <div className="flex-1 h-7 bg-gray-100 rounded-full border border-gray-200 flex items-center justify-between px-4 shadow-inner">
-        {SIZE_PRESETS.map((preset) => {
-          const isActive = preset.index === activeIndex
-          const isBeforeActive = preset.index < activeIndex
-          return (
-            <button
-              key={preset.index}
-              onClick={() => onChange(presets[preset.index])}
-              className={`rounded-full transition-all ${
-                isActive
-                  ? 'w-5 h-5 bg-white border-2 border-gray-300 shadow-md'
-                  : isBeforeActive
-                    ? 'w-1.5 h-1.5 bg-gray-400 hover:bg-gray-500'
-                    : 'w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400'
-              }`}
-              title={`${preset.label}: ${presets[preset.index]}`}
-            />
-          )
-        })}
+      <div
+        ref={trackRef}
+        className="flex-1 h-7 bg-gray-100 rounded-full border border-gray-200 relative cursor-pointer select-none shadow-inner"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
+        {/* Dot markers */}
+        <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
+          {SIZE_PRESETS.map((preset) => {
+            const isActive = preset.index === activeIndex
+            const isBeforeActive = preset.index < activeIndex
+            return (
+              <div
+                key={preset.index}
+                className={`rounded-full transition-all ${
+                  isActive
+                    ? 'w-0 h-0'
+                    : isBeforeActive
+                      ? 'w-1.5 h-1.5 bg-gray-400'
+                      : 'w-1.5 h-1.5 bg-gray-300'
+                }`}
+              />
+            )
+          })}
+        </div>
+
+        {/* Thumb */}
+        <div
+          className="absolute top-1/2 w-5 h-5 rounded-full bg-white border-2 border-gray-300 shadow-md pointer-events-none"
+          style={{
+            left: `calc(16px + (100% - 32px) * ${normalizedPosition})`,
+            transform: `translate(-50%, -50%)`,
+            boxShadow: isDragging
+              ? '0 2px 8px rgba(0,0,0,0.15), 0 0 0 3px rgba(156,163,175,0.2)'
+              : '0 1px 3px rgba(0,0,0,0.1)',
+          }}
+        />
       </div>
       <span className="text-[14px] text-gray-600 w-10 text-right tabular-nums">{value}</span>
     </div>

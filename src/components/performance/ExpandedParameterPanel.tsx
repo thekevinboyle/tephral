@@ -2674,17 +2674,20 @@ function SizeButtonGrid({
   return (
     <div className="flex items-center gap-2 py-1.5">
       <span className="text-[14px] text-gray-500 w-20 shrink-0">{label}</span>
-      <div className="flex-1 h-6 bg-[#1a1a1a] rounded-full border border-[#2a2a2a] flex items-center justify-between px-3">
+      <div className="flex-1 h-7 bg-gray-100 rounded-full border border-gray-200 flex items-center justify-between px-4 shadow-inner">
         {SIZE_PRESETS.map((preset) => {
           const isActive = preset.index === activeIndex
+          const isBeforeActive = preset.index < activeIndex
           return (
             <button
               key={preset.index}
               onClick={() => onChange(presets[preset.index])}
               className={`rounded-full transition-all ${
                 isActive
-                  ? 'w-4 h-4 bg-[#4a4a4a] border-2 border-[#5a5a5a]'
-                  : 'w-1.5 h-1.5 bg-[#3a3a3a] hover:bg-[#5a5a5a]'
+                  ? 'w-5 h-5 bg-white border-2 border-gray-300 shadow-md'
+                  : isBeforeActive
+                    ? 'w-1.5 h-1.5 bg-gray-400 hover:bg-gray-500'
+                    : 'w-1.5 h-1.5 bg-gray-300 hover:bg-gray-400'
               }`}
               title={`${preset.label}: ${presets[preset.index]}`}
             />

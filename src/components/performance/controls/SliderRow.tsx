@@ -181,28 +181,43 @@ export function SliderRow({
       {/* Custom dot slider */}
       <div
         ref={trackRef}
-        className="flex-1 h-6 bg-[#1a1a1a] rounded-full border border-[#2a2a2a] relative cursor-pointer select-none"
+        className="flex-1 h-7 bg-gray-100 rounded-full border border-gray-200 relative cursor-pointer select-none shadow-inner"
         onPointerDown={handleTrackPointerDown}
         onPointerMove={handleTrackPointerMove}
         onPointerUp={handleTrackPointerUp}
         onPointerCancel={handleTrackPointerUp}
       >
+        {/* Track fill */}
+        <div
+          className="absolute left-1 top-1 bottom-1 rounded-full bg-gradient-to-r from-gray-200 to-gray-100 pointer-events-none"
+          style={{ width: `calc((100% - 8px) * ${normalizedValue})` }}
+        />
+
         {/* Dot markers */}
-        <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
-          {Array.from({ length: DOT_COUNT }).map((_, i) => (
-            <div
-              key={i}
-              className="w-1.5 h-1.5 rounded-full bg-[#3a3a3a]"
-            />
-          ))}
+        <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
+          {Array.from({ length: DOT_COUNT }).map((_, i) => {
+            const dotPosition = i / (DOT_COUNT - 1)
+            const isBeforeThumb = dotPosition <= normalizedValue
+            return (
+              <div
+                key={i}
+                className={`w-1 h-1 rounded-full transition-colors ${
+                  isBeforeThumb ? 'bg-gray-400' : 'bg-gray-300'
+                }`}
+              />
+            )
+          })}
         </div>
 
         {/* Thumb */}
         <div
-          className="absolute top-1/2 w-4 h-4 rounded-full bg-[#4a4a4a] border-2 border-[#5a5a5a] pointer-events-none"
+          className="absolute top-1/2 w-5 h-5 rounded-full bg-white border-2 border-gray-300 shadow-md pointer-events-none transition-shadow"
           style={{
-            left: `calc(12px + (100% - 24px) * ${normalizedValue})`,
-            transform: `translate(-50%, -50%)${isDraggingSlider ? ' scale(1.1)' : ''}`,
+            left: `calc(10px + (100% - 20px) * ${normalizedValue})`,
+            transform: `translate(-50%, -50%)`,
+            boxShadow: isDraggingSlider
+              ? '0 2px 8px rgba(0,0,0,0.15), 0 0 0 3px rgba(156,163,175,0.2)'
+              : '0 1px 3px rgba(0,0,0,0.1)',
           }}
         />
       </div>

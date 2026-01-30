@@ -284,8 +284,12 @@ export function TransportBar() {
   return (
     <div className="h-full flex items-center gap-4 px-4 py-1.5">
       {/* Source buttons */}
-      <button
-        onClick={handleWebcam}
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+          Source:
+        </span>
+        <button
+          onClick={handleWebcam}
         className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
         style={{
           backgroundColor: source === 'webcam' ? 'var(--text-primary)' : 'var(--bg-surface)',
@@ -311,6 +315,7 @@ export function TransportBar() {
       >
         File
       </button>
+      </div>
 
       <input
         ref={fileInputRef}

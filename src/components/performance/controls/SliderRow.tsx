@@ -13,6 +13,8 @@ interface SliderRowProps {
   paramId?: string  // e.g., 'rgb_split.amount' for routing
 }
 
+const DOT_COUNT = 7 // Number of dots to show on the track
+
 export function SliderRow({
   label,
   value,
@@ -27,6 +29,8 @@ export function SliderRow({
   const { sequencerDrag } = useUIStore()
   const { addRouting, routings, tracks, updateRoutingDepth, removeRouting } = useSequencerStore()
   const [isDropTarget, setIsDropTarget] = useState(false)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [isDraggingSlider, setIsDraggingSlider] = useState(false)
 
   // Check if this param has routings
   const paramRoutings = paramId ? routings.filter(r => r.targetParam === paramId) : []
@@ -34,8 +38,10 @@ export function SliderRow({
   const firstRouting = hasRouting ? paramRoutings[0] : null
   const routingTrack = firstRouting ? tracks.find(t => t.id === firstRouting.trackId) : null
 
+  // Calculate thumb position (0-1)
+  const normalizedValue = (value - min) / (max - min)
+
   const handleDragOver = (e: React.DragEvent) => {
-    // Allow drop if we have a paramId - check dataTransfer for sequencer track data
     if (paramId && (sequencerDrag.isDragging || e.dataTransfer.types.includes('sequencer-track'))) {
       e.preventDefault()
       e.dataTransfer.dropEffect = 'link'
@@ -51,7 +57,6 @@ export function SliderRow({
     e.preventDefault()
     const trackId = e.dataTransfer.getData('sequencer-track')
     if (trackId && paramId) {
-      // Check if this exact routing already exists (same track to same param)
       const existingRouting = routings.find(r => r.trackId === trackId && r.targetParam === paramId)
       if (!existingRouting) {
         addRouting(trackId, paramId, 0.5)
@@ -60,8 +65,44 @@ export function SliderRow({
     setIsDropTarget(false)
   }
 
-  // Drag to adjust depth on routing indicator
-  const isDragging = useRef(false)
+  // Slider interaction
+  const updateValueFromPosition = useCallback((clientX: number) => {
+    if (!trackRef.current) return
+    const rect = trackRef.current.getBoundingClientRect()
+    const padding = 12 // Account for thumb radius
+    const trackWidth = rect.width - padding * 2
+    const x = Math.max(0, Math.min(trackWidth, clientX - rect.left - padding))
+    const ratio = x / trackWidth
+    let newValue = min + ratio * (max - min)
+
+    // Snap to step
+    newValue = Math.round(newValue / step) * step
+    newValue = Math.max(min, Math.min(max, newValue))
+
+    onChange(newValue)
+  }, [min, max, step, onChange])
+
+  const handleTrackPointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault()
+    setIsDraggingSlider(true)
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+    updateValueFromPosition(e.clientX)
+  }, [updateValueFromPosition])
+
+  const handleTrackPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDraggingSlider) return
+    updateValueFromPosition(e.clientX)
+  }, [isDraggingSlider, updateValueFromPosition])
+
+  const handleTrackPointerUp = useCallback((e: React.PointerEvent) => {
+    setIsDraggingSlider(false)
+    try {
+      ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
+    } catch {}
+  }, [])
+
+  // Routing indicator drag
+  const isDraggingDepth = useRef(false)
   const dragStartY = useRef(0)
   const dragStartDepth = useRef(0)
 
@@ -69,14 +110,14 @@ export function SliderRow({
     if (!firstRouting) return
     e.preventDefault()
     e.stopPropagation()
-    isDragging.current = true
+    isDraggingDepth.current = true
     dragStartY.current = e.clientY
     dragStartDepth.current = firstRouting.depth
     ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
   }, [firstRouting])
 
   const handleIndicatorPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDragging.current || !firstRouting) return
+    if (!isDraggingDepth.current || !firstRouting) return
     e.stopPropagation()
     const deltaY = dragStartY.current - e.clientY
     const deltaDepth = deltaY / 50
@@ -85,7 +126,7 @@ export function SliderRow({
   }, [firstRouting, updateRoutingDepth])
 
   const handleIndicatorPointerUp = useCallback((e: React.PointerEvent) => {
-    isDragging.current = false
+    isDraggingDepth.current = false
     try {
       ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
     } catch {}
@@ -125,39 +166,47 @@ export function SliderRow({
             onDoubleClick={handleIndicatorDoubleClick}
           >
             <svg width="10" height="10" viewBox="0 0 12 12">
+              <circle cx="6" cy="6" r="4" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
               <circle
-                cx="6"
-                cy="6"
-                r="4"
-                fill="none"
-                stroke="rgba(255,255,255,0.3)"
-                strokeWidth="2"
-              />
-              <circle
-                cx="6"
-                cy="6"
-                r="4"
-                fill="none"
-                stroke="white"
-                strokeWidth="2"
+                cx="6" cy="6" r="4" fill="none" stroke="white" strokeWidth="2"
                 strokeDasharray={`${Math.abs(firstRouting.depth) * 25} 100`}
-                strokeDashoffset="0"
-                transform="rotate(-90 6 6)"
+                strokeDashoffset="0" transform="rotate(-90 6 6)"
               />
             </svg>
           </span>
         )}
         {label}
       </span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="flex-1 h-1 accent-gray-700 cursor-pointer"
-      />
+
+      {/* Custom dot slider */}
+      <div
+        ref={trackRef}
+        className="flex-1 h-6 bg-[#1a1a1a] rounded-full border border-[#2a2a2a] relative cursor-pointer select-none"
+        onPointerDown={handleTrackPointerDown}
+        onPointerMove={handleTrackPointerMove}
+        onPointerUp={handleTrackPointerUp}
+        onPointerCancel={handleTrackPointerUp}
+      >
+        {/* Dot markers */}
+        <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
+          {Array.from({ length: DOT_COUNT }).map((_, i) => (
+            <div
+              key={i}
+              className="w-1.5 h-1.5 rounded-full bg-[#3a3a3a]"
+            />
+          ))}
+        </div>
+
+        {/* Thumb */}
+        <div
+          className="absolute top-1/2 w-4 h-4 rounded-full bg-[#4a4a4a] border-2 border-[#5a5a5a] pointer-events-none"
+          style={{
+            left: `calc(12px + (100% - 24px) * ${normalizedValue})`,
+            transform: `translate(-50%, -50%)${isDraggingSlider ? ' scale(1.1)' : ''}`,
+          }}
+        />
+      </div>
+
       <span className="text-[14px] text-gray-600 w-10 text-right tabular-nums">
         {displayValue}
       </span>

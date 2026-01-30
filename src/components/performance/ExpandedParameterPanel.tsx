@@ -2672,29 +2672,26 @@ function SizeButtonGrid({
   }, 0)
 
   return (
-    <div className="py-1">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[14px] text-gray-500">{label}</span>
-        <span className="text-[12px] text-gray-400 tabular-nums">{value}</span>
-      </div>
-      <div className="grid grid-cols-6 gap-1">
+    <div className="flex items-center gap-2 py-1.5">
+      <span className="text-[14px] text-gray-500 w-20 shrink-0">{label}</span>
+      <div className="flex-1 h-6 bg-[#1a1a1a] rounded-full border border-[#2a2a2a] flex items-center justify-between px-3">
         {SIZE_PRESETS.map((preset) => {
           const isActive = preset.index === activeIndex
           return (
             <button
               key={preset.index}
               onClick={() => onChange(presets[preset.index])}
-              className={`py-1.5 text-[13px] font-medium rounded transition-colors ${
+              className={`rounded-full transition-all ${
                 isActive
-                  ? 'bg-gray-800 text-white'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                  ? 'w-4 h-4 bg-[#4a4a4a] border-2 border-[#5a5a5a]'
+                  : 'w-1.5 h-1.5 bg-[#3a3a3a] hover:bg-[#5a5a5a]'
               }`}
-            >
-              {preset.label}
-            </button>
+              title={`${preset.label}: ${presets[preset.index]}`}
+            />
           )
         })}
       </div>
+      <span className="text-[14px] text-gray-600 w-10 text-right tabular-nums">{value}</span>
     </div>
   )
 }

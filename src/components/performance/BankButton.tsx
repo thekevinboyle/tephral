@@ -48,23 +48,23 @@ export function BankButton({
     if (isActive) {
       // Active (loaded) state
       return {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--bg-surface)',
         border: '2px solid #6366f1',
-        color: '#1a1a1a',
+        color: 'var(--text-primary)',
       }
     } else if (isEmpty) {
       // Empty state
       return {
         backgroundColor: 'transparent',
-        border: '1px dashed #d0d0d0',
-        color: '#999999',
+        border: '1px dashed var(--border)',
+        color: 'var(--text-muted)',
       }
     } else {
       // Filled (not active) state
       return {
-        backgroundColor: '#ffffff',
-        border: '1px solid #d0d0d0',
-        color: '#1a1a1a',
+        backgroundColor: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        color: 'var(--text-primary)',
       }
     }
   }

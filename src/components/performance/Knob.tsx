@@ -16,7 +16,7 @@ export function Knob({
   value,
   min = 0,
   max = 100,
-  color = '#666666',
+  color = 'var(--text-muted)',
   size = 'md',
   onChange,
 }: KnobProps) {
@@ -69,8 +69,8 @@ export function Knob({
         <div
           className="absolute inset-0 rounded-full"
           style={{
-            backgroundColor: '#f5f5f5',
-            border: '1px solid #d0d0d0',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
           }}
         />
 
@@ -93,7 +93,7 @@ export function Knob({
       {/* Label - mixed case, medium weight */}
       <span
         className="text-[14px] font-medium"
-        style={{ color: '#666666' }}
+        style={{ color: 'var(--text-muted)' }}
       >
         {label}
       </span>

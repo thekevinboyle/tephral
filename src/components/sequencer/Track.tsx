@@ -112,8 +112,8 @@ export function Track({ track }: TrackProps) {
     <div
       className="flex items-center gap-2 px-2 py-1.5 rounded group cursor-pointer"
       style={{
-        backgroundColor: isSelected ? `${track.color}10` : '#ffffff',
-        border: `1px solid ${isSelected ? track.color : '#e5e5e5'}`,
+        backgroundColor: isSelected ? `${track.color}10` : 'var(--bg-surface)',
+        border: `1px solid ${isSelected ? track.color : 'var(--border)'}`,
       }}
       onClick={fillModeActive ? handleFillClick : handleTrackClick}
     >
@@ -158,14 +158,14 @@ export function Track({ track }: TrackProps) {
             onKeyDown={handleNameKeyDown}
             className="w-full text-[13px] px-1 py-0.5 rounded"
             style={{
-              backgroundColor: '#f5f5f5',
-              border: '1px solid #d0d0d0',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
             }}
           />
         ) : (
           <span
             className="text-[13px] font-medium truncate cursor-text"
-            style={{ color: '#666666' }}
+            style={{ color: 'var(--text-muted)' }}
             onDoubleClick={handleNameDoubleClick}
             title="Double-click to rename"
           >
@@ -195,7 +195,7 @@ export function Track({ track }: TrackProps) {
       <button
         onClick={handleLengthClick}
         className="w-6 text-[12px] font-mono text-center rounded hover:bg-gray-100"
-        style={{ color: '#999999' }}
+        style={{ color: 'var(--text-muted)' }}
         title="Click to change length"
       >
         {track.length}
@@ -205,7 +205,7 @@ export function Track({ track }: TrackProps) {
       <button
         onClick={handleModeClick}
         className="w-5 text-[13px] font-mono text-center rounded hover:bg-gray-100"
-        style={{ color: track.modeOverride ? '#333333' : '#cccccc' }}
+        style={{ color: track.modeOverride ? 'var(--text-primary)' : '#cccccc' }}
         title={track.modeOverride ? `Mode: ${track.modeOverride}` : 'Using global mode'}
       >
         {track.modeOverride ? MODE_LABELS[track.modeOverride] : '-'}
@@ -218,7 +218,7 @@ export function Track({ track }: TrackProps) {
         style={{
           backgroundColor: track.solo ? track.color : 'transparent',
           color: track.solo ? '#ffffff' : '#cccccc',
-          border: track.solo ? 'none' : '1px solid #e5e5e5',
+          border: track.solo ? 'none' : '1px solid var(--border)',
         }}
         title={track.solo ? 'Solo (click to unsolo)' : 'Solo this track'}
       >

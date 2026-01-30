@@ -30,16 +30,16 @@ export function ExpandedParameterPanel() {
 
   if (!effectId || !effect) {
     return (
-      <div className="h-full flex items-center justify-center bg-gray-50 border-l border-gray-200">
-        <span className="text-[14px] text-gray-400">Select an effect</span>
+      <div className="h-full flex items-center justify-center border-l" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
+        <span className="text-[14px]" style={{ color: 'var(--text-muted)' }}>Select an effect</span>
       </div>
     )
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 border-l border-gray-200">
+    <div className="h-full flex flex-col border-l" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200 bg-white">
+      <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-surface)' }}>
         <div
           className="w-2 h-2 rounded-full"
           style={{
@@ -47,7 +47,7 @@ export function ExpandedParameterPanel() {
             boxShadow: `0 0 6px ${effect.color}`,
           }}
         />
-        <span className="text-[14px] font-semibold text-gray-700 uppercase tracking-wide">
+        <span className="text-[14px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-primary)' }}>
           {effect.label}
         </span>
       </div>

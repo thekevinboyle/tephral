@@ -161,7 +161,7 @@ export function SliderRow({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <span className="text-[14px] text-gray-500 w-20 shrink-0 flex items-center gap-1">
+      <span className="text-[14px] w-20 shrink-0 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
         {hasRouting && firstRouting && routingTrack && (
           <span
             className="w-3 h-3 flex-shrink-0 cursor-ns-resize hover:scale-110 transition-transform flex items-center justify-center rounded-full"
@@ -192,7 +192,11 @@ export function SliderRow({
       {/* Custom dot slider */}
       <div
         ref={trackRef}
-        className="flex-1 h-7 bg-gray-100 rounded-full border border-gray-200 relative cursor-pointer select-none shadow-inner"
+        className="flex-1 h-7 rounded-full relative cursor-pointer select-none shadow-inner"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+        }}
         onPointerDown={handleTrackPointerDown}
         onPointerMove={handleTrackPointerMove}
         onPointerUp={handleTrackPointerUp}
@@ -200,8 +204,11 @@ export function SliderRow({
       >
         {/* Track fill */}
         <div
-          className="absolute left-1 top-1 bottom-1 rounded-full bg-gradient-to-r from-gray-200 to-gray-100 pointer-events-none"
-          style={{ width: `calc((100% - 8px) * ${normalizedValue})` }}
+          className="absolute left-1 top-1 bottom-1 rounded-full pointer-events-none"
+          style={{
+            width: `calc((100% - 8px) * ${normalizedValue})`,
+            background: 'linear-gradient(to right, var(--border), var(--bg-surface))',
+          }}
         />
 
         {/* Dot markers */}
@@ -212,9 +219,10 @@ export function SliderRow({
             return (
               <div
                 key={i}
-                className={`w-1 h-1 rounded-full transition-colors ${
-                  isBeforeThumb ? 'bg-gray-400' : 'bg-gray-300'
-                }`}
+                className="w-1 h-1 rounded-full transition-colors"
+                style={{
+                  backgroundColor: isBeforeThumb ? 'var(--text-muted)' : 'var(--border)',
+                }}
               />
             )
           })}
@@ -222,10 +230,12 @@ export function SliderRow({
 
         {/* Thumb */}
         <div
-          className="absolute top-1/2 w-5 h-5 rounded-full bg-white border-2 border-gray-300 shadow-md pointer-events-none transition-shadow"
+          className="absolute top-1/2 w-5 h-5 rounded-full shadow-md pointer-events-none transition-shadow"
           style={{
             left: `calc(10px + (100% - 20px) * ${normalizedValue})`,
             transform: `translate(-50%, -50%)`,
+            backgroundColor: 'var(--bg-surface)',
+            border: '2px solid var(--border)',
             boxShadow: isDraggingSlider
               ? '0 2px 8px rgba(0,0,0,0.15), 0 0 0 3px rgba(156,163,175,0.2)'
               : '0 1px 3px rgba(0,0,0,0.1)',
@@ -233,7 +243,7 @@ export function SliderRow({
         />
       </div>
 
-      <span className="text-[14px] text-gray-600 w-10 text-right tabular-nums">
+      <span className="text-[14px] w-10 text-right tabular-nums" style={{ color: 'var(--text-muted)' }}>
         {displayValue}
       </span>
     </div>

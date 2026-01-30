@@ -61,22 +61,22 @@ export function SequencerPanel() {
     <div
       className="h-full flex flex-col"
       style={{
-        backgroundColor: '#f5f5f5',
-        borderLeft: '1px solid #d0d0d0',
+        backgroundColor: 'var(--bg-surface)',
+        borderLeft: '1px solid var(--border)',
       }}
     >
       {/* Header */}
       <div
         className="flex items-center gap-3 px-3 py-2"
         style={{
-          borderBottom: '1px solid #d0d0d0',
-          backgroundColor: '#ffffff',
+          borderBottom: '1px solid var(--border)',
+          backgroundColor: 'var(--bg-surface)',
         }}
       >
         {/* Title */}
         <span
           className="text-[13px] font-semibold uppercase tracking-wider"
-          style={{ color: '#999999' }}
+          style={{ color: 'var(--text-muted)' }}
         >
           Sequencer
         </span>
@@ -89,15 +89,15 @@ export function SequencerPanel() {
           onClick={isPlaying ? stop : play}
           className="w-7 h-7 flex items-center justify-center rounded transition-colors"
           style={{
-            backgroundColor: isPlaying ? '#333333' : '#ffffff',
-            border: '1px solid #d0d0d0',
+            backgroundColor: isPlaying ? 'var(--text-primary)' : 'var(--bg-surface)',
+            border: '1px solid var(--border)',
           }}
         >
           {isPlaying ? (
             // Stop icon
             <div
               className="w-2.5 h-2.5"
-              style={{ backgroundColor: '#ffffff' }}
+              style={{ backgroundColor: 'var(--bg-surface)' }}
             />
           ) : (
             // Play icon
@@ -106,7 +106,7 @@ export function SequencerPanel() {
               style={{
                 borderTop: '5px solid transparent',
                 borderBottom: '5px solid transparent',
-                borderLeft: '8px solid #666666',
+                borderLeft: '8px solid var(--text-muted)',
                 marginLeft: '2px',
               }}
             />
@@ -120,9 +120,9 @@ export function SequencerPanel() {
           onChange={handleBpmChange}
           className="w-12 h-7 text-center text-[14px] font-mono rounded"
           style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
-            color: '#333333',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-primary)',
           }}
           min={20}
           max={300}
@@ -133,9 +133,9 @@ export function SequencerPanel() {
           onClick={handleResolutionCycle}
           className="h-7 px-2 text-[14px] font-mono rounded"
           style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
-            color: '#666666',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
           }}
         >
           {stepResolution}
@@ -146,9 +146,9 @@ export function SequencerPanel() {
           onClick={() => setAudioReactive(!audioReactive)}
           className="h-7 px-2 text-[14px] font-medium rounded flex items-center gap-1.5"
           style={{
-            backgroundColor: audioReactive ? '#8b5cf6' : '#ffffff',
-            border: audioReactive ? '1px solid #7c3aed' : '1px solid #d0d0d0',
-            color: audioReactive ? '#ffffff' : '#666666',
+            backgroundColor: audioReactive ? '#8b5cf6' : 'var(--bg-surface)',
+            border: audioReactive ? '1px solid #7c3aed' : '1px solid var(--border)',
+            color: audioReactive ? '#ffffff' : 'var(--text-muted)',
           }}
           title="Audio reactive mode - modulates parameters based on audio input"
         >
@@ -175,7 +175,7 @@ export function SequencerPanel() {
         {tracks.length === 0 ? (
           <div
             className="flex items-center justify-center h-full text-[14px] cursor-pointer"
-            style={{ color: '#999999' }}
+            style={{ color: 'var(--text-muted)' }}
             onDoubleClick={addTrack}
             title="Double-click to add a track"
           >
@@ -193,18 +193,18 @@ export function SequencerPanel() {
       {/* Add Track button */}
       <div
         className="px-3 py-2"
-        style={{ borderTop: '1px solid #d0d0d0' }}
+        style={{ borderTop: '1px solid var(--border)' }}
       >
         <button
           onClick={addTrack}
           className="w-full h-8 text-[14px] font-medium rounded transition-colors"
           style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
-            color: '#666666',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
         >
           + Add Track
         </button>
@@ -214,8 +214,8 @@ export function SequencerPanel() {
       <div
         className="px-3 py-2"
         style={{
-          borderTop: '1px solid #d0d0d0',
-          backgroundColor: '#ffffff',
+          borderTop: '1px solid var(--border)',
+          backgroundColor: 'var(--bg-surface)',
         }}
       >
         {/* Row 1: Mode, Fill, Random, Undo */}
@@ -226,9 +226,9 @@ export function SequencerPanel() {
             onChange={(e) => setGlobalMode(e.target.value as StepMode)}
             className="flex-1 h-7 px-2 text-[13px] rounded"
             style={{
-              backgroundColor: '#f5f5f5',
-              border: '1px solid #d0d0d0',
-              color: '#666',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-muted)',
             }}
           >
             {MODE_OPTIONS.map(({ value, label }) => (
@@ -241,9 +241,9 @@ export function SequencerPanel() {
             onClick={() => setFillModeActive(!fillModeActive)}
             className="h-7 px-3 text-[13px] font-medium rounded transition-colors"
             style={{
-              backgroundColor: fillModeActive ? '#4ade80' : '#f5f5f5',
-              border: fillModeActive ? '1px solid #4ade80' : '1px solid #d0d0d0',
-              color: fillModeActive ? '#fff' : '#666',
+              backgroundColor: fillModeActive ? '#4ade80' : 'var(--bg-surface)',
+              border: fillModeActive ? '1px solid #4ade80' : '1px solid var(--border)',
+              color: fillModeActive ? '#fff' : 'var(--text-muted)',
             }}
             title={fillModeActive ? 'Click a track to fill/clear' : 'Enter fill mode'}
           >
@@ -262,12 +262,12 @@ export function SequencerPanel() {
             }}
             className="h-7 px-3 text-[13px] font-medium rounded transition-colors"
             style={{
-              backgroundColor: '#f5f5f5',
-              border: '1px solid #d0d0d0',
-              color: '#666',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-muted)',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
             title="Randomize all tracks (Shift+click for selected only)"
           >
             Random
@@ -279,9 +279,9 @@ export function SequencerPanel() {
             disabled={!previousStepsSnapshot}
             className="w-7 h-7 flex items-center justify-center text-[12px] rounded transition-colors"
             style={{
-              backgroundColor: previousStepsSnapshot ? '#f5f5f5' : '#fafafa',
-              border: '1px solid #d0d0d0',
-              color: previousStepsSnapshot ? '#666' : '#ccc',
+              backgroundColor: previousStepsSnapshot ? 'var(--bg-surface)' : 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              color: previousStepsSnapshot ? 'var(--text-muted)' : 'var(--border)',
               cursor: previousStepsSnapshot ? 'pointer' : 'not-allowed',
             }}
             title="Undo last randomize"
@@ -300,12 +300,12 @@ export function SequencerPanel() {
             onClick={freeze}
             className="flex-1 h-7 text-[13px] font-medium rounded transition-colors flex items-center justify-center gap-1"
             style={{
-              backgroundColor: frozenState ? '#e0f2fe' : '#f5f5f5',
-              border: frozenState ? '1px solid #38bdf8' : '1px solid #d0d0d0',
-              color: frozenState ? '#0284c7' : '#666',
+              backgroundColor: frozenState ? '#e0f2fe' : 'var(--bg-surface)',
+              border: frozenState ? '1px solid #38bdf8' : '1px solid var(--border)',
+              color: frozenState ? '#0284c7' : 'var(--text-muted)',
             }}
-            onMouseEnter={(e) => !frozenState && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
-            onMouseLeave={(e) => !frozenState && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+            onMouseEnter={(e) => !frozenState && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+            onMouseLeave={(e) => !frozenState && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
             title="Capture current state"
           >
             {frozenState && (
@@ -323,13 +323,13 @@ export function SequencerPanel() {
             disabled={!frozenState}
             className="flex-1 h-7 text-[13px] font-medium rounded transition-colors"
             style={{
-              backgroundColor: frozenState ? '#f5f5f5' : '#fafafa',
-              border: '1px solid #d0d0d0',
-              color: frozenState ? '#666' : '#ccc',
+              backgroundColor: frozenState ? 'var(--bg-surface)' : 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              color: frozenState ? 'var(--text-muted)' : 'var(--border)',
               cursor: frozenState ? 'pointer' : 'not-allowed',
             }}
-            onMouseEnter={(e) => frozenState && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
-            onMouseLeave={(e) => frozenState && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+            onMouseEnter={(e) => frozenState && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+            onMouseLeave={(e) => frozenState && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
             title={frozenState ? 'Restore to frozen state' : 'No frozen state'}
           >
             Revert

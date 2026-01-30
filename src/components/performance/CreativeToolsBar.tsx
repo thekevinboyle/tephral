@@ -12,8 +12,8 @@ export function CreativeToolsBar() {
         onClick={randomize}
         className="px-3 py-1.5 rounded-md text-[14px] font-medium transition-colors hover:bg-white"
         style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #d0d0d0',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
           color: '#1a1a1a',
         }}
       >
@@ -25,9 +25,9 @@ export function CreativeToolsBar() {
         disabled={!previousState}
         className="px-3 py-1.5 rounded-md text-[14px] font-medium transition-colors"
         style={{
-          backgroundColor: previousState ? '#ffffff' : '#f5f5f5',
-          border: '1px solid #d0d0d0',
-          color: previousState ? '#1a1a1a' : '#999999',
+          backgroundColor: previousState ? 'var(--bg-surface)' : 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: previousState ? '#1a1a1a' : 'var(--text-muted)',
           cursor: previousState ? 'pointer' : 'not-allowed',
         }}
       >

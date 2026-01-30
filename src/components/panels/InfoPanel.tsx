@@ -14,7 +14,7 @@ export function InfoPanel() {
   return (
     <div
       className="flex flex-col"
-      style={{ borderTop: '1px solid #d0d0d0', backgroundColor: '#f5f5f5' }}
+      style={{ borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-surface)' }}
     >
       {!infoPanelSelection && <EmptyInfoContent />}
       {infoPanelSelection?.type === 'track' && (
@@ -61,17 +61,17 @@ function EmptyInfoContent() {
     <>
       <div
         className="flex items-center px-3 py-2"
-        style={{ borderBottom: '1px solid #e5e5e5' }}
+        style={{ borderBottom: '1px solid var(--border)' }}
       >
         <span
           className="text-[13px] font-semibold uppercase tracking-wider"
-          style={{ color: '#999999' }}
+          style={{ color: 'var(--text-muted)' }}
         >
           Inspector
         </span>
       </div>
       <div className="px-3 py-3">
-        <div className="text-[12px] space-y-1.5" style={{ color: '#999999' }}>
+        <div className="text-[12px] space-y-1.5" style={{ color: 'var(--text-muted)' }}>
           <div className="flex items-center gap-2">
             <span className="w-4 text-center">●</span>
             <span>Click track to inspect</span>
@@ -98,7 +98,7 @@ function PanelHeader({ title, color, onClose }: { title: string; color?: string;
   return (
     <div
       className="flex items-center justify-between px-3 py-2"
-      style={{ borderBottom: '1px solid #e5e5e5' }}
+      style={{ borderBottom: '1px solid var(--border)' }}
     >
       <div className="flex items-center gap-2">
         {color && (
@@ -109,7 +109,7 @@ function PanelHeader({ title, color, onClose }: { title: string; color?: string;
         )}
         <span
           className="text-[13px] font-semibold uppercase tracking-wider"
-          style={{ color: '#666666' }}
+          style={{ color: 'var(--text-muted)' }}
         >
           {title}
         </span>
@@ -117,7 +117,7 @@ function PanelHeader({ title, color, onClose }: { title: string; color?: string;
       <button
         onClick={onClose}
         className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200"
-        style={{ color: '#999999' }}
+        style={{ color: 'var(--text-muted)' }}
       >
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
           <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" />
@@ -131,7 +131,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="text-[11px] font-medium uppercase tracking-wider mb-1.5"
-      style={{ color: '#999999' }}
+      style={{ color: 'var(--text-muted)' }}
     >
       {children}
     </div>
@@ -173,7 +173,7 @@ function TrackInfoContent({ trackId, onClose }: { trackId: string; onClose: () =
       <PanelHeader title={track.name} color={track.color} onClose={onClose} />
 
       {/* Length */}
-      <div className="px-3 py-2" style={{ borderBottom: '1px solid #e5e5e5' }}>
+      <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <SectionLabel>Length</SectionLabel>
         <div className="flex gap-1">
           {LENGTH_PRESETS.map((length) => (
@@ -182,10 +182,10 @@ function TrackInfoContent({ trackId, onClose }: { trackId: string; onClose: () =
               onClick={() => handleLengthChange(length)}
               className="flex-1 h-6 text-[11px] font-medium rounded-full transition-colors"
               style={{
-                backgroundColor: track.length === length ? track.color : '#ffffff',
-                color: track.length === length ? '#ffffff' : '#666666',
+                backgroundColor: track.length === length ? track.color : 'var(--bg-surface)',
+                color: track.length === length ? '#ffffff' : 'var(--text-muted)',
                 border: '1px solid',
-                borderColor: track.length === length ? track.color : '#d0d0d0',
+                borderColor: track.length === length ? track.color : 'var(--border)',
               }}
             >
               {length}
@@ -195,7 +195,7 @@ function TrackInfoContent({ trackId, onClose }: { trackId: string; onClose: () =
       </div>
 
       {/* Mode */}
-      <div className="px-3 py-2" style={{ borderBottom: '1px solid #e5e5e5' }}>
+      <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <SectionLabel>Mode</SectionLabel>
         <div className="flex gap-1">
           {MODE_OPTIONS.map(({ mode, label }) => (
@@ -204,10 +204,10 @@ function TrackInfoContent({ trackId, onClose }: { trackId: string; onClose: () =
               onClick={() => handleModeChange(mode)}
               className="w-9 h-7 text-[14px] font-mono rounded transition-colors"
               style={{
-                backgroundColor: track.modeOverride === mode ? track.color : '#ffffff',
-                color: track.modeOverride === mode ? '#ffffff' : '#999999',
+                backgroundColor: track.modeOverride === mode ? track.color : 'var(--bg-surface)',
+                color: track.modeOverride === mode ? '#ffffff' : 'var(--text-muted)',
                 border: '1px solid',
-                borderColor: track.modeOverride === mode ? track.color : '#d0d0d0',
+                borderColor: track.modeOverride === mode ? track.color : 'var(--border)',
               }}
             >
               {label}
@@ -218,9 +218,9 @@ function TrackInfoContent({ trackId, onClose }: { trackId: string; onClose: () =
               onClick={() => handleModeChange(null)}
               className="ml-auto px-2 h-7 text-[11px] rounded transition-colors hover:bg-gray-100"
               style={{
-                backgroundColor: '#ffffff',
-                color: '#999999',
-                border: '1px solid #d0d0d0',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border)',
               }}
             >
               Reset
@@ -233,7 +233,7 @@ function TrackInfoContent({ trackId, onClose }: { trackId: string; onClose: () =
       <div className="px-3 py-2">
         <SectionLabel>Routes {trackRoutings.length > 0 && `(${trackRoutings.length})`}</SectionLabel>
         {trackRoutings.length === 0 ? (
-          <div className="text-[12px] py-2" style={{ color: '#b0b0b0' }}>
+          <div className="text-[12px] py-2" style={{ color: 'var(--text-muted)' }}>
             Drag track handle to a parameter to create a route
           </div>
         ) : (
@@ -281,17 +281,17 @@ function EffectInfoContent({ effectId, onClose }: { effectId: string; onClose: (
 
       <div className="px-3 py-2">
         <SectionLabel>Details</SectionLabel>
-        <div className="space-y-1 text-[12px]" style={{ color: '#666666' }}>
+        <div className="space-y-1 text-[12px]" style={{ color: 'var(--text-muted)' }}>
           <div className="flex justify-between">
-            <span style={{ color: '#999999' }}>Page</span>
+            <span style={{ color: 'var(--text-muted)' }}>Page</span>
             <span>{pageName}</span>
           </div>
           <div className="flex justify-between">
-            <span style={{ color: '#999999' }}>ID</span>
+            <span style={{ color: 'var(--text-muted)' }}>ID</span>
             <span className="font-mono">{effect.id}</span>
           </div>
           <div className="flex justify-between">
-            <span style={{ color: '#999999' }}>Range</span>
+            <span style={{ color: 'var(--text-muted)' }}>Range</span>
             <span>{effect.min} – {effect.max}</span>
           </div>
         </div>
@@ -321,7 +321,7 @@ function StepInfoContent({ trackId, stepIndex, onClose }: { trackId: string; ste
       <PanelHeader title={`${track.name} › Step ${stepIndex + 1}`} color={track.color} onClose={onClose} />
 
       {/* Probability */}
-      <div className="px-3 py-2" style={{ borderBottom: '1px solid #e5e5e5' }}>
+      <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <SectionLabel>Probability</SectionLabel>
         <StepSlider
           value={step.probability}
@@ -331,7 +331,7 @@ function StepInfoContent({ trackId, stepIndex, onClose }: { trackId: string; ste
       </div>
 
       {/* Gate Length */}
-      <div className="px-3 py-2" style={{ borderBottom: '1px solid #e5e5e5' }}>
+      <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <SectionLabel>Gate Length</SectionLabel>
         <StepSlider
           value={step.gateLength}
@@ -341,7 +341,7 @@ function StepInfoContent({ trackId, stepIndex, onClose }: { trackId: string; ste
       </div>
 
       {/* Ratchet */}
-      <div className="px-3 py-2" style={{ borderBottom: '1px solid #e5e5e5' }}>
+      <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <SectionLabel>Ratchet</SectionLabel>
         <div className="flex gap-1">
           {([1, 2, 3, 4, 6, 8] as const).map((div) => (
@@ -350,10 +350,10 @@ function StepInfoContent({ trackId, stepIndex, onClose }: { trackId: string; ste
               onClick={() => handleStepUpdate({ ratchetDivision: div })}
               className="flex-1 h-6 text-[11px] font-medium rounded transition-colors"
               style={{
-                backgroundColor: step.ratchetDivision === div ? track.color : '#ffffff',
-                color: step.ratchetDivision === div ? '#ffffff' : '#666666',
+                backgroundColor: step.ratchetDivision === div ? track.color : 'var(--bg-surface)',
+                color: step.ratchetDivision === div ? '#ffffff' : 'var(--text-muted)',
                 border: '1px solid',
-                borderColor: step.ratchetDivision === div ? track.color : '#d0d0d0',
+                borderColor: step.ratchetDivision === div ? track.color : 'var(--border)',
               }}
             >
               {div}x
@@ -372,10 +372,10 @@ function StepInfoContent({ trackId, stepIndex, onClose }: { trackId: string; ste
               onClick={() => handleStepUpdate({ velocityCurve: curve })}
               className="flex-1 h-6 text-[11px] font-medium rounded transition-colors"
               style={{
-                backgroundColor: step.velocityCurve === curve ? track.color : '#ffffff',
-                color: step.velocityCurve === curve ? '#ffffff' : '#666666',
+                backgroundColor: step.velocityCurve === curve ? track.color : 'var(--bg-surface)',
+                color: step.velocityCurve === curve ? '#ffffff' : 'var(--text-muted)',
                 border: '1px solid',
-                borderColor: step.velocityCurve === curve ? track.color : '#d0d0d0',
+                borderColor: step.velocityCurve === curve ? track.color : 'var(--border)',
               }}
             >
               {curve === 'flat' ? '—' : curve === 'up' ? '↗' : curve === 'down' ? '↘' : '∧'}
@@ -429,7 +429,7 @@ function StepSlider({ value, onChange, color }: { value: number; onChange: (v: n
           }}
         />
       </div>
-      <span className="text-[11px] w-8 text-right tabular-nums" style={{ color: '#999' }}>
+      <span className="text-[11px] w-8 text-right tabular-nums" style={{ color: 'var(--text-muted)' }}>
         {Math.round(value * 100)}%
       </span>
     </div>
@@ -459,16 +459,16 @@ function RoutingInfoContent({ routingId, onClose }: { routingId: string; onClose
     <>
       <PanelHeader title="Routing" color={track.color} onClose={onClose} />
 
-      <div className="px-3 py-2" style={{ borderBottom: '1px solid #e5e5e5' }}>
+      <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <SectionLabel>Connection</SectionLabel>
-        <div className="text-[12px]" style={{ color: '#666666' }}>
+        <div className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
           <span style={{ color: track.color, fontWeight: 500 }}>{track.name}</span>
-          <span style={{ color: '#999999' }}> → </span>
+          <span style={{ color: 'var(--text-muted)' }}> → </span>
           <span>{formatParamName(routing.targetParam)}</span>
         </div>
       </div>
 
-      <div className="px-3 py-2" style={{ borderBottom: '1px solid #e5e5e5' }}>
+      <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <SectionLabel>Depth</SectionLabel>
         <RoutingRow
           targetParam={routing.targetParam}
@@ -491,9 +491,9 @@ function RoutingInfoContent({ routingId, onClose }: { routingId: string; onClose
           }}
           className="w-full h-7 text-[12px] font-medium rounded transition-colors hover:bg-red-50"
           style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
-            color: '#999999',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
           }}
         >
           Remove Routing
@@ -528,25 +528,25 @@ function PresetInfoContent({ presetId, onClose }: { presetId: string; onClose: (
 
       {/* Thumbnail */}
       {preset.thumbnail && (
-        <div className="px-3 py-2" style={{ borderBottom: '1px solid #e5e5e5' }}>
+        <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
           <div
             className="w-full aspect-video rounded overflow-hidden"
-            style={{ backgroundColor: '#e0e0e0' }}
+            style={{ backgroundColor: 'var(--border)' }}
           >
             <img src={preset.thumbnail} alt={preset.name} className="w-full h-full object-cover" />
           </div>
         </div>
       )}
 
-      <div className="px-3 py-2" style={{ borderBottom: '1px solid #e5e5e5' }}>
+      <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <SectionLabel>Details</SectionLabel>
-        <div className="space-y-1 text-[12px]" style={{ color: '#666666' }}>
+        <div className="space-y-1 text-[12px]" style={{ color: 'var(--text-muted)' }}>
           <div className="flex justify-between">
-            <span style={{ color: '#999999' }}>Created</span>
+            <span style={{ color: 'var(--text-muted)' }}>Created</span>
             <span>{formatDate(preset.createdAt)}</span>
           </div>
           <div className="flex justify-between">
-            <span style={{ color: '#999999' }}>Updated</span>
+            <span style={{ color: 'var(--text-muted)' }}>Updated</span>
             <span>{formatDate(preset.updatedAt)}</span>
           </div>
         </div>
@@ -560,7 +560,7 @@ function PresetInfoContent({ presetId, onClose }: { presetId: string; onClose: (
           }}
           className="flex-1 h-7 text-[12px] font-medium rounded transition-colors"
           style={{
-            backgroundColor: '#333333',
+            backgroundColor: 'var(--text-primary)',
             color: '#ffffff',
           }}
         >
@@ -575,9 +575,9 @@ function PresetInfoContent({ presetId, onClose }: { presetId: string; onClose: (
           }}
           className="h-7 px-3 text-[12px] font-medium rounded transition-colors hover:bg-red-50"
           style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
-            color: '#999999',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
           }}
         >
           Delete
@@ -648,7 +648,7 @@ function RoutingRow({ targetParam, depth, trackColor, onDepthChange, onRemove, s
       title="Drag to adjust depth, double-click to remove"
     >
       {showLabel && (
-        <span className="text-[12px] flex-1 truncate" style={{ color: '#666666' }}>
+        <span className="text-[12px] flex-1 truncate" style={{ color: 'var(--text-muted)' }}>
           {formatParamName(targetParam)}
         </span>
       )}
@@ -656,7 +656,7 @@ function RoutingRow({ targetParam, depth, trackColor, onDepthChange, onRemove, s
       <div className={`${showLabel ? 'w-16' : 'flex-1'} h-2 bg-gray-200 rounded relative overflow-hidden`}>
         <div
           className="absolute top-0 bottom-0 w-px"
-          style={{ left: '50%', backgroundColor: '#c0c0c0' }}
+          style={{ left: '50%', backgroundColor: 'var(--border)' }}
         />
         <div
           className="absolute top-0 bottom-0 rounded"
@@ -670,7 +670,7 @@ function RoutingRow({ targetParam, depth, trackColor, onDepthChange, onRemove, s
 
       <span
         className="text-[11px] w-8 text-right tabular-nums"
-        style={{ color: '#999999' }}
+        style={{ color: 'var(--text-muted)' }}
       >
         {Math.round(depth * 100)}%
       </span>

@@ -288,12 +288,12 @@ export function TransportBar() {
         onClick={handleWebcam}
         className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
         style={{
-          backgroundColor: source === 'webcam' ? '#333333' : '#f5f5f5',
-          border: '1px solid #d0d0d0',
-          color: source === 'webcam' ? '#ffffff' : '#666666',
+          backgroundColor: source === 'webcam' ? 'var(--text-primary)' : 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: source === 'webcam' ? 'var(--bg-surface)' : 'var(--text-muted)',
         }}
-        onMouseEnter={(e) => source !== 'webcam' && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
-        onMouseLeave={(e) => source !== 'webcam' && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onMouseEnter={(e) => source !== 'webcam' && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+        onMouseLeave={(e) => source !== 'webcam' && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
       >
         Cam
       </button>
@@ -302,12 +302,12 @@ export function TransportBar() {
         onClick={() => fileInputRef.current?.click()}
         className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
         style={{
-          backgroundColor: source === 'file' ? '#333333' : '#f5f5f5',
-          border: '1px solid #d0d0d0',
-          color: source === 'file' ? '#ffffff' : '#666666',
+          backgroundColor: source === 'file' ? 'var(--text-primary)' : 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: source === 'file' ? 'var(--bg-surface)' : 'var(--text-muted)',
         }}
-        onMouseEnter={(e) => source !== 'file' && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
-        onMouseLeave={(e) => source !== 'file' && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onMouseEnter={(e) => source !== 'file' && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+        onMouseLeave={(e) => source !== 'file' && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
       >
         File
       </button>
@@ -329,8 +329,8 @@ export function TransportBar() {
         disabled={!hasSource}
         className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
         style={{
-          backgroundColor: isRecording ? '#ef4444' : '#f5f5f5',
-          border: '1px solid #d0d0d0',
+          backgroundColor: isRecording ? '#ef4444' : 'var(--bg-surface)',
+          border: '1px solid var(--border)',
           boxShadow: isRecording ? '0 0 10px #ef4444' : 'none',
           opacity: hasSource ? 1 : 0.5,
           cursor: hasSource ? 'pointer' : 'not-allowed',
@@ -361,12 +361,12 @@ export function TransportBar() {
         title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
       >
         {isPlaying ? (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="#333">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="var(--text-primary)">
             <rect x="3" y="2" width="4" height="12" rx="1" />
             <rect x="9" y="2" width="4" height="12" rx="1" />
           </svg>
         ) : (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="#333">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="var(--text-primary)">
             <path d="M4 2l10 6-10 6V2z" />
           </svg>
         )}
@@ -400,7 +400,7 @@ export function TransportBar() {
       <span
         className="text-[12px] tabular-nums"
         style={{
-          color: hasPlayableContent ? '#666666' : '#aaaaaa',
+          color: hasPlayableContent ? 'var(--text-muted)' : '#aaaaaa',
           fontFamily: "'JetBrains Mono', monospace",
         }}
       >
@@ -416,14 +416,14 @@ export function TransportBar() {
         disabled={!hasSource && clips.length === 0}
         className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
         style={{
-          backgroundColor: '#f5f5f5',
-          border: '1px solid #d0d0d0',
-          color: '#666666',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-muted)',
           opacity: (hasSource || clips.length > 0) ? 1 : 0.5,
           cursor: (hasSource || clips.length > 0) ? 'pointer' : 'not-allowed',
         }}
-        onMouseEnter={(e) => (hasSource || clips.length > 0) && (e.currentTarget.style.backgroundColor = clips.length > 0 ? '#fee2e2' : '#e8e8e8')}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onMouseEnter={(e) => (hasSource || clips.length > 0) && (e.currentTarget.style.backgroundColor = clips.length > 0 ? '#fee2e2' : 'var(--bg-hover)')}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
         title={clips.length > 0 ? 'Clear all clips' : 'Clear source'}
       >
         Clear

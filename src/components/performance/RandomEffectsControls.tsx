@@ -153,13 +153,13 @@ export function RandomEffectsControls() {
         onClick={handleRandom}
         className="flex-1 h-full text-[14px] font-medium rounded-lg transition-colors active:scale-95"
         style={{
-          backgroundColor: '#f5f5f5',
-          border: '1px solid #d0d0d0',
-          color: '#666666',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-muted)',
         }}
-        onPointerDown={(e) => (e.currentTarget.style.backgroundColor = '#e0e0e0')}
-        onPointerUp={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-        onPointerLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onPointerDown={(e) => (e.currentTarget.style.backgroundColor = 'var(--border)')}
+        onPointerUp={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+        onPointerLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
       >
         Random
       </button>
@@ -168,14 +168,15 @@ export function RandomEffectsControls() {
         disabled={!hasPreviousState}
         className="flex-1 h-full text-[14px] font-medium rounded-lg transition-colors active:scale-95"
         style={{
-          backgroundColor: hasPreviousState ? '#f5f5f5' : '#f0f0f0',
-          border: '1px solid #d0d0d0',
-          color: hasPreviousState ? '#666666' : '#c0c0c0',
+          backgroundColor: hasPreviousState ? 'var(--bg-surface)' : 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: hasPreviousState ? 'var(--text-muted)' : 'var(--text-muted)',
           cursor: hasPreviousState ? 'pointer' : 'not-allowed',
+          opacity: hasPreviousState ? 1 : 0.5,
         }}
-        onPointerDown={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#e0e0e0')}
-        onPointerUp={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-        onPointerLeave={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onPointerDown={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = 'var(--border)')}
+        onPointerUp={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+        onPointerLeave={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
       >
         Undo
       </button>

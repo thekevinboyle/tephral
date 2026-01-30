@@ -1608,8 +1608,8 @@ export function ParameterPanel() {
     <div
       className="flex gap-2 rounded-lg items-center"
       style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #d0d0d0',
+        backgroundColor: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
         padding: '8px 12px',
         flexShrink: 0,
       }}
@@ -1618,37 +1618,37 @@ export function ParameterPanel() {
         onClick={handleClear}
         className="px-3 py-1.5 rounded text-[11px] font-medium transition-colors active:scale-95"
         style={{
-          backgroundColor: '#f5f5f5',
-          border: '1px solid #d0d0d0',
-          color: '#666666',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-muted)',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--border)')}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
       >
         Clear
       </button>
       <button
-        onMouseEnter={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
-        onMouseLeave={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+        onMouseEnter={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = 'var(--border)')}
+        onMouseLeave={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
         onPointerDown={(e) => {
           handleBypassDown()
-          if (!bypassActive) e.currentTarget.style.backgroundColor = '#d8d8d8'
+          if (!bypassActive) e.currentTarget.style.backgroundColor = 'var(--border)'
         }}
         onPointerUp={(e) => {
           handleBypassUp()
-          e.currentTarget.style.backgroundColor = '#f5f5f5'
+          e.currentTarget.style.backgroundColor = 'var(--bg-surface)'
         }}
         onPointerLeave={(e) => {
           handleBypassUp()
-          e.currentTarget.style.backgroundColor = '#f5f5f5'
+          e.currentTarget.style.backgroundColor = 'var(--bg-surface)'
         }}
         onPointerCancel={handleBypassUp}
         className="px-3 py-1.5 rounded text-[11px] font-medium transition-all select-none touch-none active:scale-95"
         style={{
-          backgroundColor: bypassActive ? '#ef4444' : '#f5f5f5',
-          border: bypassActive ? '1px solid #ef4444' : '1px solid #d0d0d0',
+          backgroundColor: bypassActive ? '#ef4444' : 'var(--bg-surface)',
+          border: bypassActive ? '1px solid #ef4444' : '1px solid var(--border)',
           boxShadow: bypassActive ? '0 0 12px #ef4444' : 'none',
-          color: bypassActive ? '#ffffff' : '#666666',
+          color: bypassActive ? 'var(--bg-surface)' : 'var(--text-muted)',
         }}
       >
         Bypass
@@ -1663,7 +1663,7 @@ export function ParameterPanel() {
       >
         <ControlButtons />
         <div className="flex-1 flex items-center justify-center">
-          <span className="text-[13px] text-[#999999] uppercase tracking-wider">
+          <span className="text-[13px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
             No active effects — drag to reorder
           </span>
         </div>
@@ -1682,7 +1682,7 @@ export function ParameterPanel() {
         const isBypassed = effectBypassed[section.id] || false
         const isSoloed = soloEffectId === section.id
         const isMuted = isSoloing && !isSoloed
-        const displayColor = isBypassed || isMuted ? '#999999' : section.color
+        const displayColor = isBypassed || isMuted ? 'var(--text-muted)' : section.color
 
         // Calculate backlit shadow for soloed card
         const getSoloShadow = () => {
@@ -1692,7 +1692,7 @@ export function ParameterPanel() {
         }
 
         // Border color - keep consistent
-        const borderColor = isBeingDragged ? displayColor : '#d0d0d0'
+        const borderColor = isBeingDragged ? displayColor : 'var(--border)'
 
         // Selection glow as box-shadow instead of border change
         const isSelected = selectedEffectId === section.id && !isBypassed
@@ -1737,7 +1737,7 @@ export function ParameterPanel() {
             }}
             className="flex-shrink-0 flex items-center gap-2 select-none touch-none cursor-grab active:cursor-grabbing group rounded-lg"
             style={{
-              backgroundColor: isBypassed ? '#e5e5e5' : isSequencerDropTarget ? '#f0fff0' : '#ffffff',
+              backgroundColor: isBypassed ? 'var(--border)' : isSequencerDropTarget ? '#f0fff0' : 'var(--bg-surface)',
               border: `1px solid ${isSequencerDropTarget ? sequencerDrag.trackColor || '#4ade80' : borderColor}`,
               boxShadow: isSequencerDropTarget
                 ? `0 0 12px ${sequencerDrag.trackColor || '#4ade80'}40`
@@ -1776,7 +1776,7 @@ export function ParameterPanel() {
               className="flex items-center justify-center flex-shrink-0"
               style={{
                 backgroundColor: '#000',
-                border: '1px solid #333',
+                border: '1px solid var(--text-primary)',
                 borderRadius: '2px',
                 width: '32px',
                 height: '32px',
@@ -1829,10 +1829,10 @@ export function ParameterPanel() {
                 style={{
                   width: '8px',
                   height: '1.5px',
-                  backgroundColor: '#999',
+                  backgroundColor: 'var(--text-muted)',
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f44')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#999')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--text-muted)')}
               />
             </button>
           </div>

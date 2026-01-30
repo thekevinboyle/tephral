@@ -89,7 +89,7 @@ export function StepGrid({ track }: StepGridProps) {
             style={{
               maxWidth: '12px',
               maxHeight: '12px',
-              backgroundColor: step.active ? track.color : '#e5e5e5',
+              backgroundColor: step.active ? track.color : 'var(--border)',
               opacity: step.active ? (hasProbability ? 0.6 : 1) : 0.4,
               border: isCurrentStep ? `2px solid ${track.color}` : 'none',
               boxShadow: isCurrentStep ? `0 0 4px ${track.color}` : 'none',

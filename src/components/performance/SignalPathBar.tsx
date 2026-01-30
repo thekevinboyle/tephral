@@ -68,10 +68,10 @@ export function SignalPathBar() {
           className="w-3 h-3 rounded-full"
           style={{
             backgroundColor: '#e0e0e0',
-            border: '1px solid #d0d0d0',
+            border: '1px solid var(--border)',
           }}
         />
-        <span className="text-[14px] font-medium" style={{ color: '#666666' }}>
+        <span className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>
           In
         </span>
       </div>
@@ -79,7 +79,7 @@ export function SignalPathBar() {
       {/* Connector line */}
       <div
         className="flex-shrink-0 w-8 h-[2px] rounded-full"
-        style={{ backgroundColor: '#d0d0d0' }}
+        style={{ backgroundColor: 'var(--border)' }}
       />
 
       {/* Active effects */}
@@ -87,11 +87,11 @@ export function SignalPathBar() {
         <div
           className="px-3 py-1 rounded-md"
           style={{
-            backgroundColor: '#f5f5f5',
-            border: '1px solid #d0d0d0',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
           }}
         >
-          <span className="text-[14px] font-medium" style={{ color: '#999999' }}>
+          <span className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>
             Bypass
           </span>
         </div>
@@ -102,10 +102,10 @@ export function SignalPathBar() {
               onClick={() => setSelectedEffect(effect.id)}
               className="flex items-center gap-2 px-2 py-1 rounded-md transition-colors"
               style={{
-                backgroundColor: selectedEffectId === effect.id ? '#f5f5f5' : '#ffffff',
+                backgroundColor: selectedEffectId === effect.id ? 'var(--bg-surface)' : 'var(--bg-surface)',
                 border: selectedEffectId === effect.id
                   ? `1px solid ${effect.color}60`
-                  : '1px solid #d0d0d0',
+                  : '1px solid var(--border)',
               }}
             >
               {/* LED indicator - only glow */}
@@ -118,7 +118,7 @@ export function SignalPathBar() {
               />
               <span
                 className="text-[14px] font-medium transition-colors"
-                style={{ color: selectedEffectId === effect.id ? '#1a1a1a' : '#666666' }}
+                style={{ color: selectedEffectId === effect.id ? '#1a1a1a' : 'var(--text-muted)' }}
               >
                 {effect.label}
               </span>
@@ -128,7 +128,7 @@ export function SignalPathBar() {
             {index < activeEffects.length - 1 && (
               <div
                 className="flex-shrink-0 w-6 h-[2px] rounded-full"
-                style={{ backgroundColor: '#d0d0d0' }}
+                style={{ backgroundColor: 'var(--border)' }}
               />
             )}
           </div>
@@ -138,7 +138,7 @@ export function SignalPathBar() {
       {/* Final connector */}
       <div
         className="flex-shrink-0 w-8 h-[2px] rounded-full"
-        style={{ backgroundColor: '#d0d0d0' }}
+        style={{ backgroundColor: 'var(--border)' }}
       />
 
       {/* Output node */}
@@ -147,10 +147,10 @@ export function SignalPathBar() {
           className="w-3 h-3 rounded-full"
           style={{
             backgroundColor: '#e0e0e0',
-            border: '1px solid #d0d0d0',
+            border: '1px solid var(--border)',
           }}
         />
-        <span className="text-[14px] font-medium" style={{ color: '#666666' }}>
+        <span className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>
           Out
         </span>
       </div>

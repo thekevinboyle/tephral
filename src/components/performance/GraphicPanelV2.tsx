@@ -101,7 +101,7 @@ export function GraphicPanelV2() {
       const t = frameRef.current * 0.02
 
       // Clear with flat background
-      ctx.fillStyle = '#f5f5f5'
+      ctx.fillStyle = 'var(--bg-surface)'
       ctx.fillRect(0, 0, w, h)
 
       // Grid lines
@@ -229,9 +229,9 @@ export function GraphicPanelV2() {
     return (
       <div
         className="h-full flex items-center justify-center"
-        style={{ backgroundColor: '#ffffff' }}
+        style={{ backgroundColor: 'var(--bg-surface)' }}
       >
-        <span className="text-[14px] font-medium" style={{ color: '#999999' }}>
+        <span className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>
           Select an effect
         </span>
       </div>
@@ -241,7 +241,7 @@ export function GraphicPanelV2() {
   return (
     <div
       className="h-full flex flex-col"
-      style={{ backgroundColor: '#ffffff' }}
+      style={{ backgroundColor: 'var(--bg-surface)' }}
     >
       {/* Header */}
       <div
@@ -267,7 +267,7 @@ export function GraphicPanelV2() {
         <div
           className="aspect-square w-full max-w-[200px] rounded-lg overflow-hidden"
           style={{
-            backgroundColor: '#f5f5f5',
+            backgroundColor: 'var(--bg-surface)',
             border: '1px solid #e0e0e0',
           }}
         >

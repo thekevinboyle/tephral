@@ -151,8 +151,8 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
 
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center" style={{ backgroundColor: '#f5f5f5' }}>
-        <span className="text-[14px]" style={{ color: '#999999' }}>
+      <div className="h-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)' }}>
+        <span className="text-[14px]" style={{ color: 'var(--text-muted)' }}>
           Loading presets...
         </span>
       </div>
@@ -162,17 +162,17 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
   return (
     <div
       className="h-full flex flex-col"
-      style={{ backgroundColor: '#f5f5f5' }}
+      style={{ backgroundColor: 'var(--bg-surface)' }}
     >
       {/* Header */}
       <div
         className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-100 transition-colors"
-        style={{ borderBottom: isCollapsed ? 'none' : '1px solid #d0d0d0' }}
+        style={{ borderBottom: isCollapsed ? 'none' : '1px solid var(--border)' }}
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <span
           className="text-[13px] font-semibold uppercase tracking-wider"
-          style={{ color: '#999999' }}
+          style={{ color: 'var(--text-muted)' }}
         >
           Presets
         </span>
@@ -181,7 +181,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
           height="12"
           viewBox="0 0 12 12"
           fill="none"
-          stroke="#999"
+          stroke="var(--text-muted)"
           strokeWidth="1.5"
           className="transition-transform"
           style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
@@ -193,12 +193,12 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
       {!isCollapsed && (
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
       {/* Search */}
-      <div className="px-2 py-2" style={{ borderBottom: '1px solid #e5e5e5' }}>
+      <div className="px-2 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <div
           className="flex items-center gap-2 px-2 py-1 rounded"
-          style={{ backgroundColor: '#ffffff', border: '1px solid #d0d0d0' }}
+          style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)' }}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -208,14 +208,14 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search..."
             className="flex-1 text-[14px] bg-transparent outline-none"
-            style={{ color: '#333333' }}
+            style={{ color: 'var(--text-primary)' }}
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
               className="hover:bg-gray-100 rounded p-0.5"
             >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -230,7 +230,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
           // Search results (flat list)
           <div className="py-2">
             {displayPresets.length === 0 ? (
-              <div className="text-center text-[14px] py-4" style={{ color: '#999999' }}>
+              <div className="text-center text-[14px] py-4" style={{ color: 'var(--text-muted)' }}>
                 No presets found
               </div>
             ) : (
@@ -252,14 +252,14 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
                     {preset.thumbnail ? (
                       <img src={preset.thumbnail} alt={preset.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center" style={{ color: '#999' }}>
+                      <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                         </svg>
                       </div>
                     )}
                   </div>
-                  <span className="text-[14px] truncate" style={{ color: '#333' }}>
+                  <span className="text-[14px] truncate" style={{ color: 'var(--text-primary)' }}>
                     {preset.name}
                   </span>
                 </div>
@@ -281,18 +281,18 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
       {/* Bottom actions */}
       <div
         className="flex items-center gap-2 px-2 py-2"
-        style={{ borderTop: '1px solid #d0d0d0' }}
+        style={{ borderTop: '1px solid var(--border)' }}
       >
         <button
           onClick={handleNewPreset}
           className="flex-1 h-7 text-[13px] font-medium rounded transition-colors"
           style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
-            color: '#666666',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
         >
           Save
         </button>
@@ -300,12 +300,12 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
           onClick={handleImport}
           className="flex-1 h-7 text-[13px] font-medium rounded transition-colors"
           style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
-            color: '#666666',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
         >
           Import
         </button>
@@ -314,13 +314,13 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
           disabled={presets.length === 0}
           className="flex-1 h-7 text-[13px] font-medium rounded transition-colors"
           style={{
-            backgroundColor: presets.length > 0 ? '#ffffff' : '#f5f5f5',
-            border: '1px solid #d0d0d0',
-            color: presets.length > 0 ? '#666666' : '#c0c0c0',
+            backgroundColor: presets.length > 0 ? 'var(--bg-surface)' : 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: presets.length > 0 ? 'var(--text-muted)' : 'var(--text-muted)',
             cursor: presets.length > 0 ? 'pointer' : 'not-allowed',
           }}
-          onMouseEnter={(e) => presets.length > 0 && (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-          onMouseLeave={(e) => presets.length > 0 && (e.currentTarget.style.backgroundColor = '#ffffff')}
+          onMouseEnter={(e) => presets.length > 0 && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+          onMouseLeave={(e) => presets.length > 0 && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
         >
           Export All
         </button>
@@ -361,10 +361,10 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
         >
           <div
             className="p-4 rounded-lg shadow-lg"
-            style={{ backgroundColor: '#ffffff', minWidth: '240px' }}
+            style={{ backgroundColor: 'var(--bg-surface)', minWidth: '240px' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-[14px] font-medium mb-2" style={{ color: '#333' }}>
+            <div className="text-[14px] font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
               Rename {renameState.type === 'preset' ? 'Preset' : 'Folder'}
             </div>
             <input
@@ -377,20 +377,20 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
                 if (e.key === 'Escape') setRenameState(null)
               }}
               className="w-full px-2 py-1.5 text-[14px] rounded outline-none"
-              style={{ border: '1px solid #d0d0d0', color: '#333' }}
+              style={{ border: '1px solid var(--border)', color: 'var(--text-primary)' }}
             />
             <div className="flex gap-2 mt-3">
               <button
                 onClick={() => setRenameState(null)}
                 className="flex-1 h-7 text-[13px] rounded"
-                style={{ backgroundColor: '#f5f5f5', color: '#666' }}
+                style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-muted)' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleRenameSubmit}
                 className="flex-1 h-7 text-[13px] rounded"
-                style={{ backgroundColor: '#333', color: '#fff' }}
+                style={{ backgroundColor: 'var(--text-primary)', color: '#fff' }}
               >
                 Save
               </button>

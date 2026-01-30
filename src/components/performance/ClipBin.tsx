@@ -36,7 +36,7 @@ export function ClipBin() {
       className="absolute bottom-3 left-3 right-3 rounded-lg overflow-hidden z-20"
       style={{
         backgroundColor: 'rgba(26, 26, 26, 0.85)',
-        border: '1px solid #333',
+        border: '1px solid var(--border)',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
       }}
     >
@@ -74,7 +74,7 @@ export function ClipBin() {
               className="absolute bottom-1 right-1 px-1 py-0.5 rounded text-[10px] tabular-nums"
               style={{
                 backgroundColor: 'rgba(0, 0, 0, 0.75)',
-                color: '#ffffff',
+                color: 'var(--bg-surface)',
               }}
             >
               {formatDuration(clip.duration)}

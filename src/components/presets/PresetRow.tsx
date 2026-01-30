@@ -34,7 +34,7 @@ export function PresetRow({ preset, onLoad, onContextMenu }: PresetRowProps) {
     <div
       className="flex items-center gap-2 px-2 py-1.5 cursor-pointer transition-colors rounded"
       style={{
-        backgroundColor: isHovered ? '#f0f0f0' : 'transparent',
+        backgroundColor: isHovered ? 'var(--bg-surface)' : 'transparent',
       }}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
@@ -47,7 +47,7 @@ export function PresetRow({ preset, onLoad, onContextMenu }: PresetRowProps) {
         style={{
           width: '32px',
           height: '32px',
-          backgroundColor: '#e0e0e0',
+          backgroundColor: 'var(--border)',
         }}
       >
         {preset.thumbnail ? (
@@ -59,7 +59,7 @@ export function PresetRow({ preset, onLoad, onContextMenu }: PresetRowProps) {
         ) : (
           <div
             className="w-full h-full flex items-center justify-center"
-            style={{ color: '#999999' }}
+            style={{ color: 'var(--text-muted)' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -73,7 +73,7 @@ export function PresetRow({ preset, onLoad, onContextMenu }: PresetRowProps) {
       {/* Name */}
       <span
         className="flex-1 text-[14px] truncate"
-        style={{ color: '#333333' }}
+        style={{ color: 'var(--text-primary)' }}
       >
         {preset.name}
       </span>
@@ -89,7 +89,7 @@ export function PresetRow({ preset, onLoad, onContextMenu }: PresetRowProps) {
             className="p-1 rounded hover:bg-gray-200"
             title="More options"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2">
               <circle cx="12" cy="12" r="1" />
               <circle cx="12" cy="5" r="1" />
               <circle cx="12" cy="19" r="1" />

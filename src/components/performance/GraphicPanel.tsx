@@ -167,8 +167,8 @@ export function GraphicPanel() {
 
   if (!selectedEffectId || !effect) {
     return (
-      <div className="h-full flex items-center justify-center" style={{ backgroundColor: '#ffffff', borderLeft: '1px solid #e0e0e0' }}>
-        <span className="text-[13px] uppercase tracking-wider" style={{ color: '#999999' }}>
+      <div className="h-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-surface)', borderLeft: '1px solid #e0e0e0' }}>
+        <span className="text-[13px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
           Select effect
         </span>
       </div>
@@ -178,7 +178,7 @@ export function GraphicPanel() {
   return (
     <div
       className="h-full flex flex-col select-none touch-none cursor-ns-resize"
-      style={{ backgroundColor: '#ffffff', borderLeft: '1px solid #e0e0e0' }}
+      style={{ backgroundColor: 'var(--bg-surface)', borderLeft: '1px solid #e0e0e0' }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -211,13 +211,13 @@ export function GraphicPanel() {
           >
             <span
               className="text-[12px] uppercase tracking-wider"
-              style={{ color: index === selectedParamIndex ? effect.color : '#999999' }}
+              style={{ color: index === selectedParamIndex ? effect.color : 'var(--text-muted)' }}
             >
               {index === selectedParamIndex && '▸ '}{param.label}
             </span>
             <span
               className="text-[13px] font-mono tabular-nums"
-              style={{ color: index === selectedParamIndex ? effect.color : '#666666' }}
+              style={{ color: index === selectedParamIndex ? effect.color : 'var(--text-muted)' }}
             >
               {Math.round(param.value)}
             </span>

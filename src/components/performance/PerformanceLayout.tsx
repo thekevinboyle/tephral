@@ -50,14 +50,14 @@ export function PerformanceLayout() {
   return (
     <div
       className="w-screen h-screen flex flex-col overflow-hidden"
-      style={{ backgroundColor: '#e5e5e5' }}
+      style={{ backgroundColor: 'var(--bg-primary)' }}
     >
       {/* Preview section (55vh) - 3 columns: Left placeholder, Canvas, Parameters */}
       <div
         className="flex-shrink-0 m-3 mb-0 flex rounded-xl overflow-hidden"
         style={{
           height: 'calc(55vh - 12px)',
-          border: '1px solid #d0d0d0',
+          border: '1px solid var(--border)',
         }}
       >
         {/* Left sidebar: Preset Library + Info Panel */}
@@ -65,8 +65,8 @@ export function PerformanceLayout() {
           className="flex-shrink-0"
           style={{
             width: '280px',
-            backgroundColor: '#f5f5f5',
-            borderRight: '1px solid #d0d0d0',
+            backgroundColor: 'var(--bg-surface)',
+            borderRight: '1px solid var(--border)',
           }}
         >
           <PresetLibraryPanel canvasRef={captureRef} />
@@ -75,7 +75,7 @@ export function PerformanceLayout() {
         {/* Canvas area (center) */}
         <div
           className="relative flex-1 min-w-0 flex flex-col"
-          style={{ backgroundColor: '#1a1a1a' }}
+          style={{ backgroundColor: 'var(--bg-elevated)' }}
         >
           {/* Canvas */}
           <div className="flex-1 min-h-0 relative">
@@ -88,8 +88,8 @@ export function PerformanceLayout() {
           <div
             className="flex-shrink-0"
             style={{
-              backgroundColor: '#ffffff',
-              borderTop: '1px solid #d0d0d0',
+              backgroundColor: 'var(--bg-surface)',
+              borderTop: '1px solid var(--border)',
             }}
           >
             <TransportBar />
@@ -108,8 +108,8 @@ export function PerformanceLayout() {
         style={{
           height: '8vh',
           minHeight: '60px',
-          backgroundColor: '#f5f5f5',
-          border: '1px solid #d0d0d0',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
         }}
       >
         <ParameterPanel />
@@ -123,8 +123,8 @@ export function PerformanceLayout() {
         <div
           className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
           style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
           }}
         >
           {/* Bank row header */}
@@ -132,7 +132,7 @@ export function PerformanceLayout() {
             className="flex-shrink-0"
             style={{
               height: '52px',
-              borderBottom: '1px solid #e5e5e5',
+              borderBottom: '1px solid var(--border)',
             }}
           >
             <BankPanel />
@@ -148,8 +148,8 @@ export function PerformanceLayout() {
           className="rounded-xl overflow-hidden"
           style={{
             flex: '1.5',
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
           }}
         >
           <SequencerPanel />
@@ -161,8 +161,8 @@ export function PerformanceLayout() {
           <div
             className="flex-1 rounded-xl overflow-hidden relative"
             style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #d0d0d0',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
             }}
           >
             <XYPad />
@@ -173,8 +173,8 @@ export function PerformanceLayout() {
             className="flex-shrink-0 rounded-xl overflow-hidden"
             style={{
               height: '80px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #d0d0d0',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
             }}
           >
             <MixControls />

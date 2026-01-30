@@ -37,12 +37,12 @@ export function MixControls() {
   return (
     <div
       className="h-full flex flex-col justify-center px-4 py-2"
-      style={{ backgroundColor: '#ffffff' }}
+      style={{ backgroundColor: 'var(--bg-surface)' }}
     >
       {/* Crossfader row */}
       <div className="flex items-center gap-4 select-none">
         {/* DRY label */}
-        <span className="text-[12px] font-medium" style={{ color: '#666666' }}>
+        <span className="text-[12px] font-medium" style={{ color: 'var(--text-muted)' }}>
           Dry
         </span>
 
@@ -57,7 +57,7 @@ export function MixControls() {
           {/* Track background */}
           <div
             className="absolute h-3 rounded-full"
-            style={{ left: '7%', right: '7%', backgroundColor: '#e5e5e5' }}
+            style={{ left: '7%', right: '7%', backgroundColor: 'var(--border)' }}
           />
 
           {/* Active track */}
@@ -66,7 +66,7 @@ export function MixControls() {
             style={{
               left: '7%',
               width: `${wetMix * 86}%`,
-              backgroundColor: '#999999',
+              backgroundColor: 'var(--text-muted)',
             }}
           />
 
@@ -75,15 +75,15 @@ export function MixControls() {
             className="absolute h-10 w-14 -translate-x-1/2 pointer-events-none rounded-lg"
             style={{
               left: `${thumbPosition}%`,
-              backgroundColor: '#ffffff',
-              border: '1px solid #d0d0d0',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
               boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
             }}
           />
         </div>
 
         {/* WET label */}
-        <span className="text-[12px] font-medium" style={{ color: '#666666' }}>
+        <span className="text-[12px] font-medium" style={{ color: 'var(--text-muted)' }}>
           Wet
         </span>
       </div>

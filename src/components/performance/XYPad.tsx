@@ -376,15 +376,15 @@ export function XYPad() {
     <div className="h-full flex flex-col p-3">
       {/* Header with parameter selectors */}
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[14px] font-medium" style={{ color: '#666' }}>X:</span>
+        <span className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>X:</span>
         <select
           value={xParamId}
           onChange={(e) => setXParamId(e.target.value)}
           className="flex-1 h-6 text-[14px] rounded px-1"
           style={{
-            backgroundColor: '#f5f5f5',
-            border: '1px solid #d0d0d0',
-            color: '#333',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-primary)',
           }}
         >
           {Object.entries(groupedParams).map(([group, params]) => (
@@ -396,15 +396,15 @@ export function XYPad() {
           ))}
         </select>
 
-        <span className="text-[14px] font-medium" style={{ color: '#666' }}>Y:</span>
+        <span className="text-[14px] font-medium" style={{ color: 'var(--text-muted)' }}>Y:</span>
         <select
           value={yParamId}
           onChange={(e) => setYParamId(e.target.value)}
           className="flex-1 h-6 text-[14px] rounded px-1"
           style={{
-            backgroundColor: '#f5f5f5',
-            border: '1px solid #d0d0d0',
-            color: '#333',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-primary)',
           }}
         >
           {Object.entries(groupedParams).map(([group, params]) => (
@@ -421,10 +421,10 @@ export function XYPad() {
       <div className="flex-1 flex gap-2">
         {/* Y axis label */}
         <div className="flex flex-col justify-between items-center py-2 w-10">
-          <span className="text-[14px] font-medium rotate-180 truncate" style={{ writingMode: 'vertical-rl', color: '#666' }}>
+          <span className="text-[14px] font-medium rotate-180 truncate" style={{ writingMode: 'vertical-rl', color: 'var(--text-muted)' }}>
             {yParam?.label || 'Y'}
           </span>
-          <span className="text-[14px] tabular-nums" style={{ color: '#444', fontFamily: "'JetBrains Mono', monospace" }}>
+          <span className="text-[14px] tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
             {formatValue(1 - position.y, yParam)}
           </span>
         </div>
@@ -435,8 +435,8 @@ export function XYPad() {
             ref={padRef}
             className="flex-1 relative rounded-lg cursor-crosshair touch-none"
             style={{
-              backgroundColor: '#f5f5f5',
-              border: '1px solid #d0d0d0',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
             }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -449,14 +449,14 @@ export function XYPad() {
                 <div
                   key={`v-${pos}`}
                   className="absolute top-0 bottom-0 w-px"
-                  style={{ left: `${pos * 100}%`, backgroundColor: '#e0e0e0' }}
+                  style={{ left: `${pos * 100}%`, backgroundColor: 'var(--border)' }}
                 />
               ))}
               {[0.25, 0.5, 0.75].map((pos) => (
                 <div
                   key={`h-${pos}`}
                   className="absolute left-0 right-0 h-px"
-                  style={{ top: `${pos * 100}%`, backgroundColor: '#e0e0e0' }}
+                  style={{ top: `${pos * 100}%`, backgroundColor: 'var(--border)' }}
                 />
               ))}
             </div>
@@ -474,7 +474,7 @@ export function XYPad() {
               <div
                 className="absolute inset-0 rounded-full"
                 style={{
-                  backgroundColor: '#666',
+                  backgroundColor: 'var(--text-muted)',
                   boxShadow: '0 0 8px rgba(0,0,0,0.3)',
                 }}
               />
@@ -483,10 +483,10 @@ export function XYPad() {
 
           {/* X axis label */}
           <div className="flex justify-between items-center mt-1 px-1">
-            <span className="text-[14px] font-medium truncate" style={{ color: '#666' }}>
+            <span className="text-[14px] font-medium truncate" style={{ color: 'var(--text-muted)' }}>
               {xParam?.label || 'X'}
             </span>
-            <span className="text-[14px] tabular-nums" style={{ color: '#444', fontFamily: "'JetBrains Mono', monospace" }}>
+            <span className="text-[14px] tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
               {formatValue(position.x, xParam)}
             </span>
           </div>

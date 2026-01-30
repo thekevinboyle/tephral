@@ -701,8 +701,8 @@ export function PerformanceGrid() {
                 key={`empty-${index}`}
                 className="rounded-lg"
                 style={{
-                  backgroundColor: '#e5e5e5',
-                  border: '1px solid #d0d0d0',
+                  backgroundColor: 'var(--border)',
+                  border: '1px solid var(--border)',
                 }}
               />
             )
@@ -717,8 +717,8 @@ export function PerformanceGrid() {
                 key={effect.id}
                 className="rounded-lg flex items-center justify-center"
                 style={{
-                  backgroundColor: '#f3f4f6',
-                  border: '1px dashed #d1d5db',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px dashed var(--border)',
                 }}
               >
                 <span className="text-gray-300 text-lg">—</span>

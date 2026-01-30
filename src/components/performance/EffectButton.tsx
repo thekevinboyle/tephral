@@ -167,7 +167,7 @@ export function EffectButton({
   const percentage = ((value - min) / (max - min)) * 100
 
   // Determine display color based on muted state
-  const displayColor = isMuted ? '#999999' : color
+  const displayColor = isMuted ? 'var(--text-muted)' : color
 
   // Flashing state for latched solo
   const [flashOn, setFlashOn] = useState(true)
@@ -205,8 +205,8 @@ export function EffectButton({
       onPointerUp={handlePointerUp}
       className="relative rounded-lg flex select-none touch-none cursor-pointer w-full h-full p-1.5 overflow-hidden"
       style={{
-        backgroundColor: active ? '#f5f5f5' : '#ffffff',
-        border: isSoloed ? `2px solid ${color}` : active ? `1px solid ${color}60` : '1px solid #d0d0d0',
+        backgroundColor: 'var(--bg-surface)',
+        border: isSoloed ? `2px solid ${color}` : active ? `1px solid ${color}60` : '1px solid var(--border)',
         opacity: isMuted ? 0.5 : 1,
         boxShadow: getSoloShadow(),
         transition: 'box-shadow 0.15s ease-out, border 0.15s ease-out, background-color 0.15s ease-out',
@@ -220,13 +220,13 @@ export function EffectButton({
           <div
             className="w-1.5 h-1.5 rounded-full transition-all duration-150 shrink-0"
             style={{
-              backgroundColor: active ? displayColor : '#d0d0d0',
+              backgroundColor: active ? displayColor : 'var(--border)',
               boxShadow: active && !isMuted ? `0 0 6px ${color}` : 'none',
             }}
           />
           <span
             className="text-[12px] font-medium truncate"
-            style={{ color: active ? '#1a1a1a' : '#666666' }}
+            style={{ color: active ? 'var(--text-primary)' : 'var(--text-muted)' }}
           >
             {label}
           </span>
@@ -236,7 +236,7 @@ export function EffectButton({
         <span
           className="text-[13px] tabular-nums font-medium"
           style={{
-            color: active ? '#1a1a1a' : '#999999',
+            color: active ? 'var(--text-primary)' : 'var(--text-muted)',
             fontFamily: "'JetBrains Mono', monospace",
           }}
         >
@@ -248,7 +248,7 @@ export function EffectButton({
       <div
         className="w-1 rounded-full ml-2 relative overflow-hidden"
         style={{
-          backgroundColor: '#e0e0e0',
+          backgroundColor: 'var(--border)',
         }}
       >
         {/* Fill from bottom */}
@@ -256,7 +256,7 @@ export function EffectButton({
           className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-150"
           style={{
             height: `${percentage}%`,
-            backgroundColor: active ? displayColor : '#999999',
+            backgroundColor: active ? displayColor : 'var(--text-muted)',
           }}
         />
       </div>

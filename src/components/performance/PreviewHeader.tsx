@@ -68,9 +68,9 @@ export function PreviewHeader() {
         onClick={handleWebcam}
         className="px-3 py-1.5 text-[14px] font-medium rounded-md transition-colors"
         style={{
-          backgroundColor: source === 'webcam' ? '#ffffff' : '#f5f5f5',
-          border: source === 'webcam' ? '1px solid #6366f1' : '1px solid #d0d0d0',
-          color: source === 'webcam' ? '#6366f1' : '#666666',
+          backgroundColor: source === 'webcam' ? 'var(--bg-surface)' : 'var(--bg-surface)',
+          border: source === 'webcam' ? '1px solid #6366f1' : '1px solid var(--border)',
+          color: source === 'webcam' ? '#6366f1' : 'var(--text-muted)',
         }}
       >
         Cam
@@ -80,9 +80,9 @@ export function PreviewHeader() {
         onClick={() => fileInputRef.current?.click()}
         className="px-3 py-1.5 text-[14px] font-medium rounded-md transition-colors"
         style={{
-          backgroundColor: source === 'file' ? '#ffffff' : '#f5f5f5',
-          border: source === 'file' ? '1px solid #6366f1' : '1px solid #d0d0d0',
-          color: source === 'file' ? '#6366f1' : '#666666',
+          backgroundColor: source === 'file' ? 'var(--bg-surface)' : 'var(--bg-surface)',
+          border: source === 'file' ? '1px solid #6366f1' : '1px solid var(--border)',
+          color: source === 'file' ? '#6366f1' : 'var(--text-muted)',
         }}
       >
         File

@@ -93,8 +93,8 @@ export function PresetContextMenu({
       className="fixed z-50 py-1 rounded-lg shadow-lg"
       style={{
         ...adjustedStyle,
-        backgroundColor: '#ffffff',
-        border: '1px solid #d0d0d0',
+        backgroundColor: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
         minWidth: '160px',
       }}
     >
@@ -111,7 +111,7 @@ export function PresetContextMenu({
       <div className="relative group">
         <div
           className="flex items-center justify-between gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-100"
-          style={{ color: '#333333' }}
+          style={{ color: 'var(--text-primary)' }}
         >
           <div className="flex items-center gap-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -128,8 +128,8 @@ export function PresetContextMenu({
         <div
           className="absolute left-full top-0 ml-1 py-1 rounded-lg shadow-lg hidden group-hover:block"
           style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #d0d0d0',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
             minWidth: '140px',
           }}
         >
@@ -137,7 +137,7 @@ export function PresetContextMenu({
             <div
               key={folder.id}
               className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-100"
-              style={{ color: '#333333' }}
+              style={{ color: 'var(--text-primary)' }}
               onClick={() => handleMoveTo(folder.id)}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -149,7 +149,7 @@ export function PresetContextMenu({
         </div>
       </div>
 
-      <div className="border-t my-1" style={{ borderColor: '#e5e5e5' }} />
+      <div className="border-t my-1" style={{ borderColor: 'var(--border)' }} />
 
       {/* Export */}
       <MenuItem onClick={handleExport}>
@@ -161,7 +161,7 @@ export function PresetContextMenu({
         Export
       </MenuItem>
 
-      <div className="border-t my-1" style={{ borderColor: '#e5e5e5' }} />
+      <div className="border-t my-1" style={{ borderColor: 'var(--border)' }} />
 
       {/* Delete */}
       <MenuItem onClick={handleDelete} danger>
@@ -185,7 +185,7 @@ function MenuItem({ children, onClick, danger }: MenuItemProps) {
   return (
     <div
       className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-100"
-      style={{ color: danger ? '#ef4444' : '#333333' }}
+      style={{ color: danger ? '#ef4444' : 'var(--text-primary)' }}
       onClick={onClick}
     >
       {children}
@@ -266,8 +266,8 @@ export function FolderContextMenu({
       className="fixed z-50 py-1 rounded-lg shadow-lg"
       style={{
         ...adjustedStyle,
-        backgroundColor: '#ffffff',
-        border: '1px solid #d0d0d0',
+        backgroundColor: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
         minWidth: '160px',
       }}
     >
@@ -290,7 +290,7 @@ export function FolderContextMenu({
             Rename
           </MenuItem>
 
-          <div className="border-t my-1" style={{ borderColor: '#e5e5e5' }} />
+          <div className="border-t my-1" style={{ borderColor: 'var(--border)' }} />
 
           <MenuItem onClick={handleDelete} danger>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

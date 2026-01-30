@@ -278,14 +278,14 @@ export function BankPanel() {
         onClick={handleRandom}
         className="h-full px-4 rounded-lg text-[13px] font-medium transition-colors active:scale-95"
         style={{
-          backgroundColor: '#f5f5f5',
-          border: '1px solid #d0d0d0',
-          color: '#666666',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-muted)',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-        onPointerDown={(e) => (e.currentTarget.style.backgroundColor = '#d8d8d8')}
-        onPointerUp={(e) => (e.currentTarget.style.backgroundColor = '#e8e8e8')}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+        onPointerDown={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+        onPointerUp={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
       >
         Random
       </button>
@@ -294,15 +294,15 @@ export function BankPanel() {
         disabled={!hasPreviousState}
         className="h-full px-4 rounded-lg text-[13px] font-medium transition-colors active:scale-95"
         style={{
-          backgroundColor: hasPreviousState ? '#f5f5f5' : '#f0f0f0',
-          border: '1px solid #d0d0d0',
-          color: hasPreviousState ? '#666666' : '#c0c0c0',
+          backgroundColor: hasPreviousState ? 'var(--bg-surface)' : 'var(--bg-hover)',
+          border: '1px solid var(--border)',
+          color: hasPreviousState ? 'var(--text-muted)' : '#c0c0c0',
           cursor: hasPreviousState ? 'pointer' : 'not-allowed',
         }}
-        onMouseEnter={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
-        onMouseLeave={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#f5f5f5')}
-        onPointerDown={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#d8d8d8')}
-        onPointerUp={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = '#e8e8e8')}
+        onMouseEnter={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+        onMouseLeave={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+        onPointerDown={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+        onPointerUp={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
       >
         Undo
       </button>
@@ -313,9 +313,9 @@ export function BankPanel() {
         onPointerCancel={isRektLocked ? undefined : handleRektUp}
         className="h-full px-4 rounded-lg text-[13px] font-medium transition-all select-none touch-none"
         style={{
-          backgroundColor: isRekt ? '#ef4444' : '#f5f5f5',
-          border: isRektLocked ? '2px solid #b91c1c' : isRekt ? '1px solid #dc2626' : '1px solid #d0d0d0',
-          color: isRekt ? '#ffffff' : '#666666',
+          backgroundColor: isRekt ? '#ef4444' : 'var(--bg-surface)',
+          border: isRektLocked ? '2px solid #b91c1c' : isRekt ? '1px solid #dc2626' : '1px solid var(--border)',
+          color: isRekt ? 'var(--bg-surface)' : 'var(--text-muted)',
           boxShadow: isRekt ? '0 0 12px rgba(239, 68, 68, 0.5)' : 'none',
           transform: isRekt ? 'scale(1.05)' : 'scale(1)',
         }}

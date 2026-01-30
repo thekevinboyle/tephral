@@ -5,6 +5,7 @@ import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useAcidStore } from '../../stores/acidStore'
+import { useStrandStore } from '../../stores/strandStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { EFFECTS } from '../../config/effects'
@@ -67,6 +68,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
   const stipple = useStippleStore()
   const visionTracking = useVisionTrackingStore()
   const acid = useAcidStore()
+  const strand = useStrandStore()
 
   switch (effectId) {
     case 'rgb_split':
@@ -2108,6 +2110,534 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Preserve Video"
             value={acid.preserveVideo}
             onChange={(v) => acid.setPreserveVideo(v)}
+          />
+        </div>
+      )
+
+    case 'strand_handprints':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Density"
+            value={strand.handprintsParams.density}
+            min={1}
+            max={20}
+            step={1}
+            onChange={(v) => strand.updateHandprintsParams({ density: v })}
+            paramId="strand_handprints.density"
+          />
+          <SliderRow
+            label="Fade Speed"
+            value={strand.handprintsParams.fadeSpeed}
+            min={0.1}
+            max={2}
+            step={0.1}
+            onChange={(v) => strand.updateHandprintsParams({ fadeSpeed: v })}
+            paramId="strand_handprints.fadeSpeed"
+          />
+          <SliderRow
+            label="Size"
+            value={strand.handprintsParams.size}
+            min={0.5}
+            max={3}
+            step={0.1}
+            onChange={(v) => strand.updateHandprintsParams({ size: v })}
+            paramId="strand_handprints.size"
+          />
+        </div>
+      )
+
+    case 'strand_tar':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Spread Speed"
+            value={strand.tarSpreadParams.spreadSpeed}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateTarSpreadParams({ spreadSpeed: v })}
+            paramId="strand_tar.spreadSpeed"
+          />
+          <SliderRow
+            label="Threshold"
+            value={strand.tarSpreadParams.threshold}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateTarSpreadParams({ threshold: v })}
+            paramId="strand_tar.threshold"
+          />
+          <SliderRow
+            label="Coverage"
+            value={strand.tarSpreadParams.coverage}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateTarSpreadParams({ coverage: v })}
+            paramId="strand_tar.coverage"
+          />
+        </div>
+      )
+
+    case 'strand_timefall':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Intensity"
+            value={strand.timefallParams.intensity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateTimefallParams({ intensity: v })}
+            paramId="strand_timefall.intensity"
+          />
+          <SliderRow
+            label="Streak Count"
+            value={strand.timefallParams.streakCount}
+            min={10}
+            max={500}
+            step={1}
+            onChange={(v) => strand.updateTimefallParams({ streakCount: v })}
+            paramId="strand_timefall.streakCount"
+          />
+          <SliderRow
+            label="Age Amount"
+            value={strand.timefallParams.ageAmount}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateTimefallParams({ ageAmount: v })}
+            paramId="strand_timefall.ageAmount"
+          />
+        </div>
+      )
+
+    case 'strand_voidout':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Speed"
+            value={strand.voidOutParams.speed}
+            min={0.1}
+            max={2}
+            step={0.1}
+            onChange={(v) => strand.updateVoidOutParams({ speed: v })}
+            paramId="strand_voidout.speed"
+          />
+          <SliderRow
+            label="Distort Amount"
+            value={strand.voidOutParams.distortAmount}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateVoidOutParams({ distortAmount: v })}
+            paramId="strand_voidout.distortAmount"
+          />
+          <SliderRow
+            label="Ring Width"
+            value={strand.voidOutParams.ringWidth}
+            min={0.01}
+            max={0.3}
+            step={0.01}
+            onChange={(v) => strand.updateVoidOutParams({ ringWidth: v })}
+            paramId="strand_voidout.ringWidth"
+          />
+        </div>
+      )
+
+    case 'strand_web':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Threshold"
+            value={strand.strandWebParams.threshold}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateStrandWebParams({ threshold: v })}
+            paramId="strand_web.threshold"
+          />
+          <SliderRow
+            label="Max Connections"
+            value={strand.strandWebParams.maxConnections}
+            min={1}
+            max={10}
+            step={1}
+            onChange={(v) => strand.updateStrandWebParams({ maxConnections: v })}
+            paramId="strand_web.maxConnections"
+          />
+          <SliderRow
+            label="Glow Intensity"
+            value={strand.strandWebParams.glowIntensity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateStrandWebParams({ glowIntensity: v })}
+            paramId="strand_web.glowIntensity"
+          />
+        </div>
+      )
+
+    case 'strand_bridge':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Grid Size"
+            value={strand.bridgeLinkParams.gridSize}
+            min={8}
+            max={64}
+            step={1}
+            onChange={(v) => strand.updateBridgeLinkParams({ gridSize: v })}
+            paramId="strand_bridge.gridSize"
+          />
+          <SliderRow
+            label="Edge Sensitivity"
+            value={strand.bridgeLinkParams.edgeSensitivity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateBridgeLinkParams({ edgeSensitivity: v })}
+            paramId="strand_bridge.edgeSensitivity"
+          />
+          <SliderRow
+            label="Opacity"
+            value={strand.bridgeLinkParams.opacity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateBridgeLinkParams({ opacity: v })}
+            paramId="strand_bridge.opacity"
+          />
+        </div>
+      )
+
+    case 'strand_path':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Particle Count"
+            value={strand.chiralPathParams.particleCount}
+            min={10}
+            max={200}
+            step={1}
+            onChange={(v) => strand.updateChiralPathParams({ particleCount: v })}
+            paramId="strand_path.particleCount"
+          />
+          <SliderRow
+            label="Trail Length"
+            value={strand.chiralPathParams.trailLength}
+            min={5}
+            max={50}
+            step={1}
+            onChange={(v) => strand.updateChiralPathParams({ trailLength: v })}
+            paramId="strand_path.trailLength"
+          />
+          <SliderRow
+            label="Flow Speed"
+            value={strand.chiralPathParams.flowSpeed}
+            min={0.1}
+            max={3}
+            step={0.1}
+            onChange={(v) => strand.updateChiralPathParams({ flowSpeed: v })}
+            paramId="strand_path.flowSpeed"
+          />
+        </div>
+      )
+
+    case 'strand_umbilical':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Tendril Count"
+            value={strand.umbilicalParams.tendrilCount}
+            min={2}
+            max={12}
+            step={1}
+            onChange={(v) => strand.updateUmbilicalParams({ tendrilCount: v })}
+            paramId="strand_umbilical.tendrilCount"
+          />
+          <SliderRow
+            label="Reach Distance"
+            value={strand.umbilicalParams.reachDistance}
+            min={0.1}
+            max={1}
+            step={0.1}
+            onChange={(v) => strand.updateUmbilicalParams({ reachDistance: v })}
+            paramId="strand_umbilical.reachDistance"
+          />
+          <SliderRow
+            label="Pulse Speed"
+            value={strand.umbilicalParams.pulseSpeed}
+            min={0.1}
+            max={3}
+            step={0.1}
+            onChange={(v) => strand.updateUmbilicalParams({ pulseSpeed: v })}
+            paramId="strand_umbilical.pulseSpeed"
+          />
+        </div>
+      )
+
+    case 'strand_odradek':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Sweep Speed"
+            value={strand.odradekParams.sweepSpeed}
+            min={0.1}
+            max={3}
+            step={0.1}
+            onChange={(v) => strand.updateOdradekParams({ sweepSpeed: v })}
+            paramId="strand_odradek.sweepSpeed"
+          />
+          <SliderRow
+            label="Reveal Duration"
+            value={strand.odradekParams.revealDuration}
+            min={0.1}
+            max={1}
+            step={0.1}
+            onChange={(v) => strand.updateOdradekParams({ revealDuration: v })}
+            paramId="strand_odradek.revealDuration"
+          />
+          <SliderRow
+            label="Ping Intensity"
+            value={strand.odradekParams.pingIntensity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateOdradekParams({ pingIntensity: v })}
+            paramId="strand_odradek.pingIntensity"
+          />
+        </div>
+      )
+
+    case 'strand_chiralium':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Threshold"
+            value={strand.chiraliumParams.threshold}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateChiraliumParams({ threshold: v })}
+            paramId="strand_chiralium.threshold"
+          />
+          <SliderRow
+            label="Density"
+            value={strand.chiraliumParams.density}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateChiraliumParams({ density: v })}
+            paramId="strand_chiralium.density"
+          />
+          <SliderRow
+            label="Shimmer"
+            value={strand.chiraliumParams.shimmer}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateChiraliumParams({ shimmer: v })}
+            paramId="strand_chiralium.shimmer"
+          />
+        </div>
+      )
+
+    case 'strand_beach':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Grain Amount"
+            value={strand.beachStaticParams.grainAmount}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateBeachStaticParams({ grainAmount: v })}
+            paramId="strand_beach.grainAmount"
+          />
+          <SliderRow
+            label="Invert Probability"
+            value={strand.beachStaticParams.invertProbability}
+            min={0}
+            max={0.5}
+            step={0.01}
+            onChange={(v) => strand.updateBeachStaticParams({ invertProbability: v })}
+            paramId="strand_beach.invertProbability"
+          />
+          <SliderRow
+            label="Flicker Speed"
+            value={strand.beachStaticParams.flickerSpeed}
+            min={0.1}
+            max={3}
+            step={0.1}
+            onChange={(v) => strand.updateBeachStaticParams({ flickerSpeed: v })}
+            paramId="strand_beach.flickerSpeed"
+          />
+        </div>
+      )
+
+    case 'strand_dooms':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Halo Size"
+            value={strand.doomsParams.haloSize}
+            min={0.1}
+            max={1}
+            step={0.1}
+            onChange={(v) => strand.updateDoomsParams({ haloSize: v })}
+            paramId="strand_dooms.haloSize"
+          />
+          <SliderRow
+            label="Pulse Speed"
+            value={strand.doomsParams.pulseSpeed}
+            min={0.1}
+            max={2}
+            step={0.1}
+            onChange={(v) => strand.updateDoomsParams({ pulseSpeed: v })}
+            paramId="strand_dooms.pulseSpeed"
+          />
+          <SliderRow
+            label="Sensitivity"
+            value={strand.doomsParams.sensitivity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateDoomsParams({ sensitivity: v })}
+            paramId="strand_dooms.sensitivity"
+          />
+        </div>
+      )
+
+    case 'strand_cloud':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Density"
+            value={strand.chiralCloudParams.density}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateChiralCloudParams({ density: v })}
+            paramId="strand_cloud.density"
+          />
+          <SliderRow
+            label="Responsiveness"
+            value={strand.chiralCloudParams.responsiveness}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateChiralCloudParams({ responsiveness: v })}
+            paramId="strand_cloud.responsiveness"
+          />
+          <SliderRow
+            label="Tint"
+            value={strand.chiralCloudParams.tint}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateChiralCloudParams({ tint: v })}
+            paramId="strand_cloud.tint"
+          />
+        </div>
+      )
+
+    case 'strand_bbpod':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Vignette Size"
+            value={strand.bbPodParams.vignetteSize}
+            min={0.5}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateBBPodParams({ vignetteSize: v })}
+            paramId="strand_bbpod.vignetteSize"
+          />
+          <SliderRow
+            label="Tint Strength"
+            value={strand.bbPodParams.tintStrength}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateBBPodParams({ tintStrength: v })}
+            paramId="strand_bbpod.tintStrength"
+          />
+          <SliderRow
+            label="Caustic Amount"
+            value={strand.bbPodParams.causticAmount}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateBBPodParams({ causticAmount: v })}
+            paramId="strand_bbpod.causticAmount"
+          />
+        </div>
+      )
+
+    case 'strand_seam':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Rift Width"
+            value={strand.seamParams.riftWidth}
+            min={0.01}
+            max={0.2}
+            step={0.01}
+            onChange={(v) => strand.updateSeamParams({ riftWidth: v })}
+            paramId="strand_seam.riftWidth"
+          />
+          <SliderRow
+            label="Parallax Amount"
+            value={strand.seamParams.parallaxAmount}
+            min={0}
+            max={0.5}
+            step={0.01}
+            onChange={(v) => strand.updateSeamParams({ parallaxAmount: v })}
+            paramId="strand_seam.parallaxAmount"
+          />
+          <SliderRow
+            label="Edge Distort"
+            value={strand.seamParams.edgeDistort}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateSeamParams({ edgeDistort: v })}
+            paramId="strand_seam.edgeDistort"
+          />
+        </div>
+      )
+
+    case 'strand_extinction':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Erosion Speed"
+            value={strand.extinctionParams.erosionSpeed}
+            min={0.1}
+            max={1}
+            step={0.1}
+            onChange={(v) => strand.updateExtinctionParams({ erosionSpeed: v })}
+            paramId="strand_extinction.erosionSpeed"
+          />
+          <SliderRow
+            label="Decay Stages"
+            value={strand.extinctionParams.decayStages}
+            min={1}
+            max={5}
+            step={1}
+            onChange={(v) => strand.updateExtinctionParams({ decayStages: v })}
+            paramId="strand_extinction.decayStages"
+          />
+          <SliderRow
+            label="Coverage"
+            value={strand.extinctionParams.coverage}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => strand.updateExtinctionParams({ coverage: v })}
+            paramId="strand_extinction.coverage"
           />
         </div>
       )

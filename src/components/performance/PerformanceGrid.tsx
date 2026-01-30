@@ -4,6 +4,8 @@ import { getEffectsForPage, PAGE_NAMES } from '../../config/effects'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
+import { useContourStore } from '../../stores/contourStore'
+import { useLandmarksStore } from '../../stores/landmarksStore'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useAcidStore } from '../../stores/acidStore'
 import { useRoutingStore } from '../../stores/routingStore'
@@ -20,6 +22,8 @@ export function PerformanceGrid() {
   // Render stores
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
+  const contour = useContourStore()
+  const landmarks = useLandmarksStore()
 
   // Vision store
   const visionTracking = useVisionTrackingStore()
@@ -265,6 +269,28 @@ export function PerformanceGrid() {
           value: visionTracking.handsParams.threshold,
           onToggle: () => visionTracking.setHandsEnabled(!visionTracking.handsEnabled),
           onValueChange: (v: number) => visionTracking.updateHandsParams({ threshold: v }),
+        }
+      case 'contour':
+        return {
+          active: contour.enabled,
+          value: contour.params.threshold * 100,
+          onToggle: () => contour.setEnabled(!contour.enabled),
+          onValueChange: (v: number) => contour.updateParams({ threshold: v / 100 }),
+        }
+      case 'landmarks':
+        return {
+          active: landmarks.enabled,
+          value: landmarks.minDetectionConfidence * 100,
+          onToggle: () => {
+            if (landmarks.enabled) {
+              landmarks.setEnabled(false)
+              landmarks.setCurrentMode('off')
+            } else {
+              landmarks.setEnabled(true)
+              landmarks.setCurrentMode('face')
+            }
+          },
+          onValueChange: (v: number) => landmarks.setMinDetectionConfidence(v / 100),
         }
 
       // ═══════════════════════════════════════════════════════════════

@@ -3,12 +3,14 @@ import { useUIStore } from '../../stores/uiStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
+import { useContourStore } from '../../stores/contourStore'
+import { useLandmarksStore } from '../../stores/landmarksStore'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useAcidStore } from '../../stores/acidStore'
 import { useStrandStore } from '../../stores/strandStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
-import { EFFECTS } from '../../config/effects'
+import { EFFECTS, STRAND_EFFECTS } from '../../config/effects'
 import { SliderRow, ToggleRow, SelectRow, ColorRow } from './controls'
 import { TEXTURE_LIBRARY, type TextureId } from '../overlays/TextureOverlay'
 import type { BlendMode } from '../../stores/textureOverlayStore'
@@ -26,7 +28,7 @@ export function ExpandedParameterPanel() {
   }, [selectedEffectId])
 
   const effectId = selectedEffectId || lastEffectId
-  const effect = EFFECTS.find((e) => e.id === effectId)
+  const effect = EFFECTS.find((e) => e.id === effectId) || STRAND_EFFECTS.find((e) => e.id === effectId)
 
   if (!effectId || !effect) {
     return (
@@ -66,6 +68,8 @@ function EffectParameters({ effectId }: { effectId: string }) {
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()
+  const contour = useContourStore()
+  const landmarks = useLandmarksStore()
   const visionTracking = useVisionTrackingStore()
   const acid = useAcidStore()
   const strand = useStrandStore()
@@ -1035,6 +1039,166 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Breathe"
             value={stipple.params.breathe}
             onChange={(v) => stipple.updateParams({ breathe: v })}
+          />
+        </div>
+      )
+
+    case 'contour':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Threshold"
+            value={contour.params.threshold}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => contour.updateParams({ threshold: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="contour.threshold"
+          />
+          <SliderRow
+            label="Min Size"
+            value={contour.params.minSize}
+            min={0}
+            max={0.5}
+            step={0.01}
+            onChange={(v) => contour.updateParams({ minSize: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="contour.minSize"
+          />
+          <SliderRow
+            label="Line Width"
+            value={contour.params.baseWidth}
+            min={1}
+            max={10}
+            step={0.5}
+            onChange={(v) => contour.updateParams({ baseWidth: v })}
+            paramId="contour.baseWidth"
+          />
+          <SliderRow
+            label="Glow"
+            value={contour.params.glowIntensity}
+            min={0}
+            max={1}
+            step={0.05}
+            onChange={(v) => contour.updateParams({ glowIntensity: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="contour.glowIntensity"
+          />
+          <SliderRow
+            label="Trail"
+            value={contour.params.trailLength}
+            min={0}
+            max={5}
+            step={0.1}
+            onChange={(v) => contour.updateParams({ trailLength: v })}
+            format={(v) => `${v.toFixed(1)}s`}
+            paramId="contour.trailLength"
+          />
+          <SliderRow
+            label="Smoothing"
+            value={contour.params.positionSmoothing}
+            min={0}
+            max={1}
+            step={0.05}
+            onChange={(v) => contour.updateParams({ positionSmoothing: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="contour.positionSmoothing"
+          />
+          <ColorRow
+            label="Color"
+            value={contour.params.color}
+            onChange={(v) => contour.updateParams({ color: v })}
+          />
+          <ColorRow
+            label="Glow Color"
+            value={contour.params.glowColor}
+            onChange={(v) => contour.updateParams({ glowColor: v })}
+          />
+          <SelectRow
+            label="Detection"
+            value={contour.params.mode}
+            options={[
+              { value: 'brightness', label: 'Brightness' },
+              { value: 'edge', label: 'Edge' },
+              { value: 'color', label: 'Color' },
+              { value: 'motion', label: 'Motion' },
+            ]}
+            onChange={(v) => contour.updateParams({ mode: v as 'brightness' | 'edge' | 'color' | 'motion' })}
+          />
+          <SelectRow
+            label="Fade Mode"
+            value={contour.params.fadeMode}
+            options={[
+              { value: 'fade', label: 'Fade' },
+              { value: 'fixed', label: 'Fixed' },
+              { value: 'persistent', label: 'Persistent' },
+            ]}
+            onChange={(v) => contour.updateParams({ fadeMode: v as 'fade' | 'fixed' | 'persistent' })}
+          />
+        </div>
+      )
+
+    case 'landmarks':
+      return (
+        <div className="space-y-1">
+          <SelectRow
+            label="Mode"
+            value={landmarks.currentMode}
+            options={[
+              { value: 'face', label: 'Face' },
+              { value: 'hands', label: 'Hands' },
+              { value: 'pose', label: 'Pose' },
+              { value: 'holistic', label: 'Holistic' },
+            ]}
+            onChange={(v) => landmarks.setCurrentMode(v as 'face' | 'hands' | 'pose' | 'holistic')}
+          />
+          <SliderRow
+            label="Detection"
+            value={landmarks.minDetectionConfidence}
+            min={0.1}
+            max={0.9}
+            step={0.05}
+            onChange={(v) => landmarks.setMinDetectionConfidence(v)}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="landmarks.minDetectionConfidence"
+          />
+          <SliderRow
+            label="Tracking"
+            value={landmarks.minTrackingConfidence}
+            min={0.1}
+            max={0.9}
+            step={0.05}
+            onChange={(v) => landmarks.setMinTrackingConfidence(v)}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="landmarks.minTrackingConfidence"
+          />
+          {(landmarks.currentMode === 'face' || landmarks.currentMode === 'holistic') && (
+            <SliderRow
+              label="Max Faces"
+              value={landmarks.maxFaces}
+              min={1}
+              max={4}
+              step={1}
+              onChange={(v) => landmarks.setMaxFaces(v)}
+              paramId="landmarks.maxFaces"
+            />
+          )}
+          {(landmarks.currentMode === 'hands' || landmarks.currentMode === 'holistic') && (
+            <SliderRow
+              label="Max Hands"
+              value={landmarks.maxHands}
+              min={1}
+              max={4}
+              step={1}
+              onChange={(v) => landmarks.setMaxHands(v)}
+              paramId="landmarks.maxHands"
+            />
+          )}
+          <ToggleRow
+            label="Attach to Detections"
+            value={landmarks.attachToDetections}
+            onChange={(v) => landmarks.setAttachToDetections(v)}
           />
         </div>
       )

@@ -218,8 +218,20 @@ export function TransportBar() {
     }
   }
 
-  // Webcam handler
+  // Webcam handler - toggles on/off
   const handleWebcam = async () => {
+    // If webcam is already active, stop it
+    if (source === 'webcam' && videoElement) {
+      const stream = videoElement.srcObject as MediaStream | null
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop())
+      }
+      videoElement.srcObject = null
+      reset()
+      return
+    }
+
+    // Start webcam
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 1280, height: 720 },
@@ -300,7 +312,7 @@ export function TransportBar() {
         onMouseEnter={(e) => source !== 'webcam' && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
         onMouseLeave={(e) => source !== 'webcam' && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
       >
-        Cam
+        {source === 'webcam' ? 'Stop' : 'Cam'}
       </button>
 
       <button

@@ -56,6 +56,7 @@ import { useAcidStore } from '../../stores/acidStore'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
+import { useStrandStore } from '../../stores/strandStore'
 
 interface ParameterSection {
   id: string
@@ -110,6 +111,7 @@ export function ParameterPanel() {
   const vision = useVisionTrackingStore()
   const textureOverlay = useTextureOverlayStore()
   const dataOverlay = useDataOverlayStore()
+  const strand = useStrandStore()
 
   // Clear all effects
   const handleClear = useCallback(() => {
@@ -155,7 +157,24 @@ export function ParameterPanel() {
     // Clear overlay effects
     textureOverlay.setEnabled(false)
     dataOverlay.setEnabled(false)
-  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay])
+    // Clear strand effects
+    strand.setHandprintsEnabled(false)
+    strand.setTarSpreadEnabled(false)
+    strand.setTimefallEnabled(false)
+    strand.setVoidOutEnabled(false)
+    strand.setStrandWebEnabled(false)
+    strand.setBridgeLinkEnabled(false)
+    strand.setChiralPathEnabled(false)
+    strand.setUmbilicalEnabled(false)
+    strand.setOdradekEnabled(false)
+    strand.setChiraliumEnabled(false)
+    strand.setBeachStaticEnabled(false)
+    strand.setDoomsEnabled(false)
+    strand.setChiralCloudEnabled(false)
+    strand.setBBPodEnabled(false)
+    strand.setSeamEnabled(false)
+    strand.setExtinctionEnabled(false)
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand])
 
   // Bypass handlers
   const handleBypassDown = useCallback(() => {
@@ -1363,6 +1382,218 @@ export function ParameterPanel() {
     })
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // STRAND EFFECTS
+  // ═══════════════════════════════════════════════════════════════
+
+  if (strand.handprintsEnabled) {
+    sections.push({
+      id: 'strand_handprints',
+      label: 'HANDPRINTS',
+      color: '#1a1a1a',
+      visualizer: <NetworkViz pointRadius={3} maxDistance={0.5} color="#1a1a1a" />,
+      params: [
+        { label: 'Density', value: strand.handprintsParams.density, min: 1, max: 20, onChange: (v) => strand.updateHandprintsParams({ density: v }), paramId: 'strand_handprints.density' },
+        { label: 'Fade', value: strand.handprintsParams.fadeSpeed * 10, min: 1, max: 20, onChange: (v) => strand.updateHandprintsParams({ fadeSpeed: v / 10 }), paramId: 'strand_handprints.fadeSpeed' },
+      ],
+    })
+  }
+
+  if (strand.tarSpreadEnabled) {
+    sections.push({
+      id: 'strand_tar',
+      label: 'TAR',
+      color: '#ff6b35',
+      visualizer: <NoiseViz amount={strand.tarSpreadParams.coverage} speed={1} color="#ff6b35" />,
+      params: [
+        { label: 'Speed', value: strand.tarSpreadParams.spreadSpeed * 100, min: 0, max: 100, onChange: (v) => strand.updateTarSpreadParams({ spreadSpeed: v / 100 }), paramId: 'strand_tar.spreadSpeed' },
+        { label: 'Coverage', value: strand.tarSpreadParams.coverage * 100, min: 0, max: 100, onChange: (v) => strand.updateTarSpreadParams({ coverage: v / 100 }), paramId: 'strand_tar.coverage' },
+      ],
+    })
+  }
+
+  if (strand.timefallEnabled) {
+    sections.push({
+      id: 'strand_timefall',
+      label: 'TIMEFALL',
+      color: '#4a5568',
+      visualizer: <ScanLinesViz lineCount={strand.timefallParams.streakCount} opacity={0.5} color="#4a5568" />,
+      params: [
+        { label: 'Intensity', value: strand.timefallParams.intensity * 100, min: 0, max: 100, onChange: (v) => strand.updateTimefallParams({ intensity: v / 100 }), paramId: 'strand_timefall.intensity' },
+        { label: 'Streaks', value: strand.timefallParams.streakCount, min: 10, max: 200, onChange: (v) => strand.updateTimefallParams({ streakCount: v }), paramId: 'strand_timefall.streakCount' },
+      ],
+    })
+  }
+
+  if (strand.voidOutEnabled) {
+    sections.push({
+      id: 'strand_voidout',
+      label: 'VOID OUT',
+      color: '#ff6b35',
+      visualizer: <LensViz curvature={strand.voidOutParams.distortAmount} color="#ff6b35" />,
+      params: [
+        { label: 'Speed', value: strand.voidOutParams.speed * 100, min: 0, max: 100, onChange: (v) => strand.updateVoidOutParams({ speed: v / 100 }), paramId: 'strand_voidout.speed' },
+        { label: 'Distort', value: strand.voidOutParams.distortAmount * 100, min: 0, max: 100, onChange: (v) => strand.updateVoidOutParams({ distortAmount: v / 100 }), paramId: 'strand_voidout.distortAmount' },
+      ],
+    })
+  }
+
+  if (strand.strandWebEnabled) {
+    sections.push({
+      id: 'strand_web',
+      label: 'STRAND WEB',
+      color: '#00d4ff',
+      visualizer: <NetworkViz pointRadius={2} maxDistance={strand.strandWebParams.threshold} color="#00d4ff" />,
+      params: [
+        { label: 'Threshold', value: strand.strandWebParams.threshold * 100, min: 0, max: 100, onChange: (v) => strand.updateStrandWebParams({ threshold: v / 100 }), paramId: 'strand_web.threshold' },
+        { label: 'Glow', value: strand.strandWebParams.glowIntensity * 100, min: 0, max: 100, onChange: (v) => strand.updateStrandWebParams({ glowIntensity: v / 100 }), paramId: 'strand_web.glowIntensity' },
+      ],
+    })
+  }
+
+  if (strand.bridgeLinkEnabled) {
+    sections.push({
+      id: 'strand_bridge',
+      label: 'BRIDGE',
+      color: '#00d4ff',
+      visualizer: <PixelateViz pixelSize={strand.bridgeLinkParams.gridSize} color="#00d4ff" />,
+      params: [
+        { label: 'Grid', value: strand.bridgeLinkParams.gridSize, min: 8, max: 64, onChange: (v) => strand.updateBridgeLinkParams({ gridSize: v }), paramId: 'strand_bridge.gridSize' },
+        { label: 'Edge', value: strand.bridgeLinkParams.edgeSensitivity * 100, min: 0, max: 100, onChange: (v) => strand.updateBridgeLinkParams({ edgeSensitivity: v / 100 }), paramId: 'strand_bridge.edgeSensitivity' },
+      ],
+    })
+  }
+
+  if (strand.chiralPathEnabled) {
+    sections.push({
+      id: 'strand_path',
+      label: 'CHIRAL PATH',
+      color: '#00d4ff',
+      visualizer: <CloudViz density={strand.chiralPathParams.particleCount / 200} color="#00d4ff" />,
+      params: [
+        { label: 'Particles', value: strand.chiralPathParams.particleCount, min: 10, max: 200, onChange: (v) => strand.updateChiralPathParams({ particleCount: v }), paramId: 'strand_path.particleCount' },
+        { label: 'Trail', value: strand.chiralPathParams.trailLength, min: 5, max: 50, onChange: (v) => strand.updateChiralPathParams({ trailLength: v }), paramId: 'strand_path.trailLength' },
+      ],
+    })
+  }
+
+  if (strand.umbilicalEnabled) {
+    sections.push({
+      id: 'strand_umbilical',
+      label: 'UMBILICAL',
+      color: '#00d4ff',
+      visualizer: <SlitViz speed={strand.umbilicalParams.pulseSpeed} color="#00d4ff" />,
+      params: [
+        { label: 'Tendrils', value: strand.umbilicalParams.tendrilCount, min: 2, max: 12, onChange: (v) => strand.updateUmbilicalParams({ tendrilCount: v }), paramId: 'strand_umbilical.tendrilCount' },
+        { label: 'Reach', value: strand.umbilicalParams.reachDistance * 100, min: 10, max: 100, onChange: (v) => strand.updateUmbilicalParams({ reachDistance: v / 100 }), paramId: 'strand_umbilical.reachDistance' },
+      ],
+    })
+  }
+
+  if (strand.odradekEnabled) {
+    sections.push({
+      id: 'strand_odradek',
+      label: 'ODRADEK',
+      color: '#ffd700',
+      visualizer: <EdgeViz threshold={strand.odradekParams.sweepSpeed} mix={0.5} color="#ffd700" />,
+      params: [
+        { label: 'Sweep', value: strand.odradekParams.sweepSpeed * 100, min: 0, max: 100, onChange: (v) => strand.updateOdradekParams({ sweepSpeed: v / 100 }), paramId: 'strand_odradek.sweepSpeed' },
+        { label: 'Ping', value: strand.odradekParams.pingIntensity * 100, min: 0, max: 100, onChange: (v) => strand.updateOdradekParams({ pingIntensity: v / 100 }), paramId: 'strand_odradek.pingIntensity' },
+      ],
+    })
+  }
+
+  if (strand.chiraliumEnabled) {
+    sections.push({
+      id: 'strand_chiralium',
+      label: 'CHIRALIUM',
+      color: '#ffd700',
+      visualizer: <DitherViz intensity={strand.chiraliumParams.density} color="#ffd700" />,
+      params: [
+        { label: 'Threshold', value: strand.chiraliumParams.threshold * 100, min: 0, max: 100, onChange: (v) => strand.updateChiraliumParams({ threshold: v / 100 }), paramId: 'strand_chiralium.threshold' },
+        { label: 'Density', value: strand.chiraliumParams.density * 100, min: 0, max: 100, onChange: (v) => strand.updateChiraliumParams({ density: v / 100 }), paramId: 'strand_chiralium.density' },
+      ],
+    })
+  }
+
+  if (strand.beachStaticEnabled) {
+    sections.push({
+      id: 'strand_beach',
+      label: 'BEACH',
+      color: '#ffd700',
+      visualizer: <NoiseViz amount={strand.beachStaticParams.grainAmount} speed={1} color="#ffd700" />,
+      params: [
+        { label: 'Grain', value: strand.beachStaticParams.grainAmount * 100, min: 0, max: 100, onChange: (v) => strand.updateBeachStaticParams({ grainAmount: v / 100 }), paramId: 'strand_beach.grainAmount' },
+        { label: 'Flicker', value: strand.beachStaticParams.flickerSpeed * 100, min: 0, max: 100, onChange: (v) => strand.updateBeachStaticParams({ flickerSpeed: v / 100 }), paramId: 'strand_beach.flickerSpeed' },
+      ],
+    })
+  }
+
+  if (strand.doomsEnabled) {
+    sections.push({
+      id: 'strand_dooms',
+      label: 'DOOMS',
+      color: '#ffd700',
+      visualizer: <LensViz curvature={strand.doomsParams.haloSize} color="#ffd700" />,
+      params: [
+        { label: 'Halo', value: strand.doomsParams.haloSize * 100, min: 0, max: 100, onChange: (v) => strand.updateDoomsParams({ haloSize: v / 100 }), paramId: 'strand_dooms.haloSize' },
+        { label: 'Pulse', value: strand.doomsParams.pulseSpeed * 100, min: 0, max: 100, onChange: (v) => strand.updateDoomsParams({ pulseSpeed: v / 100 }), paramId: 'strand_dooms.pulseSpeed' },
+      ],
+    })
+  }
+
+  if (strand.chiralCloudEnabled) {
+    sections.push({
+      id: 'strand_cloud',
+      label: 'CHIRAL CLOUD',
+      color: '#7b68ee',
+      visualizer: <CloudViz density={strand.chiralCloudParams.density} color="#7b68ee" />,
+      params: [
+        { label: 'Density', value: strand.chiralCloudParams.density * 100, min: 0, max: 100, onChange: (v) => strand.updateChiralCloudParams({ density: v / 100 }), paramId: 'strand_cloud.density' },
+        { label: 'Response', value: strand.chiralCloudParams.responsiveness * 100, min: 0, max: 100, onChange: (v) => strand.updateChiralCloudParams({ responsiveness: v / 100 }), paramId: 'strand_cloud.responsiveness' },
+      ],
+    })
+  }
+
+  if (strand.bbPodEnabled) {
+    sections.push({
+      id: 'strand_bbpod',
+      label: 'BB POD',
+      color: '#7b68ee',
+      visualizer: <LensViz curvature={strand.bbPodParams.vignetteSize} color="#7b68ee" />,
+      params: [
+        { label: 'Vignette', value: strand.bbPodParams.vignetteSize * 100, min: 0, max: 100, onChange: (v) => strand.updateBBPodParams({ vignetteSize: v / 100 }), paramId: 'strand_bbpod.vignetteSize' },
+        { label: 'Tint', value: strand.bbPodParams.tintStrength * 100, min: 0, max: 100, onChange: (v) => strand.updateBBPodParams({ tintStrength: v / 100 }), paramId: 'strand_bbpod.tintStrength' },
+      ],
+    })
+  }
+
+  if (strand.seamEnabled) {
+    sections.push({
+      id: 'strand_seam',
+      label: 'SEAM',
+      color: '#7b68ee',
+      visualizer: <BlockDisplaceViz amount={strand.seamParams.riftWidth} seed={0} color="#7b68ee" />,
+      params: [
+        { label: 'Width', value: strand.seamParams.riftWidth * 100, min: 0, max: 100, onChange: (v) => strand.updateSeamParams({ riftWidth: v / 100 }), paramId: 'strand_seam.riftWidth' },
+        { label: 'Parallax', value: strand.seamParams.parallaxAmount * 100, min: 0, max: 100, onChange: (v) => strand.updateSeamParams({ parallaxAmount: v / 100 }), paramId: 'strand_seam.parallaxAmount' },
+      ],
+    })
+  }
+
+  if (strand.extinctionEnabled) {
+    sections.push({
+      id: 'strand_extinction',
+      label: 'EXTINCTION',
+      color: '#7b68ee',
+      visualizer: <StaticDisplaceViz intensity={strand.extinctionParams.coverage} color="#7b68ee" />,
+      params: [
+        { label: 'Speed', value: strand.extinctionParams.erosionSpeed * 100, min: 0, max: 100, onChange: (v) => strand.updateExtinctionParams({ erosionSpeed: v / 100 }), paramId: 'strand_extinction.erosionSpeed' },
+        { label: 'Coverage', value: strand.extinctionParams.coverage * 100, min: 0, max: 100, onChange: (v) => strand.updateExtinctionParams({ coverage: v / 100 }), paramId: 'strand_extinction.coverage' },
+      ],
+    })
+  }
+
   const { selectedEffectId, setSelectedEffect, sequencerDrag } = useUIStore()
   const { effectOrder, reorderEffect } = useRoutingStore()
   const { addRouting } = useSequencerStore()
@@ -1506,12 +1737,61 @@ export function ParameterPanel() {
       case 'data_overlay':
         dataOverlay.setEnabled(false)
         break
+      // Strand effects
+      case 'strand_handprints':
+        strand.setHandprintsEnabled(false)
+        break
+      case 'strand_tar':
+        strand.setTarSpreadEnabled(false)
+        break
+      case 'strand_timefall':
+        strand.setTimefallEnabled(false)
+        break
+      case 'strand_voidout':
+        strand.setVoidOutEnabled(false)
+        break
+      case 'strand_web':
+        strand.setStrandWebEnabled(false)
+        break
+      case 'strand_bridge':
+        strand.setBridgeLinkEnabled(false)
+        break
+      case 'strand_path':
+        strand.setChiralPathEnabled(false)
+        break
+      case 'strand_umbilical':
+        strand.setUmbilicalEnabled(false)
+        break
+      case 'strand_odradek':
+        strand.setOdradekEnabled(false)
+        break
+      case 'strand_chiralium':
+        strand.setChiraliumEnabled(false)
+        break
+      case 'strand_beach':
+        strand.setBeachStaticEnabled(false)
+        break
+      case 'strand_dooms':
+        strand.setDoomsEnabled(false)
+        break
+      case 'strand_cloud':
+        strand.setChiralCloudEnabled(false)
+        break
+      case 'strand_bbpod':
+        strand.setBBPodEnabled(false)
+        break
+      case 'strand_seam':
+        strand.setSeamEnabled(false)
+        break
+      case 'strand_extinction':
+        strand.setExtinctionEnabled(false)
+        break
     }
     // Clear selection if this effect was selected
     if (selectedEffectId === effectId) {
       setSelectedEffect(null)
     }
-  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, selectedEffectId, setSelectedEffect])
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, selectedEffectId, setSelectedEffect])
 
   // Sort sections by effectOrder
   const sortedSections = [...sections].sort((a, b) => {

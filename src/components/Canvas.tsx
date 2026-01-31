@@ -7,6 +7,8 @@ import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useMediaStore } from '../stores/mediaStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useRecordingStore } from '../stores/recordingStore'
+import { useSlicerStore } from '../stores/slicerStore'
+import { SlicerCompositor } from '../effects/SlicerCompositor'
 import { OverlayContainer } from './overlays/OverlayContainer'
 
 export interface CanvasHandle {
@@ -20,6 +22,18 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   const mediaTexture = useVideoTexture()
   const { videoElement, imageElement } = useMediaStore()
   const { previewTime } = useRecordingStore()
+
+  // Slicer state
+  const {
+    enabled: slicerEnabled,
+    outputMode: slicerOutputMode,
+    wet: slicerWet,
+    blendMode: slicerBlendMode,
+    opacity: slicerOpacity
+  } = useSlicerStore()
+
+  // Slicer compositor ref
+  const slicerCompositor = useRef<SlicerCompositor | null>(null)
 
   // Expose canvas element via ref
   useImperativeHandle(ref, () => ({
@@ -82,6 +96,19 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       newPipeline.dispose()
     }
   }, [renderer])
+
+  // Initialize slicer compositor
+  useEffect(() => {
+    if (!slicerCompositor.current) {
+      slicerCompositor.current = new SlicerCompositor()
+    }
+    slicerCompositor.current.updateParams({
+      mode: slicerOutputMode,
+      wet: slicerWet,
+      blendMode: slicerBlendMode,
+      opacity: slicerOpacity,
+    })
+  }, [slicerOutputMode, slicerWet, slicerBlendMode, slicerOpacity])
 
   // Sync effect parameters
   useEffect(() => {
@@ -164,7 +191,15 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     if (!pipeline) return
 
     if (mediaTexture) {
-      pipeline.setInputTexture(mediaTexture)
+      // Check if slicer should replace input
+      let textureToUse = mediaTexture
+      if (slicerEnabled && slicerOutputMode === 'replace' && slicerCompositor.current) {
+        const slicerTexture = slicerCompositor.current.getOutputTexture()
+        if (slicerTexture) {
+          textureToUse = slicerTexture
+        }
+      }
+      pipeline.setInputTexture(textureToUse)
 
       // Get video/image dimensions for aspect ratio
       if (videoElement) {
@@ -186,7 +221,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       pipeline.setInputTexture(placeholder)
       pipeline.setVideoSize(size, size)
     }
-  }, [pipeline, mediaTexture, videoElement, imageElement])
+  }, [pipeline, mediaTexture, videoElement, imageElement, slicerEnabled, slicerOutputMode])
 
   // Handle preview time - seek video when hovering thumbnails
   useEffect(() => {
@@ -223,6 +258,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     return () => {
       cancelAnimationFrame(frameIdRef.current)
       resizeObserver.disconnect()
+      slicerCompositor.current?.dispose()
     }
   }, [pipeline, renderer, frameIdRef])
 

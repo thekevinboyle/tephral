@@ -1,6 +1,8 @@
+import { useState, useCallback } from 'react'
 import { useSlicerStore } from '../../stores/slicerStore'
 import { useSlicerBufferStore } from '../../stores/slicerBufferStore'
 import { useSequencerStore } from '../../stores/sequencerStore'
+import { useClipStore } from '../../stores/clipStore'
 
 export function SlicerTransport() {
   const {
@@ -14,10 +16,15 @@ export function SlicerTransport() {
     setBufferSize,
     enabled,
     setEnabled,
+    setImportedClipId,
   } = useSlicerStore()
 
-  const { capture, release } = useSlicerBufferStore()
+  const { capture, release, importFrames } = useSlicerBufferStore()
   const { bpm } = useSequencerStore()
+  const { clips } = useClipStore()
+
+  const [showClipPicker, setShowClipPicker] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleCaptureRelease = () => {
     if (captureState === 'live') {
@@ -26,23 +33,142 @@ export function SlicerTransport() {
     } else {
       release()
       setCaptureState('live')
+      setImportedClipId(null)
     }
   }
 
+  // Extract frames from a video clip
+  const extractFramesFromClip = useCallback(async (clipUrl: string, clipId: string) => {
+    setIsLoading(true)
+    setShowClipPicker(false)
+
+    try {
+      // Create video element
+      const video = document.createElement('video')
+      video.src = clipUrl
+      video.muted = true
+      video.playsInline = true
+
+      // Wait for video to load metadata
+      await new Promise<void>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve()
+        video.onerror = () => reject(new Error('Failed to load video'))
+      })
+
+      const duration = video.duration
+      const fps = 30
+      const frameCount = Math.min(Math.floor(duration * fps), 300) // Max 300 frames (10s)
+      const frameInterval = duration / frameCount
+
+      // Create canvas for frame extraction
+      const canvas = document.createElement('canvas')
+      canvas.width = 480
+      canvas.height = 270
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('Failed to get canvas context')
+
+      const frames: ImageData[] = []
+
+      // Extract frames by seeking through video
+      for (let i = 0; i < frameCount; i++) {
+        const time = i * frameInterval
+
+        // Seek to time
+        await new Promise<void>((resolve) => {
+          video.onseeked = () => resolve()
+          video.currentTime = time
+        })
+
+        // Draw frame to canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        frames.push(imageData)
+      }
+
+      // Import frames into slicer buffer
+      importFrames(frames)
+      setCaptureState('imported')
+      setImportedClipId(clipId)
+
+    } catch (error) {
+      console.error('Failed to extract frames from clip:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [importFrames, setCaptureState, setImportedClipId])
+
   return (
-    <div className="flex flex-row gap-2 items-center">
+    <div className="flex flex-row gap-2 items-center relative">
       {/* Capture/Release button */}
       <button
         onClick={handleCaptureRelease}
         className="h-7 px-2 text-[11px] font-medium rounded"
         style={{
-          backgroundColor: captureState === 'frozen' ? '#f87171' : 'var(--bg-surface)',
-          border: captureState === 'frozen' ? '1px solid #f87171' : '1px solid var(--border)',
-          color: captureState === 'frozen' ? '#ffffff' : 'var(--text-muted)',
+          backgroundColor: captureState === 'frozen' || captureState === 'imported'
+            ? '#f87171' : 'var(--bg-surface)',
+          border: captureState === 'frozen' || captureState === 'imported'
+            ? '1px solid #f87171' : '1px solid var(--border)',
+          color: captureState === 'frozen' || captureState === 'imported'
+            ? '#ffffff' : 'var(--text-muted)',
         }}
       >
-        {captureState === 'frozen' ? 'Release' : 'Capture'}
+        {captureState === 'live' ? 'Capture' : 'Release'}
       </button>
+
+      {/* Import button */}
+      <div className="relative">
+        <button
+          onClick={() => setShowClipPicker(!showClipPicker)}
+          disabled={isLoading || clips.length === 0}
+          className="h-7 px-2 text-[11px] font-medium rounded"
+          style={{
+            backgroundColor: captureState === 'imported' ? '#8b5cf6' : 'var(--bg-surface)',
+            border: captureState === 'imported' ? '1px solid #8b5cf6' : '1px solid var(--border)',
+            color: captureState === 'imported' ? '#ffffff' : 'var(--text-muted)',
+            opacity: isLoading || clips.length === 0 ? 0.5 : 1,
+          }}
+          title={clips.length === 0 ? 'No clips available' : 'Import from clip bin'}
+        >
+          {isLoading ? '...' : 'Import'}
+        </button>
+
+        {/* Clip picker dropdown */}
+        {showClipPicker && clips.length > 0 && (
+          <div
+            className="absolute top-full left-0 mt-1 rounded-lg shadow-lg z-50 overflow-hidden"
+            style={{
+              backgroundColor: 'var(--bg-elevated)',
+              border: '1px solid var(--border)',
+              minWidth: '200px',
+              maxHeight: '200px',
+              overflowY: 'auto',
+            }}
+          >
+            {clips.map((clip) => (
+              <button
+                key={clip.id}
+                onClick={() => extractFramesFromClip(clip.url, clip.id)}
+                className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-white/10 transition-colors"
+              >
+                <img
+                  src={clip.thumbnailUrl}
+                  alt=""
+                  className="w-12 h-8 object-cover rounded"
+                  style={{ backgroundColor: '#000' }}
+                />
+                <div className="flex-1 text-left">
+                  <div className="text-[11px]" style={{ color: 'var(--text-primary)' }}>
+                    {clip.duration.toFixed(1)}s
+                  </div>
+                  <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                    {new Date(clip.createdAt).toLocaleTimeString()}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Buffer size controls */}
       <span
@@ -118,6 +244,14 @@ export function SlicerTransport() {
       >
         {enabled ? 'ON' : 'OFF'}
       </button>
+
+      {/* Click outside to close dropdown */}
+      {showClipPicker && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowClipPicker(false)}
+        />
+      )}
     </div>
   )
 }

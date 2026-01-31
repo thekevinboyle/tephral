@@ -1869,12 +1869,8 @@ export function ParameterPanel() {
         toOrderIndex = effectOrder.indexOf(sortedSections[dragOverIndex].id)
       }
 
-      // Only adjust if we're actually moving the item (not just hovering)
-      if (fromOrderIndex !== toOrderIndex && fromOrderIndex !== toOrderIndex - 1) {
-        // If moving forward in the array, account for the removal
-        if (fromOrderIndex < toOrderIndex) {
-          toOrderIndex--
-        }
+      // Only reorder if actually moving to a different position
+      if (fromOrderIndex !== -1 && toOrderIndex !== -1 && fromOrderIndex !== toOrderIndex) {
         reorderEffect(fromOrderIndex, toOrderIndex)
       }
     } else if (!isDragging.current) {

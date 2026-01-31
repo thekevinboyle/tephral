@@ -6,6 +6,7 @@ import { useStippleStore } from '../stores/stippleStore'
 import { useAcidStore } from '../stores/acidStore'
 import { useVisionTrackingStore } from '../stores/visionTrackingStore'
 import { useStrandStore } from '../stores/strandStore'
+import { useSlicerStore } from '../stores/slicerStore'
 
 // Resolution to milliseconds per step
 const RESOLUTION_MS: Record<string, number> = {
@@ -32,6 +33,7 @@ export function useSequencerPlayback() {
   const acid = useAcidStore()
   const vision = useVisionTrackingStore()
   const strand = useStrandStore()
+  const slicer = useSlicerStore()
 
   const lastStepTime = useRef<number>(0)
   const animationFrameId = useRef<number | null>(null)
@@ -282,8 +284,23 @@ export function useSequencerPlayback() {
         if (paramName === 'decayStages') strand.updateExtinctionParams({ decayStages: 1 + Math.floor(value * 4) })
         if (paramName === 'coverage') strand.updateExtinctionParams({ coverage: value })
         break
+
+      // ============================================================================
+      // Slicer Effects
+      // ============================================================================
+      case 'slicer':
+        if (paramName === 'grainSize') slicer.updateGrainParams({ grainSize: 10 + value * 490 })
+        if (paramName === 'density') slicer.updateGrainParams({ density: 1 + Math.floor(value * 7) })
+        if (paramName === 'spray') slicer.updateGrainParams({ spray: value })
+        if (paramName === 'jitter') slicer.updateGrainParams({ jitter: value })
+        if (paramName === 'rate') slicer.updateGrainParams({ rate: 0.25 + value * 3.75 })
+        if (paramName === 'reverseProb') slicer.updateGrainParams({ reverseProb: value })
+        if (paramName === 'sliceProb') slicer.setSliceProb(value)
+        if (paramName === 'wet') slicer.setWet(value)
+        if (paramName === 'sliceIndex') slicer.setCurrentSlice(Math.floor(value * (slicer.sliceCount - 1)))
+        break
     }
-  }, [gateMode, glitch, ascii, stipple, acid, vision, strand])
+  }, [gateMode, glitch, ascii, stipple, acid, vision, strand, slicer])
 
   // Main playback loop
   const playbackLoop = useCallback((timestamp: number) => {

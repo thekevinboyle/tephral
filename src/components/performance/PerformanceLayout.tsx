@@ -9,7 +9,7 @@ import { MixControls } from './MixControls'
 import { ClipBin } from './ClipBin'
 import { ClipDetailModal } from './ClipDetailModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
-import { SequencerPanel } from '../sequencer/SequencerPanel'
+import { SequencerContainer } from '../sequencer/SequencerContainer'
 import { PresetLibraryPanel } from '../presets/PresetLibraryPanel'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
@@ -247,7 +247,7 @@ export function PerformanceLayout() {
             border: '1px solid var(--border)',
           }}
         >
-          <SequencerPanel />
+          <SequencerContainer />
         </div>
 
         {/* Column 3: XY Pad + Mix Controls */}

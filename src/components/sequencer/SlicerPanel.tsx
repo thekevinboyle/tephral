@@ -1,6 +1,6 @@
-// Stores will be used by sub-components when implemented
-// import { useSlicerStore } from '../../stores/slicerStore'
-// import { useSlicerBufferStore } from '../../stores/slicerBufferStore'
+import { SlicerTransport } from './SlicerTransport'
+import { SlicerWaveform } from './SlicerWaveform'
+import { SlicerControls } from './SlicerControls'
 
 export function SlicerPanel() {
   return (
@@ -23,27 +23,24 @@ export function SlicerPanel() {
           SLICER
         </span>
         <div className="flex-1" />
-        <span style={{ color: 'var(--text-muted)' }}>Transport here</span>
+        <SlicerTransport />
       </div>
 
       {/* Waveform area */}
       <div
-        className="shrink-0 flex items-center justify-center"
+        className="shrink-0"
         style={{
           height: '35%',
           minHeight: '80px',
-          color: 'var(--text-muted)',
+          borderBottom: '1px solid var(--border)',
         }}
       >
-        Waveform visualization
+        <SlicerWaveform />
       </div>
 
       {/* Controls area */}
-      <div
-        className="flex-1 overflow-y-auto flex items-center justify-center"
-        style={{ color: 'var(--text-muted)' }}
-      >
-        Controls here
+      <div className="flex-1 overflow-y-auto">
+        <SlicerControls />
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 import { useSequencerContainerStore } from '../../stores/sequencerContainerStore'
 import { SequencerIconBar } from './SequencerIconBar'
 import { SequencerPanel } from './SequencerPanel'
+import { SlicerPanel } from './SlicerPanel'
 
 export function SequencerContainer() {
   const { activeSequencer } = useSequencerContainerStore()
@@ -10,14 +11,7 @@ export function SequencerContainer() {
       case 'steps':
         return <SequencerPanel />
       case 'slicer':
-        return (
-          <div
-            className="flex-1 flex items-center justify-center"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            Slicer coming soon
-          </div>
-        )
+        return <SlicerPanel />
       case 'slot3':
       case 'slot4':
         return (

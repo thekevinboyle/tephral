@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from 'react'
+import { useCallback, useState, useRef, useEffect } from 'react'
 import { BankButton } from './BankButton'
 import { useBankStore } from '../../stores/bankStore'
 import { useGlitchEngineStore, type GlitchSnapshot } from '../../stores/glitchEngineStore'
@@ -28,8 +28,21 @@ export function BankPanel() {
   const [previousState, setPreviousState] = useState<EffectState | null>(null)
   const [isRekt, setIsRekt] = useState(false)
   const [isRektLocked, setIsRektLocked] = useState(false)
+  const [rektFlashOn, setRektFlashOn] = useState(true)
   const rektStateRef = useRef<EffectState | null>(null)
   const rektPressTimeRef = useRef<number>(0)
+
+  // Flash effect when REKT is locked
+  useEffect(() => {
+    if (isRektLocked) {
+      const interval = setInterval(() => {
+        setRektFlashOn(prev => !prev)
+      }, 300)
+      return () => clearInterval(interval)
+    } else {
+      setRektFlashOn(true)
+    }
+  }, [isRektLocked])
   const { banks, activeBank, loadBank, saveBank, clearBank } = useBankStore()
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
@@ -313,15 +326,21 @@ export function BankPanel() {
         onPointerCancel={isRektLocked ? undefined : handleRektUp}
         className="h-full px-4 rounded-lg text-[13px] font-medium transition-all select-none touch-none"
         style={{
-          backgroundColor: isRekt ? '#ef4444' : 'var(--bg-surface)',
-          border: isRektLocked ? '2px solid #b91c1c' : isRekt ? '1px solid #dc2626' : '1px solid var(--border)',
+          backgroundColor: isRektLocked
+            ? (rektFlashOn ? '#ef4444' : '#b91c1c')
+            : isRekt ? '#ef4444' : 'var(--bg-surface)',
+          border: isRektLocked
+            ? `2px solid ${rektFlashOn ? '#fca5a5' : '#b91c1c'}`
+            : isRekt ? '1px solid #dc2626' : '1px solid var(--border)',
           color: isRekt ? 'var(--bg-surface)' : 'var(--text-muted)',
-          boxShadow: isRekt ? '0 0 12px rgba(239, 68, 68, 0.5)' : 'none',
+          boxShadow: isRektLocked
+            ? `0 0 ${rektFlashOn ? '20px' : '8px'} rgba(239, 68, 68, ${rektFlashOn ? 0.7 : 0.3})`
+            : isRekt ? '0 0 12px rgba(239, 68, 68, 0.5)' : 'none',
           transform: isRekt ? 'scale(1.05)' : 'scale(1)',
         }}
         title={isRektLocked ? 'Click to unlock' : 'Hold or tap to lock'}
       >
-        {isRektLocked ? 'REKT 🔒' : 'REKT'}
+        REKT
       </button>
     </div>
   )

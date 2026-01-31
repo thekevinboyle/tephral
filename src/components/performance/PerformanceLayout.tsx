@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { TransportBar } from './TransportBar'
 import { ParameterPanel } from './ParameterPanel'
@@ -13,12 +13,20 @@ import { SequencerPanel } from '../sequencer/SequencerPanel'
 import { PresetLibraryPanel } from '../presets/PresetLibraryPanel'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
+import { useMediaStore } from '../../stores/mediaStore'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
+  const canvasContainerRef = useRef<HTMLDivElement>(null)
   // Use state so that when canvas becomes available, it triggers a re-render
   // which allows useRecordingCapture to properly initialize
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null)
+
+  // Track video dimensions for dynamic sizing
+  const { videoElement, imageElement, source } = useMediaStore()
+  const [videoAspect, setVideoAspect] = useState<number | null>(null)
+  const [containerWidth, setContainerWidth] = useState(0)
+  const [containerHeight, setContainerHeight] = useState(0)
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
   useAutomationPlayback()
@@ -42,6 +50,52 @@ export function PerformanceLayout() {
     const interval = setInterval(checkCanvas, 100)
     return () => clearInterval(interval)
   }, [])
+
+  // Track video/image aspect ratio
+  useEffect(() => {
+    if (videoElement) {
+      const updateAspect = () => {
+        if (videoElement.videoWidth && videoElement.videoHeight) {
+          setVideoAspect(videoElement.videoWidth / videoElement.videoHeight)
+        }
+      }
+      updateAspect()
+      videoElement.addEventListener('loadedmetadata', updateAspect)
+      return () => videoElement.removeEventListener('loadedmetadata', updateAspect)
+    } else if (imageElement) {
+      if (imageElement.naturalWidth && imageElement.naturalHeight) {
+        setVideoAspect(imageElement.naturalWidth / imageElement.naturalHeight)
+      }
+    } else {
+      setVideoAspect(null)
+    }
+  }, [videoElement, imageElement])
+
+  // Track container size
+  const updateContainerSize = useCallback(() => {
+    if (canvasContainerRef.current) {
+      const rect = canvasContainerRef.current.getBoundingClientRect()
+      setContainerWidth(rect.width)
+      setContainerHeight(rect.height)
+    }
+  }, [])
+
+  useEffect(() => {
+    updateContainerSize()
+    window.addEventListener('resize', updateContainerSize)
+    return () => window.removeEventListener('resize', updateContainerSize)
+  }, [updateContainerSize])
+
+  // Calculate if we need side placeholders
+  const hasMedia = source !== 'none'
+  const containerAspect = containerHeight > 0 ? containerWidth / containerHeight : 16/9
+  const showSidePlaceholders = hasMedia && videoAspect !== null && videoAspect < containerAspect
+
+  // Calculate the width the video actually needs
+  const videoWidth = showSidePlaceholders && videoAspect
+    ? Math.floor(containerHeight * videoAspect)
+    : containerWidth
+  const sideWidth = showSidePlaceholders ? Math.floor((containerWidth - videoWidth) / 2) : 0
 
   // Use recording capture hook - captures canvas during recording
   // Pass canvasElement as a dependency hint so hook re-runs when canvas is available
@@ -77,11 +131,52 @@ export function PerformanceLayout() {
           className="relative flex-1 min-w-0 flex flex-col"
           style={{ backgroundColor: 'var(--bg-elevated)' }}
         >
-          {/* Canvas */}
-          <div className="flex-1 min-h-0 relative">
-            <Canvas ref={canvasRef} />
-            {/* Clip bin at bottom of preview */}
-            <ClipBin />
+          {/* Canvas with side placeholders */}
+          <div ref={canvasContainerRef} className="flex-1 min-h-0 relative flex">
+            {/* Left placeholder */}
+            {showSidePlaceholders && sideWidth > 40 && (
+              <div
+                className="flex-shrink-0 flex items-center justify-center"
+                style={{
+                  width: sideWidth,
+                  backgroundColor: 'var(--bg-surface)',
+                  borderRight: '1px solid var(--border)',
+                }}
+              >
+                <span
+                  className="text-[11px] uppercase tracking-wider"
+                  style={{ color: 'var(--text-muted)', opacity: 0.5 }}
+                >
+                  {/* Empty placeholder */}
+                </span>
+              </div>
+            )}
+
+            {/* Canvas */}
+            <div className="flex-1 min-w-0 relative">
+              <Canvas ref={canvasRef} />
+              {/* Clip bin at bottom of preview */}
+              <ClipBin />
+            </div>
+
+            {/* Right placeholder */}
+            {showSidePlaceholders && sideWidth > 40 && (
+              <div
+                className="flex-shrink-0 flex items-center justify-center"
+                style={{
+                  width: sideWidth,
+                  backgroundColor: 'var(--bg-surface)',
+                  borderLeft: '1px solid var(--border)',
+                }}
+              >
+                <span
+                  className="text-[11px] uppercase tracking-wider"
+                  style={{ color: 'var(--text-muted)', opacity: 0.5 }}
+                >
+                  {/* Empty placeholder */}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Transport bar at bottom of preview */}

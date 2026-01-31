@@ -190,11 +190,7 @@ export function ClipDetailModal() {
 
         {/* Close button - always enabled, cancels operation if busy */}
         <button
-          onClick={(e) => {
-            e.stopPropagation()
-            cancel()
-            selectClip(null)
-          }}
+          onClick={handleClose}
           aria-label="Close"
           className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-gray-600"
           style={{

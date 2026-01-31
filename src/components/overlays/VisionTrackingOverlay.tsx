@@ -657,7 +657,9 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
     h: number,
     boxFilter?: string,
     boxFilterIntensity?: number,
-    sourceCtx?: CanvasRenderingContext2D
+    sourceCtx?: CanvasRenderingContext2D,
+    boxShape: 'circle' | 'square' | 'dynamic' = 'square',
+    lineStyle: 'straight' | 'web' = 'straight'
   ) {
     // Apply box filters first (if enabled)
     if (boxFilter && boxFilter !== 'none' && sourceCtx && boxFilterIntensity !== undefined) {
@@ -669,17 +671,65 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
     // Draw lines
     if (showLines && blobs.length > 1) {
       ctx.strokeStyle = lineColor
-      ctx.lineWidth = 1
+      ctx.lineWidth = lineStyle === 'web' ? 0.5 : 1
+
       for (let i = 0; i < blobs.length; i++) {
         for (let j = i + 1; j < blobs.length; j++) {
           const a = blobs[i]
           const b = blobs[j]
           const dist = Math.sqrt((a.centerX - b.centerX) ** 2 + (a.centerY - b.centerY) ** 2)
           if (dist < 0.4) {
-            ctx.beginPath()
-            ctx.moveTo(a.centerX * w, a.centerY * h)
-            ctx.lineTo(b.centerX * w, b.centerY * h)
-            ctx.stroke()
+            const ax = a.centerX * w
+            const ay = a.centerY * h
+            const bx = b.centerX * w
+            const by = b.centerY * h
+
+            if (lineStyle === 'web') {
+              // Kojima-style web: multiple curved strands with slight variations
+              const midX = (ax + bx) / 2
+              const midY = (ay + by) / 2
+              const perpX = -(by - ay) * 0.15
+              const perpY = (bx - ax) * 0.15
+
+              // Draw main curved strand
+              ctx.beginPath()
+              ctx.moveTo(ax, ay)
+              ctx.quadraticCurveTo(midX + perpX, midY + perpY, bx, by)
+              ctx.stroke()
+
+              // Draw secondary strand (opposite curve)
+              ctx.globalAlpha = 0.5
+              ctx.beginPath()
+              ctx.moveTo(ax, ay)
+              ctx.quadraticCurveTo(midX - perpX * 0.7, midY - perpY * 0.7, bx, by)
+              ctx.stroke()
+
+              // Draw thin connecting filaments
+              ctx.globalAlpha = 0.3
+              ctx.lineWidth = 0.3
+              const segments = 3
+              for (let s = 1; s < segments; s++) {
+                const t = s / segments
+                // Point on first curve
+                const c1x = (1-t)*(1-t)*ax + 2*(1-t)*t*(midX + perpX) + t*t*bx
+                const c1y = (1-t)*(1-t)*ay + 2*(1-t)*t*(midY + perpY) + t*t*by
+                // Point on second curve
+                const c2x = (1-t)*(1-t)*ax + 2*(1-t)*t*(midX - perpX*0.7) + t*t*bx
+                const c2y = (1-t)*(1-t)*ay + 2*(1-t)*t*(midY - perpY*0.7) + t*t*by
+                ctx.beginPath()
+                ctx.moveTo(c1x, c1y)
+                ctx.lineTo(c2x, c2y)
+                ctx.stroke()
+              }
+              ctx.globalAlpha = 1
+              ctx.lineWidth = 0.5
+            } else {
+              // Straight line
+              ctx.beginPath()
+              ctx.moveTo(ax, ay)
+              ctx.lineTo(bx, by)
+              ctx.stroke()
+            }
           }
         }
       }
@@ -697,9 +747,28 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
         const y = blob.y * h
         const bw = blob.width * w
         const bh = blob.height * h
+        const cx = x + bw / 2
+        const cy = y + bh / 2
 
         if (showBoxes) {
-          ctx.strokeRect(x, y, bw, bh)
+          // Determine shape based on boxShape setting
+          let useCircle = false
+          if (boxShape === 'circle') {
+            useCircle = true
+          } else if (boxShape === 'dynamic') {
+            // Use circle if blob is compact (compactness > 0.5), otherwise square
+            useCircle = blob.compactness > 0.5
+          }
+
+          if (useCircle) {
+            // Draw ellipse
+            ctx.beginPath()
+            ctx.ellipse(cx, cy, bw / 2, bh / 2, 0, 0, Math.PI * 2)
+            ctx.stroke()
+          } else {
+            // Draw rectangle
+            ctx.strokeRect(x, y, bw, bh)
+          }
         }
 
         if (showLabels) {
@@ -790,7 +859,7 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
           let blobs = detectBrightness(imageData, p.threshold, p.minSize)
           if (blobs.length > p.maxBlobs) blobs = blobs.slice(0, p.maxBlobs)
           const tracked = trackBlobs(blobs, 'bright')
-          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined)
+          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined, p.boxShape, p.lineStyle)
         }
 
         // Edge tracking
@@ -799,7 +868,7 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
           let blobs = detectEdges(imageData, p.threshold, p.minSize)
           if (blobs.length > p.maxBlobs) blobs = blobs.slice(0, p.maxBlobs)
           const tracked = trackBlobs(blobs, 'edge')
-          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined)
+          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined, p.boxShape, p.lineStyle)
         }
 
         // Color tracking
@@ -808,7 +877,7 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
           let blobs = detectColor(imageData, p.targetColor, p.colorRange, p.minSize)
           if (blobs.length > p.maxBlobs) blobs = blobs.slice(0, p.maxBlobs)
           const tracked = trackBlobs(blobs, 'color')
-          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined)
+          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined, p.boxShape, p.lineStyle)
         }
 
         // Motion tracking
@@ -817,7 +886,7 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
           let blobs = detectMotion(imageData, prevFrameRef.current, p.sensitivity, p.minSize)
           if (blobs.length > p.maxBlobs) blobs = blobs.slice(0, p.maxBlobs)
           const tracked = trackBlobs(blobs, 'motion')
-          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined)
+          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined, p.boxShape, p.lineStyle)
         }
 
         // Face tracking (skin-tone based with face-like filtering)
@@ -826,7 +895,7 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
           let blobs = detectFace(imageData, p.threshold, p.minSize)
           if (blobs.length > p.maxBlobs) blobs = blobs.slice(0, p.maxBlobs)
           const tracked = trackBlobs(blobs, 'face')
-          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined)
+          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined, p.boxShape, p.lineStyle)
         }
 
         // Hands tracking (skin-tone based, smaller blobs)
@@ -835,7 +904,7 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
           let blobs = detectHands(imageData, p.threshold, p.minSize)
           if (blobs.length > p.maxBlobs) blobs = blobs.slice(0, p.maxBlobs)
           const tracked = trackBlobs(blobs, 'hands')
-          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined)
+          drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined, p.boxShape, p.lineStyle)
         }
 
         // Store current frame for motion detection

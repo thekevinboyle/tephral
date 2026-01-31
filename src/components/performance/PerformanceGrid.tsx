@@ -230,28 +230,40 @@ export function PerformanceGrid() {
         return {
           active: visionTracking.brightEnabled,
           value: visionTracking.brightParams.threshold,
-          onToggle: () => visionTracking.setBrightEnabled(!visionTracking.brightEnabled),
+          onToggle: () => {
+            if (!visionTracking.brightEnabled) moveToEndOfChain(effectId)
+            visionTracking.setBrightEnabled(!visionTracking.brightEnabled)
+          },
           onValueChange: (v: number) => visionTracking.updateBrightParams({ threshold: v }),
         }
       case 'track_edge':
         return {
           active: visionTracking.edgeEnabled,
           value: visionTracking.edgeParams.threshold,
-          onToggle: () => visionTracking.setEdgeEnabled(!visionTracking.edgeEnabled),
+          onToggle: () => {
+            if (!visionTracking.edgeEnabled) moveToEndOfChain(effectId)
+            visionTracking.setEdgeEnabled(!visionTracking.edgeEnabled)
+          },
           onValueChange: (v: number) => visionTracking.updateEdgeParams({ threshold: v }),
         }
       case 'track_color':
         return {
           active: visionTracking.colorEnabled,
           value: visionTracking.colorParams.colorRange * 100,
-          onToggle: () => visionTracking.setColorEnabled(!visionTracking.colorEnabled),
+          onToggle: () => {
+            if (!visionTracking.colorEnabled) moveToEndOfChain(effectId)
+            visionTracking.setColorEnabled(!visionTracking.colorEnabled)
+          },
           onValueChange: (v: number) => visionTracking.updateColorParams({ colorRange: v / 100 }),
         }
       case 'track_motion':
         return {
           active: visionTracking.motionEnabled,
           value: visionTracking.motionParams.sensitivity,
-          onToggle: () => visionTracking.setMotionEnabled(!visionTracking.motionEnabled),
+          onToggle: () => {
+            if (!visionTracking.motionEnabled) moveToEndOfChain(effectId)
+            visionTracking.setMotionEnabled(!visionTracking.motionEnabled)
+          },
           onValueChange: (v: number) => visionTracking.updateMotionParams({ sensitivity: v }),
         }
 
@@ -260,21 +272,30 @@ export function PerformanceGrid() {
         return {
           active: visionTracking.faceEnabled,
           value: visionTracking.faceParams.threshold,
-          onToggle: () => visionTracking.setFaceEnabled(!visionTracking.faceEnabled),
+          onToggle: () => {
+            if (!visionTracking.faceEnabled) moveToEndOfChain(effectId)
+            visionTracking.setFaceEnabled(!visionTracking.faceEnabled)
+          },
           onValueChange: (v: number) => visionTracking.updateFaceParams({ threshold: v }),
         }
       case 'track_hands':
         return {
           active: visionTracking.handsEnabled,
           value: visionTracking.handsParams.threshold,
-          onToggle: () => visionTracking.setHandsEnabled(!visionTracking.handsEnabled),
+          onToggle: () => {
+            if (!visionTracking.handsEnabled) moveToEndOfChain(effectId)
+            visionTracking.setHandsEnabled(!visionTracking.handsEnabled)
+          },
           onValueChange: (v: number) => visionTracking.updateHandsParams({ threshold: v }),
         }
       case 'contour':
         return {
           active: contour.enabled,
           value: contour.params.threshold * 100,
-          onToggle: () => contour.setEnabled(!contour.enabled),
+          onToggle: () => {
+            if (!contour.enabled) moveToEndOfChain(effectId)
+            contour.setEnabled(!contour.enabled)
+          },
           onValueChange: (v: number) => contour.updateParams({ threshold: v / 100 }),
         }
       case 'landmarks':
@@ -286,6 +307,7 @@ export function PerformanceGrid() {
               landmarks.setEnabled(false)
               landmarks.setCurrentMode('off')
             } else {
+              moveToEndOfChain(effectId)
               landmarks.setEnabled(true)
               landmarks.setCurrentMode('face')
             }
@@ -301,84 +323,120 @@ export function PerformanceGrid() {
         return {
           active: acid.dotsEnabled,
           value: acid.dotsParams.gridSize,
-          onToggle: () => acid.setDotsEnabled(!acid.dotsEnabled),
+          onToggle: () => {
+            if (!acid.dotsEnabled) moveToEndOfChain(effectId)
+            acid.setDotsEnabled(!acid.dotsEnabled)
+          },
           onValueChange: (v: number) => acid.updateDotsParams({ gridSize: v }),
         }
       case 'acid_glyph':
         return {
           active: acid.glyphEnabled,
           value: acid.glyphParams.gridSize,
-          onToggle: () => acid.setGlyphEnabled(!acid.glyphEnabled),
+          onToggle: () => {
+            if (!acid.glyphEnabled) moveToEndOfChain(effectId)
+            acid.setGlyphEnabled(!acid.glyphEnabled)
+          },
           onValueChange: (v: number) => acid.updateGlyphParams({ gridSize: v }),
         }
       case 'acid_icons':
         return {
           active: acid.iconsEnabled,
           value: acid.iconsParams.gridSize,
-          onToggle: () => acid.setIconsEnabled(!acid.iconsEnabled),
+          onToggle: () => {
+            if (!acid.iconsEnabled) moveToEndOfChain(effectId)
+            acid.setIconsEnabled(!acid.iconsEnabled)
+          },
           onValueChange: (v: number) => acid.updateIconsParams({ gridSize: v }),
         }
       case 'acid_contour':
         return {
           active: acid.contourEnabled,
           value: acid.contourParams.levels,
-          onToggle: () => acid.setContourEnabled(!acid.contourEnabled),
+          onToggle: () => {
+            if (!acid.contourEnabled) moveToEndOfChain(effectId)
+            acid.setContourEnabled(!acid.contourEnabled)
+          },
           onValueChange: (v: number) => acid.updateContourParams({ levels: v }),
         }
       case 'acid_decomp':
         return {
           active: acid.decompEnabled,
           value: acid.decompParams.minBlock,
-          onToggle: () => acid.setDecompEnabled(!acid.decompEnabled),
+          onToggle: () => {
+            if (!acid.decompEnabled) moveToEndOfChain(effectId)
+            acid.setDecompEnabled(!acid.decompEnabled)
+          },
           onValueChange: (v: number) => acid.updateDecompParams({ minBlock: v }),
         }
       case 'acid_mirror':
         return {
           active: acid.mirrorEnabled,
           value: acid.mirrorParams.segments,
-          onToggle: () => acid.setMirrorEnabled(!acid.mirrorEnabled),
+          onToggle: () => {
+            if (!acid.mirrorEnabled) moveToEndOfChain(effectId)
+            acid.setMirrorEnabled(!acid.mirrorEnabled)
+          },
           onValueChange: (v: number) => acid.updateMirrorParams({ segments: v }),
         }
       case 'acid_slice':
         return {
           active: acid.sliceEnabled,
           value: acid.sliceParams.sliceCount,
-          onToggle: () => acid.setSliceEnabled(!acid.sliceEnabled),
+          onToggle: () => {
+            if (!acid.sliceEnabled) moveToEndOfChain(effectId)
+            acid.setSliceEnabled(!acid.sliceEnabled)
+          },
           onValueChange: (v: number) => acid.updateSliceParams({ sliceCount: v }),
         }
       case 'acid_thgrid':
         return {
           active: acid.thGridEnabled,
           value: acid.thGridParams.threshold,
-          onToggle: () => acid.setThGridEnabled(!acid.thGridEnabled),
+          onToggle: () => {
+            if (!acid.thGridEnabled) moveToEndOfChain(effectId)
+            acid.setThGridEnabled(!acid.thGridEnabled)
+          },
           onValueChange: (v: number) => acid.updateThGridParams({ threshold: v }),
         }
       case 'acid_cloud':
         return {
           active: acid.cloudEnabled,
           value: acid.cloudParams.density,
-          onToggle: () => acid.setCloudEnabled(!acid.cloudEnabled),
+          onToggle: () => {
+            if (!acid.cloudEnabled) moveToEndOfChain(effectId)
+            acid.setCloudEnabled(!acid.cloudEnabled)
+          },
           onValueChange: (v: number) => acid.updateCloudParams({ density: v }),
         }
       case 'acid_led':
         return {
           active: acid.ledEnabled,
           value: acid.ledParams.gridSize,
-          onToggle: () => acid.setLedEnabled(!acid.ledEnabled),
+          onToggle: () => {
+            if (!acid.ledEnabled) moveToEndOfChain(effectId)
+            acid.setLedEnabled(!acid.ledEnabled)
+          },
           onValueChange: (v: number) => acid.updateLedParams({ gridSize: v }),
         }
       case 'acid_slit':
         return {
           active: acid.slitEnabled,
           value: acid.slitParams.speed,
-          onToggle: () => acid.setSlitEnabled(!acid.slitEnabled),
+          onToggle: () => {
+            if (!acid.slitEnabled) moveToEndOfChain(effectId)
+            acid.setSlitEnabled(!acid.slitEnabled)
+          },
           onValueChange: (v: number) => acid.updateSlitParams({ speed: v }),
         }
       case 'acid_voronoi':
         return {
           active: acid.voronoiEnabled,
           value: acid.voronoiParams.cellCount,
-          onToggle: () => acid.setVoronoiEnabled(!acid.voronoiEnabled),
+          onToggle: () => {
+            if (!acid.voronoiEnabled) moveToEndOfChain(effectId)
+            acid.setVoronoiEnabled(!acid.voronoiEnabled)
+          },
           onValueChange: (v: number) => acid.updateVoronoiParams({ cellCount: v }),
         }
 
@@ -395,6 +453,7 @@ export function PerformanceGrid() {
             if (textureOverlay.enabled && textureOverlay.textureId === 'grain_fine') {
               textureOverlay.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               textureOverlay.setTextureId('grain_fine')
               textureOverlay.setEnabled(true)
             }
@@ -409,6 +468,7 @@ export function PerformanceGrid() {
             if (textureOverlay.enabled && textureOverlay.textureId === 'dust') {
               textureOverlay.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               textureOverlay.setTextureId('dust')
               textureOverlay.setEnabled(true)
             }
@@ -423,6 +483,7 @@ export function PerformanceGrid() {
             if (textureOverlay.enabled && textureOverlay.textureId === 'vignette') {
               textureOverlay.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               textureOverlay.setTextureId('vignette')
               textureOverlay.setEnabled(true)
             }
@@ -437,6 +498,7 @@ export function PerformanceGrid() {
             if (textureOverlay.enabled && textureOverlay.textureId === 'paper') {
               textureOverlay.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               textureOverlay.setTextureId('paper')
               textureOverlay.setEnabled(true)
             }
@@ -451,6 +513,7 @@ export function PerformanceGrid() {
             if (textureOverlay.enabled && textureOverlay.textureId === 'canvas') {
               textureOverlay.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               textureOverlay.setTextureId('canvas')
               textureOverlay.setEnabled(true)
             }
@@ -465,6 +528,7 @@ export function PerformanceGrid() {
             if (textureOverlay.enabled && textureOverlay.textureId === 'vhs_noise') {
               textureOverlay.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               textureOverlay.setTextureId('vhs_noise')
               textureOverlay.setEnabled(true)
             }
@@ -481,6 +545,7 @@ export function PerformanceGrid() {
             if (dataOverlay.enabled && dataOverlay.template === 'watermark') {
               dataOverlay.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               dataOverlay.setTemplate('watermark')
               dataOverlay.setEnabled(true)
             }
@@ -495,6 +560,7 @@ export function PerformanceGrid() {
             if (dataOverlay.enabled && dataOverlay.template === 'statsBar') {
               dataOverlay.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               dataOverlay.setTemplate('statsBar')
               dataOverlay.setEnabled(true)
             }
@@ -509,6 +575,7 @@ export function PerformanceGrid() {
             if (dataOverlay.enabled && dataOverlay.template === 'titleCard') {
               dataOverlay.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               dataOverlay.setTemplate('titleCard')
               dataOverlay.setEnabled(true)
             }
@@ -523,6 +590,7 @@ export function PerformanceGrid() {
             if (dataOverlay.enabled && dataOverlay.template === 'socialCard') {
               dataOverlay.setEnabled(false)
             } else {
+              moveToEndOfChain(effectId)
               dataOverlay.setTemplate('socialCard')
               dataOverlay.setEnabled(true)
             }
@@ -538,112 +606,160 @@ export function PerformanceGrid() {
         return {
           active: strand.handprintsEnabled,
           value: strand.handprintsParams.density,
-          onToggle: () => strand.setHandprintsEnabled(!strand.handprintsEnabled),
+          onToggle: () => {
+            if (!strand.handprintsEnabled) moveToEndOfChain(effectId)
+            strand.setHandprintsEnabled(!strand.handprintsEnabled)
+          },
           onValueChange: (v: number) => strand.updateHandprintsParams({ density: v }),
         }
       case 'strand_tar':
         return {
           active: strand.tarSpreadEnabled,
           value: strand.tarSpreadParams.coverage * 100,
-          onToggle: () => strand.setTarSpreadEnabled(!strand.tarSpreadEnabled),
+          onToggle: () => {
+            if (!strand.tarSpreadEnabled) moveToEndOfChain(effectId)
+            strand.setTarSpreadEnabled(!strand.tarSpreadEnabled)
+          },
           onValueChange: (v: number) => strand.updateTarSpreadParams({ coverage: v / 100 }),
         }
       case 'strand_timefall':
         return {
           active: strand.timefallEnabled,
           value: strand.timefallParams.intensity * 100,
-          onToggle: () => strand.setTimefallEnabled(!strand.timefallEnabled),
+          onToggle: () => {
+            if (!strand.timefallEnabled) moveToEndOfChain(effectId)
+            strand.setTimefallEnabled(!strand.timefallEnabled)
+          },
           onValueChange: (v: number) => strand.updateTimefallParams({ intensity: v / 100 }),
         }
       case 'strand_voidout':
         return {
           active: strand.voidOutEnabled,
           value: strand.voidOutParams.distortAmount * 100,
-          onToggle: () => strand.setVoidOutEnabled(!strand.voidOutEnabled),
+          onToggle: () => {
+            if (!strand.voidOutEnabled) moveToEndOfChain(effectId)
+            strand.setVoidOutEnabled(!strand.voidOutEnabled)
+          },
           onValueChange: (v: number) => strand.updateVoidOutParams({ distortAmount: v / 100 }),
         }
       case 'strand_web':
         return {
           active: strand.strandWebEnabled,
           value: strand.strandWebParams.glowIntensity * 100,
-          onToggle: () => strand.setStrandWebEnabled(!strand.strandWebEnabled),
+          onToggle: () => {
+            if (!strand.strandWebEnabled) moveToEndOfChain(effectId)
+            strand.setStrandWebEnabled(!strand.strandWebEnabled)
+          },
           onValueChange: (v: number) => strand.updateStrandWebParams({ glowIntensity: v / 100 }),
         }
       case 'strand_bridge':
         return {
           active: strand.bridgeLinkEnabled,
           value: strand.bridgeLinkParams.gridSize,
-          onToggle: () => strand.setBridgeLinkEnabled(!strand.bridgeLinkEnabled),
+          onToggle: () => {
+            if (!strand.bridgeLinkEnabled) moveToEndOfChain(effectId)
+            strand.setBridgeLinkEnabled(!strand.bridgeLinkEnabled)
+          },
           onValueChange: (v: number) => strand.updateBridgeLinkParams({ gridSize: v }),
         }
       case 'strand_path':
         return {
           active: strand.chiralPathEnabled,
           value: strand.chiralPathParams.particleCount,
-          onToggle: () => strand.setChiralPathEnabled(!strand.chiralPathEnabled),
+          onToggle: () => {
+            if (!strand.chiralPathEnabled) moveToEndOfChain(effectId)
+            strand.setChiralPathEnabled(!strand.chiralPathEnabled)
+          },
           onValueChange: (v: number) => strand.updateChiralPathParams({ particleCount: v }),
         }
       case 'strand_umbilical':
         return {
           active: strand.umbilicalEnabled,
           value: strand.umbilicalParams.tendrilCount,
-          onToggle: () => strand.setUmbilicalEnabled(!strand.umbilicalEnabled),
+          onToggle: () => {
+            if (!strand.umbilicalEnabled) moveToEndOfChain(effectId)
+            strand.setUmbilicalEnabled(!strand.umbilicalEnabled)
+          },
           onValueChange: (v: number) => strand.updateUmbilicalParams({ tendrilCount: v }),
         }
       case 'strand_odradek':
         return {
           active: strand.odradekEnabled,
           value: strand.odradekParams.sweepSpeed * 100,
-          onToggle: () => strand.setOdradekEnabled(!strand.odradekEnabled),
+          onToggle: () => {
+            if (!strand.odradekEnabled) moveToEndOfChain(effectId)
+            strand.setOdradekEnabled(!strand.odradekEnabled)
+          },
           onValueChange: (v: number) => strand.updateOdradekParams({ sweepSpeed: v / 100 }),
         }
       case 'strand_chiralium':
         return {
           active: strand.chiraliumEnabled,
           value: strand.chiraliumParams.density * 100,
-          onToggle: () => strand.setChiraliumEnabled(!strand.chiraliumEnabled),
+          onToggle: () => {
+            if (!strand.chiraliumEnabled) moveToEndOfChain(effectId)
+            strand.setChiraliumEnabled(!strand.chiraliumEnabled)
+          },
           onValueChange: (v: number) => strand.updateChiraliumParams({ density: v / 100 }),
         }
       case 'strand_beach':
         return {
           active: strand.beachStaticEnabled,
           value: strand.beachStaticParams.grainAmount * 100,
-          onToggle: () => strand.setBeachStaticEnabled(!strand.beachStaticEnabled),
+          onToggle: () => {
+            if (!strand.beachStaticEnabled) moveToEndOfChain(effectId)
+            strand.setBeachStaticEnabled(!strand.beachStaticEnabled)
+          },
           onValueChange: (v: number) => strand.updateBeachStaticParams({ grainAmount: v / 100 }),
         }
       case 'strand_dooms':
         return {
           active: strand.doomsEnabled,
           value: strand.doomsParams.haloSize * 100,
-          onToggle: () => strand.setDoomsEnabled(!strand.doomsEnabled),
+          onToggle: () => {
+            if (!strand.doomsEnabled) moveToEndOfChain(effectId)
+            strand.setDoomsEnabled(!strand.doomsEnabled)
+          },
           onValueChange: (v: number) => strand.updateDoomsParams({ haloSize: v / 100 }),
         }
       case 'strand_cloud':
         return {
           active: strand.chiralCloudEnabled,
           value: strand.chiralCloudParams.density * 100,
-          onToggle: () => strand.setChiralCloudEnabled(!strand.chiralCloudEnabled),
+          onToggle: () => {
+            if (!strand.chiralCloudEnabled) moveToEndOfChain(effectId)
+            strand.setChiralCloudEnabled(!strand.chiralCloudEnabled)
+          },
           onValueChange: (v: number) => strand.updateChiralCloudParams({ density: v / 100 }),
         }
       case 'strand_bbpod':
         return {
           active: strand.bbPodEnabled,
           value: strand.bbPodParams.vignetteSize * 100,
-          onToggle: () => strand.setBBPodEnabled(!strand.bbPodEnabled),
+          onToggle: () => {
+            if (!strand.bbPodEnabled) moveToEndOfChain(effectId)
+            strand.setBBPodEnabled(!strand.bbPodEnabled)
+          },
           onValueChange: (v: number) => strand.updateBBPodParams({ vignetteSize: v / 100 }),
         }
       case 'strand_seam':
         return {
           active: strand.seamEnabled,
           value: strand.seamParams.riftWidth * 100,
-          onToggle: () => strand.setSeamEnabled(!strand.seamEnabled),
+          onToggle: () => {
+            if (!strand.seamEnabled) moveToEndOfChain(effectId)
+            strand.setSeamEnabled(!strand.seamEnabled)
+          },
           onValueChange: (v: number) => strand.updateSeamParams({ riftWidth: v / 100 }),
         }
       case 'strand_extinction':
         return {
           active: strand.extinctionEnabled,
           value: strand.extinctionParams.coverage * 100,
-          onToggle: () => strand.setExtinctionEnabled(!strand.extinctionEnabled),
+          onToggle: () => {
+            if (!strand.extinctionEnabled) moveToEndOfChain(effectId)
+            strand.setExtinctionEnabled(!strand.extinctionEnabled)
+          },
           onValueChange: (v: number) => strand.updateExtinctionParams({ coverage: v / 100 }),
         }
 

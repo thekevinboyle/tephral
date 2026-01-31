@@ -1244,6 +1244,14 @@ function EffectParameters({ effectId }: { effectId: string }) {
             value={visionTracking.brightParams.showLabels}
             onChange={(v) => visionTracking.updateBrightParams({ showLabels: v })}
           />
+          <BoxShapeButtonGrid
+            value={visionTracking.brightParams.boxShape}
+            onChange={(v) => visionTracking.updateBrightParams({ boxShape: v })}
+          />
+          <LineStyleButtonGrid
+            value={visionTracking.brightParams.lineStyle}
+            onChange={(v) => visionTracking.updateBrightParams({ lineStyle: v })}
+          />
           <ColorRow
             label="Box Color"
             value={visionTracking.brightParams.boxColor}
@@ -1312,6 +1320,14 @@ function EffectParameters({ effectId }: { effectId: string }) {
             value={visionTracking.edgeParams.showLabels}
             onChange={(v) => visionTracking.updateEdgeParams({ showLabels: v })}
           />
+          <BoxShapeButtonGrid
+            value={visionTracking.edgeParams.boxShape}
+            onChange={(v) => visionTracking.updateEdgeParams({ boxShape: v })}
+          />
+          <LineStyleButtonGrid
+            value={visionTracking.edgeParams.lineStyle}
+            onChange={(v) => visionTracking.updateEdgeParams({ lineStyle: v })}
+          />
           <ColorRow
             label="Box Color"
             value={visionTracking.edgeParams.boxColor}
@@ -1379,6 +1395,14 @@ function EffectParameters({ effectId }: { effectId: string }) {
             value={visionTracking.colorParams.showLabels}
             onChange={(v) => visionTracking.updateColorParams({ showLabels: v })}
           />
+          <BoxShapeButtonGrid
+            value={visionTracking.colorParams.boxShape}
+            onChange={(v) => visionTracking.updateColorParams({ boxShape: v })}
+          />
+          <LineStyleButtonGrid
+            value={visionTracking.colorParams.lineStyle}
+            onChange={(v) => visionTracking.updateColorParams({ lineStyle: v })}
+          />
           <ColorRow
             label="Box Color"
             value={visionTracking.colorParams.boxColor}
@@ -1440,6 +1464,14 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Show Labels"
             value={visionTracking.motionParams.showLabels}
             onChange={(v) => visionTracking.updateMotionParams({ showLabels: v })}
+          />
+          <BoxShapeButtonGrid
+            value={visionTracking.motionParams.boxShape}
+            onChange={(v) => visionTracking.updateMotionParams({ boxShape: v })}
+          />
+          <LineStyleButtonGrid
+            value={visionTracking.motionParams.lineStyle}
+            onChange={(v) => visionTracking.updateMotionParams({ lineStyle: v })}
           />
           <ColorRow
             label="Box Color"
@@ -1509,6 +1541,14 @@ function EffectParameters({ effectId }: { effectId: string }) {
             value={visionTracking.faceParams.showLabels}
             onChange={(v) => visionTracking.updateFaceParams({ showLabels: v })}
           />
+          <BoxShapeButtonGrid
+            value={visionTracking.faceParams.boxShape}
+            onChange={(v) => visionTracking.updateFaceParams({ boxShape: v })}
+          />
+          <LineStyleButtonGrid
+            value={visionTracking.faceParams.lineStyle}
+            onChange={(v) => visionTracking.updateFaceParams({ lineStyle: v })}
+          />
           <ColorRow
             label="Box Color"
             value={visionTracking.faceParams.boxColor}
@@ -1576,6 +1616,14 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Show Labels"
             value={visionTracking.handsParams.showLabels}
             onChange={(v) => visionTracking.updateHandsParams({ showLabels: v })}
+          />
+          <BoxShapeButtonGrid
+            value={visionTracking.handsParams.boxShape}
+            onChange={(v) => visionTracking.updateHandsParams({ boxShape: v })}
+          />
+          <LineStyleButtonGrid
+            value={visionTracking.handsParams.lineStyle}
+            onChange={(v) => visionTracking.updateHandsParams({ lineStyle: v })}
           />
           <ColorRow
             label="Box Color"
@@ -2792,6 +2840,83 @@ function FilterButtonGrid({ value, onChange }: { value: string; onChange: (v: Bo
           </button>
         )
       })}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BOX SHAPE BUTTON GRID
+// ═══════════════════════════════════════════════════════════════
+
+const BOX_SHAPE_OPTIONS = [
+  { value: 'square', label: '▢' },
+  { value: 'circle', label: '○' },
+  { value: 'dynamic', label: '◇' },
+] as const
+
+type BoxShapeValue = 'circle' | 'square' | 'dynamic'
+
+function BoxShapeButtonGrid({ value, onChange }: { value: string; onChange: (v: BoxShapeValue) => void }) {
+  return (
+    <div className="flex items-center gap-2 py-1">
+      <span className="text-[12px] text-gray-500 w-16 flex-shrink-0">Shape</span>
+      <div className="flex gap-1 flex-1">
+        {BOX_SHAPE_OPTIONS.map((opt) => {
+          const isActive = value === opt.value
+          return (
+            <button
+              key={opt.value}
+              onClick={() => onChange(opt.value as BoxShapeValue)}
+              className={`flex-1 px-2 py-1.5 text-[14px] font-medium rounded transition-colors ${
+                isActive
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+              title={opt.value.charAt(0).toUpperCase() + opt.value.slice(1)}
+            >
+              {opt.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LINE STYLE BUTTON GRID
+// ═══════════════════════════════════════════════════════════════
+
+const LINE_STYLE_OPTIONS = [
+  { value: 'straight', label: '—' },
+  { value: 'web', label: '∿' },
+] as const
+
+type LineStyleValue = 'straight' | 'web'
+
+function LineStyleButtonGrid({ value, onChange }: { value: string; onChange: (v: LineStyleValue) => void }) {
+  return (
+    <div className="flex items-center gap-2 py-1">
+      <span className="text-[12px] text-gray-500 w-16 flex-shrink-0">Lines</span>
+      <div className="flex gap-1 flex-1">
+        {LINE_STYLE_OPTIONS.map((opt) => {
+          const isActive = value === opt.value
+          return (
+            <button
+              key={opt.value}
+              onClick={() => onChange(opt.value as LineStyleValue)}
+              className={`flex-1 px-2 py-1.5 text-[14px] font-medium rounded transition-colors ${
+                isActive
+                  ? 'bg-gray-800 text-white'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+              title={opt.value === 'straight' ? 'Straight' : 'Kojima Web'}
+            >
+              {opt.label}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

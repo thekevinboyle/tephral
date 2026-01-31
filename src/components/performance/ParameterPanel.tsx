@@ -1794,10 +1794,14 @@ export function ParameterPanel() {
   }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, selectedEffectId, setSelectedEffect])
 
   // Sort sections by effectOrder
+  // Effects not in effectOrder get sorted to the end (using Infinity for missing indices)
   const sortedSections = [...sections].sort((a, b) => {
     const aIndex = effectOrder.indexOf(a.id)
     const bIndex = effectOrder.indexOf(b.id)
-    return aIndex - bIndex
+    // If not in effectOrder, sort to end
+    const aPos = aIndex === -1 ? Infinity : aIndex
+    const bPos = bIndex === -1 ? Infinity : bIndex
+    return aPos - bPos
   })
 
   // Drag state
@@ -1911,18 +1915,21 @@ export function ParameterPanel() {
         onMouseEnter={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = 'var(--border)')}
         onMouseLeave={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
         onPointerDown={(e) => {
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
           handleBypassDown()
-          if (!bypassActive) e.currentTarget.style.backgroundColor = 'var(--border)'
         }}
         onPointerUp={(e) => {
+          try {
+            (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+          } catch {}
           handleBypassUp()
-          e.currentTarget.style.backgroundColor = 'var(--bg-surface)'
         }}
-        onPointerLeave={(e) => {
+        onPointerCancel={(e) => {
+          try {
+            (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+          } catch {}
           handleBypassUp()
-          e.currentTarget.style.backgroundColor = 'var(--bg-surface)'
         }}
-        onPointerCancel={handleBypassUp}
         className="px-3 py-1.5 rounded text-[11px] font-medium transition-all select-none touch-none active:scale-95"
         style={{
           backgroundColor: bypassActive ? '#ef4444' : 'var(--bg-surface)',

@@ -139,7 +139,7 @@ export function PerformanceLayout() {
                 className="flex-shrink-0 flex items-center justify-center"
                 style={{
                   width: sideWidth,
-                  backgroundColor: 'var(--bg-surface)',
+                  backgroundColor: '#1e3a5f',
                   borderRight: '1px solid var(--border)',
                 }}
               >
@@ -165,7 +165,7 @@ export function PerformanceLayout() {
                 className="flex-shrink-0 flex items-center justify-center"
                 style={{
                   width: sideWidth,
-                  backgroundColor: 'var(--bg-surface)',
+                  backgroundColor: '#1e3a5f',
                   borderLeft: '1px solid var(--border)',
                 }}
               >

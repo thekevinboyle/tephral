@@ -163,6 +163,23 @@ export function EffectButton({
     isHolding.current = false
   }, [onToggle, isRecording, addEvent, id, active, value, setSelectedEffect, selectEffectForInfoPanel, soloEffectId, soloLatched, setSolo, clearSolo])
 
+  // Handle pointer leave - clear momentary solo if not latched
+  const handlePointerLeave = useCallback(() => {
+    // Clear hold timer
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current)
+      holdTimer.current = null
+    }
+    // If we're in momentary solo (not latched), clear it
+    if (soloEffectId === id && !soloLatched) {
+      clearSolo()
+    }
+    // Reset state
+    dragStartY.current = null
+    didDrag.current = false
+    isHolding.current = false
+  }, [id, soloEffectId, soloLatched, clearSolo])
+
   // Value percentage for the progress bar
   const percentage = ((value - min) / (max - min)) * 100
 
@@ -203,6 +220,8 @@ export function EffectButton({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerLeave}
+      onPointerCancel={handlePointerLeave}
       className="relative rounded-lg flex select-none touch-none cursor-pointer w-full h-full p-1.5 overflow-hidden"
       style={{
         backgroundColor: 'var(--bg-surface)',

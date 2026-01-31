@@ -12,6 +12,9 @@ export interface TrackingModeParams {
   // Box filter effect
   boxFilter: 'none' | 'pixel' | 'invert' | 'blur' | 'thermal' | 'edge' | 'grayscale' | 'saturate'
   boxFilterIntensity: number  // 0-100
+  // Shape options
+  boxShape: 'circle' | 'square' | 'dynamic'  // circle=ellipse, square=rect, dynamic=based on compactness
+  lineStyle: 'straight' | 'web'  // straight=direct lines, web=kojima-style curved strands
 }
 
 const DEFAULT_PARAMS: TrackingModeParams = {
@@ -25,6 +28,8 @@ const DEFAULT_PARAMS: TrackingModeParams = {
   lineColor: 'rgba(255, 255, 255, 0.7)',
   boxFilter: 'none',
   boxFilterIntensity: 50,
+  boxShape: 'square',
+  lineStyle: 'straight',
 }
 
 interface VisionTrackingState {

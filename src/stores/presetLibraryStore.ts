@@ -6,6 +6,7 @@ import { useStippleStore } from './stippleStore'
 import { useContourStore } from './contourStore'
 import { useLandmarksStore } from './landmarksStore'
 import { useRoutingStore } from './routingStore'
+import { useSlicerStore } from './slicerStore'
 
 // Database constants
 const DB_NAME = 'tephral-presets'
@@ -218,6 +219,7 @@ function captureCurrentEffects(): BankSnapshot {
       mode: landmarksState.currentMode,
     },
     effectOrder: [...routingState.effectOrder],
+    slicer: useSlicerStore.getState().getSnapshot(),
     savedAt: Date.now(),
   }
 }
@@ -279,6 +281,10 @@ function applyEffects(effects: BankSnapshot): void {
   useRoutingStore.setState({
     effectOrder: [...effects.effectOrder],
   })
+
+  if (effects.slicer) {
+    useSlicerStore.getState().loadSnapshot(effects.slicer)
+  }
 }
 
 // Create default folders

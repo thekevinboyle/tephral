@@ -26,6 +26,7 @@ import { useStippleStore } from './stippleStore'
 import { useContourStore } from './contourStore'
 import { useLandmarksStore } from './landmarksStore'
 import { useRoutingStore } from './routingStore'
+import { useSlicerStore, type SlicerSnapshot } from './slicerStore'
 
 /**
  * BankSnapshot stores a complete effect state for A/B/C/D bank recall
@@ -69,6 +70,8 @@ export interface BankSnapshot {
   landmarks: { enabled: boolean; mode: LandmarkMode }
   // Chain order
   effectOrder: string[]
+  // Slicer
+  slicer?: SlicerSnapshot
   // Metadata
   savedAt: number
 }
@@ -147,6 +150,7 @@ export const useBankStore = create<BankState>((set, get) => ({
         mode: landmarksState.currentMode,
       },
       effectOrder: [...routingState.effectOrder],
+      slicer: useSlicerStore.getState().getSnapshot(),
       savedAt: Date.now(),
     }
 
@@ -230,6 +234,11 @@ export const useBankStore = create<BankState>((set, get) => ({
     useRoutingStore.setState({
       effectOrder: [...snapshot.effectOrder],
     })
+
+    // Apply slicer state
+    if (snapshot.slicer) {
+      useSlicerStore.getState().loadSnapshot(snapshot.slicer)
+    }
 
     // Set activeBank to index
     set({ activeBank: index })

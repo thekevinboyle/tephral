@@ -133,7 +133,7 @@ export function PerformanceLayout() {
         >
           {/* Canvas with side placeholders */}
           <div ref={canvasContainerRef} className="flex-1 min-h-0 relative flex">
-            {/* Left placeholder */}
+            {/* Left placeholder with clip bin */}
             {showSidePlaceholders && sideWidth > 40 && (
               <div
                 className="flex-shrink-0 flex items-center justify-center"
@@ -143,20 +143,15 @@ export function PerformanceLayout() {
                   borderRight: '1px solid var(--border)',
                 }}
               >
-                <span
-                  className="text-[11px] uppercase tracking-wider"
-                  style={{ color: 'var(--text-muted)', opacity: 0.5 }}
-                >
-                  {/* Empty placeholder */}
-                </span>
+                <ClipBin mode="sidebar" />
               </div>
             )}
 
             {/* Canvas */}
             <div className="flex-1 min-w-0 relative">
               <Canvas ref={canvasRef} />
-              {/* Clip bin at bottom of preview */}
-              <ClipBin />
+              {/* Clip bin floats when no side placeholder */}
+              {!showSidePlaceholders && <ClipBin mode="floating" />}
             </div>
 
             {/* Right placeholder */}

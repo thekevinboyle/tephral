@@ -1,6 +1,5 @@
 import { useSequencerContainerStore } from '../../stores/sequencerContainerStore'
 import { SequencerIconBar } from './SequencerIconBar'
-import { SequencerPanel } from './SequencerPanel'
 import { SlicerPanel } from './SlicerPanel'
 
 export function SequencerContainer() {
@@ -8,8 +7,6 @@ export function SequencerContainer() {
 
   const renderContent = () => {
     switch (activeSequencer) {
-      case 'steps':
-        return <SequencerPanel />
       case 'slicer':
         return <SlicerPanel />
       case 'slot3':

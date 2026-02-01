@@ -10,7 +10,7 @@ import { ClipBin } from './ClipBin'
 import { ClipDetailModal } from './ClipDetailModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
-import { PresetLibraryPanel } from '../presets/PresetLibraryPanel'
+import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 import { useMediaStore } from '../../stores/mediaStore'
@@ -114,16 +114,16 @@ export function PerformanceLayout() {
           border: '1px solid var(--border)',
         }}
       >
-        {/* Left sidebar: Preset Library + Info Panel */}
+        {/* Left sidebar: Preset Dropdown Bar */}
         <div
-          className="flex-shrink-0"
+          className="flex-shrink-0 flex flex-col"
           style={{
-            width: '280px',
+            width: '120px',
             backgroundColor: 'var(--bg-surface)',
             borderRight: '1px solid var(--border)',
           }}
         >
-          <PresetLibraryPanel canvasRef={captureRef} />
+          <PresetDropdownBar canvasRef={captureRef} />
         </div>
 
         {/* Canvas area (center) */}

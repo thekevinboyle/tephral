@@ -5,9 +5,11 @@ import { useSlicerBufferStore } from '../../stores/slicerBufferStore'
 export function SlicerWaveform() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isHolding, setIsHolding] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const [holdSlice, setHoldSlice] = useState<number | null>(null)
   const loopAnimationRef = useRef<number | null>(null)
   const loopStartTimeRef = useRef<number>(0)
+  const dragStartX = useRef<number | null>(null)
 
   // Get state from stores
   const sliceCount = useSlicerStore((state) => state.sliceCount)
@@ -110,13 +112,13 @@ export function SlicerWaveform() {
     const sliceWidth = width / sliceCount
     ctx.fillRect(currentSlice * sliceWidth, 0, sliceWidth, height)
 
-    // Draw playhead if playing
-    if (isPlaying && enabled) {
+    // Draw playhead if playing or interacting
+    if ((isPlaying && enabled) || isDragging || isHolding) {
       const sliceStartX = currentSlice * sliceWidth
       const playheadX = sliceStartX + playheadPosition * sliceWidth
 
       // Playhead line
-      ctx.strokeStyle = '#ffffff'
+      ctx.strokeStyle = isDragging ? '#FF6B6B' : '#ffffff'
       ctx.lineWidth = 2
       ctx.beginPath()
       ctx.moveTo(playheadX, 0)
@@ -124,7 +126,7 @@ export function SlicerWaveform() {
       ctx.stroke()
 
       // Playhead glow
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+      ctx.strokeStyle = isDragging ? 'rgba(255, 107, 107, 0.4)' : 'rgba(255, 255, 255, 0.3)'
       ctx.lineWidth = 6
       ctx.beginPath()
       ctx.moveTo(playheadX, 0)
@@ -152,12 +154,12 @@ export function SlicerWaveform() {
       ctx.fillStyle = 'white'
       ctx.fillText(text, badgeX + padding, badgeY + 10)
     }
-  }, [waveformData, sliceCount, currentSlice, captureState, playheadPosition, isPlaying, enabled])
+  }, [waveformData, sliceCount, currentSlice, captureState, playheadPosition, isPlaying, enabled, isDragging, isHolding])
 
-  // Effect to draw on canvas - animate when playing
+  // Effect to draw on canvas - animate when playing or interacting
   useEffect(() => {
-    if (isPlaying && enabled) {
-      // Continuous animation loop when playing
+    if ((isPlaying && enabled) || isDragging || isHolding) {
+      // Continuous animation loop when playing or interacting
       let frameId: number
       const animate = () => {
         draw()
@@ -169,7 +171,7 @@ export function SlicerWaveform() {
       // Single draw when not playing
       draw()
     }
-  }, [draw, isPlaying, enabled])
+  }, [draw, isPlaying, enabled, isDragging, isHolding])
 
   // Calculate slice from mouse position
   const getSliceFromEvent = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -183,6 +185,16 @@ export function SlicerWaveform() {
     const clickedSlice = Math.floor(relativeX * sliceCount)
     return Math.max(0, Math.min(sliceCount - 1, clickedSlice))
   }, [sliceCount])
+
+  // Get absolute position (0-1) from mouse event
+  const getPositionFromEvent = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return null
+
+    const rect = canvas.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    return Math.max(0, Math.min(1, x / rect.width))
+  }, [])
 
   // Loop animation for hold
   const loopDuration = 500 // ms per loop cycle
@@ -215,43 +227,109 @@ export function SlicerWaveform() {
     }
   }, [isHolding, holdSlice, enabled, sliceCount, setPlayheadPosition, getGrainFrame, setCurrentOutputFrame])
 
-  // Handle mouse down - start looping
+  // Handle mouse down - start dragging/scrubbing
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const slice = getSliceFromEvent(e)
-    if (slice !== null) {
-      setCurrentSlice(slice)
-      setHoldSlice(slice)
-      setIsHolding(true)
-    }
-  }, [getSliceFromEvent, setCurrentSlice])
+    const position = getPositionFromEvent(e)
 
-  // Handle mouse up - stop looping
-  const handleMouseUp = useCallback(() => {
+    if (slice !== null && position !== null) {
+      dragStartX.current = e.clientX
+      setCurrentSlice(slice)
+      setIsDragging(true)
+
+      // Immediately output frame at click position
+      if (activeFrames.length > 0) {
+        const frameIndex = Math.floor(position * (activeFrames.length - 1))
+        const frame = activeFrames[frameIndex]
+        if (frame) {
+          setCurrentOutputFrame(frame)
+          // Update playhead to show position within current slice
+          const slicePosition = (position * sliceCount) % 1
+          setPlayheadPosition(slicePosition)
+        }
+      }
+    }
+  }, [getSliceFromEvent, getPositionFromEvent, setCurrentSlice, activeFrames, sliceCount, setCurrentOutputFrame, setPlayheadPosition])
+
+  // Handle mouse move - scrub through waveform when dragging
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDragging) return
+
+    const position = getPositionFromEvent(e)
+    const slice = getSliceFromEvent(e)
+
+    if (position !== null && slice !== null && activeFrames.length > 0) {
+      // Update current slice if we've moved to a different one
+      setCurrentSlice(slice)
+
+      // Get frame at absolute position
+      const frameIndex = Math.floor(position * (activeFrames.length - 1))
+      const frame = activeFrames[frameIndex]
+      if (frame) {
+        setCurrentOutputFrame(frame)
+        // Update playhead position within slice
+        const slicePosition = (position * sliceCount) % 1
+        setPlayheadPosition(slicePosition)
+      }
+    }
+  }, [isDragging, getPositionFromEvent, getSliceFromEvent, activeFrames, sliceCount, setCurrentSlice, setCurrentOutputFrame, setPlayheadPosition])
+
+  // Handle mouse up - stop dragging, optionally start looping
+  const handleMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const startX = dragStartX.current
+    const didDrag = startX !== null && Math.abs(e.clientX - startX) > 5
+
+    if (!didDrag) {
+      // Didn't drag much - start looping on this slice
+      const slice = getSliceFromEvent(e)
+      if (slice !== null) {
+        setHoldSlice(slice)
+        setIsHolding(true)
+      }
+    }
+
+    setIsDragging(false)
+    dragStartX.current = null
+  }, [getSliceFromEvent])
+
+  // Handle mouse up outside canvas
+  const handleGlobalMouseUp = useCallback(() => {
+    setIsDragging(false)
     setIsHolding(false)
     setHoldSlice(null)
+    dragStartX.current = null
     if (loopAnimationRef.current) {
       cancelAnimationFrame(loopAnimationRef.current)
     }
   }, [])
 
-  // Handle mouse leave - stop looping if mouse leaves canvas
+  // Handle mouse leave - stop if mouse leaves canvas
   const handleMouseLeave = useCallback(() => {
-    if (isHolding) {
+    if (isDragging || isHolding) {
+      setIsDragging(false)
       setIsHolding(false)
       setHoldSlice(null)
+      dragStartX.current = null
       if (loopAnimationRef.current) {
         cancelAnimationFrame(loopAnimationRef.current)
       }
     }
-  }, [isHolding])
+  }, [isDragging, isHolding])
+
+  // Global mouse up listener for when mouse is released outside canvas
+  useEffect(() => {
+    window.addEventListener('mouseup', handleGlobalMouseUp)
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp)
+  }, [handleGlobalMouseUp])
 
   return (
     <div className="w-full h-full p-2">
       <canvas
         ref={canvasRef}
-        className="w-full h-full rounded cursor-pointer"
-        style={{ backgroundColor: 'var(--bg-elevated)' }}
+        className="w-full h-full rounded"
+        style={{ backgroundColor: 'var(--bg-elevated)', cursor: isDragging ? 'grabbing' : 'pointer' }}
         onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
       />

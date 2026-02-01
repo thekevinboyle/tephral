@@ -37,10 +37,7 @@ export function VerticalCrossfader() {
   const thumbPosition = 93 - wetMix * 86
 
   return (
-    <div
-      className="w-[40px] h-full flex flex-col items-center py-2"
-      style={{ backgroundColor: 'var(--bg-surface)' }}
-    >
+    <div className="w-[40px] h-full flex flex-col items-center py-2">
       {/* WET label (top) */}
       <span className="text-[10px] font-medium select-none" style={{ color: 'var(--text-muted)' }}>
         Wet

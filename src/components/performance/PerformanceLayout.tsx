@@ -213,14 +213,14 @@ export function PerformanceLayout() {
         className="flex-1 min-h-0 flex mx-3 mt-3 mb-3 gap-3"
       >
         {/* Column 1: Banks + Button grid + Vertical Crossfader */}
-        <div className="flex-1 min-h-0 flex">
-          <div
-            className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-            }}
-          >
+        <div
+          className="flex-1 min-h-0 flex rounded-xl overflow-hidden"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          <div className="flex-1 min-h-0 flex flex-col">
             {/* Bank row header */}
             <div
               className="flex-shrink-0"
@@ -236,7 +236,10 @@ export function PerformanceLayout() {
               <PerformanceGrid />
             </div>
           </div>
-          <VerticalCrossfader />
+          {/* Crossfader with left border separator */}
+          <div style={{ borderLeft: '1px solid var(--border)' }}>
+            <VerticalCrossfader />
+          </div>
         </div>
 
         {/* Column 2: Sequencer */}

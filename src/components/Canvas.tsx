@@ -8,6 +8,7 @@ import { useMediaStore } from '../stores/mediaStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useRecordingStore } from '../stores/recordingStore'
 import { useSlicerStore } from '../stores/slicerStore'
+import { useSlicerBufferStore } from '../stores/slicerBufferStore'
 import { SlicerCompositor } from '../effects/SlicerCompositor'
 import { OverlayContainer } from './overlays/OverlayContainer'
 
@@ -31,6 +32,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     blendMode: slicerBlendMode,
     opacity: slicerOpacity
   } = useSlicerStore()
+
+  // Slicer output frame
+  const slicerOutputFrame = useSlicerBufferStore((state) => state.currentOutputFrame)
 
   // Slicer compositor ref
   const slicerCompositor = useRef<SlicerCompositor | null>(null)
@@ -109,6 +113,13 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       opacity: slicerOpacity,
     })
   }, [slicerOutputMode, slicerWet, slicerBlendMode, slicerOpacity])
+
+  // Update slicer compositor with output frame
+  useEffect(() => {
+    if (slicerCompositor.current && slicerOutputFrame) {
+      slicerCompositor.current.setSlicerFrame(slicerOutputFrame)
+    }
+  }, [slicerOutputFrame])
 
   // Sync effect parameters
   useEffect(() => {

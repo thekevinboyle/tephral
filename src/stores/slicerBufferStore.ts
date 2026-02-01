@@ -6,6 +6,7 @@ interface SlicerBufferState {
   writeHead: number
   maxFrames: number
   capturedFrames: ImageData[] | null
+  currentOutputFrame: ImageData | null
 
   // Actions
   addFrame: (frame: ImageData) => void
@@ -14,6 +15,7 @@ interface SlicerBufferState {
   importFrames: (frames: ImageData[]) => void
   clear: () => void
   setMaxFrames: (max: number) => void
+  setCurrentOutputFrame: (frame: ImageData | null) => void
 
   // Getters
   getActiveFrames: () => ImageData[]
@@ -27,6 +29,7 @@ export const useSlicerBufferStore = create<SlicerBufferState>((set, get) => ({
   writeHead: 0,
   maxFrames: 120, // 4 seconds at 30fps
   capturedFrames: null,
+  currentOutputFrame: null,
 
   // Actions
   addFrame: (frame) => {
@@ -79,6 +82,10 @@ export const useSlicerBufferStore = create<SlicerBufferState>((set, get) => ({
 
   setMaxFrames: (max) => {
     set({ maxFrames: max })
+  },
+
+  setCurrentOutputFrame: (frame) => {
+    set({ currentOutputFrame: frame })
   },
 
   // Getters

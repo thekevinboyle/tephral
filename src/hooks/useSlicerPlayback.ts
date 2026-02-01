@@ -40,6 +40,7 @@ export function useSlicerPlayback() {
     addFrame,
     setMaxFrames,
     getGrainFrame,
+    setCurrentOutputFrame,
   } = useSlicerBufferStore()
 
   const { bpm } = useSequencerStore()
@@ -216,10 +217,14 @@ export function useSlicerPlayback() {
         const frame = getGrainFrame(firstGrain.sliceIndex, sliceCount, currentPosition)
         outputFrame.current = frame
 
+        // Update store with current output frame for canvas compositor
+        setCurrentOutputFrame(frame)
+
         // Update playhead position for visualization
         setPlayheadPosition(currentPosition)
       } else {
         outputFrame.current = null
+        setCurrentOutputFrame(null)
       }
 
       playbackFrameId = requestAnimationFrame(playbackLoop)
@@ -245,6 +250,7 @@ export function useSlicerPlayback() {
     getGrainFrame,
     sliceCount,
     setPlayheadPosition,
+    setCurrentOutputFrame,
   ])
 
   return {

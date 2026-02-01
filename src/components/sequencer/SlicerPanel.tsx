@@ -5,12 +5,16 @@ import { SlicerControls } from './SlicerControls'
 import { useSlicerStore } from '../../stores/slicerStore'
 import { useSlicerBufferStore } from '../../stores/slicerBufferStore'
 import { useClipStore } from '../../stores/clipStore'
+import { useSlicerPlayback } from '../../hooks/useSlicerPlayback'
 import { extractFramesFromClip } from '../../utils/clipFrameExtractor'
 
 export function SlicerPanel() {
   const { setCaptureState, setImportedClipId } = useSlicerStore()
   const { importFrames } = useSlicerBufferStore()
   const { clips } = useClipStore()
+
+  // Initialize the slicer playback engine
+  useSlicerPlayback()
 
   const [isDragOver, setIsDragOver] = useState(false)
   const [isImporting, setIsImporting] = useState(false)

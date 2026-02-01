@@ -114,12 +114,26 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     })
   }, [slicerOutputMode, slicerWet, slicerBlendMode, slicerOpacity])
 
-  // Update slicer compositor with output frame
+  // Update slicer compositor with output frame and original for mixing
   useEffect(() => {
     if (slicerCompositor.current && slicerOutputFrame) {
       slicerCompositor.current.setSlicerFrame(slicerOutputFrame)
+
+      // For mix/layer modes, capture original video frame
+      if (slicerOutputMode !== 'replace' && videoElement) {
+        // Create canvas to capture current video frame
+        const canvas = document.createElement('canvas')
+        canvas.width = slicerOutputFrame.width
+        canvas.height = slicerOutputFrame.height
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height)
+          const originalFrame = ctx.getImageData(0, 0, canvas.width, canvas.height)
+          slicerCompositor.current.setOriginalFrame(originalFrame)
+        }
+      }
     }
-  }, [slicerOutputFrame])
+  }, [slicerOutputFrame, slicerOutputMode, videoElement])
 
   // Sync effect parameters
   useEffect(() => {
@@ -202,9 +216,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     if (!pipeline) return
 
     if (mediaTexture) {
-      // Check if slicer should replace input
+      // Check if slicer should modify input
       let textureToUse = mediaTexture
-      if (slicerEnabled && slicerOutputMode === 'replace' && slicerCompositor.current) {
+      if (slicerEnabled && slicerCompositor.current) {
         const slicerTexture = slicerCompositor.current.getOutputTexture()
         if (slicerTexture) {
           textureToUse = slicerTexture

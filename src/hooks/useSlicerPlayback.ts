@@ -33,6 +33,7 @@ export function useSlicerPlayback() {
     freeze,
     bufferSize,
     setCurrentSlice,
+    setPlayheadPosition,
   } = useSlicerStore()
 
   const {
@@ -214,6 +215,9 @@ export function useSlicerPlayback() {
 
         const frame = getGrainFrame(firstGrain.sliceIndex, sliceCount, currentPosition)
         outputFrame.current = frame
+
+        // Update playhead position for visualization
+        setPlayheadPosition(currentPosition)
       } else {
         outputFrame.current = null
       }
@@ -240,6 +244,7 @@ export function useSlicerPlayback() {
     spawnGrain,
     getGrainFrame,
     sliceCount,
+    setPlayheadPosition,
   ])
 
   return {

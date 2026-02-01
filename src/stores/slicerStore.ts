@@ -62,6 +62,9 @@ interface SlicerState {
   currentSlice: number
   sliceSequenceMode: SliceSequenceMode
 
+  // Playhead (0-1 position within current slice for visualization)
+  playheadPosition: number
+
   // Grains
   grainSize: number
   density: number
@@ -95,6 +98,7 @@ interface SlicerState {
   setSliceCount: (count: 4 | 8 | 16 | 32) => void
   setCurrentSlice: (slice: number) => void
   setSliceSequenceMode: (mode: SliceSequenceMode) => void
+  setPlayheadPosition: (position: number) => void
 
   // Grain actions
   setGrainSize: (size: number) => void
@@ -139,6 +143,7 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
   sliceCount: 8,
   currentSlice: 0,
   sliceSequenceMode: 'forward',
+  playheadPosition: 0,
 
   // Grain defaults
   grainSize: 100,
@@ -182,6 +187,7 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
     }))
   },
   setSliceSequenceMode: (sliceSequenceMode) => set({ sliceSequenceMode }),
+  setPlayheadPosition: (playheadPosition) => set({ playheadPosition: clamp(playheadPosition, 0, 1) }),
 
   // Grain actions
   setGrainSize: (size) => set({ grainSize: clamp(size, 10, 500) }),

@@ -9,6 +9,9 @@ export function SlicerWaveform() {
   const sliceCount = useSlicerStore((state) => state.sliceCount)
   const currentSlice = useSlicerStore((state) => state.currentSlice)
   const captureState = useSlicerStore((state) => state.captureState)
+  const playheadPosition = useSlicerStore((state) => state.playheadPosition)
+  const isPlaying = useSlicerStore((state) => state.isPlaying)
+  const enabled = useSlicerStore((state) => state.enabled)
 
   // Subscribe to the actual frame arrays, not just the getter
   const frames = useSlicerBufferStore((state) => state.frames)
@@ -99,6 +102,28 @@ export function SlicerWaveform() {
     const sliceWidth = width / sliceCount
     ctx.fillRect(currentSlice * sliceWidth, 0, sliceWidth, height)
 
+    // Draw playhead if playing
+    if (isPlaying && enabled) {
+      const sliceStartX = currentSlice * sliceWidth
+      const playheadX = sliceStartX + playheadPosition * sliceWidth
+
+      // Playhead line
+      ctx.strokeStyle = '#ffffff'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(playheadX, 0)
+      ctx.lineTo(playheadX, height)
+      ctx.stroke()
+
+      // Playhead glow
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+      ctx.lineWidth = 6
+      ctx.beginPath()
+      ctx.moveTo(playheadX, 0)
+      ctx.lineTo(playheadX, height)
+      ctx.stroke()
+    }
+
     // Draw state badge if frozen or imported
     if (captureState === 'frozen' || captureState === 'imported') {
       const text = captureState === 'imported' ? 'IMPORTED' : 'FROZEN'
@@ -119,12 +144,24 @@ export function SlicerWaveform() {
       ctx.fillStyle = 'white'
       ctx.fillText(text, badgeX + padding, badgeY + 10)
     }
-  }, [waveformData, sliceCount, currentSlice, captureState])
+  }, [waveformData, sliceCount, currentSlice, captureState, playheadPosition, isPlaying, enabled])
 
-  // Effect to draw on canvas
+  // Effect to draw on canvas - animate when playing
   useEffect(() => {
-    draw()
-  }, [draw])
+    if (isPlaying && enabled) {
+      // Continuous animation loop when playing
+      let frameId: number
+      const animate = () => {
+        draw()
+        frameId = requestAnimationFrame(animate)
+      }
+      frameId = requestAnimationFrame(animate)
+      return () => cancelAnimationFrame(frameId)
+    } else {
+      // Single draw when not playing
+      draw()
+    }
+  }, [draw, isPlaying, enabled])
 
   return (
     <div className="w-full h-full p-2">

@@ -17,11 +17,13 @@ export function SlicerPanel() {
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    const clipId = e.dataTransfer.types.includes('application/x-clip-id')
-    if (clipId) {
+    e.dataTransfer.dropEffect = 'copy'
+    const hasClipId = e.dataTransfer.types.includes('application/x-clip-id')
+    if (hasClipId && !isDragOver) {
+      console.log('[SlicerPanel] Drag over detected')
       setIsDragOver(true)
     }
-  }, [])
+  }, [isDragOver])
 
   const handleDragLeave = useCallback(() => {
     setIsDragOver(false)
@@ -31,21 +33,25 @@ export function SlicerPanel() {
     e.preventDefault()
     setIsDragOver(false)
 
+    console.log('[SlicerPanel] Drop event, types:', e.dataTransfer.types)
     const clipId = e.dataTransfer.getData('application/x-clip-id')
+    console.log('[SlicerPanel] Clip ID:', clipId)
     if (!clipId) return
 
     // Find clip in store
     const clip = clips.find((c) => c.id === clipId)
+    console.log('[SlicerPanel] Found clip:', clip)
     if (!clip) return
 
     setIsImporting(true)
     try {
-      const frames = await extractFramesFromClip(clip.url)
+      const frames = await extractFramesFromClip(clip.url, clip.duration)
+      console.log('[SlicerPanel] Got frames:', frames.length)
       importFrames(frames)
       setCaptureState('imported')
       setImportedClipId(clipId)
     } catch (error) {
-      console.error('Failed to import clip:', error)
+      console.error('[SlicerPanel] Failed to import clip:', error)
     } finally {
       setIsImporting(false)
     }

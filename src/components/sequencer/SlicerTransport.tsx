@@ -39,17 +39,19 @@ export function SlicerTransport() {
   }
 
   // Import a clip into the slicer
-  const handleImportClip = useCallback(async (clipUrl: string, clipId: string) => {
+  const handleImportClip = useCallback(async (clipUrl: string, clipId: string, duration: number) => {
+    console.log('[SlicerTransport] Importing clip:', clipId, clipUrl, 'duration:', duration)
     setIsLoading(true)
     setShowClipPicker(false)
 
     try {
-      const frames = await extractFramesFromClip(clipUrl)
+      const frames = await extractFramesFromClip(clipUrl, duration)
+      console.log('[SlicerTransport] Got frames:', frames.length)
       importFrames(frames)
       setCaptureState('imported')
       setImportedClipId(clipId)
     } catch (error) {
-      console.error('Failed to extract frames from clip:', error)
+      console.error('[SlicerTransport] Failed to extract frames from clip:', error)
     } finally {
       setIsLoading(false)
     }
@@ -105,7 +107,7 @@ export function SlicerTransport() {
             {clips.map((clip) => (
               <button
                 key={clip.id}
-                onClick={() => handleImportClip(clip.url, clip.id)}
+                onClick={() => handleImportClip(clip.url, clip.id, clip.duration)}
                 className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-white/10 transition-colors"
               >
                 <img

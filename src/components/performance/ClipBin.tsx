@@ -5,10 +5,16 @@ import { ClipBinPopover } from './ClipBinPopover'
 export function ClipBin() {
   const clips = useClipStore((state) => state.clips)
   const [popoverOpen, setPopoverOpen] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const stackRef = useRef<HTMLDivElement>(null)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
 
   const handleStackClick = () => {
+    // Don't open popover if we just finished dragging
+    if (isDragging) {
+      setIsDragging(false)
+      return
+    }
     if (clips.length === 0) return
     if (stackRef.current) {
       setAnchorRect(stackRef.current.getBoundingClientRect())
@@ -71,8 +77,14 @@ export function ClipBin() {
                 className="absolute rounded overflow-hidden cursor-grab active:cursor-grabbing"
                 draggable
                 onDragStart={(e) => {
+                  console.log('[ClipBin] Drag start, clip:', clip.id)
+                  setIsDragging(true)
                   e.dataTransfer.setData('application/x-clip-id', clip.id)
                   e.dataTransfer.effectAllowed = 'copy'
+                }}
+                onDragEnd={() => {
+                  // Small delay to prevent click from firing
+                  setTimeout(() => setIsDragging(false), 100)
                 }}
                 style={{
                   width: cardWidth,

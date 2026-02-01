@@ -6,7 +6,6 @@ import { useSlicerStore } from '../../stores/slicerStore'
 import { useSlicerBufferStore } from '../../stores/slicerBufferStore'
 import { useClipStore } from '../../stores/clipStore'
 import { useSlicerPlayback } from '../../hooks/useSlicerPlayback'
-import { extractFramesFromClip } from '../../utils/clipFrameExtractor'
 
 export function SlicerPanel() {
   const { setCaptureState, setImportedClipId } = useSlicerStore()
@@ -17,7 +16,6 @@ export function SlicerPanel() {
   useSlicerPlayback()
 
   const [isDragOver, setIsDragOver] = useState(false)
-  const [isImporting, setIsImporting] = useState(false)
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -33,32 +31,20 @@ export function SlicerPanel() {
     setIsDragOver(false)
   }, [])
 
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragOver(false)
 
-    console.log('[SlicerPanel] Drop event, types:', e.dataTransfer.types)
     const clipId = e.dataTransfer.getData('application/x-clip-id')
-    console.log('[SlicerPanel] Clip ID:', clipId)
     if (!clipId) return
 
-    // Find clip in store
-    const clip = clips.find((c) => c.id === clipId)
-    console.log('[SlicerPanel] Found clip:', clip)
-    if (!clip) return
+    const clip = clips.find(c => c.id === clipId)
+    if (!clip || clip.frames.length === 0) return
 
-    setIsImporting(true)
-    try {
-      const frames = await extractFramesFromClip(clip.url, clip.duration)
-      console.log('[SlicerPanel] Got frames:', frames.length)
-      importFrames(frames)
-      setCaptureState('imported')
-      setImportedClipId(clipId)
-    } catch (error) {
-      console.error('[SlicerPanel] Failed to import clip:', error)
-    } finally {
-      setIsImporting(false)
-    }
+    // Instant - frames already extracted
+    importFrames(clip.frames)
+    setCaptureState('imported')
+    setImportedClipId(clipId)
   }, [clips, importFrames, setCaptureState, setImportedClipId])
 
   return (
@@ -83,18 +69,6 @@ export function SlicerPanel() {
         >
           <span className="text-lg font-medium" style={{ color: '#8b5cf6' }}>
             Drop to import
-          </span>
-        </div>
-      )}
-
-      {/* Loading overlay */}
-      {isImporting && (
-        <div
-          className="absolute inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-        >
-          <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
-            Importing...
           </span>
         </div>
       )}

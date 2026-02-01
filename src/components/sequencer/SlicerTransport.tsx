@@ -195,15 +195,23 @@ export function SlicerTransport() {
       {/* Master On/Off button - green when on, red when off */}
       <button
         onClick={() => setEnabled(!enabled)}
-        className="w-4 h-4 rounded-full"
+        className="w-7 h-7 rounded flex items-center justify-center"
         style={{
           backgroundColor: enabled ? '#4ade80' : '#ef4444',
           boxShadow: enabled
-            ? '0 0 8px rgba(74, 222, 128, 0.5)'
+            ? '0 0 8px rgba(74, 222, 128, 0.4)'
             : '0 0 8px rgba(239, 68, 68, 0.3)',
         }}
         title={enabled ? 'Slicer On' : 'Slicer Off'}
-      />
+      >
+        {/* Small LED indicator inside button */}
+        <div
+          className="w-2 h-2 rounded-full"
+          style={{
+            backgroundColor: enabled ? '#166534' : '#7f1d1d',
+          }}
+        />
+      </button>
 
       {/* Click outside to close dropdown */}
       {showClipPicker && (

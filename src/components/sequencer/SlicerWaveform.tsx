@@ -8,10 +8,12 @@ export function SlicerWaveform() {
   const [isLooping, setIsLooping] = useState(false)
   const [loopSlice, setLoopSlice] = useState<number | null>(null)
   const dragStartX = useRef<number | null>(null)
+  const dragStartY = useRef<number | null>(null)
   const clickedSliceRef = useRef<number | null>(null) // Store clicked slice immediately
   const holdTimerRef = useRef<number | null>(null)
   const loopAnimationRef = useRef<number | null>(null)
   const loopStartTimeRef = useRef<number>(0)
+  const loopSpeedRef = useRef<number>(1) // Speed multiplier: 1 = normal, >1 = faster, <1 = slower
 
   // Get state from stores
   const sliceCount = useSlicerStore((state) => state.sliceCount)
@@ -184,14 +186,23 @@ export function SlicerWaveform() {
   }, [draw, isPlaying, enabled, isDragging, isLooping])
 
   // Loop animation - plays through slice frames when holding
-  const loopDuration = 500 // ms per loop cycle
+  const baseLoopDuration = 500 // ms per loop cycle at normal speed
   useEffect(() => {
     if (isLooping && loopSlice !== null && enabled) {
       loopStartTimeRef.current = performance.now()
+      let lastPosition = 0
 
       const loopAnimation = (timestamp: number) => {
         const elapsed = timestamp - loopStartTimeRef.current
-        const position = (elapsed % loopDuration) / loopDuration
+        // Apply speed multiplier - higher speed = faster loop (shorter effective duration)
+        const effectiveDuration = baseLoopDuration / loopSpeedRef.current
+        const position = (elapsed % effectiveDuration) / effectiveDuration
+
+        // Detect loop restart for smooth speed changes
+        if (position < lastPosition) {
+          loopStartTimeRef.current = timestamp
+        }
+        lastPosition = position
 
         // Update playhead and output frame
         setPlayheadPosition(position)
@@ -243,6 +254,7 @@ export function SlicerWaveform() {
 
     if (slice !== null && position !== null) {
       dragStartX.current = e.clientX
+      dragStartY.current = e.clientY
       clickedSliceRef.current = slice // Store clicked slice immediately in ref
       setCurrentSlice(slice)
       setIsDragging(true)
@@ -268,14 +280,26 @@ export function SlicerWaveform() {
           setIsLooping(true)
           setLoopSlice(clickedSliceRef.current)
           setCurrentSlice(clickedSliceRef.current) // Ensure we're on the right slice
+          loopSpeedRef.current = 1 // Reset speed when starting loop
         }
       }, 150) // 150ms hold threshold (faster response)
     }
   }, [getSliceFromEvent, getPositionFromEvent, setCurrentSlice, activeFrames, sliceCount, setCurrentOutputFrame, setPlayheadPosition])
 
-  // Handle mouse move - scrub through waveform when dragging
+  // Handle mouse move - scrub through waveform when dragging, or adjust loop speed when looping
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    // If moved enough, cancel the hold timer (user is dragging, not holding)
+    // If looping, vertical drag adjusts speed (up = faster, down = slower)
+    if (isLooping && dragStartY.current !== null) {
+      const deltaY = e.clientY - dragStartY.current
+      // Map deltaY to speed: -100px = 4x speed, +100px = 0.25x speed
+      // Negative deltaY (drag up) = faster, positive (drag down) = slower
+      const speedMultiplier = Math.pow(2, -deltaY / 50)
+      // Clamp speed between 0.25x and 4x
+      loopSpeedRef.current = Math.max(0.25, Math.min(4, speedMultiplier))
+      return
+    }
+
+    // If moved enough horizontally, cancel the hold timer (user is dragging, not holding)
     if (dragStartX.current !== null && Math.abs(e.clientX - dragStartX.current) > 5) {
       if (holdTimerRef.current) {
         clearTimeout(holdTimerRef.current)
@@ -303,7 +327,7 @@ export function SlicerWaveform() {
         setPlayheadPosition(slicePosition)
       }
     }
-  }, [isDragging, getPositionFromEvent, getSliceFromEvent, activeFrames, sliceCount, setCurrentSlice, setCurrentOutputFrame, setPlayheadPosition])
+  }, [isDragging, isLooping, getPositionFromEvent, getSliceFromEvent, activeFrames, sliceCount, setCurrentSlice, setCurrentOutputFrame, setPlayheadPosition])
 
   // Handle mouse up - stop dragging/looping, start playback from slice start (quantized) if clicked
   const handleMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -322,7 +346,9 @@ export function SlicerWaveform() {
       }
       setIsDragging(false)
       dragStartX.current = null
+      dragStartY.current = null
       clickedSliceRef.current = null
+      loopSpeedRef.current = 1 // Reset speed
       return
     }
 
@@ -342,6 +368,7 @@ export function SlicerWaveform() {
 
     setIsDragging(false)
     dragStartX.current = null
+    dragStartY.current = null
     clickedSliceRef.current = null
   }, [getSliceFromEvent, setCurrentSlice, setPlayheadPosition, setIsPlaying, isLooping])
 
@@ -355,7 +382,9 @@ export function SlicerWaveform() {
     setIsLooping(false)
     setLoopSlice(null)
     dragStartX.current = null
+    dragStartY.current = null
     clickedSliceRef.current = null
+    loopSpeedRef.current = 1 // Reset speed
     if (loopAnimationRef.current) {
       cancelAnimationFrame(loopAnimationRef.current)
     }
@@ -372,7 +401,9 @@ export function SlicerWaveform() {
       setIsLooping(false)
       setLoopSlice(null)
       dragStartX.current = null
+      dragStartY.current = null
       clickedSliceRef.current = null
+      loopSpeedRef.current = 1 // Reset speed
       if (loopAnimationRef.current) {
         cancelAnimationFrame(loopAnimationRef.current)
       }

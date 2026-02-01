@@ -8,8 +8,10 @@ export function SlicerWaveform() {
   // Get state from stores
   const sliceCount = useSlicerStore((state) => state.sliceCount)
   const currentSlice = useSlicerStore((state) => state.currentSlice)
+  const setCurrentSlice = useSlicerStore((state) => state.setCurrentSlice)
   const captureState = useSlicerStore((state) => state.captureState)
   const playheadPosition = useSlicerStore((state) => state.playheadPosition)
+  const setPlayheadPosition = useSlicerStore((state) => state.setPlayheadPosition)
   const isPlaying = useSlicerStore((state) => state.isPlaying)
   const enabled = useSlicerStore((state) => state.enabled)
 
@@ -163,12 +165,35 @@ export function SlicerWaveform() {
     }
   }, [draw, isPlaying, enabled])
 
+  // Handle click to jump to slice
+  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const rect = canvas.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const relativeX = x / rect.width
+
+    // Calculate which slice was clicked
+    const clickedSlice = Math.floor(relativeX * sliceCount)
+    const clampedSlice = Math.max(0, Math.min(sliceCount - 1, clickedSlice))
+
+    // Calculate position within the slice (0-1)
+    const sliceWidth = 1 / sliceCount
+    const sliceStartX = clampedSlice * sliceWidth
+    const positionInSlice = (relativeX - sliceStartX) / sliceWidth
+
+    setCurrentSlice(clampedSlice)
+    setPlayheadPosition(Math.max(0, Math.min(1, positionInSlice)))
+  }, [sliceCount, setCurrentSlice, setPlayheadPosition])
+
   return (
     <div className="w-full h-full p-2">
       <canvas
         ref={canvasRef}
-        className="w-full h-full rounded"
+        className="w-full h-full rounded cursor-pointer"
         style={{ backgroundColor: 'var(--bg-elevated)' }}
+        onClick={handleClick}
       />
     </div>
   )

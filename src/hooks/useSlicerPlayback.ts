@@ -25,6 +25,7 @@ export function useSlicerPlayback() {
     density,
     spray,
     jitter,
+    rate,
     direction,
     reverseProb,
     sliceProb,
@@ -210,8 +211,9 @@ export function useSlicerPlayback() {
         const elapsed = performance.now() - firstGrain.startTime
         const progress = elapsed / firstGrain.duration
 
-        // Update position based on direction and progress
-        let currentPosition = firstGrain.position + progress * firstGrain.direction * 0.5
+        // Update position based on direction, progress, and rate
+        // rate=1 is normal, rate=2 is 2x speed, rate=0.5 is half speed
+        let currentPosition = firstGrain.position + progress * firstGrain.direction * rate * 0.5
         currentPosition = Math.max(0, Math.min(1, currentPosition))
 
         const frame = getGrainFrame(firstGrain.sliceIndex, sliceCount, currentPosition)
@@ -251,6 +253,7 @@ export function useSlicerPlayback() {
     sliceCount,
     setPlayheadPosition,
     setCurrentOutputFrame,
+    rate,
   ])
 
   return {

@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 
+export const MAX_FRAMES_PER_CLIP = 150
+
 // Clip interface
 export interface Clip {
   id: string
@@ -8,6 +10,7 @@ export interface Clip {
   thumbnailUrl: string  // First frame as data URL
   duration: number
   createdAt: number
+  frames: ImageData[]
 }
 
 // Export setting types
@@ -27,7 +30,7 @@ interface ClipState {
   exportFormat: ExportFormat
 
   // Actions
-  addClip: (blob: Blob, duration: number) => Promise<void>
+  addClip: (blob: Blob, duration: number, frames?: ImageData[]) => Promise<void>
   removeClip: (id: string) => void
   clearAllClips: () => void
   selectClip: (id: string | null) => void
@@ -105,7 +108,7 @@ export const useClipStore = create<ClipState>((set, get) => ({
   exportFrameRate: 30,
   exportFormat: 'webm',  // webm is instant (no FFmpeg needed)
 
-  addClip: async (blob: Blob, duration: number) => {
+  addClip: async (blob: Blob, duration: number, frames?: ImageData[]) => {
     const id = generateUUID()
     const url = URL.createObjectURL(blob)
 
@@ -125,6 +128,7 @@ export const useClipStore = create<ClipState>((set, get) => ({
       thumbnailUrl,
       duration,
       createdAt: Date.now(),
+      frames: frames ?? [],
     }
 
     set((state) => ({

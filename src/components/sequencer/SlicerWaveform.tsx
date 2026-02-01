@@ -9,32 +9,40 @@ export function SlicerWaveform() {
   const sliceCount = useSlicerStore((state) => state.sliceCount)
   const currentSlice = useSlicerStore((state) => state.currentSlice)
   const captureState = useSlicerStore((state) => state.captureState)
-  const getActiveFrames = useSlicerBufferStore((state) => state.getActiveFrames)
+
+  // Subscribe to the actual frame arrays, not just the getter
+  const frames = useSlicerBufferStore((state) => state.frames)
+  const capturedFrames = useSlicerBufferStore((state) => state.capturedFrames)
+
+  // Get active frames based on state
+  const activeFrames = capturedFrames !== null ? capturedFrames : frames
 
   // Calculate waveform data from frames (luminance values)
   const waveformData = useMemo(() => {
-    const frames = getActiveFrames()
+    if (activeFrames.length === 0) return []
 
-    if (frames.length === 0) return []
+    // Sample frames to avoid performance issues with many frames
+    const maxSamples = 100
+    const step = Math.max(1, Math.floor(activeFrames.length / maxSamples))
+    const sampledFrames = activeFrames.filter((_, i) => i % step === 0)
 
-    return frames.map((frame) => {
+    return sampledFrames.map((frame) => {
       const { data, width, height } = frame
       let totalLuminance = 0
       const pixelCount = width * height
 
-      // Loop through RGBA data (step by 4)
-      for (let i = 0; i < data.length; i += 4) {
+      // Sample pixels for performance (every 16th pixel)
+      for (let i = 0; i < data.length; i += 64) {
         const r = data[i]
         const g = data[i + 1]
         const b = data[i + 2]
-        // Calculate luminance and normalize to 0-1
         totalLuminance += (0.299 * r + 0.587 * g + 0.114 * b) / 255
       }
 
       // Return average luminance for this frame
-      return totalLuminance / pixelCount
+      return totalLuminance / (pixelCount / 16)
     })
-  }, [getActiveFrames])
+  }, [activeFrames])
 
   // Draw function
   const draw = useCallback(() => {
@@ -91,9 +99,10 @@ export function SlicerWaveform() {
     const sliceWidth = width / sliceCount
     ctx.fillRect(currentSlice * sliceWidth, 0, sliceWidth, height)
 
-    // Draw frozen badge if frozen
-    if (captureState === 'frozen') {
-      const text = 'FROZEN'
+    // Draw state badge if frozen or imported
+    if (captureState === 'frozen' || captureState === 'imported') {
+      const text = captureState === 'imported' ? 'IMPORTED' : 'FROZEN'
+      const badgeColor = captureState === 'imported' ? '#8b5cf680' : '#f8717180'
       ctx.font = '10px monospace'
       const textMetrics = ctx.measureText(text)
       const padding = 4
@@ -103,7 +112,7 @@ export function SlicerWaveform() {
       const badgeY = 4
 
       // Badge background
-      ctx.fillStyle = '#f8717180'
+      ctx.fillStyle = badgeColor
       ctx.fillRect(badgeX, badgeY, badgeWidth, badgeHeight)
 
       // Badge text

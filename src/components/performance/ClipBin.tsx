@@ -2,11 +2,7 @@ import { useState, useRef } from 'react'
 import { useClipStore } from '../../stores/clipStore'
 import { ClipBinPopover } from './ClipBinPopover'
 
-interface ClipBinProps {
-  mode: 'sidebar' | 'floating'
-}
-
-export function ClipBin({ mode }: ClipBinProps) {
+export function ClipBin() {
   const clips = useClipStore((state) => state.clips)
   const [popoverOpen, setPopoverOpen] = useState(false)
   const stackRef = useRef<HTMLDivElement>(null)
@@ -39,48 +35,21 @@ export function ClipBin({ mode }: ClipBinProps) {
   const stackWidth = cardWidth + (Math.min(clips.length, maxVisibleCards) - 1) * offsetX
   const stackHeight = cardHeight + (Math.min(clips.length, maxVisibleCards) - 1) * offsetY
 
-  // Empty state for sidebar mode
-  if (clips.length === 0 && mode === 'sidebar') {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div
-          className="rounded-lg flex items-center justify-center"
-          style={{
-            width: cardWidth,
-            height: cardHeight,
-            border: '2px dashed var(--border)',
-          }}
-        >
-          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>No clips</span>
-        </div>
-      </div>
-    )
-  }
-
-  // Hide in floating mode if no clips
-  if (clips.length === 0 && mode === 'floating') {
+  // Hide if no clips
+  if (clips.length === 0) {
     return null
   }
 
-  // Container styles based on mode
-  const containerStyle: React.CSSProperties = mode === 'floating'
-    ? {
-        position: 'absolute',
-        bottom: 12,
-        left: 12,
-        zIndex: 20,
-      }
-    : {
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }
-
   return (
     <>
-      <div style={containerStyle}>
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 12,
+          left: 12,
+          zIndex: 20,
+        }}
+      >
         {/* Stacked cards */}
         <div
           ref={stackRef}

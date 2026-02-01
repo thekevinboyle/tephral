@@ -4,12 +4,12 @@ import { TransportBar } from './TransportBar'
 import { ParameterPanel } from './ParameterPanel'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
-import { XYPad } from './XYPad'
-import { MixControls } from './MixControls'
+import { VerticalCrossfader } from './VerticalCrossfader'
 import { ClipBin } from './ClipBin'
 import { ClipDetailModal } from './ClipDetailModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
+import { SequencerPanel } from '../sequencer/SequencerPanel'
 import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
@@ -212,28 +212,31 @@ export function PerformanceLayout() {
       <div
         className="flex-1 min-h-0 flex mx-3 mt-3 mb-3 gap-3"
       >
-        {/* Column 1: Banks + Button grid (unified container) */}
-        <div
-          className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-          }}
-        >
-          {/* Bank row header */}
+        {/* Column 1: Banks + Button grid + Vertical Crossfader */}
+        <div className="flex-1 min-h-0 flex">
           <div
-            className="flex-shrink-0"
+            className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
             style={{
-              height: '52px',
-              borderBottom: '1px solid var(--border)',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
             }}
           >
-            <BankPanel />
+            {/* Bank row header */}
+            <div
+              className="flex-shrink-0"
+              style={{
+                height: '52px',
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              <BankPanel />
+            </div>
+            {/* Grid */}
+            <div className="flex-1 min-h-0">
+              <PerformanceGrid />
+            </div>
           </div>
-          {/* Grid */}
-          <div className="flex-1 min-h-0">
-            <PerformanceGrid />
-          </div>
+          <VerticalCrossfader />
         </div>
 
         {/* Column 2: Sequencer */}
@@ -248,30 +251,16 @@ export function PerformanceLayout() {
           <SequencerContainer />
         </div>
 
-        {/* Column 3: XY Pad + Mix Controls */}
-        <div className="flex flex-col gap-3" style={{ flex: '0.7' }}>
-          {/* XY Pad */}
-          <div
-            className="flex-1 rounded-xl overflow-hidden relative"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            <XYPad />
-          </div>
-
-          {/* Mix Controls */}
-          <div
-            className="flex-shrink-0 rounded-xl overflow-hidden"
-            style={{
-              height: '80px',
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            <MixControls />
-          </div>
+        {/* Column 3: Step Sequencer */}
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{
+            flex: '0.8',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          <SequencerPanel />
         </div>
       </div>
 

@@ -192,18 +192,18 @@ export function SlicerTransport() {
         {syncToBpm ? bpm : 'Free'}
       </button>
 
-      {/* Master On/Off button */}
+      {/* Master On/Off button - green when on, red when off */}
       <button
         onClick={() => setEnabled(!enabled)}
-        className="w-7 h-7 rounded text-[11px] font-bold"
+        className="w-4 h-4 rounded-full"
         style={{
-          backgroundColor: enabled ? '#FF6B6B' : 'var(--bg-surface)',
-          border: enabled ? '1px solid #FF6B6B' : '1px solid var(--border)',
-          color: enabled ? '#ffffff' : 'var(--text-muted)',
+          backgroundColor: enabled ? '#4ade80' : '#ef4444',
+          boxShadow: enabled
+            ? '0 0 8px rgba(74, 222, 128, 0.5)'
+            : '0 0 8px rgba(239, 68, 68, 0.3)',
         }}
-      >
-        {enabled ? 'ON' : 'OFF'}
-      </button>
+        title={enabled ? 'Slicer On' : 'Slicer Off'}
+      />
 
       {/* Click outside to close dropdown */}
       {showClipPicker && (

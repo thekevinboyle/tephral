@@ -1,3 +1,5 @@
+import { MAX_FRAMES_PER_CLIP } from './frameSampler'
+
 /**
  * Extract frames from a video clip URL as ImageData array
  * @param clipUrl - URL to the video (blob URL or regular URL)
@@ -49,11 +51,11 @@ export async function extractFramesFromClip(
     throw new Error('Invalid duration: ' + duration)
   }
 
-  const fps = 30
-  const frameCount = Math.min(Math.floor(duration * fps), 300) // Max 300 frames (10s)
-  const frameInterval = duration / frameCount
+  const rawFrameCount = Math.ceil(knownDuration * 30)
+  const targetFrames = Math.min(rawFrameCount, MAX_FRAMES_PER_CLIP)
+  const timeInterval = knownDuration / targetFrames
 
-  console.log('[clipFrameExtractor] Will extract', frameCount, 'frames over', duration.toFixed(2), 'seconds')
+  console.log('[clipFrameExtractor] Will extract', targetFrames, 'frames over', duration.toFixed(2), 'seconds')
 
   // Create canvas for frame extraction
   const canvas = document.createElement('canvas')
@@ -65,8 +67,8 @@ export async function extractFramesFromClip(
   const frames: ImageData[] = []
 
   // Extract frames by seeking through video
-  for (let i = 0; i < frameCount; i++) {
-    const time = Math.min(i * frameInterval, duration - 0.001)
+  for (let i = 0; i < targetFrames; i++) {
+    const time = i * timeInterval
 
     // Seek to time
     await new Promise<void>((resolve) => {
@@ -96,7 +98,7 @@ export async function extractFramesFromClip(
 
     // Report progress
     if (onProgress) {
-      onProgress((i + 1) / frameCount)
+      onProgress((i + 1) / targetFrames)
     }
   }
 

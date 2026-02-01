@@ -9,24 +9,6 @@ interface IconConfig {
 
 const ICONS: IconConfig[] = [
   {
-    type: 'steps',
-    color: '#4ECDC4',
-    label: 'Step Sequencer',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-        <rect x="1" y="1" width="3" height="3" />
-        <rect x="6" y="1" width="3" height="3" />
-        <rect x="11" y="1" width="3" height="3" />
-        <rect x="1" y="6" width="3" height="3" />
-        <rect x="6" y="6" width="3" height="3" />
-        <rect x="11" y="6" width="3" height="3" />
-        <rect x="1" y="11" width="3" height="3" />
-        <rect x="6" y="11" width="3" height="3" />
-        <rect x="11" y="11" width="3" height="3" />
-      </svg>
-    ),
-  },
-  {
     type: 'slicer',
     color: '#FF6B6B',
     label: 'Granular Slicer',

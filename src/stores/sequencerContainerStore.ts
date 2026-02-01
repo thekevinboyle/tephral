@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type SequencerType = 'steps' | 'slicer' | 'slot3' | 'slot4'
+export type SequencerType = 'slicer' | 'slot3' | 'slot4'
 
 interface SequencerContainerState {
   activeSequencer: SequencerType
@@ -8,6 +8,6 @@ interface SequencerContainerState {
 }
 
 export const useSequencerContainerStore = create<SequencerContainerState>((set) => ({
-  activeSequencer: 'steps',
+  activeSequencer: 'slicer',
   setActiveSequencer: (id) => set({ activeSequencer: id }),
 }))

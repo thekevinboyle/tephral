@@ -90,7 +90,13 @@ export function ClipBinPopover({ onClose, anchorRect }: ClipBinPopoverProps) {
         {clips.map((clip) => (
           <div
             key={clip.id}
-            className="p-2 hover:bg-white/10 cursor-pointer transition-colors group relative"
+            className="p-2 hover:bg-white/10 cursor-grab active:cursor-grabbing transition-colors group relative"
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData('application/x-clip-id', clip.id)
+              e.dataTransfer.effectAllowed = 'copy'
+              onClose() // Close popover when dragging
+            }}
             onClick={() => handleClipClick(clip.id)}
           >
             {/* Thumbnail */}
@@ -98,7 +104,7 @@ export function ClipBinPopover({ onClose, anchorRect }: ClipBinPopoverProps) {
               <img
                 src={clip.thumbnailUrl}
                 alt=""
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover pointer-events-none"
                 draggable={false}
               />
               {/* Duration badge */}

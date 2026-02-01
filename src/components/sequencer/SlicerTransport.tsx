@@ -3,6 +3,7 @@ import { useSlicerStore } from '../../stores/slicerStore'
 import { useSlicerBufferStore } from '../../stores/slicerBufferStore'
 import { useSequencerStore } from '../../stores/sequencerStore'
 import { useClipStore } from '../../stores/clipStore'
+import { extractFramesFromClip } from '../../utils/clipFrameExtractor'
 
 export function SlicerTransport() {
   const {
@@ -37,59 +38,16 @@ export function SlicerTransport() {
     }
   }
 
-  // Extract frames from a video clip
-  const extractFramesFromClip = useCallback(async (clipUrl: string, clipId: string) => {
+  // Import a clip into the slicer
+  const handleImportClip = useCallback(async (clipUrl: string, clipId: string) => {
     setIsLoading(true)
     setShowClipPicker(false)
 
     try {
-      // Create video element
-      const video = document.createElement('video')
-      video.src = clipUrl
-      video.muted = true
-      video.playsInline = true
-
-      // Wait for video to load metadata
-      await new Promise<void>((resolve, reject) => {
-        video.onloadedmetadata = () => resolve()
-        video.onerror = () => reject(new Error('Failed to load video'))
-      })
-
-      const duration = video.duration
-      const fps = 30
-      const frameCount = Math.min(Math.floor(duration * fps), 300) // Max 300 frames (10s)
-      const frameInterval = duration / frameCount
-
-      // Create canvas for frame extraction
-      const canvas = document.createElement('canvas')
-      canvas.width = 480
-      canvas.height = 270
-      const ctx = canvas.getContext('2d')
-      if (!ctx) throw new Error('Failed to get canvas context')
-
-      const frames: ImageData[] = []
-
-      // Extract frames by seeking through video
-      for (let i = 0; i < frameCount; i++) {
-        const time = i * frameInterval
-
-        // Seek to time
-        await new Promise<void>((resolve) => {
-          video.onseeked = () => resolve()
-          video.currentTime = time
-        })
-
-        // Draw frame to canvas
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-        frames.push(imageData)
-      }
-
-      // Import frames into slicer buffer
+      const frames = await extractFramesFromClip(clipUrl)
       importFrames(frames)
       setCaptureState('imported')
       setImportedClipId(clipId)
-
     } catch (error) {
       console.error('Failed to extract frames from clip:', error)
     } finally {
@@ -147,7 +105,7 @@ export function SlicerTransport() {
             {clips.map((clip) => (
               <button
                 key={clip.id}
-                onClick={() => extractFramesFromClip(clip.url, clip.id)}
+                onClick={() => handleImportClip(clip.url, clip.id)}
                 className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-white/10 transition-colors"
               >
                 <img

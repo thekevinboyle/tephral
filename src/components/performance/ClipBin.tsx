@@ -68,7 +68,12 @@ export function ClipBin() {
             return (
               <div
                 key={clip.id}
-                className="absolute rounded overflow-hidden"
+                className="absolute rounded overflow-hidden cursor-grab active:cursor-grabbing"
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('application/x-clip-id', clip.id)
+                  e.dataTransfer.effectAllowed = 'copy'
+                }}
                 style={{
                   width: cardWidth,
                   height: cardHeight,
@@ -85,7 +90,7 @@ export function ClipBin() {
                 <img
                   src={clip.thumbnailUrl}
                   alt=""
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover pointer-events-none"
                   draggable={false}
                 />
               </div>

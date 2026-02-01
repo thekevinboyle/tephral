@@ -8,7 +8,7 @@ import { useClipStore } from '../../stores/clipStore'
 import { useSlicerPlayback } from '../../hooks/useSlicerPlayback'
 
 export function SlicerPanel() {
-  const { setCaptureState, setImportedClipId } = useSlicerStore()
+  const { setCaptureState, setImportedClipId, enabled } = useSlicerStore()
   const { importFrames } = useSlicerBufferStore()
   const { clips } = useClipStore()
 
@@ -52,12 +52,32 @@ export function SlicerPanel() {
       className="flex flex-col h-full relative"
       style={{
         backgroundColor: 'var(--bg-surface)',
-        borderLeft: '1px solid var(--border)',
+        borderLeft: enabled ? '2px solid #4ade80' : '1px solid var(--border)',
+        transition: 'border-color 0.15s ease',
       }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {/* Bypassed overlay */}
+      {!enabled && (
+        <div
+          className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+        >
+          <span
+            className="text-sm font-bold uppercase tracking-widest px-3 py-1 rounded"
+            style={{
+              color: 'var(--text-muted)',
+              backgroundColor: 'var(--bg-elevated)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            BYPASSED
+          </span>
+        </div>
+      )}
+
       {/* Drag overlay */}
       {isDragOver && (
         <div
@@ -76,11 +96,23 @@ export function SlicerPanel() {
       {/* Header row */}
       <div
         className="px-3 py-2 flex items-center"
-        style={{ borderBottom: '1px solid var(--border)' }}
+        style={{
+          borderBottom: '1px solid var(--border)',
+          backgroundColor: enabled ? 'rgba(74, 222, 128, 0.1)' : 'transparent',
+          transition: 'background-color 0.15s ease',
+        }}
       >
+        {/* Active indicator dot */}
+        <div
+          className="w-2 h-2 rounded-full mr-2"
+          style={{
+            backgroundColor: enabled ? '#4ade80' : '#ef4444',
+            boxShadow: enabled ? '0 0 6px rgba(74, 222, 128, 0.6)' : 'none',
+          }}
+        />
         <span
           className="text-[13px] font-semibold uppercase tracking-wider"
-          style={{ color: 'var(--text-muted)' }}
+          style={{ color: enabled ? '#4ade80' : 'var(--text-muted)' }}
         >
           SLICER
         </span>
@@ -95,13 +127,21 @@ export function SlicerPanel() {
           height: '35%',
           minHeight: '80px',
           borderBottom: '1px solid var(--border)',
+          opacity: enabled ? 1 : 0.4,
+          transition: 'opacity 0.15s ease',
         }}
       >
         <SlicerWaveform />
       </div>
 
       {/* Controls area */}
-      <div className="flex-1 overflow-y-auto">
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{
+          opacity: enabled ? 1 : 0.4,
+          transition: 'opacity 0.15s ease',
+        }}
+      >
         <SlicerControls />
       </div>
     </div>

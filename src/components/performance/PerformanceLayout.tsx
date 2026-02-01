@@ -14,6 +14,7 @@ import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 import { useMediaStore } from '../../stores/mediaStore'
+import { InfoPanel } from '../panels/InfoPanel'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
@@ -114,16 +115,20 @@ export function PerformanceLayout() {
           border: '1px solid var(--border)',
         }}
       >
-        {/* Left sidebar: Preset Dropdown Bar */}
+        {/* Left sidebar: Preset Dropdown Bar + Info Panel */}
         <div
           className="flex-shrink-0 flex flex-col"
           style={{
-            width: '120px',
+            width: '220px',
             backgroundColor: 'var(--bg-surface)',
             borderRight: '1px solid var(--border)',
           }}
         >
           <PresetDropdownBar canvasRef={captureRef} />
+          {/* Info Panel fills remaining space */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <InfoPanel />
+          </div>
         </div>
 
         {/* Canvas area (center) */}

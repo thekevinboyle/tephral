@@ -74,11 +74,11 @@ function EmptyInfoContent() {
         <div className="text-[12px] space-y-1.5" style={{ color: 'var(--text-muted)' }}>
           <div className="flex items-center gap-2">
             <span className="w-4 text-center">●</span>
-            <span>Click track to inspect</span>
+            <span>Click effect to inspect</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-4 text-center">⇧</span>
-            <span>Shift+click effect or step</span>
+            <span className="w-4 text-center">▸</span>
+            <span>Click track or preset</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-4 text-center">◐</span>

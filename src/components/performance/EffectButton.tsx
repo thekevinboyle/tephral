@@ -110,13 +110,18 @@ export function EffectButton({
       addEvent({ effect: id, param: value })
     }
 
-    // Shift+click = select for info panel
+    // Shift+click = select for info panel only (no toggle)
     if (!wasDrag && e.shiftKey && elapsed < HOLD_THRESHOLD) {
       selectEffectForInfoPanel(id)
       dragStartY.current = null
       didDrag.current = false
       isHolding.current = false
       return
+    }
+
+    // Regular click also shows effect info (along with toggling)
+    if (!wasDrag && elapsed < HOLD_THRESHOLD) {
+      selectEffectForInfoPanel(id)
     }
 
     // Handle solo/latch/toggle logic

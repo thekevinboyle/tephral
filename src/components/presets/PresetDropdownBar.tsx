@@ -5,7 +5,7 @@ import type { Preset, Folder } from '../../stores/presetLibraryStore'
 import { PresetFolderTree } from './PresetFolderTree'
 import { PresetContextMenu, FolderContextMenu } from './PresetContextMenu'
 import { importFile, openImportDialog, exportPack, captureThumbnail } from '../../utils/presetIO'
-import { InfoPanel } from '../panels/InfoPanel'
+import { useUIStore } from '../../stores/uiStore'
 
 interface ContextMenuState {
   type: 'preset' | 'folder'
@@ -41,6 +41,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [renameState, setRenameState] = useState<{ id: string; type: 'preset' | 'folder'; name: string } | null>(null)
   const renameInputRef = useRef<HTMLInputElement>(null)
+  const selectPreset = useUIStore((s) => s.selectPreset)
 
   // Load presets on mount
   useEffect(() => {
@@ -103,9 +104,10 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
   const handlePresetLoad = useCallback(
     (preset: Preset) => {
       loadPreset(preset.id)
+      selectPreset(preset.id) // Show preset details in info panel
       setIsOpen(false)
     },
-    [loadPreset]
+    [loadPreset, selectPreset]
   )
 
   const handlePresetContextMenu = useCallback((preset: Preset, e: React.MouseEvent) => {
@@ -397,10 +399,6 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
                   </button>
                 </div>
 
-                {/* Info Panel */}
-                <div style={{ borderTop: '1px solid var(--border)' }}>
-                  <InfoPanel />
-                </div>
               </div>
             )}
           </div>,

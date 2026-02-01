@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TEPHRAL — Real-Time Video Destruction</title>
-  <meta name="description" content="64 GPU-accelerated effects. Industrial aesthetic. Runs entirely in your browser.">
+  <meta name="description" content="80+ GPU-accelerated effects. Sample slicer. Clip bin. Industrial aesthetic. Runs entirely in your browser.">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +35,7 @@
       <h1 class="hero__headline heading-xl typewriter">REAL-TIME VIDEO DESTRUCTION</h1>
       <div class="hero__divider"></div>
       <p class="hero__subhead fade-up">
-        64 GPU-accelerated effects. Industrial aesthetic.<br>
+        80+ GPU-accelerated effects. Sample slicer. Clip bin.<br>
         Runs entirely in your browser. No uploads. No waiting.
       </p>
       <div class="hero__ctas fade-up">
@@ -141,20 +141,20 @@
 
     <div class="screenshots-grid">
       <div class="screenshot">
+        <img src="assets/screenshots/slicer.png" alt="Sample slicer">
+        <span class="screenshot__caption">Sample slicer with waveform visualization</span>
+      </div>
+      <div class="screenshot">
+        <img src="assets/screenshots/clipbin.png" alt="Clip bin">
+        <span class="screenshot__caption">Clip bin stores recordings for instant recall</span>
+      </div>
+      <div class="screenshot">
         <img src="assets/screenshots/sequencer.png" alt="Sequencer panel">
         <span class="screenshot__caption">64-step sequencer with parameter automation</span>
       </div>
       <div class="screenshot">
-        <img src="assets/screenshots/params.png" alt="Expanded parameters">
-        <span class="screenshot__caption">Expanded parameter controls with modulation routing</span>
-      </div>
-      <div class="screenshot">
-        <img src="assets/screenshots/presets.png" alt="Preset library">
-        <span class="screenshot__caption">Preset library with folder organization</span>
-      </div>
-      <div class="screenshot">
         <img src="assets/screenshots/inspector.png" alt="Inspector panel">
-        <span class="screenshot__caption">Dynamic inspector for tracks, effects, and routing</span>
+        <span class="screenshot__caption">Contextual inspector - click anything to inspect</span>
       </div>
     </div>
   </section>
@@ -170,6 +170,30 @@
     </div>
 
     <div class="capabilities-table">
+      <div class="capability-row">
+        <div class="capability-row__main">
+          <h3 class="capability-row__title">SAMPLE SLICER</h3>
+          <p class="capability-row__desc">Chop video into slices for live performance</p>
+        </div>
+        <ul class="capability-row__features">
+          <li>Click to jump to slice</li>
+          <li>Hold to loop</li>
+          <li>Crossfader blend modes</li>
+        </ul>
+      </div>
+
+      <div class="capability-row">
+        <div class="capability-row__main">
+          <h3 class="capability-row__title">CLIP BIN</h3>
+          <p class="capability-row__desc">Store recordings for instant recall</p>
+        </div>
+        <ul class="capability-row__features">
+          <li>Auto-capture recordings</li>
+          <li>Drag to slicer</li>
+          <li>Thumbnail preview</li>
+        </ul>
+      </div>
+
       <div class="capability-row">
         <div class="capability-row__main">
           <h3 class="capability-row__title">SEQUENCER</h3>
@@ -202,7 +226,7 @@
         <ul class="capability-row__features">
           <li>Live canvas capture</li>
           <li>WebM/MP4 export</li>
-          <li>No server upload</li>
+          <li>Clip bin storage</li>
         </ul>
       </div>
 
@@ -212,8 +236,8 @@
           <p class="capability-row__desc">Save and recall effect configurations</p>
         </div>
         <ul class="capability-row__features">
-          <li>Folder organization</li>
-          <li>Import/export JSON</li>
+          <li>Compact dropdown menu</li>
+          <li>Import/export packs</li>
           <li>Bank system (A-D)</li>
         </ul>
       </div>
@@ -296,8 +320,8 @@
             <td>Switch effect page</td>
           </tr>
           <tr>
-            <td><kbd>SHIFT</kbd></td>
-            <td>Hold + click for info panel</td>
+            <td><kbd>S</kbd></td>
+            <td>Toggle slicer</td>
           </tr>
           <tr>
             <td><kbd>ESC</kbd></td>
@@ -312,20 +336,20 @@
           <li><span class="step-num">01</span> Select input source</li>
           <li><span class="step-num">02</span> Click effect buttons to toggle</li>
           <li><span class="step-num">03</span> Drag up/down to adjust intensity</li>
-          <li><span class="step-num">04</span> Use sequencer to automate</li>
-          <li><span class="step-num">05</span> Save presets to recall setups</li>
-          <li><span class="step-num">06</span> Hit record to capture</li>
+          <li><span class="step-num">04</span> Record clips to the bin</li>
+          <li><span class="step-num">05</span> Drag clips to slicer for chopping</li>
+          <li><span class="step-num">06</span> Use crossfader to blend</li>
         </ol>
       </div>
 
       <div class="docs-block">
         <h3 class="docs-block__title">TIPS</h3>
         <ul class="tips-list">
-          <li>Double-click effect to solo</li>
+          <li>Click effects to show info in inspector</li>
+          <li>Hold slice to loop that section</li>
           <li>Drag track handle to parameter slider</li>
-          <li>Click routing indicator to inspect</li>
-          <li>Right-click presets for context menu</li>
-          <li>Use bank buttons (A-D) for quick switching</li>
+          <li>Use crossfader blend modes (mix/layer)</li>
+          <li>Bank buttons (A-D) for quick switching</li>
         </ul>
       </div>
     </div>

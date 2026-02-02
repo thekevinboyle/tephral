@@ -858,16 +858,15 @@ export function PerformanceGrid() {
                     : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
-                {/* LED indicator */}
-                {hasActive && (
-                  <span
-                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{
-                      backgroundColor: '#22c55e',
-                      boxShadow: '0 0 4px #22c55e',
-                    }}
-                  />
-                )}
+                {/* LED indicator - always reserve space */}
+                <span
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-opacity"
+                  style={{
+                    backgroundColor: '#22c55e',
+                    boxShadow: hasActive ? '0 0 4px #22c55e' : 'none',
+                    opacity: hasActive ? 1 : 0,
+                  }}
+                />
                 {name}
               </button>
             )

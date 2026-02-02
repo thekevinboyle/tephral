@@ -119,9 +119,14 @@ export function ClipBinPopover({ onClose, anchorRect }: ClipBinPopoverProps) {
               </div>
             </div>
 
-            {/* Time ago */}
-            <div className="mt-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
-              {formatTimeAgo(clip.createdAt)}
+            {/* Time ago + drag hint */}
+            <div className="mt-1 flex items-center justify-between">
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                {formatTimeAgo(clip.createdAt)}
+              </span>
+              <span className="text-[9px] opacity-0 group-hover:opacity-60 transition-opacity" style={{ color: 'var(--text-muted)' }}>
+                drag to slicer
+              </span>
             </div>
 
             {/* Delete button */}

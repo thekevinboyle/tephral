@@ -250,6 +250,11 @@ export class EffectPipeline {
       const renderer = this.composer.getRenderer()
       // Must reset render target to screen (null) since composer uses internal buffers
       renderer.setRenderTarget(null)
+      // Set viewport to full canvas size
+      const size = renderer.getSize(new THREE.Vector2())
+      renderer.setViewport(0, 0, size.x, size.y)
+      renderer.setScissor(0, 0, size.x, size.y)
+      renderer.setScissorTest(false)
       renderer.clear()
       renderer.render(this.quadScene, this.camera)
       return

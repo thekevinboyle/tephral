@@ -177,105 +177,94 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
     return detectFromBinaryArray(motion, w, h, minSize, 'motion')
   }
 
-  // Convert RGB to HSV
-  function rgbToHsv(r: number, g: number, b: number): [number, number, number] {
-    r /= 255; g /= 255; b /= 255
-    const max = Math.max(r, g, b)
-    const min = Math.min(r, g, b)
-    const d = max - min
-    let h = 0
-    const s = max === 0 ? 0 : d / max
-    const v = max
+  // Detect faces - stable bright regions (bright but NOT moving)
+  // Faces tend to be well-lit and stationary relative to background
+  function detectFace(
+    currentData: ImageData,
+    prevData: ImageData | null,
+    threshold: number,
+    minSize: number
+  ): Blob[] {
+    if (!prevData) return []
 
-    if (d !== 0) {
-      switch (max) {
-        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break
-        case g: h = ((b - r) / d + 2) / 6; break
-        case b: h = ((r - g) / d + 4) / 6; break
-      }
+    const w = currentData.width
+    const h = currentData.height
+    const curr = currentData.data
+    const prev = prevData.data
+    const stable = new Uint8Array(w * h)
+
+    // Brightness threshold scaled from 0-100 param to actual luminance
+    const brightnessThresh = 80 + (threshold / 100) * 120 // 80-200 range
+
+    for (let i = 0; i < w * h; i++) {
+      const idx = i * 4
+      const lum = 0.299 * curr[idx] + 0.587 * curr[idx + 1] + 0.114 * curr[idx + 2]
+
+      // Check if bright
+      const isBright = lum >= brightnessThresh
+
+      // Check if stable (low motion)
+      const diff = Math.abs(curr[idx] - prev[idx]) +
+                   Math.abs(curr[idx + 1] - prev[idx + 1]) +
+                   Math.abs(curr[idx + 2] - prev[idx + 2])
+      const isStable = diff < 30
+
+      // Face = bright AND stable
+      stable[i] = (isBright && isStable) ? 1 : 0
     }
-    return [h * 360, s, v]
-  }
 
-  // Detect skin-tone blobs
-  function detectSkinTone(imageData: ImageData, threshold: number, minSize: number, mode: string): Blob[] {
-    const satMin = 0.1
-    const satMax = 0.2 + (threshold / 100) * 0.6
-
-    return detectConnectedComponents(imageData, (r, g, b) => {
-      const [h, s, v] = rgbToHsv(r, g, b)
-      const hueMatch = (h >= 0 && h <= 50) || (h >= 340 && h <= 360)
-      const satMatch = s >= satMin && s <= satMax
-      const valMatch = v >= 0.2 && v <= 0.95
-      return hueMatch && satMatch && valMatch
-    }, minSize, mode)
-  }
-
-  // Detect faces - skin-tone blobs with face-like shape:
-  // - High compactness (faces are oval/round shapes)
-  // - High extent (faces fill their bounding box well)
-  // - Aspect ratio close to 1 (not too wide or tall)
-  // - In upper 75% of frame
-  // - Reasonably large
-  function detectFace(imageData: ImageData, threshold: number, minSize: number): Blob[] {
-    const allSkinBlobs = detectSkinTone(imageData, threshold, minSize, 'face')
-
-    return allSkinBlobs.filter(blob => {
+    // Filter for upper 75% of frame and face-like shapes
+    const blobs = detectFromBinaryArray(stable, w, h, minSize, 'face')
+    return blobs.filter(blob => {
       // Face should be in upper 75% of frame
       if (blob.centerY > 0.75) return false
-
-      // Face shape: high compactness (oval/circular)
-      // Faces typically have compactness > 0.25
-      if (blob.compactness < 0.25) return false
-
-      // Face shape: high extent (fills bounding box well)
-      // Faces typically fill 40%+ of their bounding box
-      if (blob.extent < 0.4) return false
-
-      // Aspect ratio should be face-like (0.5 to 1.8)
-      if (blob.aspectRatio < 0.5 || blob.aspectRatio > 1.8) return false
-
-      // Face should be reasonably large (at least 0.5% of frame area)
-      const blobArea = blob.width * blob.height
-      if (blobArea < 0.005) return false
-
+      // Face should be reasonably compact (not thin lines)
+      if (blob.compactness < 0.15) return false
+      // Face should be reasonably large
+      if (blob.width * blob.height < 0.003) return false
       return true
     })
   }
 
-  // Detect hands - skin-tone blobs with hand-like shape:
-  // - Lower compactness than faces (irregular due to fingers)
-  // - Lower extent (fingers create gaps)
-  // - More varied aspect ratio
-  // - Not face-like (exclude round blobs in upper frame)
-  function detectHands(imageData: ImageData, threshold: number, minSize: number): Blob[] {
-    const allSkinBlobs = detectSkinTone(imageData, threshold, minSize, 'hands')
+  // Detect hands - bright regions that ARE moving
+  // Hands tend to be active/moving and reasonably bright
+  function detectHands(
+    currentData: ImageData,
+    prevData: ImageData | null,
+    threshold: number,
+    minSize: number
+  ): Blob[] {
+    if (!prevData) return []
 
-    return allSkinBlobs.filter(blob => {
-      const blobArea = blob.width * blob.height
+    const w = currentData.width
+    const h = currentData.height
+    const curr = currentData.data
+    const prev = prevData.data
+    const moving = new Uint8Array(w * h)
 
-      // Exclude very face-like blobs (high compactness + high extent + upper frame + ~1:1 aspect)
-      const isFaceLike =
-        blob.compactness > 0.35 &&
-        blob.extent > 0.5 &&
-        blob.centerY < 0.5 &&
-        blob.aspectRatio > 0.6 && blob.aspectRatio < 1.5 &&
-        blobArea > 0.015
+    // Motion sensitivity from threshold param
+    const motionThresh = 20 + (100 - threshold) // Lower threshold = more sensitive
 
-      if (isFaceLike) return false
+    for (let i = 0; i < w * h; i++) {
+      const idx = i * 4
+      const lum = 0.299 * curr[idx] + 0.587 * curr[idx + 1] + 0.114 * curr[idx + 2]
 
-      // Hands typically have lower extent due to finger gaps
-      // But not too low (would be noise)
-      if (blob.extent < 0.15) return false
+      // Check if reasonably bright (not dark shadows)
+      const isBright = lum >= 50
 
-      // Hands should be medium-sized (not huge like a full torso)
-      if (blobArea > 0.12) return false
+      // Check if moving
+      const diff = Math.abs(curr[idx] - prev[idx]) +
+                   Math.abs(curr[idx + 1] - prev[idx + 1]) +
+                   Math.abs(curr[idx + 2] - prev[idx + 2])
+      const isMoving = diff > motionThresh
 
-      // Hands should have some minimum size
-      if (blobArea < 0.002) return false
+      // Hand = bright AND moving
+      moving[i] = (isBright && isMoving) ? 1 : 0
+    }
 
-      return true
-    })
+    const blobs = detectFromBinaryArray(moving, w, h, minSize, 'hands')
+    // Filter out very large blobs (likely whole body movement)
+    return blobs.filter(blob => blob.width * blob.height < 0.15)
   }
 
   // Generic connected component detection from RGBA data
@@ -889,19 +878,19 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
           drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined, p.boxShape, p.lineStyle)
         }
 
-        // Face tracking (skin-tone based with face-like filtering)
+        // Face tracking (stable bright regions - not moving)
         if (currentStore.faceEnabled) {
           const p = currentStore.faceParams
-          let blobs = detectFace(imageData, p.threshold, p.minSize)
+          let blobs = detectFace(imageData, prevFrameRef.current, p.threshold, p.minSize)
           if (blobs.length > p.maxBlobs) blobs = blobs.slice(0, p.maxBlobs)
           const tracked = trackBlobs(blobs, 'face')
           drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined, p.boxShape, p.lineStyle)
         }
 
-        // Hands tracking (skin-tone based, smaller blobs)
+        // Hands tracking (moving bright regions)
         if (currentStore.handsEnabled) {
           const p = currentStore.handsParams
-          let blobs = detectHands(imageData, p.threshold, p.minSize)
+          let blobs = detectHands(imageData, prevFrameRef.current, p.threshold, p.minSize)
           if (blobs.length > p.maxBlobs) blobs = blobs.slice(0, p.maxBlobs)
           const tracked = trackBlobs(blobs, 'hands')
           drawBlobs(ctx, tracked, p.boxColor, p.lineColor, p.showBoxes, p.showLines, p.showLabels, currentWidth, currentHeight, p.boxFilter, p.boxFilterIntensity, srcCtx ?? undefined, p.boxShape, p.lineStyle)

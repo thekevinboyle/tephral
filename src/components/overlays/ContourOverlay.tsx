@@ -18,6 +18,7 @@ interface Blob {
   centerY: number
   area: number
   value: number // tracking value for display
+  compactness: number  // Shape metric for rendering style
 }
 
 // Downsampled resolution for blob detection
@@ -32,6 +33,7 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const offscreenRef = useRef<HTMLCanvasElement | null>(null)
   const offscreenCtxRef = useRef<CanvasRenderingContext2D | null>(null)
+  const prevFrameRef = useRef<ImageData | null>(null)
   const frameIdRef = useRef<number>(0)
   const lastFrameTimeRef = useRef<number>(0)
   const isRunningRef = useRef<boolean>(false)
@@ -77,31 +79,27 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
     if (!enabled) {
       trackedBlobs.current.clear()
       blobIdCounter.current = 0
+      prevFrameRef.current = null
     }
   }, [enabled])
 
-  // Detect blobs using connected component labeling
-  function detectBlobs(
-    imageData: ImageData,
-    threshold: number,
+  // Reset previous frame when detection mode changes
+  useEffect(() => {
+    prevFrameRef.current = null
+    trackedBlobs.current.clear()
+  }, [params.mode])
+
+  // Connected component labeling from binary array with shape analysis
+  function detectFromBinaryArray(
+    binary: Uint8Array,
+    w: number,
+    h: number,
     minSize: number
   ): Blob[] {
-    const w = imageData.width
-    const h = imageData.height
-    const data = imageData.data
     const labels = new Int32Array(w * h)
     const parent: number[] = []
     let nextLabel = 1
 
-    // Helper to get luminance
-    const getLuminance = (i: number) => {
-      const r = data[i * 4]
-      const g = data[i * 4 + 1]
-      const b = data[i * 4 + 2]
-      return 0.299 * r + 0.587 * g + 0.114 * b
-    }
-
-    // Union-find helpers
     const find = (x: number): number => {
       if (parent[x] !== x) parent[x] = find(parent[x])
       return parent[x]
@@ -112,18 +110,15 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
       if (ra !== rb) parent[rb] = ra
     }
 
-    // First pass: label connected components
+    // First pass - label connected components
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const idx = y * w + x
-        const lum = getLuminance(idx)
-
-        if (lum >= threshold) {
+        if (binary[idx] === 1) {
           const left = x > 0 ? labels[idx - 1] : 0
           const up = y > 0 ? labels[idx - w] : 0
 
           if (left === 0 && up === 0) {
-            // New label
             labels[idx] = nextLabel
             parent[nextLabel] = nextLabel
             nextLabel++
@@ -132,7 +127,6 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
           } else if (left === 0 && up !== 0) {
             labels[idx] = up
           } else {
-            // Both neighbors labeled - union them
             labels[idx] = left
             if (left !== up) union(left, up)
           }
@@ -140,8 +134,11 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
       }
     }
 
-    // Second pass: collect blob stats
-    const blobStats = new Map<number, { minX: number; maxX: number; minY: number; maxY: number; count: number }>()
+    // Collect stats including perimeter
+    const stats = new Map<number, {
+      minX: number; maxX: number; minY: number; maxY: number;
+      count: number; perimeter: number
+    }>()
 
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
@@ -149,41 +146,159 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
         const label = labels[idx]
         if (label > 0) {
           const root = find(label)
-          if (!blobStats.has(root)) {
-            blobStats.set(root, { minX: x, maxX: x, minY: y, maxY: y, count: 1 })
+
+          // Check if this pixel is on the perimeter
+          const isPerimeter =
+            x === 0 || x === w - 1 || y === 0 || y === h - 1 ||
+            binary[idx - 1] === 0 || binary[idx + 1] === 0 ||
+            binary[idx - w] === 0 || binary[idx + w] === 0
+
+          if (!stats.has(root)) {
+            stats.set(root, {
+              minX: x, maxX: x, minY: y, maxY: y,
+              count: 1, perimeter: isPerimeter ? 1 : 0
+            })
           } else {
-            const stats = blobStats.get(root)!
-            stats.minX = Math.min(stats.minX, x)
-            stats.maxX = Math.max(stats.maxX, x)
-            stats.minY = Math.min(stats.minY, y)
-            stats.maxY = Math.max(stats.maxY, y)
-            stats.count++
+            const s = stats.get(root)!
+            s.minX = Math.min(s.minX, x)
+            s.maxX = Math.max(s.maxX, x)
+            s.minY = Math.min(s.minY, y)
+            s.maxY = Math.max(s.maxY, y)
+            s.count++
+            if (isPerimeter) s.perimeter++
           }
         }
       }
     }
 
-    // Convert to blob objects
     const blobs: Blob[] = []
-    blobStats.forEach((stats, label) => {
-      if (stats.count >= minSize) {
-        const blobW = (stats.maxX - stats.minX + 1) / w
-        const blobH = (stats.maxY - stats.minY + 1) / h
+    stats.forEach((s, label) => {
+      if (s.count >= minSize) {
+        const blobWidth = (s.maxX - s.minX + 1)
+        const blobHeight = (s.maxY - s.minY + 1)
+
+        // Compactness: 4π*area/perimeter² (1.0 = perfect circle)
+        const perimeter = Math.max(s.perimeter, 1)
+        const compactness = Math.min((4 * Math.PI * s.count) / (perimeter * perimeter), 1)
+
         blobs.push({
           id: label,
-          x: stats.minX / w,
-          y: stats.minY / h,
-          width: blobW,
-          height: blobH,
-          centerX: (stats.minX + stats.maxX) / 2 / w,
-          centerY: (stats.minY + stats.maxY) / 2 / h,
-          area: stats.count,
-          value: 0, // will be assigned during tracking
+          x: s.minX / w,
+          y: s.minY / h,
+          width: blobWidth / w,
+          height: blobHeight / h,
+          centerX: (s.minX + s.maxX) / 2 / w,
+          centerY: (s.minY + s.maxY) / 2 / h,
+          area: s.count,
+          value: 0,
+          compactness,
         })
       }
     })
 
     return blobs
+  }
+
+  // Detect blobs by brightness threshold
+  function detectBrightness(imageData: ImageData, threshold: number, minSize: number): Blob[] {
+    const w = imageData.width
+    const h = imageData.height
+    const data = imageData.data
+    const binary = new Uint8Array(w * h)
+
+    for (let i = 0; i < w * h; i++) {
+      const idx = i * 4
+      const lum = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]
+      binary[i] = lum >= threshold ? 1 : 0
+    }
+
+    return detectFromBinaryArray(binary, w, h, minSize)
+  }
+
+  // Detect blobs by edge detection (Sobel)
+  function detectEdges(imageData: ImageData, threshold: number, minSize: number): Blob[] {
+    const w = imageData.width
+    const h = imageData.height
+    const data = imageData.data
+    const edges = new Uint8Array(w * h)
+
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const getLum = (ox: number, oy: number) => {
+          const i = ((y + oy) * w + (x + ox)) * 4
+          return 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
+        }
+
+        const gx = -getLum(-1, -1) - 2 * getLum(-1, 0) - getLum(-1, 1) +
+                    getLum(1, -1) + 2 * getLum(1, 0) + getLum(1, 1)
+        const gy = -getLum(-1, -1) - 2 * getLum(0, -1) - getLum(1, -1) +
+                    getLum(-1, 1) + 2 * getLum(0, 1) + getLum(1, 1)
+        const magnitude = Math.sqrt(gx * gx + gy * gy)
+
+        edges[y * w + x] = magnitude >= threshold ? 1 : 0
+      }
+    }
+
+    return detectFromBinaryArray(edges, w, h, minSize)
+  }
+
+  // Detect blobs by color matching
+  function detectColor(
+    imageData: ImageData,
+    targetColor: string,
+    colorRange: number,
+    minSize: number
+  ): Blob[] {
+    const w = imageData.width
+    const h = imageData.height
+    const data = imageData.data
+    const binary = new Uint8Array(w * h)
+
+    // Parse target color
+    const match = targetColor.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i)
+    if (!match) return []
+    const tr = parseInt(match[1], 16)
+    const tg = parseInt(match[2], 16)
+    const tb = parseInt(match[3], 16)
+    const maxDist = colorRange * 441.67 // sqrt(255^2 * 3)
+
+    for (let i = 0; i < w * h; i++) {
+      const idx = i * 4
+      const dist = Math.sqrt(
+        (data[idx] - tr) ** 2 +
+        (data[idx + 1] - tg) ** 2 +
+        (data[idx + 2] - tb) ** 2
+      )
+      binary[i] = dist <= maxDist ? 1 : 0
+    }
+
+    return detectFromBinaryArray(binary, w, h, minSize)
+  }
+
+  // Detect blobs by motion (frame difference)
+  function detectMotion(
+    currentData: ImageData,
+    prevData: ImageData | null,
+    sensitivity: number,
+    minSize: number
+  ): Blob[] {
+    if (!prevData) return []
+
+    const w = currentData.width
+    const h = currentData.height
+    const curr = currentData.data
+    const prev = prevData.data
+    const motion = new Uint8Array(w * h)
+
+    for (let i = 0; i < w * h; i++) {
+      const idx = i * 4
+      const diff = Math.abs(curr[idx] - prev[idx]) +
+                   Math.abs(curr[idx + 1] - prev[idx + 1]) +
+                   Math.abs(curr[idx + 2] - prev[idx + 2])
+      motion[i] = diff > sensitivity ? 1 : 0
+    }
+
+    return detectFromBinaryArray(motion, w, h, minSize)
   }
 
   // Match and track blobs across frames
@@ -209,7 +324,7 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
       })
 
       if (bestMatch !== null) {
-        // Update existing blob
+        // Update existing blob with smoothing
         matched.add(bestMatch)
         const existingBlob = tracked.get(bestMatch)!
         blob.id = bestMatch
@@ -226,7 +341,7 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
       }
     }
 
-    // Remove unmatched old blobs (with some persistence)
+    // Remove unmatched old blobs
     const toRemove: number[] = []
     tracked.forEach((_, id) => {
       if (!matched.has(id) && !newBlobs.some(b => b.id === id)) {
@@ -307,10 +422,29 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
         offscreenCtx.drawImage(source, 0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
         const imageData = offscreenCtx.getImageData(0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
 
-        // Detect blobs
-        const threshold255 = currentParams.threshold * 255
+        // Detect blobs based on detection mode
         const minPixels = currentParams.minSize * 10 // scale minSize to pixel count
-        let blobs = detectBlobs(imageData, threshold255, minPixels)
+        let blobs: Blob[] = []
+
+        switch (currentParams.mode) {
+          case 'brightness':
+            blobs = detectBrightness(imageData, currentParams.threshold * 255, minPixels)
+            break
+          case 'edge':
+            blobs = detectEdges(imageData, currentParams.threshold * 150, minPixels)
+            break
+          case 'color':
+            blobs = detectColor(imageData, currentParams.targetColor, currentParams.colorRange, minPixels)
+            break
+          case 'motion':
+            // Motion sensitivity: lower threshold = more sensitive
+            const sensitivity = 30 + (1 - currentParams.threshold) * 70
+            blobs = detectMotion(imageData, prevFrameRef.current, sensitivity, minPixels)
+            break
+        }
+
+        // Store current frame for motion detection
+        prevFrameRef.current = imageData
 
         // Limit blob count
         if (blobs.length > 30) {
@@ -320,53 +454,110 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
         // Track blobs
         const trackedBlobList = trackBlobs(blobs)
 
-        // Get style colors
-        const boxColor = currentParams.color || 'rgba(255, 200, 100, 0.8)'
-        const lineColor = currentParams.glowColor || 'rgba(255, 255, 255, 0.7)'
+        // Get style params
+        const lineWidth = currentParams.baseWidth
+        const contourColor = currentParams.color
+        const glowColor = currentParams.glowColor
+        const glowIntensity = currentParams.glowIntensity
+        const taperAmount = currentParams.taperAmount
 
-        // Draw connecting lines between nearby blobs
-        ctx.strokeStyle = lineColor
-        ctx.lineWidth = 1
-        for (let i = 0; i < trackedBlobList.length; i++) {
-          for (let j = i + 1; j < trackedBlobList.length; j++) {
-            const a = trackedBlobList[i]
-            const b = trackedBlobList[j]
-            const dx = a.centerX - b.centerX
-            const dy = a.centerY - b.centerY
-            const dist = Math.sqrt(dx * dx + dy * dy)
+        // Draw connecting lines (Kojima-style strands)
+        if (trackedBlobList.length > 1) {
+          for (let i = 0; i < trackedBlobList.length; i++) {
+            for (let j = i + 1; j < trackedBlobList.length; j++) {
+              const a = trackedBlobList[i]
+              const b = trackedBlobList[j]
+              const dx = a.centerX - b.centerX
+              const dy = a.centerY - b.centerY
+              const dist = Math.sqrt(dx * dx + dy * dy)
 
-            // Connect blobs within a certain distance
-            if (dist < 0.4) {
-              ctx.beginPath()
-              ctx.moveTo(a.centerX * currentWidth, a.centerY * currentHeight)
-              ctx.lineTo(b.centerX * currentWidth, b.centerY * currentHeight)
-              ctx.stroke()
+              // Connect blobs within a certain distance
+              if (dist < 0.4) {
+                const ax = a.centerX * currentWidth
+                const ay = a.centerY * currentHeight
+                const bx = b.centerX * currentWidth
+                const by = b.centerY * currentHeight
+                const midX = (ax + bx) / 2
+                const midY = (ay + by) / 2
+                const perpX = -(by - ay) * 0.15
+                const perpY = (bx - ax) * 0.15
+
+                // Draw glow if enabled
+                if (glowIntensity > 0) {
+                  ctx.strokeStyle = glowColor
+                  ctx.lineWidth = lineWidth * 3
+                  ctx.globalAlpha = glowIntensity * 0.3
+                  ctx.beginPath()
+                  ctx.moveTo(ax, ay)
+                  ctx.quadraticCurveTo(midX + perpX, midY + perpY, bx, by)
+                  ctx.stroke()
+                  ctx.globalAlpha = 1
+                }
+
+                // Draw main curved strand
+                ctx.strokeStyle = contourColor
+                ctx.lineWidth = lineWidth
+                ctx.beginPath()
+                ctx.moveTo(ax, ay)
+                ctx.quadraticCurveTo(midX + perpX, midY + perpY, bx, by)
+                ctx.stroke()
+
+                // Draw secondary strand (opposite curve) with taper
+                if (taperAmount > 0.3) {
+                  ctx.globalAlpha = 0.4
+                  ctx.lineWidth = lineWidth * 0.5
+                  ctx.beginPath()
+                  ctx.moveTo(ax, ay)
+                  ctx.quadraticCurveTo(midX - perpX * 0.7, midY - perpY * 0.7, bx, by)
+                  ctx.stroke()
+                  ctx.globalAlpha = 1
+                }
+              }
             }
           }
         }
 
-        // Draw bounding boxes and labels
-        ctx.strokeStyle = boxColor
-        ctx.lineWidth = 1.5
-        ctx.font = '11px monospace'
-        ctx.fillStyle = boxColor
+        // Draw contour outlines around blobs
+        ctx.strokeStyle = contourColor
+        ctx.lineWidth = lineWidth
 
         for (const blob of trackedBlobList) {
           const x = blob.x * currentWidth
           const y = blob.y * currentHeight
           const w = blob.width * currentWidth
           const h = blob.height * currentHeight
+          const cx = x + w / 2
+          const cy = y + h / 2
 
-          // Draw box
-          ctx.strokeRect(x, y, w, h)
+          // Draw glow if enabled
+          if (glowIntensity > 0) {
+            ctx.strokeStyle = glowColor
+            ctx.lineWidth = lineWidth * 2.5
+            ctx.globalAlpha = glowIntensity * 0.4
+            if (blob.compactness > 0.5) {
+              ctx.beginPath()
+              ctx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2)
+              ctx.stroke()
+            } else {
+              ctx.strokeRect(x, y, w, h)
+            }
+            ctx.globalAlpha = 1
+          }
 
-          // Draw tracking value label
-          const label = blob.value.toFixed(4)
-          ctx.fillText(label, x + 4, y + h - 4)
+          // Draw main contour - use ellipse for compact shapes, rect for others
+          ctx.strokeStyle = contourColor
+          ctx.lineWidth = lineWidth
+          if (blob.compactness > 0.5) {
+            ctx.beginPath()
+            ctx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2)
+            ctx.stroke()
+          } else {
+            ctx.strokeRect(x, y, w, h)
+          }
         }
 
       } catch (err) {
-        console.error('Blob detection error:', err)
+        console.error('Contour detection error:', err)
       }
 
       frameIdRef.current = requestAnimationFrame(animate)

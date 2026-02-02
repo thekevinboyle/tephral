@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { AsciiRenderOverlay } from './AsciiRenderOverlay'
 import { StippleOverlay } from './StippleOverlay'
 import { VisionTrackingOverlay } from './VisionTrackingOverlay'
+import { ContourOverlay } from './ContourOverlay'
+import { LandmarksOverlay } from './LandmarksOverlay'
 import { AcidOverlay } from './AcidOverlay'
 import { TextureOverlay } from './TextureOverlay'
 import { DataOverlay } from './DataOverlay'
@@ -51,6 +53,12 @@ export function OverlayContainer({ containerRef, glCanvas }: OverlayContainerPro
 
       {/* Vision tracking overlay renders on top */}
       <VisionTrackingOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
+
+      {/* Contour tracking overlay */}
+      <ContourOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
+
+      {/* ML-based landmarks overlay */}
+      <LandmarksOverlay width={dimensions.width} height={dimensions.height} />
 
       {/* Acid effects overlay (renders after vision tracking) */}
       <AcidOverlay sourceCanvas={glCanvas} width={dimensions.width} height={dimensions.height} />

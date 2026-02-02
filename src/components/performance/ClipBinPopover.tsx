@@ -24,14 +24,17 @@ function formatTimeAgo(timestamp: number): string {
 
 export function ClipBinPopover({ onClose, anchorRect }: ClipBinPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null)
+  const isDraggingRef = useRef(false)
   const clips = useClipStore((state) => state.clips)
   const selectClip = useClipStore((state) => state.selectClip)
   const removeClip = useClipStore((state) => state.removeClip)
   const clearAllClips = useClipStore((state) => state.clearAllClips)
 
-  // Handle click outside
+  // Handle click outside (but not during drag)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      // Don't close if we're dragging
+      if (isDraggingRef.current) return
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
         onClose()
       }
@@ -41,10 +44,11 @@ export function ClipBinPopover({ onClose, anchorRect }: ClipBinPopoverProps) {
       if (e.key === 'Escape') onClose()
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
+    // Use mouseup instead of mousedown to allow drag to start
+    document.addEventListener('mouseup', handleClickOutside)
     document.addEventListener('keydown', handleEscape)
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('mouseup', handleClickOutside)
       document.removeEventListener('keydown', handleEscape)
     }
   }, [onClose])
@@ -93,9 +97,13 @@ export function ClipBinPopover({ onClose, anchorRect }: ClipBinPopoverProps) {
             className="p-2 hover:bg-white/10 cursor-grab active:cursor-grabbing transition-colors group relative"
             draggable
             onDragStart={(e) => {
+              isDraggingRef.current = true
               e.dataTransfer.setData('application/x-clip-id', clip.id)
               e.dataTransfer.effectAllowed = 'copy'
-              onClose() // Close popover when dragging
+            }}
+            onDragEnd={() => {
+              isDraggingRef.current = false
+              onClose() // Close popover after drag completes
             }}
             onClick={() => handleClipClick(clip.id)}
           >

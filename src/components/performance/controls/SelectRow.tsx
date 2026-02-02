@@ -7,34 +7,17 @@ interface SelectRowProps {
 
 export function SelectRow({ label, value, options, onChange }: SelectRowProps) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '6px 0',
-      }}
-    >
-      <span
-        style={{
-          fontSize: '14px',
-          color: 'var(--text-muted)',
-        }}
-      >
+    <div className="flex items-center justify-between py-1.5">
+      <span className="text-[14px]" style={{ color: 'var(--text-muted)' }}>
         {label}
       </span>
-      <div style={{ display: 'flex', gap: '4px' }}>
+      <div className="flex gap-1">
         {options.map((option) => (
           <button
             key={option.value}
             onClick={() => onChange(option.value)}
+            className="px-2 py-0.5 text-[13px] rounded transition-colors"
             style={{
-              padding: '2px 8px',
-              fontSize: '13px',
-              borderRadius: '4px',
-              transition: 'background-color 0.15s, color 0.15s',
-              border: 'none',
-              cursor: 'pointer',
               backgroundColor:
                 value === option.value
                   ? 'var(--accent)'
@@ -43,6 +26,7 @@ export function SelectRow({ label, value, options, onChange }: SelectRowProps) {
                 value === option.value
                   ? 'var(--bg-surface)'
                   : 'var(--text-muted)',
+              border: value === option.value ? 'none' : '1px solid var(--border)',
             }}
           >
             {option.label}

@@ -7,19 +7,20 @@ interface ToggleRowProps {
 export function ToggleRow({ label, value, onChange }: ToggleRowProps) {
   return (
     <div className="flex items-center justify-between py-1.5">
-      <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{label}</span>
+      <span className="text-[14px]" style={{ color: 'var(--text-muted)' }}>{label}</span>
       <button
         onClick={() => onChange(!value)}
-        className="w-8 h-4 rounded-full transition-colors"
+        className="w-9 h-5 rounded-full transition-colors relative"
         style={{
-          backgroundColor: value ? 'var(--text-primary)' : 'var(--border)',
+          backgroundColor: value ? 'var(--accent)' : 'var(--border)',
         }}
       >
         <div
-          className={`w-3 h-3 rounded-full shadow transition-transform ${
-            value ? 'translate-x-4' : 'translate-x-0.5'
-          }`}
-          style={{ backgroundColor: 'var(--bg-surface)' }}
+          className="w-3.5 h-3.5 rounded-full shadow absolute top-0.5 transition-all"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            left: value ? 'calc(100% - 18px)' : '3px',
+          }}
         />
       </button>
     </div>

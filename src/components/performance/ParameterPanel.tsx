@@ -76,7 +76,7 @@ interface ParameterSection {
 
 export function ParameterPanel() {
   const glitch = useGlitchEngineStore()
-  const { effectBypassed, toggleEffectBypassed, soloEffectId, soloLatched, bypassActive, setBypassActive } = useGlitchEngineStore()
+  const { effectBypassed, toggleEffectBypassed, soloEffectId, soloLatched, bypassActive } = useGlitchEngineStore()
 
   // Solo filtering: check if we're in solo mode
   const isSoloing = soloEffectId !== null
@@ -175,15 +175,6 @@ export function ParameterPanel() {
     strand.setSeamEnabled(false)
     strand.setExtinctionEnabled(false)
   }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand])
-
-  // Bypass handlers
-  const handleBypassDown = useCallback(() => {
-    setBypassActive(true)
-  }, [setBypassActive])
-
-  const handleBypassUp = useCallback(() => {
-    setBypassActive(false)
-  }, [setBypassActive])
 
   // Build active effect sections
   const sections: ParameterSection[] = []
@@ -1908,25 +1899,13 @@ export function ParameterPanel() {
         Clear
       </button>
       <button
+        onClick={() => {
+          const current = useGlitchEngineStore.getState().bypassActive
+          useGlitchEngineStore.getState().setBypassActive(!current)
+        }}
         onMouseEnter={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = 'var(--border)')}
         onMouseLeave={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-        onPointerDown={(e) => {
-          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-          handleBypassDown()
-        }}
-        onPointerUp={(e) => {
-          try {
-            (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
-          } catch {}
-          handleBypassUp()
-        }}
-        onPointerCancel={(e) => {
-          try {
-            (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
-          } catch {}
-          handleBypassUp()
-        }}
-        className="px-3 py-1.5 rounded text-[11px] font-medium transition-all select-none touch-none active:scale-95"
+        className="px-3 py-1.5 rounded text-[11px] font-medium transition-all select-none active:scale-95"
         style={{
           backgroundColor: bypassActive ? '#ef4444' : 'var(--bg-surface)',
           border: bypassActive ? '1px solid #ef4444' : '1px solid var(--border)',

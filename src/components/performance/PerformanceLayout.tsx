@@ -115,20 +115,9 @@ export function PerformanceLayout() {
           border: '1px solid var(--border)',
         }}
       >
-        {/* Left sidebar: Preset Dropdown Bar + Info Panel */}
-        <div
-          className="flex-shrink-0 flex flex-col"
-          style={{
-            width: '220px',
-            backgroundColor: 'var(--bg-surface)',
-            borderRight: '1px solid var(--border)',
-          }}
-        >
-          <PresetDropdownBar canvasRef={captureRef} />
-          {/* Info Panel fills remaining space */}
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <InfoPanel />
-          </div>
+        {/* Left sidebar: Expanded Parameter Panel */}
+        <div className="flex-shrink-0" style={{ width: '340px' }}>
+          <ExpandedParameterPanel />
         </div>
 
         {/* Canvas area (center) */}
@@ -189,9 +178,20 @@ export function PerformanceLayout() {
           </div>
         </div>
 
-        {/* Expanded Parameter Panel (right) */}
-        <div className="flex-shrink-0" style={{ width: '340px' }}>
-          <ExpandedParameterPanel />
+        {/* Right sidebar: Preset Dropdown Bar + Info Panel */}
+        <div
+          className="flex-shrink-0 flex flex-col"
+          style={{
+            width: '220px',
+            backgroundColor: 'var(--bg-surface)',
+            borderLeft: '1px solid var(--border)',
+          }}
+        >
+          <PresetDropdownBar canvasRef={captureRef} />
+          {/* Info Panel fills remaining space */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <InfoPanel />
+          </div>
         </div>
       </div>
 

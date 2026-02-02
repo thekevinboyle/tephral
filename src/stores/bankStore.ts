@@ -175,7 +175,10 @@ export const useBankStore = create<BankState>((set, get) => ({
     if (!snapshot) return
 
     // Apply the snapshot to glitch engine store
+    // Always enable the master switch and clear bypasses when loading a bank
     useGlitchEngineStore.setState({
+      enabled: true,
+      effectBypassed: {},
       rgbSplitEnabled: snapshot.glitch.rgbSplitEnabled,
       rgbSplit: { ...snapshot.glitch.rgbSplit },
       blockDisplaceEnabled: snapshot.glitch.blockDisplaceEnabled,

@@ -23,17 +23,23 @@ export function BankButton({
 
   const handleClick = useCallback(() => {
     const now = Date.now()
-    if (now - lastClickTime.current < 300) {
-      // Double-click - save (overwrite)
+    const isDoubleClick = now - lastClickTime.current < 300
+    lastClickTime.current = now
+
+    if (isEmpty) {
+      // Empty bank: single click saves
       onSave()
-      // Flash feedback
       setIsFlashing(true)
       setTimeout(() => setIsFlashing(false), 150)
-    } else if (!isEmpty) {
-      // Single click - load (only if not empty)
+    } else if (isDoubleClick) {
+      // Filled bank: double-click overwrites
+      onSave()
+      setIsFlashing(true)
+      setTimeout(() => setIsFlashing(false), 150)
+    } else {
+      // Filled bank: single click loads
       onLoad()
     }
-    lastClickTime.current = now
   }, [isEmpty, onLoad, onSave])
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {

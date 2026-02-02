@@ -57,7 +57,11 @@ export const useSlicerBufferStore = create<SlicerBufferState>((set, get) => ({
 
   capture: () => {
     const { frames } = get()
-    set({ capturedFrames: [...frames] })
+    const captured = [...frames]
+    set({
+      capturedFrames: captured,
+      currentOutputFrame: captured.length > 0 ? captured[0] : null, // Show first frame immediately
+    })
   },
 
   release: () => {
@@ -69,6 +73,7 @@ export const useSlicerBufferStore = create<SlicerBufferState>((set, get) => ({
       capturedFrames: frames,
       frames: [],
       writeHead: 0,
+      currentOutputFrame: frames.length > 0 ? frames[0] : null, // Show first frame immediately
     })
   },
 

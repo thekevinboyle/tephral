@@ -215,16 +215,25 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   useEffect(() => {
     if (!pipeline) return
 
-    if (mediaTexture) {
-      // Check if slicer should modify input
-      let textureToUse = mediaTexture
-      if (slicerEnabled && slicerCompositor.current) {
-        const slicerTexture = slicerCompositor.current.getOutputTexture()
-        if (slicerTexture) {
-          textureToUse = slicerTexture
+    // Check if slicer should provide the texture (even without media source)
+    if (slicerEnabled && slicerCompositor.current) {
+      const slicerTexture = slicerCompositor.current.getOutputTexture()
+      if (slicerTexture) {
+        pipeline.setInputTexture(slicerTexture)
+        // Use slicer frame dimensions or fallback
+        if (slicerOutputFrame) {
+          pipeline.setVideoSize(slicerOutputFrame.width, slicerOutputFrame.height)
+        } else if (videoElement) {
+          pipeline.setVideoSize(videoElement.videoWidth, videoElement.videoHeight)
+        } else if (imageElement) {
+          pipeline.setVideoSize(imageElement.naturalWidth, imageElement.naturalHeight)
         }
+        return
       }
-      pipeline.setInputTexture(textureToUse)
+    }
+
+    if (mediaTexture) {
+      pipeline.setInputTexture(mediaTexture)
 
       // Get video/image dimensions for aspect ratio
       if (videoElement) {
@@ -246,7 +255,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       pipeline.setInputTexture(placeholder)
       pipeline.setVideoSize(size, size)
     }
-  }, [pipeline, mediaTexture, videoElement, imageElement, slicerEnabled, slicerOutputMode])
+  }, [pipeline, mediaTexture, videoElement, imageElement, slicerEnabled, slicerOutputMode, slicerOutputFrame])
 
   // Handle preview time - seek video when hovering thumbnails
   useEffect(() => {

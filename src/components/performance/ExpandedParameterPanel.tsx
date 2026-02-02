@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useUIStore } from '../../stores/uiStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
@@ -1210,23 +1210,34 @@ function EffectParameters({ effectId }: { effectId: string }) {
     case 'track_bright':
       return (
         <div className="space-y-1">
-          <SizeButtonGrid
+          <SliderRow
             label="Threshold"
             value={visionTracking.brightParams.threshold}
-            presets={THRESHOLD_VALUES}
+            min={0}
+            max={255}
+            step={1}
             onChange={(v) => visionTracking.updateBrightParams({ threshold: v })}
+            format={(v) => `${Math.round((v / 255) * 100)}%`}
+            paramId="track_bright.threshold"
           />
-          <SizeButtonGrid
+          <SliderRow
             label="Min Size"
             value={visionTracking.brightParams.minSize}
-            presets={MIN_SIZE_VALUES}
+            min={1}
+            max={100}
+            step={1}
             onChange={(v) => visionTracking.updateBrightParams({ minSize: v })}
+            format={(v) => `${v}px`}
+            paramId="track_bright.minSize"
           />
-          <SizeButtonGrid
+          <SliderRow
             label="Max Blobs"
             value={visionTracking.brightParams.maxBlobs}
-            presets={MAX_BLOBS_VALUES}
+            min={1}
+            max={50}
+            step={1}
             onChange={(v) => visionTracking.updateBrightParams({ maxBlobs: v })}
+            paramId="track_bright.maxBlobs"
           />
           <SectionLabel label="Display" />
           <ToggleRow
@@ -1286,23 +1297,34 @@ function EffectParameters({ effectId }: { effectId: string }) {
     case 'track_edge':
       return (
         <div className="space-y-1">
-          <SizeButtonGrid
+          <SliderRow
             label="Threshold"
             value={visionTracking.edgeParams.threshold}
-            presets={THRESHOLD_VALUES}
+            min={0}
+            max={255}
+            step={1}
             onChange={(v) => visionTracking.updateEdgeParams({ threshold: v })}
+            format={(v) => `${Math.round((v / 255) * 100)}%`}
+            paramId="track_edge.threshold"
           />
-          <SizeButtonGrid
+          <SliderRow
             label="Min Size"
             value={visionTracking.edgeParams.minSize}
-            presets={MIN_SIZE_VALUES}
+            min={1}
+            max={100}
+            step={1}
             onChange={(v) => visionTracking.updateEdgeParams({ minSize: v })}
+            format={(v) => `${v}px`}
+            paramId="track_edge.minSize"
           />
-          <SizeButtonGrid
+          <SliderRow
             label="Max Blobs"
             value={visionTracking.edgeParams.maxBlobs}
-            presets={MAX_BLOBS_VALUES}
+            min={1}
+            max={50}
+            step={1}
             onChange={(v) => visionTracking.updateEdgeParams({ maxBlobs: v })}
+            paramId="track_edge.maxBlobs"
           />
           <SectionLabel label="Display" />
           <ToggleRow
@@ -1367,17 +1389,25 @@ function EffectParameters({ effectId }: { effectId: string }) {
             value={visionTracking.colorParams.targetColor}
             onChange={(v) => visionTracking.updateColorParams({ targetColor: v })}
           />
-          <SizeButtonGrid
+          <SliderRow
             label="Color Range"
-            value={Math.round(visionTracking.colorParams.colorRange * 100)}
-            presets={COLOR_RANGE_VALUES}
-            onChange={(v) => visionTracking.updateColorParams({ colorRange: v / 100 })}
+            value={visionTracking.colorParams.colorRange}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => visionTracking.updateColorParams({ colorRange: v })}
+            format={(v) => `${Math.round(v * 100)}%`}
+            paramId="track_color.colorRange"
           />
-          <SizeButtonGrid
+          <SliderRow
             label="Min Size"
             value={visionTracking.colorParams.minSize}
-            presets={MIN_SIZE_VALUES}
+            min={1}
+            max={100}
+            step={1}
             onChange={(v) => visionTracking.updateColorParams({ minSize: v })}
+            format={(v) => `${v}px`}
+            paramId="track_color.minSize"
           />
           <SectionLabel label="Display" />
           <ToggleRow
@@ -1437,17 +1467,25 @@ function EffectParameters({ effectId }: { effectId: string }) {
     case 'track_motion':
       return (
         <div className="space-y-1">
-          <SizeButtonGrid
+          <SliderRow
             label="Sensitivity"
             value={visionTracking.motionParams.sensitivity}
-            presets={SENSITIVITY_VALUES}
+            min={0}
+            max={100}
+            step={1}
             onChange={(v) => visionTracking.updateMotionParams({ sensitivity: v })}
+            format={(v) => `${v}%`}
+            paramId="track_motion.sensitivity"
           />
-          <SizeButtonGrid
+          <SliderRow
             label="Min Size"
             value={visionTracking.motionParams.minSize}
-            presets={MIN_SIZE_VALUES}
+            min={1}
+            max={100}
+            step={1}
             onChange={(v) => visionTracking.updateMotionParams({ minSize: v })}
+            format={(v) => `${v}px`}
+            paramId="track_motion.minSize"
           />
           <SectionLabel label="Display" />
           <ToggleRow
@@ -1507,23 +1545,34 @@ function EffectParameters({ effectId }: { effectId: string }) {
     case 'track_face':
       return (
         <div className="space-y-1">
-          <SizeButtonGrid
-            label="Skin Sensitivity"
+          <SliderRow
+            label="Sensitivity"
             value={visionTracking.faceParams.threshold}
-            presets={SENSITIVITY_VALUES}
+            min={0}
+            max={100}
+            step={1}
             onChange={(v) => visionTracking.updateFaceParams({ threshold: v })}
+            format={(v) => `${v}%`}
+            paramId="track_face.threshold"
           />
-          <SizeButtonGrid
+          <SliderRow
             label="Min Size"
             value={visionTracking.faceParams.minSize}
-            presets={FACE_SIZE_VALUES}
+            min={10}
+            max={200}
+            step={5}
             onChange={(v) => visionTracking.updateFaceParams({ minSize: v })}
+            format={(v) => `${v}px`}
+            paramId="track_face.minSize"
           />
-          <SizeButtonGrid
+          <SliderRow
             label="Max Blobs"
             value={visionTracking.faceParams.maxBlobs}
-            presets={FACE_BLOBS_VALUES}
+            min={1}
+            max={10}
+            step={1}
             onChange={(v) => visionTracking.updateFaceParams({ maxBlobs: v })}
+            paramId="track_face.maxBlobs"
           />
           <SectionLabel label="Display" />
           <ToggleRow
@@ -1583,23 +1632,34 @@ function EffectParameters({ effectId }: { effectId: string }) {
     case 'track_hands':
       return (
         <div className="space-y-1">
-          <SizeButtonGrid
-            label="Skin Sensitivity"
+          <SliderRow
+            label="Sensitivity"
             value={visionTracking.handsParams.threshold}
-            presets={SENSITIVITY_VALUES}
+            min={0}
+            max={100}
+            step={1}
             onChange={(v) => visionTracking.updateHandsParams({ threshold: v })}
+            format={(v) => `${v}%`}
+            paramId="track_hands.threshold"
           />
-          <SizeButtonGrid
+          <SliderRow
             label="Min Size"
             value={visionTracking.handsParams.minSize}
-            presets={MIN_SIZE_VALUES}
+            min={1}
+            max={100}
+            step={1}
             onChange={(v) => visionTracking.updateHandsParams({ minSize: v })}
+            format={(v) => `${v}px`}
+            paramId="track_hands.minSize"
           />
-          <SizeButtonGrid
+          <SliderRow
             label="Max Blobs"
             value={visionTracking.handsParams.maxBlobs}
-            presets={HANDS_BLOBS_VALUES}
+            min={1}
+            max={20}
+            step={1}
             onChange={(v) => visionTracking.updateHandsParams({ maxBlobs: v })}
+            paramId="track_hands.maxBlobs"
           />
           <SectionLabel label="Display" />
           <ToggleRow
@@ -2920,133 +2980,6 @@ function LineStyleButtonGrid({ value, onChange }: { value: string; onChange: (v:
           )
         })}
       </div>
-    </div>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════
-// SIZE PRESET BUTTON GRID (Kojima-style cryptic labels)
-// ═══════════════════════════════════════════════════════════════
-
-const SIZE_PRESETS = [
-  { label: 'α', index: 0 },
-  { label: 'β', index: 1 },
-  { label: 'γ', index: 2 },
-  { label: 'δ', index: 3 },
-  { label: 'ε', index: 4 },
-  { label: 'ζ', index: 5 },
-] as const
-
-// Preset values for different parameter types
-const THRESHOLD_VALUES = [32, 64, 96, 128, 192, 224]     // 0-255 range
-const MIN_SIZE_VALUES = [8, 16, 32, 48, 72, 100]         // pixels
-const MAX_BLOBS_VALUES = [5, 10, 20, 30, 40, 50]         // count
-const SENSITIVITY_VALUES = [15, 30, 50, 70, 85, 100]     // 0-100 range
-const COLOR_RANGE_VALUES = [10, 20, 35, 50, 70, 90]      // percentage
-const FACE_SIZE_VALUES = [20, 40, 80, 120, 160, 200]     // face detection: larger sizes
-const FACE_BLOBS_VALUES = [1, 2, 3, 5, 7, 10]            // face detection: fewer max
-const HANDS_BLOBS_VALUES = [2, 4, 8, 12, 16, 20]         // hands detection
-
-function SizeButtonGrid({
-  label,
-  value,
-  presets,
-  onChange
-}: {
-  label: string
-  value: number
-  presets: readonly number[]
-  onChange: (v: number) => void
-}) {
-  const trackRef = useRef<HTMLDivElement>(null)
-  const [isDragging, setIsDragging] = useState(false)
-
-  // Find closest preset index
-  const activeIndex = presets.reduce((closest, preset, index) => {
-    return Math.abs(preset - value) < Math.abs(presets[closest] - value) ? index : closest
-  }, 0)
-
-  const updateFromPosition = useCallback((clientX: number) => {
-    if (!trackRef.current) return
-    const rect = trackRef.current.getBoundingClientRect()
-    const padding = 16
-    const trackWidth = rect.width - padding * 2
-    const x = Math.max(0, Math.min(trackWidth, clientX - rect.left - padding))
-    const ratio = x / trackWidth
-    // Map ratio to preset index
-    const index = Math.round(ratio * (presets.length - 1))
-    const clampedIndex = Math.max(0, Math.min(presets.length - 1, index))
-    onChange(presets[clampedIndex])
-  }, [presets, onChange])
-
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-    updateFromPosition(e.clientX)
-  }, [updateFromPosition])
-
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDragging) return
-    updateFromPosition(e.clientX)
-  }, [isDragging, updateFromPosition])
-
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    setIsDragging(false)
-    try {
-      ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
-    } catch {}
-  }, [])
-
-  // Normalized position for thumb (0-1)
-  const normalizedPosition = activeIndex / (SIZE_PRESETS.length - 1)
-
-  return (
-    <div className="flex items-center gap-2 py-1.5">
-      <span className="text-[14px] w-20 shrink-0" style={{ color: 'var(--text-muted)' }}>{label}</span>
-      <div
-        ref={trackRef}
-        className="flex-1 h-7 rounded-full relative cursor-pointer select-none shadow-inner"
-        style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-      >
-        {/* Dot markers */}
-        <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
-          {SIZE_PRESETS.map((preset) => {
-            const isActive = preset.index === activeIndex
-            const isBeforeActive = preset.index < activeIndex
-            return (
-              <div
-                key={preset.index}
-                className="rounded-full transition-all"
-                style={{
-                  width: isActive ? 0 : 6,
-                  height: isActive ? 0 : 6,
-                  backgroundColor: isActive ? 'transparent' : isBeforeActive ? 'var(--text-muted)' : 'var(--border)',
-                }}
-              />
-            )
-          })}
-        </div>
-
-        {/* Thumb */}
-        <div
-          className="absolute top-1/2 w-5 h-5 rounded-full pointer-events-none"
-          style={{
-            left: `calc(16px + (100% - 32px) * ${normalizedPosition})`,
-            transform: `translate(-50%, -50%)`,
-            backgroundColor: 'var(--bg-primary)',
-            border: '2px solid var(--border)',
-            boxShadow: isDragging
-              ? '0 2px 8px rgba(0,0,0,0.15), 0 0 0 3px rgba(156,163,175,0.2)'
-              : '0 1px 3px rgba(0,0,0,0.1)',
-          }}
-        />
-      </div>
-      <span className="text-[14px] w-10 text-right tabular-nums" style={{ color: 'var(--text-muted)' }}>{value}</span>
     </div>
   )
 }

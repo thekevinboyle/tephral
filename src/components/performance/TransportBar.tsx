@@ -7,11 +7,12 @@ import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useAcidStore } from '../../stores/acidStore'
+import { SourceSelector } from '../ui/SourceSelector'
 
 // Note: We use getState() in handleStartRecording to get fresh state at call time
 
 export function TransportBar() {
-  const { source, reset, videoElement, setVideoElement, setSource } = useMediaStore()
+  const { source, reset, videoElement } = useMediaStore()
   const {
     isRecording,
     isPlaying: isRecordingPlaying,
@@ -21,7 +22,6 @@ export function TransportBar() {
     stopRecording,
     setCurrentTime,
     addThumbnail,
-    setSource: setRecordingSource,
     play: playRecording,
     pause: pauseRecording,
     seek: seekRecording,
@@ -179,37 +179,6 @@ export function TransportBar() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`
   }
 
-  // Webcam handler - toggles on/off
-  const handleWebcam = async () => {
-    // If webcam is already active, stop it
-    if (source === 'webcam' && videoElement) {
-      const stream = videoElement.srcObject as MediaStream | null
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop())
-      }
-      videoElement.srcObject = null
-      reset()
-      return
-    }
-
-    // Start webcam
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720 },
-      })
-      const video = document.createElement('video')
-      video.srcObject = stream
-      video.playsInline = true
-      video.onloadeddata = () => {
-        setVideoElement(video)
-        setSource('webcam')
-        setRecordingSource('webcam')
-        video.play()
-      }
-    } catch (err) {
-      console.error('Webcam error:', err)
-    }
-  }
 
   // Recording timer
   useEffect(() => {
@@ -256,26 +225,12 @@ export function TransportBar() {
 
   return (
     <div className="h-full flex items-center gap-4 px-4 py-1.5">
-      {/* Source buttons */}
+      {/* Source selector */}
       <div className="flex items-center gap-2">
         <span className="text-[11px] font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
           Source:
         </span>
-        <button
-          onClick={handleWebcam}
-        className="h-7 rounded-md text-[12px] font-medium transition-colors active:scale-95"
-        style={{
-          width: '48px',
-          backgroundColor: source === 'webcam' ? 'var(--text-primary)' : 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          color: source === 'webcam' ? 'var(--bg-surface)' : 'var(--text-muted)',
-        }}
-        onMouseEnter={(e) => source !== 'webcam' && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-        onMouseLeave={(e) => source !== 'webcam' && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-      >
-        {source === 'webcam' ? 'Stop' : 'Cam'}
-      </button>
-
+        <SourceSelector variant="compact" />
       </div>
 
       {/* Divider */}

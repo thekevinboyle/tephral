@@ -296,8 +296,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     }
   }, [pipeline, renderer, frameIdRef])
 
-  // Consider slicer with frames as valid media source
-  const hasMedia = videoElement || imageElement || (slicerEnabled && slicerOutputFrame)
+  // Use unified source from mediaStore
+  const { source } = useMediaStore()
+  const hasMedia = source !== 'none'
 
   return (
     <div

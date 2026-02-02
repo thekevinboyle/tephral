@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useMediaStore } from './mediaStore'
 
 // Types
 export type CaptureState = 'live' | 'frozen' | 'imported'
@@ -244,7 +245,21 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
   setWet: (wet) => set({ wet: clamp(wet, 0, 1) }),
   setBlendMode: (blendMode) => set({ blendMode }),
   setOpacity: (opacity) => set({ opacity: clamp(opacity, 0, 1) }),
-  setEnabled: (enabled) => set({ enabled }),
+  setEnabled: (enabled) => {
+    set({ enabled })
+    // Coordinate with mediaStore
+    if (enabled) {
+      // Stash current source and switch to slicer
+      useMediaStore.getState().stashCurrentSource()
+      useMediaStore.getState().setSource('slicer')
+    } else {
+      // Try to restore stashed source, or set to none
+      const restored = useMediaStore.getState().restoreStashedSource()
+      if (!restored) {
+        useMediaStore.getState().setSource('none')
+      }
+    }
+  },
 
   // Snapshot actions
   getSnapshot: () => {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useRecordingStore, type AutomationEvent } from '../../stores/recordingStore'
 import { useClipStore } from '../../stores/clipStore'
@@ -11,8 +11,7 @@ import { useAcidStore } from '../../stores/acidStore'
 // Note: We use getState() in handleStartRecording to get fresh state at call time
 
 export function TransportBar() {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const { source, reset, videoElement, setVideoElement, setImageElement, setSource } = useMediaStore()
+  const { source, reset, videoElement, setVideoElement, setSource } = useMediaStore()
   const {
     isRecording,
     isPlaying: isRecordingPlaying,
@@ -180,44 +179,6 @@ export function TransportBar() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`
   }
 
-  // File select handler
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Reset file input so the same file can be selected again
-    e.target.value = ''
-
-    // Clear previous source
-    reset()
-
-    const url = URL.createObjectURL(file)
-
-    if (file.type.startsWith('video/')) {
-      const video = document.createElement('video')
-      video.src = url
-      video.loop = true
-      video.muted = true
-      video.playsInline = true
-      video.autoplay = true
-      video.oncanplaythrough = () => {
-        setVideoElement(video)
-        setSource('file')
-        setRecordingSource('file')
-        video.play().catch(err => console.error('Video play error:', err))
-      }
-      video.load()
-    } else if (file.type.startsWith('image/')) {
-      const img = new Image()
-      img.src = url
-      img.onload = () => {
-        setImageElement(img)
-        setSource('file')
-        setRecordingSource('file')
-      }
-    }
-  }
-
   // Webcam handler - toggles on/off
   const handleWebcam = async () => {
     // If webcam is already active, stop it
@@ -315,29 +276,7 @@ export function TransportBar() {
         {source === 'webcam' ? 'Stop' : 'Cam'}
       </button>
 
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        className="h-7 rounded-md text-[12px] font-medium transition-colors active:scale-95"
-        style={{
-          width: '48px',
-          backgroundColor: source === 'file' ? 'var(--text-primary)' : 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          color: source === 'file' ? 'var(--bg-surface)' : 'var(--text-muted)',
-        }}
-        onMouseEnter={(e) => source !== 'file' && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-        onMouseLeave={(e) => source !== 'file' && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-      >
-        File
-      </button>
       </div>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,video/*"
-        onChange={handleFileSelect}
-        className="hidden"
-      />
 
       {/* Divider */}
       <div className="w-px h-5 bg-gray-300" />

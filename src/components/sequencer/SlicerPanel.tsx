@@ -8,7 +8,7 @@ import { useClipStore } from '../../stores/clipStore'
 import { useSlicerPlayback } from '../../hooks/useSlicerPlayback'
 
 export function SlicerPanel() {
-  const { setCaptureState, setImportedClipId, enabled } = useSlicerStore()
+  const { setCaptureState, setImportedClipId, enabled, setEnabled } = useSlicerStore()
   const { importFrames } = useSlicerBufferStore()
   const { clips } = useClipStore()
 
@@ -45,7 +45,8 @@ export function SlicerPanel() {
     importFrames(clip.frames)
     setCaptureState('imported')
     setImportedClipId(clipId)
-  }, [clips, importFrames, setCaptureState, setImportedClipId])
+    setEnabled(true) // Auto-enable slicer when clip is imported
+  }, [clips, importFrames, setCaptureState, setImportedClipId, setEnabled])
 
   return (
     <div

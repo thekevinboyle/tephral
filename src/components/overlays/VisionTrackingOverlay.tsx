@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useMediaStore } from '../../stores/mediaStore'
+import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 
 interface Props {
   width: number
@@ -55,6 +56,7 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
   // Sync refs
   const store = useVisionTrackingStore()
   const { videoElement, imageElement } = useMediaStore()
+  const { effectBypassed, bypassActive } = useGlitchEngineStore()
 
   storeRef.current = store
   videoElementRef.current = videoElement
@@ -62,8 +64,20 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
   glCanvasRef.current = glCanvas ?? null
   sizeRef.current = { width, height }
 
-  const anyEnabled = store.brightEnabled || store.edgeEnabled ||
-    store.colorEnabled || store.motionEnabled || store.faceEnabled || store.handsEnabled
+  // Check which effects are bypassed (global bypass disables all)
+  const brightBypassed = bypassActive || effectBypassed['track_bright']
+  const edgeBypassed = bypassActive || effectBypassed['track_edge']
+  const colorBypassed = bypassActive || effectBypassed['track_color']
+  const motionBypassed = bypassActive || effectBypassed['track_motion']
+  const faceBypassed = bypassActive || effectBypassed['track_face']
+  const handsBypassed = bypassActive || effectBypassed['track_hands']
+
+  const anyEnabled = (store.brightEnabled && !brightBypassed) ||
+    (store.edgeEnabled && !edgeBypassed) ||
+    (store.colorEnabled && !colorBypassed) ||
+    (store.motionEnabled && !motionBypassed) ||
+    (store.faceEnabled && !faceBypassed) ||
+    (store.handsEnabled && !handsBypassed)
 
   // Initialize
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { useRef, useEffect, useMemo } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useStippleStore } from '../../stores/stippleStore'
+import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { calculateVideoArea } from '../../utils/videoArea'
 
 interface Particle {
@@ -25,6 +26,10 @@ export function StippleOverlay({ width, height, glCanvas }: StippleOverlayProps)
 
   const { videoElement, imageElement } = useMediaStore()
   const { enabled, params } = useStippleStore()
+  const { effectBypassed, bypassActive } = useGlitchEngineStore()
+
+  // Check if stipple is bypassed
+  const isBypassed = bypassActive || effectBypassed['stipple']
 
   // Calculate video display area (respecting aspect ratio)
   const videoArea = useMemo(() => {
@@ -106,7 +111,7 @@ export function StippleOverlay({ width, height, glCanvas }: StippleOverlayProps)
 
   // Render loop
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || isBypassed) {
       cancelAnimationFrame(animationFrameRef.current)
       return
     }
@@ -180,9 +185,9 @@ export function StippleOverlay({ width, height, glCanvas }: StippleOverlayProps)
     return () => {
       cancelAnimationFrame(animationFrameRef.current)
     }
-  }, [enabled, videoElement, imageElement, glCanvas, params, width, height, videoArea])
+  }, [enabled, isBypassed, videoElement, imageElement, glCanvas, params, width, height, videoArea])
 
-  if (!enabled) return null
+  if (!enabled || isBypassed) return null
 
   return (
     <canvas

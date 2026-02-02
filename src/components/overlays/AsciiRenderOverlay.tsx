@@ -1,6 +1,7 @@
 import { useRef, useEffect, useMemo } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
+import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { AsciiRenderer } from '../../effects/vision/AsciiRenderEffect'
 import { calculateVideoArea } from '../../utils/videoArea'
 
@@ -19,6 +20,10 @@ export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverl
 
   const { videoElement, imageElement } = useMediaStore()
   const { enabled, params } = useAsciiRenderStore()
+  const { effectBypassed, bypassActive } = useGlitchEngineStore()
+
+  // Check if ASCII is bypassed
+  const isBypassed = bypassActive || effectBypassed['ascii']
 
   // Calculate video display area (respecting aspect ratio)
   const videoArea = useMemo(() => {
@@ -50,7 +55,7 @@ export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverl
 
   // Render loop
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || isBypassed) {
       cancelAnimationFrame(animationFrameRef.current)
       return
     }
@@ -120,9 +125,9 @@ export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverl
     return () => {
       cancelAnimationFrame(animationFrameRef.current)
     }
-  }, [enabled, videoElement, imageElement, glCanvas, params, width, height, videoArea])
+  }, [enabled, isBypassed, videoElement, imageElement, glCanvas, params, width, height, videoArea])
 
-  if (!enabled) return null
+  if (!enabled || isBypassed) return null
 
   return (
     <canvas

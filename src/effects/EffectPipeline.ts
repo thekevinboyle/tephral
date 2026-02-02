@@ -44,7 +44,6 @@ export class EffectPipeline {
 
   private effectPass: EffectPass | null = null
   private mixEffectPass: EffectPass | null = null
-  private bypassActive = false
 
   // Dimensions for aspect ratio
   private canvasWidth = 1
@@ -124,9 +123,6 @@ export class EffectPipeline {
     wetMix: number
     bypassActive: boolean
   }) {
-    // Store bypass state for render
-    this.bypassActive = config.bypassActive
-
     // Remove existing passes
     if (this.effectPass) {
       this.composer.removePass(this.effectPass)
@@ -135,6 +131,11 @@ export class EffectPipeline {
     if (this.mixEffectPass) {
       this.composer.removePass(this.mixEffectPass)
       this.mixEffectPass = null
+    }
+
+    // If bypass is active, don't add any effect passes - just render the input
+    if (config.bypassActive) {
+      return
     }
 
     // Update mix effect params
@@ -245,20 +246,8 @@ export class EffectPipeline {
   render() {
     if (!this.inputTexture) return
 
-    // If bypass is active, render the original without effects
-    if (this.bypassActive) {
-      const renderer = this.composer.getRenderer()
-      // Must reset render target to screen (null) since composer uses internal buffers
-      renderer.setRenderTarget(null)
-      // Set viewport to full canvas size
-      const size = renderer.getSize(new THREE.Vector2())
-      renderer.setViewport(0, 0, size.x, size.y)
-      renderer.setScissor(0, 0, size.x, size.y)
-      renderer.setScissorTest(false)
-      renderer.clear()
-      renderer.render(this.quadScene, this.camera)
-      return
-    }
+    // Bypass mode now handled by not adding effect passes in updateEffects
+    // The composer will just render the input quad without any post-processing
 
     this.composer.render()
   }

@@ -6,6 +6,7 @@
 
 import { useRef, useEffect, useCallback } from 'react'
 import { useAcidStore } from '../../stores/acidStore'
+import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 
 // Canvas 2D effects
 import { renderDots } from './acid/dotsEffect'
@@ -51,12 +52,15 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
 
   // Store refs for animation loop
   const storeRef = useRef(useAcidStore.getState())
+  const glitchStoreRef = useRef<{ effectBypassed: Record<string, boolean>; bypassActive: boolean }>({ effectBypassed: {}, bypassActive: false })
   const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const sizeRef = useRef({ width, height })
 
   // Sync refs
   const store = useAcidStore()
+  const { effectBypassed, bypassActive } = useGlitchEngineStore()
   storeRef.current = store
+  glitchStoreRef.current = { effectBypassed, bypassActive }
   sourceCanvasRef.current = sourceCanvas
   sizeRef.current = { width, height }
 
@@ -127,7 +131,15 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     }
 
     const currentStore = storeRef.current
+    const { effectBypassed: bypassed, bypassActive: globalBypass } = glitchStoreRef.current
     const { width: currentWidth, height: currentHeight } = sizeRef.current
+
+    // If global bypass is active, skip all acid effects
+    if (globalBypass) {
+      ctx.clearRect(0, 0, currentWidth, currentHeight)
+      frameIdRef.current = requestAnimationFrame(renderFrame)
+      return
+    }
 
     // Create or resize offscreen canvas for reading WebGL pixels
     if (!offscreenCanvasRef.current) {
@@ -162,55 +174,55 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
       ctx.drawImage(source, 0, 0, currentWidth, currentHeight)
     }
 
-    // Apply Canvas 2D effects in order
-    if (currentStore.dotsEnabled) {
+    // Apply Canvas 2D effects in order (respecting per-effect bypass)
+    if (currentStore.dotsEnabled && !bypassed['acid_dots']) {
       renderDots(sourceCtx, ctx, currentWidth, currentHeight, currentStore.dotsParams)
     }
 
-    if (currentStore.glyphEnabled) {
+    if (currentStore.glyphEnabled && !bypassed['acid_glyph']) {
       renderGlyphs(sourceCtx, ctx, currentWidth, currentHeight, currentStore.glyphParams)
     }
 
-    if (currentStore.iconsEnabled) {
+    if (currentStore.iconsEnabled && !bypassed['acid_icons']) {
       renderIcons(sourceCtx, ctx, currentWidth, currentHeight, currentStore.iconsParams)
     }
 
-    if (currentStore.contourEnabled) {
+    if (currentStore.contourEnabled && !bypassed['acid_contour']) {
       renderContour(sourceCtx, ctx, currentWidth, currentHeight, currentStore.contourParams)
     }
 
-    if (currentStore.decompEnabled) {
+    if (currentStore.decompEnabled && !bypassed['acid_decomp']) {
       renderDecomp(sourceCtx, ctx, currentWidth, currentHeight, currentStore.decompParams)
     }
 
-    if (currentStore.mirrorEnabled) {
+    if (currentStore.mirrorEnabled && !bypassed['acid_mirror']) {
       renderMirror(sourceCtx, ctx, currentWidth, currentHeight, currentStore.mirrorParams)
     }
 
-    if (currentStore.sliceEnabled) {
+    if (currentStore.sliceEnabled && !bypassed['acid_slice']) {
       renderSlice(sourceCtx, ctx, currentWidth, currentHeight, currentStore.sliceParams)
     }
 
-    if (currentStore.thGridEnabled) {
+    if (currentStore.thGridEnabled && !bypassed['acid_thgrid']) {
       renderThGrid(sourceCtx, ctx, currentWidth, currentHeight, currentStore.thGridParams)
     }
 
-    if (currentStore.ledEnabled) {
+    if (currentStore.ledEnabled && !bypassed['acid_led']) {
       renderLed(sourceCtx, ctx, currentWidth, currentHeight, currentStore.ledParams)
     }
 
     // Render WebGL effects (they render to their own canvases)
     const timeSeconds = time * 0.001
 
-    if (currentStore.cloudEnabled && cloudEffectRef.current) {
+    if (currentStore.cloudEnabled && cloudEffectRef.current && !bypassed['acid_cloud']) {
       cloudEffectRef.current.render(source, currentStore.cloudParams, timeSeconds)
     }
 
-    if (currentStore.slitEnabled && slitEffectRef.current) {
+    if (currentStore.slitEnabled && slitEffectRef.current && !bypassed['acid_slit']) {
       slitEffectRef.current.render(source, currentStore.slitParams)
     }
 
-    if (currentStore.voronoiEnabled && voronoiEffectRef.current) {
+    if (currentStore.voronoiEnabled && voronoiEffectRef.current && !bypassed['acid_voronoi']) {
       voronoiEffectRef.current.render(source, currentStore.voronoiParams)
     }
 

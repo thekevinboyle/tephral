@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { useContourStore } from '../../stores/contourStore'
 import { useMediaStore } from '../../stores/mediaStore'
+import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 
 interface Props {
   width: number
@@ -50,6 +51,10 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
   // Sync refs with props/state
   const { enabled, params } = useContourStore()
   const { videoElement, imageElement } = useMediaStore()
+  const { effectBypassed, bypassActive } = useGlitchEngineStore()
+
+  // Check if contour is bypassed
+  const isBypassed = bypassActive || effectBypassed['contour']
 
   paramsRef.current = params
   videoElementRef.current = videoElement
@@ -74,9 +79,9 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
     }
   }, [])
 
-  // Clear when disabled
+  // Clear when disabled or bypassed
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || isBypassed) {
       trackedBlobs.current.clear()
       blobIdCounter.current = 0
       prevFrameRef.current = null
@@ -355,7 +360,7 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
 
   // Single animation loop
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || isBypassed) {
       isRunningRef.current = false
       return
     }
@@ -569,9 +574,9 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
       isRunningRef.current = false
       if (frameIdRef.current) cancelAnimationFrame(frameIdRef.current)
     }
-  }, [enabled])
+  }, [enabled, isBypassed])
 
-  if (!enabled) return null
+  if (!enabled || isBypassed) return null
 
   return (
     <canvas

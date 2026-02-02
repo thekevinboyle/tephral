@@ -2016,7 +2016,7 @@ export function ParameterPanel() {
             <div
               className="w-2 h-2 rounded-full flex-shrink-0"
               style={{
-                backgroundColor: isBypassed || isMuted ? 'var(--border)' : displayColor,
+                backgroundColor: isBypassed || isMuted ? '#bbb' : displayColor,
                 boxShadow: isBypassed || isMuted ? 'none' : `0 0 6px ${section.color}`,
               }}
             />
@@ -2025,7 +2025,7 @@ export function ParameterPanel() {
             <span
               className="text-[11px] tracking-wider uppercase flex-shrink-0"
               style={{
-                color: isBypassed || isMuted ? 'var(--text-muted)' : 'var(--text-secondary)',
+                color: isBypassed || isMuted ? '#999' : '#555',
                 fontFamily: "'JetBrains Mono', monospace",
                 minWidth: '50px',
               }}
@@ -2055,7 +2055,7 @@ export function ParameterPanel() {
               <span
                 className="font-bold text-[16px]"
                 style={{
-                  color: isBypassed || isMuted ? 'var(--text-muted)' : displayColor,
+                  color: isBypassed || isMuted ? '#bbb' : displayColor,
                   fontFamily: "'JetBrains Mono', monospace",
                 }}
               >
@@ -2064,7 +2064,7 @@ export function ParameterPanel() {
               <span
                 className="text-[9px]"
                 style={{
-                  color: 'var(--text-muted)',
+                  color: '#888',
                   fontFamily: "'JetBrains Mono', monospace",
                 }}
               >

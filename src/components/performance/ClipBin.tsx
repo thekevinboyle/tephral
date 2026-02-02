@@ -30,6 +30,7 @@ export function ClipBin() {
   const addClip = useClipStore((state) => state.addClip)
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [isFileDragOver, setIsFileDragOver] = useState(false)
   const stackRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null)
@@ -89,6 +90,30 @@ export function ClipBin() {
     e.target.value = ''
   }, [handleFileImport])
 
+  // File drag and drop handlers
+  const handleFileDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    // Check if it's a file (not a clip from the bin)
+    if (e.dataTransfer.types.includes('Files')) {
+      e.dataTransfer.dropEffect = 'copy'
+      setIsFileDragOver(true)
+    }
+  }, [])
+
+  const handleFileDragLeave = useCallback(() => {
+    setIsFileDragOver(false)
+  }, [])
+
+  const handleFileDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsFileDragOver(false)
+
+    const file = e.dataTransfer.files?.[0]
+    if (file && file.type.startsWith('video/')) {
+      handleFileImport(file)
+    }
+  }, [handleFileImport])
+
   // Card dimensions
   const cardWidth = 80
   const cardHeight = 48
@@ -124,6 +149,9 @@ export function ClipBin() {
           left: 12,
           zIndex: 20,
         }}
+        onDragOver={handleFileDragOver}
+        onDragLeave={handleFileDragLeave}
+        onDrop={handleFileDrop}
       >
         {/* Import progress overlay */}
         {isImporting && (
@@ -195,6 +223,22 @@ export function ClipBin() {
               <path d="M12 5v14M5 12h14" />
             </svg>
           </button>
+        )}
+
+        {/* File drag overlay */}
+        {isFileDragOver && (
+          <div
+            className="absolute inset-0 flex items-center justify-center rounded-lg pointer-events-none"
+            style={{
+              backgroundColor: 'rgba(139, 92, 246, 0.3)',
+              border: '2px dashed #8b5cf6',
+              zIndex: 100,
+            }}
+          >
+            <span className="text-[11px] font-medium" style={{ color: '#c4b5fd' }}>
+              Drop video
+            </span>
+          </div>
         )}
 
         {/* Stacked cards - shown when there are clips and not importing */}
@@ -277,6 +321,38 @@ export function ClipBin() {
                 boxShadow: '0 0 20px rgba(255, 107, 107, 0.3)',
               }}
             />
+
+            {/* Add button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                fileInputRef.current?.click()
+              }}
+              className="absolute flex items-center justify-center rounded transition-all hover:scale-110"
+              style={{
+                width: 20,
+                height: 20,
+                right: -8,
+                bottom: -8,
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                zIndex: maxVisibleCards + 2,
+              }}
+              title="Add video clip"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--text-muted)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </button>
           </div>
         )}
       </div>

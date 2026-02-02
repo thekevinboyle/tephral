@@ -783,6 +783,44 @@ export function PerformanceGrid() {
     }
   }
 
+  // Check which pages have active effects
+  const pageHasActiveEffects = (pageIndex: number): boolean => {
+    switch (pageIndex) {
+      case 0: // VISION
+        return visionTracking.brightEnabled || visionTracking.edgeEnabled ||
+               visionTracking.colorEnabled || visionTracking.motionEnabled ||
+               visionTracking.faceEnabled || visionTracking.handsEnabled ||
+               contour.enabled || landmarks.enabled
+      case 1: // ACID
+        return acid.dotsEnabled || acid.glyphEnabled || acid.iconsEnabled ||
+               acid.contourEnabled || acid.decompEnabled || acid.mirrorEnabled ||
+               acid.sliceEnabled || acid.thGridEnabled || acid.cloudEnabled ||
+               acid.ledEnabled || acid.slitEnabled || acid.voronoiEnabled
+      case 2: // GLITCH
+        return glitch.rgbSplitEnabled || glitch.chromaticAberrationEnabled ||
+               glitch.posterizeEnabled || glitch.colorGradeEnabled ||
+               glitch.blockDisplaceEnabled || glitch.staticDisplacementEnabled ||
+               glitch.pixelateEnabled || glitch.lensDistortionEnabled ||
+               glitch.scanLinesEnabled || glitch.vhsTrackingEnabled ||
+               glitch.noiseEnabled || glitch.ditherEnabled ||
+               glitch.edgeDetectionEnabled || glitch.feedbackLoopEnabled ||
+               ascii.enabled || stipple.enabled
+      case 3: // OVERLAY
+        return textureOverlay.enabled || dataOverlay.enabled
+      case 4: // STRAND
+        return strand.handprintsEnabled || strand.tarSpreadEnabled ||
+               strand.timefallEnabled || strand.voidOutEnabled ||
+               strand.strandWebEnabled || strand.bridgeLinkEnabled ||
+               strand.chiralPathEnabled || strand.umbilicalEnabled ||
+               strand.odradekEnabled || strand.chiraliumEnabled ||
+               strand.beachStaticEnabled || strand.doomsEnabled ||
+               strand.chiralCloudEnabled || strand.bbPodEnabled ||
+               strand.seamEnabled || strand.extinctionEnabled
+      default:
+        return false
+    }
+  }
+
   // Get effects for current page
   const pageEffects = getEffectsForPage(gridPage)
 
@@ -806,20 +844,34 @@ export function PerformanceGrid() {
           </svg>
         </button>
 
-        <div className="flex items-center gap-2">
-          {PAGE_NAMES.map((name, index) => (
-            <button
-              key={index}
-              onClick={() => setGridPage(index)}
-              className={`px-2 py-0.5 text-[12px] font-medium uppercase tracking-wider rounded transition-colors ${
-                gridPage === index
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              {name}
-            </button>
-          ))}
+        <div className="flex items-center gap-1">
+          {PAGE_NAMES.map((name, index) => {
+            const hasActive = pageHasActiveEffects(index)
+            const isSelected = gridPage === index
+            return (
+              <button
+                key={index}
+                onClick={() => setGridPage(index)}
+                className={`flex items-center gap-1.5 px-2 py-0.5 text-[12px] font-medium uppercase tracking-wider rounded transition-colors ${
+                  isSelected
+                    ? 'bg-gray-800 text-white'
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                {/* LED indicator */}
+                {hasActive && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{
+                      backgroundColor: '#22c55e',
+                      boxShadow: '0 0 4px #22c55e',
+                    }}
+                  />
+                )}
+                {name}
+              </button>
+            )
+          })}
         </div>
 
         <button

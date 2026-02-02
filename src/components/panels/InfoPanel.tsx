@@ -1,8 +1,10 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useUIStore } from '../../stores/uiStore'
 import { useSequencerStore, type StepMode, type Step } from '../../stores/sequencerStore'
 import { usePresetLibraryStore } from '../../stores/presetLibraryStore'
-import { getEffectsForPage, PAGE_NAMES } from '../../config/effects'
+import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { useAcidStore } from '../../stores/acidStore'
+import { getEffectsForPage, PAGE_NAMES, EFFECTS } from '../../config/effects'
 
 // ============================================================================
 // MAIN INFO PANEL
@@ -11,12 +13,74 @@ import { getEffectsForPage, PAGE_NAMES } from '../../config/effects'
 export function InfoPanel() {
   const { infoPanelSelection, clearInfoPanelSelection } = useUIStore()
 
+  // Subscribe to effect enabled states for reactivity
+  const rgbSplitEnabled = useGlitchEngineStore(s => s.rgbSplitEnabled)
+  const chromaticAberrationEnabled = useGlitchEngineStore(s => s.chromaticAberrationEnabled)
+  const posterizeEnabled = useGlitchEngineStore(s => s.posterizeEnabled)
+  const colorGradeEnabled = useGlitchEngineStore(s => s.colorGradeEnabled)
+  const blockDisplaceEnabled = useGlitchEngineStore(s => s.blockDisplaceEnabled)
+  const staticDisplacementEnabled = useGlitchEngineStore(s => s.staticDisplacementEnabled)
+  const pixelateEnabled = useGlitchEngineStore(s => s.pixelateEnabled)
+  const lensDistortionEnabled = useGlitchEngineStore(s => s.lensDistortionEnabled)
+  const scanLinesEnabled = useGlitchEngineStore(s => s.scanLinesEnabled)
+  const vhsTrackingEnabled = useGlitchEngineStore(s => s.vhsTrackingEnabled)
+  const noiseEnabled = useGlitchEngineStore(s => s.noiseEnabled)
+  const ditherEnabled = useGlitchEngineStore(s => s.ditherEnabled)
+  const edgeDetectionEnabled = useGlitchEngineStore(s => s.edgeDetectionEnabled)
+  const feedbackLoopEnabled = useGlitchEngineStore(s => s.feedbackLoopEnabled)
+
+  const dotsEnabled = useAcidStore(s => s.dotsEnabled)
+  const glyphEnabled = useAcidStore(s => s.glyphEnabled)
+  const iconsEnabled = useAcidStore(s => s.iconsEnabled)
+  const contourEnabled = useAcidStore(s => s.contourEnabled)
+  const decompEnabled = useAcidStore(s => s.decompEnabled)
+  const mirrorEnabled = useAcidStore(s => s.mirrorEnabled)
+  const sliceEnabled = useAcidStore(s => s.sliceEnabled)
+  const thGridEnabled = useAcidStore(s => s.thGridEnabled)
+  const cloudEnabled = useAcidStore(s => s.cloudEnabled)
+  const ledEnabled = useAcidStore(s => s.ledEnabled)
+  const slitEnabled = useAcidStore(s => s.slitEnabled)
+  const voronoiEnabled = useAcidStore(s => s.voronoiEnabled)
+
+  // Build active effects list
+  const activeEffects: ActiveEffect[] = []
+  if (rgbSplitEnabled) activeEffects.push({ id: 'rgb_split', label: 'RGB', color: '#0891b2', type: 'glitch' })
+  if (chromaticAberrationEnabled) activeEffects.push({ id: 'chromatic', label: 'CHROMA', color: '#6366f1', type: 'glitch' })
+  if (posterizeEnabled) activeEffects.push({ id: 'posterize', label: 'POSTER', color: '#dc2626', type: 'glitch' })
+  if (colorGradeEnabled) activeEffects.push({ id: 'color_grade', label: 'GRADE', color: '#ea580c', type: 'glitch' })
+  if (blockDisplaceEnabled) activeEffects.push({ id: 'block_displace', label: 'BLOCK', color: '#a855f7', type: 'glitch' })
+  if (staticDisplacementEnabled) activeEffects.push({ id: 'static_displace', label: 'STATIC', color: '#8b5cf6', type: 'glitch' })
+  if (pixelateEnabled) activeEffects.push({ id: 'pixelate', label: 'PIXEL', color: '#d946ef', type: 'glitch' })
+  if (lensDistortionEnabled) activeEffects.push({ id: 'lens', label: 'LENS', color: '#0284c7', type: 'glitch' })
+  if (scanLinesEnabled) activeEffects.push({ id: 'scan_lines', label: 'SCAN', color: '#65a30d', type: 'glitch' })
+  if (vhsTrackingEnabled) activeEffects.push({ id: 'vhs', label: 'VHS', color: '#059669', type: 'glitch' })
+  if (noiseEnabled) activeEffects.push({ id: 'noise', label: 'NOISE', color: '#84cc16', type: 'glitch' })
+  if (ditherEnabled) activeEffects.push({ id: 'dither', label: 'DITHER', color: '#22c55e', type: 'glitch' })
+  if (edgeDetectionEnabled) activeEffects.push({ id: 'edges', label: 'EDGES', color: '#f59e0b', type: 'glitch' })
+  if (feedbackLoopEnabled) activeEffects.push({ id: 'feedback', label: 'FEEDBACK', color: '#d97706', type: 'glitch' })
+  if (dotsEnabled) activeEffects.push({ id: 'acid_dots', label: 'DOTS', color: '#e5e5e5', type: 'acid' })
+  if (glyphEnabled) activeEffects.push({ id: 'acid_glyph', label: 'GLYPH', color: '#d4d4d4', type: 'acid' })
+  if (iconsEnabled) activeEffects.push({ id: 'acid_icons', label: 'ICONS', color: '#c4c4c4', type: 'acid' })
+  if (contourEnabled) activeEffects.push({ id: 'acid_contour', label: 'CONTOUR', color: '#b4b4b4', type: 'acid' })
+  if (decompEnabled) activeEffects.push({ id: 'acid_decomp', label: 'DECOMP', color: '#94a3b8', type: 'acid' })
+  if (mirrorEnabled) activeEffects.push({ id: 'acid_mirror', label: 'MIRROR', color: '#7dd3fc', type: 'acid' })
+  if (sliceEnabled) activeEffects.push({ id: 'acid_slice', label: 'SLICE', color: '#67e8f9', type: 'acid' })
+  if (thGridEnabled) activeEffects.push({ id: 'acid_thgrid', label: 'THGRID', color: '#a5f3fc', type: 'acid' })
+  if (cloudEnabled) activeEffects.push({ id: 'acid_cloud', label: 'CLOUD', color: '#f0abfc', type: 'acid' })
+  if (ledEnabled) activeEffects.push({ id: 'acid_led', label: 'LED', color: '#c084fc', type: 'acid' })
+  if (slitEnabled) activeEffects.push({ id: 'acid_slit', label: 'SLIT', color: '#a78bfa', type: 'acid' })
+  if (voronoiEnabled) activeEffects.push({ id: 'acid_voronoi', label: 'VORONOI', color: '#818cf8', type: 'acid' })
+
+  const hasActiveEffects = activeEffects.length > 0
+
   return (
     <div
-      className="flex flex-col"
+      className="flex flex-col h-full overflow-hidden"
       style={{ borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-surface)' }}
     >
-      {!infoPanelSelection && <EmptyInfoContent />}
+      {/* Show active effects summary when no specific selection and effects are active */}
+      {!infoPanelSelection && hasActiveEffects && <ActiveEffectsSummary effects={activeEffects} />}
+      {!infoPanelSelection && !hasActiveEffects && <EmptyInfoContent />}
       {infoPanelSelection?.type === 'track' && (
         <TrackInfoContent
           trackId={infoPanelSelection.trackId}
@@ -53,6 +117,184 @@ export function InfoPanel() {
 }
 
 // ============================================================================
+// ACTIVE EFFECT TYPE
+// ============================================================================
+
+interface ActiveEffect {
+  id: string
+  label: string
+  color: string
+  type: 'glitch' | 'acid'
+}
+
+// ============================================================================
+// ACTIVE EFFECTS SUMMARY
+// ============================================================================
+
+function ActiveEffectsSummary({ effects }: { effects: ActiveEffect[] }) {
+  const [expandedEffect, setExpandedEffect] = useState<string | null>(null)
+
+  return (
+    <>
+      <div
+        className="flex items-center justify-between px-3 py-2"
+        style={{ borderBottom: '1px solid var(--border)' }}
+      >
+        <div className="flex items-center gap-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#22c55e' }}>
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+          </svg>
+          <span
+            className="text-[13px] font-semibold uppercase tracking-wider"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Active
+          </span>
+        </div>
+        <span
+          className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+          style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-muted)' }}
+        >
+          {effects.length}
+        </span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-2 py-2 space-y-1">
+          {effects.map((effect) => (
+            <EffectMiniControl
+              key={effect.id}
+              effect={effect}
+              isExpanded={expandedEffect === effect.id}
+              onToggle={() => setExpandedEffect(expandedEffect === effect.id ? null : effect.id)}
+            />
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+function EffectMiniControl({ effect, isExpanded, onToggle }: { effect: ActiveEffect; isExpanded: boolean; onToggle: () => void }) {
+  const glitch = useGlitchEngineStore()
+  const acid = useAcidStore()
+
+  // Get the primary parameter value and setter based on effect id
+  const { value, setValue, min, max, paramName } = getEffectParam(effect.id, glitch, acid)
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(parseFloat(e.target.value))
+  }
+
+  return (
+    <div
+      className="rounded-lg overflow-hidden transition-colors"
+      style={{ backgroundColor: isExpanded ? 'var(--bg-elevated)' : 'transparent' }}
+    >
+      {/* Header row - always visible */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
+      >
+        <div
+          className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ backgroundColor: effect.color }}
+        />
+        <span className="text-[12px] font-medium flex-1" style={{ color: 'var(--text-primary)' }}>
+          {effect.label}
+        </span>
+        <span className="text-[11px] tabular-nums" style={{ color: 'var(--text-muted)' }}>
+          {typeof value === 'number' ? Math.round(value) : '—'}
+        </span>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          style={{
+            color: 'var(--text-muted)',
+            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.15s ease',
+          }}
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {/* Expanded controls */}
+      {isExpanded && (
+        <div className="px-2 pb-2 pt-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wide w-12" style={{ color: 'var(--text-muted)' }}>
+              {paramName}
+            </span>
+            <input
+              type="range"
+              min={min}
+              max={max}
+              step={(max - min) / 100}
+              value={value}
+              onChange={handleSliderChange}
+              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, ${effect.color} 0%, ${effect.color} ${((value - min) / (max - min)) * 100}%, var(--bg-hover) ${((value - min) / (max - min)) * 100}%, var(--bg-hover) 100%)`,
+              }}
+            />
+            <span className="text-[11px] tabular-nums w-8 text-right" style={{ color: 'var(--text-muted)' }}>
+              {Math.round(value)}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Get parameter info for an effect
+function getEffectParam(effectId: string, glitch: ReturnType<typeof useGlitchEngineStore.getState>, acid: ReturnType<typeof useAcidStore.getState>) {
+  const effectDef = EFFECTS.find(e => e.id === effectId)
+  const min = effectDef?.min ?? 0
+  const max = effectDef?.max ?? 100
+
+  switch (effectId) {
+    // Glitch effects - use correct property names from effect types
+    case 'rgb_split': return { value: glitch.rgbSplit.amount, setValue: (v: number) => useGlitchEngineStore.setState({ rgbSplit: { ...glitch.rgbSplit, amount: v } }), min, max, paramName: 'Amount' }
+    case 'chromatic': return { value: glitch.chromaticAberration.intensity, setValue: (v: number) => useGlitchEngineStore.setState({ chromaticAberration: { ...glitch.chromaticAberration, intensity: v } }), min, max, paramName: 'Intensity' }
+    case 'posterize': return { value: glitch.posterize.levels, setValue: (v: number) => useGlitchEngineStore.setState({ posterize: { ...glitch.posterize, levels: v } }), min, max, paramName: 'Levels' }
+    case 'color_grade': return { value: glitch.colorGrade.saturation * 100, setValue: (v: number) => useGlitchEngineStore.setState({ colorGrade: { ...glitch.colorGrade, saturation: v / 100 } }), min: 0, max: 200, paramName: 'Sat' }
+    case 'block_displace': return { value: glitch.blockDisplace.displaceDistance * 100, setValue: (v: number) => useGlitchEngineStore.setState({ blockDisplace: { ...glitch.blockDisplace, displaceDistance: v / 100 } }), min, max, paramName: 'Distance' }
+    case 'static_displace': return { value: glitch.staticDisplacement.intensity * 100, setValue: (v: number) => useGlitchEngineStore.setState({ staticDisplacement: { ...glitch.staticDisplacement, intensity: v / 100 } }), min, max, paramName: 'Intensity' }
+    case 'pixelate': return { value: glitch.pixelate.pixelSize, setValue: (v: number) => useGlitchEngineStore.setState({ pixelate: { ...glitch.pixelate, pixelSize: v } }), min, max, paramName: 'Size' }
+    case 'lens': return { value: glitch.lensDistortion.curvature * 100, setValue: (v: number) => useGlitchEngineStore.setState({ lensDistortion: { ...glitch.lensDistortion, curvature: v / 100 } }), min, max, paramName: 'Curve' }
+    case 'scan_lines': return { value: glitch.scanLines.lineCount, setValue: (v: number) => useGlitchEngineStore.setState({ scanLines: { ...glitch.scanLines, lineCount: v } }), min, max, paramName: 'Count' }
+    case 'vhs': return { value: glitch.vhsTracking.tearIntensity * 100, setValue: (v: number) => useGlitchEngineStore.setState({ vhsTracking: { ...glitch.vhsTracking, tearIntensity: v / 100 } }), min, max, paramName: 'Tear' }
+    case 'noise': return { value: glitch.noise.amount, setValue: (v: number) => useGlitchEngineStore.setState({ noise: { ...glitch.noise, amount: v } }), min, max, paramName: 'Amount' }
+    case 'dither': return { value: glitch.dither.scale, setValue: (v: number) => useGlitchEngineStore.setState({ dither: { ...glitch.dither, scale: v } }), min, max, paramName: 'Scale' }
+    case 'edges': return { value: glitch.edgeDetection.threshold, setValue: (v: number) => useGlitchEngineStore.setState({ edgeDetection: { ...glitch.edgeDetection, threshold: v } }), min, max, paramName: 'Threshold' }
+    case 'feedback': return { value: glitch.feedbackLoop.decay * 100, setValue: (v: number) => useGlitchEngineStore.setState({ feedbackLoop: { ...glitch.feedbackLoop, decay: v / 100 } }), min: 0, max: 100, paramName: 'Decay' }
+
+    // Acid effects - use nested params objects
+    case 'acid_dots': return { value: acid.dotsParams.gridSize, setValue: (v: number) => useAcidStore.setState({ dotsParams: { ...acid.dotsParams, gridSize: v } }), min, max, paramName: 'Grid' }
+    case 'acid_glyph': return { value: acid.glyphParams.gridSize, setValue: (v: number) => useAcidStore.setState({ glyphParams: { ...acid.glyphParams, gridSize: v } }), min, max, paramName: 'Grid' }
+    case 'acid_icons': return { value: acid.iconsParams.gridSize, setValue: (v: number) => useAcidStore.setState({ iconsParams: { ...acid.iconsParams, gridSize: v } }), min, max, paramName: 'Grid' }
+    case 'acid_contour': return { value: acid.contourParams.levels, setValue: (v: number) => useAcidStore.setState({ contourParams: { ...acid.contourParams, levels: v } }), min, max, paramName: 'Levels' }
+    case 'acid_decomp': return { value: acid.decompParams.maxBlock, setValue: (v: number) => useAcidStore.setState({ decompParams: { ...acid.decompParams, maxBlock: v } }), min, max, paramName: 'Block' }
+    case 'acid_mirror': return { value: acid.mirrorParams.segments, setValue: (v: number) => useAcidStore.setState({ mirrorParams: { ...acid.mirrorParams, segments: v } }), min, max, paramName: 'Segments' }
+    case 'acid_slice': return { value: acid.sliceParams.sliceCount, setValue: (v: number) => useAcidStore.setState({ sliceParams: { ...acid.sliceParams, sliceCount: v } }), min, max, paramName: 'Slices' }
+    case 'acid_thgrid': return { value: acid.thGridParams.threshold * 255, setValue: (v: number) => useAcidStore.setState({ thGridParams: { ...acid.thGridParams, threshold: v / 255 } }), min, max, paramName: 'Thresh' }
+    case 'acid_cloud': return { value: acid.cloudParams.density, setValue: (v: number) => useAcidStore.setState({ cloudParams: { ...acid.cloudParams, density: v } }), min, max, paramName: 'Density' }
+    case 'acid_led': return { value: acid.ledParams.gridSize, setValue: (v: number) => useAcidStore.setState({ ledParams: { ...acid.ledParams, gridSize: v } }), min, max, paramName: 'Grid' }
+    case 'acid_slit': return { value: acid.slitParams.speed, setValue: (v: number) => useAcidStore.setState({ slitParams: { ...acid.slitParams, speed: v } }), min, max, paramName: 'Speed' }
+    case 'acid_voronoi': return { value: acid.voronoiParams.cellCount, setValue: (v: number) => useAcidStore.setState({ voronoiParams: { ...acid.voronoiParams, cellCount: v } }), min, max, paramName: 'Cells' }
+
+    default: return { value: 50, setValue: () => {}, min: 0, max: 100, paramName: 'Value' }
+  }
+}
+
+// ============================================================================
 // EMPTY STATE
 // ============================================================================
 
@@ -70,19 +312,40 @@ function EmptyInfoContent() {
           Inspector
         </span>
       </div>
-      <div className="px-3 py-3">
-        <div className="text-[12px] space-y-1.5" style={{ color: 'var(--text-muted)' }}>
-          <div className="flex items-center gap-2">
-            <span className="w-4 text-center">●</span>
-            <span>Click effect to inspect</span>
+      <div className="px-3 py-4">
+        <div className="text-[12px] space-y-3" style={{ color: 'var(--text-muted)' }}>
+          {/* Effect hint */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
+              </svg>
+            </div>
+            <span>Enable effects to see controls here</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="w-4 text-center">▸</span>
-            <span>Click track or preset</span>
+
+          {/* Track hint */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M3 9h18M9 21V9" />
+              </svg>
+            </div>
+            <span>Click track for settings</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="w-4 text-center">◐</span>
-            <span>Click routing indicator</span>
+
+          {/* Routing hint */}
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="5" cy="12" r="2" />
+                <circle cx="19" cy="12" r="2" />
+                <path d="M7 12h10" />
+              </svg>
+            </div>
+            <span>Click routing to adjust</span>
           </div>
         </div>
       </div>

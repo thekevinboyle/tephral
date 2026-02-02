@@ -2801,7 +2801,10 @@ function EffectParameters({ effectId }: { effectId: string }) {
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <div className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide pt-3 pb-1 border-t border-gray-200 mt-2 first:mt-0 first:border-0 first:pt-0">
+    <div
+      className="text-[13px] font-semibold uppercase tracking-wide pt-3 pb-1 border-t mt-2 first:mt-0 first:border-0 first:pt-0"
+      style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}
+    >
       {label}
     </div>
   )
@@ -2830,11 +2833,11 @@ function FilterButtonGrid({ value, onChange }: { value: string; onChange: (v: Bo
           <button
             key={opt.value}
             onClick={() => onChange(actualValue as BoxFilterValue)}
-            className={`px-1 py-1.5 text-[12px] font-medium uppercase rounded transition-colors ${
-              isActive
-                ? 'bg-gray-800 text-white'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-            }`}
+            className="px-1 py-1.5 text-[12px] font-medium uppercase rounded transition-colors"
+            style={{
+              backgroundColor: isActive ? 'var(--accent)' : 'var(--bg-surface)',
+              color: isActive ? 'var(--bg-surface)' : 'var(--text-muted)',
+            }}
           >
             {opt.label}
           </button>
@@ -2858,8 +2861,8 @@ type BoxShapeValue = 'circle' | 'square' | 'dynamic'
 
 function BoxShapeButtonGrid({ value, onChange }: { value: string; onChange: (v: BoxShapeValue) => void }) {
   return (
-    <div className="flex items-center gap-2 py-1">
-      <span className="text-[12px] text-gray-500 w-16 flex-shrink-0">Shape</span>
+    <div className="flex items-center gap-2 py-1.5">
+      <span className="text-[14px] w-20 flex-shrink-0" style={{ color: 'var(--text-muted)' }}>Shape</span>
       <div className="flex gap-1 flex-1">
         {BOX_SHAPE_OPTIONS.map((opt) => {
           const isActive = value === opt.value
@@ -2867,11 +2870,11 @@ function BoxShapeButtonGrid({ value, onChange }: { value: string; onChange: (v: 
             <button
               key={opt.value}
               onClick={() => onChange(opt.value as BoxShapeValue)}
-              className={`flex-1 px-2 py-1.5 text-[14px] font-medium rounded transition-colors ${
-                isActive
-                  ? 'bg-gray-800 text-white'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              }`}
+              className="flex-1 px-2 py-1.5 text-[13px] font-medium rounded transition-colors"
+              style={{
+                backgroundColor: isActive ? 'var(--accent)' : 'var(--bg-surface)',
+                color: isActive ? 'var(--bg-surface)' : 'var(--text-muted)',
+              }}
               title={opt.value.charAt(0).toUpperCase() + opt.value.slice(1)}
             >
               {opt.label}
@@ -2896,8 +2899,8 @@ type LineStyleValue = 'straight' | 'web'
 
 function LineStyleButtonGrid({ value, onChange }: { value: string; onChange: (v: LineStyleValue) => void }) {
   return (
-    <div className="flex items-center gap-2 py-1">
-      <span className="text-[12px] text-gray-500 w-16 flex-shrink-0">Lines</span>
+    <div className="flex items-center gap-2 py-1.5">
+      <span className="text-[14px] w-20 flex-shrink-0" style={{ color: 'var(--text-muted)' }}>Lines</span>
       <div className="flex gap-1 flex-1">
         {LINE_STYLE_OPTIONS.map((opt) => {
           const isActive = value === opt.value
@@ -2905,11 +2908,11 @@ function LineStyleButtonGrid({ value, onChange }: { value: string; onChange: (v:
             <button
               key={opt.value}
               onClick={() => onChange(opt.value as LineStyleValue)}
-              className={`flex-1 px-2 py-1.5 text-[14px] font-medium rounded transition-colors ${
-                isActive
-                  ? 'bg-gray-800 text-white'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              }`}
+              className="flex-1 px-2 py-1.5 text-[13px] font-medium rounded transition-colors"
+              style={{
+                backgroundColor: isActive ? 'var(--accent)' : 'var(--bg-surface)',
+                color: isActive ? 'var(--bg-surface)' : 'var(--text-muted)',
+              }}
               title={opt.value === 'straight' ? 'Straight' : 'Kojima Web'}
             >
               {opt.label}
@@ -3000,10 +3003,11 @@ function SizeButtonGrid({
 
   return (
     <div className="flex items-center gap-2 py-1.5">
-      <span className="text-[14px] text-gray-500 w-20 shrink-0">{label}</span>
+      <span className="text-[14px] w-20 shrink-0" style={{ color: 'var(--text-muted)' }}>{label}</span>
       <div
         ref={trackRef}
-        className="flex-1 h-7 bg-gray-100 rounded-full border border-gray-200 relative cursor-pointer select-none shadow-inner"
+        className="flex-1 h-7 rounded-full relative cursor-pointer select-none shadow-inner"
+        style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -3017,13 +3021,12 @@ function SizeButtonGrid({
             return (
               <div
                 key={preset.index}
-                className={`rounded-full transition-all ${
-                  isActive
-                    ? 'w-0 h-0'
-                    : isBeforeActive
-                      ? 'w-1.5 h-1.5 bg-gray-400'
-                      : 'w-1.5 h-1.5 bg-gray-300'
-                }`}
+                className="rounded-full transition-all"
+                style={{
+                  width: isActive ? 0 : 6,
+                  height: isActive ? 0 : 6,
+                  backgroundColor: isActive ? 'transparent' : isBeforeActive ? 'var(--text-muted)' : 'var(--border)',
+                }}
               />
             )
           })}
@@ -3031,17 +3034,19 @@ function SizeButtonGrid({
 
         {/* Thumb */}
         <div
-          className="absolute top-1/2 w-5 h-5 rounded-full bg-white border-2 border-gray-300 shadow-md pointer-events-none"
+          className="absolute top-1/2 w-5 h-5 rounded-full pointer-events-none"
           style={{
             left: `calc(16px + (100% - 32px) * ${normalizedPosition})`,
             transform: `translate(-50%, -50%)`,
+            backgroundColor: 'var(--bg-primary)',
+            border: '2px solid var(--border)',
             boxShadow: isDragging
               ? '0 2px 8px rgba(0,0,0,0.15), 0 0 0 3px rgba(156,163,175,0.2)'
               : '0 1px 3px rgba(0,0,0,0.1)',
           }}
         />
       </div>
-      <span className="text-[14px] text-gray-600 w-10 text-right tabular-nums">{value}</span>
+      <span className="text-[14px] w-10 text-right tabular-nums" style={{ color: 'var(--text-muted)' }}>{value}</span>
     </div>
   )
 }

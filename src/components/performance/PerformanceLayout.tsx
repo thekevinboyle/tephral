@@ -14,6 +14,8 @@ import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 import { useContinuousModulation } from '../../hooks/useContinuousModulation'
+import { useEuclideanEngine } from '../../hooks/useEuclideanEngine'
+import { useRicochetEngine } from '../../hooks/useRicochetEngine'
 import { useMediaStore } from '../../stores/mediaStore'
 import { InfoPanel } from '../panels/InfoPanel'
 
@@ -32,6 +34,10 @@ export function PerformanceLayout() {
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
   useAutomationPlayback()
+
+  // Initialize sequencer engines (always running)
+  useEuclideanEngine()
+  useRicochetEngine()
 
   // Initialize continuous modulation for special sources (euclidean, ricochet)
   useContinuousModulation()

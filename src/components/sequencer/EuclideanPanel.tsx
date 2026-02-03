@@ -1,6 +1,5 @@
 import { useCallback } from 'react'
 import { useEuclideanStore } from '../../stores/euclideanStore'
-import { useEuclideanEngine } from '../../hooks/useEuclideanEngine'
 import { EuclideanDisplay } from './EuclideanDisplay'
 
 const ACCENT_COLOR = '#FF9F43'
@@ -56,9 +55,6 @@ function ParamRow({ label, value, displayValue, min, max, step = 1, onChange }: 
 
 export function EuclideanPanel() {
   const store = useEuclideanStore()
-
-  // Initialize the engine
-  useEuclideanEngine()
 
   return (
     <div

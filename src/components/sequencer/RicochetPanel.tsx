@@ -1,6 +1,5 @@
 import { useCallback } from 'react'
 import { useRicochetStore, type PolygonSides } from '../../stores/ricochetStore'
-import { useRicochetEngine } from '../../hooks/useRicochetEngine'
 import { RicochetDisplay } from './RicochetDisplay'
 
 const ACCENT_COLOR = '#00D9FF'
@@ -58,9 +57,6 @@ const SIDES_OPTIONS: PolygonSides[] = [3, 4, 5, 6, 8]
 
 export function RicochetPanel() {
   const store = useRicochetStore()
-
-  // Initialize the engine
-  useRicochetEngine()
 
   const handleReset = useCallback(() => {
     store.resetBall()

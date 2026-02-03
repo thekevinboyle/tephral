@@ -11,9 +11,6 @@ import { useSlicerStore } from '../stores/slicerStore'
  * that run independently of the main step sequencer.
  */
 export function useContinuousModulation() {
-  const { routings } = useSequencerStore()
-  const euclidean = useEuclideanStore()
-  const ricochet = useRicochetStore()
   const glitch = useGlitchEngineStore()
   const acid = useAcidStore()
   const slicer = useSlicerStore()
@@ -82,40 +79,38 @@ export function useContinuousModulation() {
     }
   }, [glitch, acid, slicer])
 
-  // Continuous modulation loop
+  // Continuous modulation loop - reads fresh values from stores each frame
   const modulationLoop = useCallback(() => {
-    // Get euclidean routings
-    const euclideanRoutings = routings.filter(r => r.trackId === 'euclidean')
+    const currentRoutings = useSequencerStore.getState().routings
+    const euclideanState = useEuclideanStore.getState()
+    const ricochetState = useRicochetStore.getState()
 
-    if (euclideanRoutings.length > 0 && euclidean.enabled) {
+    // Get euclidean routings
+    const euclideanRoutings = currentRoutings.filter(r => r.trackId === 'euclidean')
+
+    if (euclideanRoutings.length > 0 && euclideanState.enabled) {
       for (const routing of euclideanRoutings) {
-        const modulatedValue = euclidean.currentValue * routing.depth
+        const modulatedValue = euclideanState.currentValue * routing.depth
         applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
       }
     }
 
     // Get ricochet routings
-    const ricochetRoutings = routings.filter(r => r.trackId === 'ricochet')
+    const ricochetRoutings = currentRoutings.filter(r => r.trackId === 'ricochet')
 
-    if (ricochetRoutings.length > 0 && ricochet.enabled) {
+    if (ricochetRoutings.length > 0 && ricochetState.enabled) {
       for (const routing of ricochetRoutings) {
-        const modulatedValue = ricochet.currentValue * routing.depth
+        const modulatedValue = ricochetState.currentValue * routing.depth
         applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
       }
     }
 
     animationFrameId.current = requestAnimationFrame(modulationLoop)
-  }, [routings, euclidean.enabled, euclidean.currentValue, ricochet.enabled, ricochet.currentValue, applyModulation])
+  }, [applyModulation])
 
-  // Start modulation loop when there are relevant routings
+  // Always run modulation loop - it checks for routings internally
   useEffect(() => {
-    const hasSpecialRoutings = routings.some(r =>
-      r.trackId === 'euclidean' || r.trackId === 'ricochet'
-    )
-
-    if (hasSpecialRoutings) {
-      animationFrameId.current = requestAnimationFrame(modulationLoop)
-    }
+    animationFrameId.current = requestAnimationFrame(modulationLoop)
 
     return () => {
       if (animationFrameId.current !== null) {
@@ -123,5 +118,5 @@ export function useContinuousModulation() {
         animationFrameId.current = null
       }
     }
-  }, [routings, modulationLoop])
+  }, [modulationLoop])
 }

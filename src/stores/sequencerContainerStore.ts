@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 
-export type SequencerType = 'slicer' | 'euclidean' | 'ricochet'
+// SequencerContainer now only holds the Slicer
+// Euclidean and Ricochet sequencers are in SequencerPanel
+export type SequencerType = 'slicer'
 
 interface SequencerContainerState {
   activeSequencer: SequencerType

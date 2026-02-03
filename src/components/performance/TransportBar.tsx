@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { Button } from '../ui/Button'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useRecordingStore, type AutomationEvent } from '../../stores/recordingStore'
 import { useClipStore } from '../../stores/clipStore'
@@ -324,23 +325,14 @@ export function TransportBar() {
       <div className="flex-1" />
 
       {/* Clear button */}
-      <button
+      <Button
+        size="sm"
         onClick={clips.length > 0 ? clearAllClips : reset}
         disabled={!hasSource && clips.length === 0}
-        className="h-7 px-3 rounded-md text-[12px] font-medium transition-colors active:scale-95"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          color: 'var(--text-muted)',
-          opacity: (hasSource || clips.length > 0) ? 1 : 0.5,
-          cursor: (hasSource || clips.length > 0) ? 'pointer' : 'not-allowed',
-        }}
-        onMouseEnter={(e) => (hasSource || clips.length > 0) && (e.currentTarget.style.backgroundColor = clips.length > 0 ? '#fee2e2' : 'var(--bg-hover)')}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
         title={clips.length > 0 ? 'Clear all clips' : 'Clear source'}
       >
         Clear
-      </button>
+      </Button>
     </div>
   )
 }

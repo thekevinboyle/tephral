@@ -8,9 +8,10 @@ import { useLandmarksStore } from '../../stores/landmarksStore'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useAcidStore } from '../../stores/acidStore'
 import { useStrandStore } from '../../stores/strandStore'
+import { useMotionStore } from '../../stores/motionStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
-import { EFFECTS, STRAND_EFFECTS } from '../../config/effects'
+import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS } from '../../config/effects'
 import { SliderRow, ToggleRow, SelectRow, ColorRow } from './controls'
 import { TEXTURE_LIBRARY, type TextureId } from '../overlays/TextureOverlay'
 import type { BlendMode } from '../../stores/textureOverlayStore'
@@ -28,7 +29,7 @@ export function ExpandedParameterPanel() {
   }, [selectedEffectId])
 
   const effectId = selectedEffectId || lastEffectId
-  const effect = EFFECTS.find((e) => e.id === effectId) || STRAND_EFFECTS.find((e) => e.id === effectId)
+  const effect = EFFECTS.find((e) => e.id === effectId) || STRAND_EFFECTS.find((e) => e.id === effectId) || MOTION_EFFECTS.find((e) => e.id === effectId)
 
   if (!effectId || !effect) {
     return (
@@ -73,6 +74,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
   const visionTracking = useVisionTrackingStore()
   const acid = useAcidStore()
   const strand = useStrandStore()
+  const motion = useMotionStore()
 
   switch (effectId) {
     case 'rgb_split':
@@ -2846,6 +2848,193 @@ function EffectParameters({ effectId }: { effectId: string }) {
             step={0.01}
             onChange={(v) => strand.updateExtinctionParams({ coverage: v })}
             paramId="strand_extinction.coverage"
+          />
+        </div>
+      )
+
+    // ═══════════════════════════════════════════════════════════════
+    // MOTION EFFECTS
+    // ═══════════════════════════════════════════════════════════════
+
+    case 'motion_extract':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Threshold"
+            value={motion.motionExtract.threshold}
+            min={0}
+            max={0.5}
+            step={0.01}
+            onChange={(v) => motion.updateMotionExtract({ threshold: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="motion_extract.threshold"
+          />
+          <SliderRow
+            label="Frame Count"
+            value={motion.motionExtract.frameCount}
+            min={2}
+            max={8}
+            step={1}
+            onChange={(v) => motion.updateMotionExtract({ frameCount: v })}
+            paramId="motion_extract.frameCount"
+          />
+          <SliderRow
+            label="Amplify"
+            value={motion.motionExtract.amplify}
+            min={1}
+            max={10}
+            step={0.1}
+            onChange={(v) => motion.updateMotionExtract({ amplify: v })}
+            format={(v) => `${v.toFixed(1)}x`}
+            paramId="motion_extract.amplify"
+          />
+          <ToggleRow
+            label="Show Original"
+            value={motion.motionExtract.showOriginal}
+            onChange={(v) => motion.updateMotionExtract({ showOriginal: v })}
+          />
+          {motion.motionExtract.showOriginal && (
+            <SliderRow
+              label="Original Mix"
+              value={motion.motionExtract.originalMix}
+              min={0}
+              max={1}
+              step={0.01}
+              onChange={(v) => motion.updateMotionExtract({ originalMix: v })}
+              format={(v) => `${(v * 100).toFixed(0)}%`}
+              paramId="motion_extract.originalMix"
+            />
+          )}
+        </div>
+      )
+
+    case 'echo_trail':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Trail Count"
+            value={motion.echoTrail.trailCount}
+            min={2}
+            max={16}
+            step={1}
+            onChange={(v) => motion.updateEchoTrail({ trailCount: v })}
+            paramId="echo_trail.trailCount"
+          />
+          <SliderRow
+            label="Decay"
+            value={motion.echoTrail.decay}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => motion.updateEchoTrail({ decay: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="echo_trail.decay"
+          />
+          <SliderRow
+            label="Offset"
+            value={motion.echoTrail.offset}
+            min={0}
+            max={0.1}
+            step={0.001}
+            onChange={(v) => motion.updateEchoTrail({ offset: v })}
+            format={(v) => `${(v * 100).toFixed(1)}`}
+            paramId="echo_trail.offset"
+          />
+          <ToggleRow
+            label="Color Shift"
+            value={motion.echoTrail.colorShift}
+            onChange={(v) => motion.updateEchoTrail({ colorShift: v })}
+          />
+          {motion.echoTrail.colorShift && (
+            <SliderRow
+              label="Hue Amount"
+              value={motion.echoTrail.hueAmount}
+              min={0}
+              max={60}
+              step={1}
+              onChange={(v) => motion.updateEchoTrail({ hueAmount: v })}
+              format={(v) => `${v.toFixed(0)}°`}
+              paramId="echo_trail.hueAmount"
+            />
+          )}
+        </div>
+      )
+
+    case 'time_smear':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Accumulation"
+            value={motion.timeSmear.accumulation}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => motion.updateTimeSmear({ accumulation: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="time_smear.accumulation"
+          />
+          <SelectRow
+            label="Direction"
+            value={motion.timeSmear.direction}
+            options={[
+              { value: 'both', label: 'Both' },
+              { value: 'forward', label: 'Forward' },
+              { value: 'backward', label: 'Backward' },
+            ]}
+            onChange={(v) => motion.updateTimeSmear({ direction: v as 'both' | 'forward' | 'backward' })}
+          />
+          <ToggleRow
+            label="Motion Only"
+            value={motion.timeSmear.motionOnly}
+            onChange={(v) => motion.updateTimeSmear({ motionOnly: v })}
+          />
+          {motion.timeSmear.motionOnly && (
+            <SliderRow
+              label="Motion Threshold"
+              value={motion.timeSmear.threshold}
+              min={0}
+              max={0.5}
+              step={0.01}
+              onChange={(v) => motion.updateTimeSmear({ threshold: v })}
+              format={(v) => `${(v * 100).toFixed(0)}%`}
+              paramId="time_smear.threshold"
+            />
+          )}
+        </div>
+      )
+
+    case 'freeze_mask':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Freeze Threshold"
+            value={motion.freezeMask.freezeThreshold}
+            min={0}
+            max={0.2}
+            step={0.001}
+            onChange={(v) => motion.updateFreezeMask({ freezeThreshold: v })}
+            format={(v) => `${(v * 100).toFixed(1)}%`}
+            paramId="freeze_mask.freezeThreshold"
+          />
+          <SliderRow
+            label="Update Speed"
+            value={motion.freezeMask.updateSpeed}
+            min={0}
+            max={0.1}
+            step={0.001}
+            onChange={(v) => motion.updateFreezeMask({ updateSpeed: v })}
+            format={(v) => `${(v * 100).toFixed(1)}%`}
+            paramId="freeze_mask.updateSpeed"
+          />
+          <ToggleRow
+            label="Show Freeze"
+            value={motion.freezeMask.showFreeze}
+            onChange={(v) => motion.updateFreezeMask({ showFreeze: v })}
+          />
+          <ToggleRow
+            label="Invert Mask"
+            value={motion.freezeMask.invertMask}
+            onChange={(v) => motion.updateFreezeMask({ invertMask: v })}
           />
         </div>
       )

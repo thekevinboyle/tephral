@@ -1,4 +1,5 @@
 import { useCallback, useState, useRef, useEffect } from 'react'
+import { Button } from '../ui/Button'
 import { BankButton } from './BankButton'
 import { useBankStore } from '../../stores/bankStore'
 import { useGlitchEngineStore, type GlitchSnapshot } from '../../stores/glitchEngineStore'
@@ -287,44 +288,20 @@ export function BankPanel() {
       <div className="flex-1" />
 
       {/* Action buttons */}
-      <button
-        onClick={handleRandom}
-        className="h-full px-4 rounded-lg text-[13px] font-medium transition-colors active:scale-95"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          color: 'var(--text-muted)',
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-        onPointerDown={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-        onPointerUp={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-      >
+      <Button size="lg" className="h-full" onClick={handleRandom}>
         Random
-      </button>
-      <button
-        onClick={handleUndo}
-        disabled={!hasPreviousState}
-        className="h-full px-4 rounded-lg text-[13px] font-medium transition-colors active:scale-95"
-        style={{
-          backgroundColor: hasPreviousState ? 'var(--bg-surface)' : 'var(--bg-hover)',
-          border: '1px solid var(--border)',
-          color: hasPreviousState ? 'var(--text-muted)' : '#c0c0c0',
-          cursor: hasPreviousState ? 'pointer' : 'not-allowed',
-        }}
-        onMouseEnter={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-        onMouseLeave={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-        onPointerDown={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-        onPointerUp={(e) => hasPreviousState && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-      >
+      </Button>
+      <Button size="lg" className="h-full" onClick={handleUndo} disabled={!hasPreviousState}>
         Undo
-      </button>
+      </Button>
       <button
         onPointerDown={handleRektDown}
         onPointerUp={handleRektUp}
         onPointerLeave={isRektLocked ? undefined : handleRektUp}
         onPointerCancel={isRektLocked ? undefined : handleRektUp}
-        className="h-full px-4 rounded-lg text-[13px] font-medium transition-all select-none touch-none"
+        onMouseEnter={(e) => !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')}
+        onMouseLeave={(e) => !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+        className="h-full px-4 rounded-lg text-[13px] font-medium transition-all select-none touch-none active:scale-95"
         style={{
           backgroundColor: isRektLocked
             ? (rektFlashOn ? '#ef4444' : '#b91c1c')

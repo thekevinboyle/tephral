@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { EFFECTS } from '../config/effects'
+import { EFFECTS, MOTION_EFFECTS } from '../config/effects'
 import { useGlitchEngineStore, type GlitchSnapshot } from './glitchEngineStore'
 import { useAsciiRenderStore, type AsciiSnapshot } from './asciiRenderStore'
 import { useStippleStore, type StippleSnapshot } from './stippleStore'
@@ -61,8 +61,8 @@ interface RoutingState {
   undoRandomize: () => void
 }
 
-// Default effect order based on EFFECTS config
-const defaultEffectOrder = EFFECTS.map(e => e.id)
+// Default effect order based on EFFECTS config (includes motion effects)
+const defaultEffectOrder = [...EFFECTS.map(e => e.id), ...MOTION_EFFECTS.map(e => e.id)]
 
 // Initialize empty banks (4 banks × 4 presets)
 const createEmptyBanks = (): (RoutingPreset | null)[][] => {

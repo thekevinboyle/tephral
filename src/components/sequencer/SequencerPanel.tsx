@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { Button } from '../ui/Button'
 import { useSequencerStore, type StepResolution, type StepMode } from '../../stores/sequencerStore'
 import { useSequencerPlayback } from '../../hooks/useSequencerPlayback'
 import { useAudioAnalysis } from '../../hooks/useAudioAnalysis'
@@ -303,7 +304,8 @@ export function SequencerPanel() {
                   Fill
                 </button>
 
-                <button
+                <Button
+                  size="sm"
                   onClick={(e) => {
                     if (e.shiftKey && tracks.length > 0) {
                       useSequencerStore.getState().randomizeTrack(tracks[0].id)
@@ -311,36 +313,23 @@ export function SequencerPanel() {
                       randomizeAllTracks()
                     }
                   }}
-                  className="h-7 px-3 text-[13px] font-medium rounded transition-colors"
-                  style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-muted)',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
                   title="Randomize all tracks (Shift+click for selected only)"
                 >
                   Random
-                </button>
+                </Button>
 
-                <button
+                <Button
+                  size="sm"
                   onClick={undoRandomize}
                   disabled={!previousStepsSnapshot}
-                  className="w-7 h-7 flex items-center justify-center text-[12px] rounded transition-colors"
-                  style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    border: '1px solid var(--border)',
-                    color: previousStepsSnapshot ? 'var(--text-muted)' : 'var(--border)',
-                    cursor: previousStepsSnapshot ? 'pointer' : 'not-allowed',
-                  }}
+                  className="w-7 px-0 flex items-center justify-center"
                   title="Undo last randomize"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                     <path d="M3 3v5h5" />
                   </svg>
-                </button>
+                </Button>
               </div>
 
               {/* Row 2: Freeze / Revert */}
@@ -366,22 +355,15 @@ export function SequencerPanel() {
                   Freeze
                 </button>
 
-                <button
+                <Button
+                  size="sm"
+                  className="flex-1"
                   onClick={revert}
                   disabled={!frozenState}
-                  className="flex-1 h-7 text-[13px] font-medium rounded transition-colors"
-                  style={{
-                    backgroundColor: 'var(--bg-surface)',
-                    border: '1px solid var(--border)',
-                    color: frozenState ? 'var(--text-muted)' : 'var(--border)',
-                    cursor: frozenState ? 'pointer' : 'not-allowed',
-                  }}
-                  onMouseEnter={(e) => frozenState && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-                  onMouseLeave={(e) => frozenState && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
                   title={frozenState ? 'Restore to frozen state' : 'No frozen state'}
                 >
                   Revert
-                </button>
+                </Button>
               </div>
             </div>
           </div>

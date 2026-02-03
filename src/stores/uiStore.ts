@@ -67,8 +67,8 @@ export const useUIStore = create<UIState>((set) => ({
   setSelectedEffect: (id) => set({ selectedEffectId: id, selectedParamIndex: 0 }),
   setSelectedParamIndex: (index) => set({ selectedParamIndex: index }),
 
-  setGridPage: (page) => set({ gridPage: Math.max(0, Math.min(4, page)) }),
-  nextGridPage: () => set((state) => ({ gridPage: Math.min(4, state.gridPage + 1) })),
+  setGridPage: (page) => set({ gridPage: Math.max(0, Math.min(5, page)) }),
+  nextGridPage: () => set((state) => ({ gridPage: Math.min(5, state.gridPage + 1) })),
   prevGridPage: () => set((state) => ({ gridPage: Math.max(0, state.gridPage - 1) })),
 
   startSequencerDrag: (trackId, trackColor) => set({

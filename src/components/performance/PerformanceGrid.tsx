@@ -13,6 +13,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { useStrandStore } from '../../stores/strandStore'
+import { useMotionStore } from '../../stores/motionStore'
 
 export function PerformanceGrid() {
   // Glitch engine store
@@ -37,6 +38,9 @@ export function PerformanceGrid() {
 
   // Strand store
   const strand = useStrandStore()
+
+  // Motion store
+  const motion = useMotionStore()
 
   // Routing store for effect order
   const { effectOrder, setEffectOrder } = useRoutingStore()
@@ -763,6 +767,51 @@ export function PerformanceGrid() {
           onValueChange: (v: number) => strand.updateExtinctionParams({ coverage: v / 100 }),
         }
 
+      // ═══════════════════════════════════════════════════════════════
+      // PAGE 5: MOTION EFFECTS
+      // ═══════════════════════════════════════════════════════════════
+
+      case 'motion_extract':
+        return {
+          active: motion.motionExtractEnabled,
+          value: motion.motionExtract.threshold * 100,
+          onToggle: () => {
+            if (!motion.motionExtractEnabled) moveToEndOfChain(effectId)
+            motion.setMotionExtractEnabled(!motion.motionExtractEnabled)
+          },
+          onValueChange: (v: number) => motion.updateMotionExtract({ threshold: v / 100 }),
+        }
+      case 'echo_trail':
+        return {
+          active: motion.echoTrailEnabled,
+          value: motion.echoTrail.decay * 100,
+          onToggle: () => {
+            if (!motion.echoTrailEnabled) moveToEndOfChain(effectId)
+            motion.setEchoTrailEnabled(!motion.echoTrailEnabled)
+          },
+          onValueChange: (v: number) => motion.updateEchoTrail({ decay: v / 100 }),
+        }
+      case 'time_smear':
+        return {
+          active: motion.timeSmearEnabled,
+          value: motion.timeSmear.accumulation * 100,
+          onToggle: () => {
+            if (!motion.timeSmearEnabled) moveToEndOfChain(effectId)
+            motion.setTimeSmearEnabled(!motion.timeSmearEnabled)
+          },
+          onValueChange: (v: number) => motion.updateTimeSmear({ accumulation: v / 100 }),
+        }
+      case 'freeze_mask':
+        return {
+          active: motion.freezeMaskEnabled,
+          value: motion.freezeMask.freezeThreshold * 100,
+          onToggle: () => {
+            if (!motion.freezeMaskEnabled) moveToEndOfChain(effectId)
+            motion.setFreezeMaskEnabled(!motion.freezeMaskEnabled)
+          },
+          onValueChange: (v: number) => motion.updateFreezeMask({ freezeThreshold: v / 100 }),
+        }
+
       // Reserved / empty slots
       default:
         if (effectId.startsWith('reserved')) {
@@ -816,6 +865,9 @@ export function PerformanceGrid() {
                strand.beachStaticEnabled || strand.doomsEnabled ||
                strand.chiralCloudEnabled || strand.bbPodEnabled ||
                strand.seamEnabled || strand.extinctionEnabled
+      case 5: // MOTION
+        return motion.motionExtractEnabled || motion.echoTrailEnabled ||
+               motion.timeSmearEnabled || motion.freezeMaskEnabled
       default:
         return false
     }
@@ -874,8 +926,8 @@ export function PerformanceGrid() {
         </div>
 
         <button
-          onClick={() => setGridPage(Math.min(4, gridPage + 1))}
-          disabled={gridPage === 4}
+          onClick={() => setGridPage(Math.min(5, gridPage + 1))}
+          disabled={gridPage === 5}
           className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

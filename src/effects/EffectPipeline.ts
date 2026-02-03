@@ -16,6 +16,10 @@ import {
   StaticDisplacementEffect,
   ColorGradeEffect,
   FeedbackLoopEffect,
+  MotionExtractEffect,
+  EchoTrailEffect,
+  TimeSmearEffect,
+  FreezeMaskEffect,
 } from './glitch-engine'
 
 export class EffectPipeline {
@@ -41,6 +45,12 @@ export class EffectPipeline {
   staticDisplacement: StaticDisplacementEffect | null = null
   colorGrade: ColorGradeEffect | null = null
   feedbackLoop: FeedbackLoopEffect | null = null
+
+  // Motion effects
+  motionExtract: MotionExtractEffect | null = null
+  echoTrail: EchoTrailEffect | null = null
+  timeSmear: TimeSmearEffect | null = null
+  freezeMask: FreezeMaskEffect | null = null
 
   private effectPass: EffectPass | null = null
   private mixEffectPass: EffectPass | null = null
@@ -81,6 +91,12 @@ export class EffectPipeline {
     this.staticDisplacement = new StaticDisplacementEffect()
     this.colorGrade = new ColorGradeEffect()
     this.feedbackLoop = new FeedbackLoopEffect()
+
+    // Motion effects
+    this.motionExtract = new MotionExtractEffect()
+    this.echoTrail = new EchoTrailEffect()
+    this.timeSmear = new TimeSmearEffect()
+    this.freezeMask = new FreezeMaskEffect()
   }
 
   // Map effect IDs to effect instances
@@ -100,6 +116,10 @@ export class EffectPipeline {
       case 'dither': return this.dither
       case 'edges': return this.edgeDetection
       case 'feedback': return this.feedbackLoop
+      case 'motion_extract': return this.motionExtract
+      case 'echo_trail': return this.echoTrail
+      case 'time_smear': return this.timeSmear
+      case 'freeze_mask': return this.freezeMask
       default: return null
     }
   }
@@ -120,6 +140,11 @@ export class EffectPipeline {
     ditherEnabled: boolean
     edgeDetectionEnabled: boolean
     feedbackLoopEnabled: boolean
+    // Motion effects
+    motionExtractEnabled: boolean
+    echoTrailEnabled: boolean
+    timeSmearEnabled: boolean
+    freezeMaskEnabled: boolean
     wetMix: number
     bypassActive: boolean
   }) {
@@ -160,6 +185,10 @@ export class EffectPipeline {
       dither: config.ditherEnabled,
       edges: config.edgeDetectionEnabled,
       feedback: config.feedbackLoopEnabled,
+      motion_extract: config.motionExtractEnabled,
+      echo_trail: config.echoTrailEnabled,
+      time_smear: config.timeSmearEnabled,
+      freeze_mask: config.freezeMaskEnabled,
     }
 
     // Collect enabled effects in the specified order
@@ -250,6 +279,18 @@ export class EffectPipeline {
     // The composer will just render the input quad without any post-processing
 
     this.composer.render()
+
+    // Capture frames for temporal effects
+    const renderer = this.composer.getRenderer()
+    const outputBuffer = this.composer.outputBuffer
+
+    if (renderer && outputBuffer) {
+      this.feedbackLoop?.captureFrame(renderer, outputBuffer)
+      this.motionExtract?.captureFrame(renderer, outputBuffer)
+      this.echoTrail?.captureFrame(renderer, outputBuffer)
+      this.timeSmear?.captureFrame(renderer, outputBuffer)
+      this.freezeMask?.captureFrame(renderer, outputBuffer)
+    }
   }
 
   dispose() {
@@ -271,5 +312,35 @@ export class EffectPipeline {
     this.staticDisplacement?.dispose()
     this.colorGrade?.dispose()
     this.feedbackLoop?.dispose()
+    this.motionExtract?.dispose()
+    this.echoTrail?.dispose()
+    this.timeSmear?.dispose()
+    this.freezeMask?.dispose()
+  }
+
+  // Capture frame for temporal effects (call after render)
+  captureFrameForMotionEffects(renderer: THREE.WebGLRenderer) {
+    const outputBuffer = this.composer.outputBuffer
+    if (!outputBuffer) return
+
+    // Motion extract needs the input frame before effects
+    if (this.motionExtract) {
+      this.motionExtract.captureFrame(renderer, outputBuffer)
+    }
+
+    // Echo trail captures the output after effects
+    if (this.echoTrail) {
+      this.echoTrail.captureFrame(renderer, outputBuffer)
+    }
+
+    // Time smear accumulates frames
+    if (this.timeSmear) {
+      this.timeSmear.captureFrame(renderer, outputBuffer)
+    }
+
+    // Freeze mask updates its reference slowly
+    if (this.freezeMask) {
+      this.freezeMask.captureFrame(renderer, outputBuffer)
+    }
   }
 }

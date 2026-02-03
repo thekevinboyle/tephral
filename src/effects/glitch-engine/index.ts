@@ -42,3 +42,16 @@ export type { ColorGradeParams, TintMode } from './ColorGradeEffect'
 
 export { FeedbackLoopEffect, DEFAULT_FEEDBACK_LOOP_PARAMS } from './FeedbackLoopEffect'
 export type { FeedbackLoopParams } from './FeedbackLoopEffect'
+
+// Motion effects
+export { MotionExtractEffect, DEFAULT_MOTION_EXTRACT_PARAMS } from './MotionExtractEffect'
+export type { MotionExtractParams } from './MotionExtractEffect'
+
+export { EchoTrailEffect, DEFAULT_ECHO_TRAIL_PARAMS } from './EchoTrailEffect'
+export type { EchoTrailParams } from './EchoTrailEffect'
+
+export { TimeSmearEffect, DEFAULT_TIME_SMEAR_PARAMS } from './TimeSmearEffect'
+export type { TimeSmearParams } from './TimeSmearEffect'
+
+export { FreezeMaskEffect, DEFAULT_FREEZE_MASK_PARAMS } from './FreezeMaskEffect'
+export type { FreezeMaskParams } from './FreezeMaskEffect'

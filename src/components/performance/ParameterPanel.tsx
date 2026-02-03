@@ -1,4 +1,5 @@
 import { type ReactNode, useState, useRef, useCallback, useEffect } from 'react'
+import { Button } from '../ui/Button'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
@@ -57,6 +58,7 @@ import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { useStrandStore } from '../../stores/strandStore'
+import { useMotionStore } from '../../stores/motionStore'
 
 interface ParameterSection {
   id: string
@@ -112,9 +114,11 @@ export function ParameterPanel() {
   const textureOverlay = useTextureOverlayStore()
   const dataOverlay = useDataOverlayStore()
   const strand = useStrandStore()
+  const motion = useMotionStore()
 
   // Clear all effects
   const handleClear = useCallback(() => {
+    console.log('[ParameterPanel] handleClear called')
     glitch.setRGBSplitEnabled(false)
     glitch.setBlockDisplaceEnabled(false)
     glitch.setScanLinesEnabled(false)
@@ -174,7 +178,12 @@ export function ParameterPanel() {
     strand.setBBPodEnabled(false)
     strand.setSeamEnabled(false)
     strand.setExtinctionEnabled(false)
-  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand])
+    // Clear motion effects
+    motion.setMotionExtractEnabled(false)
+    motion.setEchoTrailEnabled(false)
+    motion.setTimeSmearEnabled(false)
+    motion.setFreezeMaskEnabled(false)
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion])
 
   // Build active effect sections
   const sections: ParameterSection[] = []
@@ -1585,6 +1594,64 @@ export function ParameterPanel() {
     })
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // MOTION EFFECTS
+  // ═══════════════════════════════════════════════════════════════
+
+  if (motion.motionExtractEnabled) {
+    sections.push({
+      id: 'motion_extract',
+      label: 'MOTION EXTRACT',
+      color: '#22c55e',
+      visualizer: <EdgeViz threshold={motion.motionExtract.threshold} mix={1} color="#22c55e" />,
+      params: [
+        { label: 'Threshold', value: motion.motionExtract.threshold * 100, min: 0, max: 50, onChange: (v) => motion.updateMotionExtract({ threshold: v / 100 }), paramId: 'motion_extract.threshold' },
+        { label: 'Frames', value: motion.motionExtract.frameCount, min: 2, max: 8, onChange: (v) => motion.updateMotionExtract({ frameCount: v }), paramId: 'motion_extract.frameCount' },
+        { label: 'Amplify', value: motion.motionExtract.amplify, min: 1, max: 10, onChange: (v) => motion.updateMotionExtract({ amplify: v }), paramId: 'motion_extract.amplify' },
+      ],
+    })
+  }
+
+  if (motion.echoTrailEnabled) {
+    sections.push({
+      id: 'echo_trail',
+      label: 'ECHO TRAIL',
+      color: '#06b6d4',
+      visualizer: <FeedbackViz decay={motion.echoTrail.decay} color="#06b6d4" />,
+      params: [
+        { label: 'Decay', value: motion.echoTrail.decay * 100, min: 0, max: 100, onChange: (v) => motion.updateEchoTrail({ decay: v / 100 }), paramId: 'echo_trail.decay' },
+        { label: 'Offset', value: motion.echoTrail.offset * 1000, min: 0, max: 100, onChange: (v) => motion.updateEchoTrail({ offset: v / 1000 }), paramId: 'echo_trail.offset' },
+        { label: 'Hue Shift', value: motion.echoTrail.hueAmount, min: 0, max: 60, onChange: (v) => motion.updateEchoTrail({ hueAmount: v }), paramId: 'echo_trail.hueAmount' },
+      ],
+    })
+  }
+
+  if (motion.timeSmearEnabled) {
+    sections.push({
+      id: 'time_smear',
+      label: 'TIME SMEAR',
+      color: '#8b5cf6',
+      visualizer: <FeedbackViz decay={motion.timeSmear.accumulation} color="#8b5cf6" />,
+      params: [
+        { label: 'Accumulation', value: motion.timeSmear.accumulation * 100, min: 0, max: 100, onChange: (v) => motion.updateTimeSmear({ accumulation: v / 100 }), paramId: 'time_smear.accumulation' },
+        { label: 'Threshold', value: motion.timeSmear.threshold * 100, min: 0, max: 50, onChange: (v) => motion.updateTimeSmear({ threshold: v / 100 }), paramId: 'time_smear.threshold' },
+      ],
+    })
+  }
+
+  if (motion.freezeMaskEnabled) {
+    sections.push({
+      id: 'freeze_mask',
+      label: 'FREEZE MASK',
+      color: '#f97316',
+      visualizer: <EdgeViz threshold={motion.freezeMask.freezeThreshold * 10} mix={1} color="#f97316" />,
+      params: [
+        { label: 'Threshold', value: motion.freezeMask.freezeThreshold * 100, min: 0, max: 20, onChange: (v) => motion.updateFreezeMask({ freezeThreshold: v / 100 }), paramId: 'freeze_mask.freezeThreshold' },
+        { label: 'Update Speed', value: motion.freezeMask.updateSpeed * 1000, min: 0, max: 100, onChange: (v) => motion.updateFreezeMask({ updateSpeed: v / 1000 }), paramId: 'freeze_mask.updateSpeed' },
+      ],
+    })
+  }
+
   const { selectedEffectId, setSelectedEffect, sequencerDrag } = useUIStore()
   const { effectOrder, reorderEffect } = useRoutingStore()
   const { addRouting } = useSequencerStore()
@@ -1777,12 +1844,25 @@ export function ParameterPanel() {
       case 'strand_extinction':
         strand.setExtinctionEnabled(false)
         break
+      // Motion effects
+      case 'motion_extract':
+        motion.setMotionExtractEnabled(false)
+        break
+      case 'echo_trail':
+        motion.setEchoTrailEnabled(false)
+        break
+      case 'time_smear':
+        motion.setTimeSmearEnabled(false)
+        break
+      case 'freeze_mask':
+        motion.setFreezeMaskEnabled(false)
+        break
     }
     // Clear selection if this effect was selected
     if (selectedEffectId === effectId) {
       setSelectedEffect(null)
     }
-  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, selectedEffectId, setSelectedEffect])
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion, selectedEffectId, setSelectedEffect])
 
   // Sort sections by effectOrder
   // Effects not in effectOrder get sorted to the end (using Infinity for missing indices)
@@ -1875,6 +1955,7 @@ export function ParameterPanel() {
   }, [dragIndex, dragOverIndex, effectOrder, reorderEffect, setSelectedEffect, sortedSections])
 
   // Control buttons component (compact horizontal layout)
+  // Note: position:relative + z-index ensures buttons stay clickable above any overlapping elements
   const ControlButtons = () => (
     <div
       className="flex gap-2 rounded-lg items-center"
@@ -1883,38 +1964,24 @@ export function ParameterPanel() {
         border: '1px solid var(--border)',
         padding: '8px 12px',
         flexShrink: 0,
+        position: 'relative',
+        zIndex: 20,
       }}
     >
-      <button
-        onClick={handleClear}
-        className="px-3 py-1.5 rounded text-[11px] font-medium transition-colors active:scale-95"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          color: 'var(--text-muted)',
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--border)')}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-      >
+      <Button size="sm" onClick={handleClear}>
         Clear
-      </button>
-      <button
+      </Button>
+      <Button
+        size="sm"
+        variant={bypassActive ? 'danger' : 'default'}
         onClick={() => {
           const current = useGlitchEngineStore.getState().bypassActive
           useGlitchEngineStore.getState().setBypassActive(!current)
         }}
-        onMouseEnter={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = 'var(--border)')}
-        onMouseLeave={(e) => !bypassActive && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-        className="px-3 py-1.5 rounded text-[11px] font-medium transition-all select-none active:scale-95"
-        style={{
-          backgroundColor: bypassActive ? '#ef4444' : 'var(--bg-surface)',
-          border: bypassActive ? '1px solid #ef4444' : '1px solid var(--border)',
-          boxShadow: bypassActive ? '0 0 12px #ef4444' : 'none',
-          color: bypassActive ? 'var(--bg-surface)' : 'var(--text-muted)',
-        }}
+        style={bypassActive ? { boxShadow: '0 0 12px #ef4444' } : undefined}
       >
         Bypass
-      </button>
+      </Button>
     </div>
   )
 
@@ -1922,6 +1989,7 @@ export function ParameterPanel() {
     return (
       <div
         className="h-full flex items-stretch gap-3 px-4 py-2"
+        style={{ position: 'relative', zIndex: 10 }}
       >
         <ControlButtons />
         <div className="flex-1 flex items-center justify-center">
@@ -1936,6 +2004,7 @@ export function ParameterPanel() {
   return (
     <div
       className="h-full flex items-stretch gap-3 overflow-x-auto px-4 py-2"
+      style={{ position: 'relative', zIndex: 10 }}
     >
       <ControlButtons />
       {sortedSections.map((section, index) => {

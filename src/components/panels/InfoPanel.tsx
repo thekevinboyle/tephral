@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
+import { Button } from '../ui/Button'
 import { useUIStore } from '../../stores/uiStore'
 import { useSequencerStore, type StepMode, type Step } from '../../stores/sequencerStore'
 import { usePresetLibraryStore } from '../../stores/presetLibraryStore'
@@ -747,20 +748,16 @@ function RoutingInfoContent({ routingId, onClose }: { routingId: string; onClose
       </div>
 
       <div className="px-3 py-2">
-        <button
+        <Button
+          size="sm"
+          className="w-full"
           onClick={() => {
             removeRouting(routing.id)
             onClose()
           }}
-          className="w-full h-7 text-[12px] font-medium rounded transition-colors hover:bg-red-50"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-muted)',
-          }}
         >
           Remove Routing
-        </button>
+        </Button>
       </div>
     </>
   )
@@ -816,35 +813,28 @@ function PresetInfoContent({ presetId, onClose }: { presetId: string; onClose: (
       </div>
 
       <div className="px-3 py-2 flex gap-2">
-        <button
+        <Button
+          size="sm"
+          variant="active"
+          className="flex-1"
           onClick={() => {
             loadPreset(preset.id)
             onClose()
           }}
-          className="flex-1 h-7 text-[12px] font-medium rounded transition-colors"
-          style={{
-            backgroundColor: 'var(--text-primary)',
-            color: '#ffffff',
-          }}
         >
           Load
-        </button>
-        <button
+        </Button>
+        <Button
+          size="sm"
           onClick={() => {
             if (confirm(`Delete "${preset.name}"?`)) {
               deletePreset(preset.id)
               onClose()
             }
           }}
-          className="h-7 px-3 text-[12px] font-medium rounded transition-colors hover:bg-red-50"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-muted)',
-          }}
         >
           Delete
-        </button>
+        </Button>
       </div>
     </>
   )

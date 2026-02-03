@@ -126,7 +126,13 @@ export function PerformanceLayout() {
         }}
       >
         {/* Left sidebar: Expanded Parameter Panel */}
-        <div className="flex-shrink-0" style={{ width: '340px' }}>
+        <div
+          className="flex-shrink-0"
+          style={{
+            width: '340px',
+            borderRight: '1px solid var(--border)',
+          }}
+        >
           <ExpandedParameterPanel />
         </div>
 

@@ -4,6 +4,7 @@ import { useThree } from '../hooks/useThree'
 import { useVideoTexture } from '../hooks/useVideoTexture'
 import { EffectPipeline } from '../effects/EffectPipeline'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
+import { useMotionStore } from '../stores/motionStore'
 import { useMediaStore } from '../stores/mediaStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useRecordingStore } from '../stores/recordingStore'
@@ -80,6 +81,18 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     soloEffectId,
   } = useGlitchEngineStore()
 
+  // Motion effects state
+  const {
+    motionExtractEnabled,
+    echoTrailEnabled,
+    timeSmearEnabled,
+    freezeMaskEnabled,
+    motionExtract,
+    echoTrail,
+    timeSmear,
+    freezeMask,
+  } = useMotionStore()
+
   // Solo filtering: when soloing, only the soloed effect passes through
   const isSoloing = soloEffectId !== null
   const getEffectiveEnabled = (effectId: string, actualEnabled: boolean) => {
@@ -154,6 +167,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     pipeline.edgeDetection?.updateParams(edgeDetection)
     pipeline.feedbackLoop?.updateParams(feedbackLoop)
 
+    // Motion effects
+    pipeline.motionExtract?.updateParams(motionExtract)
+    pipeline.echoTrail?.updateParams(echoTrail)
+    pipeline.timeSmear?.updateParams(timeSmear)
+    pipeline.freezeMask?.updateParams(freezeMask)
+
     pipeline.updateEffects({
       effectOrder,
       rgbSplitEnabled: getEffectiveEnabled('rgb_split', glitchEnabled && rgbSplitEnabled && !effectBypassed['rgb_split']),
@@ -170,6 +189,11 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       ditherEnabled: getEffectiveEnabled('dither', glitchEnabled && ditherEnabled && !effectBypassed['dither']),
       edgeDetectionEnabled: getEffectiveEnabled('edges', glitchEnabled && edgeDetectionEnabled && !effectBypassed['edges']),
       feedbackLoopEnabled: getEffectiveEnabled('feedback', glitchEnabled && feedbackLoopEnabled && !effectBypassed['feedback']),
+      // Motion effects (not affected by glitchEnabled - separate system)
+      motionExtractEnabled: getEffectiveEnabled('motion_extract', motionExtractEnabled),
+      echoTrailEnabled: getEffectiveEnabled('echo_trail', echoTrailEnabled),
+      timeSmearEnabled: getEffectiveEnabled('time_smear', timeSmearEnabled),
+      freezeMaskEnabled: getEffectiveEnabled('freeze_mask', freezeMaskEnabled),
       wetMix,
       bypassActive,
     })
@@ -209,6 +233,15 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     bypassActive,
     effectBypassed,
     soloEffectId,
+    // Motion effects
+    motionExtractEnabled,
+    echoTrailEnabled,
+    timeSmearEnabled,
+    freezeMaskEnabled,
+    motionExtract,
+    echoTrail,
+    timeSmear,
+    freezeMask,
   ])
 
   // Update input texture and video dimensions

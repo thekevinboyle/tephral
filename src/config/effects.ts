@@ -9,7 +9,7 @@ export interface EffectDefinition {
 }
 
 // Page names for UI
-export const PAGE_NAMES = ['VISION', 'ACID', 'GLITCH', 'OVERLAY', 'STRAND']
+export const PAGE_NAMES = ['VISION', 'ACID', 'GLITCH', 'OVERLAY', 'STRAND', 'MOTION']
 
 export const EFFECTS: EffectDefinition[] = [
   // ═══════════════════════════════════════════════════════════════
@@ -153,9 +153,36 @@ export const STRAND_EFFECTS: EffectDefinition[] = [
   { id: 'strand_extinction', label: 'EXTINCTION', color: '#7b68ee', row: 'render', page: 4, min: 0, max: 100 },
 ]
 
+// ═══════════════════════════════════════════════════════════════
+// PAGE 5: MOTION (Temporal / Motion-based effects)
+// ═══════════════════════════════════════════════════════════════
+
+export const MOTION_EFFECTS: EffectDefinition[] = [
+  // Row 1: Core motion effects
+  { id: 'motion_extract', label: 'EXTRACT', color: '#22c55e', row: 'render', page: 5, min: 0, max: 100 },
+  { id: 'echo_trail', label: 'ECHO', color: '#06b6d4', row: 'render', page: 5, min: 0, max: 100 },
+  { id: 'time_smear', label: 'SMEAR', color: '#8b5cf6', row: 'render', page: 5, min: 0, max: 100 },
+  { id: 'freeze_mask', label: 'FREEZE', color: '#f97316', row: 'render', page: 5, min: 0, max: 100 },
+
+  // Row 2-4: Reserved
+  { id: 'motion_reserved_5', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'motion_reserved_6', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'motion_reserved_7', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'motion_reserved_8', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'motion_reserved_9', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'motion_reserved_10', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'motion_reserved_11', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'motion_reserved_12', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'motion_reserved_13', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'motion_reserved_14', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'motion_reserved_15', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'motion_reserved_16', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+]
+
 // Get effects for a specific page
 export const getEffectsForPage = (page: number): EffectDefinition[] => {
   if (page === 4) return STRAND_EFFECTS
+  if (page === 5) return MOTION_EFFECTS
   return EFFECTS.filter(e => e.page === page)
 }
 

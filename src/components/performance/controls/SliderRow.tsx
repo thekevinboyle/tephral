@@ -1,6 +1,12 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import { useUIStore } from '../../../stores/uiStore'
 import { useSequencerStore } from '../../../stores/sequencerStore'
+
+// Special sequencer sources (not regular tracks)
+const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
+  euclidean: { name: 'Euclidean', color: '#FF9F43' },
+  ricochet: { name: 'Ricochet', color: '#00D9FF' },
+}
 
 interface SliderRowProps {
   label: string
@@ -36,7 +42,14 @@ export function SliderRow({
   const paramRoutings = paramId ? routings.filter(r => r.targetParam === paramId) : []
   const hasRouting = paramRoutings.length > 0
   const firstRouting = hasRouting ? paramRoutings[0] : null
-  const routingTrack = firstRouting ? tracks.find(t => t.id === firstRouting.trackId) : null
+
+  // Get source info (either from tracks or special sources)
+  const sourceInfo = useMemo(() => {
+    if (!firstRouting) return null
+    const track = tracks.find(t => t.id === firstRouting.trackId)
+    if (track) return { name: track.name, color: track.color }
+    return SPECIAL_SOURCES[firstRouting.trackId] || null
+  }, [firstRouting, tracks])
 
   // Calculate thumb position (0-1)
   const normalizedValue = (value - min) / (max - min)
@@ -162,14 +175,14 @@ export function SliderRow({
       onDrop={handleDrop}
     >
       <span className="text-[14px] w-20 shrink-0 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-        {hasRouting && firstRouting && routingTrack && (
+        {hasRouting && firstRouting && sourceInfo && (
           <span
             className="w-3 h-3 flex-shrink-0 cursor-ns-resize hover:scale-110 transition-transform flex items-center justify-center rounded-full"
             style={{
-              backgroundColor: routingTrack.color,
-              boxShadow: `0 0 4px ${routingTrack.color}`,
+              backgroundColor: sourceInfo.color,
+              boxShadow: `0 0 4px ${sourceInfo.color}`,
             }}
-            title={`${routingTrack.name}: ${Math.round(firstRouting.depth * 100)}% — Drag to adjust, double-click to remove`}
+            title={`${sourceInfo.name}: ${Math.round(firstRouting.depth * 100)}% — Drag to adjust, double-click to remove`}
             onPointerDown={handleIndicatorPointerDown}
             onPointerMove={handleIndicatorPointerMove}
             onPointerUp={handleIndicatorPointerUp}

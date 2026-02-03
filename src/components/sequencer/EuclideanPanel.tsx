@@ -219,7 +219,7 @@ export function EuclideanPanel() {
           }}
           draggable
           onDragStart={(e) => {
-            e.dataTransfer.setData('sequencer-euclidean', 'euclidean')
+            e.dataTransfer.setData('sequencer-track', 'euclidean')
             e.dataTransfer.effectAllowed = 'link'
           }}
           title="Drag to parameter"

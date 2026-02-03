@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useEuclideanStore } from './euclideanStore'
 
 export type StepMode = 'forward' | 'backward' | 'pendulum' | 'random'
 export type StepResolution = '1/4' | '1/8' | '1/16' | '1/32'
@@ -446,6 +447,18 @@ export const useSequencerStore = create<SequencerState>((set, get) => ({
     const hasSolo = tracks.some((t) => t.solo)
 
     for (const routing of routings) {
+      // Handle special sources (euclidean, ricochet, etc.)
+      if (routing.trackId === 'euclidean') {
+        const euclidean = useEuclideanStore.getState()
+        if (euclidean.enabled) {
+          const modulatedValue = euclidean.currentValue * routing.depth
+          const existing = values.get(routing.targetParam) ?? 0
+          values.set(routing.targetParam, Math.max(-1, Math.min(1, existing + modulatedValue)))
+        }
+        continue
+      }
+
+      // Handle regular sequencer tracks
       const track = tracks.find((t) => t.id === routing.trackId)
       if (!track) continue
 

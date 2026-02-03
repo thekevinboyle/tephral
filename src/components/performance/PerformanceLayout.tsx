@@ -13,6 +13,7 @@ import { SequencerPanel } from '../sequencer/SequencerPanel'
 import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
+import { useContinuousModulation } from '../../hooks/useContinuousModulation'
 import { useMediaStore } from '../../stores/mediaStore'
 import { InfoPanel } from '../panels/InfoPanel'
 
@@ -31,6 +32,9 @@ export function PerformanceLayout() {
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
   useAutomationPlayback()
+
+  // Initialize continuous modulation for special sources (euclidean, ricochet)
+  useContinuousModulation()
 
   // Create a ref object that useRecordingCapture can use
   const captureRef = useRef<HTMLCanvasElement | null>(null)

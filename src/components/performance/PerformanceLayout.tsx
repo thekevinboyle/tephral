@@ -32,6 +32,7 @@ export function PerformanceLayout() {
   const [videoAspect, setVideoAspect] = useState<number | null>(null)
   const [containerWidth, setContainerWidth] = useState(0)
   const [containerHeight, setContainerHeight] = useState(0)
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1920)
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
   useAutomationPlayback()
@@ -83,13 +84,14 @@ export function PerformanceLayout() {
     }
   }, [videoElement, imageElement])
 
-  // Track container size
+  // Track container size and window width for responsive panels
   const updateContainerSize = useCallback(() => {
     if (canvasContainerRef.current) {
       const rect = canvasContainerRef.current.getBoundingClientRect()
       setContainerWidth(rect.width)
       setContainerHeight(rect.height)
     }
+    setWindowWidth(window.innerWidth)
   }, [])
 
   useEffect(() => {
@@ -108,6 +110,21 @@ export function PerformanceLayout() {
     ? Math.floor(containerHeight * videoAspect)
     : containerWidth
   const sideWidth = showSidePlaceholders ? Math.floor((containerWidth - videoWidth) / 2) : 0
+
+  // Responsive panel widths based on Tailwind breakpoints
+  // < 1280px (below xl): compact
+  // 1280-1536px (xl): comfortable
+  // 1536-1920px (2xl): spacious
+  // >= 1920px (large monitors): wide
+  const leftPanelWidth = windowWidth >= 1920 ? 440
+    : windowWidth >= 1536 ? 400
+    : windowWidth >= 1280 ? 360
+    : 320
+
+  const rightPanelWidth = windowWidth >= 1920 ? 320
+    : windowWidth >= 1536 ? 280
+    : windowWidth >= 1280 ? 240
+    : 200
 
   // Use recording capture hook - captures canvas during recording
   // Pass canvasElement as a dependency hint so hook re-runs when canvas is available
@@ -128,9 +145,9 @@ export function PerformanceLayout() {
       >
         {/* Left sidebar: Expanded Parameter Panel */}
         <div
-          className="flex-shrink-0"
+          className="flex-shrink-0 transition-[width] duration-200"
           style={{
-            width: '340px',
+            width: leftPanelWidth,
             borderRight: '1px solid var(--border)',
           }}
         >
@@ -197,9 +214,9 @@ export function PerformanceLayout() {
 
         {/* Right sidebar: Preset Dropdown Bar + Effects Lane */}
         <div
-          className="flex-shrink-0 flex flex-col"
+          className="flex-shrink-0 flex flex-col transition-[width] duration-200"
           style={{
-            width: '220px',
+            width: rightPanelWidth,
             backgroundColor: 'var(--bg-surface)',
             borderLeft: '1px solid var(--border)',
           }}

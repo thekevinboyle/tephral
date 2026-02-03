@@ -77,7 +77,7 @@ function rotatePattern(pattern: boolean[], offset: number): boolean[] {
 }
 
 export const useEuclideanStore = create<EuclideanState>((set, get) => ({
-  enabled: false,
+  enabled: true, // Always enabled - this is a modulation source, not an effect
   setEnabled: (enabled) => set({ enabled }),
 
   steps: 16,

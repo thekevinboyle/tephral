@@ -62,10 +62,6 @@ export function RicochetPanel() {
   // Initialize the engine
   useRicochetEngine()
 
-  const handleDoubleClick = useCallback(() => {
-    store.setEnabled(!store.enabled)
-  }, [store])
-
   const handleReset = useCallback(() => {
     store.resetBall()
   }, [store])
@@ -75,45 +71,22 @@ export function RicochetPanel() {
       className="flex flex-col h-full relative"
       style={{
         backgroundColor: 'var(--bg-surface)',
-        borderLeft: store.enabled ? `2px solid ${ACCENT_COLOR}` : '1px solid var(--border)',
-        transition: 'border-color 0.15s ease',
       }}
     >
-      {/* Bypassed overlay */}
-      {!store.enabled && (
-        <div
-          className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
-        >
-          <span
-            className="text-sm font-bold uppercase tracking-widest px-3 py-1 rounded"
-            style={{
-              color: 'var(--text-muted)',
-              backgroundColor: 'var(--bg-elevated)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            BYPASSED
-          </span>
-        </div>
-      )}
-
       {/* Header */}
       <div
-        className="px-3 py-2 flex items-center justify-between cursor-pointer"
+        className="px-3 py-2 flex items-center justify-between"
         style={{
           backgroundColor: 'var(--bg-elevated)',
           borderBottom: '1px solid var(--border)',
         }}
-        onDoubleClick={handleDoubleClick}
-        title="Double-click to toggle"
       >
         <div className="flex items-center gap-2">
           <div
             className="w-2 h-2 rounded-full"
             style={{
-              backgroundColor: store.enabled ? ACCENT_COLOR : 'var(--text-muted)',
-              boxShadow: store.enabled ? `0 0 8px ${ACCENT_COLOR}` : 'none',
+              backgroundColor: ACCENT_COLOR,
+              boxShadow: `0 0 8px ${ACCENT_COLOR}`,
             }}
           />
           <span

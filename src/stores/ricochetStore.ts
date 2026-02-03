@@ -56,7 +56,7 @@ export const useRicochetStore = create<RicochetState>((set) => {
   const initial = getRandomVelocity()
 
   return {
-    enabled: false,
+    enabled: true, // Always enabled - this is a modulation source, not an effect
     sides: 6,
     gravity: 0.3,
     bounciness: 0.8,

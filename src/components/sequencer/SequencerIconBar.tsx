@@ -22,16 +22,30 @@ const ICONS: IconConfig[] = [
     ),
   },
   {
-    type: 'slot3',
-    color: '#888',
-    label: 'Coming Soon',
-    icon: <span style={{ fontSize: '16px', lineHeight: 1 }}>&#8226;</span>,
+    type: 'euclidean',
+    color: '#FF9F43',
+    label: 'Euclidean Sequencer',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="8" cy="8" r="6" />
+        <circle cx="8" cy="2" r="1.5" fill="currentColor" />
+        <circle cx="13" cy="6" r="1.5" fill="currentColor" />
+        <circle cx="11" cy="12" r="1.5" fill="currentColor" />
+        <circle cx="5" cy="12" r="1" />
+        <circle cx="3" cy="6" r="1" />
+      </svg>
+    ),
   },
   {
-    type: 'slot4',
-    color: '#888',
-    label: 'Coming Soon',
-    icon: <span style={{ fontSize: '16px', lineHeight: 1 }}>&#8226;</span>,
+    type: 'ricochet',
+    color: '#00D9FF',
+    label: 'Ricochet Sequencer',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <polygon points="8,1 15,12 1,12" />
+        <circle cx="7" cy="8" r="2" fill="currentColor" />
+      </svg>
+    ),
   },
 ]
 

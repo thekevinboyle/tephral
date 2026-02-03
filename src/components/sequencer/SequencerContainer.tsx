@@ -1,6 +1,7 @@
 import { useSequencerContainerStore } from '../../stores/sequencerContainerStore'
 import { SequencerIconBar } from './SequencerIconBar'
 import { SlicerPanel } from './SlicerPanel'
+import { EuclideanPanel } from './EuclideanPanel'
 
 export function SequencerContainer() {
   const { activeSequencer } = useSequencerContainerStore()
@@ -9,8 +10,9 @@ export function SequencerContainer() {
     switch (activeSequencer) {
       case 'slicer':
         return <SlicerPanel />
-      case 'slot3':
-      case 'slot4':
+      case 'euclidean':
+        return <EuclideanPanel />
+      case 'ricochet':
         return (
           <div
             className="flex-1 flex items-center justify-center"

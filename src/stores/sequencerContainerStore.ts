@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type SequencerType = 'slicer' | 'slot3' | 'slot4'
+export type SequencerType = 'slicer' | 'euclidean' | 'ricochet'
 
 interface SequencerContainerState {
   activeSequencer: SequencerType

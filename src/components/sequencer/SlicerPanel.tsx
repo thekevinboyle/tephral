@@ -50,10 +50,9 @@ export function SlicerPanel() {
 
   return (
     <div
-      className="flex flex-col h-full relative"
+      className="flex flex-col h-full w-full relative"
       style={{
         backgroundColor: 'var(--bg-surface)',
-        borderLeft: enabled ? '2px solid #4ade80' : '1px solid var(--border)',
         transition: 'border-color 0.15s ease',
       }}
       onDragOver={handleDragOver}

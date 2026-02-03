@@ -1,13 +1,13 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { TransportBar } from './TransportBar'
-import { ParameterPanel } from './ParameterPanel'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
 import { VerticalCrossfader } from './VerticalCrossfader'
 import { ClipBin } from './ClipBin'
 import { ClipDetailModal } from './ClipDetailModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
+import { EffectsLane } from './EffectsLane'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
 import { SequencerPanel } from '../sequencer/SequencerPanel'
 import { PresetDropdownBar } from '../presets/PresetDropdownBar'
@@ -17,7 +17,8 @@ import { useContinuousModulation } from '../../hooks/useContinuousModulation'
 import { useEuclideanEngine } from '../../hooks/useEuclideanEngine'
 import { useRicochetEngine } from '../../hooks/useRicochetEngine'
 import { useMediaStore } from '../../stores/mediaStore'
-import { InfoPanel } from '../panels/InfoPanel'
+// InfoPanel kept for future use
+// import { InfoPanel } from '../panels/InfoPanel'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
@@ -194,7 +195,7 @@ export function PerformanceLayout() {
           </div>
         </div>
 
-        {/* Right sidebar: Preset Dropdown Bar + Info Panel */}
+        {/* Right sidebar: Preset Dropdown Bar + Effects Lane */}
         <div
           className="flex-shrink-0 flex flex-col"
           style={{
@@ -204,24 +205,11 @@ export function PerformanceLayout() {
           }}
         >
           <PresetDropdownBar canvasRef={captureRef} />
-          {/* Info Panel fills remaining space */}
+          {/* Effects Lane fills remaining space */}
           <div className="flex-1 min-h-0 overflow-hidden">
-            <InfoPanel />
+            <EffectsLane />
           </div>
         </div>
-      </div>
-
-      {/* Parameter strip */}
-      <div
-        className="flex-shrink-0 mx-3 mt-3 rounded-xl overflow-hidden"
-        style={{
-          height: '8vh',
-          minHeight: '60px',
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-        }}
-      >
-        <ParameterPanel />
       </div>
 
       {/* Bottom section - 3 equal columns */}

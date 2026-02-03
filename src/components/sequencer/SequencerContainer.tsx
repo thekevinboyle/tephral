@@ -2,6 +2,7 @@ import { useSequencerContainerStore } from '../../stores/sequencerContainerStore
 import { SequencerIconBar } from './SequencerIconBar'
 import { SlicerPanel } from './SlicerPanel'
 import { EuclideanPanel } from './EuclideanPanel'
+import { RicochetPanel } from './RicochetPanel'
 
 export function SequencerContainer() {
   const { activeSequencer } = useSequencerContainerStore()
@@ -13,14 +14,7 @@ export function SequencerContainer() {
       case 'euclidean':
         return <EuclideanPanel />
       case 'ricochet':
-        return (
-          <div
-            className="flex-1 flex items-center justify-center"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            Coming soon
-          </div>
-        )
+        return <RicochetPanel />
       default:
         return null
     }

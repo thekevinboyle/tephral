@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useSequencerStore } from '../stores/sequencerStore'
 import { useEuclideanStore } from '../stores/euclideanStore'
+import { useRicochetStore } from '../stores/ricochetStore'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useAcidStore } from '../stores/acidStore'
 import { useSlicerStore } from '../stores/slicerStore'
@@ -12,6 +13,7 @@ import { useSlicerStore } from '../stores/slicerStore'
 export function useContinuousModulation() {
   const { routings } = useSequencerStore()
   const euclidean = useEuclideanStore()
+  const ricochet = useRicochetStore()
   const glitch = useGlitchEngineStore()
   const acid = useAcidStore()
   const slicer = useSlicerStore()
@@ -92,10 +94,18 @@ export function useContinuousModulation() {
       }
     }
 
-    // TODO: Add ricochet modulation when implemented
+    // Get ricochet routings
+    const ricochetRoutings = routings.filter(r => r.trackId === 'ricochet')
+
+    if (ricochetRoutings.length > 0 && ricochet.enabled) {
+      for (const routing of ricochetRoutings) {
+        const modulatedValue = ricochet.currentValue * routing.depth
+        applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
+      }
+    }
 
     animationFrameId.current = requestAnimationFrame(modulationLoop)
-  }, [routings, euclidean.enabled, euclidean.currentValue, applyModulation])
+  }, [routings, euclidean.enabled, euclidean.currentValue, ricochet.enabled, ricochet.currentValue, applyModulation])
 
   // Start modulation loop when there are relevant routings
   useEffect(() => {

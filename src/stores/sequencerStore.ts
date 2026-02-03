@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { useEuclideanStore } from './euclideanStore'
+import { useRicochetStore } from './ricochetStore'
 
 export type StepMode = 'forward' | 'backward' | 'pendulum' | 'random'
 export type StepResolution = '1/4' | '1/8' | '1/16' | '1/32'
@@ -452,6 +453,16 @@ export const useSequencerStore = create<SequencerState>((set, get) => ({
         const euclidean = useEuclideanStore.getState()
         if (euclidean.enabled) {
           const modulatedValue = euclidean.currentValue * routing.depth
+          const existing = values.get(routing.targetParam) ?? 0
+          values.set(routing.targetParam, Math.max(-1, Math.min(1, existing + modulatedValue)))
+        }
+        continue
+      }
+
+      if (routing.trackId === 'ricochet') {
+        const ricochet = useRicochetStore.getState()
+        if (ricochet.enabled) {
+          const modulatedValue = ricochet.currentValue * routing.depth
           const existing = values.get(routing.targetParam) ?? 0
           values.set(routing.targetParam, Math.max(-1, Math.min(1, existing + modulatedValue)))
         }

@@ -22,32 +22,42 @@ export function useContinuousModulation() {
     const [effectId, paramName] = targetParam.split('.')
 
     // Apply to the appropriate store based on effect ID
+    // ParamIds match those used in ExpandedParameterPanel
     switch (effectId) {
       case 'rgb_split':
-        if (paramName === 'amount') {
-          const baseValue = 1
-          glitch.updateRGBSplit({ amount: baseValue + value * 1.5 })
-        }
+        if (paramName === 'amount') glitch.updateRGBSplit({ amount: 1 + value * 1.5 })
+        if (paramName === 'redOffsetX') glitch.updateRGBSplit({ redOffsetX: value * 0.1 - 0.05 })
+        if (paramName === 'redOffsetY') glitch.updateRGBSplit({ redOffsetY: value * 0.1 - 0.05 })
         break
       case 'block_displace':
-        if (paramName === 'dist') {
-          glitch.updateBlockDisplace({ displaceDistance: 0.02 + value * 0.08 })
-        }
+        if (paramName === 'blockSize') glitch.updateBlockDisplace({ blockSize: 0.02 + value * 0.13 })
+        if (paramName === 'displaceChance') glitch.updateBlockDisplace({ displaceChance: value * 0.3 })
+        if (paramName === 'displaceDistance') glitch.updateBlockDisplace({ displaceDistance: value * 0.1 })
         break
       case 'scan_lines':
-        if (paramName === 'lines') {
-          glitch.updateScanLines({ lineCount: 100 + Math.floor(value * 300) })
-        }
+        if (paramName === 'lineCount') glitch.updateScanLines({ lineCount: 50 + Math.floor(value * 350) })
+        if (paramName === 'lineOpacity') glitch.updateScanLines({ lineOpacity: value })
+        if (paramName === 'lineFlicker') glitch.updateScanLines({ lineFlicker: value * 0.3 })
         break
       case 'noise':
-        if (paramName === 'amount') {
-          glitch.updateNoise({ amount: value * 0.5 })
-        }
+        if (paramName === 'amount') glitch.updateNoise({ amount: value * 0.5 })
+        if (paramName === 'speed') glitch.updateNoise({ speed: 1 + value * 29 })
         break
       case 'pixelate':
-        if (paramName === 'size') {
-          glitch.updatePixelate({ pixelSize: 4 + Math.floor(value * 20) })
-        }
+        if (paramName === 'pixelSize') glitch.updatePixelate({ pixelSize: 2 + Math.floor(value * 30) })
+        break
+      case 'edges':
+        if (paramName === 'threshold') glitch.updateEdgeDetection({ threshold: 0.1 + value * 0.8 })
+        if (paramName === 'mixAmount') glitch.updateEdgeDetection({ mixAmount: value })
+        break
+      case 'chromatic':
+        if (paramName === 'intensity') glitch.updateChromaticAberration({ intensity: value })
+        if (paramName === 'radialAmount') glitch.updateChromaticAberration({ radialAmount: value })
+        break
+      case 'feedback':
+        if (paramName === 'decay') glitch.updateFeedbackLoop({ decay: value })
+        if (paramName === 'zoom') glitch.updateFeedbackLoop({ zoom: 0.95 + value * 0.1 })
+        if (paramName === 'rotation') glitch.updateFeedbackLoop({ rotation: value * 10 - 5 })
         break
 
       // Acid effects
@@ -58,6 +68,8 @@ export function useContinuousModulation() {
         break
       case 'acid_mirror':
         if (paramName === 'segments') acid.updateMirrorParams({ segments: 2 + Math.floor(value * 10) })
+        if (paramName === 'centerX') acid.updateMirrorParams({ centerX: value })
+        if (paramName === 'centerY') acid.updateMirrorParams({ centerY: value })
         if (paramName === 'rotation') acid.updateMirrorParams({ rotation: value * 360 })
         break
       case 'acid_slice':
@@ -68,6 +80,18 @@ export function useContinuousModulation() {
         if (paramName === 'gridSize') acid.updateLedParams({ gridSize: 4 + Math.floor(value * 20) })
         if (paramName === 'dotSize') acid.updateLedParams({ dotSize: 0.3 + value * 0.7 })
         if (paramName === 'brightness') acid.updateLedParams({ brightness: 0.5 + value * 0.5 })
+        if (paramName === 'bleed') acid.updateLedParams({ bleed: value * 0.5 })
+        break
+      case 'acid_contour':
+        if (paramName === 'levels') acid.updateContourParams({ levels: 2 + Math.floor(value * 14) })
+        if (paramName === 'lineWidth') acid.updateContourParams({ lineWidth: 1 + value * 3 })
+        break
+      case 'acid_cloud':
+        if (paramName === 'density') acid.updateCloudParams({ density: 1000 + Math.floor(value * 9000) })
+        if (paramName === 'depthScale') acid.updateCloudParams({ depthScale: 0.5 + value * 1.5 })
+        break
+      case 'acid_voronoi':
+        if (paramName === 'cellCount') acid.updateVoronoiParams({ cellCount: 20 + Math.floor(value * 180) })
         break
 
       // Slicer

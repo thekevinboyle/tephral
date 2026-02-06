@@ -79,12 +79,12 @@ export function ClipBinPopover({ onClose, anchorRect }: ClipBinPopoverProps) {
   return (
     <div
       ref={popoverRef}
-      className="rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+      className="rounded-sm overflow-hidden animate-in fade-in zoom-in-95 duration-150"
       style={{
         ...style,
         width: '240px',
         maxHeight: '300px',
-        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+        backgroundColor: 'var(--bg-elevated)',
         border: '1px solid var(--border)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
       }}
@@ -139,14 +139,14 @@ export function ClipBinPopover({ onClose, anchorRect }: ClipBinPopoverProps) {
 
             {/* Delete button */}
             <button
-              className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ backgroundColor: 'rgba(255, 100, 100, 0.8)' }}
+              className="absolute top-2 right-2 w-4 h-4 rounded-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ backgroundColor: 'var(--accent)' }}
               onClick={(e) => {
                 e.stopPropagation()
                 removeClip(clip.id)
               }}
             >
-              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -160,18 +160,21 @@ export function ClipBinPopover({ onClose, anchorRect }: ClipBinPopoverProps) {
         style={{ borderTop: '1px solid var(--border)' }}
       >
         <button
-          className="w-full py-1.5 rounded text-[11px] transition-colors"
+          className="w-full py-1 rounded-sm text-[10px] transition-colors"
           style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backgroundColor: 'var(--bg-surface)',
             color: 'var(--text-muted)',
+            border: '1px solid var(--border)',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 100, 100, 0.3)'
-            e.currentTarget.style.color = '#ff6b6b'
+            e.currentTarget.style.backgroundColor = 'var(--accent)'
+            e.currentTarget.style.color = 'var(--text-primary)'
+            e.currentTarget.style.borderColor = 'var(--accent)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+            e.currentTarget.style.backgroundColor = 'var(--bg-surface)'
             e.currentTarget.style.color = 'var(--text-muted)'
+            e.currentTarget.style.borderColor = 'var(--border)'
           }}
           onClick={handleClearAll}
         >

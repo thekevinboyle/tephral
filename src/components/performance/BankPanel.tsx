@@ -301,18 +301,18 @@ export function BankPanel() {
         onPointerCancel={isRektLocked ? undefined : handleRektUp}
         onMouseEnter={(e) => !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')}
         onMouseLeave={(e) => !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-        className="h-full px-4 rounded-lg text-[13px] font-medium transition-all select-none touch-none active:scale-95"
+        className="h-full px-4 rounded-sm text-[11px] font-medium transition-all select-none touch-none active:scale-95"
         style={{
           backgroundColor: isRektLocked
-            ? (rektFlashOn ? '#ef4444' : '#b91c1c')
-            : isRekt ? '#ef4444' : 'var(--bg-surface)',
+            ? (rektFlashOn ? 'var(--accent)' : 'var(--accent-dim)')
+            : isRekt ? 'var(--accent)' : 'var(--bg-surface)',
           border: isRektLocked
-            ? `2px solid ${rektFlashOn ? '#fca5a5' : '#b91c1c'}`
-            : isRekt ? '1px solid #dc2626' : '1px solid var(--border)',
+            ? `2px solid ${rektFlashOn ? 'var(--accent)' : 'var(--accent-dim)'}`
+            : isRekt ? '1px solid var(--accent)' : '1px solid var(--border)',
           color: isRekt ? 'var(--bg-surface)' : 'var(--text-muted)',
           boxShadow: isRektLocked
-            ? `0 0 ${rektFlashOn ? '20px' : '8px'} rgba(239, 68, 68, ${rektFlashOn ? 0.7 : 0.3})`
-            : isRekt ? '0 0 12px rgba(239, 68, 68, 0.5)' : 'none',
+            ? `0 0 ${rektFlashOn ? '20px' : '8px'} var(--accent-glow)`
+            : isRekt ? '0 0 12px var(--accent-glow)' : 'none',
           transform: isRekt ? 'scale(1.05)' : 'scale(1)',
         }}
         title={isRektLocked ? 'Click to unlock' : 'Hold or tap to lock'}

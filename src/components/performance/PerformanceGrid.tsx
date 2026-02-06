@@ -889,14 +889,15 @@ export function PerformanceGrid() {
         <button
           onClick={() => setGridPage(Math.max(0, gridPage - 1))}
           disabled={gridPage === 0}
-          className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-5 h-5 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{ color: 'var(--text-ghost)' }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           {PAGE_NAMES.map((name, index) => {
             const hasActive = pageHasActiveEffects(index)
             const isSelected = gridPage === index
@@ -904,18 +905,18 @@ export function PerformanceGrid() {
               <button
                 key={index}
                 onClick={() => setGridPage(index)}
-                className={`flex items-center gap-1.5 px-2 py-0.5 text-[12px] font-medium uppercase tracking-wider rounded transition-colors ${
-                  isSelected
-                    ? 'bg-gray-800 text-white'
-                    : 'text-gray-400 hover:text-gray-600'
-                }`}
+                className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-sm transition-colors"
+                style={{
+                  backgroundColor: isSelected ? 'var(--bg-elevated)' : 'transparent',
+                  color: isSelected ? 'var(--text-secondary)' : 'var(--text-ghost)',
+                }}
               >
                 {/* LED indicator - always reserve space */}
                 <span
-                  className="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-opacity"
+                  className="w-1 h-1 rounded-full flex-shrink-0 transition-opacity"
                   style={{
-                    backgroundColor: '#22c55e',
-                    boxShadow: hasActive ? '0 0 4px #22c55e' : 'none',
+                    backgroundColor: 'var(--accent)',
+                    boxShadow: hasActive ? '0 0 4px var(--accent-glow)' : 'none',
                     opacity: hasActive ? 1 : 0,
                   }}
                 />
@@ -928,9 +929,10 @@ export function PerformanceGrid() {
         <button
           onClick={() => setGridPage(Math.min(5, gridPage + 1))}
           disabled={gridPage === 5}
-          className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-5 h-5 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{ color: 'var(--text-ghost)' }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </button>
@@ -944,9 +946,9 @@ export function PerformanceGrid() {
             return (
               <div
                 key={`empty-${index}`}
-                className="rounded-lg"
+                className="rounded-sm"
                 style={{
-                  backgroundColor: 'var(--border)',
+                  backgroundColor: 'var(--bg-surface)',
                   border: '1px solid var(--border)',
                 }}
               />
@@ -960,13 +962,13 @@ export function PerformanceGrid() {
             return (
               <div
                 key={effect.id}
-                className="rounded-lg flex items-center justify-center"
+                className="rounded-sm flex items-center justify-center"
                 style={{
                   backgroundColor: 'var(--bg-surface)',
                   border: '1px dashed var(--border)',
                 }}
               >
-                <span className="text-gray-300 text-lg">—</span>
+                <span style={{ color: 'var(--text-ghost)', fontSize: '14px' }}>—</span>
               </div>
             )
           }

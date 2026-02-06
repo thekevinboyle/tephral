@@ -60,17 +60,18 @@ export function PreviewHeader() {
 
   return (
     <div
-      className="flex items-center gap-2 px-4 py-2"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
+      className="flex items-center gap-1.5 px-3 py-1.5"
+      style={{ backgroundColor: 'var(--bg-elevated)' }}
     >
       {/* Source buttons */}
       <button
         onClick={handleWebcam}
-        className="px-3 py-1.5 text-[14px] font-medium rounded-md transition-colors"
+        className="px-2 py-1 text-[10px] font-medium rounded-sm transition-colors"
         style={{
           backgroundColor: source === 'webcam' ? 'var(--bg-surface)' : 'var(--bg-surface)',
-          border: source === 'webcam' ? '1px solid #6366f1' : '1px solid var(--border)',
-          color: source === 'webcam' ? '#6366f1' : 'var(--text-muted)',
+          border: source === 'webcam' ? '1px solid var(--accent)' : '1px solid var(--border)',
+          color: source === 'webcam' ? 'var(--accent)' : 'var(--text-muted)',
+          boxShadow: source === 'webcam' ? '0 0 4px var(--accent-glow)' : 'none',
         }}
       >
         Cam
@@ -78,11 +79,12 @@ export function PreviewHeader() {
 
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="px-3 py-1.5 text-[14px] font-medium rounded-md transition-colors"
+        className="px-2 py-1 text-[10px] font-medium rounded-sm transition-colors"
         style={{
           backgroundColor: source === 'file' ? 'var(--bg-surface)' : 'var(--bg-surface)',
-          border: source === 'file' ? '1px solid #6366f1' : '1px solid var(--border)',
-          color: source === 'file' ? '#6366f1' : 'var(--text-muted)',
+          border: source === 'file' ? '1px solid var(--accent)' : '1px solid var(--border)',
+          color: source === 'file' ? 'var(--accent)' : 'var(--text-muted)',
+          boxShadow: source === 'file' ? '0 0 4px var(--accent-glow)' : 'none',
         }}
       >
         File

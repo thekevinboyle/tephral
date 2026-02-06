@@ -55,22 +55,25 @@ export function BankButton({
       // Active (loaded) state
       return {
         backgroundColor: 'var(--bg-surface)',
-        border: '2px solid #6366f1',
+        border: '1px solid var(--accent)',
         color: 'var(--text-primary)',
+        boxShadow: '0 0 4px var(--accent-glow)',
       }
     } else if (isEmpty) {
       // Empty state
       return {
         backgroundColor: 'transparent',
         border: '1px dashed var(--border)',
-        color: 'var(--text-muted)',
+        color: 'var(--text-ghost)',
+        boxShadow: 'none',
       }
     } else {
       // Filled (not active) state
       return {
         backgroundColor: 'var(--bg-surface)',
         border: '1px solid var(--border)',
-        color: 'var(--text-primary)',
+        color: 'var(--text-secondary)',
+        boxShadow: 'none',
       }
     }
   }
@@ -81,10 +84,10 @@ export function BankButton({
     <button
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      className="w-full h-full flex items-center justify-center rounded-lg text-[16px] font-medium select-none transition-all duration-100"
+      className="w-full h-full flex items-center justify-center rounded-sm text-[12px] font-medium select-none transition-all duration-100"
       style={{
         ...styles,
-        boxShadow: isFlashing ? `0 0 20px ${isActive ? '#6366f1' : '#6366f1'}` : 'none',
+        boxShadow: isFlashing ? '0 0 12px var(--accent-glow)' : styles.boxShadow,
         transform: isFlashing ? 'scale(1.05)' : 'scale(1)',
       }}
     >

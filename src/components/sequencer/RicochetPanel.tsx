@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { useRicochetStore, type PolygonSides } from '../../stores/ricochetStore'
 import { RicochetDisplay } from './RicochetDisplay'
 
-const ACCENT_COLOR = '#00D9FF'
+const ACCENT_COLOR = '#FF0055' // var(--accent)
 
 interface ParamRowProps {
   label: string
@@ -37,14 +37,14 @@ function ParamRow({ label, value, displayValue, min, max, step = 0.01, onChange 
 
   return (
     <div
-      className="flex items-center justify-between py-1.5 cursor-ns-resize select-none"
+      className="flex items-center justify-between py-1 cursor-ns-resize select-none"
       onPointerDown={handlePointerDown}
     >
-      <span className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
+      <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
         {label}
       </span>
       <span
-        className="text-[14px] font-medium tabular-nums"
+        className="text-[11px] font-medium tabular-nums"
         style={{ color: ACCENT_COLOR }}
       >
         {displayValue ?? value.toFixed(2)}
@@ -71,7 +71,7 @@ export function RicochetPanel() {
     >
       {/* Header */}
       <div
-        className="px-3 py-2 flex items-center justify-between"
+        className="px-3 py-1.5 flex items-center justify-between"
         style={{
           backgroundColor: 'var(--bg-elevated)',
           borderBottom: '1px solid var(--border)',
@@ -79,15 +79,15 @@ export function RicochetPanel() {
       >
         <div className="flex items-center gap-2">
           <div
-            className="w-2 h-2 rounded-full"
+            className="w-1.5 h-1.5 rounded-full"
             style={{
               backgroundColor: ACCENT_COLOR,
-              boxShadow: `0 0 8px ${ACCENT_COLOR}`,
+              boxShadow: `0 0 6px ${ACCENT_COLOR}`,
             }}
           />
           <span
-            className="text-[13px] font-semibold uppercase tracking-wide"
-            style={{ color: 'var(--text-primary)' }}
+            className="text-[9px] font-medium uppercase tracking-widest"
+            style={{ color: 'var(--text-ghost)' }}
           >
             Ricochet
           </span>
@@ -96,7 +96,7 @@ export function RicochetPanel() {
         {/* Reset button */}
         <button
           onClick={handleReset}
-          className="px-2 py-0.5 text-[10px] font-medium uppercase rounded transition-colors"
+          className="px-1.5 py-0.5 text-[9px] font-medium uppercase rounded-sm transition-colors"
           style={{
             backgroundColor: 'var(--bg-surface)',
             color: 'var(--text-muted)',
@@ -117,20 +117,21 @@ export function RicochetPanel() {
         {/* Parameters */}
         <div className="flex-1 flex flex-col justify-center">
           {/* Sides selector */}
-          <div className="flex items-center justify-between py-1.5">
-            <span className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
+          <div className="flex items-center justify-between py-1">
+            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
               Sides
             </span>
-            <div className="flex gap-1">
+            <div className="flex gap-0.5">
               {SIDES_OPTIONS.map((n) => (
                 <button
                   key={n}
                   onClick={() => store.setSides(n)}
-                  className="w-6 h-6 text-[11px] font-medium rounded transition-colors"
+                  className="w-5 h-5 text-[10px] font-medium rounded-sm transition-colors"
                   style={{
                     backgroundColor: store.sides === n ? ACCENT_COLOR : 'var(--bg-surface)',
-                    color: store.sides === n ? 'var(--bg-surface)' : 'var(--text-muted)',
+                    color: store.sides === n ? 'var(--text-primary)' : 'var(--text-muted)',
                     border: `1px solid ${store.sides === n ? ACCENT_COLOR : 'var(--border)'}`,
+                    boxShadow: store.sides === n ? '0 0 4px rgba(255,0,85,0.3)' : 'none',
                   }}
                 >
                   {n}
@@ -189,18 +190,18 @@ export function RicochetPanel() {
 
       {/* Output indicator */}
       <div
-        className="px-3 py-2 flex items-center gap-2"
+        className="px-3 py-1.5 flex items-center gap-2"
         style={{
           borderTop: '1px solid var(--border)',
           backgroundColor: 'var(--bg-elevated)',
         }}
       >
         <div
-          className="w-3 h-3 rounded-full cursor-grab active:cursor-grabbing"
+          className="w-2.5 h-2.5 rounded-full cursor-grab active:cursor-grabbing"
           style={{
             backgroundColor: ACCENT_COLOR,
             boxShadow: store.currentValue > 0.1
-              ? `0 0 ${8 + store.currentValue * 12}px ${ACCENT_COLOR}`
+              ? `0 0 ${6 + store.currentValue * 10}px ${ACCENT_COLOR}`
               : 'none',
             opacity: 0.5 + store.currentValue * 0.5,
             transition: 'box-shadow 0.05s ease-out, opacity 0.05s ease-out',
@@ -212,11 +213,11 @@ export function RicochetPanel() {
           }}
           title="Drag to parameter"
         />
-        <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-          Output
+        <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+          Out
         </span>
         <span
-          className="text-[11px] tabular-nums ml-auto"
+          className="text-[10px] tabular-nums ml-auto"
           style={{ color: ACCENT_COLOR }}
         >
           {(store.currentValue * 100).toFixed(0)}%

@@ -11,20 +11,20 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  *
  * Variants:
  * - default: Standard button with hover effect
- * - danger: Red button for destructive actions
+ * - danger: Accent button for destructive actions
  * - active: Highlighted state (e.g., toggle on)
  *
  * Sizes:
- * - sm: Compact (h-7, px-2, text-[11px])
- * - md: Standard (h-8, px-3, text-[12px])
- * - lg: Large (h-9, px-4, text-[13px])
+ * - sm: Compact (h-6, px-2, text-[10px])
+ * - md: Standard (h-7, px-2.5, text-[11px])
+ * - lg: Large (h-8, px-3, text-[12px])
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ children, variant = 'default', size = 'md', disabled, className = '', style, ...props }, ref) => {
     const sizeClasses = {
-      sm: 'h-7 px-2 text-[11px]',
-      md: 'h-8 px-3 text-[12px]',
-      lg: 'h-9 px-4 text-[13px]',
+      sm: 'h-6 px-2 text-[10px]',
+      md: 'h-7 px-2.5 text-[11px]',
+      lg: 'h-8 px-3 text-[12px]',
     }
 
     const getStyles = () => {
@@ -32,7 +32,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         return {
           backgroundColor: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
-          color: 'var(--text-muted)',
+          color: 'var(--text-ghost)',
           opacity: 0.5,
           cursor: 'not-allowed',
         }
@@ -41,15 +41,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       switch (variant) {
         case 'danger':
           return {
-            backgroundColor: '#ef4444',
-            border: '1px solid #ef4444',
-            color: '#fff',
+            backgroundColor: 'var(--accent)',
+            border: '1px solid var(--accent)',
+            color: 'var(--text-primary)',
+            boxShadow: '0 0 4px var(--accent-glow)',
           }
         case 'active':
           return {
-            backgroundColor: 'var(--accent-blue)',
-            border: '1px solid var(--accent-blue)',
-            color: '#fff',
+            backgroundColor: 'var(--accent)',
+            border: '1px solid var(--accent)',
+            color: 'var(--text-primary)',
+            boxShadow: '0 0 4px var(--accent-glow)',
           }
         default:
           return {
@@ -63,11 +65,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (disabled) return
       if (variant === 'default') {
-        e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'
-      } else if (variant === 'danger') {
-        e.currentTarget.style.backgroundColor = '#dc2626'
-      } else if (variant === 'active') {
-        e.currentTarget.style.backgroundColor = '#2563eb'
+        e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+      } else if (variant === 'danger' || variant === 'active') {
+        e.currentTarget.style.backgroundColor = 'var(--accent-dim)'
       }
     }
 
@@ -81,7 +81,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled}
-        className={`${sizeClasses[size]} rounded font-medium transition-colors active:scale-95 ${className}`}
+        className={`${sizeClasses[size]} rounded-sm font-medium transition-colors active:scale-95 ${className}`}
         style={{
           ...getStyles(),
           ...style,

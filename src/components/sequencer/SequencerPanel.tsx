@@ -27,7 +27,7 @@ interface ViewConfig {
 const VIEWS: ViewConfig[] = [
   {
     type: 'steps',
-    color: '#a78bfa', // purple
+    color: 'var(--accent)',
     label: 'Step Sequencer',
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -40,7 +40,7 @@ const VIEWS: ViewConfig[] = [
   },
   {
     type: 'euclidean',
-    color: '#FF9F43',
+    color: 'var(--accent)',
     label: 'Euclidean Sequencer',
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -55,7 +55,7 @@ const VIEWS: ViewConfig[] = [
   },
   {
     type: 'ricochet',
-    color: '#00D9FF',
+    color: 'var(--accent)',
     label: 'Ricochet Sequencer',
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -133,10 +133,10 @@ export function SequencerPanel() {
             >
               {/* Title */}
               <span
-                className="text-[13px] font-semibold uppercase tracking-wider"
-                style={{ color: 'var(--text-muted)' }}
+                className="text-[9px] font-medium uppercase tracking-widest"
+                style={{ color: 'var(--text-ghost)' }}
               >
-                Sequencer
+                SEQ
               </span>
 
               {/* Spacer */}
@@ -145,16 +145,17 @@ export function SequencerPanel() {
               {/* Play/Stop */}
               <button
                 onClick={isPlaying ? stop : play}
-                className="w-7 h-7 flex items-center justify-center rounded transition-colors"
+                className="w-7 h-7 flex items-center justify-center rounded-sm transition-colors"
                 style={{
-                  backgroundColor: isPlaying ? 'var(--text-primary)' : 'var(--bg-surface)',
-                  border: '1px solid var(--border)',
+                  backgroundColor: isPlaying ? 'var(--accent)' : 'var(--bg-surface)',
+                  border: isPlaying ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  boxShadow: isPlaying ? '0 0 6px var(--accent-glow)' : 'none',
                 }}
               >
                 {isPlaying ? (
                   <div
                     className="w-2.5 h-2.5"
-                    style={{ backgroundColor: 'var(--bg-surface)' }}
+                    style={{ backgroundColor: 'var(--text-primary)' }}
                   />
                 ) : (
                   <div
@@ -174,11 +175,11 @@ export function SequencerPanel() {
                 type="number"
                 value={bpm}
                 onChange={handleBpmChange}
-                className="w-12 h-7 text-center text-[14px] font-mono rounded"
+                className="w-12 h-6 text-center text-[11px] font-mono rounded-sm"
                 style={{
                   backgroundColor: 'var(--bg-surface)',
                   border: '1px solid var(--border)',
-                  color: 'var(--text-primary)',
+                  color: 'var(--text-secondary)',
                 }}
                 min={20}
                 max={300}
@@ -187,7 +188,7 @@ export function SequencerPanel() {
               {/* Resolution */}
               <button
                 onClick={handleResolutionCycle}
-                className="h-7 px-2 text-[14px] font-mono rounded"
+                className="h-6 px-2 text-[11px] font-mono rounded-sm"
                 style={{
                   backgroundColor: 'var(--bg-surface)',
                   border: '1px solid var(--border)',
@@ -200,24 +201,25 @@ export function SequencerPanel() {
               {/* Audio Reactive Toggle */}
               <button
                 onClick={() => setAudioReactive(!audioReactive)}
-                className="h-7 px-2 text-[14px] font-medium rounded flex items-center gap-1.5"
+                className="h-6 px-2 text-[11px] font-medium rounded-sm flex items-center gap-1.5"
                 style={{
-                  backgroundColor: audioReactive ? '#8b5cf6' : 'var(--bg-surface)',
-                  border: audioReactive ? '1px solid #7c3aed' : '1px solid var(--border)',
-                  color: audioReactive ? '#ffffff' : 'var(--text-muted)',
+                  backgroundColor: audioReactive ? 'var(--accent)' : 'var(--bg-surface)',
+                  border: audioReactive ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  color: audioReactive ? 'var(--text-primary)' : 'var(--text-muted)',
+                  boxShadow: audioReactive ? '0 0 6px var(--accent-glow)' : 'none',
                 }}
                 title="Audio reactive mode - modulates parameters based on audio input"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                   <line x1="12" y1="19" x2="12" y2="22" />
                 </svg>
                 {audioReactive && (
                   <div
-                    className="w-1.5 h-3 rounded-sm"
+                    className="w-1 h-2.5 rounded-sm"
                     style={{
-                      backgroundColor: '#ffffff',
+                      backgroundColor: 'var(--text-primary)',
                       opacity: 0.3 + audioLevel * 0.7,
                       transform: `scaleY(${0.3 + audioLevel * 0.7})`,
                     }}
@@ -230,12 +232,12 @@ export function SequencerPanel() {
             <div className="flex-1 overflow-y-auto">
               {tracks.length === 0 ? (
                 <div
-                  className="flex items-center justify-center h-full text-[14px] cursor-pointer"
-                  style={{ color: 'var(--text-muted)' }}
+                  className="flex items-center justify-center h-full text-[11px] cursor-pointer uppercase tracking-wider"
+                  style={{ color: 'var(--text-ghost)' }}
                   onDoubleClick={addTrack}
                   title="Double-click to add a track"
                 >
-                  No tracks yet
+                  No tracks
                 </div>
               ) : (
                 <div className="p-2 space-y-1">
@@ -253,7 +255,7 @@ export function SequencerPanel() {
             >
               <button
                 onClick={addTrack}
-                className="w-full h-8 text-[14px] font-medium rounded transition-colors"
+                className="w-full h-7 text-[11px] font-medium rounded-sm transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-surface)',
                   border: '1px solid var(--border)',
@@ -262,7 +264,7 @@ export function SequencerPanel() {
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
               >
-                + Add Track
+                + Track
               </button>
             </div>
 
@@ -275,11 +277,11 @@ export function SequencerPanel() {
               }}
             >
               {/* Row 1: Mode, Fill, Random, Undo */}
-              <div className="flex gap-2 mb-2">
+              <div className="flex gap-1.5 mb-1.5">
                 <select
                   value={globalMode}
                   onChange={(e) => setGlobalMode(e.target.value as StepMode)}
-                  className="flex-1 h-7 px-2 text-[13px] rounded"
+                  className="flex-1 h-6 px-2 text-[11px] rounded-sm"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     border: '1px solid var(--border)',
@@ -293,11 +295,12 @@ export function SequencerPanel() {
 
                 <button
                   onClick={() => setFillModeActive(!fillModeActive)}
-                  className="h-7 px-3 text-[13px] font-medium rounded transition-colors"
+                  className="h-6 px-2 text-[11px] font-medium rounded-sm transition-colors"
                   style={{
-                    backgroundColor: fillModeActive ? '#4ade80' : 'var(--bg-surface)',
-                    border: fillModeActive ? '1px solid #4ade80' : '1px solid var(--border)',
-                    color: fillModeActive ? '#fff' : 'var(--text-muted)',
+                    backgroundColor: fillModeActive ? 'var(--accent)' : 'var(--bg-surface)',
+                    border: fillModeActive ? '1px solid var(--accent)' : '1px solid var(--border)',
+                    color: fillModeActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                    boxShadow: fillModeActive ? '0 0 6px var(--accent-glow)' : 'none',
                   }}
                   title={fillModeActive ? 'Click a track to fill/clear' : 'Enter fill mode'}
                 >
@@ -315,17 +318,17 @@ export function SequencerPanel() {
                   }}
                   title="Randomize all tracks (Shift+click for selected only)"
                 >
-                  Random
+                  Rand
                 </Button>
 
                 <Button
                   size="sm"
                   onClick={undoRandomize}
                   disabled={!previousStepsSnapshot}
-                  className="w-7 px-0 flex items-center justify-center"
+                  className="w-6 px-0 flex items-center justify-center"
                   title="Undo last randomize"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                     <path d="M3 3v5h5" />
                   </svg>
@@ -333,14 +336,15 @@ export function SequencerPanel() {
               </div>
 
               {/* Row 2: Freeze / Revert */}
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <button
                   onClick={freeze}
-                  className="flex-1 h-7 text-[13px] font-medium rounded transition-colors flex items-center justify-center gap-1"
+                  className="flex-1 h-6 text-[11px] font-medium rounded-sm transition-colors flex items-center justify-center gap-1"
                   style={{
-                    backgroundColor: frozenState ? '#e0f2fe' : 'var(--bg-surface)',
-                    border: frozenState ? '1px solid #38bdf8' : '1px solid var(--border)',
-                    color: frozenState ? '#0284c7' : 'var(--text-muted)',
+                    backgroundColor: frozenState ? 'var(--accent)' : 'var(--bg-surface)',
+                    border: frozenState ? '1px solid var(--accent)' : '1px solid var(--border)',
+                    color: frozenState ? 'var(--text-primary)' : 'var(--text-muted)',
+                    boxShadow: frozenState ? '0 0 6px var(--accent-glow)' : 'none',
                   }}
                   onMouseEnter={(e) => !frozenState && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
                   onMouseLeave={(e) => !frozenState && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
@@ -349,7 +353,7 @@ export function SequencerPanel() {
                   {frozenState && (
                     <div
                       className="w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: '#38bdf8' }}
+                      style={{ backgroundColor: 'var(--text-primary)' }}
                     />
                   )}
                   Freeze
@@ -380,14 +384,14 @@ export function SequencerPanel() {
     >
       {/* Icon bar */}
       <div
-        className="flex flex-col items-center gap-2 py-2"
+        className="flex flex-col items-center gap-1.5 py-2"
         style={{
-          width: '40px',
+          width: '36px',
           backgroundColor: 'var(--bg-elevated)',
           borderRight: '1px solid var(--border)',
         }}
       >
-        {VIEWS.map(({ type, color, label, icon }) => {
+        {VIEWS.map(({ type, label, icon }) => {
           const isActive = activeView === type
 
           return (
@@ -395,15 +399,14 @@ export function SequencerPanel() {
               key={type}
               onClick={() => setActiveView(type)}
               title={label}
-              className="flex items-center justify-center transition-colors"
+              className="flex items-center justify-center transition-colors rounded-sm"
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '4px',
-                backgroundColor: isActive ? `${color}20` : 'transparent',
-                border: isActive ? `2px solid ${color}` : '1px solid var(--border)',
-                boxShadow: isActive ? `0 0 8px ${color}40` : 'none',
-                color: isActive ? color : 'var(--text-muted)',
+                width: '28px',
+                height: '28px',
+                backgroundColor: isActive ? 'var(--accent-subtle)' : 'transparent',
+                border: isActive ? '1px solid var(--accent)' : '1px solid var(--border)',
+                boxShadow: isActive ? '0 0 6px var(--accent-glow)' : 'none',
+                color: isActive ? 'var(--accent)' : 'var(--text-muted)',
                 cursor: 'pointer',
               }}
             >

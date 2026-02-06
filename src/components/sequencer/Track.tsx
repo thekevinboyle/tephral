@@ -110,7 +110,7 @@ export function Track({ track }: TrackProps) {
 
   return (
     <div
-      className="flex items-center gap-2 px-2 py-1.5 rounded group cursor-pointer"
+      className="flex items-center gap-2 px-2 py-1 rounded-sm group cursor-pointer"
       style={{
         backgroundColor: isSelected ? `${track.color}10` : 'var(--bg-surface)',
         border: `1px solid ${isSelected ? track.color : 'var(--border)'}`,
@@ -119,7 +119,7 @@ export function Track({ track }: TrackProps) {
     >
       {/* Drag handle for routing */}
       <div
-        className="w-4 h-4 flex flex-col justify-center gap-0.5 cursor-grab opacity-40 group-hover:opacity-100 transition-opacity"
+        className="w-3 h-3 flex flex-col justify-center gap-0.5 cursor-grab opacity-30 group-hover:opacity-80 transition-opacity"
         title="Drag to effect parameter to create modulation route"
         draggable
         onDragStart={(e) => {
@@ -137,16 +137,16 @@ export function Track({ track }: TrackProps) {
           borderRadius: isRoutingDrag ? '2px' : undefined,
         }}
       >
-        <div className="w-full h-0.5 bg-gray-400 rounded" style={{ backgroundColor: isRoutingDrag ? '#fff' : undefined }} />
-        <div className="w-full h-0.5 bg-gray-400 rounded" style={{ backgroundColor: isRoutingDrag ? '#fff' : undefined }} />
-        <div className="w-full h-0.5 bg-gray-400 rounded" style={{ backgroundColor: isRoutingDrag ? '#fff' : undefined }} />
+        <div className="w-full h-px rounded-sm" style={{ backgroundColor: isRoutingDrag ? 'var(--text-primary)' : 'var(--text-ghost)' }} />
+        <div className="w-full h-px rounded-sm" style={{ backgroundColor: isRoutingDrag ? 'var(--text-primary)' : 'var(--text-ghost)' }} />
+        <div className="w-full h-px rounded-sm" style={{ backgroundColor: isRoutingDrag ? 'var(--text-primary)' : 'var(--text-ghost)' }} />
       </div>
 
       {/* Track name with color dot */}
-      <div className="flex items-center gap-1.5 w-16 flex-shrink-0">
+      <div className="flex items-center gap-1.5 w-14 flex-shrink-0">
         <div
-          className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ backgroundColor: track.color }}
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: track.color, boxShadow: `0 0 4px ${track.color}` }}
         />
         {isEditing ? (
           <input
@@ -156,15 +156,16 @@ export function Track({ track }: TrackProps) {
             onChange={(e) => setEditName(e.target.value)}
             onBlur={handleNameSubmit}
             onKeyDown={handleNameKeyDown}
-            className="w-full text-[13px] px-1 py-0.5 rounded"
+            className="w-full text-[11px] px-1 py-0.5 rounded-sm"
             style={{
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border)',
+              color: 'var(--text-secondary)',
             }}
           />
         ) : (
           <span
-            className="text-[13px] font-medium truncate cursor-text"
+            className="text-[11px] font-medium truncate cursor-text"
             style={{ color: 'var(--text-muted)' }}
             onDoubleClick={handleNameDoubleClick}
             title="Double-click to rename"
@@ -194,7 +195,7 @@ export function Track({ track }: TrackProps) {
       {/* Length */}
       <button
         onClick={handleLengthClick}
-        className="w-6 text-[12px] font-mono text-center rounded hover:bg-gray-100"
+        className="w-5 text-[10px] font-mono text-center rounded-sm"
         style={{ color: 'var(--text-muted)' }}
         title="Click to change length"
       >
@@ -204,8 +205,8 @@ export function Track({ track }: TrackProps) {
       {/* Mode override */}
       <button
         onClick={handleModeClick}
-        className="w-5 text-[13px] font-mono text-center rounded hover:bg-gray-100"
-        style={{ color: track.modeOverride ? 'var(--text-primary)' : '#cccccc' }}
+        className="w-4 text-[11px] font-mono text-center rounded-sm"
+        style={{ color: track.modeOverride ? 'var(--text-secondary)' : 'var(--text-ghost)' }}
         title={track.modeOverride ? `Mode: ${track.modeOverride}` : 'Using global mode'}
       >
         {track.modeOverride ? MODE_LABELS[track.modeOverride] : '-'}
@@ -214,11 +215,12 @@ export function Track({ track }: TrackProps) {
       {/* Solo toggle */}
       <button
         onClick={handleSoloClick}
-        className="w-5 h-5 text-[13px] font-medium rounded"
+        className="w-4 h-4 text-[10px] font-medium rounded-sm"
         style={{
-          backgroundColor: track.solo ? track.color : 'transparent',
-          color: track.solo ? '#ffffff' : '#cccccc',
-          border: track.solo ? 'none' : '1px solid var(--border)',
+          backgroundColor: track.solo ? 'var(--accent)' : 'transparent',
+          color: track.solo ? 'var(--text-primary)' : 'var(--text-ghost)',
+          border: track.solo ? '1px solid var(--accent)' : '1px solid var(--border)',
+          boxShadow: track.solo ? '0 0 4px var(--accent-glow)' : 'none',
         }}
         title={track.solo ? 'Solo (click to unsolo)' : 'Solo this track'}
       >
@@ -228,13 +230,13 @@ export function Track({ track }: TrackProps) {
       {/* Remove button (shown on hover) */}
       <button
         onClick={handleRemove}
-        className="w-4 h-4 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
-        style={{ color: '#cccccc' }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = '#f44')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = '#cccccc')}
+        className="w-3.5 h-3.5 flex items-center justify-center rounded-sm opacity-0 group-hover:opacity-60 transition-opacity"
+        style={{ color: 'var(--text-ghost)' }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
+        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-ghost)')}
         title="Remove track"
       >
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+        <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
           <path d="M1 1L7 7M7 1L1 7" stroke="currentColor" strokeWidth="1.5" />
         </svg>
       </button>

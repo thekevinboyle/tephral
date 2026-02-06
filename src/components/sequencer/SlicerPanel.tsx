@@ -63,17 +63,17 @@ export function SlicerPanel() {
       {!enabled && (
         <div
           className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
         >
           <span
-            className="text-sm font-bold uppercase tracking-widest px-3 py-1 rounded"
+            className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm"
             style={{
-              color: 'var(--text-muted)',
+              color: 'var(--text-ghost)',
               backgroundColor: 'var(--bg-elevated)',
               border: '1px solid var(--border)',
             }}
           >
-            BYPASSED
+            Bypassed
           </span>
         </div>
       )}
@@ -83,11 +83,11 @@ export function SlicerPanel() {
         <div
           className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none"
           style={{
-            backgroundColor: 'rgba(139, 92, 246, 0.2)',
-            border: '2px dashed #8b5cf6',
+            backgroundColor: 'rgba(255, 0, 85, 0.15)',
+            border: '2px dashed var(--accent)',
           }}
         >
-          <span className="text-lg font-medium" style={{ color: '#8b5cf6' }}>
+          <span className="text-[12px] font-medium uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
             Drop to import
           </span>
         </div>
@@ -95,26 +95,26 @@ export function SlicerPanel() {
 
       {/* Header row */}
       <div
-        className="px-3 py-2 flex items-center"
+        className="px-3 py-1.5 flex items-center"
         style={{
           borderBottom: '1px solid var(--border)',
-          backgroundColor: enabled ? 'rgba(74, 222, 128, 0.1)' : 'transparent',
+          backgroundColor: enabled ? 'rgba(255, 0, 85, 0.08)' : 'transparent',
           transition: 'background-color 0.15s ease',
         }}
       >
         {/* Active indicator dot */}
         <div
-          className="w-2 h-2 rounded-full mr-2"
+          className="w-1.5 h-1.5 rounded-full mr-2"
           style={{
-            backgroundColor: enabled ? '#4ade80' : '#ef4444',
-            boxShadow: enabled ? '0 0 6px rgba(74, 222, 128, 0.6)' : 'none',
+            backgroundColor: enabled ? 'var(--accent)' : 'var(--text-ghost)',
+            boxShadow: enabled ? '0 0 6px var(--accent-glow)' : 'none',
           }}
         />
         <span
-          className="text-[13px] font-semibold uppercase tracking-wider"
-          style={{ color: enabled ? '#4ade80' : 'var(--text-muted)' }}
+          className="text-[9px] font-medium uppercase tracking-widest"
+          style={{ color: enabled ? 'var(--accent)' : 'var(--text-ghost)' }}
         >
-          SLICER
+          Slicer
         </span>
         <div className="flex-1" />
         <SlicerTransport />

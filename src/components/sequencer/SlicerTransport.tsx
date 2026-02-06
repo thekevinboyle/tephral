@@ -58,18 +58,20 @@ export function SlicerTransport() {
   }, [importFrames, setCaptureState, setImportedClipId])
 
   return (
-    <div className="flex flex-row gap-2 items-center relative">
+    <div className="flex flex-row gap-1.5 items-center relative">
       {/* Capture/Release button */}
       <button
         onClick={handleCaptureRelease}
-        className="h-7 px-2 text-[11px] font-medium rounded"
+        className="h-6 px-2 text-[10px] font-medium rounded-sm"
         style={{
           backgroundColor: captureState === 'frozen' || captureState === 'imported'
-            ? '#f87171' : 'var(--bg-surface)',
+            ? 'var(--accent)' : 'var(--bg-surface)',
           border: captureState === 'frozen' || captureState === 'imported'
-            ? '1px solid #f87171' : '1px solid var(--border)',
+            ? '1px solid var(--accent)' : '1px solid var(--border)',
           color: captureState === 'frozen' || captureState === 'imported'
-            ? '#ffffff' : 'var(--text-muted)',
+            ? 'var(--text-primary)' : 'var(--text-muted)',
+          boxShadow: captureState === 'frozen' || captureState === 'imported'
+            ? '0 0 4px var(--accent-glow)' : 'none',
         }}
       >
         {captureState === 'live' ? 'Capture' : 'Release'}
@@ -80,12 +82,13 @@ export function SlicerTransport() {
         <button
           onClick={() => setShowClipPicker(!showClipPicker)}
           disabled={isLoading || clips.length === 0}
-          className="h-7 px-2 text-[11px] font-medium rounded"
+          className="h-6 px-2 text-[10px] font-medium rounded-sm"
           style={{
-            backgroundColor: captureState === 'imported' ? '#8b5cf6' : 'var(--bg-surface)',
-            border: captureState === 'imported' ? '1px solid #8b5cf6' : '1px solid var(--border)',
-            color: captureState === 'imported' ? '#ffffff' : 'var(--text-muted)',
+            backgroundColor: captureState === 'imported' ? 'var(--accent)' : 'var(--bg-surface)',
+            border: captureState === 'imported' ? '1px solid var(--accent)' : '1px solid var(--border)',
+            color: captureState === 'imported' ? 'var(--text-primary)' : 'var(--text-muted)',
             opacity: isLoading || clips.length === 0 ? 0.5 : 1,
+            boxShadow: captureState === 'imported' ? '0 0 4px var(--accent-glow)' : 'none',
           }}
           title={clips.length === 0 ? 'No clips available' : 'Import from clip bin'}
         >
@@ -95,12 +98,12 @@ export function SlicerTransport() {
         {/* Clip picker dropdown */}
         {showClipPicker && clips.length > 0 && (
           <div
-            className="absolute top-full left-0 mt-1 rounded-lg shadow-lg z-50 overflow-hidden"
+            className="absolute top-full left-0 mt-1 rounded-sm shadow-lg z-50 overflow-hidden"
             style={{
               backgroundColor: 'var(--bg-elevated)',
               border: '1px solid var(--border)',
-              minWidth: '200px',
-              maxHeight: '200px',
+              minWidth: '180px',
+              maxHeight: '180px',
               overflowY: 'auto',
             }}
           >
@@ -108,19 +111,19 @@ export function SlicerTransport() {
               <button
                 key={clip.id}
                 onClick={() => handleImportClip(clip.url, clip.id, clip.duration)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-white/10 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1 hover:bg-white/5 transition-colors"
               >
                 <img
                   src={clip.thumbnailUrl}
                   alt=""
-                  className="w-12 h-8 object-cover rounded"
+                  className="w-10 h-7 object-cover rounded-sm"
                   style={{ backgroundColor: '#000' }}
                 />
                 <div className="flex-1 text-left">
-                  <div className="text-[11px]" style={{ color: 'var(--text-primary)' }}>
+                  <div className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>
                     {clip.duration.toFixed(1)}s
                   </div>
-                  <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                  <div className="text-[9px]" style={{ color: 'var(--text-ghost)' }}>
                     {new Date(clip.createdAt).toLocaleTimeString()}
                   </div>
                 </div>
@@ -132,7 +135,7 @@ export function SlicerTransport() {
 
       {/* Buffer size controls */}
       <span
-        className="text-[11px]"
+        className="text-[10px] tabular-nums"
         style={{ color: 'var(--text-muted)' }}
       >
         {bufferSize}s
@@ -145,34 +148,36 @@ export function SlicerTransport() {
         value={bufferSize}
         onChange={(e) => setBufferSize(parseFloat(e.target.value))}
         disabled={captureState !== 'live'}
-        className="w-12"
+        className="w-10"
         style={{
-          opacity: captureState === 'live' ? 1 : 0.5,
+          opacity: captureState === 'live' ? 1 : 0.4,
+          accentColor: '#FF0055',
         }}
       />
 
       {/* Play/Stop button */}
       <button
         onClick={() => setIsPlaying(!isPlaying)}
-        className="w-7 h-7 flex items-center justify-center rounded"
+        className="w-6 h-6 flex items-center justify-center rounded-sm"
         style={{
-          backgroundColor: isPlaying ? '#4ade80' : 'var(--bg-surface)',
-          border: isPlaying ? '1px solid #4ade80' : '1px solid var(--border)',
+          backgroundColor: isPlaying ? 'var(--accent)' : 'var(--bg-surface)',
+          border: isPlaying ? '1px solid var(--accent)' : '1px solid var(--border)',
+          boxShadow: isPlaying ? '0 0 6px var(--accent-glow)' : 'none',
         }}
       >
         {isPlaying ? (
           <div
-            className="w-2.5 h-2.5"
-            style={{ backgroundColor: isPlaying ? '#ffffff' : 'var(--text-muted)' }}
+            className="w-2 h-2"
+            style={{ backgroundColor: 'var(--text-primary)' }}
           />
         ) : (
           <div
             className="w-0 h-0"
             style={{
-              borderTop: '5px solid transparent',
-              borderBottom: '5px solid transparent',
-              borderLeft: '8px solid var(--text-muted)',
-              marginLeft: '2px',
+              borderTop: '4px solid transparent',
+              borderBottom: '4px solid transparent',
+              borderLeft: '6px solid var(--text-muted)',
+              marginLeft: '1px',
             }}
           />
         )}
@@ -181,34 +186,34 @@ export function SlicerTransport() {
       {/* BPM Sync toggle */}
       <button
         onClick={() => setSyncToBpm(!syncToBpm)}
-        className="h-7 px-2 text-[11px] font-mono rounded"
+        className="h-6 px-1.5 text-[10px] font-mono rounded-sm"
         style={{
-          backgroundColor: syncToBpm ? 'var(--text-primary)' : 'var(--bg-surface)',
-          border: syncToBpm ? '1px solid var(--text-primary)' : '1px solid var(--border)',
-          color: syncToBpm ? 'var(--bg-surface)' : 'var(--text-muted)',
+          backgroundColor: syncToBpm ? 'var(--accent)' : 'var(--bg-surface)',
+          border: syncToBpm ? '1px solid var(--accent)' : '1px solid var(--border)',
+          color: syncToBpm ? 'var(--text-primary)' : 'var(--text-muted)',
+          boxShadow: syncToBpm ? '0 0 4px var(--accent-glow)' : 'none',
         }}
         title={syncToBpm ? `Synced to ${bpm} BPM` : 'Free running'}
       >
         {syncToBpm ? bpm : 'Free'}
       </button>
 
-      {/* Master On/Off button - green when on, red when off */}
+      {/* Master On/Off button */}
       <button
         onClick={() => setEnabled(!enabled)}
-        className="w-7 h-7 rounded flex items-center justify-center"
+        className="w-6 h-6 rounded-sm flex items-center justify-center"
         style={{
-          backgroundColor: enabled ? '#4ade80' : '#ef4444',
-          boxShadow: enabled
-            ? '0 0 8px rgba(74, 222, 128, 0.4)'
-            : '0 0 8px rgba(239, 68, 68, 0.3)',
+          backgroundColor: enabled ? 'var(--accent)' : 'var(--bg-surface)',
+          border: enabled ? '1px solid var(--accent)' : '1px solid var(--border)',
+          boxShadow: enabled ? '0 0 6px var(--accent-glow)' : 'none',
         }}
         title={enabled ? 'Slicer On' : 'Slicer Off'}
       >
         {/* Small LED indicator inside button */}
         <div
-          className="w-2 h-2 rounded-full"
+          className="w-1.5 h-1.5 rounded-full"
           style={{
-            backgroundColor: enabled ? '#166534' : '#7f1d1d',
+            backgroundColor: enabled ? 'var(--text-primary)' : 'var(--text-ghost)',
           }}
         />
       </button>

@@ -90,7 +90,7 @@ export function PresetContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 py-1 rounded-lg shadow-lg"
+      className="fixed z-50 py-1 rounded-sm shadow-lg"
       style={{
         ...adjustedStyle,
         backgroundColor: 'var(--bg-surface)',
@@ -110,14 +110,14 @@ export function PresetContextMenu({
       {/* Move To submenu */}
       <div className="relative group">
         <div
-          className="flex items-center justify-between gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-100"
+          className="flex items-center justify-between gap-2 px-3 py-1.5 cursor-pointer hover:bg-white/5"
           style={{ color: 'var(--text-primary)' }}
         >
           <div className="flex items-center gap-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
-            <span className="text-[14px]">Move to</span>
+            <span className="text-[11px]">Move to</span>
           </div>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="9 18 15 12 9 6" />
@@ -126,7 +126,7 @@ export function PresetContextMenu({
 
         {/* Submenu */}
         <div
-          className="absolute left-full top-0 ml-1 py-1 rounded-lg shadow-lg hidden group-hover:block"
+          className="absolute left-full top-0 ml-1 py-1 rounded-sm shadow-lg hidden group-hover:block"
           style={{
             backgroundColor: 'var(--bg-surface)',
             border: '1px solid var(--border)',
@@ -136,14 +136,14 @@ export function PresetContextMenu({
           {moveableFolders.map((folder) => (
             <div
               key={folder.id}
-              className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-100"
+              className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-white/5"
               style={{ color: 'var(--text-primary)' }}
               onClick={() => handleMoveTo(folder.id)}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
               </svg>
-              <span className="text-[14px]">{folder.name}</span>
+              <span className="text-[11px]">{folder.name}</span>
             </div>
           ))}
         </div>
@@ -184,12 +184,12 @@ interface MenuItemProps {
 function MenuItem({ children, onClick, danger }: MenuItemProps) {
   return (
     <div
-      className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-gray-100"
-      style={{ color: danger ? '#ef4444' : 'var(--text-primary)' }}
+      className="flex items-center gap-2 px-3 py-1 cursor-pointer hover:bg-white/5"
+      style={{ color: danger ? 'var(--accent)' : 'var(--text-primary)' }}
       onClick={onClick}
     >
       {children}
-      {typeof children === 'string' && <span className="text-[14px]">{children}</span>}
+      {typeof children === 'string' && <span className="text-[11px]">{children}</span>}
     </div>
   )
 }
@@ -263,7 +263,7 @@ export function FolderContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 py-1 rounded-lg shadow-lg"
+      className="fixed z-50 py-1 rounded-sm shadow-lg"
       style={{
         ...adjustedStyle,
         backgroundColor: 'var(--bg-surface)',

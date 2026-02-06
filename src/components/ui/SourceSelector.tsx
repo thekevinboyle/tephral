@@ -38,8 +38,8 @@ export function SourceSelector({ variant = 'compact' }: SourceSelectorProps) {
   }, [switchCheck, openFilePicker])
 
   const buttonBase = variant === 'compact'
-    ? 'h-7 rounded-md text-[12px] font-medium transition-colors active:scale-95'
-    : 'h-9 rounded-lg text-[13px] font-medium transition-colors active:scale-95'
+    ? 'h-6 rounded-sm text-[10px] font-medium transition-colors active:scale-95'
+    : 'h-7 rounded-sm text-[11px] font-medium transition-colors active:scale-95'
 
   const buttonWidth = variant === 'compact' ? '48px' : '64px'
 
@@ -92,10 +92,11 @@ export function SourceSelector({ variant = 'compact' }: SourceSelectorProps) {
       {/* Slicer indicator (shown when slicer is the active source) */}
       {slicerEnabled && (
         <span
-          className="text-[11px] font-medium px-2 py-1 rounded"
+          className="text-[9px] font-medium px-1.5 py-0.5 rounded-sm"
           style={{
-            backgroundColor: '#6366f1',
-            color: 'white',
+            backgroundColor: 'var(--accent)',
+            color: 'var(--text-primary)',
+            boxShadow: '0 0 4px var(--accent-glow)',
           }}
         >
           Slicer

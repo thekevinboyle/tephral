@@ -1958,11 +1958,11 @@ export function ParameterPanel() {
   // Note: position:relative + z-index ensures buttons stay clickable above any overlapping elements
   const ControlButtons = () => (
     <div
-      className="flex gap-2 rounded-lg items-center"
+      className="flex gap-1.5 rounded-sm items-center"
       style={{
         backgroundColor: 'var(--bg-surface)',
         border: '1px solid var(--border)',
-        padding: '8px 12px',
+        padding: '6px 10px',
         flexShrink: 0,
         position: 'relative',
         zIndex: 20,
@@ -1978,7 +1978,7 @@ export function ParameterPanel() {
           const current = useGlitchEngineStore.getState().bypassActive
           useGlitchEngineStore.getState().setBypassActive(!current)
         }}
-        style={bypassActive ? { boxShadow: '0 0 12px #ef4444' } : undefined}
+        style={bypassActive ? { boxShadow: '0 0 8px var(--accent-glow)' } : undefined}
       >
         Bypass
       </Button>
@@ -2066,7 +2066,7 @@ export function ParameterPanel() {
               }
               setDropTargetId(null)
             }}
-            className="flex-shrink-0 flex items-center gap-2 select-none touch-none cursor-grab active:cursor-grabbing group rounded-lg"
+            className="flex-shrink-0 flex items-center gap-2 select-none touch-none cursor-grab active:cursor-grabbing group rounded-sm"
             style={{
               backgroundColor: isBypassed ? 'var(--border)' : isSequencerDropTarget ? '#f0fff0' : 'var(--bg-surface)',
               border: `1px solid ${isSequencerDropTarget ? sequencerDrag.trackColor || '#4ade80' : borderColor}`,

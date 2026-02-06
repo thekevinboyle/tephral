@@ -237,59 +237,59 @@ export function TransportBar() {
     <div className="h-full flex items-center gap-4 px-4 py-1.5">
       {/* Source selector */}
       <div className="flex items-center gap-2">
-        <span className="text-[11px] font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-          Source:
+        <span className="text-[9px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
+          SRC
         </span>
         <SourceSelector variant="compact" />
       </div>
 
       {/* Divider */}
-      <div className="w-px h-5 bg-gray-300" />
+      <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
 
-      {/* Record/Stop button - toggles between record (red circle) and stop (white square) */}
+      {/* Record/Stop button */}
       <button
         onClick={isRecording ? stopRecording : handleStartRecording}
         disabled={!hasSource}
-        className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+        className="w-7 h-7 rounded-sm flex items-center justify-center transition-all"
         style={{
-          backgroundColor: isRecording ? '#ef4444' : 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          boxShadow: isRecording ? '0 0 10px #ef4444' : 'none',
+          backgroundColor: isRecording ? 'var(--accent)' : 'var(--bg-elevated)',
+          border: `1px solid ${isRecording ? 'var(--accent)' : 'var(--border)'}`,
+          boxShadow: isRecording ? '0 0 8px var(--accent-glow)' : 'none',
           opacity: hasSource ? 1 : 0.5,
           cursor: hasSource ? 'pointer' : 'not-allowed',
         }}
         title={isRecording ? 'Stop Recording' : 'Start Recording'}
       >
         {isRecording ? (
-          /* Stop icon - white square */
-          <div className="w-3 h-3 bg-white" />
+          <div className="w-2.5 h-2.5" style={{ backgroundColor: 'var(--text-primary)' }} />
         ) : (
-          /* Record icon - red circle */
-          <div className="w-3 h-3 rounded-full bg-red-500" />
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--accent)' }} />
         )}
       </button>
 
       {/* Divider */}
-      <div className="w-px h-5 bg-gray-300" />
+      <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
 
       {/* Play/Pause button */}
       <button
         onClick={handlePlayPause}
         disabled={!hasPlayableContent}
-        className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+        className="w-7 h-7 rounded-sm flex items-center justify-center transition-all"
         style={{
+          backgroundColor: 'var(--bg-elevated)',
+          border: '1px solid var(--border)',
           opacity: hasPlayableContent ? 1 : 0.4,
           cursor: hasPlayableContent ? 'pointer' : 'default',
         }}
         title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
       >
         {isPlaying ? (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="var(--text-primary)">
-            <rect x="3" y="2" width="4" height="12" rx="1" />
-            <rect x="9" y="2" width="4" height="12" rx="1" />
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="var(--text-secondary)">
+            <rect x="3" y="2" width="4" height="12" />
+            <rect x="9" y="2" width="4" height="12" />
           </svg>
         ) : (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="var(--text-primary)">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="var(--text-secondary)">
             <path d="M4 2l10 6-10 6V2z" />
           </svg>
         )}
@@ -297,38 +297,48 @@ export function TransportBar() {
 
       {/* Timeline */}
       <div
-        className="h-2 bg-gray-200 rounded-full relative overflow-hidden group"
+        className="h-1 rounded-sm relative overflow-hidden group"
         onClick={hasPlayableContent ? handleTimelineClick : undefined}
         style={{
-          width: '200px',
+          width: '180px',
+          backgroundColor: 'var(--bg-elevated)',
           cursor: hasPlayableContent ? 'pointer' : 'default',
           opacity: hasPlayableContent ? 1 : 0.5,
         }}
       >
         {/* Progress fill */}
         <div
-          className="absolute inset-y-0 left-0 bg-blue-500 rounded-full"
-          style={{ width: `${progress}%` }}
+          className="absolute inset-y-0 left-0 rounded-sm"
+          style={{
+            width: `${progress}%`,
+            backgroundColor: 'var(--accent)',
+            boxShadow: '0 0 4px var(--accent-glow)',
+          }}
         />
-        {/* Playhead */}
-        {hasPlayableContent && (
-          <div
-            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ left: `calc(${progress}% - 5px)` }}
-          />
-        )}
       </div>
 
       {/* Playback timecode */}
-      <span
-        className="text-[12px] tabular-nums"
-        style={{
-          color: hasPlayableContent ? 'var(--text-muted)' : '#aaaaaa',
-          fontFamily: "'JetBrains Mono', monospace",
-        }}
-      >
-        {formatTime(currentTime)} / {formatTime(duration)}
-      </span>
+      <div className="flex items-center gap-1">
+        <span
+          className="text-[11px] tabular-nums tracking-wide"
+          style={{
+            color: hasPlayableContent ? 'var(--text-secondary)' : 'var(--text-ghost)',
+            letterSpacing: '0.05em',
+          }}
+        >
+          {formatTime(currentTime)}
+        </span>
+        <span style={{ color: 'var(--text-ghost)' }}>\</span>
+        <span
+          className="text-[11px] tabular-nums tracking-wide"
+          style={{
+            color: 'var(--text-muted)',
+            letterSpacing: '0.05em',
+          }}
+        >
+          {formatTime(duration)}
+        </span>
+      </div>
 
       {/* Spacer */}
       <div className="flex-1" />

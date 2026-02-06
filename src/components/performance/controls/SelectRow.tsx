@@ -12,28 +12,28 @@ export function SelectRow({ label, value, options, onChange }: SelectRowProps) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '6px 0',
+        padding: '4px 0',
       }}
     >
       <span
         style={{
-          fontSize: '14px',
+          fontSize: '11px',
           color: 'var(--text-muted)',
         }}
       >
         {label}
       </span>
-      <div style={{ display: 'flex', gap: '4px' }}>
+      <div style={{ display: 'flex', gap: '2px' }}>
         {options.map((option) => (
           <button
             key={option.value}
             onClick={() => onChange(option.value)}
             style={{
-              padding: '2px 8px',
-              fontSize: '13px',
-              borderRadius: '4px',
-              transition: 'background-color 0.15s, color 0.15s',
-              border: 'none',
+              padding: '2px 6px',
+              fontSize: '10px',
+              borderRadius: '2px',
+              transition: 'background-color 0.15s, color 0.15s, box-shadow 0.15s',
+              border: value === option.value ? '1px solid var(--accent)' : '1px solid var(--border)',
               cursor: 'pointer',
               backgroundColor:
                 value === option.value
@@ -41,8 +41,12 @@ export function SelectRow({ label, value, options, onChange }: SelectRowProps) {
                   : 'var(--bg-surface)',
               color:
                 value === option.value
-                  ? 'var(--bg-surface)'
+                  ? 'var(--text-primary)'
                   : 'var(--text-muted)',
+              boxShadow:
+                value === option.value
+                  ? '0 0 4px var(--accent-glow)'
+                  : 'none',
             }}
           >
             {option.label}

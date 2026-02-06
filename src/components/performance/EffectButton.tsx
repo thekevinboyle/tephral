@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from 'react'
+import { useRef, useCallback } from 'react'
 import { useRecordingStore } from '../../stores/recordingStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
@@ -23,7 +23,7 @@ interface EffectButtonProps {
 export function EffectButton({
   id,
   label,
-  color,
+  color: _color,
   active,
   value,
   min = 0,
@@ -33,6 +33,7 @@ export function EffectButton({
   isSoloed = false,
   isMuted = false,
 }: EffectButtonProps) {
+  void _color // Keep color prop for API compatibility
   const dragStartY = useRef<number | null>(null)
   const dragStartValue = useRef<number>(0)
   const didDrag = useRef(false)
@@ -188,38 +189,6 @@ export function EffectButton({
   // Value percentage for the progress bar
   const percentage = ((value - min) / (max - min)) * 100
 
-  // Determine display color based on muted state
-  const displayColor = isMuted ? 'var(--text-muted)' : color
-
-  // Flashing state for latched solo
-  const [flashOn, setFlashOn] = useState(true)
-  useEffect(() => {
-    if (isSoloed && soloLatched) {
-      const interval = setInterval(() => {
-        setFlashOn((prev) => !prev)
-      }, 400) // Flash every 400ms
-      return () => clearInterval(interval)
-    } else {
-      setFlashOn(true)
-    }
-  }, [isSoloed, soloLatched])
-
-  // Backlit shadow for solo states
-  const getSoloShadow = () => {
-    if (!isSoloed) return 'none'
-    const shadowOpacity = soloLatched && !flashOn ? 0.2 : 0.6
-    return `0 0 20px rgba(${hexToRgb(color)}, ${shadowOpacity}), 0 0 40px rgba(${hexToRgb(color)}, ${shadowOpacity * 0.5})`
-  }
-
-  // Helper to convert hex to rgb values
-  function hexToRgb(hex: string): string {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-    if (result) {
-      return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
-    }
-    return '255, 255, 255'
-  }
-
   return (
     <div
       onPointerDown={handlePointerDown}
@@ -227,12 +196,12 @@ export function EffectButton({
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
       onPointerCancel={handlePointerLeave}
-      className="relative rounded-lg flex select-none touch-none cursor-pointer w-full h-full p-1.5 overflow-hidden"
+      className="relative rounded-sm flex select-none touch-none cursor-pointer w-full h-full p-1 overflow-hidden"
       style={{
         backgroundColor: 'var(--bg-surface)',
-        border: isSoloed ? `2px solid ${color}` : active ? `1px solid ${color}60` : '1px solid var(--border)',
-        opacity: isMuted ? 0.5 : 1,
-        boxShadow: getSoloShadow(),
+        border: isSoloed ? `1px solid var(--accent)` : active ? `1px solid var(--accent)40` : '1px solid var(--border)',
+        opacity: isMuted ? 0.4 : 1,
+        boxShadow: isSoloed ? '0 0 8px var(--accent-glow)' : 'none',
         transition: 'box-shadow 0.15s ease-out, border 0.15s ease-out, background-color 0.15s ease-out',
       }}
     >
@@ -242,15 +211,15 @@ export function EffectButton({
         <div className="flex items-center gap-1">
           {/* LED - only this gets a glow when active */}
           <div
-            className="w-1.5 h-1.5 rounded-full transition-all duration-150 shrink-0"
+            className="w-1 h-1 rounded-full transition-all duration-150 shrink-0"
             style={{
-              backgroundColor: active ? displayColor : 'var(--border)',
-              boxShadow: active && !isMuted ? `0 0 6px ${color}` : 'none',
+              backgroundColor: active ? 'var(--accent)' : 'var(--text-ghost)',
+              boxShadow: active && !isMuted ? '0 0 4px var(--accent-glow)' : 'none',
             }}
           />
           <span
-            className="text-[12px] font-medium truncate"
-            style={{ color: active ? 'var(--text-primary)' : 'var(--text-muted)' }}
+            className="text-[10px] font-medium truncate"
+            style={{ color: active ? 'var(--text-secondary)' : 'var(--text-muted)' }}
           >
             {label}
           </span>
@@ -258,9 +227,9 @@ export function EffectButton({
 
         {/* Parameter value */}
         <span
-          className="text-[13px] tabular-nums font-medium"
+          className="text-[11px] tabular-nums font-medium"
           style={{
-            color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+            color: active ? 'var(--accent)' : 'var(--text-ghost)',
             fontFamily: "'JetBrains Mono', monospace",
           }}
         >
@@ -270,17 +239,17 @@ export function EffectButton({
 
       {/* Vertical progress bar on the right - flat style */}
       <div
-        className="w-1 rounded-full ml-2 relative overflow-hidden"
+        className="w-0.5 rounded-sm ml-1.5 relative overflow-hidden"
         style={{
           backgroundColor: 'var(--border)',
         }}
       >
         {/* Fill from bottom */}
         <div
-          className="absolute bottom-0 left-0 right-0 rounded-full transition-all duration-150"
+          className="absolute bottom-0 left-0 right-0 rounded-sm transition-all duration-150"
           style={{
             height: `${percentage}%`,
-            backgroundColor: active ? displayColor : 'var(--text-muted)',
+            backgroundColor: active ? 'var(--accent)' : 'var(--text-ghost)',
           }}
         />
       </div>

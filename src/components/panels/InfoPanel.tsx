@@ -138,31 +138,31 @@ function ActiveEffectsSummary({ effects }: { effects: ActiveEffect[] }) {
   return (
     <>
       <div
-        className="flex items-center justify-between px-3 py-2"
+        className="flex items-center justify-between px-3 py-1.5"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         <div className="flex items-center gap-2">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#22c55e' }}>
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 6v6l4 2" />
-          </svg>
+          <div
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ backgroundColor: 'var(--accent)', boxShadow: '0 0 4px var(--accent-glow)' }}
+          />
           <span
-            className="text-[13px] font-semibold uppercase tracking-wider"
-            style={{ color: 'var(--text-secondary)' }}
+            className="text-[9px] font-medium uppercase tracking-widest"
+            style={{ color: 'var(--text-ghost)' }}
           >
             Active
           </span>
         </div>
         <span
-          className="text-[11px] font-medium px-1.5 py-0.5 rounded"
-          style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-muted)' }}
+          className="text-[9px] font-medium px-1 py-0.5 rounded-sm"
+          style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-muted)' }}
         >
           {effects.length}
         </span>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="px-2 py-2 space-y-1">
+        <div className="px-2 py-1.5 space-y-0.5">
           {effects.map((effect) => (
             <EffectMiniControl
               key={effect.id}
@@ -190,33 +190,33 @@ function EffectMiniControl({ effect, isExpanded, onToggle }: { effect: ActiveEff
 
   return (
     <div
-      className="rounded-lg overflow-hidden transition-colors"
+      className="rounded-sm overflow-hidden transition-colors"
       style={{ backgroundColor: isExpanded ? 'var(--bg-elevated)' : 'transparent' }}
     >
       {/* Header row - always visible */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
+        className="w-full flex items-center gap-1.5 px-2 py-1 text-left hover:bg-[var(--bg-hover)] rounded-sm transition-colors"
       >
         <div
-          className="w-2 h-2 rounded-full flex-shrink-0"
-          style={{ backgroundColor: effect.color }}
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: 'var(--accent)', boxShadow: '0 0 4px var(--accent-glow)' }}
         />
-        <span className="text-[12px] font-medium flex-1" style={{ color: 'var(--text-primary)' }}>
+        <span className="text-[10px] font-medium flex-1" style={{ color: 'var(--text-secondary)' }}>
           {effect.label}
         </span>
-        <span className="text-[11px] tabular-nums" style={{ color: 'var(--text-muted)' }}>
+        <span className="text-[10px] tabular-nums" style={{ color: 'var(--accent)' }}>
           {typeof value === 'number' ? Math.round(value) : '—'}
         </span>
         <svg
-          width="12"
-          height="12"
+          width="10"
+          height="10"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
           style={{
-            color: 'var(--text-muted)',
+            color: 'var(--text-ghost)',
             transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
             transition: 'transform 0.15s ease',
           }}
@@ -227,9 +227,9 @@ function EffectMiniControl({ effect, isExpanded, onToggle }: { effect: ActiveEff
 
       {/* Expanded controls */}
       {isExpanded && (
-        <div className="px-2 pb-2 pt-1">
+        <div className="px-2 pb-1.5 pt-0.5">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wide w-12" style={{ color: 'var(--text-muted)' }}>
+            <span className="text-[9px] uppercase tracking-wider w-10" style={{ color: 'var(--text-ghost)' }}>
               {paramName}
             </span>
             <input
@@ -239,12 +239,12 @@ function EffectMiniControl({ effect, isExpanded, onToggle }: { effect: ActiveEff
               step={(max - min) / 100}
               value={value}
               onChange={handleSliderChange}
-              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+              className="flex-1 h-1 rounded-sm appearance-none cursor-pointer"
               style={{
-                background: `linear-gradient(to right, ${effect.color} 0%, ${effect.color} ${((value - min) / (max - min)) * 100}%, var(--bg-hover) ${((value - min) / (max - min)) * 100}%, var(--bg-hover) 100%)`,
+                background: `linear-gradient(to right, var(--accent) 0%, var(--accent) ${((value - min) / (max - min)) * 100}%, var(--bg-hover) ${((value - min) / (max - min)) * 100}%, var(--bg-hover) 100%)`,
               }}
             />
-            <span className="text-[11px] tabular-nums w-8 text-right" style={{ color: 'var(--text-muted)' }}>
+            <span className="text-[10px] tabular-nums w-7 text-right" style={{ color: 'var(--accent)' }}>
               {Math.round(value)}
             </span>
           </div>
@@ -303,33 +303,33 @@ function EmptyInfoContent() {
   return (
     <>
       <div
-        className="flex items-center px-3 py-2"
+        className="flex items-center px-3 py-1.5"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         <span
-          className="text-[13px] font-semibold uppercase tracking-wider"
-          style={{ color: 'var(--text-muted)' }}
+          className="text-[9px] font-medium uppercase tracking-widest"
+          style={{ color: 'var(--text-ghost)' }}
         >
           Inspector
         </span>
       </div>
-      <div className="px-3 py-4">
-        <div className="text-[12px] space-y-3" style={{ color: 'var(--text-muted)' }}>
+      <div className="px-3 py-3">
+        <div className="text-[10px] space-y-2" style={{ color: 'var(--text-muted)' }}>
           {/* Effect hint */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-sm flex items-center justify-center" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-ghost)" strokeWidth="2">
                 <circle cx="12" cy="12" r="3" />
                 <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
               </svg>
             </div>
-            <span>Enable effects to see controls here</span>
+            <span>Enable effects for controls</span>
           </div>
 
           {/* Track hint */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-sm flex items-center justify-center" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-ghost)" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <path d="M3 9h18M9 21V9" />
               </svg>
@@ -338,9 +338,9 @@ function EmptyInfoContent() {
           </div>
 
           {/* Routing hint */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-sm flex items-center justify-center" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-ghost)" strokeWidth="2">
                 <circle cx="5" cy="12" r="2" />
                 <circle cx="19" cy="12" r="2" />
                 <path d="M7 12h10" />
@@ -361,29 +361,29 @@ function EmptyInfoContent() {
 function PanelHeader({ title, color, onClose }: { title: string; color?: string; onClose: () => void }) {
   return (
     <div
-      className="flex items-center justify-between px-3 py-2"
+      className="flex items-center justify-between px-3 py-1.5"
       style={{ borderBottom: '1px solid var(--border)' }}
     >
       <div className="flex items-center gap-2">
         {color && (
           <div
-            className="w-2.5 h-2.5 rounded-full"
-            style={{ backgroundColor: color }}
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ backgroundColor: 'var(--accent)', boxShadow: '0 0 4px var(--accent-glow)' }}
           />
         )}
         <span
-          className="text-[13px] font-semibold uppercase tracking-wider"
-          style={{ color: 'var(--text-muted)' }}
+          className="text-[9px] font-medium uppercase tracking-widest"
+          style={{ color: 'var(--text-ghost)' }}
         >
           {title}
         </span>
       </div>
       <button
         onClick={onClose}
-        className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200"
-        style={{ color: 'var(--text-muted)' }}
+        className="w-4 h-4 flex items-center justify-center rounded-sm hover:bg-[var(--bg-hover)]"
+        style={{ color: 'var(--text-ghost)' }}
       >
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+        <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
           <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" />
         </svg>
       </button>
@@ -394,8 +394,8 @@ function PanelHeader({ title, color, onClose }: { title: string; color?: string;
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="text-[11px] font-medium uppercase tracking-wider mb-1.5"
-      style={{ color: 'var(--text-muted)' }}
+      className="text-[9px] font-medium uppercase tracking-widest mb-1"
+      style={{ color: 'var(--text-ghost)' }}
     >
       {children}
     </div>

@@ -4,8 +4,8 @@ import { useSequencerStore } from '../../../stores/sequencerStore'
 
 // Special sequencer sources (not regular tracks)
 const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
-  euclidean: { name: 'Euclidean', color: '#FF9F43' },
-  ricochet: { name: 'Ricochet', color: '#00D9FF' },
+  euclidean: { name: 'Euclidean', color: '#FF0055' },
+  ricochet: { name: 'Ricochet', color: '#FF0055' },
 }
 
 interface SliderRowProps {
@@ -165,16 +165,16 @@ export function SliderRow({
 
   return (
     <div
-      className="flex items-center gap-2 py-1.5 rounded transition-colors"
+      className="flex items-center gap-2 py-1 rounded-sm transition-colors"
       style={{
-        backgroundColor: isDropTarget ? `${sequencerDrag.trackColor}20` : undefined,
-        outline: isDropTarget ? `2px solid ${sequencerDrag.trackColor}` : undefined,
+        backgroundColor: isDropTarget ? `${sequencerDrag.trackColor}15` : undefined,
+        outline: isDropTarget ? `1px solid ${sequencerDrag.trackColor}` : undefined,
       }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <span className="text-[14px] w-20 shrink-0 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+      <span className="text-[11px] w-16 shrink-0 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
         {hasRouting && firstRouting && sourceInfo && (
           <span
             className="w-3 h-3 flex-shrink-0 cursor-ns-resize hover:scale-110 transition-transform flex items-center justify-center rounded-full"
@@ -205,7 +205,7 @@ export function SliderRow({
       {/* Custom dot slider */}
       <div
         ref={trackRef}
-        className="flex-1 h-7 rounded-full relative cursor-pointer select-none shadow-inner"
+        className="flex-1 h-5 rounded-sm relative cursor-pointer select-none"
         style={{
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border)',
@@ -217,22 +217,23 @@ export function SliderRow({
       >
         {/* Track fill */}
         <div
-          className="absolute left-1 top-1 bottom-1 rounded-full pointer-events-none"
+          className="absolute left-0.5 top-0.5 bottom-0.5 rounded-sm pointer-events-none"
           style={{
-            width: `calc((100% - 8px) * ${normalizedValue})`,
-            background: 'linear-gradient(to right, var(--border), var(--bg-surface))',
+            width: `calc((100% - 4px) * ${normalizedValue})`,
+            backgroundColor: 'var(--accent)',
+            opacity: 0.3,
           }}
         />
 
         {/* Dot markers */}
-        <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
+        <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
           {Array.from({ length: DOT_COUNT }).map((_, i) => {
             const dotPosition = i / (DOT_COUNT - 1)
             const isBeforeThumb = dotPosition <= normalizedValue
             return (
               <div
                 key={i}
-                className="w-1 h-1 rounded-full transition-colors"
+                className="w-0.5 h-0.5 rounded-full transition-colors"
                 style={{
                   backgroundColor: isBeforeThumb ? 'var(--text-muted)' : 'var(--border)',
                 }}
@@ -243,20 +244,17 @@ export function SliderRow({
 
         {/* Thumb */}
         <div
-          className="absolute top-1/2 w-5 h-5 rounded-full shadow-md pointer-events-none transition-shadow"
+          className="absolute top-1/2 w-3 h-3 rounded-sm pointer-events-none transition-shadow"
           style={{
-            left: `calc(10px + (100% - 20px) * ${normalizedValue})`,
+            left: `calc(6px + (100% - 12px) * ${normalizedValue})`,
             transform: `translate(-50%, -50%)`,
-            backgroundColor: 'var(--bg-surface)',
-            border: '2px solid var(--border)',
-            boxShadow: isDraggingSlider
-              ? '0 2px 8px rgba(0,0,0,0.15), 0 0 0 3px rgba(156,163,175,0.2)'
-              : '0 1px 3px rgba(0,0,0,0.1)',
+            backgroundColor: isDraggingSlider ? 'var(--accent)' : 'var(--text-muted)',
+            boxShadow: isDraggingSlider ? '0 0 6px var(--accent-glow)' : 'none',
           }}
         />
       </div>
 
-      <span className="text-[14px] w-10 text-right tabular-nums" style={{ color: 'var(--text-muted)' }}>
+      <span className="text-[10px] w-9 text-right tabular-nums" style={{ color: 'var(--text-secondary)' }}>
         {displayValue}
       </span>
     </div>

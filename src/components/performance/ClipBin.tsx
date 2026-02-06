@@ -156,41 +156,41 @@ export function ClipBin() {
         {/* Import progress overlay */}
         {isImporting && (
           <div
-            className="flex flex-col items-center justify-center rounded-lg"
+            className="flex flex-col items-center justify-center rounded-sm"
             style={{
               width: cardWidth,
               height: cardHeight,
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
-              border: '1px solid rgba(139, 92, 246, 0.5)',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+              backgroundColor: 'var(--bg-elevated)',
+              border: '1px solid var(--accent)',
+              boxShadow: '0 0 8px var(--accent-glow)',
             }}
           >
             <div
-              className="text-[11px] font-medium"
-              style={{ color: '#a78bfa' }}
+              className="text-[9px] font-medium uppercase tracking-wider"
+              style={{ color: 'var(--accent)' }}
             >
-              Importing...
+              Importing
             </div>
             <div
-              className="text-[13px] font-mono font-bold"
-              style={{ color: '#c4b5fd' }}
+              className="text-[11px] font-mono font-bold"
+              style={{ color: 'var(--accent)' }}
             >
               {importProgress}%
             </div>
             {/* Progress bar */}
             <div
-              className="mt-1 rounded-full overflow-hidden"
+              className="mt-1 rounded-sm overflow-hidden"
               style={{
-                width: '60px',
-                height: '3px',
-                backgroundColor: 'rgba(139, 92, 246, 0.3)',
+                width: '50px',
+                height: '2px',
+                backgroundColor: 'var(--border)',
               }}
             >
               <div
                 className="h-full transition-all duration-150"
                 style={{
                   width: `${importProgress}%`,
-                  backgroundColor: '#8b5cf6',
+                  backgroundColor: 'var(--accent)',
                 }}
               />
             </div>
@@ -201,21 +201,21 @@ export function ClipBin() {
         {clips.length === 0 && !isImporting && (
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center justify-center rounded-lg cursor-pointer transition-all hover:scale-105"
+            className="flex items-center justify-center rounded-sm cursor-pointer transition-all hover:scale-105"
             style={{
               width: cardWidth,
               height: cardHeight,
-              backgroundColor: 'rgba(0, 0, 0, 0.6)',
-              border: '1px dashed rgba(255, 255, 255, 0.3)',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px dashed var(--border)',
             }}
             title="Import video clip"
           >
             <svg
-              width="20"
-              height="20"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="rgba(255, 255, 255, 0.5)"
+              stroke="var(--text-ghost)"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -228,15 +228,15 @@ export function ClipBin() {
         {/* File drag overlay */}
         {isFileDragOver && (
           <div
-            className="absolute inset-0 flex items-center justify-center rounded-lg pointer-events-none"
+            className="absolute inset-0 flex items-center justify-center rounded-sm pointer-events-none"
             style={{
-              backgroundColor: 'rgba(139, 92, 246, 0.3)',
-              border: '2px dashed #8b5cf6',
+              backgroundColor: 'rgba(255, 0, 85, 0.15)',
+              border: '1px dashed var(--accent)',
               zIndex: 100,
             }}
           >
-            <span className="text-[11px] font-medium" style={{ color: '#c4b5fd' }}>
-              Drop video
+            <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
+              Drop
             </span>
           </div>
         )}
@@ -298,16 +298,16 @@ export function ClipBin() {
             {/* Extra count badge */}
             {extraCount > 0 && (
               <div
-                className="absolute flex items-center justify-center rounded-full text-[10px] font-medium"
+                className="absolute flex items-center justify-center rounded-sm text-[9px] font-medium"
                 style={{
-                  width: 20,
-                  height: 20,
-                  right: -6,
-                  top: -6,
-                  backgroundColor: '#FF6B6B',
-                  color: '#fff',
+                  width: 16,
+                  height: 16,
+                  right: -4,
+                  top: -4,
+                  backgroundColor: 'var(--accent)',
+                  color: 'var(--text-primary)',
                   zIndex: maxVisibleCards + 1,
-                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                  boxShadow: '0 0 4px var(--accent-glow)',
                 }}
               >
                 +{extraCount}
@@ -316,9 +316,9 @@ export function ClipBin() {
 
             {/* Hover glow effect */}
             <div
-              className="absolute inset-0 rounded opacity-0 hover:opacity-100 transition-opacity pointer-events-none"
+              className="absolute inset-0 rounded-sm opacity-0 hover:opacity-100 transition-opacity pointer-events-none"
               style={{
-                boxShadow: '0 0 20px rgba(255, 107, 107, 0.3)',
+                boxShadow: '0 0 12px var(--accent-glow)',
               }}
             />
 
@@ -328,12 +328,12 @@ export function ClipBin() {
                 e.stopPropagation()
                 fileInputRef.current?.click()
               }}
-              className="absolute flex items-center justify-center rounded transition-all hover:scale-110"
+              className="absolute flex items-center justify-center rounded-sm transition-all hover:scale-110"
               style={{
-                width: 20,
-                height: 20,
-                right: -8,
-                bottom: -8,
+                width: 16,
+                height: 16,
+                right: -6,
+                bottom: -6,
                 backgroundColor: 'var(--bg-surface)',
                 border: '1px solid var(--border)',
                 zIndex: maxVisibleCards + 2,
@@ -341,11 +341,11 @@ export function ClipBin() {
               title="Add video clip"
             >
               <svg
-                width="12"
-                height="12"
+                width="10"
+                height="10"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="var(--text-muted)"
+                stroke="var(--text-ghost)"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"

@@ -8,6 +8,7 @@ import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useAcidStore } from '../../stores/acidStore'
+import { useSlicerStore } from '../../stores/slicerStore'
 import { SourceSelector } from '../ui/SourceSelector'
 
 // Note: We use getState() in handleStartRecording to get fresh state at call time
@@ -136,6 +137,14 @@ export function TransportBar() {
 
   // Handle play/pause
   const handlePlayPause = useCallback(() => {
+    // Bypass slicer when playing source video (not during recording playback)
+    // Use setState directly to avoid source restoration logic that could interfere
+    const slicerState = useSlicerStore.getState()
+    if (slicerState.enabled && !isRecordingMode) {
+      // Just disable slicer and stop its playback - don't trigger full source restore
+      useSlicerStore.setState({ enabled: false, isPlaying: false })
+    }
+
     if (isRecordingMode) {
       if (isRecordingPlaying) {
         pauseRecording()

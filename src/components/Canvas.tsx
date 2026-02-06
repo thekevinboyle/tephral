@@ -253,13 +253,15 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       const slicerTexture = slicerCompositor.current.getOutputTexture()
       if (slicerTexture) {
         pipeline.setInputTexture(slicerTexture)
-        // Use slicer frame dimensions or fallback
-        if (slicerOutputFrame) {
-          pipeline.setVideoSize(slicerOutputFrame.width, slicerOutputFrame.height)
-        } else if (videoElement) {
+        // Always use original video/image dimensions for proper aspect ratio
+        // The slicer texture (480x270) will be scaled up to fill the canvas
+        if (videoElement && videoElement.videoWidth > 0) {
           pipeline.setVideoSize(videoElement.videoWidth, videoElement.videoHeight)
-        } else if (imageElement) {
+        } else if (imageElement && imageElement.naturalWidth > 0) {
           pipeline.setVideoSize(imageElement.naturalWidth, imageElement.naturalHeight)
+        } else {
+          // Fallback to 16:9 aspect ratio if no media dimensions available
+          pipeline.setVideoSize(1920, 1080)
         }
         return
       }

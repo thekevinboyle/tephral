@@ -97,6 +97,7 @@ export function useContinuousModulation() {
       // Slicer
       case 'slicer':
         if (paramName === 'grainSize') slicer.updateGrainParams({ grainSize: 10 + value * 490 })
+        if (paramName === 'scanPosition') slicer.setScanPosition(value)
         if (paramName === 'spray') slicer.updateGrainParams({ spray: value })
         if (paramName === 'wet') slicer.setWet(value)
         break

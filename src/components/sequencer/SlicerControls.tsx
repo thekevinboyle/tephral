@@ -7,6 +7,14 @@ export function SlicerControls() {
     setSliceCount,
     grainSize,
     density,
+    scanPosition,
+    setScanPosition,
+    autoScan,
+    setAutoScan,
+    scanSpeed,
+    setScanSpeed,
+    scanMode,
+    setScanMode,
     spray,
     jitter,
     rate,
@@ -93,6 +101,65 @@ export function SlicerControls() {
             format={(v) => v.toString()}
             paramId="slicer.density"
           />
+          <SliderRow
+            label="Position"
+            value={scanPosition}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={setScanPosition}
+            format={(v) => `${Math.round(v * 100)}%`}
+            paramId="slicer.scanPosition"
+          />
+          {/* Auto-scan controls */}
+          <div className="flex items-center gap-2 py-1">
+            <button
+              onClick={() => setAutoScan(!autoScan)}
+              className="h-6 px-2 text-[11px] font-medium rounded"
+              style={{
+                backgroundColor: autoScan ? '#10b981' : 'var(--bg-surface)',
+                border: `1px solid ${autoScan ? '#10b981' : 'var(--border)'}`,
+                color: autoScan ? 'white' : 'var(--text-muted)',
+              }}
+            >
+              Scan
+            </button>
+            {autoScan && (
+              <>
+                <input
+                  type="range"
+                  min={0.1}
+                  max={4}
+                  step={0.1}
+                  value={scanSpeed}
+                  onChange={(e) => setScanSpeed(parseFloat(e.target.value))}
+                  className="flex-1 h-1 accent-emerald-500"
+                  style={{ accentColor: '#10b981' }}
+                />
+                <span className="text-[11px] w-10 text-right" style={{ color: 'var(--text-muted)' }}>
+                  {scanSpeed.toFixed(1)}Hz
+                </span>
+              </>
+            )}
+          </div>
+          {autoScan && (
+            <div className="flex gap-1">
+              {(['loop', 'pendulum'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setScanMode(mode)}
+                  className="flex-1 h-6 text-[11px] font-medium rounded capitalize"
+                  style={{
+                    backgroundColor: scanMode === mode ? '#10b981' : 'var(--bg-surface)',
+                    border: `1px solid ${scanMode === mode ? '#10b981' : 'var(--border)'}`,
+                    color: scanMode === mode ? 'white' : 'var(--text-muted)',
+                  }}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          )}
           <SliderRow
             label="Spray"
             value={spray}

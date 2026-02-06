@@ -291,6 +291,7 @@ export function useSequencerPlayback() {
       case 'slicer':
         if (paramName === 'grainSize') slicer.updateGrainParams({ grainSize: 10 + value * 490 })
         if (paramName === 'density') slicer.updateGrainParams({ density: 1 + Math.floor(value * 7) })
+        if (paramName === 'scanPosition') slicer.setScanPosition(value)
         if (paramName === 'spray') slicer.updateGrainParams({ spray: value })
         if (paramName === 'jitter') slicer.updateGrainParams({ jitter: value })
         if (paramName === 'rate') slicer.updateGrainParams({ rate: 0.25 + value * 3.75 })

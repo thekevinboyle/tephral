@@ -65,6 +65,12 @@ interface SlicerState {
 
   // Playhead (0-1 position within current slice for visualization)
   playheadPosition: number
+  // Scan position (0-1 user-controllable read position within slice)
+  scanPosition: number
+  // Auto-scan: automatically sweep scanPosition through the slice
+  autoScan: boolean
+  scanSpeed: number  // Speed in Hz (cycles per second through the slice)
+  scanMode: 'loop' | 'pendulum'  // Loop = wrap around, Pendulum = bounce back
 
   // Grains
   grainSize: number
@@ -100,6 +106,10 @@ interface SlicerState {
   setCurrentSlice: (slice: number) => void
   setSliceSequenceMode: (mode: SliceSequenceMode) => void
   setPlayheadPosition: (position: number) => void
+  setScanPosition: (position: number) => void
+  setAutoScan: (autoScan: boolean) => void
+  setScanSpeed: (speed: number) => void
+  setScanMode: (mode: 'loop' | 'pendulum') => void
 
   // Grain actions
   setGrainSize: (size: number) => void
@@ -145,6 +155,10 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
   currentSlice: 0,
   sliceSequenceMode: 'forward',
   playheadPosition: 0,
+  scanPosition: 0.5,
+  autoScan: false,
+  scanSpeed: 0.5,  // 0.5 Hz = 2 seconds per cycle
+  scanMode: 'pendulum',
 
   // Grain defaults
   grainSize: 100,
@@ -189,6 +203,10 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
   },
   setSliceSequenceMode: (sliceSequenceMode) => set({ sliceSequenceMode }),
   setPlayheadPosition: (playheadPosition) => set({ playheadPosition: clamp(playheadPosition, 0, 1) }),
+  setScanPosition: (scanPosition) => set({ scanPosition: clamp(scanPosition, 0, 1) }),
+  setAutoScan: (autoScan) => set({ autoScan }),
+  setScanSpeed: (scanSpeed) => set({ scanSpeed: clamp(scanSpeed, 0.1, 10) }),
+  setScanMode: (scanMode) => set({ scanMode }),
 
   // Grain actions
   setGrainSize: (size) => set({ grainSize: clamp(size, 10, 500) }),

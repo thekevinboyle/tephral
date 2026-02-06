@@ -24,7 +24,6 @@ export function useSlicerPlayback() {
     grainSize,
     density,
     spray,
-    jitter,
     rate,
     direction,
     reverseProb,
@@ -33,8 +32,13 @@ export function useSlicerPlayback() {
     triggerRate,
     freeze,
     bufferSize,
+    scanPosition,
+    autoScan,
+    scanSpeed,
+    scanMode,
     setCurrentSlice,
     setPlayheadPosition,
+    setScanPosition,
   } = useSlicerStore()
 
   const {
@@ -56,12 +60,68 @@ export function useSlicerPlayback() {
   const sliceDirection = useRef<1 | -1>(1)
   const outputFrame = useRef<ImageData | null>(null)
   const lastCaptureTime = useRef<number>(0)
+  const scanDirection = useRef<1 | -1>(1)
+  const lastScanTime = useRef<number>(0)
 
   // Update maxFrames when bufferSize changes
   useEffect(() => {
     const fps = 30
     setMaxFrames(Math.floor(bufferSize * fps))
   }, [bufferSize, setMaxFrames])
+
+  // Auto-scan: automatically sweep scanPosition through the slice
+  useEffect(() => {
+    if (!autoScan || !isPlaying || !enabled) {
+      return
+    }
+
+    let scanFrameId: number | null = null
+
+    const scanLoop = (timestamp: number) => {
+      if (lastScanTime.current === 0) {
+        lastScanTime.current = timestamp
+      }
+
+      const deltaTime = (timestamp - lastScanTime.current) / 1000 // Convert to seconds
+      lastScanTime.current = timestamp
+
+      // Calculate position change based on speed (Hz = cycles per second)
+      const positionDelta = deltaTime * scanSpeed
+
+      // Get current position from store
+      const currentPos = useSlicerStore.getState().scanPosition
+
+      let newPosition: number
+
+      if (scanMode === 'loop') {
+        // Loop mode: wrap around from 1 to 0
+        newPosition = (currentPos + positionDelta) % 1
+      } else {
+        // Pendulum mode: bounce back at edges
+        newPosition = currentPos + positionDelta * scanDirection.current
+
+        if (newPosition >= 1) {
+          newPosition = 1
+          scanDirection.current = -1
+        } else if (newPosition <= 0) {
+          newPosition = 0
+          scanDirection.current = 1
+        }
+      }
+
+      setScanPosition(newPosition)
+      scanFrameId = requestAnimationFrame(scanLoop)
+    }
+
+    scanFrameId = requestAnimationFrame(scanLoop)
+
+    return () => {
+      if (scanFrameId !== null) {
+        cancelAnimationFrame(scanFrameId)
+      }
+      lastScanTime.current = 0
+    }
+  }, [autoScan, isPlaying, enabled, scanSpeed, scanMode, setScanPosition])
 
   // Frame capture loop (only when videoElement exists and captureState === 'live')
   useEffect(() => {
@@ -144,11 +204,10 @@ export function useSlicerPlayback() {
     // Check slice probability
     if (Math.random() > sliceProb) return
 
-    // Calculate position with jitter and spray
-    const basePosition = 0.5
-    const jitterOffset = (Math.random() - 0.5) * jitter * 2
+    // Calculate position with spray around the user-controlled scan position
+    // Spray randomizes grain start positions around scanPosition (like a granular synth)
     const sprayOffset = (Math.random() - 0.5) * spray * 2
-    const position = Math.max(0, Math.min(1, basePosition + jitterOffset + sprayOffset))
+    const position = Math.max(0, Math.min(1, scanPosition + sprayOffset))
 
     // Determine direction based on direction param and reverseProb
     let grainDirection: 1 | -1
@@ -171,7 +230,7 @@ export function useSlicerPlayback() {
     }
 
     activeGrains.current.push(newGrain)
-  }, [sliceProb, jitter, spray, direction, reverseProb, currentSlice, grainSize])
+  }, [sliceProb, scanPosition, spray, direction, reverseProb, currentSlice, grainSize])
 
   // Main playback loop (only when isPlaying && enabled)
   useEffect(() => {

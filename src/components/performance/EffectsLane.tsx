@@ -1,5 +1,4 @@
 import { useCallback, useState, useRef } from 'react'
-import { Button } from '../ui/Button'
 import { HorizontalCrossfader } from './HorizontalCrossfader'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
@@ -433,10 +432,10 @@ export function EffectsLane() {
         className="flex-shrink-0 px-3 py-2 flex items-center justify-between"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <span className="text-[11px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-muted)' }}>
-          Effects
+        <span className="text-[9px] uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
+          FX CHAIN
         </span>
-        <span className="text-[11px] tabular-nums" style={{ color: 'var(--text-muted)' }}>
+        <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>
           {sortedEffects.length}
         </span>
       </div>
@@ -445,8 +444,8 @@ export function EffectsLane() {
       <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2">
         {sortedEffects.length === 0 ? (
           <div className="h-full flex items-center justify-center">
-            <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
-              No active effects
+            <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
+              —
             </span>
           </div>
         ) : (
@@ -464,42 +463,41 @@ export function EffectsLane() {
                   onPointerMove={(e) => handlePointerMove(e, index)}
                   onPointerUp={(e) => handlePointerUp(e, index)}
                   onDoubleClick={() => toggleEffectBypassed(effect.id)}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded cursor-grab active:cursor-grabbing transition-all select-none touch-none"
+                  className="flex items-center gap-2 px-2 py-1 rounded-sm cursor-grab active:cursor-grabbing transition-all select-none touch-none"
                   style={{
                     backgroundColor: isBypassed
                       ? 'var(--bg-elevated)'
                       : isSelected
-                        ? `${effect.color}15`
+                        ? 'var(--accent-subtle)'
                         : 'transparent',
-                    border: isSelected ? `1px solid ${effect.color}40` : '1px solid transparent',
-                    opacity: isBypassed ? 0.5 : isBeingDragged ? 0.8 : 1,
+                    border: isSelected ? '1px solid var(--accent-dim)' : '1px solid transparent',
+                    opacity: isBypassed ? 0.4 : isBeingDragged ? 0.8 : 1,
                     transform: isBeingDragged ? 'scale(1.02)' : 'scale(1)',
                     marginTop: isDropTarget ? '24px' : '0',
                   }}
                 >
                   {/* LED indicator */}
                   <div
-                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                     style={{
-                      backgroundColor: isBypassed ? 'var(--text-muted)' : effect.color,
-                      boxShadow: isBypassed ? 'none' : `0 0 6px ${effect.color}`,
+                      backgroundColor: isBypassed ? 'var(--text-ghost)' : 'var(--accent)',
+                      boxShadow: isBypassed ? 'none' : '0 0 4px var(--accent-glow)',
                     }}
                   />
 
                   {/* Label */}
                   <span
-                    className="flex-1 text-[11px] truncate"
-                    style={{ color: isBypassed ? 'var(--text-muted)' : 'var(--text-primary)' }}
+                    className="flex-1 text-[10px] uppercase tracking-wide truncate"
+                    style={{ color: isBypassed ? 'var(--text-ghost)' : 'var(--text-secondary)' }}
                   >
                     {effect.label}
                   </span>
 
                   {/* Value */}
                   <span
-                    className="text-[11px] tabular-nums"
+                    className="text-[9px] tabular-nums tracking-wide"
                     style={{
-                      color: isBypassed ? 'var(--text-muted)' : effect.color,
-                      fontFamily: "'JetBrains Mono', monospace",
+                      color: isBypassed ? 'var(--text-ghost)' : 'var(--text-muted)',
                     }}
                   >
                     {effect.primaryValue}
@@ -516,21 +514,32 @@ export function EffectsLane() {
         className="flex-shrink-0 p-2 flex gap-2"
         style={{ borderTop: '1px solid var(--border)' }}
       >
-        <Button size="sm" className="flex-1" onClick={handleClear}>
+        <button
+          className="flex-1 h-7 text-[10px] uppercase tracking-wide rounded-sm transition-colors"
+          style={{
+            backgroundColor: 'var(--bg-elevated)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-muted)',
+          }}
+          onClick={handleClear}
+        >
           Clear
-        </Button>
-        <Button
-          size="sm"
-          className="flex-1"
-          variant={bypassActive ? 'danger' : 'default'}
+        </button>
+        <button
+          className="flex-1 h-7 text-[10px] uppercase tracking-wide rounded-sm transition-colors"
+          style={{
+            backgroundColor: bypassActive ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
+            border: `1px solid ${bypassActive ? 'var(--accent)' : 'var(--border)'}`,
+            color: bypassActive ? 'var(--accent)' : 'var(--text-muted)',
+            boxShadow: bypassActive ? '0 0 8px var(--accent-glow)' : 'none',
+          }}
           onClick={() => {
             const current = useGlitchEngineStore.getState().bypassActive
             useGlitchEngineStore.getState().setBypassActive(!current)
           }}
-          style={bypassActive ? { boxShadow: '0 0 12px #ef4444' } : undefined}
         >
           Bypass
-        </Button>
+        </button>
       </div>
 
       {/* A/B Crossfader */}

@@ -197,7 +197,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       wetMix,
       bypassActive,
       crossfaderPosition,
-      hasSourceTexture: !!mediaTexture,
+      hasSourceTexture: !!mediaTexture && !slicerEnabled,
     })
   }, [
     pipeline,
@@ -246,15 +246,17 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     timeSmear,
     freezeMask,
     mediaTexture,
+    slicerEnabled,
   ])
 
   // Update input texture and video dimensions
   useEffect(() => {
     if (!pipeline) return
 
-    // Always set source texture to original media for crossfader A side
-    // This ensures the crossfader can blend between original and processed
-    if (mediaTexture) {
+    // Set source texture for crossfader A side
+    // When slicer is active, don't use original media (aspect ratio mismatch)
+    // Only enable crossfader blending when not using slicer
+    if (mediaTexture && !slicerEnabled) {
       pipeline.setSourceTexture(mediaTexture)
     } else {
       pipeline.setSourceTexture(null)
@@ -265,16 +267,11 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       const slicerTexture = slicerCompositor.current.getOutputTexture()
       if (slicerTexture) {
         pipeline.setInputTexture(slicerTexture)
-        // Always use original video/image dimensions for proper aspect ratio
-        // The slicer texture (480x270) will be scaled up to fill the canvas
-        if (videoElement && videoElement.videoWidth > 0) {
-          pipeline.setVideoSize(videoElement.videoWidth, videoElement.videoHeight)
-        } else if (imageElement && imageElement.naturalWidth > 0) {
-          pipeline.setVideoSize(imageElement.naturalWidth, imageElement.naturalHeight)
-        } else {
-          // Fallback to 16:9 aspect ratio if no media dimensions available
-          pipeline.setVideoSize(1920, 1080)
-        }
+        // Use the slicer texture's actual dimensions for proper aspect ratio
+        // The slicer outputs at 480x270 (16:9) regardless of source
+        const texWidth = (slicerTexture as THREE.DataTexture).image?.width || 480
+        const texHeight = (slicerTexture as THREE.DataTexture).image?.height || 270
+        pipeline.setVideoSize(texWidth, texHeight)
         return
       }
     }

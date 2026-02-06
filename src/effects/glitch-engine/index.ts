@@ -19,6 +19,8 @@ export type { EdgeDetectionParams } from './EdgeDetectionEffect'
 export { MixEffect, DEFAULT_MIX_PARAMS } from './MixEffect'
 export type { MixEffectParams } from './MixEffect'
 
+export { CrossfaderEffect } from './CrossfaderEffect'
+
 export { ChromaticAberrationEffect, DEFAULT_CHROMATIC_ABERRATION_PARAMS } from './ChromaticAberrationEffect'
 export type { ChromaticAberrationParams } from './ChromaticAberrationEffect'
 

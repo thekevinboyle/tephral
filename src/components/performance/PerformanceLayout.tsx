@@ -3,7 +3,6 @@ import { Canvas, type CanvasHandle } from '../Canvas'
 import { TransportBar } from './TransportBar'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
-import { VerticalCrossfader } from './VerticalCrossfader'
 import { ClipBin } from './ClipBin'
 import { ClipDetailModal } from './ClipDetailModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
@@ -233,40 +232,27 @@ export function PerformanceLayout() {
       <div
         className="flex-1 min-h-0 flex mx-3 mt-3 mb-3 gap-3"
       >
-        {/* Column 1: Banks + Button grid + Vertical Crossfader */}
-        <div className="flex-1 min-h-0 flex gap-3">
-          {/* Grid container */}
+        {/* Column 1: Banks + Button grid */}
+        <div
+          className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          {/* Bank row header */}
           <div
-            className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
+            className="flex-shrink-0"
             style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
+              height: '52px',
+              borderBottom: '1px solid var(--border)',
             }}
           >
-            {/* Bank row header */}
-            <div
-              className="flex-shrink-0"
-              style={{
-                height: '52px',
-                borderBottom: '1px solid var(--border)',
-              }}
-            >
-              <BankPanel />
-            </div>
-            {/* Grid */}
-            <div className="flex-1 min-h-0">
-              <PerformanceGrid />
-            </div>
+            <BankPanel />
           </div>
-          {/* Crossfader container */}
-          <div
-            className="flex-shrink-0 rounded-xl overflow-hidden"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            <VerticalCrossfader />
+          {/* Grid */}
+          <div className="flex-1 min-h-0">
+            <PerformanceGrid />
           </div>
         </div>
 

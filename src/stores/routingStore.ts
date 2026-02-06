@@ -25,6 +25,9 @@ interface RoutingState {
   // Current effect order (determines processing sequence)
   effectOrder: string[]
 
+  // Master crossfader: 0 = Source (A), 1 = Processed (B)
+  crossfaderPosition: number
+
   // Preset banks: 4 banks × 4 presets
   banks: (RoutingPreset | null)[][]
   activeBank: number
@@ -40,6 +43,7 @@ interface RoutingState {
   // Actions
   reorderEffect: (fromIndex: number, toIndex: number) => void
   setEffectOrder: (order: string[]) => void
+  setCrossfaderPosition: (position: number) => void
 
   setActiveBank: (bankIndex: number) => void
   savePreset: (presetIndex: number, name?: string) => void
@@ -71,6 +75,7 @@ const createEmptyBanks = (): (RoutingPreset | null)[][] => {
 
 export const useRoutingStore = create<RoutingState>((set, get) => ({
   effectOrder: [...defaultEffectOrder],
+  crossfaderPosition: 1, // Default to fully processed (B side)
   banks: createEmptyBanks(),
   activeBank: 0,
   activePreset: null,
@@ -89,6 +94,10 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
 
   setEffectOrder: (order) => {
     set({ effectOrder: order, isModified: true })
+  },
+
+  setCrossfaderPosition: (position) => {
+    set({ crossfaderPosition: Math.max(0, Math.min(1, position)) })
   },
 
   setActiveBank: (bankIndex) => {

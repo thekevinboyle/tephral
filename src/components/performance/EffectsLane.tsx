@@ -1,5 +1,6 @@
 import { useCallback, useState, useRef } from 'react'
 import { Button } from '../ui/Button'
+import { HorizontalCrossfader } from './HorizontalCrossfader'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
@@ -530,6 +531,14 @@ export function EffectsLane() {
         >
           Bypass
         </Button>
+      </div>
+
+      {/* A/B Crossfader */}
+      <div
+        className="flex-shrink-0"
+        style={{ borderTop: '1px solid var(--border)' }}
+      >
+        <HorizontalCrossfader />
       </div>
     </div>
   )

@@ -100,7 +100,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     return soloEffectId === effectId && actualEnabled
   }
 
-  const { effectOrder } = useRoutingStore()
+  const { effectOrder, crossfaderPosition } = useRoutingStore()
 
   // Initialize pipeline
   useEffect(() => {
@@ -196,6 +196,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       freezeMaskEnabled: getEffectiveEnabled('freeze_mask', freezeMaskEnabled),
       wetMix,
       bypassActive,
+      crossfaderPosition,
     })
   }, [
     pipeline,
@@ -231,6 +232,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     effectOrder,
     wetMix,
     bypassActive,
+    crossfaderPosition,
     effectBypassed,
     soloEffectId,
     // Motion effects
@@ -247,6 +249,14 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   // Update input texture and video dimensions
   useEffect(() => {
     if (!pipeline) return
+
+    // Always set source texture to original media for crossfader A side
+    // This ensures the crossfader can blend between original and processed
+    if (mediaTexture) {
+      pipeline.setSourceTexture(mediaTexture)
+    } else {
+      pipeline.setSourceTexture(null)
+    }
 
     // Check if slicer should provide the texture (even without media source)
     if (slicerEnabled && slicerCompositor.current) {

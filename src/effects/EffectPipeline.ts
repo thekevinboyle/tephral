@@ -8,6 +8,7 @@ import {
   PixelateEffect,
   EdgeDetectionEffect,
   MixEffect,
+  CrossfaderEffect,
   ChromaticAberrationEffect,
   VHSTrackingEffect,
   LensDistortionEffect,
@@ -25,6 +26,7 @@ import {
 export class EffectPipeline {
   private composer: EffectComposer
   private inputTexture: THREE.Texture | null = null
+  private sourceTexture: THREE.Texture | null = null  // Original source for crossfader A side
   private quad: THREE.Mesh
   private quadScene: THREE.Scene
   private camera: THREE.OrthographicCamera
@@ -52,8 +54,12 @@ export class EffectPipeline {
   timeSmear: TimeSmearEffect | null = null
   freezeMask: FreezeMaskEffect | null = null
 
+  // Crossfader for A/B blending (source vs processed)
+  crossfaderEffect: CrossfaderEffect | null = null
+
   private effectPass: EffectPass | null = null
   private mixEffectPass: EffectPass | null = null
+  private crossfaderPass: EffectPass | null = null
 
   // Dimensions for aspect ratio
   private canvasWidth = 1
@@ -97,6 +103,9 @@ export class EffectPipeline {
     this.echoTrail = new EchoTrailEffect()
     this.timeSmear = new TimeSmearEffect()
     this.freezeMask = new FreezeMaskEffect()
+
+    // Crossfader for A/B source blending
+    this.crossfaderEffect = new CrossfaderEffect()
   }
 
   // Map effect IDs to effect instances
@@ -147,6 +156,7 @@ export class EffectPipeline {
     freezeMaskEnabled: boolean
     wetMix: number
     bypassActive: boolean
+    crossfaderPosition: number
   }) {
     // Remove existing passes
     if (this.effectPass) {
@@ -156,6 +166,10 @@ export class EffectPipeline {
     if (this.mixEffectPass) {
       this.composer.removePass(this.mixEffectPass)
       this.mixEffectPass = null
+    }
+    if (this.crossfaderPass) {
+      this.composer.removePass(this.crossfaderPass)
+      this.crossfaderPass = null
     }
 
     // If bypass is active, don't add any effect passes - just render the input
@@ -167,6 +181,11 @@ export class EffectPipeline {
     if (this.mixEffect) {
       this.mixEffect.updateParams({ wetMix: config.wetMix })
       this.mixEffect.setOriginalTexture(this.inputTexture)
+    }
+
+    // Update crossfader position
+    if (this.crossfaderEffect) {
+      this.crossfaderEffect.setCrossfaderPosition(config.crossfaderPosition)
     }
 
     // Map effect IDs to enabled state
@@ -223,6 +242,13 @@ export class EffectPipeline {
       this.mixEffectPass = new EffectPass(this.camera, this.mixEffect)
       this.composer.addPass(this.mixEffectPass)
     }
+
+    // Add crossfader pass for A/B blending (source vs processed)
+    // Only add if we have a source texture and crossfader is not fully processed (position < 1)
+    if (this.crossfaderEffect && this.sourceTexture && config.crossfaderPosition < 1) {
+      this.crossfaderPass = new EffectPass(this.camera, this.crossfaderEffect)
+      this.composer.addPass(this.crossfaderPass)
+    }
   }
 
   setInputTexture(texture: THREE.Texture) {
@@ -233,6 +259,21 @@ export class EffectPipeline {
     // Update mix effect's original texture reference
     if (this.mixEffect) {
       this.mixEffect.setOriginalTexture(texture)
+    }
+  }
+
+  // Set the original source texture for crossfader A side
+  setSourceTexture(texture: THREE.Texture | null) {
+    this.sourceTexture = texture
+    if (this.crossfaderEffect) {
+      this.crossfaderEffect.setSourceTexture(texture)
+    }
+  }
+
+  // Update crossfader position (0 = source, 1 = processed)
+  setCrossfaderPosition(position: number) {
+    if (this.crossfaderEffect) {
+      this.crossfaderEffect.setCrossfaderPosition(position)
     }
   }
 
@@ -269,6 +310,11 @@ export class EffectPipeline {
     // Update MixEffect with the quad scale for proper dry/wet blending
     if (this.mixEffect) {
       this.mixEffect.setQuadScale(scaleX, scaleY)
+    }
+
+    // Update CrossfaderEffect with the quad scale
+    if (this.crossfaderEffect) {
+      this.crossfaderEffect.setQuadScale(scaleX, scaleY)
     }
   }
 

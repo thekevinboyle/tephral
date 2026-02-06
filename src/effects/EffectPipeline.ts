@@ -26,7 +26,6 @@ import {
 export class EffectPipeline {
   private composer: EffectComposer
   private inputTexture: THREE.Texture | null = null
-  private sourceTexture: THREE.Texture | null = null  // Original source for crossfader A side
   private quad: THREE.Mesh
   private quadScene: THREE.Scene
   private camera: THREE.OrthographicCamera
@@ -157,6 +156,7 @@ export class EffectPipeline {
     wetMix: number
     bypassActive: boolean
     crossfaderPosition: number
+    hasSourceTexture: boolean
   }) {
     // Remove existing passes
     if (this.effectPass) {
@@ -245,7 +245,7 @@ export class EffectPipeline {
 
     // Add crossfader pass for A/B blending (source vs processed)
     // Only add if we have a source texture and crossfader is not fully processed (position < 1)
-    if (this.crossfaderEffect && this.sourceTexture && config.crossfaderPosition < 1) {
+    if (this.crossfaderEffect && config.hasSourceTexture && config.crossfaderPosition < 1) {
       this.crossfaderPass = new EffectPass(this.camera, this.crossfaderEffect)
       this.composer.addPass(this.crossfaderPass)
     }
@@ -264,7 +264,6 @@ export class EffectPipeline {
 
   // Set the original source texture for crossfader A side
   setSourceTexture(texture: THREE.Texture | null) {
-    this.sourceTexture = texture
     if (this.crossfaderEffect) {
       this.crossfaderEffect.setSourceTexture(texture)
     }

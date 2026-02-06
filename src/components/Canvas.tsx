@@ -197,6 +197,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       wetMix,
       bypassActive,
       crossfaderPosition,
+      hasSourceTexture: !!mediaTexture,
     })
   }, [
     pipeline,
@@ -244,6 +245,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     echoTrail,
     timeSmear,
     freezeMask,
+    mediaTexture,
   ])
 
   // Update input texture and video dimensions

@@ -436,11 +436,11 @@ export function ClipDetailModal() {
             {exportError && (
               <div
                 role="alert"
-                className="p-3 rounded-md text-[14px]"
+                className="p-2 rounded-sm text-[11px]"
                 style={{
-                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid #ef4444',
-                  color: '#ef4444',
+                  backgroundColor: 'var(--accent-subtle)',
+                  border: '1px solid var(--accent)',
+                  color: 'var(--accent)',
                 }}
               >
                 {exportError}
@@ -448,25 +448,25 @@ export function ClipDetailModal() {
             )}
 
             {/* Action buttons */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-2 pt-2">
               <button
                 onClick={handleDelete}
-                className="flex-1 py-2 text-[14px] font-medium rounded-md transition-colors"
+                className="flex-1 py-1.5 text-[11px] font-medium rounded-sm transition-colors"
                 style={{
-                  backgroundColor: '#333',
-                  border: '1px solid #ef4444',
-                  color: '#ef4444',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--accent)',
+                  color: 'var(--accent)',
                 }}
               >
                 Delete
               </button>
               <button
                 onClick={handleExport}
-                className="flex-1 py-2 text-[14px] font-medium rounded-md transition-colors"
+                className="flex-1 py-1.5 text-[11px] font-medium rounded-sm transition-colors"
                 style={{
-                  backgroundColor: '#3b82f6',
-                  border: '1px solid #3b82f6',
-                  color: '#fff',
+                  backgroundColor: 'var(--accent)',
+                  border: '1px solid var(--accent)',
+                  color: 'var(--text-primary)',
                 }}
               >
                 Export

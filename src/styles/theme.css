@@ -1,32 +1,51 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    TEPHRAL DESIGN TOKENS
-   Dark brutalist theme
+   Monochrome + Toxic Magenta
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Backgrounds */
-  --bg-primary: #0d0d0d;
-  --bg-surface: #1a1a1a;
-  --bg-elevated: #222222;
-  --bg-hover: #333333;
+  /* Backgrounds - pure black foundation */
+  --bg-void: #000000;
+  --bg-primary: #0a0a0a;
+  --bg-surface: #111111;
+  --bg-elevated: #1a1a1a;
+  --bg-hover: #222222;
 
-  /* Borders */
-  --border: #4a4a4a;
-  --border-light: #5a5a5a;
+  /* Dot matrix grid */
+  --grid-dot: #1f1f1f;
+  --grid-size: 16px;
+  --dot-size: 1px;
 
-  /* Text */
-  --text-primary: #f5f5f5;
-  --text-secondary: #d0d0d0;
-  --text-muted: #a8a8a8;
+  /* Borders - subtle structure */
+  --border: #2a2a2a;
+  --border-emphasis: #3a3a3a;
+  --border-light: #3a3a3a;
 
-  /* Accent */
-  --accent: #ff6b35;
-  --accent-hover: #ff8255;
-  --accent-glow: rgba(255, 107, 53, 0.4);
-  --accent-subtle: rgba(255, 107, 53, 0.1);
+  /* Text - warm bone monochrome */
+  --text-primary: #E8E4DE;
+  --text-secondary: #B8B4AE;
+  --text-muted: #6A6864;
+  --text-ghost: #3A3834;
+
+  /* Accent - toxic magenta */
+  --accent: #FF0055;
+  --accent-dim: #CC0044;
+  --accent-hover: #FF2270;
+  --accent-glow: rgba(255, 0, 85, 0.3);
+  --accent-subtle: rgba(255, 0, 85, 0.08);
 
   /* Typography */
-  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  --text-micro: 9px;
+  --text-tiny: 10px;
+  --text-small: 11px;
+  --text-base: 12px;
+  --text-medium: 14px;
+  --text-large: 16px;
+  --leading-tight: 1.2;
+  --leading-normal: 1.4;
+  --tracking-tight: -0.01em;
+  --tracking-wide: 0.08em;
 }
 
 /* Base styles */
@@ -36,4 +55,96 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DOT MATRIX GRID
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.grid-substrate {
+  background-color: var(--bg-primary);
+  background-image: radial-gradient(
+    circle,
+    var(--grid-dot) var(--dot-size),
+    transparent var(--dot-size)
+  );
+  background-size: var(--grid-size) var(--grid-size);
+  background-position: center center;
+}
+
+.grid-dense {
+  --grid-size: 8px;
+}
+
+.grid-none {
+  background-image: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DATA READOUT - Machine Language Aesthetic
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.data-row {
+  display: flex;
+  gap: 16px;
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.data-label {
+  color: var(--text-ghost);
+}
+
+.data-value {
+  color: var(--text-secondary);
+}
+
+.data-sep::after {
+  content: '·';
+  margin: 0 8px;
+  color: var(--text-ghost);
+}
+
+.data-sep-bar::after {
+  content: '|';
+  margin: 0 8px;
+  color: var(--text-ghost);
+}
+
+.timecode {
+  font-size: var(--text-small);
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.timecode-sep {
+  color: var(--text-ghost);
+  margin: 0 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACCENT STATES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.accent-glow {
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.accent-active {
+  border-color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+/* Recording pulse animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.recording-pulse {
+  animation: pulse 1s ease infinite;
 }

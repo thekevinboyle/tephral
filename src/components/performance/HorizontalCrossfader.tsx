@@ -44,18 +44,27 @@ export function HorizontalCrossfader() {
 
   return (
     <div className="px-3 py-3">
+      {/* Label row */}
+      <div
+        className="flex justify-between mb-2 text-[9px] uppercase tracking-widest"
+        style={{ color: 'var(--text-ghost)' }}
+      >
+        <span>SRC</span>
+        <span>FX</span>
+      </div>
+
       <div className="flex items-center gap-2">
         {/* Source icon (video camera) */}
         <button
           onClick={snapToSource}
-          className="p-1.5 rounded transition-colors"
+          className="p-1.5 rounded-sm transition-colors"
           style={{
-            color: crossfaderPosition < 0.5 ? '#10b981' : 'var(--text-muted)',
-            backgroundColor: crossfaderPosition < 0.5 ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+            color: crossfaderPosition < 0.5 ? 'var(--text-primary)' : 'var(--text-ghost)',
+            backgroundColor: crossfaderPosition < 0.5 ? 'var(--accent-subtle)' : 'transparent',
           }}
           title="Source"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M23 7l-7 5 7 5V7z" />
             <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
           </svg>
@@ -64,35 +73,26 @@ export function HorizontalCrossfader() {
         {/* Crossfader track */}
         <div
           ref={trackRef}
-          className="flex-1 h-6 relative cursor-pointer rounded-full"
+          className="flex-1 h-5 relative cursor-pointer rounded-sm"
           style={{ backgroundColor: 'var(--bg-elevated)' }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          {/* Fill from left to thumb */}
-          <div
-            className="absolute inset-y-0 left-0 rounded-full transition-all"
-            style={{
-              width: `${thumbPosition}%`,
-              background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.3), rgba(99, 102, 241, 0.3))',
-            }}
-          />
-
           {/* Center line */}
           <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-3"
-            style={{ backgroundColor: 'var(--border)' }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-2"
+            style={{ backgroundColor: 'var(--border-emphasis)' }}
           />
 
           {/* Thumb */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full shadow-md transition-shadow"
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-sm transition-shadow"
             style={{
-              left: `calc(${thumbPosition}% - 8px)`,
-              backgroundColor: crossfaderPosition < 0.5 ? '#10b981' : '#6366f1',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+              left: `calc(${thumbPosition}% - 6px)`,
+              backgroundColor: 'var(--accent)',
+              boxShadow: '0 0 6px var(--accent-glow)',
             }}
           />
         </div>
@@ -100,14 +100,14 @@ export function HorizontalCrossfader() {
         {/* Processed icon (waveform/effects) */}
         <button
           onClick={snapToProcessed}
-          className="p-1.5 rounded transition-colors"
+          className="p-1.5 rounded-sm transition-colors"
           style={{
-            color: crossfaderPosition > 0.5 ? '#6366f1' : 'var(--text-muted)',
-            backgroundColor: crossfaderPosition > 0.5 ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+            color: crossfaderPosition > 0.5 ? 'var(--text-primary)' : 'var(--text-ghost)',
+            backgroundColor: crossfaderPosition > 0.5 ? 'var(--accent-subtle)' : 'transparent',
           }}
           title="Processed"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M2 12h4l3-9 4 18 3-9h4" />
           </svg>
         </button>

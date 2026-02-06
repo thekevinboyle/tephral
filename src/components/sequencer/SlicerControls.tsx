@@ -61,8 +61,8 @@ export function SlicerControls() {
               onClick={() => setSliceCount(count)}
               className="flex-1 h-7 text-[12px] font-medium rounded"
               style={{
-                backgroundColor: sliceCount === count ? '#FF6B6B' : 'var(--bg-surface)',
-                border: `1px solid ${sliceCount === count ? '#FF6B6B' : 'var(--border)'}`,
+                backgroundColor: sliceCount === count ? '#FF0055' : 'var(--bg-surface)',
+                border: `1px solid ${sliceCount === count ? '#FF0055' : 'var(--border)'}`,
                 color: sliceCount === count ? 'white' : 'var(--text-muted)',
               }}
             >
@@ -117,8 +117,8 @@ export function SlicerControls() {
               onClick={() => setAutoScan(!autoScan)}
               className="h-6 px-2 text-[11px] font-medium rounded"
               style={{
-                backgroundColor: autoScan ? '#10b981' : 'var(--bg-surface)',
-                border: `1px solid ${autoScan ? '#10b981' : 'var(--border)'}`,
+                backgroundColor: autoScan ? '#FF0055' : 'var(--bg-surface)',
+                border: `1px solid ${autoScan ? '#FF0055' : 'var(--border)'}`,
                 color: autoScan ? 'white' : 'var(--text-muted)',
               }}
             >
@@ -133,8 +133,8 @@ export function SlicerControls() {
                   step={0.1}
                   value={scanSpeed}
                   onChange={(e) => setScanSpeed(parseFloat(e.target.value))}
-                  className="flex-1 h-1 accent-emerald-500"
-                  style={{ accentColor: '#10b981' }}
+                  className="flex-1 h-1 accent-[#FF0055]"
+                  style={{ accentColor: '#FF0055' }}
                 />
                 <span className="text-[11px] w-10 text-right" style={{ color: 'var(--text-muted)' }}>
                   {scanSpeed.toFixed(1)}Hz
@@ -150,8 +150,8 @@ export function SlicerControls() {
                   onClick={() => setScanMode(mode)}
                   className="flex-1 h-6 text-[11px] font-medium rounded capitalize"
                   style={{
-                    backgroundColor: scanMode === mode ? '#10b981' : 'var(--bg-surface)',
-                    border: `1px solid ${scanMode === mode ? '#10b981' : 'var(--border)'}`,
+                    backgroundColor: scanMode === mode ? '#FF0055' : 'var(--bg-surface)',
+                    border: `1px solid ${scanMode === mode ? '#FF0055' : 'var(--border)'}`,
                     color: scanMode === mode ? 'white' : 'var(--text-muted)',
                   }}
                 >
@@ -228,8 +228,8 @@ export function SlicerControls() {
               onClick={() => setOutputMode(mode)}
               className="flex-1 h-7 text-[12px] font-medium rounded capitalize"
               style={{
-                backgroundColor: outputMode === mode ? '#FF6B6B' : 'var(--bg-surface)',
-                border: `1px solid ${outputMode === mode ? '#FF6B6B' : 'var(--border)'}`,
+                backgroundColor: outputMode === mode ? '#FF0055' : 'var(--bg-surface)',
+                border: `1px solid ${outputMode === mode ? '#FF0055' : 'var(--border)'}`,
                 color: outputMode === mode ? 'white' : 'var(--text-muted)',
               }}
             >

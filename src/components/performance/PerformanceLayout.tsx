@@ -131,12 +131,11 @@ export function PerformanceLayout() {
 
   return (
     <div
-      className="w-screen h-screen flex flex-col overflow-hidden"
-      style={{ backgroundColor: 'var(--bg-primary)' }}
+      className="w-screen h-screen flex flex-col overflow-hidden grid-substrate"
     >
       {/* Preview section (55vh) - 3 columns: Left placeholder, Canvas, Parameters */}
       <div
-        className="flex-shrink-0 m-3 mb-0 flex rounded-xl overflow-hidden"
+        className="flex-shrink-0 m-3 mb-0 flex rounded-sm overflow-hidden"
         style={{
           height: 'calc(55vh - 12px)',
           border: '1px solid var(--border)',
@@ -234,7 +233,7 @@ export function PerformanceLayout() {
       >
         {/* Column 1: Banks + Button grid */}
         <div
-          className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
+          className="flex-1 min-h-0 flex flex-col rounded-sm overflow-hidden"
           style={{
             backgroundColor: 'var(--bg-surface)',
             border: '1px solid var(--border)',
@@ -258,7 +257,7 @@ export function PerformanceLayout() {
 
         {/* Column 2: Sequencer */}
         <div
-          className="rounded-xl overflow-hidden"
+          className="rounded-sm overflow-hidden"
           style={{
             flex: '1.5',
             backgroundColor: 'var(--bg-surface)',
@@ -270,7 +269,7 @@ export function PerformanceLayout() {
 
         {/* Column 3: Step Sequencer */}
         <div
-          className="rounded-xl overflow-hidden"
+          className="rounded-sm overflow-hidden"
           style={{
             flex: '0.8',
             backgroundColor: 'var(--bg-surface)',

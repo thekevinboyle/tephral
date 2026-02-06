@@ -26,7 +26,7 @@ export const EFFECTS: EffectDefinition[] = [
   { id: 'track_face', label: 'FACE', color: '#f97316', row: 'vision', page: 0, min: 10, max: 90 },
   { id: 'track_hands', label: 'HANDS', color: '#a855f7', row: 'vision', page: 0, min: 10, max: 90 },
   { id: 'contour', label: 'CONTOUR', color: '#00ffff', row: 'vision', page: 0, min: 0, max: 100 },
-  { id: 'landmarks', label: 'LANDMARKS', color: '#10b981', row: 'vision', page: 0, min: 10, max: 90 },
+  { id: 'landmarks', label: 'LANDMARKS', color: '#FF0055', row: 'vision', page: 0, min: 10, max: 90 },
 
   // Row 3-4: Reserved
   { id: 'reserved_v3', label: '—', color: '#374151', row: 'reserved', page: 0, min: 0, max: 100 },

@@ -158,9 +158,13 @@ export class VoronoiEffect {
   private initialized: boolean = false
   private lastCellCount: number = 0
   private cellColors: Float32Array | null = null
+  private webglAttempted: boolean = false
 
   init(canvas: HTMLCanvasElement): void {
     this.canvas = canvas
+
+    // Mark that we're attempting WebGL (can't use 2D on this canvas after this)
+    this.webglAttempted = true
 
     const gl = canvas.getContext('webgl', {
       alpha: true,
@@ -169,6 +173,7 @@ export class VoronoiEffect {
 
     if (!gl) {
       console.warn('WebGL not available for VoronoiEffect')
+      this.webglAttempted = false // WebGL not available, can still use 2D
       return
     }
 
@@ -176,6 +181,9 @@ export class VoronoiEffect {
     const floatTextureExt = gl.getExtension('OES_texture_float')
     if (!floatTextureExt) {
       console.warn('OES_texture_float not available, using fallback')
+      // Note: GL context exists, so canvas is locked to WebGL
+      // Store gl so fallback can try to use it for simple rendering
+      this.gl = gl
       return
     }
 
@@ -651,17 +659,38 @@ export class VoronoiEffect {
     sourceCanvas: HTMLCanvasElement,
     params: VoronoiParams
   ): void {
-    // Canvas 2D fallback using simple nearest-seed approach
-    const ctx = this.canvas?.getContext('2d')
-    if (!ctx || !this.canvas) return
+    if (!this.canvas) return
 
     const width = sourceCanvas.width
     const height = sourceCanvas.height
+
+    // If we have a GL context (but float textures not supported), just clear
+    if (this.gl && this.webglAttempted) {
+      const gl = this.gl
+      this.canvas.width = width
+      this.canvas.height = height
+      gl.viewport(0, 0, width, height)
+      gl.clearColor(0, 0, 0, 0)
+      gl.clear(gl.COLOR_BUFFER_BIT)
+      return
+    }
+
+    // No GL context - can safely use 2D
+    const ctx = this.canvas.getContext('2d')
+    if (!ctx) return
+
     this.canvas.width = width
     this.canvas.height = height
 
-    const sourceCtx = sourceCanvas.getContext('2d')
-    if (!sourceCtx) return
+    // Create offscreen canvas to read source pixels (source may be WebGL canvas)
+    const offscreen = document.createElement('canvas')
+    offscreen.width = width
+    offscreen.height = height
+    const offscreenCtx = offscreen.getContext('2d')
+    if (!offscreenCtx) return
+
+    // Draw source to offscreen canvas (works even if source is WebGL)
+    offscreenCtx.drawImage(sourceCanvas, 0, 0)
 
     // Generate seeds if needed
     if (!this.seeds || params.cellCount !== this.lastCellCount) {
@@ -675,8 +704,8 @@ export class VoronoiEffect {
       this.lastCellCount = params.cellCount
     }
 
-    // Get source image data
-    const imageData = sourceCtx.getImageData(0, 0, width, height)
+    // Get source image data from offscreen canvas
+    const imageData = offscreenCtx.getImageData(0, 0, width, height)
     const pixels = imageData.data
     const destData = ctx.createImageData(width, height)
     const destPixels = destData.data

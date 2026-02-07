@@ -140,7 +140,7 @@ export const DEFAULT_MIRROR_PARAMS: MirrorParams = {
 export const DEFAULT_SLICE_PARAMS: SliceParams = {
   sliceCount: 20,
   direction: 'horizontal',
-  offset: 0,
+  offset: 50,
   wave: true,
 }
 

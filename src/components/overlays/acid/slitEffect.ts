@@ -379,12 +379,38 @@ export class SlitEffect {
     sourceCanvas: HTMLCanvasElement,
     params: SlitParams
   ): void {
-    // Simple Canvas 2D fallback
-    const ctx = this.canvas?.getContext('2d')
-    if (!ctx || !this.canvas) return
+    if (!this.canvas) return
 
     const width = sourceCanvas.width
     const height = sourceCanvas.height
+
+    // If we have a GL context (but init failed), use it to draw source directly
+    if (this.gl) {
+      const gl = this.gl
+      this.canvas.width = width
+      this.canvas.height = height
+      gl.viewport(0, 0, width, height)
+
+      // Upload source texture
+      if (!this.sourceTexture) {
+        this.sourceTexture = gl.createTexture()
+      }
+      gl.activeTexture(gl.TEXTURE0)
+      gl.bindTexture(gl.TEXTURE_2D, this.sourceTexture)
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+
+      // Just clear and draw nothing - shows the effect isn't working
+      gl.clearColor(0, 0, 0, 0)
+      gl.clear(gl.COLOR_BUFFER_BIT)
+      return
+    }
+
+    // No GL context - can safely use 2D
+    const ctx = this.canvas.getContext('2d')
+    if (!ctx) return
+
     this.canvas.width = width
     this.canvas.height = height
 

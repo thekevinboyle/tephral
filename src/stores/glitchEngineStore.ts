@@ -129,6 +129,11 @@ interface GlitchEngineState {
   effectBypassed: Record<string, boolean>
   toggleEffectBypassed: (effectId: string) => void
 
+  // Per-effect mix (dry/wet, 0-1)
+  effectMix: Record<string, number>
+  setEffectMix: (effectId: string, value: number) => void
+  getEffectMix: (effectId: string) => number
+
   // Solo state
   soloEffectId: string | null    // which effect is soloed (null = no solo)
   soloLatched: boolean           // true if latched, false if momentary
@@ -215,6 +220,20 @@ export const useGlitchEngineStore = create<GlitchEngineState>((set, get) => ({
       [effectId]: !state.effectBypassed[effectId]
     }
   })),
+
+  effectMix: {},
+
+  setEffectMix: (effectId, value) => set((state) => ({
+    effectMix: {
+      ...state.effectMix,
+      [effectId]: Math.max(0, Math.min(1, value))
+    }
+  })),
+
+  getEffectMix: (effectId) => {
+    const state = get()
+    return state.effectMix[effectId] ?? 1
+  },
 
   // Solo state
   soloEffectId: null,

@@ -18,7 +18,7 @@ import { useMotionStore } from '../../stores/motionStore'
 export function PerformanceGrid() {
   // Glitch engine store
   const glitch = useGlitchEngineStore()
-  const { soloEffectId } = useGlitchEngineStore()
+  const { soloEffectId, effectMix, setEffectMix } = useGlitchEngineStore()
 
   // Render stores
   const ascii = useAsciiRenderStore()
@@ -983,11 +983,9 @@ export function PerformanceGrid() {
               label={effect.label}
               color={effect.color}
               active={state.active}
-              value={state.value}
-              min={effect.min}
-              max={effect.max}
+              mix={effectMix[effect.id] ?? 1}
               onToggle={state.onToggle}
-              onValueChange={state.onValueChange}
+              onMixChange={(v) => setEffectMix(effect.id, v)}
               isSoloed={isSoloed}
               isMuted={isMuted}
             />

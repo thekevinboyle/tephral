@@ -7,6 +7,7 @@ export interface AutomationEvent {
   effect: string
   action?: 'on' | 'off'
   param?: number
+  mix?: number  // 0-1 dry/wet mix
 }
 
 export interface Thumbnail {

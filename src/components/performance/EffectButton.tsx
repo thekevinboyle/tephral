@@ -11,11 +11,9 @@ interface EffectButtonProps {
   label: string
   color: string
   active: boolean
-  value: number
-  min?: number
-  max?: number
+  mix: number  // 0-1 dry/wet mix
   onToggle: () => void
-  onValueChange: (value: number) => void
+  onMixChange: (value: number) => void
   isSoloed?: boolean
   isMuted?: boolean
 }
@@ -25,11 +23,9 @@ export function EffectButton({
   label,
   color: _color,
   active,
-  value,
-  min = 0,
-  max = 100,
+  mix,
   onToggle,
-  onValueChange,
+  onMixChange,
   isSoloed = false,
   isMuted = false,
 }: EffectButtonProps) {
@@ -54,7 +50,7 @@ export function EffectButton({
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault()
     dragStartY.current = e.clientY
-    dragStartValue.current = value
+    dragStartValue.current = mix
     didDrag.current = false
     isHolding.current = false
     pointerDownTime.current = Date.now()
@@ -71,7 +67,7 @@ export function EffectButton({
         }
       }
     }, HOLD_THRESHOLD)
-  }, [value, active, id, setSolo])
+  }, [mix, active, id, setSolo])
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (dragStartY.current === null) return
@@ -81,12 +77,12 @@ export function EffectButton({
     // Only count as drag if moved more than 5px
     if (Math.abs(deltaY) > 5) {
       didDrag.current = true
-      const range = max - min
-      const sensitivity = range / 100
-      const newValue = Math.min(max, Math.max(min, dragStartValue.current + deltaY * sensitivity))
-      onValueChange(newValue)
+      // Mix is 0-1, sensitivity of 0.01 per pixel
+      const sensitivity = 0.01
+      const newMix = Math.min(1, Math.max(0, dragStartValue.current + deltaY * sensitivity))
+      onMixChange(newMix)
     }
-  }, [min, max, onValueChange])
+  }, [onMixChange])
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     try {
@@ -106,9 +102,9 @@ export function EffectButton({
     const elapsed = Date.now() - pointerDownTime.current
     const now = Date.now()
 
-    // Record parameter change if we dragged
+    // Record mix change if we dragged
     if (wasDrag && isRecording) {
-      addEvent({ effect: id, param: value })
+      addEvent({ effect: id, mix })
     }
 
     // Shift+click = select for info panel only (no toggle)
@@ -155,7 +151,7 @@ export function EffectButton({
             onToggle()
             setSelectedEffect(id)
             if (isRecording) {
-              addEvent({ effect: id, action: active ? 'off' : 'on', param: value })
+              addEvent({ effect: id, action: active ? 'off' : 'on', mix })
             }
           }
         }
@@ -167,7 +163,7 @@ export function EffectButton({
     dragStartY.current = null
     didDrag.current = false
     isHolding.current = false
-  }, [onToggle, isRecording, addEvent, id, active, value, setSelectedEffect, selectEffectForInfoPanel, soloEffectId, soloLatched, setSolo, clearSolo])
+  }, [onToggle, isRecording, addEvent, id, active, mix, setSelectedEffect, selectEffectForInfoPanel, soloEffectId, soloLatched, setSolo, clearSolo])
 
   // Handle pointer leave - clear momentary solo if not latched
   const handlePointerLeave = useCallback(() => {
@@ -186,8 +182,8 @@ export function EffectButton({
     isHolding.current = false
   }, [id, soloEffectId, soloLatched, clearSolo])
 
-  // Value percentage for the progress bar
-  const percentage = ((value - min) / (max - min)) * 100
+  // Mix percentage for the progress bar (0-100%)
+  const mixPercent = Math.round(mix * 100)
 
   return (
     <div
@@ -215,7 +211,7 @@ export function EffectButton({
           {label}
         </span>
 
-        {/* Parameter value */}
+        {/* Mix percentage */}
         <span
           className="text-[11px] tabular-nums font-medium"
           style={{
@@ -223,11 +219,11 @@ export function EffectButton({
             fontFamily: "'JetBrains Mono', monospace",
           }}
         >
-          {Math.round(value)}
+          {mixPercent}%
         </span>
       </div>
 
-      {/* Vertical progress bar on the right */}
+      {/* Vertical progress bar on the right - shows mix level */}
       <div
         className="w-0.5 rounded-sm ml-1.5 relative overflow-hidden"
         style={{
@@ -238,7 +234,7 @@ export function EffectButton({
         <div
           className="absolute bottom-0 left-0 right-0 rounded-sm transition-all duration-150"
           style={{
-            height: `${percentage}%`,
+            height: `${mixPercent}%`,
             backgroundColor: active ? 'var(--bg-primary)' : 'var(--text-ghost)',
           }}
         />

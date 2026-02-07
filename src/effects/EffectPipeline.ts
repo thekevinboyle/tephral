@@ -244,8 +244,8 @@ export class EffectPipeline {
     }
 
     // Add crossfader pass for A/B blending (source vs processed)
-    // Only add if we have a source texture and crossfader is not fully processed (position < 1)
-    if (this.crossfaderEffect && config.hasSourceTexture && config.crossfaderPosition < 1) {
+    // Always add when we have a source texture - shader handles the blend amount
+    if (this.crossfaderEffect && config.hasSourceTexture) {
       this.crossfaderPass = new EffectPass(this.camera, this.crossfaderEffect)
       this.composer.addPass(this.crossfaderPass)
     }

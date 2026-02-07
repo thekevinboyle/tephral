@@ -198,8 +198,8 @@ export function EffectButton({
       onPointerCancel={handlePointerLeave}
       className="relative rounded-sm flex select-none touch-none cursor-pointer w-full h-full p-1 overflow-hidden"
       style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: isSoloed ? `1px solid var(--accent)` : active ? `1px solid var(--accent)40` : '1px solid var(--border)',
+        backgroundColor: active ? 'var(--accent)' : 'var(--bg-surface)',
+        border: isSoloed ? '1px solid var(--text-primary)' : active ? '1px solid var(--accent)' : '1px solid var(--border)',
         opacity: isMuted ? 0.4 : 1,
         boxShadow: isSoloed ? '0 0 8px var(--accent-glow)' : 'none',
         transition: 'box-shadow 0.15s ease-out, border 0.15s ease-out, background-color 0.15s ease-out',
@@ -207,29 +207,19 @@ export function EffectButton({
     >
       {/* Main content area */}
       <div className="flex-1 flex flex-col justify-between">
-        {/* LED indicator + label */}
-        <div className="flex items-center gap-1">
-          {/* LED - only this gets a glow when active */}
-          <div
-            className="w-1 h-1 rounded-full transition-all duration-150 shrink-0"
-            style={{
-              backgroundColor: active ? 'var(--accent)' : 'var(--text-ghost)',
-              boxShadow: active && !isMuted ? '0 0 4px var(--accent-glow)' : 'none',
-            }}
-          />
-          <span
-            className="text-[10px] font-medium truncate"
-            style={{ color: active ? 'var(--text-secondary)' : 'var(--text-muted)' }}
-          >
-            {label}
-          </span>
-        </div>
+        {/* Label */}
+        <span
+          className="text-[10px] font-medium truncate"
+          style={{ color: active ? 'var(--bg-primary)' : 'var(--text-muted)' }}
+        >
+          {label}
+        </span>
 
         {/* Parameter value */}
         <span
           className="text-[11px] tabular-nums font-medium"
           style={{
-            color: active ? 'var(--accent)' : 'var(--text-ghost)',
+            color: active ? 'var(--bg-primary)' : 'var(--text-ghost)',
             fontFamily: "'JetBrains Mono', monospace",
           }}
         >
@@ -237,11 +227,11 @@ export function EffectButton({
         </span>
       </div>
 
-      {/* Vertical progress bar on the right - flat style */}
+      {/* Vertical progress bar on the right */}
       <div
         className="w-0.5 rounded-sm ml-1.5 relative overflow-hidden"
         style={{
-          backgroundColor: 'var(--border)',
+          backgroundColor: active ? 'rgba(0,0,0,0.3)' : 'var(--border)',
         }}
       >
         {/* Fill from bottom */}
@@ -249,7 +239,7 @@ export function EffectButton({
           className="absolute bottom-0 left-0 right-0 rounded-sm transition-all duration-150"
           style={{
             height: `${percentage}%`,
-            backgroundColor: active ? 'var(--accent)' : 'var(--text-ghost)',
+            backgroundColor: active ? 'var(--bg-primary)' : 'var(--text-ghost)',
           }}
         />
       </div>

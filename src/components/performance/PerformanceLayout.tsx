@@ -7,8 +7,10 @@ import { ClipBin } from './ClipBin'
 import { ClipDetailModal } from './ClipDetailModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { EffectsLane } from './EffectsLane'
+import { MiddleSection } from './MiddleSection'
+import { CrossfaderPanel } from './CrossfaderPanel'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
-import { SequencerPanel } from '../sequencer/SequencerPanel'
+import { DataTerminal } from '../terminal/DataTerminal'
 import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
@@ -31,7 +33,6 @@ export function PerformanceLayout() {
   const [videoAspect, setVideoAspect] = useState<number | null>(null)
   const [containerWidth, setContainerWidth] = useState(0)
   const [containerHeight, setContainerHeight] = useState(0)
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1920)
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
   useAutomationPlayback()
@@ -83,14 +84,13 @@ export function PerformanceLayout() {
     }
   }, [videoElement, imageElement])
 
-  // Track container size and window width for responsive panels
+  // Track container size
   const updateContainerSize = useCallback(() => {
     if (canvasContainerRef.current) {
       const rect = canvasContainerRef.current.getBoundingClientRect()
       setContainerWidth(rect.width)
       setContainerHeight(rect.height)
     }
-    setWindowWidth(window.innerWidth)
   }, [])
 
   useEffect(() => {
@@ -110,174 +110,186 @@ export function PerformanceLayout() {
     : containerWidth
   const sideWidth = showSidePlaceholders ? Math.floor((containerWidth - videoWidth) / 2) : 0
 
-  // Responsive panel widths based on Tailwind breakpoints
-  // < 1280px (below xl): compact
-  // 1280-1536px (xl): comfortable
-  // 1536-1920px (2xl): spacious
-  // >= 1920px (large monitors): wide
-  const leftPanelWidth = windowWidth >= 1920 ? 440
-    : windowWidth >= 1536 ? 400
-    : windowWidth >= 1280 ? 360
-    : 320
-
-  const rightPanelWidth = windowWidth >= 1920 ? 320
-    : windowWidth >= 1536 ? 280
-    : windowWidth >= 1280 ? 240
-    : 200
-
   // Use recording capture hook - captures canvas during recording
   // Pass canvasElement as a dependency hint so hook re-runs when canvas is available
   useRecordingCapture(captureRef, canvasElement)
 
   return (
     <div
-      className="w-screen h-screen flex flex-col overflow-hidden grid-substrate"
+      className="w-screen h-screen overflow-hidden grid-substrate"
+      style={{
+        display: 'grid',
+        gridTemplateRows: '1fr auto 1fr',
+        gridTemplateColumns: 'var(--col-left) 1fr var(--col-right)',
+        gap: 'var(--gap)',
+        padding: 'var(--gap)',
+      }}
     >
-      {/* Preview section (55vh) - 3 columns: Left placeholder, Canvas, Parameters */}
+      {/* Row 1, Col 1: Effect Info Panel */}
       <div
-        className="flex-shrink-0 m-3 mb-0 flex rounded-sm overflow-hidden"
+        className="rounded-sm overflow-hidden"
         style={{
-          height: 'calc(55vh - 12px)',
+          gridRow: 1,
+          gridColumn: 1,
+          backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border)',
         }}
       >
-        {/* Left sidebar: Expanded Parameter Panel */}
-        <div
-          className="flex-shrink-0 transition-[width] duration-200"
-          style={{
-            width: leftPanelWidth,
-            borderRight: '1px solid var(--border)',
-          }}
-        >
-          <ExpandedParameterPanel />
-        </div>
+        <ExpandedParameterPanel />
+      </div>
 
-        {/* Canvas area (center) */}
-        <div
-          className="relative flex-1 min-w-0 flex flex-col"
-          style={{ backgroundColor: 'var(--bg-elevated)' }}
-        >
-          {/* Canvas with side placeholders */}
-          <div ref={canvasContainerRef} className="flex-1 min-h-0 relative flex">
-            {/* Left placeholder */}
-            {showSidePlaceholders && sideWidth > 40 && (
-              <div
-                className="flex-shrink-0 flex items-center justify-center"
-                style={{
-                  width: sideWidth,
-                  backgroundColor: '#1e3a5f',
-                  borderRight: '1px solid var(--border)',
-                }}
-              />
-            )}
+      {/* Row 1, Col 2: Canvas + Transport */}
+      <div
+        className="relative flex flex-col rounded-sm overflow-hidden"
+        style={{
+          gridRow: 1,
+          gridColumn: 2,
+          backgroundColor: 'var(--bg-elevated)',
+          border: '1px solid var(--border)',
+        }}
+      >
+        {/* Canvas with side placeholders */}
+        <div ref={canvasContainerRef} className="flex-1 min-h-0 relative flex">
+          {/* Left placeholder */}
+          {showSidePlaceholders && sideWidth > 40 && (
+            <div
+              className="flex-shrink-0 flex items-center justify-center"
+              style={{
+                width: sideWidth,
+                backgroundColor: '#1e3a5f',
+                borderRight: '1px solid var(--border)',
+              }}
+            />
+          )}
 
-            {/* Canvas */}
-            <div className="flex-1 min-w-0 relative">
-              <Canvas ref={canvasRef} />
-              {/* Clip bin always floats in bottom left corner */}
-              <ClipBin />
-            </div>
+          {/* Canvas */}
+          <div className="flex-1 min-w-0 relative">
+            <Canvas ref={canvasRef} />
+            {/* Clip bin always floats in bottom left corner */}
+            <ClipBin />
+          </div>
 
-            {/* Right placeholder */}
-            {showSidePlaceholders && sideWidth > 40 && (
-              <div
-                className="flex-shrink-0 flex items-center justify-center"
-                style={{
-                  width: sideWidth,
-                  backgroundColor: '#1e3a5f',
-                  borderLeft: '1px solid var(--border)',
-                }}
+          {/* Right placeholder */}
+          {showSidePlaceholders && sideWidth > 40 && (
+            <div
+              className="flex-shrink-0 flex items-center justify-center"
+              style={{
+                width: sideWidth,
+                backgroundColor: '#1e3a5f',
+                borderLeft: '1px solid var(--border)',
+              }}
+            >
+              <span
+                className="text-[11px] uppercase tracking-wider"
+                style={{ color: 'var(--text-muted)', opacity: 0.5 }}
               >
-                <span
-                  className="text-[11px] uppercase tracking-wider"
-                  style={{ color: 'var(--text-muted)', opacity: 0.5 }}
-                >
-                  {/* Empty placeholder */}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Transport bar at bottom of preview */}
-          <div
-            className="flex-shrink-0"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              borderTop: '1px solid var(--border)',
-            }}
-          >
-            <TransportBar />
-          </div>
+                {/* Empty placeholder */}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Right sidebar: Preset Dropdown Bar + Effects Lane */}
+        {/* Transport bar at bottom of preview */}
         <div
-          className="flex-shrink-0 flex flex-col transition-[width] duration-200"
+          className="flex-shrink-0"
           style={{
-            width: rightPanelWidth,
             backgroundColor: 'var(--bg-surface)',
-            borderLeft: '1px solid var(--border)',
+            borderTop: '1px solid var(--border)',
           }}
         >
-          <PresetDropdownBar canvasRef={captureRef} />
-          {/* Effects Lane fills remaining space */}
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <EffectsLane />
-          </div>
+          <TransportBar />
         </div>
       </div>
 
-      {/* Bottom section - 3 equal columns */}
+      {/* Row 1, Col 3: Presets/FX Chain */}
       <div
-        className="flex-1 min-h-0 flex mx-3 mt-3 mb-3 gap-3"
+        className="flex flex-col rounded-sm overflow-hidden"
+        style={{
+          gridRow: 1,
+          gridColumn: 3,
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+        }}
       >
-        {/* Column 1: Banks + Button grid */}
-        <div
-          className="flex-1 min-h-0 flex flex-col rounded-sm overflow-hidden"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-          }}
-        >
-          {/* Bank row header */}
-          <div
-            className="flex-shrink-0"
-            style={{
-              height: '52px',
-              borderBottom: '1px solid var(--border)',
-            }}
-          >
-            <BankPanel />
-          </div>
-          {/* Grid */}
-          <div className="flex-1 min-h-0">
-            <PerformanceGrid />
-          </div>
+        <PresetDropdownBar canvasRef={captureRef} />
+        {/* Effects Lane fills remaining space */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <EffectsLane />
         </div>
+      </div>
 
-        {/* Column 2: Sequencer */}
-        <div
-          className="rounded-sm overflow-hidden"
-          style={{
-            flex: '1.5',
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-          }}
-        >
-          <SequencerContainer />
-        </div>
+      {/* Row 2, Col 1-2: Middle Section (placeholder) */}
+      <div
+        style={{
+          gridRow: 2,
+          gridColumn: '1 / 3',
+          minHeight: 'var(--row-middle)',
+        }}
+      >
+        <MiddleSection />
+      </div>
 
-        {/* Column 3: Step Sequencer */}
+      {/* Row 2, Col 3: Crossfader Controls */}
+      <div
+        style={{
+          gridRow: 2,
+          gridColumn: 3,
+          minHeight: 'var(--row-middle)',
+        }}
+      >
+        <CrossfaderPanel />
+      </div>
+
+      {/* Row 3, Col 1: Effects Grid */}
+      <div
+        className="flex flex-col rounded-sm overflow-hidden"
+        style={{
+          gridRow: 3,
+          gridColumn: 1,
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+        }}
+      >
+        {/* Bank row header */}
         <div
-          className="rounded-sm overflow-hidden"
+          className="flex-shrink-0"
           style={{
-            flex: '0.8',
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
+            height: '52px',
+            borderBottom: '1px solid var(--border)',
           }}
         >
-          <SequencerPanel />
+          <BankPanel />
         </div>
+        {/* Grid */}
+        <div className="flex-1 min-h-0">
+          <PerformanceGrid />
+        </div>
+      </div>
+
+      {/* Row 3, Col 2: Slicer Panel */}
+      <div
+        className="rounded-sm overflow-hidden"
+        style={{
+          gridRow: 3,
+          gridColumn: 2,
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+        }}
+      >
+        <SequencerContainer />
+      </div>
+
+      {/* Row 3, Col 3: Data Terminal */}
+      <div
+        className="rounded-sm overflow-hidden"
+        style={{
+          gridRow: 3,
+          gridColumn: 3,
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+        }}
+      >
+        <DataTerminal />
       </div>
 
       {/* Clip detail modal */}

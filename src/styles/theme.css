@@ -11,6 +11,12 @@
   --bg-elevated: #181818;
   --bg-hover: #202020;
 
+  /* Layout grid */
+  --col-left: 400px;
+  --col-right: 200px;
+  --row-middle: 100px;
+  --gap: 3px;
+
   /* Dot matrix grid */
   --grid-dot: #080808;
   --grid-size: 16px;
@@ -147,4 +153,29 @@ body {
 
 .recording-pulse {
   animation: pulse 1s ease infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE LAYOUT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (min-width: 1280px) {
+  :root {
+    --col-left: 440px;
+    --col-right: 240px;
+  }
+}
+
+@media (min-width: 1536px) {
+  :root {
+    --col-left: 480px;
+    --col-right: 280px;
+  }
+}
+
+@media (min-width: 1920px) {
+  :root {
+    --col-left: 520px;
+    --col-right: 320px;
+  }
 }

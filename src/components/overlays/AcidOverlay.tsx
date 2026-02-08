@@ -64,7 +64,22 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
   sourceCanvasRef.current = sourceCanvas
   sizeRef.current = { width, height }
 
-  // Check if any effect is enabled
+  // Check if any effect is enabled AND not bypassed
+  const anyActiveEffect =
+    (store.dotsEnabled && !effectBypassed['acid_dots']) ||
+    (store.glyphEnabled && !effectBypassed['acid_glyph']) ||
+    (store.iconsEnabled && !effectBypassed['acid_icons']) ||
+    (store.contourEnabled && !effectBypassed['acid_contour']) ||
+    (store.decompEnabled && !effectBypassed['acid_decomp']) ||
+    (store.mirrorEnabled && !effectBypassed['acid_mirror']) ||
+    (store.sliceEnabled && !effectBypassed['acid_slice']) ||
+    (store.thGridEnabled && !effectBypassed['acid_thgrid']) ||
+    (store.ledEnabled && !effectBypassed['acid_led']) ||
+    (store.cloudEnabled && !effectBypassed['acid_cloud']) ||
+    (store.slitEnabled && !effectBypassed['acid_slit']) ||
+    (store.voronoiEnabled && !effectBypassed['acid_voronoi'])
+
+  // Check if any effect is enabled (for WebGL lifecycle)
   const anyEnabled =
     store.dotsEnabled ||
     store.glyphEnabled ||
@@ -271,8 +286,8 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     }
   }, [])
 
-  // Don't render if no effects are enabled
-  if (!anyEnabled) return null
+  // Don't render if no effects are active (enabled and not bypassed)
+  if (!anyActiveEffect) return null
 
   // Check which WebGL effects need canvases
   const needsCloudCanvas = store.cloudEnabled

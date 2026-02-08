@@ -4,12 +4,12 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Backgrounds - near black foundation */
+  /* Backgrounds - near black foundation with visible layering */
   --bg-void: #000000;
-  --bg-primary: #020202;
-  --bg-surface: #050505;
-  --bg-elevated: #080808;
-  --bg-hover: #0a0a0a;
+  --bg-primary: #080808;
+  --bg-surface: #101010;
+  --bg-elevated: #181818;
+  --bg-hover: #202020;
 
   /* Dot matrix grid */
   --grid-dot: #080808;

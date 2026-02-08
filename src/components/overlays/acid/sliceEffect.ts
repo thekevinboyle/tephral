@@ -20,9 +20,7 @@ export function renderSlice(
 ): void {
   const { sliceCount, direction, offset, wave } = params
 
-  // Black background
-  destCtx.fillStyle = '#000'
-  destCtx.fillRect(0, 0, width, height)
+  // Background handled by AcidOverlay based on preserveVideo setting
 
   const time = Date.now() * 0.001
 
@@ -101,11 +99,7 @@ export function renderSlice(
       tempCtx.drawImage(destCtx.canvas, 0, 0)
     }
 
-    // Clear if only vertical
-    if (direction === 'vertical') {
-      destCtx.fillStyle = '#000'
-      destCtx.fillRect(0, 0, width, height)
-    }
+    // Note: background handled by AcidOverlay based on preserveVideo setting
 
     for (let i = 0; i < sliceCount; i++) {
       const x = i * sliceWidth

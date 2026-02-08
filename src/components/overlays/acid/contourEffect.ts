@@ -58,13 +58,16 @@ export function renderContour(
   destCtx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  params: ContourParams
+  params: ContourParams,
+  preserveVideo: boolean = false
 ): void {
   const { levels, lineWidth, smooth, animate } = params
 
-  // Black background
-  destCtx.fillStyle = '#000'
-  destCtx.fillRect(0, 0, width, height)
+  // Only fill black background if not preserving video
+  if (!preserveVideo) {
+    destCtx.fillStyle = '#000'
+    destCtx.fillRect(0, 0, width, height)
+  }
 
   // Get source image data
   const imageData = sourceCtx.getImageData(0, 0, width, height)

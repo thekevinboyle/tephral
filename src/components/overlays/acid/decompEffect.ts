@@ -164,9 +164,7 @@ export function renderDecomp(
 ): void {
   const { minBlock, maxBlock, threshold, showGrid, fillMode } = params
 
-  // Black background
-  destCtx.fillStyle = '#000'
-  destCtx.fillRect(0, 0, width, height)
+  // Background handled by AcidOverlay based on preserveVideo setting
 
   // Get source image data
   const imageData = sourceCtx.getImageData(0, 0, width, height)

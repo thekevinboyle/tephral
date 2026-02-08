@@ -203,7 +203,7 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     }
 
     if (currentStore.contourEnabled && !bypassed['acid_contour']) {
-      renderContour(sourceCtx, ctx, currentWidth, currentHeight, currentStore.contourParams)
+      renderContour(sourceCtx, ctx, currentWidth, currentHeight, currentStore.contourParams, currentStore.preserveVideo)
     }
 
     if (currentStore.decompEnabled && !bypassed['acid_decomp']) {

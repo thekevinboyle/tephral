@@ -20,9 +20,7 @@ export function renderMirror(
 ): void {
   const { segments, centerX, centerY, rotation } = params
 
-  // Black background
-  destCtx.fillStyle = '#000'
-  destCtx.fillRect(0, 0, width, height)
+  // Background handled by AcidOverlay based on preserveVideo setting
 
   // Calculate center point
   const cx = width * centerX

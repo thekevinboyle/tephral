@@ -12,7 +12,386 @@ import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useRoutingStore } from '../../stores/routingStore'
+import { useModulationStore, type LFOShape } from '../../stores/modulationStore'
+import { useSequencerStore } from '../../stores/sequencerStore'
 import { EFFECTS } from '../../config/effects'
+
+// ════════════════════════════════════════════════════════════════════════════
+// MODULATION PARAMETER CONTROLS
+// ════════════════════════════════════════════════════════════════════════════
+
+function ModSlider({
+  label,
+  value,
+  min,
+  max,
+  step: _step = 0.01,
+  onChange,
+  format,
+  color,
+}: {
+  label: string
+  value: number
+  min: number
+  max: number
+  step?: number
+  onChange: (v: number) => void
+  format?: (v: number) => string
+  color?: string
+}) {
+  void _step // Used for future snap-to-step functionality
+  const normalized = (value - min) / (max - min)
+  const display = format ? format(value) : value.toFixed(2)
+
+  return (
+    <div className="flex items-center gap-2 py-0.5">
+      <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+        {label}
+      </span>
+      <div
+        className="flex-1 h-3 rounded-sm relative cursor-pointer"
+        style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect()
+          const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+          onChange(min + ratio * (max - min))
+        }}
+      >
+        <div
+          className="absolute left-0 top-0 bottom-0 rounded-sm"
+          style={{
+            width: `${normalized * 100}%`,
+            backgroundColor: color || 'var(--accent)',
+            opacity: 0.5,
+          }}
+        />
+      </div>
+      <span className="text-[9px] w-8 text-right tabular-nums" style={{ color: 'var(--text-secondary)' }}>
+        {display}
+      </span>
+    </div>
+  )
+}
+
+function ModSelect<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+  color,
+}: {
+  label: string
+  value: T
+  options: { value: T; label: string }[]
+  onChange: (v: T) => void
+  color?: string
+}) {
+  return (
+    <div className="flex items-center gap-2 py-0.5">
+      <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+        {label}
+      </span>
+      <div className="flex-1 flex gap-1">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            className="flex-1 text-[8px] uppercase tracking-wide py-0.5 rounded-sm transition-colors"
+            style={{
+              backgroundColor: value === opt.value ? (color || 'var(--accent)') : 'var(--bg-elevated)',
+              color: value === opt.value ? 'white' : 'var(--text-muted)',
+              border: '1px solid var(--border)',
+              opacity: value === opt.value ? 1 : 0.7,
+            }}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ModulatorSection({
+  title,
+  enabled,
+  onToggle,
+  color,
+  children,
+}: {
+  title: string
+  enabled: boolean
+  onToggle: () => void
+  color: string
+  children: React.ReactNode
+}) {
+  return (
+    <div
+      className="rounded-sm overflow-hidden"
+      style={{
+        border: enabled ? `1px solid ${color}40` : '1px solid var(--border)',
+        backgroundColor: enabled ? `${color}08` : 'transparent',
+      }}
+    >
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 px-2 py-1.5"
+        style={{ borderBottom: enabled ? '1px solid var(--border)' : 'none' }}
+      >
+        <div
+          className="w-2 h-2 rounded-full"
+          style={{
+            backgroundColor: enabled ? color : 'var(--text-ghost)',
+            boxShadow: enabled ? `0 0 6px ${color}` : 'none',
+          }}
+        />
+        <span
+          className="text-[10px] uppercase tracking-widest"
+          style={{ color: enabled ? color : 'var(--text-muted)' }}
+        >
+          {title}
+        </span>
+        <span
+          className="ml-auto text-[8px] uppercase"
+          style={{ color: enabled ? color : 'var(--text-ghost)' }}
+        >
+          {enabled ? 'ON' : 'OFF'}
+        </span>
+      </button>
+      {enabled && <div className="px-2 py-1.5">{children}</div>}
+    </div>
+  )
+}
+
+function ModulationPanel() {
+  const mod = useModulationStore()
+  const { routings } = useSequencerStore()
+
+  // Count routings per modulator
+  const lfoRoutings = routings.filter(r => r.trackId === 'lfo').length
+  const randomRoutings = routings.filter(r => r.trackId === 'random').length
+  const stepRoutings = routings.filter(r => r.trackId === 'step').length
+  const envRoutings = routings.filter(r => r.trackId === 'envelope').length
+
+  const lfoShapes: { value: LFOShape; label: string }[] = [
+    { value: 'sine', label: 'Sin' },
+    { value: 'triangle', label: 'Tri' },
+    { value: 'square', label: 'Sqr' },
+    { value: 'saw', label: 'Saw' },
+    { value: 'random', label: 'Rnd' },
+  ]
+
+  return (
+    <div className="flex flex-col gap-2 p-2">
+      {/* LFO */}
+      <ModulatorSection
+        title={`LFO${lfoRoutings > 0 ? ` → ${lfoRoutings}` : ''}`}
+        enabled={mod.lfo.enabled}
+        onToggle={mod.toggleLFO}
+        color="#00D4FF"
+      >
+        <ModSelect
+          label="Shape"
+          value={mod.lfo.shape}
+          options={lfoShapes}
+          onChange={mod.setLFOShape}
+          color="#00D4FF"
+        />
+        <ModSlider
+          label="Rate"
+          value={mod.lfo.rate}
+          min={0.1}
+          max={20}
+          step={0.1}
+          onChange={mod.setLFORate}
+          format={(v) => `${v.toFixed(1)}Hz`}
+          color="#00D4FF"
+        />
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Value</span>
+          <div className="flex-1 h-1 rounded-sm" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+            <div
+              className="h-full rounded-sm transition-all duration-75"
+              style={{
+                width: `${mod.lfo.currentValue * 100}%`,
+                backgroundColor: '#00D4FF',
+              }}
+            />
+          </div>
+        </div>
+      </ModulatorSection>
+
+      {/* Random */}
+      <ModulatorSection
+        title={`Random${randomRoutings > 0 ? ` → ${randomRoutings}` : ''}`}
+        enabled={mod.random.enabled}
+        onToggle={mod.toggleRandom}
+        color="#FF6B6B"
+      >
+        <ModSlider
+          label="Rate"
+          value={mod.random.rate}
+          min={0.1}
+          max={30}
+          step={0.1}
+          onChange={mod.setRandomRate}
+          format={(v) => `${v.toFixed(1)}/s`}
+          color="#FF6B6B"
+        />
+        <ModSlider
+          label="Smooth"
+          value={mod.random.smoothing}
+          min={0}
+          max={1}
+          step={0.01}
+          onChange={mod.setRandomSmoothing}
+          format={(v) => `${Math.round(v * 100)}%`}
+          color="#FF6B6B"
+        />
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Value</span>
+          <div className="flex-1 h-1 rounded-sm" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+            <div
+              className="h-full rounded-sm transition-all duration-75"
+              style={{
+                width: `${mod.random.currentValue * 100}%`,
+                backgroundColor: '#FF6B6B',
+              }}
+            />
+          </div>
+        </div>
+      </ModulatorSection>
+
+      {/* Step */}
+      <ModulatorSection
+        title={`Step${stepRoutings > 0 ? ` → ${stepRoutings}` : ''}`}
+        enabled={mod.step.enabled}
+        onToggle={mod.toggleStep}
+        color="#4ECDC4"
+      >
+        <ModSlider
+          label="Rate"
+          value={mod.step.rate}
+          min={0.1}
+          max={20}
+          step={0.1}
+          onChange={mod.setStepRate}
+          format={(v) => `${v.toFixed(1)}/s`}
+          color="#4ECDC4"
+        />
+        {/* Step value bars */}
+        <div className="flex gap-[2px] mt-1 mb-1">
+          {mod.step.steps.map((val, i) => (
+            <div
+              key={i}
+              className="flex-1 flex flex-col items-center cursor-pointer"
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect()
+                const ratio = 1 - Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height))
+                mod.setStepValue(i, ratio)
+              }}
+            >
+              <div
+                className="w-full h-8 rounded-sm relative"
+                style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
+              >
+                <div
+                  className="absolute bottom-0 left-0 right-0 rounded-sm transition-all"
+                  style={{
+                    height: `${val * 100}%`,
+                    backgroundColor: mod.step.currentStep === i ? '#4ECDC4' : '#4ECDC480',
+                  }}
+                />
+              </div>
+              <span
+                className="text-[7px] mt-0.5"
+                style={{ color: mod.step.currentStep === i ? '#4ECDC4' : 'var(--text-ghost)' }}
+              >
+                {i + 1}
+              </span>
+            </div>
+          ))}
+        </div>
+      </ModulatorSection>
+
+      {/* Envelope */}
+      <ModulatorSection
+        title={`Envelope${envRoutings > 0 ? ` → ${envRoutings}` : ''}`}
+        enabled={mod.envelope.enabled}
+        onToggle={mod.toggleEnvelope}
+        color="#22c55e"
+      >
+        <ModSlider
+          label="Attack"
+          value={mod.envelope.attack}
+          min={0}
+          max={2}
+          step={0.01}
+          onChange={(v) => mod.setEnvelopeParams({ attack: v })}
+          format={(v) => `${(v * 1000).toFixed(0)}ms`}
+          color="#22c55e"
+        />
+        <ModSlider
+          label="Decay"
+          value={mod.envelope.decay}
+          min={0}
+          max={2}
+          step={0.01}
+          onChange={(v) => mod.setEnvelopeParams({ decay: v })}
+          format={(v) => `${(v * 1000).toFixed(0)}ms`}
+          color="#22c55e"
+        />
+        <ModSlider
+          label="Sustain"
+          value={mod.envelope.sustain}
+          min={0}
+          max={1}
+          step={0.01}
+          onChange={(v) => mod.setEnvelopeParams({ sustain: v })}
+          format={(v) => `${Math.round(v * 100)}%`}
+          color="#22c55e"
+        />
+        <ModSlider
+          label="Release"
+          value={mod.envelope.release}
+          min={0}
+          max={2}
+          step={0.01}
+          onChange={(v) => mod.setEnvelopeParams({ release: v })}
+          format={(v) => `${(v * 1000).toFixed(0)}ms`}
+          color="#22c55e"
+        />
+        <div className="flex items-center gap-2 mt-1">
+          <button
+            onMouseDown={mod.triggerEnvelope}
+            onMouseUp={mod.releaseEnvelope}
+            onMouseLeave={mod.releaseEnvelope}
+            className="flex-1 text-[8px] uppercase py-1 rounded-sm"
+            style={{
+              backgroundColor: mod.envelope.phase !== 'idle' ? '#22c55e' : 'var(--bg-elevated)',
+              color: mod.envelope.phase !== 'idle' ? 'white' : 'var(--text-muted)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            {mod.envelope.phase === 'idle' ? 'Trigger' : mod.envelope.phase.toUpperCase()}
+          </button>
+        </div>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Value</span>
+          <div className="flex-1 h-1 rounded-sm" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+            <div
+              className="h-full rounded-sm transition-all duration-75"
+              style={{
+                width: `${mod.envelope.currentValue * 100}%`,
+                backgroundColor: '#22c55e',
+              }}
+            />
+          </div>
+        </div>
+      </ModulatorSection>
+    </div>
+  )
+}
 
 interface ActiveEffect {
   id: string
@@ -22,7 +401,10 @@ interface ActiveEffect {
   primaryLabel: string
 }
 
+type TabId = 'fx' | 'mod'
+
 export function EffectsLane() {
+  const [activeTab, setActiveTab] = useState<TabId>('fx')
   const glitch = useGlitchEngineStore()
   const { effectBypassed, toggleEffectBypassed } = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
@@ -37,6 +419,10 @@ export function EffectsLane() {
   const motion = useMotionStore()
   const { selectedEffectId, setSelectedEffect } = useUIStore()
   const { effectOrder, reorderEffect } = useRoutingStore()
+  const modulation = useModulationStore()
+
+  // Check if any modulator is active (for tab indicator)
+  const hasActiveModulation = modulation.lfo.enabled || modulation.random.enabled || modulation.step.enabled || modulation.envelope.enabled
 
   // Build list of active effects
   const activeEffects: ActiveEffect[] = []
@@ -363,85 +749,125 @@ export function EffectsLane() {
 
   return (
     <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--bg-surface)' }}>
-      {/* Header */}
+      {/* Tab Header */}
       <div
-        className="flex-shrink-0 px-3 py-2 flex items-center justify-between"
+        className="flex-shrink-0 flex"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <span className="text-[9px] uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
-          FX CHAIN
-        </span>
-        <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>
-          {sortedEffects.length}
-        </span>
+        <button
+          onClick={() => setActiveTab('fx')}
+          className="flex-1 px-3 py-2 flex items-center justify-between transition-colors"
+          style={{
+            backgroundColor: activeTab === 'fx' ? 'var(--bg-elevated)' : 'transparent',
+            borderRight: '1px solid var(--border)',
+          }}
+        >
+          <span
+            className="text-[9px] uppercase tracking-widest"
+            style={{ color: activeTab === 'fx' ? 'var(--accent)' : 'var(--text-ghost)' }}
+          >
+            FX
+          </span>
+          <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>
+            {sortedEffects.length}
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('mod')}
+          className="flex-1 px-3 py-2 flex items-center justify-between transition-colors"
+          style={{
+            backgroundColor: activeTab === 'mod' ? 'var(--bg-elevated)' : 'transparent',
+          }}
+        >
+          <span
+            className="text-[9px] uppercase tracking-widest flex items-center gap-1"
+            style={{ color: activeTab === 'mod' ? 'var(--accent)' : 'var(--text-ghost)' }}
+          >
+            MOD
+            {hasActiveModulation && (
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: 'var(--accent)', boxShadow: '0 0 4px var(--accent-glow)' }}
+              />
+            )}
+          </span>
+        </button>
       </div>
 
-      {/* Effects list */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2">
-        {sortedEffects.length === 0 ? (
-          <div className="h-full flex items-center justify-center">
-            <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
-              —
-            </span>
+      {/* Tab Content */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {activeTab === 'fx' ? (
+          /* Effects list */
+          <div className="px-2 py-2">
+            {sortedEffects.length === 0 ? (
+              <div className="h-full flex items-center justify-center py-8">
+                <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
+                  —
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {sortedEffects.map((effect, index) => {
+                  const isSelected = selectedEffectId === effect.id
+                  const isBypassed = effectBypassed[effect.id] || false
+                  const isBeingDragged = dragIndex === index
+                  const isDropTarget = dragOverIndex === index && dragIndex !== null && dragIndex !== index
+
+                  return (
+                    <div
+                      key={effect.id}
+                      onPointerDown={(e) => handlePointerDown(e, index)}
+                      onPointerMove={(e) => handlePointerMove(e, index)}
+                      onPointerUp={(e) => handlePointerUp(e, index)}
+                      onDoubleClick={() => toggleEffectBypassed(effect.id)}
+                      className="flex items-center gap-2 px-2 py-1 rounded-sm cursor-grab active:cursor-grabbing transition-all select-none touch-none"
+                      style={{
+                        backgroundColor: isBypassed
+                          ? 'var(--bg-elevated)'
+                          : isSelected
+                            ? 'var(--accent-subtle)'
+                            : 'transparent',
+                        border: isSelected ? '1px solid var(--accent-dim)' : '1px solid transparent',
+                        opacity: isBypassed ? 0.4 : isBeingDragged ? 0.8 : 1,
+                        transform: isBeingDragged ? 'scale(1.02)' : 'scale(1)',
+                        marginTop: isDropTarget ? '24px' : '0',
+                      }}
+                    >
+                      {/* LED indicator */}
+                      <div
+                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                        style={{
+                          backgroundColor: isBypassed ? 'var(--text-ghost)' : 'var(--accent)',
+                          boxShadow: isBypassed ? 'none' : '0 0 4px var(--accent-glow)',
+                        }}
+                      />
+
+                      {/* Label */}
+                      <span
+                        className="flex-1 text-[10px] uppercase tracking-wide truncate"
+                        style={{ color: isBypassed ? 'var(--text-ghost)' : 'var(--text-secondary)' }}
+                      >
+                        {effect.label}
+                      </span>
+
+                      {/* Value */}
+                      <span
+                        className="text-[9px] tabular-nums tracking-wide"
+                        style={{
+                          color: isBypassed ? 'var(--text-ghost)' : 'var(--text-muted)',
+                        }}
+                      >
+                        {effect.primaryValue}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         ) : (
-          <div className="flex flex-col gap-1">
-            {sortedEffects.map((effect, index) => {
-              const isSelected = selectedEffectId === effect.id
-              const isBypassed = effectBypassed[effect.id] || false
-              const isBeingDragged = dragIndex === index
-              const isDropTarget = dragOverIndex === index && dragIndex !== null && dragIndex !== index
-
-              return (
-                <div
-                  key={effect.id}
-                  onPointerDown={(e) => handlePointerDown(e, index)}
-                  onPointerMove={(e) => handlePointerMove(e, index)}
-                  onPointerUp={(e) => handlePointerUp(e, index)}
-                  onDoubleClick={() => toggleEffectBypassed(effect.id)}
-                  className="flex items-center gap-2 px-2 py-1 rounded-sm cursor-grab active:cursor-grabbing transition-all select-none touch-none"
-                  style={{
-                    backgroundColor: isBypassed
-                      ? 'var(--bg-elevated)'
-                      : isSelected
-                        ? 'var(--accent-subtle)'
-                        : 'transparent',
-                    border: isSelected ? '1px solid var(--accent-dim)' : '1px solid transparent',
-                    opacity: isBypassed ? 0.4 : isBeingDragged ? 0.8 : 1,
-                    transform: isBeingDragged ? 'scale(1.02)' : 'scale(1)',
-                    marginTop: isDropTarget ? '24px' : '0',
-                  }}
-                >
-                  {/* LED indicator */}
-                  <div
-                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{
-                      backgroundColor: isBypassed ? 'var(--text-ghost)' : 'var(--accent)',
-                      boxShadow: isBypassed ? 'none' : '0 0 4px var(--accent-glow)',
-                    }}
-                  />
-
-                  {/* Label */}
-                  <span
-                    className="flex-1 text-[10px] uppercase tracking-wide truncate"
-                    style={{ color: isBypassed ? 'var(--text-ghost)' : 'var(--text-secondary)' }}
-                  >
-                    {effect.label}
-                  </span>
-
-                  {/* Value */}
-                  <span
-                    className="text-[9px] tabular-nums tracking-wide"
-                    style={{
-                      color: isBypassed ? 'var(--text-ghost)' : 'var(--text-muted)',
-                    }}
-                  >
-                    {effect.primaryValue}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
+          /* Modulation panel */
+          <ModulationPanel />
         )}
       </div>
     </div>

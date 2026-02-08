@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { useUIStore } from '../../../stores/uiStore'
 import { useSequencerStore } from '../../../stores/sequencerStore'
 
@@ -6,6 +6,10 @@ import { useSequencerStore } from '../../../stores/sequencerStore'
 const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
   euclidean: { name: 'Euclidean', color: '#FF0055' },
   ricochet: { name: 'Ricochet', color: '#FF0055' },
+  lfo: { name: 'LFO', color: '#00D4FF' },
+  random: { name: 'Random', color: '#FF6B6B' },
+  step: { name: 'Step', color: '#4ECDC4' },
+  envelope: { name: 'Envelope', color: '#22c55e' },
 }
 
 interface SliderRowProps {
@@ -37,6 +41,27 @@ export function SliderRow({
   const [isDropTarget, setIsDropTarget] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
   const [isDraggingSlider, setIsDraggingSlider] = useState(false)
+  const [isModulationDrag, setIsModulationDrag] = useState(false)
+
+  // Listen for global drag events to show plus icon
+  useEffect(() => {
+    const handleGlobalDragStart = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes('modulation-source') ||
+          e.dataTransfer?.types.includes('sequencer-track')) {
+        setIsModulationDrag(true)
+      }
+    }
+    const handleGlobalDragEnd = () => {
+      setIsModulationDrag(false)
+    }
+
+    document.addEventListener('dragstart', handleGlobalDragStart)
+    document.addEventListener('dragend', handleGlobalDragEnd)
+    return () => {
+      document.removeEventListener('dragstart', handleGlobalDragStart)
+      document.removeEventListener('dragend', handleGlobalDragEnd)
+    }
+  }, [])
 
   // Check if this param has routings
   const paramRoutings = paramId ? routings.filter(r => r.targetParam === paramId) : []
@@ -55,7 +80,11 @@ export function SliderRow({
   const normalizedValue = (value - min) / (max - min)
 
   const handleDragOver = (e: React.DragEvent) => {
-    if (paramId && (sequencerDrag.isDragging || e.dataTransfer.types.includes('sequencer-track'))) {
+    if (paramId && (
+      sequencerDrag.isDragging ||
+      e.dataTransfer.types.includes('sequencer-track') ||
+      e.dataTransfer.types.includes('modulation-source')
+    )) {
       e.preventDefault()
       e.dataTransfer.dropEffect = 'link'
       setIsDropTarget(true)
@@ -68,7 +97,8 @@ export function SliderRow({
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
-    const trackId = e.dataTransfer.getData('sequencer-track')
+    const trackId = e.dataTransfer.getData('sequencer-track') ||
+                    e.dataTransfer.getData('modulation-source')
     if (trackId && paramId) {
       const existingRouting = routings.find(r => r.trackId === trackId && r.targetParam === paramId)
       if (!existingRouting) {
@@ -165,7 +195,8 @@ export function SliderRow({
 
   return (
     <div
-      className="flex items-center gap-2 py-1 rounded-sm transition-colors"
+      className="flex items-center gap-2 py-1 rounded-sm transition-colors relative"
+      data-param-id={paramId}
       style={{
         backgroundColor: isDropTarget ? `${sequencerDrag.trackColor}15` : undefined,
         outline: isDropTarget ? `1px solid ${sequencerDrag.trackColor}` : undefined,
@@ -174,6 +205,20 @@ export function SliderRow({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {/* Plus icon when dragging modulation and no routing exists */}
+      {paramId && isModulationDrag && !hasRouting && (
+        <div
+          className="absolute -right-1 -top-1 w-4 h-4 rounded-full flex items-center justify-center z-10 pointer-events-none"
+          style={{
+            backgroundColor: 'var(--accent)',
+            boxShadow: '0 0 6px var(--accent-glow)',
+          }}
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10">
+            <path d="M5 2v6M2 5h6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </div>
+      )}
       <span className="text-[11px] w-16 shrink-0 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
         {hasRouting && firstRouting && sourceInfo && (
           <span

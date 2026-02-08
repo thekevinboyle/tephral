@@ -2,12 +2,13 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useSequencerStore } from '../stores/sequencerStore'
 import { useEuclideanStore } from '../stores/euclideanStore'
 import { useRicochetStore } from '../stores/ricochetStore'
+import { useModulationStore } from '../stores/modulationStore'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useAcidStore } from '../stores/acidStore'
 import { useSlicerStore } from '../stores/slicerStore'
 
 /**
- * Applies continuous modulation from special sources (euclidean, ricochet)
+ * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope)
  * that run independently of the main step sequencer.
  */
 export function useContinuousModulation() {
@@ -109,6 +110,7 @@ export function useContinuousModulation() {
     const currentRoutings = useSequencerStore.getState().routings
     const euclideanState = useEuclideanStore.getState()
     const ricochetState = useRicochetStore.getState()
+    const modState = useModulationStore.getState()
 
     // Get euclidean routings
     const euclideanRoutings = currentRoutings.filter(r => r.trackId === 'euclidean')
@@ -126,6 +128,42 @@ export function useContinuousModulation() {
     if (ricochetRoutings.length > 0 && ricochetState.enabled) {
       for (const routing of ricochetRoutings) {
         const modulatedValue = ricochetState.currentValue * routing.depth
+        applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
+      }
+    }
+
+    // LFO routings
+    const lfoRoutings = currentRoutings.filter(r => r.trackId === 'lfo')
+    if (lfoRoutings.length > 0 && modState.lfo.enabled) {
+      for (const routing of lfoRoutings) {
+        const modulatedValue = modState.lfo.currentValue * routing.depth
+        applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
+      }
+    }
+
+    // Random routings
+    const randomRoutings = currentRoutings.filter(r => r.trackId === 'random')
+    if (randomRoutings.length > 0 && modState.random.enabled) {
+      for (const routing of randomRoutings) {
+        const modulatedValue = modState.random.currentValue * routing.depth
+        applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
+      }
+    }
+
+    // Step routings
+    const stepRoutings = currentRoutings.filter(r => r.trackId === 'step')
+    if (stepRoutings.length > 0 && modState.step.enabled) {
+      for (const routing of stepRoutings) {
+        const modulatedValue = modState.step.currentValue * routing.depth
+        applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
+      }
+    }
+
+    // Envelope routings
+    const envRoutings = currentRoutings.filter(r => r.trackId === 'envelope')
+    if (envRoutings.length > 0 && modState.envelope.enabled) {
+      for (const routing of envRoutings) {
+        const modulatedValue = modState.envelope.currentValue * routing.depth
         applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
       }
     }

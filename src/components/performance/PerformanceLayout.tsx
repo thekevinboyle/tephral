@@ -8,15 +8,16 @@ import { ClipDetailModal } from './ClipDetailModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { EffectsLane } from './EffectsLane'
 import { MiddleSection } from './MiddleSection'
-import { CrossfaderPanel } from './CrossfaderPanel'
+import { ModulationLines } from './ModulationLines'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
 import { DataTerminal } from '../terminal/DataTerminal'
-import { PresetDropdownBar } from '../presets/PresetDropdownBar'
+// import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 import { useContinuousModulation } from '../../hooks/useContinuousModulation'
 import { useEuclideanEngine } from '../../hooks/useEuclideanEngine'
 import { useRicochetEngine } from '../../hooks/useRicochetEngine'
+import { useModulationEngine } from '../../hooks/useModulationEngine'
 import { useMediaStore } from '../../stores/mediaStore'
 // InfoPanel kept for future use
 // import { InfoPanel } from '../panels/InfoPanel'
@@ -41,7 +42,10 @@ export function PerformanceLayout() {
   useEuclideanEngine()
   useRicochetEngine()
 
-  // Initialize continuous modulation for special sources (euclidean, ricochet)
+  // Initialize modulation engine (LFO, Random, Step, Envelope value generators)
+  useModulationEngine()
+
+  // Initialize continuous modulation for special sources (euclidean, ricochet, lfo, random, step, envelope)
   useContinuousModulation()
 
   // Create a ref object that useRecordingCapture can use
@@ -127,11 +131,10 @@ export function PerformanceLayout() {
     >
       {/* Row 1, Col 1: Effect Info Panel */}
       <div
-        className="rounded-sm overflow-hidden"
+        className="rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
           gridRow: 1,
           gridColumn: 1,
-          backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border)',
         }}
       >
@@ -201,52 +204,40 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Row 1, Col 3: Presets/FX Chain */}
+      {/* Row 1, Col 3: FX Chain / Modulation */}
       <div
-        className="flex flex-col rounded-sm overflow-hidden"
+        className="flex flex-col rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
           gridRow: 1,
           gridColumn: 3,
-          backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border)',
         }}
       >
-        <PresetDropdownBar canvasRef={captureRef} />
+        {/* Presets hidden for now */}
+        {/* <PresetDropdownBar canvasRef={captureRef} /> */}
         {/* Effects Lane fills remaining space */}
         <div className="flex-1 min-h-0 overflow-hidden">
           <EffectsLane />
         </div>
       </div>
 
-      {/* Row 2, Col 1-2: Middle Section (placeholder) */}
+      {/* Row 2: Crossfader Section (spans all columns) */}
       <div
         style={{
           gridRow: 2,
-          gridColumn: '1 / 3',
+          gridColumn: '1 / 4',
           minHeight: 'var(--row-middle)',
         }}
       >
         <MiddleSection />
       </div>
 
-      {/* Row 2, Col 3: Crossfader Controls */}
-      <div
-        style={{
-          gridRow: 2,
-          gridColumn: 3,
-          minHeight: 'var(--row-middle)',
-        }}
-      >
-        <CrossfaderPanel />
-      </div>
-
       {/* Row 3, Col 1: Effects Grid */}
       <div
-        className="flex flex-col rounded-sm overflow-hidden"
+        className="flex flex-col rounded-sm overflow-hidden panel-gradient"
         style={{
           gridRow: 3,
           gridColumn: 1,
-          backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border)',
         }}
       >
@@ -268,11 +259,10 @@ export function PerformanceLayout() {
 
       {/* Row 3, Col 2: Slicer Panel */}
       <div
-        className="rounded-sm overflow-hidden"
+        className="rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
           gridRow: 3,
           gridColumn: 2,
-          backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border)',
         }}
       >
@@ -281,11 +271,10 @@ export function PerformanceLayout() {
 
       {/* Row 3, Col 3: Data Terminal */}
       <div
-        className="rounded-sm overflow-hidden"
+        className="rounded-sm overflow-hidden panel-gradient-accent"
         style={{
           gridRow: 3,
           gridColumn: 3,
-          backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border)',
         }}
       >
@@ -294,6 +283,9 @@ export function PerformanceLayout() {
 
       {/* Clip detail modal */}
       <ClipDetailModal />
+
+      {/* Modulation connection lines overlay */}
+      <ModulationLines />
     </div>
   )
 }

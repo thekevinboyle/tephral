@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Screenshot capture script for Tephral marketing site
+ * Screenshot capture script for seg_f4ult marketing site
  * Captures screenshots from the running app at localhost:5177
  */
 

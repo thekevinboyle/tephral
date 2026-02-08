@@ -108,7 +108,7 @@
   // ───────────────────────────────────────────────────────────────────────────
   // Export for potential external use
   // ───────────────────────────────────────────────────────────────────────────
-  window.TephralGlitch = {
+  window.SegfaultGlitch = {
     glitchText: function(element, duration = 500) {
       const originalText = element.textContent;
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

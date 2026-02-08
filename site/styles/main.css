@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   TEPHRAL MARKETING SITE — MAIN STYLES
+   SEG_F4ULT MARKETING SITE — MAIN STYLES
    Brutalist, industrial design
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -177,6 +177,29 @@ img {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+}
+
+.nav__links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.nav__link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.nav__link:hover {
+  color: var(--text-primary);
+}
+
+.nav__link--active {
+  color: var(--accent);
 }
 
 .nav__cta {

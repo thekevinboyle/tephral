@@ -33,12 +33,12 @@
   --text-muted: #6A6864;
   --text-ghost: #3A3834;
 
-  /* Accent - toxic magenta */
-  --accent: #FF0055;
-  --accent-dim: #CC0044;
-  --accent-hover: #FF2270;
-  --accent-glow: rgba(255, 0, 85, 0.3);
-  --accent-subtle: rgba(255, 0, 85, 0.08);
+  /* Accent - cyan */
+  --accent: #00D4FF;
+  --accent-dim: #00A8CC;
+  --accent-hover: #33DDFF;
+  --accent-glow: rgba(0, 212, 255, 0.3);
+  --accent-subtle: rgba(0, 212, 255, 0.08);
 
   /* Typography */
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;

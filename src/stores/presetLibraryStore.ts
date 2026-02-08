@@ -9,7 +9,7 @@ import { useRoutingStore } from './routingStore'
 import { useSlicerStore } from './slicerStore'
 
 // Database constants
-const DB_NAME = 'tephral-presets'
+const DB_NAME = 'segf4ult-presets'
 const DB_VERSION = 1
 const PRESETS_STORE = 'presets'
 const FOLDERS_STORE = 'folders'

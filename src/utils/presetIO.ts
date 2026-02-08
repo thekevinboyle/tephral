@@ -31,10 +31,10 @@ interface PresetPackFile {
   }>
 }
 
-type TephralFile = SinglePresetFile | PresetPackFile
+type SegfaultFile = SinglePresetFile | PresetPackFile
 
 /**
- * Export a single preset as a .tephral file
+ * Export a single preset as a .segf file
  */
 export async function exportPreset(presetId: string): Promise<void> {
   const { presets } = usePresetLibraryStore.getState()
@@ -56,13 +56,13 @@ export async function exportPreset(presetId: string): Promise<void> {
 
   const json = JSON.stringify(fileData, null, 2)
   const blob = new Blob([json], { type: 'application/json' })
-  const filename = sanitizeFilename(preset.name) + '.tephral'
+  const filename = sanitizeFilename(preset.name) + '.segf'
 
   downloadBlob(blob, filename)
 }
 
 /**
- * Export multiple presets as a pack .tephral file
+ * Export multiple presets as a pack .segf file
  */
 export async function exportPack(presetIds: string[], packName: string): Promise<void> {
   const { presets } = usePresetLibraryStore.getState()
@@ -85,27 +85,27 @@ export async function exportPack(presetIds: string[], packName: string): Promise
 
   const json = JSON.stringify(fileData, null, 2)
   const blob = new Blob([json], { type: 'application/json' })
-  const filename = sanitizeFilename(packName) + '.tephral'
+  const filename = sanitizeFilename(packName) + '.segf'
 
   downloadBlob(blob, filename)
 }
 
 /**
- * Import presets from a .tephral or .json file
+ * Import presets from a .segf or .json file
  */
 export async function importFile(file: File): Promise<{ imported: number; type: 'preset' | 'pack' }> {
   const text = await file.text()
-  let data: TephralFile
+  let data: SegfaultFile
 
   try {
-    data = JSON.parse(text) as TephralFile
+    data = JSON.parse(text) as SegfaultFile
   } catch {
     throw new Error('Invalid file format: not valid JSON')
   }
 
   // Validate version
   if (typeof data.version !== 'number' || data.version > FORMAT_VERSION) {
-    throw new Error(`Unsupported file version: ${data.version}. Please update Tephral.`)
+    throw new Error(`Unsupported file version: ${data.version}. Please update seg_f4ult.sys.`)
   }
 
   const store = usePresetLibraryStore.getState()
@@ -203,7 +203,7 @@ export function openImportDialog(): Promise<File | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.tephral,.json'
+    input.accept = '.segf,.json'
 
     input.onchange = () => {
       const file = input.files?.[0] ?? null

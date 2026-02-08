@@ -444,7 +444,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
               fontFamily: "'JetBrains Mono', monospace",
             }}
           >
-            TEPHRAL
+            SEG_F4ULT.SYS
           </h1>
           <p
             className="mt-4 text-sm tracking-wider"

@@ -47,7 +47,7 @@ export interface DataOverlayState {
 
 const TEMPLATE_FIELDS: Record<Template, DataField[]> = {
   watermark: [
-    { id: 'text', label: 'Text', value: 'TEPHRAL', visible: true },
+    { id: 'text', label: 'Text', value: 'SEG_F4ULT', visible: true },
   ],
   statsBar: [
     { id: 'title', label: 'Title', value: '', visible: true },
@@ -64,7 +64,7 @@ const TEMPLATE_FIELDS: Record<Template, DataField[]> = {
     { id: 'subtitle', label: 'Subtitle', value: '', visible: true },
     { id: 'duration', label: 'Duration', value: '', visible: true, isAuto: true },
     { id: 'effectCount', label: 'Effects', value: '', visible: true, isAuto: true },
-    { id: 'branding', label: 'Branding', value: 'Made with TEPHRAL', visible: true },
+    { id: 'branding', label: 'Branding', value: 'Made with SEG_F4ULT', visible: true },
   ],
 }
 

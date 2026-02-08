@@ -7,18 +7,19 @@ uniform sampler2D sourceTexture;
 uniform vec2 quadScale;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
-  // Transform UV to account for aspect ratio scaling
+  // Transform UV to match how video is rendered (with letterboxing)
   vec2 adjustedUv = (uv - 0.5) / quadScale + 0.5;
 
-  // Check if UV is outside the valid range (letterbox/pillarbox area)
+  // For letterbox/pillarbox areas, source should be black to match processed
+  vec4 source;
   if (adjustedUv.x < 0.0 || adjustedUv.x > 1.0 || adjustedUv.y < 0.0 || adjustedUv.y > 1.0) {
-    // Outside video area - blend black with processed
-    outputColor = mix(vec4(0.0, 0.0, 0.0, 1.0), inputColor, crossfaderPosition);
+    source = vec4(0.0, 0.0, 0.0, 1.0);
   } else {
-    // A side = source, B side = processed (inputColor)
-    vec4 source = texture2D(sourceTexture, adjustedUv);
-    outputColor = mix(source, inputColor, crossfaderPosition);
+    source = texture2D(sourceTexture, adjustedUv);
   }
+
+  // Blend: SRC (0) = source, FX (1) = processed
+  outputColor = mix(source, inputColor, crossfaderPosition);
 }
 `
 
@@ -46,8 +47,7 @@ export class CrossfaderEffect extends Effect {
   }
 
   setQuadScale(scaleX: number, scaleY: number) {
-    const scale = this.uniforms.get('quadScale')!.value as THREE.Vector2
-    scale.set(scaleX, scaleY)
+    this.uniforms.get('quadScale')!.value = new THREE.Vector2(scaleX, scaleY)
   }
 
   getSourceTexture(): THREE.Texture | null {

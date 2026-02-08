@@ -157,6 +157,8 @@ export class EffectPipeline {
     bypassActive: boolean
     crossfaderPosition: number
     hasSourceTexture: boolean
+    videoWidth: number
+    videoHeight: number
   }) {
     // Remove existing passes
     if (this.effectPass) {
@@ -224,11 +226,6 @@ export class EffectPipeline {
       }
     }
 
-    // Debug: log the effect order being applied
-    if (effects.length > 0) {
-      console.log('[EffectPipeline] Applying effect order:', effectIds.join(' → '))
-    }
-
     // Add effect pass if there are effects
     if (effects.length > 0) {
       this.effectPass = new EffectPass(this.camera, ...effects)
@@ -244,8 +241,19 @@ export class EffectPipeline {
     }
 
     // Add crossfader pass for A/B blending (source vs processed)
-    // Always add when we have a source texture - shader handles the blend amount
-    if (this.crossfaderEffect && config.hasSourceTexture) {
+    // Use inputTexture (same as MixEffect) for consistency
+    if (this.crossfaderEffect && this.inputTexture) {
+      this.crossfaderEffect.setSourceTexture(this.inputTexture)
+      // Calculate quad scale from config dimensions
+      const canvasAspect = this.canvasWidth / this.canvasHeight
+      const videoAspect = config.videoWidth / config.videoHeight
+      let scaleX = 1, scaleY = 1
+      if (videoAspect > canvasAspect) {
+        scaleY = canvasAspect / videoAspect
+      } else {
+        scaleX = videoAspect / canvasAspect
+      }
+      this.crossfaderEffect.setQuadScale(scaleX, scaleY)
       this.crossfaderPass = new EffectPass(this.camera, this.crossfaderEffect)
       this.composer.addPass(this.crossfaderPass)
     }
@@ -319,9 +327,6 @@ export class EffectPipeline {
 
   render() {
     if (!this.inputTexture) return
-
-    // Bypass mode now handled by not adding effect passes in updateEffects
-    // The composer will just render the input quad without any post-processing
 
     this.composer.render()
 

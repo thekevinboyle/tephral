@@ -198,6 +198,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       bypassActive,
       crossfaderPosition,
       hasSourceTexture: !!mediaTexture && !slicerEnabled,
+      videoWidth: videoElement?.videoWidth || imageElement?.naturalWidth || 1,
+      videoHeight: videoElement?.videoHeight || imageElement?.naturalHeight || 1,
     })
   }, [
     pipeline,

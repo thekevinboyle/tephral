@@ -19,6 +19,10 @@ import { renderMirror } from './acid/mirrorEffect'
 import { renderSlice } from './acid/sliceEffect'
 import { renderThGrid } from './acid/thgridEffect'
 import { renderLed } from './acid/ledEffect'
+import { renderHalftone } from './acid/halftoneEffect'
+import { renderHex } from './acid/hexEffect'
+import { renderScan } from './acid/scanEffect'
+import { renderRipple } from './acid/rippleEffect'
 
 // WebGL effects
 import { CloudEffect } from './acid/cloudEffect'
@@ -79,7 +83,11 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     (store.ledEnabled && !effectBypassed['acid_led']) ||
     (store.cloudEnabled && !effectBypassed['acid_cloud']) ||
     (store.slitEnabled && !effectBypassed['acid_slit']) ||
-    (store.voronoiEnabled && !effectBypassed['acid_voronoi'])
+    (store.voronoiEnabled && !effectBypassed['acid_voronoi']) ||
+    (store.halftoneEnabled && !effectBypassed['acid_halftone']) ||
+    (store.hexEnabled && !effectBypassed['acid_hex']) ||
+    (store.scanEnabled && !effectBypassed['acid_scan']) ||
+    (store.rippleEnabled && !effectBypassed['acid_ripple'])
 
   // Check if any effect is enabled (for WebGL lifecycle)
   // NOTE: Dots is now handled by GPU shader, so exclude from overlay check
@@ -95,7 +103,11 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     store.ledEnabled ||
     store.cloudEnabled ||
     store.slitEnabled ||
-    store.voronoiEnabled
+    store.voronoiEnabled ||
+    store.halftoneEnabled ||
+    store.hexEnabled ||
+    store.scanEnabled ||
+    store.rippleEnabled
 
   // WebGL effect initialization/disposal
   useEffect(() => {
@@ -231,6 +243,22 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
       renderLed(sourceCtx, ctx, currentWidth, currentHeight, currentStore.ledParams)
     }
 
+    if (currentStore.halftoneEnabled && !bypassed['acid_halftone']) {
+      renderHalftone(sourceCtx, ctx, currentWidth, currentHeight, currentStore.halftoneParams)
+    }
+
+    if (currentStore.hexEnabled && !bypassed['acid_hex']) {
+      renderHex(sourceCtx, ctx, currentWidth, currentHeight, currentStore.hexParams)
+    }
+
+    if (currentStore.scanEnabled && !bypassed['acid_scan']) {
+      renderScan(sourceCtx, ctx, currentWidth, currentHeight, currentStore.scanParams)
+    }
+
+    if (currentStore.rippleEnabled && !bypassed['acid_ripple']) {
+      renderRipple(sourceCtx, ctx, currentWidth, currentHeight, currentStore.rippleParams)
+    }
+
     // Render WebGL effects (they render to their own canvases)
     const timeSeconds = time * 0.001
 
@@ -306,8 +334,8 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
         ref={canvasRef}
         width={width}
         height={height}
-        className="absolute inset-0 pointer-events-none"
-        style={{ zIndex: 15 }}
+        className="absolute top-0 left-0 pointer-events-none"
+        style={{ zIndex: 15, width, height }}
       />
 
       {/* WebGL Cloud effect layer */}
@@ -316,8 +344,8 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
           ref={cloudCanvasRef}
           width={width}
           height={height}
-          className="absolute inset-0 pointer-events-none"
-          style={{ zIndex: 16 }}
+          className="absolute top-0 left-0 pointer-events-none"
+          style={{ zIndex: 16, width, height }}
         />
       )}
 
@@ -327,8 +355,8 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
           ref={slitCanvasRef}
           width={width}
           height={height}
-          className="absolute inset-0 pointer-events-none"
-          style={{ zIndex: 17 }}
+          className="absolute top-0 left-0 pointer-events-none"
+          style={{ zIndex: 17, width, height }}
         />
       )}
 
@@ -338,8 +366,8 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
           ref={voronoiCanvasRef}
           width={width}
           height={height}
-          className="absolute inset-0 pointer-events-none"
-          style={{ zIndex: 18 }}
+          className="absolute top-0 left-0 pointer-events-none"
+          style={{ zIndex: 18, width, height }}
         />
       )}
     </>

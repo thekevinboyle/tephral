@@ -42,6 +42,10 @@ import {
   LedViz,
   SlitViz,
   VoronoiViz,
+  HalftoneViz,
+  HexViz,
+  ScanViz,
+  RippleViz,
   // Vision tracking visualizers
   BrightViz,
   EdgeTrackViz,
@@ -151,6 +155,10 @@ export function ParameterPanel() {
     acid.setLedEnabled(false)
     acid.setSlitEnabled(false)
     acid.setVoronoiEnabled(false)
+    acid.setHalftoneEnabled(false)
+    acid.setHexEnabled(false)
+    acid.setScanEnabled(false)
+    acid.setRippleEnabled(false)
     // Clear vision tracking effects
     vision.setBrightEnabled(false)
     vision.setEdgeEnabled(false)
@@ -1314,6 +1322,161 @@ export function ParameterPanel() {
     })
   }
 
+  // Halftone
+  if (acid.halftoneEnabled) {
+    const color = '#fbbf24'
+    sections.push({
+      id: 'acid_halftone',
+      label: 'HALFTONE',
+      color,
+      visualizer: <HalftoneViz dotSize={acid.halftoneParams.dotSize} color={color} />,
+      params: [
+        {
+          label: 'Dot Size',
+          value: acid.halftoneParams.dotSize,
+          min: 4,
+          max: 24,
+          onChange: (v) => acid.updateHalftoneParams({ dotSize: v }),
+          paramId: 'acid_halftone.dotSize',
+        },
+        {
+          label: 'Angle',
+          value: acid.halftoneParams.angle,
+          min: 0,
+          max: 90,
+          onChange: (v) => acid.updateHalftoneParams({ angle: v }),
+          paramId: 'acid_halftone.angle',
+        },
+        {
+          label: 'Contrast',
+          value: acid.halftoneParams.contrast * 100,
+          min: 50,
+          max: 200,
+          onChange: (v) => acid.updateHalftoneParams({ contrast: v / 100 }),
+          paramId: 'acid_halftone.contrast',
+        },
+      ],
+    })
+  }
+
+  // Hex
+  if (acid.hexEnabled) {
+    const color = '#f59e0b'
+    sections.push({
+      id: 'acid_hex',
+      label: 'HEX',
+      color,
+      visualizer: <HexViz cellSize={acid.hexParams.cellSize} color={color} />,
+      params: [
+        {
+          label: 'Cell Size',
+          value: acid.hexParams.cellSize,
+          min: 8,
+          max: 48,
+          onChange: (v) => acid.updateHexParams({ cellSize: v }),
+          paramId: 'acid_hex.cellSize',
+        },
+        {
+          label: 'Rotation',
+          value: acid.hexParams.rotation,
+          min: 0,
+          max: 60,
+          onChange: (v) => acid.updateHexParams({ rotation: v }),
+          paramId: 'acid_hex.rotation',
+        },
+        {
+          label: 'Edges',
+          value: acid.hexParams.showEdges ? 1 : 0,
+          min: 0,
+          max: 1,
+          onChange: (v) => acid.updateHexParams({ showEdges: v > 0.5 }),
+        },
+      ],
+    })
+  }
+
+  // Scan
+  if (acid.scanEnabled) {
+    const color = '#f97316'
+    sections.push({
+      id: 'acid_scan',
+      label: 'SCAN',
+      color,
+      visualizer: <ScanViz speed={acid.scanParams.speed} color={color} />,
+      params: [
+        {
+          label: 'Speed',
+          value: acid.scanParams.speed,
+          min: 1,
+          max: 10,
+          onChange: (v) => acid.updateScanParams({ speed: v }),
+          paramId: 'acid_scan.speed',
+        },
+        {
+          label: 'Width',
+          value: acid.scanParams.width,
+          min: 5,
+          max: 100,
+          onChange: (v) => acid.updateScanParams({ width: v }),
+          paramId: 'acid_scan.width',
+        },
+        {
+          label: 'Trail',
+          value: acid.scanParams.trail * 100,
+          min: 0,
+          max: 100,
+          onChange: (v) => acid.updateScanParams({ trail: v / 100 }),
+          paramId: 'acid_scan.trail',
+        },
+      ],
+    })
+  }
+
+  // Ripple
+  if (acid.rippleEnabled) {
+    const color = '#ef4444'
+    sections.push({
+      id: 'acid_ripple',
+      label: 'RIPPLE',
+      color,
+      visualizer: <RippleViz frequency={acid.rippleParams.frequency} color={color} />,
+      params: [
+        {
+          label: 'Frequency',
+          value: acid.rippleParams.frequency,
+          min: 1,
+          max: 20,
+          onChange: (v) => acid.updateRippleParams({ frequency: v }),
+          paramId: 'acid_ripple.frequency',
+        },
+        {
+          label: 'Amplitude',
+          value: acid.rippleParams.amplitude,
+          min: 5,
+          max: 50,
+          onChange: (v) => acid.updateRippleParams({ amplitude: v }),
+          paramId: 'acid_ripple.amplitude',
+        },
+        {
+          label: 'Speed',
+          value: acid.rippleParams.speed,
+          min: 1,
+          max: 10,
+          onChange: (v) => acid.updateRippleParams({ speed: v }),
+          paramId: 'acid_ripple.speed',
+        },
+        {
+          label: 'Decay',
+          value: acid.rippleParams.decay * 100,
+          min: 10,
+          max: 100,
+          onChange: (v) => acid.updateRippleParams({ decay: v / 100 }),
+          paramId: 'acid_ripple.decay',
+        },
+      ],
+    })
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // OVERLAY EFFECTS
   // ═══════════════════════════════════════════════════════════════
@@ -1768,6 +1931,18 @@ export function ParameterPanel() {
         break
       case 'acid_voronoi':
         acid.setVoronoiEnabled(false)
+        break
+      case 'acid_halftone':
+        acid.setHalftoneEnabled(false)
+        break
+      case 'acid_hex':
+        acid.setHexEnabled(false)
+        break
+      case 'acid_scan':
+        acid.setScanEnabled(false)
+        break
+      case 'acid_ripple':
+        acid.setRippleEnabled(false)
         break
       // Vision tracking effects
       case 'track_bright':

@@ -34,11 +34,11 @@ export const EFFECTS: EffectDefinition[] = [
   { id: 'acid_slit', label: 'SLIT', color: '#a78bfa', row: 'render', page: 0, min: 1, max: 10 },
   { id: 'acid_voronoi', label: 'VORONOI', color: '#818cf8', row: 'render', page: 0, min: 16, max: 256 },
 
-  // Row 4: Reserved for expansion
-  { id: 'acid_reserved_1', label: '—', color: '#374151', row: 'reserved', page: 0, min: 0, max: 100 },
-  { id: 'acid_reserved_2', label: '—', color: '#374151', row: 'reserved', page: 0, min: 0, max: 100 },
-  { id: 'acid_reserved_3', label: '—', color: '#374151', row: 'reserved', page: 0, min: 0, max: 100 },
-  { id: 'acid_reserved_4', label: '—', color: '#374151', row: 'reserved', page: 0, min: 0, max: 100 },
+  // Row 4: Print/Geometric
+  { id: 'acid_halftone', label: 'HALFTONE', color: '#fbbf24', row: 'render', page: 0, min: 4, max: 24 },
+  { id: 'acid_hex', label: 'HEX', color: '#f59e0b', row: 'render', page: 0, min: 8, max: 48 },
+  { id: 'acid_scan', label: 'SCAN', color: '#f97316', row: 'render', page: 0, min: 1, max: 10 },
+  { id: 'acid_ripple', label: 'RIPPLE', color: '#ef4444', row: 'render', page: 0, min: 1, max: 20 },
 
   // ═══════════════════════════════════════════════════════════════
   // PAGE 1: VISION / TRACKING

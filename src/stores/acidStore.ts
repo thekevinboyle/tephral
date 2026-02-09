@@ -90,6 +90,34 @@ export interface VoronoiParams {
   fillMode: 'average' | 'centroid' | 'original'
 }
 
+export interface HalftoneParams {
+  dotSize: number
+  angle: number
+  colorMode: 'mono' | 'cmyk' | 'rgb'
+  contrast: number
+}
+
+export interface HexParams {
+  cellSize: number
+  fillMode: 'average' | 'center' | 'original'
+  showEdges: boolean
+  rotation: number
+}
+
+export interface ScanParams {
+  speed: number
+  width: number
+  direction: 'horizontal' | 'vertical' | 'radial'
+  trail: number
+}
+
+export interface RippleParams {
+  frequency: number
+  amplitude: number
+  speed: number
+  decay: number
+}
+
 // ============================================================================
 // Default Parameters
 // ============================================================================
@@ -180,6 +208,34 @@ export const DEFAULT_VORONOI_PARAMS: VoronoiParams = {
   fillMode: 'average',
 }
 
+export const DEFAULT_HALFTONE_PARAMS: HalftoneParams = {
+  dotSize: 8,
+  angle: 45,
+  colorMode: 'mono',
+  contrast: 1.0,
+}
+
+export const DEFAULT_HEX_PARAMS: HexParams = {
+  cellSize: 16,
+  fillMode: 'average',
+  showEdges: false,
+  rotation: 0,
+}
+
+export const DEFAULT_SCAN_PARAMS: ScanParams = {
+  speed: 2,
+  width: 20,
+  direction: 'horizontal',
+  trail: 0.5,
+}
+
+export const DEFAULT_RIPPLE_PARAMS: RippleParams = {
+  frequency: 5,
+  amplitude: 20,
+  speed: 2,
+  decay: 0.5,
+}
+
 // ============================================================================
 // Snapshot Type
 // ============================================================================
@@ -222,6 +278,18 @@ export interface AcidSnapshot {
 
   voronoiEnabled: boolean
   voronoiParams: VoronoiParams
+
+  halftoneEnabled: boolean
+  halftoneParams: HalftoneParams
+
+  hexEnabled: boolean
+  hexParams: HexParams
+
+  scanEnabled: boolean
+  scanParams: ScanParams
+
+  rippleEnabled: boolean
+  rippleParams: RippleParams
 }
 
 // ============================================================================
@@ -304,6 +372,30 @@ interface AcidState {
   voronoiParams: VoronoiParams
   setVoronoiEnabled: (v: boolean) => void
   updateVoronoiParams: (p: Partial<VoronoiParams>) => void
+
+  // HALFTONE
+  halftoneEnabled: boolean
+  halftoneParams: HalftoneParams
+  setHalftoneEnabled: (v: boolean) => void
+  updateHalftoneParams: (p: Partial<HalftoneParams>) => void
+
+  // HEX
+  hexEnabled: boolean
+  hexParams: HexParams
+  setHexEnabled: (v: boolean) => void
+  updateHexParams: (p: Partial<HexParams>) => void
+
+  // SCAN
+  scanEnabled: boolean
+  scanParams: ScanParams
+  setScanEnabled: (v: boolean) => void
+  updateScanParams: (p: Partial<ScanParams>) => void
+
+  // RIPPLE
+  rippleEnabled: boolean
+  rippleParams: RippleParams
+  setRippleEnabled: (v: boolean) => void
+  updateRippleParams: (p: Partial<RippleParams>) => void
 
   // Utility methods
   reset: () => void
@@ -416,6 +508,38 @@ export const useAcidStore = create<AcidState>((set, get) => ({
     voronoiParams: { ...state.voronoiParams, ...p },
   })),
 
+  // HALFTONE
+  halftoneEnabled: false,
+  halftoneParams: { ...DEFAULT_HALFTONE_PARAMS },
+  setHalftoneEnabled: (v) => set({ halftoneEnabled: v }),
+  updateHalftoneParams: (p) => set((state) => ({
+    halftoneParams: { ...state.halftoneParams, ...p },
+  })),
+
+  // HEX
+  hexEnabled: false,
+  hexParams: { ...DEFAULT_HEX_PARAMS },
+  setHexEnabled: (v) => set({ hexEnabled: v }),
+  updateHexParams: (p) => set((state) => ({
+    hexParams: { ...state.hexParams, ...p },
+  })),
+
+  // SCAN
+  scanEnabled: false,
+  scanParams: { ...DEFAULT_SCAN_PARAMS },
+  setScanEnabled: (v) => set({ scanEnabled: v }),
+  updateScanParams: (p) => set((state) => ({
+    scanParams: { ...state.scanParams, ...p },
+  })),
+
+  // RIPPLE
+  rippleEnabled: false,
+  rippleParams: { ...DEFAULT_RIPPLE_PARAMS },
+  setRippleEnabled: (v) => set({ rippleEnabled: v }),
+  updateRippleParams: (p) => set((state) => ({
+    rippleParams: { ...state.rippleParams, ...p },
+  })),
+
   // Utility methods
   reset: () => set({
     preserveVideo: false,
@@ -443,6 +567,14 @@ export const useAcidStore = create<AcidState>((set, get) => ({
     slitParams: { ...DEFAULT_SLIT_PARAMS },
     voronoiEnabled: false,
     voronoiParams: { ...DEFAULT_VORONOI_PARAMS },
+    halftoneEnabled: false,
+    halftoneParams: { ...DEFAULT_HALFTONE_PARAMS },
+    hexEnabled: false,
+    hexParams: { ...DEFAULT_HEX_PARAMS },
+    scanEnabled: false,
+    scanParams: { ...DEFAULT_SCAN_PARAMS },
+    rippleEnabled: false,
+    rippleParams: { ...DEFAULT_RIPPLE_PARAMS },
   }),
 
   getSnapshot: () => {
@@ -473,6 +605,14 @@ export const useAcidStore = create<AcidState>((set, get) => ({
       slitParams: { ...state.slitParams },
       voronoiEnabled: state.voronoiEnabled,
       voronoiParams: { ...state.voronoiParams },
+      halftoneEnabled: state.halftoneEnabled,
+      halftoneParams: { ...state.halftoneParams },
+      hexEnabled: state.hexEnabled,
+      hexParams: { ...state.hexParams },
+      scanEnabled: state.scanEnabled,
+      scanParams: { ...state.scanParams },
+      rippleEnabled: state.rippleEnabled,
+      rippleParams: { ...state.rippleParams },
     }
   },
 
@@ -502,5 +642,13 @@ export const useAcidStore = create<AcidState>((set, get) => ({
     slitParams: snapshot.slitParams ? { ...snapshot.slitParams } : { ...DEFAULT_SLIT_PARAMS },
     voronoiEnabled: snapshot.voronoiEnabled ?? false,
     voronoiParams: snapshot.voronoiParams ? { ...snapshot.voronoiParams } : { ...DEFAULT_VORONOI_PARAMS },
+    halftoneEnabled: snapshot.halftoneEnabled ?? false,
+    halftoneParams: snapshot.halftoneParams ? { ...snapshot.halftoneParams } : { ...DEFAULT_HALFTONE_PARAMS },
+    hexEnabled: snapshot.hexEnabled ?? false,
+    hexParams: snapshot.hexParams ? { ...snapshot.hexParams } : { ...DEFAULT_HEX_PARAMS },
+    scanEnabled: snapshot.scanEnabled ?? false,
+    scanParams: snapshot.scanParams ? { ...snapshot.scanParams } : { ...DEFAULT_SCAN_PARAMS },
+    rippleEnabled: snapshot.rippleEnabled ?? false,
+    rippleParams: snapshot.rippleParams ? { ...snapshot.rippleParams } : { ...DEFAULT_RIPPLE_PARAMS },
   }),
 }))

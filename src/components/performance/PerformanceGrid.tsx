@@ -443,6 +443,46 @@ export function PerformanceGrid() {
           },
           onValueChange: (v: number) => acid.updateVoronoiParams({ cellCount: v }),
         }
+      case 'acid_halftone':
+        return {
+          active: acid.halftoneEnabled,
+          value: acid.halftoneParams.dotSize,
+          onToggle: () => {
+            if (!acid.halftoneEnabled) moveToEndOfChain(effectId)
+            acid.setHalftoneEnabled(!acid.halftoneEnabled)
+          },
+          onValueChange: (v: number) => acid.updateHalftoneParams({ dotSize: v }),
+        }
+      case 'acid_hex':
+        return {
+          active: acid.hexEnabled,
+          value: acid.hexParams.cellSize,
+          onToggle: () => {
+            if (!acid.hexEnabled) moveToEndOfChain(effectId)
+            acid.setHexEnabled(!acid.hexEnabled)
+          },
+          onValueChange: (v: number) => acid.updateHexParams({ cellSize: v }),
+        }
+      case 'acid_scan':
+        return {
+          active: acid.scanEnabled,
+          value: acid.scanParams.speed,
+          onToggle: () => {
+            if (!acid.scanEnabled) moveToEndOfChain(effectId)
+            acid.setScanEnabled(!acid.scanEnabled)
+          },
+          onValueChange: (v: number) => acid.updateScanParams({ speed: v }),
+        }
+      case 'acid_ripple':
+        return {
+          active: acid.rippleEnabled,
+          value: acid.rippleParams.frequency,
+          onToggle: () => {
+            if (!acid.rippleEnabled) moveToEndOfChain(effectId)
+            acid.setRippleEnabled(!acid.rippleEnabled)
+          },
+          onValueChange: (v: number) => acid.updateRippleParams({ frequency: v }),
+        }
 
       // ═══════════════════════════════════════════════════════════════
       // (OVERLAY effects removed - kept handlers for compatibility)

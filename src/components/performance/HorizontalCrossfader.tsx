@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { useRoutingStore } from '../../stores/routingStore'
+import { SourceIcon, FxIcon } from '../ui/DotMatrixIcons'
 
 export function HorizontalCrossfader() {
   const { crossfaderPosition, setCrossfaderPosition } = useRoutingStore()
@@ -44,17 +45,8 @@ export function HorizontalCrossfader() {
 
   return (
     <div className="px-4 py-3">
-      {/* Label row */}
-      <div
-        className="flex justify-between mb-2 text-[9px] uppercase tracking-widest"
-        style={{ color: 'var(--text-ghost)' }}
-      >
-        <span>SRC</span>
-        <span>FX</span>
-      </div>
-
       <div className="flex items-center gap-3">
-        {/* Source icon (video camera) */}
+        {/* Source icon (film frame) */}
         <button
           onClick={snapToSource}
           className="p-2 rounded-sm transition-colors flex-shrink-0"
@@ -64,10 +56,7 @@ export function HorizontalCrossfader() {
           }}
           title="Source"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M23 7l-7 5 7 5V7z" />
-            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-          </svg>
+          <SourceIcon size={14} />
         </button>
 
         {/* Crossfader track */}
@@ -97,7 +86,7 @@ export function HorizontalCrossfader() {
           />
         </div>
 
-        {/* Processed icon (waveform/effects) */}
+        {/* FX icon (sparkle/effects) */}
         <button
           onClick={snapToProcessed}
           className="p-2 rounded-sm transition-colors flex-shrink-0"
@@ -107,9 +96,7 @@ export function HorizontalCrossfader() {
           }}
           title="Processed"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M2 12h4l3-9 4 18 3-9h4" />
-          </svg>
+          <FxIcon size={14} />
         </button>
       </div>
     </div>

@@ -82,8 +82,8 @@ export function SliderRow({
     return SPECIAL_SOURCES[firstRouting.trackId] || null
   }, [firstRouting, tracks])
 
-  // Calculate thumb position (0-1)
-  const normalizedValue = (value - min) / (max - min)
+  // Calculate thumb position (0-1), clamped to prevent overflow when modulation exceeds bounds
+  const normalizedValue = Math.max(0, Math.min(1, (value - min) / (max - min)))
 
   const handleDragOver = (e: React.DragEvent) => {
     if (paramId && (

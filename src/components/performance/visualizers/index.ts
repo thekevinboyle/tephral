@@ -31,6 +31,10 @@ export {
   LedViz,
   SlitViz,
   VoronoiViz,
+  HalftoneViz,
+  HexViz,
+  ScanViz,
+  RippleViz,
 } from './acid'
 
 // Vision tracking visualizers

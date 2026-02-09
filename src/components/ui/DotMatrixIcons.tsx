@@ -781,3 +781,82 @@ export function ModIcon({ size = 16, color = 'currentColor', className }: IconPr
     </svg>
   )
 }
+
+// Sun icon - for light theme
+export function SunIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      {/* Center */}
+      <Dot x={2} y={2} /><Dot x={3} y={2} /><Dot x={4} y={2} />
+      <Dot x={2} y={3} /><Dot x={3} y={3} /><Dot x={4} y={3} />
+      <Dot x={2} y={4} /><Dot x={3} y={4} /><Dot x={4} y={4} />
+      {/* Rays */}
+      <Dot x={3} y={0} />
+      <Dot x={0} y={3} />
+      <Dot x={6} y={3} />
+      <Dot x={3} y={6} />
+      <Dot x={1} y={1} />
+      <Dot x={5} y={1} />
+      <Dot x={1} y={5} />
+      <Dot x={5} y={5} />
+    </svg>
+  )
+}
+
+// Moon icon - for dark theme
+export function MoonIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      {/* Crescent moon */}
+      <Dot x={3} y={0} /><Dot x={4} y={0} />
+      <Dot x={2} y={1} /><Dot x={5} y={1} />
+      <Dot x={1} y={2} /><Dot x={4} y={2} />
+      <Dot x={1} y={3} /><Dot x={3} y={3} />
+      <Dot x={1} y={4} /><Dot x={4} y={4} />
+      <Dot x={2} y={5} /><Dot x={5} y={5} />
+      <Dot x={3} y={6} /><Dot x={4} y={6} />
+    </svg>
+  )
+}
+
+// Source/input icon - film frame/monitor style
+export function SourceIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      {/* Film frame outer border */}
+      <Dot x={0} y={0} /><Dot x={1} y={0} /><Dot x={2} y={0} /><Dot x={3} y={0} /><Dot x={4} y={0} /><Dot x={5} y={0} /><Dot x={6} y={0} />
+      <Dot x={0} y={1} /><Dot x={6} y={1} />
+      <Dot x={0} y={2} /><Dot x={6} y={2} />
+      <Dot x={0} y={3} /><Dot x={6} y={3} />
+      <Dot x={0} y={4} /><Dot x={6} y={4} />
+      <Dot x={0} y={5} /><Dot x={6} y={5} />
+      <Dot x={0} y={6} /><Dot x={1} y={6} /><Dot x={2} y={6} /><Dot x={3} y={6} /><Dot x={4} y={6} /><Dot x={5} y={6} /><Dot x={6} y={6} />
+      {/* Sprocket holes */}
+      <Dot x={1} y={2} /><Dot x={1} y={4} />
+      <Dot x={5} y={2} /><Dot x={5} y={4} />
+      {/* Center content area */}
+      <Dot x={3} y={3} />
+    </svg>
+  )
+}
+
+// FX/effects icon - sparkle/magic wand style
+export function FxIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      {/* Main sparkle - large cross */}
+      <Dot x={3} y={0} />
+      <Dot x={3} y={1} />
+      <Dot x={0} y={3} /><Dot x={1} y={3} /><Dot x={2} y={3} /><Dot x={3} y={3} /><Dot x={4} y={3} /><Dot x={5} y={3} /><Dot x={6} y={3} />
+      <Dot x={3} y={5} />
+      <Dot x={3} y={6} />
+      {/* Diagonal sparkles */}
+      <Dot x={1} y={1} />
+      <Dot x={5} y={1} />
+      <Dot x={1} y={5} />
+      <Dot x={5} y={5} />
+      {/* Small accent sparkle */}
+      <Dot x={6} y={0} />
+    </svg>
+  )
+}

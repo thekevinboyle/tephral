@@ -2324,6 +2324,201 @@ function EffectParameters({ effectId }: { effectId: string }) {
         </div>
       )
 
+    case 'acid_halftone':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Dot Size"
+            value={acid.halftoneParams.dotSize}
+            min={4}
+            max={24}
+            step={1}
+            onChange={(v) => acid.updateHalftoneParams({ dotSize: v })}
+            paramId="acid_halftone.dotSize"
+          />
+          <SliderRow
+            label="Angle"
+            value={acid.halftoneParams.angle}
+            min={0}
+            max={90}
+            step={5}
+            onChange={(v) => acid.updateHalftoneParams({ angle: v })}
+            paramId="acid_halftone.angle"
+          />
+          <SelectRow
+            label="Color Mode"
+            value={acid.halftoneParams.colorMode}
+            options={[
+              { value: 'mono', label: 'Mono' },
+              { value: 'cmyk', label: 'CMYK' },
+              { value: 'rgb', label: 'RGB' },
+            ]}
+            onChange={(v) => acid.updateHalftoneParams({ colorMode: v as 'mono' | 'cmyk' | 'rgb' })}
+          />
+          <SliderRow
+            label="Contrast"
+            value={acid.halftoneParams.contrast * 100}
+            min={50}
+            max={200}
+            step={10}
+            onChange={(v) => acid.updateHalftoneParams({ contrast: v / 100 })}
+            format={(v) => `${v.toFixed(0)}%`}
+            paramId="acid_halftone.contrast"
+          />
+          <SectionLabel label="Global" />
+          <ToggleRow
+            label="Preserve Video"
+            value={acid.preserveVideo}
+            onChange={(v) => acid.setPreserveVideo(v)}
+          />
+        </div>
+      )
+
+    case 'acid_hex':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Cell Size"
+            value={acid.hexParams.cellSize}
+            min={8}
+            max={48}
+            step={2}
+            onChange={(v) => acid.updateHexParams({ cellSize: v })}
+            paramId="acid_hex.cellSize"
+          />
+          <SelectRow
+            label="Fill Mode"
+            value={acid.hexParams.fillMode}
+            options={[
+              { value: 'average', label: 'Average' },
+              { value: 'center', label: 'Center' },
+              { value: 'original', label: 'Original' },
+            ]}
+            onChange={(v) => acid.updateHexParams({ fillMode: v as 'average' | 'center' | 'original' })}
+          />
+          <ToggleRow
+            label="Show Edges"
+            value={acid.hexParams.showEdges}
+            onChange={(v) => acid.updateHexParams({ showEdges: v })}
+          />
+          <SliderRow
+            label="Rotation"
+            value={acid.hexParams.rotation}
+            min={0}
+            max={60}
+            step={5}
+            onChange={(v) => acid.updateHexParams({ rotation: v })}
+            format={(v) => `${v.toFixed(0)}°`}
+            paramId="acid_hex.rotation"
+          />
+          <SectionLabel label="Global" />
+          <ToggleRow
+            label="Preserve Video"
+            value={acid.preserveVideo}
+            onChange={(v) => acid.setPreserveVideo(v)}
+          />
+        </div>
+      )
+
+    case 'acid_scan':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Speed"
+            value={acid.scanParams.speed}
+            min={1}
+            max={10}
+            step={0.5}
+            onChange={(v) => acid.updateScanParams({ speed: v })}
+            paramId="acid_scan.speed"
+          />
+          <SliderRow
+            label="Width"
+            value={acid.scanParams.width}
+            min={5}
+            max={100}
+            step={5}
+            onChange={(v) => acid.updateScanParams({ width: v })}
+            paramId="acid_scan.width"
+          />
+          <SelectRow
+            label="Direction"
+            value={acid.scanParams.direction}
+            options={[
+              { value: 'horizontal', label: 'Horizontal' },
+              { value: 'vertical', label: 'Vertical' },
+              { value: 'radial', label: 'Radial' },
+            ]}
+            onChange={(v) => acid.updateScanParams({ direction: v as 'horizontal' | 'vertical' | 'radial' })}
+          />
+          <SliderRow
+            label="Trail"
+            value={acid.scanParams.trail * 100}
+            min={0}
+            max={100}
+            step={10}
+            onChange={(v) => acid.updateScanParams({ trail: v / 100 })}
+            format={(v) => `${v.toFixed(0)}%`}
+            paramId="acid_scan.trail"
+          />
+          <SectionLabel label="Global" />
+          <ToggleRow
+            label="Preserve Video"
+            value={acid.preserveVideo}
+            onChange={(v) => acid.setPreserveVideo(v)}
+          />
+        </div>
+      )
+
+    case 'acid_ripple':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Frequency"
+            value={acid.rippleParams.frequency}
+            min={1}
+            max={20}
+            step={1}
+            onChange={(v) => acid.updateRippleParams({ frequency: v })}
+            paramId="acid_ripple.frequency"
+          />
+          <SliderRow
+            label="Amplitude"
+            value={acid.rippleParams.amplitude}
+            min={5}
+            max={50}
+            step={5}
+            onChange={(v) => acid.updateRippleParams({ amplitude: v })}
+            paramId="acid_ripple.amplitude"
+          />
+          <SliderRow
+            label="Speed"
+            value={acid.rippleParams.speed}
+            min={1}
+            max={10}
+            step={0.5}
+            onChange={(v) => acid.updateRippleParams({ speed: v })}
+            paramId="acid_ripple.speed"
+          />
+          <SliderRow
+            label="Decay"
+            value={acid.rippleParams.decay * 100}
+            min={10}
+            max={100}
+            step={10}
+            onChange={(v) => acid.updateRippleParams({ decay: v / 100 })}
+            format={(v) => `${v.toFixed(0)}%`}
+            paramId="acid_ripple.decay"
+          />
+          <SectionLabel label="Global" />
+          <ToggleRow
+            label="Preserve Video"
+            value={acid.preserveVideo}
+            onChange={(v) => acid.setPreserveVideo(v)}
+          />
+        </div>
+      )
+
     case 'strand_handprints':
       return (
         <div className="space-y-1">

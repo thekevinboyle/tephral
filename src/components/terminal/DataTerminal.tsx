@@ -11,6 +11,7 @@ import { useModulationStore } from '../../stores/modulationStore'
 import { useSequencerStore } from '../../stores/sequencerStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useThemeStore } from '../../stores/themeStore'
+import { SunIcon, MoonIcon } from '../ui/DotMatrixIcons'
 
 // Generate random alphanumeric code
 function generateCode(length: number): string {
@@ -776,11 +777,15 @@ function ThemeToggleBar({ source, patternLabel, isProcessing }: ThemeToggleBarPr
       </span>
       <button
         onClick={toggleTheme}
-        className="text-[10px] hover:opacity-100 transition-opacity"
-        style={{ color: 'var(--text-ghost)', opacity: 0.7 }}
+        className="hover:opacity-100 transition-opacity flex items-center justify-center"
+        style={{ opacity: 0.7 }}
         title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
       >
-        {theme === 'dark' ? '◐' : '◑'}
+        {theme === 'dark' ? (
+          <MoonIcon size={10} color="var(--text-ghost)" />
+        ) : (
+          <SunIcon size={10} color="var(--text-ghost)" />
+        )}
       </button>
     </div>
   )

@@ -764,19 +764,25 @@ function ThemeToggleBar({ source, patternLabel, isProcessing }: ThemeToggleBarPr
   const { theme, toggleTheme } = useThemeStore()
 
   return (
-    <button
-      onClick={toggleTheme}
-      className="flex-shrink-0 w-full px-3 py-1.5 text-center cursor-pointer transition-colors hover:bg-[var(--bg-hover)]"
+    <div
+      className="flex-shrink-0 w-full px-3 py-1.5 flex items-center justify-center gap-2"
       style={{
         backgroundColor: 'var(--bg-elevated)',
         borderTop: '1px solid var(--border)',
       }}
-      title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
     >
       <span className="text-[8px] uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
-        {theme === 'dark' ? '◐' : '◑'} {source !== 'none' ? 'LINKED' : 'OFFLINE'} · {patternLabel} · {isProcessing ? 'PROCESSING' : 'IDLE'}
+        {source !== 'none' ? 'LINKED' : 'OFFLINE'} · {patternLabel} · {isProcessing ? 'PROCESSING' : 'IDLE'}
       </span>
-    </button>
+      <button
+        onClick={toggleTheme}
+        className="text-[10px] hover:opacity-100 transition-opacity"
+        style={{ color: 'var(--text-ghost)', opacity: 0.7 }}
+        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+      >
+        {theme === 'dark' ? '◐' : '◑'}
+      </button>
+    </div>
   )
 }
 

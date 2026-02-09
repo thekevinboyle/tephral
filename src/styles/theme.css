@@ -27,11 +27,11 @@
   --border-emphasis: #444444;
   --border-light: #444444;
 
-  /* Text - improved readability */
-  --text-primary: #E8E4DE;
-  --text-secondary: #C0BDB8;
-  --text-muted: #888480;
-  --text-ghost: #555250;
+  /* Text - high contrast for readability */
+  --text-primary: #F0EDE8;
+  --text-secondary: #D0CDC8;
+  --text-muted: #A09A94;
+  --text-ghost: #706A64;
 
   /* Accent - cyan */
   --accent: #00D4FF;
@@ -40,12 +40,12 @@
   --accent-glow: rgba(0, 212, 255, 0.3);
   --accent-subtle: rgba(0, 212, 255, 0.08);
 
-  /* Typography */
+  /* Typography - slightly larger for readability */
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
-  --text-micro: 9px;
-  --text-tiny: 10px;
-  --text-small: 11px;
-  --text-base: 12px;
+  --text-micro: 10px;
+  --text-tiny: 11px;
+  --text-small: 12px;
+  --text-base: 13px;
   --text-medium: 14px;
   --text-large: 16px;
   --leading-tight: 1.2;

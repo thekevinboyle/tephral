@@ -192,7 +192,7 @@ export function EffectButton({
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
       onPointerCancel={handlePointerLeave}
-      className="relative rounded-sm flex select-none touch-none cursor-pointer w-full h-full p-1 overflow-hidden"
+      className="relative rounded-sm flex select-none touch-none cursor-pointer w-full h-full p-1.5 overflow-hidden"
       style={{
         backgroundColor: active ? 'var(--accent)' : 'var(--bg-surface)',
         border: isSoloed ? '1px solid var(--text-primary)' : active ? '1px solid var(--accent)' : '1px solid var(--border)',
@@ -205,17 +205,17 @@ export function EffectButton({
       <div className="flex-1 flex flex-col justify-between">
         {/* Label */}
         <span
-          className="text-[10px] font-medium truncate"
-          style={{ color: active ? 'var(--bg-primary)' : 'var(--text-muted)' }}
+          className="text-[11px] font-semibold truncate uppercase tracking-wide"
+          style={{ color: active ? 'var(--bg-primary)' : 'var(--text-secondary)' }}
         >
           {label}
         </span>
 
         {/* Mix percentage */}
         <span
-          className="text-[11px] tabular-nums font-medium"
+          className="text-[11px] tabular-nums font-medium tracking-wider"
           style={{
-            color: active ? 'var(--bg-primary)' : 'var(--text-ghost)',
+            color: active ? 'var(--bg-primary)' : 'var(--text-muted)',
             fontFamily: "'JetBrains Mono', monospace",
           }}
         >

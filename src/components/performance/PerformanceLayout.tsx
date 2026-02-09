@@ -8,6 +8,7 @@ import { ClipDetailModal } from './ClipDetailModal'
 import { ExpandedParameterPanel } from './ExpandedParameterPanel'
 import { EffectsLane } from './EffectsLane'
 import { MiddleSection } from './MiddleSection'
+import { ModulationLane } from './ModulationLane'
 import { ModulationLines } from './ModulationLines'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
 import { DataTerminal } from '../terminal/DataTerminal'
@@ -257,16 +258,23 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Row 3, Col 2: Slicer Panel */}
+      {/* Row 3, Col 2: Slicer Panel + Modulation Lane */}
       <div
-        className="rounded-sm overflow-hidden panel-gradient-subtle"
+        className="flex flex-col rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
           gridRow: 3,
           gridColumn: 2,
           border: '1px solid var(--border)',
         }}
       >
-        <SequencerContainer />
+        {/* Slicer takes most of the space */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <SequencerContainer />
+        </div>
+        {/* Modulation lane at the bottom */}
+        <div className="flex-shrink-0" style={{ height: '72px' }}>
+          <ModulationLane />
+        </div>
       </div>
 
       {/* Row 3, Col 3: Data Terminal */}

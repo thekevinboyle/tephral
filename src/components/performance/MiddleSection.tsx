@@ -235,7 +235,7 @@ function ModulationCard({
           }}
           title={isAssigning ? 'Stop assigning' : 'Click to assign to parameters'}
         >
-          <RoutingIcon size={12} color={isAssigning ? 'var(--bg-primary)' : 'var(--text-ghost)'} />
+          <RoutingIcon size={16} color={isAssigning ? 'var(--bg-primary)' : 'var(--text-ghost)'} />
         </button>
       </div>
     </div>

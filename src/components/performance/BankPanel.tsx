@@ -288,8 +288,14 @@ export function BankPanel() {
       <div className="flex-1" />
 
       {/* Action buttons */}
-      <Button size="lg" className="h-full" onClick={handleRandom}>
-        Random
+      <Button size="lg" className="h-full" onClick={handleRandom} title="Randomize effects">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <circle cx="3" cy="3" r="1.5" />
+          <circle cx="13" cy="3" r="1.5" />
+          <circle cx="8" cy="8" r="1.5" />
+          <circle cx="3" cy="13" r="1.5" />
+          <circle cx="13" cy="13" r="1.5" />
+        </svg>
       </Button>
       <Button size="lg" className="h-full" onClick={handleUndo} disabled={!hasPreviousState}>
         Undo

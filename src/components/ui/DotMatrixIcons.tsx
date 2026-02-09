@@ -860,3 +860,23 @@ export function FxIcon({ size = 16, color = 'currentColor', className }: IconPro
     </svg>
   )
 }
+
+// Clear/reset icon - circular arrow (filled style)
+export function ClearIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      {/* Circular arrow - reset symbol */}
+      <path d="M8 2.5V0l3 2.5-3 2.5V3a5 5 0 1 0 5 5h1.5a6.5 6.5 0 1 1-6.5-6.5z" />
+    </svg>
+  )
+}
+
+// Bypass icon - diagonal line through circle (filled style)
+export function BypassIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      {/* Circle with diagonal slash */}
+      <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 1.5a5.5 5.5 0 0 1 4.33 8.89L4.61 3.67A5.47 5.47 0 0 1 8 2.5zm0 11a5.5 5.5 0 0 1-4.33-8.89l7.72 7.72A5.47 5.47 0 0 1 8 13.5z" />
+    </svg>
+  )
+}

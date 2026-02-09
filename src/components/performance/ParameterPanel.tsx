@@ -1,5 +1,5 @@
 import { type ReactNode, useState, useRef, useCallback, useEffect } from 'react'
-import { Button } from '../ui/Button'
+import { ClearIcon, BypassIcon } from '../ui/DotMatrixIcons'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
@@ -2129,34 +2129,51 @@ export function ParameterPanel() {
     isDragging.current = false
   }, [dragIndex, dragOverIndex, effectOrder, reorderEffect, setSelectedEffect, sortedSections])
 
-  // Control buttons component (compact horizontal layout)
+  // Control buttons component (compact icon buttons)
   // Note: position:relative + z-index ensures buttons stay clickable above any overlapping elements
   const ControlButtons = () => (
     <div
-      className="flex gap-1.5 rounded-sm items-center"
+      className="flex gap-1 items-center"
       style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border)',
-        padding: '6px 10px',
         flexShrink: 0,
         position: 'relative',
         zIndex: 20,
       }}
     >
-      <Button size="sm" onClick={handleClear}>
-        Clear
-      </Button>
-      <Button
-        size="sm"
-        variant={bypassActive ? 'danger' : 'default'}
+      <button
+        onClick={handleClear}
+        title="Clear all effects"
+        className="flex items-center justify-center rounded-sm transition-all hover:scale-105"
+        style={{
+          width: 28,
+          height: 28,
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          color: 'var(--warning)',
+          cursor: 'pointer',
+        }}
+      >
+        <ClearIcon size={14} />
+      </button>
+      <button
         onClick={() => {
           const current = useGlitchEngineStore.getState().bypassActive
           useGlitchEngineStore.getState().setBypassActive(!current)
         }}
-        style={bypassActive ? { boxShadow: '0 0 8px var(--accent-glow)' } : undefined}
+        title="Bypass all effects"
+        className="flex items-center justify-center rounded-sm transition-all hover:scale-105"
+        style={{
+          width: 28,
+          height: 28,
+          backgroundColor: bypassActive ? 'var(--danger)' : 'var(--bg-surface)',
+          border: `1px solid ${bypassActive ? 'var(--danger)' : 'var(--border)'}`,
+          color: bypassActive ? 'white' : 'var(--danger)',
+          boxShadow: bypassActive ? '0 0 8px var(--danger)' : 'none',
+          cursor: 'pointer',
+        }}
       >
-        Bypass
-      </Button>
+        <BypassIcon size={14} />
+      </button>
     </div>
   )
 

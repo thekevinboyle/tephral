@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { HorizontalCrossfader } from './HorizontalCrossfader'
-import { LinkIcon } from '../ui/DotMatrixIcons'
+import { ZapIcon } from '../ui/DotMatrixIcons'
 import { useModulationStore } from '../../stores/modulationStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
@@ -235,7 +235,7 @@ function ModulationCard({
           }}
           title={isAssigning ? 'Stop assigning' : 'Click to assign to parameters'}
         >
-          <LinkIcon size={16} color={isAssigning ? 'var(--bg-primary)' : 'var(--text-ghost)'} />
+          <ZapIcon size={16} color={isAssigning ? 'var(--bg-primary)' : 'var(--text-ghost)'} />
         </button>
       </div>
     </div>

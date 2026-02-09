@@ -204,21 +204,16 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Row 1, Col 3: FX Chain / Modulation */}
+      {/* Row 1, Col 3: Data Terminal */}
       <div
-        className="flex flex-col rounded-sm overflow-hidden panel-gradient-subtle"
+        className="rounded-sm overflow-hidden panel-gradient-accent"
         style={{
           gridRow: 1,
           gridColumn: 3,
           border: '1px solid var(--border)',
         }}
       >
-        {/* Presets hidden for now */}
-        {/* <PresetDropdownBar canvasRef={captureRef} /> */}
-        {/* Effects Lane fills remaining space */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <EffectsLane />
-        </div>
+        <DataTerminal />
       </div>
 
       {/* Row 2: Crossfader Section (spans all columns) */}
@@ -269,16 +264,18 @@ export function PerformanceLayout() {
         <SequencerContainer />
       </div>
 
-      {/* Row 3, Col 3: Data Terminal */}
+      {/* Row 3, Col 3: FX Chain / Modulation */}
       <div
-        className="rounded-sm overflow-hidden panel-gradient-accent"
+        className="flex flex-col rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
           gridRow: 3,
           gridColumn: 3,
           border: '1px solid var(--border)',
         }}
       >
-        <DataTerminal />
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <EffectsLane />
+        </div>
       </div>
 
       {/* Clip detail modal */}

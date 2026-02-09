@@ -18,6 +18,7 @@ import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 import { useContinuousModulation } from '../../hooks/useContinuousModulation'
 import { useEuclideanEngine } from '../../hooks/useEuclideanEngine'
 import { useRicochetEngine } from '../../hooks/useRicochetEngine'
+import { usePolyEuclidEngine } from '../../hooks/usePolyEuclidEngine'
 import { useModulationEngine } from '../../hooks/useModulationEngine'
 import { useMediaStore } from '../../stores/mediaStore'
 // InfoPanel kept for future use
@@ -42,6 +43,7 @@ export function PerformanceLayout() {
   // Initialize sequencer engines (always running)
   useEuclideanEngine()
   useRicochetEngine()
+  usePolyEuclidEngine()
 
   // Initialize modulation engine (LFO, Random, Step, Envelope value generators)
   useModulationEngine()

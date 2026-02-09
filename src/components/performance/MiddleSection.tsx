@@ -211,9 +211,9 @@ function ModulationCard({
       style={{
         width: '80px',
         height: '100%',
-        backgroundColor: isAssigning ? 'var(--accent)' : active ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
-        border: isAssigning ? '1px solid var(--accent)' : active ? '1px solid var(--accent-dim)' : '1px solid var(--border)',
-        boxShadow: isAssigning ? '0 0 12px var(--accent-glow)' : active ? '0 0 8px var(--accent-glow)' : 'none',
+        backgroundColor: active ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
+        border: active ? '1px solid var(--accent-dim)' : '1px solid var(--border)',
+        boxShadow: active ? '0 0 8px var(--accent-glow)' : 'none',
       }}
     >
       {/* Graphic area */}
@@ -228,7 +228,7 @@ function ModulationCard({
       <div className="px-2 py-1 flex items-center justify-between">
         <span
           className="text-[9px] uppercase tracking-widest"
-          style={{ color: isAssigning ? 'var(--bg-primary)' : active ? 'var(--accent)' : 'var(--text-muted)' }}
+          style={{ color: active ? 'var(--accent)' : 'var(--text-muted)' }}
         >
           {label}
         </span>
@@ -241,7 +241,8 @@ function ModulationCard({
           }}
           className="w-5 h-5 rounded-sm flex items-center justify-center transition-all hover:scale-110"
           style={{
-            backgroundColor: isAssigning ? 'rgba(0,0,0,0.2)' : 'transparent',
+            backgroundColor: isAssigning ? 'var(--accent)' : 'transparent',
+            boxShadow: isAssigning ? '0 0 8px var(--accent-glow)' : 'none',
           }}
           title={isAssigning ? 'Stop assigning' : 'Click to assign to parameters'}
         >

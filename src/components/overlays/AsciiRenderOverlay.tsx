@@ -89,9 +89,12 @@ export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverl
 
       const { displayWidth, displayHeight, offsetX, offsetY } = videoArea
 
-      // Clear entire canvas
-      ctx.fillStyle = '#000000'
-      ctx.fillRect(0, 0, width, height)
+      // Clear canvas only for non-matrix modes
+      // Matrix mode uses trail effect that needs previous frame to persist
+      if (params.mode !== 'matrix') {
+        ctx.fillStyle = '#000000'
+        ctx.fillRect(0, 0, width, height)
+      }
 
       // Setup offscreen canvas for sampling
       const sampleWidth = Math.floor(displayWidth / params.resolution)

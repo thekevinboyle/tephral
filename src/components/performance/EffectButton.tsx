@@ -194,11 +194,11 @@ export function EffectButton({
       onPointerCancel={handlePointerLeave}
       className="relative rounded-sm flex select-none touch-none cursor-pointer w-full h-full p-1.5 overflow-hidden"
       style={{
-        backgroundColor: active ? 'var(--accent)' : 'var(--bg-surface)',
+        backgroundColor: 'var(--bg-surface)',
         border: isSoloed ? '1px solid var(--text-primary)' : active ? '1px solid var(--accent)' : '1px solid var(--border)',
         opacity: isMuted ? 0.4 : 1,
-        boxShadow: isSoloed ? '0 0 8px var(--accent-glow)' : 'none',
-        transition: 'box-shadow 0.15s ease-out, border 0.15s ease-out, background-color 0.15s ease-out',
+        boxShadow: isSoloed ? '0 0 8px var(--accent-glow)' : active ? 'inset 3px 0 0 var(--accent)' : 'none',
+        transition: 'box-shadow 0.15s ease-out, border 0.15s ease-out',
       }}
     >
       {/* Main content area */}
@@ -206,7 +206,7 @@ export function EffectButton({
         {/* Label */}
         <span
           className="text-[11px] font-semibold truncate uppercase tracking-wide"
-          style={{ color: active ? 'var(--bg-primary)' : 'var(--text-secondary)' }}
+          style={{ color: active ? 'var(--accent)' : 'var(--text-secondary)' }}
         >
           {label}
         </span>
@@ -215,7 +215,7 @@ export function EffectButton({
         <span
           className="text-[11px] tabular-nums font-medium tracking-wider"
           style={{
-            color: active ? 'var(--bg-primary)' : 'var(--text-muted)',
+            color: active ? 'var(--accent)' : 'var(--text-muted)',
             fontFamily: "'JetBrains Mono', monospace",
           }}
         >
@@ -227,7 +227,7 @@ export function EffectButton({
       <div
         className="w-0.5 rounded-sm ml-1.5 relative overflow-hidden"
         style={{
-          backgroundColor: active ? 'rgba(0,0,0,0.3)' : 'var(--border)',
+          backgroundColor: 'var(--border)',
         }}
       >
         {/* Fill from bottom */}
@@ -235,7 +235,7 @@ export function EffectButton({
           className="absolute bottom-0 left-0 right-0 rounded-sm transition-all duration-150"
           style={{
             height: `${mixPercent}%`,
-            backgroundColor: active ? 'var(--bg-primary)' : 'var(--text-ghost)',
+            backgroundColor: active ? 'var(--accent)' : 'var(--text-ghost)',
           }}
         />
       </div>

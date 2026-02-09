@@ -197,8 +197,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       cellSize: asciiParams.resolution,
       contrast: asciiParams.contrast,
       invert: asciiParams.invert,
-      colorMode: asciiParams.colorMode === 'gradient' ? 'mono' : asciiParams.colorMode as 'mono' | 'original',
+      colorMode: asciiParams.colorMode as 'mono' | 'original' | 'gradient',
       monoColor: asciiParams.monoColor,
+      gradientEndColor: asciiParams.gradientEnd,
       mix: getMix('ascii'),
     })
 

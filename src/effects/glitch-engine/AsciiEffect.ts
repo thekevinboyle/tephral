@@ -17,6 +17,7 @@ uniform vec2 atlasSize;
 uniform float contrast;
 uniform bool invert;
 uniform vec3 monoColor;
+uniform vec3 gradientEndColor;
 uniform int colorMode;
 uniform float effectMix;
 
@@ -59,9 +60,12 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   if (colorMode == 0) {
     // Mono mode - use monoColor
     finalColor = monoColor;
-  } else {
+  } else if (colorMode == 1) {
     // Original mode - use source color
     finalColor = cellColor.rgb;
+  } else {
+    // Gradient mode - interpolate between monoColor and gradientEndColor based on brightness
+    finalColor = mix(monoColor, gradientEndColor, brightness);
   }
 
   // Black background with colored character
@@ -71,7 +75,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 `
 
 export type AsciiEffectMode = 'standard' | 'blocks' | 'braille'
-export type AsciiColorMode = 'mono' | 'original'
+export type AsciiColorMode = 'mono' | 'original' | 'gradient'
 
 export interface AsciiEffectParams {
   mode: AsciiEffectMode
@@ -80,6 +84,7 @@ export interface AsciiEffectParams {
   invert: boolean
   colorMode: AsciiColorMode
   monoColor: string
+  gradientEndColor: string
   mix: number
 }
 
@@ -90,6 +95,7 @@ export const DEFAULT_ASCII_EFFECT_PARAMS: AsciiEffectParams = {
   invert: false,
   colorMode: 'mono',
   monoColor: '#00ff00',
+  gradientEndColor: '#ffffff',
   mix: 1,
 }
 
@@ -100,6 +106,8 @@ export class AsciiEffect extends Effect {
   constructor(params: Partial<AsciiEffectParams> = {}) {
     const p = { ...DEFAULT_ASCII_EFFECT_PARAMS, ...params }
     const color = hexToRgb(p.monoColor)
+    const endColor = hexToRgb(p.gradientEndColor)
+    const colorModeValue = p.colorMode === 'mono' ? 0 : p.colorMode === 'original' ? 1 : 2
 
     super('AsciiEffect', fragmentShader, {
       blendFunction: BlendFunction.NORMAL,
@@ -112,7 +120,8 @@ export class AsciiEffect extends Effect {
         ['contrast', new THREE.Uniform(p.contrast)],
         ['invert', new THREE.Uniform(p.invert)],
         ['monoColor', new THREE.Uniform(new THREE.Vector3(color.r, color.g, color.b))],
-        ['colorMode', new THREE.Uniform(p.colorMode === 'mono' ? 0 : 1)],
+        ['gradientEndColor', new THREE.Uniform(new THREE.Vector3(endColor.r, endColor.g, endColor.b))],
+        ['colorMode', new THREE.Uniform(colorModeValue)],
         ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
@@ -200,11 +209,15 @@ export class AsciiEffect extends Effect {
       this.uniforms.get('invert')!.value = params.invert
     }
     if (params.colorMode !== undefined) {
-      this.uniforms.get('colorMode')!.value = params.colorMode === 'mono' ? 0 : 1
+      this.uniforms.get('colorMode')!.value = params.colorMode === 'mono' ? 0 : params.colorMode === 'original' ? 1 : 2
     }
     if (params.monoColor !== undefined) {
       const color = hexToRgb(params.monoColor)
       ;(this.uniforms.get('monoColor')!.value as THREE.Vector3).set(color.r, color.g, color.b)
+    }
+    if (params.gradientEndColor !== undefined) {
+      const color = hexToRgb(params.gradientEndColor)
+      ;(this.uniforms.get('gradientEndColor')!.value as THREE.Vector3).set(color.r, color.g, color.b)
     }
     if (params.mix !== undefined) {
       this.uniforms.get('effectMix')!.value = params.mix

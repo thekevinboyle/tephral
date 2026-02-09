@@ -63,14 +63,18 @@ export function SlicerPanel() {
       {!enabled && (
         <div
           className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)',
+          }}
         >
           <span
-            className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-sm"
+            className="text-[14px] font-bold uppercase tracking-widest px-4 py-2 rounded-sm"
             style={{
-              color: 'var(--text-ghost)',
-              backgroundColor: 'var(--bg-elevated)',
-              border: '1px solid var(--border)',
+              color: '#ef4444',
+              backgroundColor: 'var(--bg-primary)',
+              border: '2px solid #ef4444',
+              boxShadow: '0 0 20px rgba(239, 68, 68, 0.3)',
             }}
           >
             Bypassed
@@ -127,7 +131,7 @@ export function SlicerPanel() {
           height: '35%',
           minHeight: '80px',
           borderBottom: '1px solid var(--border)',
-          opacity: enabled ? 1 : 0.4,
+          opacity: enabled ? 1 : 0.25,
           transition: 'opacity 0.15s ease',
         }}
       >
@@ -138,7 +142,7 @@ export function SlicerPanel() {
       <div
         className="flex-1 overflow-y-auto"
         style={{
-          opacity: enabled ? 1 : 0.4,
+          opacity: enabled ? 1 : 0.25,
           transition: 'opacity 0.15s ease',
         }}
       >

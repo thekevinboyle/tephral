@@ -357,14 +357,6 @@ export function ModulationLane() {
         borderTop: '1px solid var(--border)',
       }}
     >
-      {/* Section label */}
-      <div
-        className="flex-shrink-0 text-[9px] uppercase tracking-widest mr-2"
-        style={{ color: 'var(--text-ghost)' }}
-      >
-        MOD
-      </div>
-
       {/* Modulation cards */}
       <ModulationCard
         type="lfo"

@@ -202,7 +202,7 @@ function ModulationCard({
       style={{
         width: '80px',
         height: '100%',
-        backgroundColor: active ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
+        backgroundColor: 'var(--bg-elevated)',
         border: selected ? '2px solid var(--accent)' : active ? '1px solid var(--accent-dim)' : '1px solid var(--border)',
       }}
     >

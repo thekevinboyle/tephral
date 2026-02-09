@@ -21,126 +21,198 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
     const time = timestamp / 1000
 
     // Clear with slight fade for trails
-    ctx.fillStyle = 'rgba(10, 10, 10, 0.15)'
+    ctx.fillStyle = 'rgba(10, 10, 10, 0.12)'
     ctx.fillRect(0, 0, width, height)
 
     const centerX = width / 2
     const centerY = height / 2
 
+    // Total pulse from all tracks
+    const totalPulse = tracks.reduce((sum, t) => sum + (t.muted ? 0 : t.currentValue), 0) / Math.max(tracks.length, 1)
+
     // ═══════════════════════════════════════════════════════════════
-    // ORGANIC FLOWING PARTICLES
+    // DOT GRID BACKGROUND (inspired by DataTerminal patterns)
+    // ═══════════════════════════════════════════════════════════════
+    const gridSize = 16
+    const dotSpacing = Math.min(width, height) / gridSize
+    const gridOffsetX = (width - (gridSize - 1) * dotSpacing) / 2
+    const gridOffsetY = (height - (gridSize - 1) * dotSpacing) / 2
+
+    ctx.fillStyle = CREAM
+
+    for (let row = 0; row < gridSize; row++) {
+      for (let col = 0; col < gridSize; col++) {
+        const x = gridOffsetX + col * dotSpacing
+        const y = gridOffsetY + row * dotSpacing
+
+        // Distance from center
+        const dx = x - centerX
+        const dy = y - centerY
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        const maxDist = Math.min(width, height) / 2
+
+        // Angle for spiral effect
+        const angle = Math.atan2(dy, dx)
+
+        // Ripple waves from center
+        const ripple = Math.sin(dist * 0.08 - time * 2 + totalPulse * 3) * 0.5 + 0.5
+
+        // Spiral overlay
+        const spiral = Math.sin(angle * 4 + dist * 0.05 - time * 1.5) * 0.5 + 0.5
+
+        // Base dot size and opacity
+        const baseOpacity = 0.05 + ripple * 0.1 * (1 - dist / maxDist)
+        const dotSize = 1.5 + spiral * totalPulse * 2
+
+        ctx.globalAlpha = baseOpacity
+        ctx.beginPath()
+        ctx.arc(x, y, dotSize, 0, Math.PI * 2)
+        ctx.fill()
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // TRACK RING ORBITS
     // ═══════════════════════════════════════════════════════════════
 
     tracks.forEach((track, trackIndex) => {
       const pattern = getPattern(track.id)
-      const baseOpacity = track.muted ? 0.1 : 1
+      const baseOpacity = track.muted ? 0.15 : 1
 
-      // Each track spawns flowing particles
-      const particleCount = 40
+      // Each track gets a ring at different radius
+      const trackRadius = 25 + trackIndex * 22
+      const stepAngle = (Math.PI * 2) / pattern.length
 
-      for (let i = 0; i < particleCount; i++) {
-        const patternIdx = i % pattern.length
-        const isHit = pattern[patternIdx]
-        const isCurrent = patternIdx === track.currentStep
+      // Draw the orbit ring
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, trackRadius, 0, Math.PI * 2)
+      ctx.strokeStyle = CREAM
+      ctx.globalAlpha = baseOpacity * 0.08
+      ctx.lineWidth = 1
+      ctx.stroke()
 
-        // Organic flow paths using noise-like functions
-        const seed = i * 73.1 + trackIndex * 137
-        const flowTime = time * (0.3 + track.clockDivider * 0.2) + seed
+      // Draw each step on the ring
+      pattern.forEach((isHit, stepIndex) => {
+        const isCurrent = stepIndex === track.currentStep
+        const angle = stepAngle * stepIndex - Math.PI / 2 + time * 0.1 * track.clockDivider
 
-        // Lissajous-like curves for organic movement
-        const freqX = 1 + (i % 3) * 0.5
-        const freqY = 1.5 + (i % 4) * 0.3
-        const phaseX = seed * 0.1
-        const phaseY = seed * 0.15
-
-        const radius = 30 + (i % 8) * 15 + Math.sin(flowTime * 0.5) * 20
-
-        const x = centerX + Math.sin(flowTime * freqX + phaseX) * radius * 1.5
-        const y = centerY + Math.cos(flowTime * freqY + phaseY) * radius
+        const x = centerX + Math.cos(angle) * trackRadius
+        const y = centerY + Math.sin(angle) * trackRadius
 
         // Size based on hit and current state
-        let size = isHit ? 3 + Math.sin(flowTime * 2) * 1.5 : 1.5
+        let size = isHit ? 3.5 : 1.5
         if (isCurrent && !track.muted) {
-          size += track.currentValue * 4
+          size += track.currentValue * 5
         }
 
         // Opacity varies
-        let opacity = isHit ? 0.4 : 0.1
+        let opacity = isHit ? 0.5 : 0.15
         if (isCurrent) {
-          opacity = 0.6 + track.currentValue * 0.4
+          opacity = 0.7 + track.currentValue * 0.3
+        }
+
+        ctx.globalAlpha = baseOpacity * opacity
+
+        // Glow on active hits
+        if (isCurrent && track.currentValue > 0.1 && !track.muted) {
+          ctx.shadowColor = CREAM
+          ctx.shadowBlur = 8 + track.currentValue * 12
         }
 
         ctx.beginPath()
         ctx.arc(x, y, size, 0, Math.PI * 2)
         ctx.fillStyle = CREAM
-        ctx.globalAlpha = baseOpacity * opacity
-
-        // Glow on hits
-        if (isCurrent && track.currentValue > 0.1 && !track.muted) {
-          ctx.shadowColor = CREAM
-          ctx.shadowBlur = 10 + track.currentValue * 15
-        }
-
         ctx.fill()
+
         ctx.shadowBlur = 0
-      }
 
-      // Draw flowing connection lines between nearby particles
-      ctx.strokeStyle = CREAM
-      ctx.lineWidth = 0.5
-      ctx.globalAlpha = baseOpacity * 0.08
+        // Draw dashed lines for rests
+        if (!isHit) {
+          const nextAngle = angle + stepAngle * 0.4
+          const x2 = centerX + Math.cos(nextAngle) * trackRadius
+          const y2 = centerY + Math.sin(nextAngle) * trackRadius
 
-      for (let i = 0; i < particleCount - 1; i++) {
-        const seed1 = i * 73.1 + trackIndex * 137
-        const seed2 = (i + 1) * 73.1 + trackIndex * 137
-        const flowTime = time * (0.3 + track.clockDivider * 0.2)
-
-        const freqX1 = 1 + (i % 3) * 0.5
-        const freqY1 = 1.5 + (i % 4) * 0.3
-        const freqX2 = 1 + ((i + 1) % 3) * 0.5
-        const freqY2 = 1.5 + ((i + 1) % 4) * 0.3
-
-        const radius1 = 30 + (i % 8) * 15 + Math.sin((flowTime + seed1) * 0.5) * 20
-        const radius2 = 30 + ((i + 1) % 8) * 15 + Math.sin((flowTime + seed2) * 0.5) * 20
-
-        const x1 = centerX + Math.sin((flowTime + seed1) * freqX1 + seed1 * 0.1) * radius1 * 1.5
-        const y1 = centerY + Math.cos((flowTime + seed1) * freqY1 + seed1 * 0.15) * radius1
-        const x2 = centerX + Math.sin((flowTime + seed2) * freqX2 + seed2 * 0.1) * radius2 * 1.5
-        const y2 = centerY + Math.cos((flowTime + seed2) * freqY2 + seed2 * 0.15) * radius2
-
-        const dist = Math.hypot(x2 - x1, y2 - y1)
-        if (dist < 50) {
+          ctx.globalAlpha = baseOpacity * 0.08
+          ctx.strokeStyle = CREAM
+          ctx.lineWidth = 0.5
+          ctx.setLineDash([2, 4])
           ctx.beginPath()
-          ctx.moveTo(x1, y1)
+          ctx.moveTo(x, y)
           ctx.lineTo(x2, y2)
           ctx.stroke()
+          ctx.setLineDash([])
         }
+      })
+
+      // Draw radial lines from current hit to center
+      const currentHit = pattern[track.currentStep]
+      if (currentHit && track.currentValue > 0.2 && !track.muted) {
+        const angle = stepAngle * track.currentStep - Math.PI / 2 + time * 0.1 * track.clockDivider
+        const x = centerX + Math.cos(angle) * trackRadius
+        const y = centerY + Math.sin(angle) * trackRadius
+
+        ctx.globalAlpha = baseOpacity * track.currentValue * 0.3
+        ctx.strokeStyle = CREAM
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(centerX, centerY)
+        ctx.lineTo(x, y)
+        ctx.stroke()
       }
     })
 
     // ═══════════════════════════════════════════════════════════════
-    // CENTER BREATHING CORE
+    // CENTER ANIMATED CORE (star pattern from DataTerminal)
     // ═══════════════════════════════════════════════════════════════
-    const totalPulse = tracks.reduce((sum, t) => sum + (t.muted ? 0 : t.currentValue), 0) / tracks.length
+    const coreGridSize = 10
+    const coreDotSpacing = 5
+    const coreOffsetX = centerX - (coreGridSize - 1) * coreDotSpacing / 2
+    const coreOffsetY = centerY - (coreGridSize - 1) * coreDotSpacing / 2
     const breathe = Math.sin(time * 2) * 0.3 + 1
 
-    // Outer glow rings
-    for (let ring = 3; ring >= 0; ring--) {
-      const ringSize = (8 + ring * 6) * breathe + totalPulse * 10
+    for (let row = 0; row < coreGridSize; row++) {
+      for (let col = 0; col < coreGridSize; col++) {
+        const x = coreOffsetX + col * coreDotSpacing
+        const y = coreOffsetY + row * coreDotSpacing
+
+        const dx = col - coreGridSize / 2 + 0.5
+        const dy = row - coreGridSize / 2 + 0.5
+        const angle = Math.atan2(dy, dx)
+        const dist = Math.sqrt(dx * dx + dy * dy)
+
+        // Star shape: varies radius based on angle (4 points)
+        const starRadius = 3 + Math.cos(angle * 4 + time * 2) * 1.5
+        const onStar = dist < starRadius && dist > starRadius - 1.5
+        const inCenter = dist < 1.5
+
+        const visible = onStar || inCenter
+        const pulse = Math.sin((time * 3 + col + row) * 0.3)
+
+        if (visible) {
+          ctx.globalAlpha = (0.4 + pulse * 0.4 + totalPulse * 0.3) * breathe
+          ctx.beginPath()
+          ctx.arc(x, y, 2 + totalPulse * 1.5, 0, Math.PI * 2)
+          ctx.fillStyle = CREAM
+          ctx.fill()
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // OUTER EXPANDING RINGS
+    // ═══════════════════════════════════════════════════════════════
+    for (let ring = 0; ring < 3; ring++) {
+      const ringPhase = (time * 0.5 + ring * 0.33) % 1
+      const ringRadius = 20 + ringPhase * 80
+      const ringOpacity = (1 - ringPhase) * 0.15 * (0.5 + totalPulse * 0.5)
+
       ctx.beginPath()
-      ctx.arc(centerX, centerY, ringSize, 0, Math.PI * 2)
+      ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2)
       ctx.strokeStyle = CREAM
-      ctx.globalAlpha = (0.05 - ring * 0.01) + totalPulse * 0.1
+      ctx.globalAlpha = ringOpacity
       ctx.lineWidth = 1
       ctx.stroke()
     }
-
-    // Core
-    ctx.beginPath()
-    ctx.arc(centerX, centerY, 3 + totalPulse * 5, 0, Math.PI * 2)
-    ctx.fillStyle = CREAM
-    ctx.globalAlpha = 0.3 + totalPulse * 0.5
-    ctx.fill()
 
     ctx.globalAlpha = 1
   }, [tracks, getPattern, width, height])

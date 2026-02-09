@@ -25,12 +25,13 @@ export function SlicerWaveform() {
   const isPlaying = useSlicerStore((state) => state.isPlaying)
   const setIsPlaying = useSlicerStore((state) => state.setIsPlaying)
   const enabled = useSlicerStore((state) => state.enabled)
+  const setScanPosition = useSlicerStore((state) => state.setScanPosition)
 
   // Subscribe to the actual frame arrays, not just the getter
   const frames = useSlicerBufferStore((state) => state.frames)
   const capturedFrames = useSlicerBufferStore((state) => state.capturedFrames)
   const setCurrentOutputFrame = useSlicerBufferStore((state) => state.setCurrentOutputFrame)
-  const getGrainFrame = useSlicerBufferStore((state) => state.getGrainFrame)
+  const getFrameAtPosition = useSlicerBufferStore((state) => state.getFrameAtPosition)
 
   // Get active frames based on state
   const activeFrames = capturedFrames !== null ? capturedFrames : frames
@@ -125,9 +126,9 @@ export function SlicerWaveform() {
     }
 
     // Draw playhead if playing, scrubbing, or looping
+    // playheadPosition is now global (0-1 across entire buffer)
     if ((isPlaying && enabled) || isDragging || isLooping) {
-      const sliceStartX = currentSlice * sliceWidth
-      const playheadX = sliceStartX + playheadPosition * sliceWidth
+      const playheadX = playheadPosition * width
 
       // Playhead line
       ctx.strokeStyle = isDragging ? '#FF6B6B' : isLooping ? '#ffcc00' : '#ffffff'
@@ -192,21 +193,28 @@ export function SlicerWaveform() {
       loopStartTimeRef.current = performance.now()
       let lastPosition = 0
 
+      // Calculate global position range for this slice
+      const sliceStart = loopSlice / sliceCount
+      const sliceWidth = 1 / sliceCount
+
       const loopAnimation = (timestamp: number) => {
         const elapsed = timestamp - loopStartTimeRef.current
         // Apply speed multiplier - higher speed = faster loop (shorter effective duration)
         const effectiveDuration = baseLoopDuration / loopSpeedRef.current
-        const position = (elapsed % effectiveDuration) / effectiveDuration
+        const localPosition = (elapsed % effectiveDuration) / effectiveDuration
 
         // Detect loop restart for smooth speed changes
-        if (position < lastPosition) {
+        if (localPosition < lastPosition) {
           loopStartTimeRef.current = timestamp
         }
-        lastPosition = position
+        lastPosition = localPosition
+
+        // Convert to global position within slice
+        const globalPosition = sliceStart + localPosition * sliceWidth
 
         // Update playhead and output frame
-        setPlayheadPosition(position)
-        const frame = getGrainFrame(loopSlice, sliceCount, position)
+        setPlayheadPosition(globalPosition)
+        const frame = getFrameAtPosition(globalPosition)
         if (frame) {
           setCurrentOutputFrame(frame)
         }
@@ -222,7 +230,7 @@ export function SlicerWaveform() {
         }
       }
     }
-  }, [isLooping, loopSlice, enabled, sliceCount, setPlayheadPosition, getGrainFrame, setCurrentOutputFrame])
+  }, [isLooping, loopSlice, enabled, sliceCount, setPlayheadPosition, getFrameAtPosition, setCurrentOutputFrame])
 
   // Calculate slice from mouse position
   const getSliceFromEvent = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -259,15 +267,13 @@ export function SlicerWaveform() {
       setCurrentSlice(slice)
       setIsDragging(true)
 
-      // Immediately output frame at click position
+      // Immediately output frame at click position (global position 0-1)
       if (activeFrames.length > 0) {
         const frameIndex = Math.floor(position * (activeFrames.length - 1))
         const frame = activeFrames[frameIndex]
         if (frame) {
           setCurrentOutputFrame(frame)
-          // Update playhead to show position within current slice
-          const slicePosition = (position * sliceCount) % 1
-          setPlayheadPosition(slicePosition)
+          setPlayheadPosition(position)
         }
       }
 
@@ -317,14 +323,12 @@ export function SlicerWaveform() {
       // Update current slice if we've moved to a different one
       setCurrentSlice(slice)
 
-      // Get frame at absolute position
+      // Get frame at global position (0-1)
       const frameIndex = Math.floor(position * (activeFrames.length - 1))
       const frame = activeFrames[frameIndex]
       if (frame) {
         setCurrentOutputFrame(frame)
-        // Update playhead position within slice
-        const slicePosition = (position * sliceCount) % 1
-        setPlayheadPosition(slicePosition)
+        setPlayheadPosition(position)
       }
     }
   }, [isDragging, isLooping, getPositionFromEvent, getSliceFromEvent, activeFrames, sliceCount, setCurrentSlice, setCurrentOutputFrame, setPlayheadPosition])
@@ -361,7 +365,10 @@ export function SlicerWaveform() {
       const slice = clickedSliceRef.current ?? getSliceFromEvent(e)
       if (slice !== null) {
         setCurrentSlice(slice)
-        setPlayheadPosition(0) // Start from beginning of slice
+        // Set both scanPosition and playhead to start of clicked slice (global position)
+        const globalSliceStart = slice / sliceCount
+        setScanPosition(globalSliceStart)
+        setPlayheadPosition(globalSliceStart)
         setIsPlaying(true) // Start playback
       }
     }
@@ -370,7 +377,7 @@ export function SlicerWaveform() {
     dragStartX.current = null
     dragStartY.current = null
     clickedSliceRef.current = null
-  }, [getSliceFromEvent, setCurrentSlice, setPlayheadPosition, setIsPlaying, isLooping])
+  }, [getSliceFromEvent, setCurrentSlice, setPlayheadPosition, setScanPosition, setIsPlaying, isLooping, sliceCount])
 
   // Handle mouse up outside canvas
   const handleGlobalMouseUp = useCallback(() => {

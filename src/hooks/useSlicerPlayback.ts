@@ -6,12 +6,14 @@ import { useMediaStore } from '../stores/mediaStore'
 
 interface ActiveGrain {
   id: number
-  sliceIndex: number
-  position: number  // 0-1 within slice
+  startPosition: number  // Global buffer position (0-1) where grain starts
   direction: 1 | -1
   startTime: number
-  duration: number
+  duration: number       // How long this grain plays (ms)
+  rate: number          // Playback rate for this grain
 }
+
+const FPS = 30
 
 export function useSlicerPlayback() {
   const {
@@ -43,7 +45,7 @@ export function useSlicerPlayback() {
   const {
     addFrame,
     setMaxFrames,
-    getGrainFrame,
+    getFrameAtPosition,
     setCurrentOutputFrame,
   } = useSlicerBufferStore()
 
@@ -64,11 +66,11 @@ export function useSlicerPlayback() {
 
   // Update maxFrames when bufferSize changes
   useEffect(() => {
-    const fps = 30
-    setMaxFrames(Math.floor(bufferSize * fps))
+    setMaxFrames(Math.floor(bufferSize * FPS))
   }, [bufferSize, setMaxFrames])
 
-  // Auto-scan: automatically sweep scanPosition through the slice
+  // Auto-scan: automatically sweep scanPosition through the buffer
+  // scanPosition is now GLOBAL (0-1 across entire buffer)
   useEffect(() => {
     if (!autoScan || !isPlaying || !enabled) {
       return
@@ -81,22 +83,20 @@ export function useSlicerPlayback() {
         lastScanTime.current = timestamp
       }
 
-      const deltaTime = (timestamp - lastScanTime.current) / 1000 // Convert to seconds
+      const deltaTime = (timestamp - lastScanTime.current) / 1000
       lastScanTime.current = timestamp
 
-      // Calculate position change based on speed (Hz = cycles per second)
+      // Calculate position change based on speed (Hz = full cycles through buffer per second)
       const positionDelta = deltaTime * scanSpeed
 
-      // Get current position from store
       const currentPos = useSlicerStore.getState().scanPosition
 
       let newPosition: number
 
       if (scanMode === 'loop') {
-        // Loop mode: wrap around from 1 to 0
         newPosition = (currentPos + positionDelta) % 1
       } else {
-        // Pendulum mode: bounce back at edges
+        // Pendulum mode
         newPosition = currentPos + positionDelta * scanDirection.current
 
         if (newPosition >= 1) {
@@ -122,7 +122,7 @@ export function useSlicerPlayback() {
     }
   }, [autoScan, isPlaying, enabled, scanSpeed, scanMode, setScanPosition])
 
-  // Frame capture loop (only when videoElement exists and captureState === 'live')
+  // Frame capture loop
   useEffect(() => {
     if (!videoElement || captureState !== 'live') {
       if (frameId.current !== null) {
@@ -132,7 +132,6 @@ export function useSlicerPlayback() {
       return
     }
 
-    // Create capture canvas if needed (480x270 for performance)
     if (!captureCanvas.current) {
       captureCanvas.current = document.createElement('canvas')
       captureCanvas.current.width = 480
@@ -144,11 +143,8 @@ export function useSlicerPlayback() {
     if (!ctx) return
 
     const captureLoop = (timestamp: number) => {
-      // Target ~33ms (30fps)
       if (timestamp - lastCaptureTime.current >= 33) {
         lastCaptureTime.current = timestamp
-
-        // Draw video to canvas
         ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height)
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
         addFrame(imageData)
@@ -198,57 +194,60 @@ export function useSlicerPlayback() {
     setCurrentSlice(nextSlice)
   }, [sliceSequenceMode, currentSlice, sliceCount, setCurrentSlice])
 
-  // Spawn a grain
+  // Spawn a grain at the current scan position
   const spawnGrain = useCallback(() => {
     // Check slice probability
     if (Math.random() > sliceProb) return
 
-    // Get fresh scanPosition from store (important for auto-scan mode)
+    // Get current scan position (now global buffer position 0-1)
     const currentScanPosition = useSlicerStore.getState().scanPosition
 
-    // Calculate position with spray around the user-controlled scan position
-    // Spray randomizes grain start positions around scanPosition (like a granular synth)
-    const sprayOffset = (Math.random() - 0.5) * spray * 2
-    const position = Math.max(0, Math.min(1, currentScanPosition + sprayOffset))
+    // Apply spray randomization around scan position
+    const sprayOffset = (Math.random() - 0.5) * spray
+    let startPosition = currentScanPosition + sprayOffset
 
-    // Determine direction based on direction param and reverseProb
+    // Wrap to keep in valid range
+    if (startPosition < 0) startPosition += 1
+    if (startPosition > 1) startPosition -= 1
+
+    // Determine direction
     let grainDirection: 1 | -1
     if (direction === 'forward') {
       grainDirection = Math.random() < reverseProb ? -1 : 1
     } else if (direction === 'reverse') {
       grainDirection = Math.random() < reverseProb ? 1 : -1
     } else {
-      // random
       grainDirection = Math.random() < 0.5 ? 1 : -1
     }
 
     const newGrain: ActiveGrain = {
       id: grainIdCounter.current++,
-      sliceIndex: currentSlice,
-      position,
+      startPosition,
       direction: grainDirection,
       startTime: performance.now(),
       duration: grainSize,
+      rate: rate,
     }
 
     activeGrains.current.push(newGrain)
-  }, [sliceProb, spray, direction, reverseProb, currentSlice, grainSize])
+  }, [sliceProb, spray, direction, reverseProb, grainSize, rate])
 
-  // Main playback loop (only when isPlaying && enabled)
+  // Main playback loop
   useEffect(() => {
     if (!isPlaying || !enabled) {
       return
     }
 
     let playbackFrameId: number | null = null
+    const bufferDurationMs = bufferSize * 1000
 
     const playbackLoop = (timestamp: number) => {
       // Calculate trigger interval
       const triggerInterval = syncToBpm
-        ? (60000 / bpm) / 4  // Quarter note subdivisions
+        ? (60000 / bpm) / 4
         : 1000 / triggerRate
 
-      // Check if it's time to trigger
+      // Check if it's time to trigger new grains
       if (timestamp - lastTriggerTime.current >= triggerInterval) {
         if (!freeze) {
           advanceSlice()
@@ -261,47 +260,49 @@ export function useSlicerPlayback() {
       }
 
       // Filter expired grains
+      const now = performance.now()
       activeGrains.current = activeGrains.current.filter((grain) => {
-        const elapsed = timestamp - grain.startTime
-        return elapsed < grain.duration
+        return (now - grain.startTime) < grain.duration
       })
 
-      // Set outputFrame from first active grain or auto-scan position
+      // Calculate output from active grains
       if (activeGrains.current.length > 0) {
-        const firstGrain = activeGrains.current[0]
+        const grain = activeGrains.current[0]
+        const elapsed = now - grain.startTime
+        const progress = Math.min(1, elapsed / grain.duration)
 
-        // When auto-scan is on, use scanPosition directly for smooth visual scanning
-        // Otherwise, use grain-based position calculation
-        let currentPosition: number
-        const slicerState = useSlicerStore.getState()
+        // Calculate how much of the buffer this grain spans during its lifetime
+        // At rate=1.0, a 100ms grain reads 100ms of buffer (grainSize/bufferDuration of the buffer)
+        // At rate=2.0, it reads 200ms of buffer (double speed scrub)
+        const grainBufferSpan = (grain.duration * grain.rate) / bufferDurationMs
 
-        if (slicerState.autoScan) {
-          // Auto-scan mode: use current scanPosition directly
-          currentPosition = slicerState.scanPosition
-        } else {
-          // Normal grain playback: position advances from grain's spawn position
-          const elapsed = performance.now() - firstGrain.startTime
-          const progress = elapsed / firstGrain.duration
-          currentPosition = firstGrain.position + progress * firstGrain.direction * rate * 0.5
-          currentPosition = Math.max(0, Math.min(1, currentPosition))
-        }
+        // Calculate current read position
+        let currentPosition = grain.startPosition + progress * grainBufferSpan * grain.direction
 
-        const frame = getGrainFrame(firstGrain.sliceIndex, sliceCount, currentPosition)
+        // Wrap position to stay in 0-1 range (allows grains to loop through buffer)
+        currentPosition = currentPosition % 1
+        if (currentPosition < 0) currentPosition += 1
+
+        // Get frame at current position
+        const frame = getFrameAtPosition(currentPosition)
         outputFrame.current = frame
-
-        // Update store with current output frame for canvas compositor
         setCurrentOutputFrame(frame)
 
-        // Update current slice to match what's being displayed (for playhead visualization)
-        if (firstGrain.sliceIndex !== slicerState.currentSlice) {
-          setCurrentSlice(firstGrain.sliceIndex)
-        }
-
-        // Update playhead position for visualization
+        // Update playhead visualization
         setPlayheadPosition(currentPosition)
+
+        // Update current slice for visualization (which slice are we in?)
+        const visualSlice = Math.floor(currentPosition * sliceCount) % sliceCount
+        if (visualSlice !== useSlicerStore.getState().currentSlice) {
+          setCurrentSlice(visualSlice)
+        }
       } else {
-        outputFrame.current = null
-        setCurrentOutputFrame(null)
+        // No active grains - show frame at current scan position
+        const slicerState = useSlicerStore.getState()
+        const frame = getFrameAtPosition(slicerState.scanPosition)
+        outputFrame.current = frame
+        setCurrentOutputFrame(frame)
+        setPlayheadPosition(slicerState.scanPosition)
       }
 
       playbackFrameId = requestAnimationFrame(playbackLoop)
@@ -324,11 +325,12 @@ export function useSlicerPlayback() {
     advanceSlice,
     density,
     spawnGrain,
-    getGrainFrame,
+    getFrameAtPosition,
     sliceCount,
     setPlayheadPosition,
     setCurrentOutputFrame,
-    rate,
+    setCurrentSlice,
+    bufferSize,
   ])
 
   return {

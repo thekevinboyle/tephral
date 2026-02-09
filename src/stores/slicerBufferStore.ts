@@ -21,6 +21,7 @@ interface SlicerBufferState {
   getActiveFrames: () => ImageData[]
   getSliceFrames: (sliceIndex: number, sliceCount: number) => ImageData[]
   getGrainFrame: (sliceIndex: number, sliceCount: number, position: number) => ImageData | null
+  getFrameAtPosition: (position: number) => ImageData | null
 }
 
 export const useSlicerBufferStore = create<SlicerBufferState>((set, get) => ({
@@ -120,5 +121,19 @@ export const useSlicerBufferStore = create<SlicerBufferState>((set, get) => ({
     // Calculate frame index from position (0-1)
     const frameIndex = Math.floor(position * (sliceFrames.length - 1))
     return sliceFrames[frameIndex]
+  },
+
+  // Get frame from global buffer position (0-1 across entire buffer)
+  // Used for granular playback where grains can span slice boundaries
+  getFrameAtPosition: (position: number) => {
+    const activeFrames = get().getActiveFrames()
+    if (activeFrames.length === 0) return null
+
+    // Wrap position to keep in 0-1 range (allows grains to loop)
+    let wrappedPos = position % 1
+    if (wrappedPos < 0) wrappedPos += 1
+
+    const frameIndex = Math.floor(wrappedPos * (activeFrames.length - 1))
+    return activeFrames[Math.max(0, Math.min(activeFrames.length - 1, frameIndex))]
   },
 }))

@@ -316,11 +316,15 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       const slicerTexture = slicerCompositor.current.getOutputTexture()
       if (slicerTexture) {
         pipeline.setInputTexture(slicerTexture)
+        // Also set as source texture so crossfader SRC shows raw slicer output
+        // (not the camera/file which may not exist)
+        pipeline.setSourceTexture(slicerTexture)
         // Use the slicer texture's actual dimensions for proper aspect ratio
         // The slicer outputs at 480x270 (16:9) regardless of source
         const texWidth = (slicerTexture as THREE.DataTexture).image?.width || 480
         const texHeight = (slicerTexture as THREE.DataTexture).image?.height || 270
         pipeline.setVideoSize(texWidth, texHeight)
+        pipeline.setSourceVideoSize(texWidth, texHeight)
         return
       }
     }

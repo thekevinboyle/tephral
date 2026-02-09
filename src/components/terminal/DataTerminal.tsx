@@ -9,6 +9,7 @@ import { useMotionStore } from '../../stores/motionStore'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useModulationStore } from '../../stores/modulationStore'
 import { useSequencerStore } from '../../stores/sequencerStore'
+import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 
 // Generate random alphanumeric code
 function generateCode(length: number): string {
@@ -410,6 +411,7 @@ export function DataTerminal() {
   const acid = useAcidStore()
   const strand = useStrandStore()
   const motion = useMotionStore()
+  const ascii = useAsciiRenderStore()
   const vision = useVisionTrackingStore()
   const modulation = useModulationStore()
   const { routings } = useSequencerStore()
@@ -467,6 +469,7 @@ export function DataTerminal() {
   // Count active effects
   const activeEffectCount = useMemo(() => {
     let count = 0
+    // Glitch effects
     if (glitch.rgbSplitEnabled) count++
     if (glitch.blockDisplaceEnabled) count++
     if (glitch.scanLinesEnabled) count++
@@ -481,8 +484,28 @@ export function DataTerminal() {
     if (glitch.staticDisplacementEnabled) count++
     if (glitch.colorGradeEnabled) count++
     if (glitch.feedbackLoopEnabled) count++
+    // Acid effects
+    if (acid.dotsEnabled) count++
+    if (acid.glyphEnabled) count++
+    if (acid.iconsEnabled) count++
+    if (acid.contourEnabled) count++
+    if (acid.decompEnabled) count++
+    if (acid.mirrorEnabled) count++
+    if (acid.sliceEnabled) count++
+    if (acid.thGridEnabled) count++
+    if (acid.cloudEnabled) count++
+    if (acid.ledEnabled) count++
+    if (acid.slitEnabled) count++
+    if (acid.voronoiEnabled) count++
+    // Motion effects
+    if (motion.motionExtractEnabled) count++
+    if (motion.echoTrailEnabled) count++
+    if (motion.timeSmearEnabled) count++
+    if (motion.freezeMaskEnabled) count++
+    // ASCII effect
+    if (ascii.enabled) count++
     return count
-  }, [glitch])
+  }, [glitch, acid, motion, ascii])
 
   // Animation tick
   const [tick, setTick] = useState(0)

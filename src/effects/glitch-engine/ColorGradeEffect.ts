@@ -11,6 +11,7 @@ uniform float brightness;
 uniform vec3 tintColor;
 uniform float tintAmount;
 uniform int tintMode; // 0=overlay, 1=multiply, 2=screen
+uniform float effectMix;
 
 vec3 rgb2hsl(vec3 c) {
   float maxC = max(max(c.r, c.g), c.b);
@@ -82,7 +83,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     color = mix(color, tinted, tintAmount);
   }
 
-  outputColor = vec4(clamp(color, 0.0, 1.0), inputColor.a);
+  vec4 effectColor = vec4(clamp(color, 0.0, 1.0), inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -98,6 +100,7 @@ export interface ColorGradeParams {
   tintColor: string
   tintAmount: number
   tintMode: TintMode
+  mix: number
 }
 
 export const DEFAULT_COLOR_GRADE_PARAMS: ColorGradeParams = {
@@ -110,6 +113,7 @@ export const DEFAULT_COLOR_GRADE_PARAMS: ColorGradeParams = {
   tintColor: '#000000',
   tintAmount: 0,
   tintMode: 'overlay',
+  mix: 1,
 }
 
 const TINT_MODE_MAP: Record<TintMode, number> = {
@@ -142,6 +146,7 @@ export class ColorGradeEffect extends Effect {
         ['tintColor', new THREE.Uniform(new THREE.Vector3(...tintRgb))],
         ['tintAmount', new THREE.Uniform(p.tintAmount)],
         ['tintMode', new THREE.Uniform(TINT_MODE_MAP[p.tintMode])],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -169,5 +174,6 @@ export class ColorGradeEffect extends Effect {
     }
     if (params.tintAmount !== undefined) this.uniforms.get('tintAmount')!.value = params.tintAmount
     if (params.tintMode !== undefined) this.uniforms.get('tintMode')!.value = TINT_MODE_MAP[params.tintMode]
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 }

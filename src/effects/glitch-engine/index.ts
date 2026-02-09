@@ -57,3 +57,10 @@ export type { TimeSmearParams } from './TimeSmearEffect'
 
 export { FreezeMaskEffect, DEFAULT_FREEZE_MASK_PARAMS } from './FreezeMaskEffect'
 export type { FreezeMaskParams } from './FreezeMaskEffect'
+
+// Vision effects (GPU versions of overlay effects)
+export { DotsEffect, DEFAULT_DOTS_EFFECT_PARAMS } from './DotsEffect'
+export type { DotsEffectParams } from './DotsEffect'
+
+export { AsciiEffect, DEFAULT_ASCII_EFFECT_PARAMS } from './AsciiEffect'
+export type { AsciiEffectParams, AsciiEffectMode, AsciiColorMode } from './AsciiEffect'

@@ -9,6 +9,7 @@ uniform float fresnelRainbow;
 uniform float vignette;
 uniform float vignetteShape;
 uniform float phosphorGlow;
+uniform float effectMix;
 
 vec2 barrelDistort(vec2 uv, float k) {
   vec2 center = uv - 0.5;
@@ -71,7 +72,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     color.rgb += color.rgb * smoothstep(0.5, 1.0, luma) * phosphorGlow;
   }
 
-  outputColor = color;
+  vec4 effectColor = color;
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -83,6 +85,7 @@ export interface LensDistortionParams {
   vignette: number         // 0-1
   vignetteShape: number    // 0-1 (0=circular, 1=rectangular)
   phosphorGlow: number     // 0-1
+  mix: number              // 0-1
 }
 
 export const DEFAULT_LENS_DISTORTION_PARAMS: LensDistortionParams = {
@@ -93,6 +96,7 @@ export const DEFAULT_LENS_DISTORTION_PARAMS: LensDistortionParams = {
   vignette: 0.3,
   vignetteShape: 0,
   phosphorGlow: 0,
+  mix: 1,
 }
 
 export class LensDistortionEffect extends Effect {
@@ -109,6 +113,7 @@ export class LensDistortionEffect extends Effect {
         ['vignette', new THREE.Uniform(p.vignette)],
         ['vignetteShape', new THREE.Uniform(p.vignetteShape)],
         ['phosphorGlow', new THREE.Uniform(p.phosphorGlow)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -121,5 +126,6 @@ export class LensDistortionEffect extends Effect {
     if (params.vignette !== undefined) this.uniforms.get('vignette')!.value = params.vignette
     if (params.vignetteShape !== undefined) this.uniforms.get('vignetteShape')!.value = params.vignetteShape
     if (params.phosphorGlow !== undefined) this.uniforms.get('phosphorGlow')!.value = params.phosphorGlow
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 }

@@ -8,6 +8,7 @@ uniform float speed;
 uniform int direction; // 0=both, 1=horizontal, 2=vertical
 uniform int noiseType; // 0=white, 1=perlin
 uniform float time;
+uniform float effectMix;
 
 float random(vec2 st) {
   return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
@@ -66,7 +67,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   vec2 displacedUV = uv + offset;
   displacedUV = clamp(displacedUV, 0.0, 1.0);
 
-  outputColor = texture2D(inputBuffer, displacedUV);
+  vec4 effectColor = texture2D(inputBuffer, displacedUV);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -79,6 +81,7 @@ export interface StaticDisplacementParams {
   speed: number                 // 0-10
   direction: DisplacementDirection
   noiseType: DisplacementNoiseType
+  mix: number
 }
 
 export const DEFAULT_STATIC_DISPLACEMENT_PARAMS: StaticDisplacementParams = {
@@ -87,6 +90,7 @@ export const DEFAULT_STATIC_DISPLACEMENT_PARAMS: StaticDisplacementParams = {
   speed: 1.0,
   direction: 'both',
   noiseType: 'perlin',
+  mix: 1,
 }
 
 const DIRECTION_MAP: Record<DisplacementDirection, number> = {
@@ -113,6 +117,7 @@ export class StaticDisplacementEffect extends Effect {
         ['direction', new THREE.Uniform(DIRECTION_MAP[p.direction])],
         ['noiseType', new THREE.Uniform(NOISE_MAP[p.noiseType])],
         ['time', new THREE.Uniform(0)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -127,5 +132,6 @@ export class StaticDisplacementEffect extends Effect {
     if (params.speed !== undefined) this.uniforms.get('speed')!.value = params.speed
     if (params.direction !== undefined) this.uniforms.get('direction')!.value = DIRECTION_MAP[params.direction]
     if (params.noiseType !== undefined) this.uniforms.get('noiseType')!.value = NOISE_MAP[params.noiseType]
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 }

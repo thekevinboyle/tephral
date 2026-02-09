@@ -8,6 +8,7 @@ uniform float offset;
 uniform bool colorShift;
 uniform float hueAmount;
 uniform bool hasTrail;
+uniform float effectMix;
 
 vec3 rgb2hsv(vec3 c) {
   vec4 K = vec4(0.0, -1.0/3.0, 2.0/3.0, -1.0);
@@ -50,7 +51,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   // Use max blend for additive ghosting effect
   vec3 result = max(current, trail);
 
-  outputColor = vec4(result, inputColor.a);
+  vec4 effectColor = vec4(result, inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -60,6 +62,7 @@ export interface EchoTrailParams {
   offset: number
   colorShift: boolean
   hueAmount: number
+  mix: number
 }
 
 export const DEFAULT_ECHO_TRAIL_PARAMS: EchoTrailParams = {
@@ -68,6 +71,7 @@ export const DEFAULT_ECHO_TRAIL_PARAMS: EchoTrailParams = {
   offset: 0,
   colorShift: false,
   hueAmount: 15,
+  mix: 1,
 }
 
 export class EchoTrailEffect extends Effect {
@@ -90,6 +94,7 @@ export class EchoTrailEffect extends Effect {
         ['colorShift', new THREE.Uniform(p.colorShift)],
         ['hueAmount', new THREE.Uniform(p.hueAmount)],
         ['hasTrail', new THREE.Uniform(false)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -153,6 +158,7 @@ export class EchoTrailEffect extends Effect {
     if (params.offset !== undefined) this.uniforms.get('offset')!.value = params.offset
     if (params.colorShift !== undefined) this.uniforms.get('colorShift')!.value = params.colorShift
     if (params.hueAmount !== undefined) this.uniforms.get('hueAmount')!.value = params.hueAmount
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 
   clearTrail() {

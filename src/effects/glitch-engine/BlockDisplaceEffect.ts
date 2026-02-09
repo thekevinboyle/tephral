@@ -7,6 +7,7 @@ uniform float displaceChance;
 uniform float displaceDistance;
 uniform float time;
 uniform float seed;
+uniform float effectMix;
 
 float random(vec2 st) {
   return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
@@ -24,7 +25,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     sampleUv += vec2(displaceX, displaceY);
   }
 
-  outputColor = texture2D(inputBuffer, sampleUv);
+  vec4 effectColor = texture2D(inputBuffer, sampleUv);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -34,6 +36,7 @@ export interface BlockDisplaceParams {
   displaceDistance: number
   seed: number
   animated: boolean
+  mix: number
 }
 
 export const DEFAULT_BLOCK_DISPLACE_PARAMS: BlockDisplaceParams = {
@@ -42,6 +45,7 @@ export const DEFAULT_BLOCK_DISPLACE_PARAMS: BlockDisplaceParams = {
   displaceDistance: 0.02,
   seed: 0,
   animated: true,
+  mix: 1,
 }
 
 export class BlockDisplaceEffect extends Effect {
@@ -58,6 +62,7 @@ export class BlockDisplaceEffect extends Effect {
         ['displaceDistance', new THREE.Uniform(p.displaceDistance)],
         ['time', new THREE.Uniform(0)],
         ['seed', new THREE.Uniform(p.seed)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
 
@@ -80,6 +85,9 @@ export class BlockDisplaceEffect extends Effect {
     }
     if (params.seed !== undefined) {
       this.uniforms.get('seed')!.value = params.seed
+    }
+    if (params.mix !== undefined) {
+      this.uniforms.get('effectMix')!.value = params.mix
     }
   }
 

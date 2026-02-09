@@ -473,6 +473,10 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
   }
 
   // Apply filter to image data region
+  // Temp canvas for clipped drawing (putImageData ignores clip paths)
+  let tempFilterCanvas: HTMLCanvasElement | null = null
+  let tempFilterCtx: CanvasRenderingContext2D | null = null
+
   function applyBoxFilter(
     sourceCtx: CanvasRenderingContext2D,
     destCtx: CanvasRenderingContext2D,
@@ -480,7 +484,8 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
     filter: string,
     intensity: number,
     canvasWidth: number,
-    canvasHeight: number
+    canvasHeight: number,
+    boxShape: 'circle' | 'square' | 'dynamic' = 'square'
   ) {
     const x = Math.floor(blob.x * canvasWidth)
     const y = Math.floor(blob.y * canvasHeight)
@@ -641,7 +646,37 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
         }
       }
 
-      destCtx.putImageData(imageData, x, y)
+      // Determine if we should use ellipse clipping
+      let useCircle = false
+      if (boxShape === 'circle') {
+        useCircle = true
+      } else if (boxShape === 'dynamic') {
+        useCircle = blob.compactness > 0.5
+      }
+
+      if (useCircle) {
+        // Use temp canvas + clip path for ellipse (putImageData ignores clip paths)
+        if (!tempFilterCanvas) {
+          tempFilterCanvas = document.createElement('canvas')
+          tempFilterCtx = tempFilterCanvas.getContext('2d')
+        }
+        if (tempFilterCanvas && tempFilterCtx) {
+          tempFilterCanvas.width = bw
+          tempFilterCanvas.height = bh
+          tempFilterCtx.putImageData(imageData, 0, 0)
+
+          // Draw with ellipse clip
+          destCtx.save()
+          destCtx.beginPath()
+          destCtx.ellipse(x + bw / 2, y + bh / 2, bw / 2, bh / 2, 0, 0, Math.PI * 2)
+          destCtx.clip()
+          destCtx.drawImage(tempFilterCanvas, x, y)
+          destCtx.restore()
+        }
+      } else {
+        // Rectangle - direct putImageData is fine
+        destCtx.putImageData(imageData, x, y)
+      }
     } catch (e) {
       // Ignore errors from accessing pixels outside canvas
     }
@@ -667,7 +702,7 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
     // Apply box filters first (if enabled)
     if (boxFilter && boxFilter !== 'none' && sourceCtx && boxFilterIntensity !== undefined) {
       for (const blob of blobs) {
-        applyBoxFilter(sourceCtx, ctx, blob, boxFilter, boxFilterIntensity, w, h)
+        applyBoxFilter(sourceCtx, ctx, blob, boxFilter, boxFilterIntensity, w, h, boxShape)
       }
     }
 

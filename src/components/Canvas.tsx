@@ -5,6 +5,8 @@ import { useVideoTexture } from '../hooks/useVideoTexture'
 import { EffectPipeline } from '../effects/EffectPipeline'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useMotionStore } from '../stores/motionStore'
+import { useAcidStore } from '../stores/acidStore'
+import { useAsciiRenderStore } from '../stores/asciiRenderStore'
 import { useMediaStore } from '../stores/mediaStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useRecordingStore } from '../stores/recordingStore'
@@ -75,11 +77,10 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     dither,
     edgeDetection,
     feedbackLoop,
-    wetMix,
     bypassActive,
     effectBypassed,
     soloEffectId,
-    getEffectMix,
+    effectMix,
   } = useGlitchEngineStore()
 
   // Motion effects state
@@ -93,6 +94,17 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     timeSmear,
     freezeMask,
   } = useMotionStore()
+
+  // Vision effects (GPU overlay versions)
+  const {
+    dotsEnabled,
+    dotsParams,
+  } = useAcidStore()
+
+  const {
+    enabled: asciiEnabled,
+    params: asciiParams,
+  } = useAsciiRenderStore()
 
   // Solo filtering: when soloing, only the soloed effect passes through
   const isSoloing = soloEffectId !== null
@@ -149,107 +161,45 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     }
   }, [slicerOutputFrame, slicerOutputMode, videoElement])
 
-  // Sync effect parameters (apply per-effect mix to intensity params)
+  // Sync effect parameters with per-effect dry/wet mix
   useEffect(() => {
     if (!pipeline) return
 
-    // Apply mix to RGB split amount
-    pipeline.rgbSplit?.updateParams({
-      ...rgbSplit,
-      amount: rgbSplit.amount * getEffectMix('rgb_split'),
-    })
+    // Helper to get mix value (defaults to 1 if not set)
+    const getMix = (id: string) => effectMix[id] ?? 1
 
-    // Apply mix to chromatic aberration intensity
-    pipeline.chromaticAberration?.updateParams({
-      ...chromaticAberration,
-      intensity: chromaticAberration.intensity * getEffectMix('chromatic'),
-    })
-
-    // Posterize levels don't scale well with mix, keep as-is
-    pipeline.posterize?.updateParams(posterize)
-
-    // Apply mix to color grade saturation
-    pipeline.colorGrade?.updateParams({
-      ...colorGrade,
-      saturation: 1 + (colorGrade.saturation - 1) * getEffectMix('color_grade'),
-      contrast: 1 + (colorGrade.contrast - 1) * getEffectMix('color_grade'),
-      brightness: 1 + (colorGrade.brightness - 1) * getEffectMix('color_grade'),
-    })
-
-    // Apply mix to block displace distance
-    pipeline.blockDisplace?.updateParams({
-      ...blockDisplace,
-      displaceDistance: blockDisplace.displaceDistance * getEffectMix('block_displace'),
-    })
-
-    // Apply mix to static displacement intensity
-    pipeline.staticDisplacement?.updateParams({
-      ...staticDisplacement,
-      intensity: staticDisplacement.intensity * getEffectMix('static_displace'),
-    })
-
-    // Pixelate size doesn't scale intuitively, keep as-is
-    pipeline.pixelate?.updateParams(pixelate)
-
-    // Apply mix to lens distortion curvature
-    pipeline.lensDistortion?.updateParams({
-      ...lensDistortion,
-      curvature: lensDistortion.curvature * getEffectMix('lens'),
-    })
-
-    // Apply mix to scan lines opacity
-    pipeline.scanLines?.updateParams({
-      ...scanLines,
-      lineOpacity: scanLines.lineOpacity * getEffectMix('scan_lines'),
-    })
-
-    // Apply mix to VHS tear intensity
-    pipeline.vhsTracking?.updateParams({
-      ...vhsTracking,
-      tearIntensity: vhsTracking.tearIntensity * getEffectMix('vhs'),
-    })
-
-    // Apply mix to noise amount
-    pipeline.noise?.updateParams({
-      ...noise,
-      amount: noise.amount * getEffectMix('noise'),
-    })
-
-    // Apply mix to dither intensity
-    pipeline.dither?.updateParams({
-      ...dither,
-      intensity: dither.intensity * getEffectMix('dither'),
-    })
-
-    // Apply mix to edge detection threshold (inverse - lower = more edges)
-    const edgeMix = getEffectMix('edges')
-    pipeline.edgeDetection?.updateParams({
-      ...edgeDetection,
-      threshold: edgeMix > 0 ? edgeDetection.threshold / edgeMix : 1,
-    })
-
-    // Apply mix to feedback decay
-    pipeline.feedbackLoop?.updateParams({
-      ...feedbackLoop,
-      decay: feedbackLoop.decay * getEffectMix('feedback'),
-    })
+    // Each effect now has a mix uniform for true dry/wet blending
+    pipeline.rgbSplit?.updateParams({ ...rgbSplit, mix: getMix('rgb_split') })
+    pipeline.chromaticAberration?.updateParams({ ...chromaticAberration, mix: getMix('chromatic') })
+    pipeline.posterize?.updateParams({ ...posterize, mix: getMix('posterize') })
+    pipeline.colorGrade?.updateParams({ ...colorGrade, mix: getMix('color_grade') })
+    pipeline.blockDisplace?.updateParams({ ...blockDisplace, mix: getMix('block_displace') })
+    pipeline.staticDisplacement?.updateParams({ ...staticDisplacement, mix: getMix('static_displace') })
+    pipeline.pixelate?.updateParams({ ...pixelate, mix: getMix('pixelate') })
+    pipeline.lensDistortion?.updateParams({ ...lensDistortion, mix: getMix('lens') })
+    pipeline.scanLines?.updateParams({ ...scanLines, mix: getMix('scan_lines') })
+    pipeline.vhsTracking?.updateParams({ ...vhsTracking, mix: getMix('vhs') })
+    pipeline.noise?.updateParams({ ...noise, mix: getMix('noise') })
+    pipeline.dither?.updateParams({ ...dither, mix: getMix('dither') })
+    pipeline.edgeDetection?.updateParams({ ...edgeDetection, mix: getMix('edges') })
+    pipeline.feedbackLoop?.updateParams({ ...feedbackLoop, mix: getMix('feedback') })
 
     // Motion effects
-    pipeline.motionExtract?.updateParams({
-      ...motionExtract,
-      threshold: motionExtract.threshold * getEffectMix('motion_extract'),
-    })
-    pipeline.echoTrail?.updateParams({
-      ...echoTrail,
-      decay: echoTrail.decay * getEffectMix('echo_trail'),
-    })
-    pipeline.timeSmear?.updateParams({
-      ...timeSmear,
-      accumulation: timeSmear.accumulation * getEffectMix('time_smear'),
-    })
-    pipeline.freezeMask?.updateParams({
-      ...freezeMask,
-      freezeThreshold: freezeMask.freezeThreshold * getEffectMix('freeze_mask'),
+    pipeline.motionExtract?.updateParams({ ...motionExtract, mix: getMix('motion_extract') })
+    pipeline.echoTrail?.updateParams({ ...echoTrail, mix: getMix('echo_trail') })
+    pipeline.timeSmear?.updateParams({ ...timeSmear, mix: getMix('time_smear') })
+    pipeline.freezeMask?.updateParams({ ...freezeMask, mix: getMix('freeze_mask') })
+
+    // Vision effects (GPU overlay versions)
+    pipeline.dotsEffect?.updateParams({ ...dotsParams, mix: getMix('acid_dots') })
+    pipeline.asciiEffect?.updateParams({
+      mode: asciiParams.mode === 'matrix' ? 'standard' : asciiParams.mode as 'standard' | 'blocks' | 'braille',
+      cellSize: asciiParams.resolution,
+      contrast: asciiParams.contrast,
+      invert: asciiParams.invert,
+      colorMode: asciiParams.colorMode === 'gradient' ? 'mono' : asciiParams.colorMode as 'mono' | 'original',
+      monoColor: asciiParams.monoColor,
+      mix: getMix('ascii'),
     })
 
     pipeline.updateEffects({
@@ -273,7 +223,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       echoTrailEnabled: getEffectiveEnabled('echo_trail', echoTrailEnabled),
       timeSmearEnabled: getEffectiveEnabled('time_smear', timeSmearEnabled),
       freezeMaskEnabled: getEffectiveEnabled('freeze_mask', freezeMaskEnabled),
-      wetMix,
+      // Vision effects (GPU overlay versions) - not affected by glitchEnabled
+      dotsEnabled: getEffectiveEnabled('acid_dots', dotsEnabled && !effectBypassed['acid_dots']),
+      asciiEnabled: getEffectiveEnabled('ascii', asciiEnabled && !effectBypassed['ascii'] && asciiParams.mode !== 'matrix'),
       bypassActive,
       crossfaderPosition,
       hasSourceTexture: !!mediaTexture && !slicerEnabled,
@@ -312,7 +264,6 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     edgeDetection,
     feedbackLoop,
     effectOrder,
-    wetMix,
     bypassActive,
     crossfaderPosition,
     effectBypassed,
@@ -328,7 +279,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     freezeMask,
     mediaTexture,
     slicerEnabled,
-    getEffectMix,
+    effectMix,
+    // Vision effects
+    dotsEnabled,
+    dotsParams,
+    asciiEnabled,
+    asciiParams,
   ])
 
   // Update input texture and video dimensions
@@ -402,6 +358,11 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     const updateSize = () => {
       pipeline.setSize(container.clientWidth, container.clientHeight)
       renderer.setSize(container.clientWidth, container.clientHeight)
+      // Update resolution for GPU effects that need it
+      pipeline.dotsEffect?.setResolution(container.clientWidth, container.clientHeight)
+      pipeline.asciiEffect?.setResolution(container.clientWidth, container.clientHeight)
+      pipeline.edgeDetection?.setResolution(container.clientWidth, container.clientHeight)
+      pipeline.pixelate?.setResolution(container.clientWidth, container.clientHeight)
     }
 
     updateSize()

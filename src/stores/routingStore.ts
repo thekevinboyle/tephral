@@ -248,6 +248,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
           greenOffsetY: 0,
           blueOffsetX: rand(-0.05, 0.05),
           blueOffsetY: rand(-0.05, 0.05),
+          mix: 1,
         },
         blockDisplaceEnabled: randBool(),
         blockDisplace: {
@@ -256,27 +257,32 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
           displaceDistance: rand(0, 0.1),
           seed: randInt(0, 1000),
           animated: randBool(),
+          mix: 1,
         },
         scanLinesEnabled: randBool(),
         scanLines: {
           lineCount: randInt(50, 400),
           lineOpacity: rand(0.1, 0.8),
           lineFlicker: rand(0, 0.3),
+          mix: 1,
         },
         noiseEnabled: randBool(),
         noise: {
           amount: rand(0, 0.5),
           speed: rand(1, 30),
+          mix: 1,
         },
         pixelateEnabled: randBool(),
         pixelate: {
           pixelSize: randInt(2, 24),
+          mix: 1,
         },
         edgeDetectionEnabled: randBool(),
         edgeDetection: {
           threshold: rand(0.1, 0.9),
           edgeColor: ['#00ff00', '#ff0066', '#00ffff', '#ffff00', '#ff00ff'][randInt(0, 4)],
           mixAmount: rand(0.3, 1),
+          mix: 1,
         },
         chromaticAberrationEnabled: randBool(),
         chromaticAberration: {
@@ -285,6 +291,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
           direction: rand(0, 360),
           redOffset: rand(-0.05, 0.05),
           blueOffset: rand(-0.05, 0.05),
+          mix: 1,
         },
         vhsTrackingEnabled: randBool(),
         vhsTracking: {
@@ -293,6 +300,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
           headSwitchNoise: rand(0, 1),
           colorBleed: rand(0, 1),
           jitter: rand(0, 1),
+          mix: 1,
         },
         lensDistortionEnabled: randBool(),
         lensDistortion: {
@@ -303,6 +311,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
           vignette: rand(0, 1),
           vignetteShape: rand(0, 1),
           phosphorGlow: rand(0, 1),
+          mix: 1,
         },
         ditherEnabled: randBool(),
         dither: {
@@ -311,6 +320,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
           scale: randInt(1, 8),
           colorDepth: randInt(2, 16),
           angle: rand(0, 180),
+          mix: 1,
         },
         posterizeEnabled: randBool(),
         posterize: {
@@ -318,6 +328,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
           mode: ['rgb', 'hsl'][randInt(0, 1)] as 'rgb' | 'hsl',
           saturationBoost: rand(0, 2),
           edgeContrast: rand(0, 1),
+          mix: 1,
         },
         staticDisplacementEnabled: randBool(),
         staticDisplacement: {
@@ -326,6 +337,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
           speed: rand(0, 10),
           direction: ['both', 'horizontal', 'vertical'][randInt(0, 2)] as 'both' | 'horizontal' | 'vertical',
           noiseType: ['white', 'perlin'][randInt(0, 1)] as 'white' | 'perlin',
+          mix: 1,
         },
         colorGradeEnabled: randBool(),
         colorGrade: {
@@ -338,6 +350,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
           tintColor: ['#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00'][randInt(0, 4)],
           tintAmount: rand(0, 1),
           tintMode: ['overlay', 'multiply', 'screen'][randInt(0, 2)] as 'overlay' | 'multiply' | 'screen',
+          mix: 1,
         },
         feedbackLoopEnabled: randBool(),
         feedbackLoop: {
@@ -347,6 +360,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
           zoom: rand(0.95, 1.05),
           rotation: rand(-5, 5),
           hueShift: rand(0, 30),
+          mix: 1,
         },
         wetMix: rand(0.5, 1),
       },

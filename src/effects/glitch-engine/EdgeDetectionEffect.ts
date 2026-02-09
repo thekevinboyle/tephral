@@ -6,6 +6,7 @@ uniform float threshold;
 uniform vec2 resolution;
 uniform vec3 edgeColor;
 uniform float mixAmount;
+uniform float effectMix;
 
 float luminance(vec3 color) {
   return dot(color, vec3(0.299, 0.587, 0.114));
@@ -31,7 +32,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   edge = step(threshold, edge);
 
   vec3 result = mix(inputColor.rgb, edgeColor * edge, mixAmount);
-  outputColor = vec4(result, inputColor.a);
+  vec4 effectColor = vec4(result, inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -39,12 +41,14 @@ export interface EdgeDetectionParams {
   threshold: number
   edgeColor: string
   mixAmount: number
+  mix: number
 }
 
 export const DEFAULT_EDGE_DETECTION_PARAMS: EdgeDetectionParams = {
   threshold: 0.1,
   edgeColor: '#00ff00',
   mixAmount: 1.0,
+  mix: 1,
 }
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -66,6 +70,7 @@ export class EdgeDetectionEffect extends Effect {
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['edgeColor', new THREE.Uniform(new THREE.Vector3(r, g, b))],
         ['mixAmount', new THREE.Uniform(p.mixAmount)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -86,6 +91,9 @@ export class EdgeDetectionEffect extends Effect {
     }
     if (params.mixAmount !== undefined) {
       this.uniforms.get('mixAmount')!.value = params.mixAmount
+    }
+    if (params.mix !== undefined) {
+      this.uniforms.get('effectMix')!.value = params.mix
     }
   }
 }

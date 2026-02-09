@@ -7,6 +7,7 @@ uniform float scale;
 uniform float colorDepth;
 uniform float angle;
 uniform int mode; // 0=ordered, 1=halftone, 2=newsprint
+uniform float effectMix;
 
 // 4x4 Bayer matrix
 const mat4 bayerMatrix = mat4(
@@ -68,7 +69,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   }
 
   color = mix(inputColor.rgb, color, intensity);
-  outputColor = vec4(color, inputColor.a);
+  vec4 effectColor = vec4(color, inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -80,6 +82,7 @@ export interface DitherParams {
   scale: number      // 1-8
   colorDepth: number // 2-16
   angle: number      // 0-180
+  mix: number
 }
 
 export const DEFAULT_DITHER_PARAMS: DitherParams = {
@@ -88,6 +91,7 @@ export const DEFAULT_DITHER_PARAMS: DitherParams = {
   scale: 1,
   colorDepth: 4,
   angle: 45,
+  mix: 1,
 }
 
 const MODE_MAP: Record<DitherMode, number> = {
@@ -108,6 +112,7 @@ export class DitherEffect extends Effect {
         ['colorDepth', new THREE.Uniform(p.colorDepth)],
         ['angle', new THREE.Uniform(p.angle)],
         ['mode', new THREE.Uniform(MODE_MAP[p.mode])],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -118,5 +123,6 @@ export class DitherEffect extends Effect {
     if (params.colorDepth !== undefined) this.uniforms.get('colorDepth')!.value = params.colorDepth
     if (params.angle !== undefined) this.uniforms.get('angle')!.value = params.angle
     if (params.mode !== undefined) this.uniforms.get('mode')!.value = MODE_MAP[params.mode]
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 }

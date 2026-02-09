@@ -10,6 +10,7 @@ uniform float zoom;
 uniform float rotation;
 uniform float hueShift;
 uniform bool hasFeedback;
+uniform float effectMix;
 
 vec3 rgb2hsv(vec3 c) {
   vec4 K = vec4(0.0, -1.0/3.0, 2.0/3.0, -1.0);
@@ -73,7 +74,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   // Mix current with decayed feedback
   vec3 result = current + feedback * decay;
 
-  outputColor = vec4(result, inputColor.a);
+  vec4 effectColor = vec4(result, inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -84,6 +86,7 @@ export interface FeedbackLoopParams {
   zoom: number       // 0.95-1.05
   rotation: number   // -5 to 5 degrees
   hueShift: number   // 0-30 degrees
+  mix: number
 }
 
 export const DEFAULT_FEEDBACK_LOOP_PARAMS: FeedbackLoopParams = {
@@ -93,6 +96,7 @@ export const DEFAULT_FEEDBACK_LOOP_PARAMS: FeedbackLoopParams = {
   zoom: 1.0,
   rotation: 0,
   hueShift: 0,
+  mix: 1,
 }
 
 export class FeedbackLoopEffect extends Effect {
@@ -116,6 +120,7 @@ export class FeedbackLoopEffect extends Effect {
         ['rotation', new THREE.Uniform(p.rotation)],
         ['hueShift', new THREE.Uniform(p.hueShift)],
         ['hasFeedback', new THREE.Uniform(false)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -186,6 +191,7 @@ export class FeedbackLoopEffect extends Effect {
     if (params.zoom !== undefined) this.uniforms.get('zoom')!.value = params.zoom
     if (params.rotation !== undefined) this.uniforms.get('rotation')!.value = params.rotation
     if (params.hueShift !== undefined) this.uniforms.get('hueShift')!.value = params.hueShift
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 
   dispose() {

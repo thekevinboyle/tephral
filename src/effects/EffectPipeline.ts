@@ -7,7 +7,6 @@ import {
   NoiseEffect,
   PixelateEffect,
   EdgeDetectionEffect,
-  MixEffect,
   CrossfaderEffect,
   ChromaticAberrationEffect,
   VHSTrackingEffect,
@@ -21,6 +20,8 @@ import {
   EchoTrailEffect,
   TimeSmearEffect,
   FreezeMaskEffect,
+  DotsEffect,
+  AsciiEffect,
 } from './glitch-engine'
 
 export class EffectPipeline {
@@ -37,7 +38,6 @@ export class EffectPipeline {
   noise: NoiseEffect | null = null
   pixelate: PixelateEffect | null = null
   edgeDetection: EdgeDetectionEffect | null = null
-  mixEffect: MixEffect | null = null
   chromaticAberration: ChromaticAberrationEffect | null = null
   vhsTracking: VHSTrackingEffect | null = null
   lensDistortion: LensDistortionEffect | null = null
@@ -53,11 +53,14 @@ export class EffectPipeline {
   timeSmear: TimeSmearEffect | null = null
   freezeMask: FreezeMaskEffect | null = null
 
+  // Vision effects (GPU versions of overlays)
+  dotsEffect: DotsEffect | null = null
+  asciiEffect: AsciiEffect | null = null
+
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
 
   private effectPass: EffectPass | null = null
-  private mixEffectPass: EffectPass | null = null
   private crossfaderPass: EffectPass | null = null
 
   // Dimensions for aspect ratio
@@ -87,7 +90,6 @@ export class EffectPipeline {
     this.noise = new NoiseEffect()
     this.pixelate = new PixelateEffect()
     this.edgeDetection = new EdgeDetectionEffect()
-    this.mixEffect = new MixEffect()
     this.chromaticAberration = new ChromaticAberrationEffect()
     this.vhsTracking = new VHSTrackingEffect()
     this.lensDistortion = new LensDistortionEffect()
@@ -102,6 +104,10 @@ export class EffectPipeline {
     this.echoTrail = new EchoTrailEffect()
     this.timeSmear = new TimeSmearEffect()
     this.freezeMask = new FreezeMaskEffect()
+
+    // Vision effects (GPU versions of overlays)
+    this.dotsEffect = new DotsEffect()
+    this.asciiEffect = new AsciiEffect()
 
     // Crossfader for A/B source blending
     this.crossfaderEffect = new CrossfaderEffect()
@@ -128,6 +134,8 @@ export class EffectPipeline {
       case 'echo_trail': return this.echoTrail
       case 'time_smear': return this.timeSmear
       case 'freeze_mask': return this.freezeMask
+      case 'acid_dots': return this.dotsEffect
+      case 'ascii': return this.asciiEffect
       default: return null
     }
   }
@@ -153,7 +161,9 @@ export class EffectPipeline {
     echoTrailEnabled: boolean
     timeSmearEnabled: boolean
     freezeMaskEnabled: boolean
-    wetMix: number
+    // Vision effects (GPU overlays)
+    dotsEnabled: boolean
+    asciiEnabled: boolean
     bypassActive: boolean
     crossfaderPosition: number
     hasSourceTexture: boolean
@@ -165,10 +175,6 @@ export class EffectPipeline {
       this.composer.removePass(this.effectPass)
       this.effectPass = null
     }
-    if (this.mixEffectPass) {
-      this.composer.removePass(this.mixEffectPass)
-      this.mixEffectPass = null
-    }
     if (this.crossfaderPass) {
       this.composer.removePass(this.crossfaderPass)
       this.crossfaderPass = null
@@ -177,12 +183,6 @@ export class EffectPipeline {
     // If bypass is active, don't add any effect passes - just render the input
     if (config.bypassActive) {
       return
-    }
-
-    // Update mix effect params
-    if (this.mixEffect) {
-      this.mixEffect.updateParams({ wetMix: config.wetMix })
-      this.mixEffect.setOriginalTexture(this.inputTexture)
     }
 
     // Update crossfader position
@@ -210,6 +210,8 @@ export class EffectPipeline {
       echo_trail: config.echoTrailEnabled,
       time_smear: config.timeSmearEnabled,
       freeze_mask: config.freezeMaskEnabled,
+      acid_dots: config.dotsEnabled,
+      ascii: config.asciiEnabled,
     }
 
     // Collect enabled effects in the specified order
@@ -230,14 +232,6 @@ export class EffectPipeline {
     if (effects.length > 0) {
       this.effectPass = new EffectPass(this.camera, ...effects)
       this.composer.addPass(this.effectPass)
-    }
-
-    // Add mix effect pass for wet/dry control (only if not fully wet and we have an input texture)
-    if (this.mixEffect && config.wetMix < 1 && this.inputTexture) {
-      // Ensure originalTexture is set before adding the pass
-      this.mixEffect.setOriginalTexture(this.inputTexture)
-      this.mixEffectPass = new EffectPass(this.camera, this.mixEffect)
-      this.composer.addPass(this.mixEffectPass)
     }
 
     // Add crossfader pass for A/B blending (source vs processed)
@@ -263,11 +257,6 @@ export class EffectPipeline {
     this.inputTexture = texture
     ;(this.quad.material as THREE.MeshBasicMaterial).map = texture
     ;(this.quad.material as THREE.MeshBasicMaterial).needsUpdate = true
-
-    // Update mix effect's original texture reference
-    if (this.mixEffect) {
-      this.mixEffect.setOriginalTexture(texture)
-    }
   }
 
   // Set the original source texture for crossfader A side
@@ -314,11 +303,6 @@ export class EffectPipeline {
 
     this.quad.scale.set(scaleX, scaleY, 1)
 
-    // Update MixEffect with the quad scale for proper dry/wet blending
-    if (this.mixEffect) {
-      this.mixEffect.setQuadScale(scaleX, scaleY)
-    }
-
     // Update CrossfaderEffect with the quad scale
     if (this.crossfaderEffect) {
       this.crossfaderEffect.setQuadScale(scaleX, scaleY)
@@ -353,7 +337,6 @@ export class EffectPipeline {
     this.noise?.dispose()
     this.pixelate?.dispose()
     this.edgeDetection?.dispose()
-    this.mixEffect?.dispose()
     this.chromaticAberration?.dispose()
     this.vhsTracking?.dispose()
     this.lensDistortion?.dispose()
@@ -366,6 +349,8 @@ export class EffectPipeline {
     this.echoTrail?.dispose()
     this.timeSmear?.dispose()
     this.freezeMask?.dispose()
+    this.dotsEffect?.dispose()
+    this.asciiEffect?.dispose()
   }
 
   // Capture frame for temporal effects (call after render)

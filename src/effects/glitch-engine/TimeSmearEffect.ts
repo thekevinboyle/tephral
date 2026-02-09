@@ -8,6 +8,7 @@ uniform int direction; // 0 = both, 1 = forward, 2 = backward
 uniform bool motionOnly;
 uniform float threshold;
 uniform bool hasAccumulation;
+uniform float effectMix;
 
 float luminance(vec3 c) {
   return dot(c, vec3(0.299, 0.587, 0.114));
@@ -45,7 +46,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     result = mix(result, current, 0.3); // Keep some current frame clarity
   }
 
-  outputColor = vec4(result, inputColor.a);
+  vec4 effectColor = vec4(result, inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -54,6 +56,7 @@ export interface TimeSmearParams {
   direction: 'forward' | 'backward' | 'both'
   motionOnly: boolean
   threshold: number
+  mix: number
 }
 
 export const DEFAULT_TIME_SMEAR_PARAMS: TimeSmearParams = {
@@ -61,6 +64,7 @@ export const DEFAULT_TIME_SMEAR_PARAMS: TimeSmearParams = {
   direction: 'both',
   motionOnly: false,
   threshold: 0.1,
+  mix: 1,
 }
 
 export class TimeSmearEffect extends Effect {
@@ -84,6 +88,7 @@ export class TimeSmearEffect extends Effect {
         ['motionOnly', new THREE.Uniform(p.motionOnly)],
         ['threshold', new THREE.Uniform(p.threshold)],
         ['hasAccumulation', new THREE.Uniform(false)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -142,6 +147,7 @@ export class TimeSmearEffect extends Effect {
     }
     if (params.motionOnly !== undefined) this.uniforms.get('motionOnly')!.value = params.motionOnly
     if (params.threshold !== undefined) this.uniforms.get('threshold')!.value = params.threshold
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 
   clearAccumulation() {

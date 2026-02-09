@@ -12,6 +12,7 @@ uniform int frameCount;
 uniform bool showOriginal;
 uniform float originalMix;
 uniform bool hasHistory;
+uniform float effectMix;
 
 float luminance(vec3 c) {
   return dot(c, vec3(0.299, 0.587, 0.114));
@@ -66,7 +67,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     result = motionColor;
   }
 
-  outputColor = vec4(result, inputColor.a);
+  vec4 effectColor = vec4(result, inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -76,6 +78,7 @@ export interface MotionExtractParams {
   amplify: number
   showOriginal: boolean
   originalMix: number
+  mix: number
 }
 
 export const DEFAULT_MOTION_EXTRACT_PARAMS: MotionExtractParams = {
@@ -84,6 +87,7 @@ export const DEFAULT_MOTION_EXTRACT_PARAMS: MotionExtractParams = {
   amplify: 2,
   showOriginal: false,
   originalMix: 0,
+  mix: 1,
 }
 
 export class MotionExtractEffect extends Effect {
@@ -110,6 +114,7 @@ export class MotionExtractEffect extends Effect {
         ['showOriginal', new THREE.Uniform(p.showOriginal)],
         ['originalMix', new THREE.Uniform(p.originalMix)],
         ['hasHistory', new THREE.Uniform(false)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -177,6 +182,7 @@ export class MotionExtractEffect extends Effect {
     if (params.frameCount !== undefined) this.uniforms.get('frameCount')!.value = params.frameCount
     if (params.showOriginal !== undefined) this.uniforms.get('showOriginal')!.value = params.showOriginal
     if (params.originalMix !== undefined) this.uniforms.get('originalMix')!.value = params.originalMix
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 
   dispose() {

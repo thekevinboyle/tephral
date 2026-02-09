@@ -9,7 +9,8 @@ import { useAcidStore } from '../../stores/acidStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 
 // Canvas 2D effects
-import { renderDots } from './acid/dotsEffect'
+// NOTE: renderDots is now handled by GPU shader in EffectPipeline
+// import { renderDots } from './acid/dotsEffect'
 import { renderGlyphs } from './acid/glyphEffect'
 import { renderIcons } from './acid/iconsEffect'
 import { renderContour } from './acid/contourEffect'
@@ -65,8 +66,9 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
   sizeRef.current = { width, height }
 
   // Check if any effect is enabled AND not bypassed
+  // NOTE: Dots is now handled by GPU shader, so exclude from overlay check
   const anyActiveEffect =
-    (store.dotsEnabled && !effectBypassed['acid_dots']) ||
+    // (store.dotsEnabled && !effectBypassed['acid_dots']) || // GPU shader handles this
     (store.glyphEnabled && !effectBypassed['acid_glyph']) ||
     (store.iconsEnabled && !effectBypassed['acid_icons']) ||
     (store.contourEnabled && !effectBypassed['acid_contour']) ||
@@ -80,8 +82,9 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     (store.voronoiEnabled && !effectBypassed['acid_voronoi'])
 
   // Check if any effect is enabled (for WebGL lifecycle)
+  // NOTE: Dots is now handled by GPU shader, so exclude from overlay check
   const anyEnabled =
-    store.dotsEnabled ||
+    // store.dotsEnabled || // GPU shader handles this
     store.glyphEnabled ||
     store.iconsEnabled ||
     store.contourEnabled ||
@@ -190,9 +193,11 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     }
 
     // Apply Canvas 2D effects in order (respecting per-effect bypass)
-    if (currentStore.dotsEnabled && !bypassed['acid_dots']) {
-      renderDots(sourceCtx, ctx, currentWidth, currentHeight, currentStore.dotsParams)
-    }
+    // NOTE: Dots effect is now handled by GPU shader in EffectPipeline
+    // Skip Canvas 2D version to let GPU version respect effect chain order
+    // if (currentStore.dotsEnabled && !bypassed['acid_dots']) {
+    //   renderDots(sourceCtx, ctx, currentWidth, currentHeight, currentStore.dotsParams)
+    // }
 
     if (currentStore.glyphEnabled && !bypassed['acid_glyph']) {
       renderGlyphs(sourceCtx, ctx, currentWidth, currentHeight, currentStore.glyphParams)

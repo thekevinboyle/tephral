@@ -6,6 +6,7 @@ uniform vec2 redOffset;
 uniform vec2 greenOffset;
 uniform vec2 blueOffset;
 uniform float amount;
+uniform float effectMix;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   vec2 rUv = uv + redOffset * amount;
@@ -16,7 +17,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   float g = texture2D(inputBuffer, gUv).g;
   float b = texture2D(inputBuffer, bUv).b;
 
-  outputColor = vec4(r, g, b, inputColor.a);
+  vec4 effectColor = vec4(r, g, b, inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -28,6 +30,7 @@ export interface RGBSplitParams {
   blueOffsetX: number
   blueOffsetY: number
   amount: number
+  mix: number
 }
 
 export const DEFAULT_RGB_SPLIT_PARAMS: RGBSplitParams = {
@@ -38,6 +41,7 @@ export const DEFAULT_RGB_SPLIT_PARAMS: RGBSplitParams = {
   blueOffsetX: -0.01,
   blueOffsetY: 0,
   amount: 1,
+  mix: 1,
 }
 
 export class RGBSplitEffect extends Effect {
@@ -51,6 +55,7 @@ export class RGBSplitEffect extends Effect {
         ['greenOffset', new THREE.Uniform(new THREE.Vector2(p.greenOffsetX, p.greenOffsetY))],
         ['blueOffset', new THREE.Uniform(new THREE.Vector2(p.blueOffsetX, p.blueOffsetY))],
         ['amount', new THREE.Uniform(p.amount)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -73,6 +78,9 @@ export class RGBSplitEffect extends Effect {
     }
     if (params.amount !== undefined) {
       this.uniforms.get('amount')!.value = params.amount
+    }
+    if (params.mix !== undefined) {
+      this.uniforms.get('effectMix')!.value = params.mix
     }
   }
 }

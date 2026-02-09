@@ -8,6 +8,7 @@ uniform float headSwitchNoise;
 uniform float colorBleed;
 uniform float jitter;
 uniform float time;
+uniform float effectMix;
 
 float random(vec2 st) {
   return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
@@ -49,7 +50,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   float headNoise = random(vec2(uv.x * 100.0, time * 60.0));
   color = mix(vec3(headNoise), color, mix(headSwitch, 1.0, 1.0 - headSwitchNoise));
 
-  outputColor = vec4(color, inputColor.a);
+  vec4 effectColor = vec4(color, inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -59,6 +61,7 @@ export interface VHSTrackingParams {
   headSwitchNoise: number  // 0-1
   colorBleed: number       // 0-1
   jitter: number           // 0-1
+  mix: number              // 0-1
 }
 
 export const DEFAULT_VHS_TRACKING_PARAMS: VHSTrackingParams = {
@@ -67,6 +70,7 @@ export const DEFAULT_VHS_TRACKING_PARAMS: VHSTrackingParams = {
   headSwitchNoise: 0.5,
   colorBleed: 0.2,
   jitter: 0.1,
+  mix: 1,
 }
 
 export class VHSTrackingEffect extends Effect {
@@ -82,6 +86,7 @@ export class VHSTrackingEffect extends Effect {
         ['colorBleed', new THREE.Uniform(p.colorBleed)],
         ['jitter', new THREE.Uniform(p.jitter)],
         ['time', new THREE.Uniform(0)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -96,5 +101,6 @@ export class VHSTrackingEffect extends Effect {
     if (params.headSwitchNoise !== undefined) this.uniforms.get('headSwitchNoise')!.value = params.headSwitchNoise
     if (params.colorBleed !== undefined) this.uniforms.get('colorBleed')!.value = params.colorBleed
     if (params.jitter !== undefined) this.uniforms.get('jitter')!.value = params.jitter
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 }

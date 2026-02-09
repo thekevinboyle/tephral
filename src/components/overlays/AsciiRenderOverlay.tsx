@@ -25,6 +25,9 @@ export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverl
   // Check if ASCII is bypassed
   const isBypassed = bypassActive || effectBypassed['ascii']
 
+  // GPU shader handles non-matrix modes, so only use Canvas 2D for matrix mode
+  const useGpuShader = params.mode !== 'matrix'
+
   // Calculate video display area (respecting aspect ratio)
   const videoArea = useMemo(() => {
     const videoWidth = videoElement?.videoWidth || imageElement?.naturalWidth || width
@@ -55,7 +58,8 @@ export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverl
 
   // Render loop
   useEffect(() => {
-    if (!enabled || isBypassed) {
+    // Skip Canvas 2D rendering when GPU shader handles it (non-matrix modes)
+    if (!enabled || isBypassed || useGpuShader) {
       cancelAnimationFrame(animationFrameRef.current)
       return
     }
@@ -125,9 +129,10 @@ export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverl
     return () => {
       cancelAnimationFrame(animationFrameRef.current)
     }
-  }, [enabled, isBypassed, videoElement, imageElement, glCanvas, params, width, height, videoArea])
+  }, [enabled, isBypassed, useGpuShader, videoElement, imageElement, glCanvas, params, width, height, videoArea])
 
-  if (!enabled || isBypassed) return null
+  // Skip Canvas 2D rendering when GPU shader handles it (non-matrix modes)
+  if (!enabled || isBypassed || useGpuShader) return null
 
   return (
     <canvas

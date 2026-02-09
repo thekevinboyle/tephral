@@ -8,6 +8,7 @@ uniform float updateSpeed;
 uniform bool showFreeze;
 uniform bool invertMask;
 uniform bool hasFreeze;
+uniform float effectMix;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   vec3 current = inputColor.rgb;
@@ -40,7 +41,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     result = current * mask;
   }
 
-  outputColor = vec4(result, inputColor.a);
+  vec4 effectColor = vec4(result, inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -69,6 +71,7 @@ export interface FreezeMaskParams {
   updateSpeed: number
   showFreeze: boolean
   invertMask: boolean
+  mix: number
 }
 
 export const DEFAULT_FREEZE_MASK_PARAMS: FreezeMaskParams = {
@@ -76,6 +79,7 @@ export const DEFAULT_FREEZE_MASK_PARAMS: FreezeMaskParams = {
   updateSpeed: 0.01,
   showFreeze: true,
   invertMask: false,
+  mix: 1,
 }
 
 export class FreezeMaskEffect extends Effect {
@@ -99,6 +103,7 @@ export class FreezeMaskEffect extends Effect {
         ['showFreeze', new THREE.Uniform(p.showFreeze)],
         ['invertMask', new THREE.Uniform(p.invertMask)],
         ['hasFreeze', new THREE.Uniform(false)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
 
@@ -183,6 +188,7 @@ export class FreezeMaskEffect extends Effect {
     }
     if (params.showFreeze !== undefined) this.uniforms.get('showFreeze')!.value = params.showFreeze
     if (params.invertMask !== undefined) this.uniforms.get('invertMask')!.value = params.invertMask
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 
   resetFreeze() {

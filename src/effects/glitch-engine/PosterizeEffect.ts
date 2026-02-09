@@ -6,6 +6,7 @@ uniform float levels;
 uniform int mode; // 0=rgb, 1=hsl
 uniform float saturationBoost;
 uniform float edgeContrast;
+uniform float effectMix;
 
 vec3 rgb2hsl(vec3 c) {
   float maxC = max(max(c.r, c.g), c.b);
@@ -88,7 +89,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     color = mix(color, color * (1.0 + edgeMag * 2.0), edgeContrast);
   }
 
-  outputColor = vec4(color, inputColor.a);
+  vec4 effectColor = vec4(color, inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -99,6 +101,7 @@ export interface PosterizeParams {
   mode: PosterizeMode
   saturationBoost: number  // 0-2
   edgeContrast: number     // 0-1
+  mix: number
 }
 
 export const DEFAULT_POSTERIZE_PARAMS: PosterizeParams = {
@@ -106,6 +109,7 @@ export const DEFAULT_POSTERIZE_PARAMS: PosterizeParams = {
   mode: 'rgb',
   saturationBoost: 1.2,
   edgeContrast: 0,
+  mix: 1,
 }
 
 const MODE_MAP: Record<PosterizeMode, number> = {
@@ -124,6 +128,7 @@ export class PosterizeEffect extends Effect {
         ['mode', new THREE.Uniform(MODE_MAP[p.mode])],
         ['saturationBoost', new THREE.Uniform(p.saturationBoost)],
         ['edgeContrast', new THREE.Uniform(p.edgeContrast)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -133,5 +138,6 @@ export class PosterizeEffect extends Effect {
     if (params.mode !== undefined) this.uniforms.get('mode')!.value = MODE_MAP[params.mode]
     if (params.saturationBoost !== undefined) this.uniforms.get('saturationBoost')!.value = params.saturationBoost
     if (params.edgeContrast !== undefined) this.uniforms.get('edgeContrast')!.value = params.edgeContrast
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 }

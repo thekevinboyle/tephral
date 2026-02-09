@@ -7,6 +7,7 @@ uniform float radialAmount;
 uniform float direction;
 uniform float redOffset;
 uniform float blueOffset;
+uniform float effectMix;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   vec2 center = vec2(0.5);
@@ -30,7 +31,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   float g = texture2D(inputBuffer, greenUV).g;
   float b = texture2D(inputBuffer, blueUV).b;
 
-  outputColor = vec4(r, g, b, inputColor.a);
+  vec4 effectColor = vec4(r, g, b, inputColor.a);
+  outputColor = mix(inputColor, effectColor, effectMix);
 }
 `
 
@@ -40,6 +42,7 @@ export interface ChromaticAberrationParams {
   direction: number      // 0-360
   redOffset: number      // -0.05 to 0.05
   blueOffset: number     // -0.05 to 0.05
+  mix: number            // 0-1
 }
 
 export const DEFAULT_CHROMATIC_ABERRATION_PARAMS: ChromaticAberrationParams = {
@@ -48,6 +51,7 @@ export const DEFAULT_CHROMATIC_ABERRATION_PARAMS: ChromaticAberrationParams = {
   direction: 0,
   redOffset: 0.01,
   blueOffset: -0.01,
+  mix: 1,
 }
 
 export class ChromaticAberrationEffect extends Effect {
@@ -62,6 +66,7 @@ export class ChromaticAberrationEffect extends Effect {
         ['direction', new THREE.Uniform(p.direction)],
         ['redOffset', new THREE.Uniform(p.redOffset)],
         ['blueOffset', new THREE.Uniform(p.blueOffset)],
+        ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
@@ -72,5 +77,6 @@ export class ChromaticAberrationEffect extends Effect {
     if (params.direction !== undefined) this.uniforms.get('direction')!.value = params.direction
     if (params.redOffset !== undefined) this.uniforms.get('redOffset')!.value = params.redOffset
     if (params.blueOffset !== undefined) this.uniforms.get('blueOffset')!.value = params.blueOffset
+    if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 }

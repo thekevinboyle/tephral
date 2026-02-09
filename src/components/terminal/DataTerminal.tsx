@@ -881,7 +881,7 @@ export function DataTerminal() {
           }
           return next
         })
-      }, 5000) // Change every 5 seconds
+      }, 20000) // Change every 20 seconds
       return () => clearInterval(interval)
     }
   }, [activePattern, idlePatterns.length])

@@ -98,38 +98,53 @@ export function MiddleSection() {
 
   return (
     <div
-      className="h-full flex items-center gap-2 px-3 panel-gradient-up"
+      className="h-full rounded-sm flex panel-gradient-up"
+      style={{
+        border: '1px solid var(--border)',
+      }}
     >
-      {/* Clear/Bypass buttons stacked */}
-      <div className="flex flex-col gap-1 flex-shrink-0">
-        <Button
-          size="sm"
-          onClick={handleClear}
-          style={{
-            backgroundColor: 'var(--bg-elevated)',
-            borderColor: '#f59e0b',
-            color: '#f59e0b',
-          }}
-        >
-          Clear
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => glitch.setBypassActive(!glitch.bypassActive)}
-          style={{
-            backgroundColor: glitch.bypassActive ? '#ef4444' : 'var(--bg-elevated)',
-            borderColor: '#ef4444',
-            color: glitch.bypassActive ? '#fff' : '#ef4444',
-            boxShadow: glitch.bypassActive ? '0 0 8px rgba(239, 68, 68, 0.5)' : 'none',
-          }}
-        >
-          Bypass
-        </Button>
+      {/* Crossfader section */}
+      <div
+        className="h-full flex items-center flex-shrink-0 gap-2 px-3"
+        style={{
+          width: 'var(--col-left)',
+          borderRight: '1px solid var(--border)',
+        }}
+      >
+        {/* Clear/Bypass buttons stacked */}
+        <div className="flex flex-col gap-1 flex-shrink-0">
+          <Button
+            size="sm"
+            onClick={handleClear}
+            style={{
+              backgroundColor: 'var(--bg-elevated)',
+              borderColor: '#f59e0b',
+              color: '#f59e0b',
+            }}
+          >
+            Clear
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => glitch.setBypassActive(!glitch.bypassActive)}
+            style={{
+              backgroundColor: glitch.bypassActive ? '#ef4444' : 'var(--bg-elevated)',
+              borderColor: '#ef4444',
+              color: glitch.bypassActive ? '#fff' : '#ef4444',
+              boxShadow: glitch.bypassActive ? '0 0 8px rgba(239, 68, 68, 0.5)' : 'none',
+            }}
+          >
+            Bypass
+          </Button>
+        </div>
+        {/* Crossfader */}
+        <div className="flex-1">
+          <HorizontalCrossfader />
+        </div>
       </div>
-      {/* Crossfader */}
-      <div className="flex-1">
-        <HorizontalCrossfader />
-      </div>
+
+      {/* Empty space where mod cards used to be - now just fills remaining width */}
+      <div className="flex-1" />
     </div>
   )
 }

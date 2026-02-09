@@ -2,7 +2,6 @@ import { useRef, useEffect, useCallback } from 'react'
 import { usePolyEuclidStore } from '../../stores/polyEuclidStore'
 
 const CREAM = '#E8E4D9'
-const GRID_SIZE = 20
 
 interface DiagonalCascadeProps {
   width: number
@@ -11,7 +10,6 @@ interface DiagonalCascadeProps {
 
 export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const timeRef = useRef(0)
   const { tracks, getPattern } = usePolyEuclidStore()
 
   const draw = useCallback((timestamp: number) => {
@@ -21,112 +19,118 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
     if (!ctx) return
 
     const time = timestamp / 1000
-    timeRef.current = time
 
-    // Clear with dark background
-    ctx.fillStyle = '#0a0a0a'
+    // Clear
+    ctx.fillStyle = '#080808'
     ctx.fillRect(0, 0, width, height)
 
-    // Draw subtle grid
-    ctx.strokeStyle = CREAM
-    ctx.globalAlpha = 0.03
-    ctx.lineWidth = 1
-    for (let x = 0; x < width; x += GRID_SIZE) {
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, height)
-      ctx.stroke()
-    }
-    for (let y = 0; y < height; y += GRID_SIZE) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(width, y)
-      ctx.stroke()
-    }
-    ctx.globalAlpha = 1
+    // Grid settings - dense coverage
+    const cellSize = 18
+    const cols = Math.ceil(width / cellSize) + 2
+    const rows = Math.ceil(height / cellSize) + 2
 
-    const centerX = width / 2
-    const centerY = height / 2
+    // Block dimensions
+    const blockW = 12
+    const blockH = 4
 
-    // Draw each track as radiating diagonal lines from center
-    tracks.forEach((track, trackIndex) => {
-      const pattern = getPattern(track.id)
+    // Animated offsets
+    const scrollX = (time * 25) % cellSize
+    const scrollY = (time * 15) % cellSize
 
-      // Each track gets multiple angles for the starburst effect
-      // Distribute angles based on track index
-      const angleOffset = (trackIndex / tracks.length) * 180
-      const angles = [angleOffset, angleOffset + 90] // Two opposite directions
+    // Draw dense grid of diagonal elements
+    for (let row = -1; row < rows; row++) {
+      for (let col = -1; col < cols; col++) {
+        const baseX = col * cellSize - scrollX
+        const baseY = row * cellSize - scrollY
 
-      const blockWidth = 14
-      const blockHeight = 5
-      const gap = 6
-      const stepSpacing = blockWidth + gap
+        // Skip some cells for visual variety
+        const cellHash = (col * 7 + row * 13) % 17
+        if (cellHash < 4) continue
 
-      const baseOpacity = track.muted ? 0.15 : 1
+        // Determine which track/step this cell represents
+        const trackIndex = Math.abs((col + row) % tracks.length)
+        const track = tracks[trackIndex]
+        if (!track) continue
 
-      angles.forEach(baseDeg => {
-        const angleRad = (baseDeg * Math.PI) / 180
+        const pattern = getPattern(track.id)
+        const stepIndex = Math.abs((col * 3 + row * 2 + Math.floor(time * track.clockDivider * 2)) % pattern.length)
+        const isHit = pattern[stepIndex]
+        const isCurrent = stepIndex === track.currentStep
 
-        // Draw pattern radiating outward from center in both directions
-        for (let dir = -1; dir <= 1; dir += 2) {
-          for (let i = 0; i < pattern.length; i++) {
-            const isHit = pattern[i]
-            const isCurrent = i === track.currentStep
+        // Diagonal angle varies by position
+        const angleBase = ((col + row) % 4) * 45 - 67.5
+        const angleWobble = Math.sin(time * 3 + col * 0.5 + row * 0.3) * 8
+        const angle = (angleBase + angleWobble) * Math.PI / 180
 
-            // Distance from center
-            const distance = (i + 1) * stepSpacing * 1.2
+        // Position with wave distortion
+        const waveX = Math.sin(time * 2 + row * 0.4) * 3
+        const waveY = Math.cos(time * 1.5 + col * 0.3) * 3
+        const x = baseX + waveX
+        const y = baseY + waveY
 
-            // Slight wave animation
-            const waveOffset = Math.sin(time * 2 + i * 0.3 + trackIndex) * 2
+        // Opacity based on pattern and distance from active hits
+        let opacity = track.muted ? 0.08 : 0.15
 
-            const x = centerX + Math.cos(angleRad) * distance * dir
-            const y = centerY + Math.sin(angleRad) * distance * dir + waveOffset
-
-            // Skip if too far from center or off screen
-            if (distance > Math.min(width, height) * 0.45) continue
-            if (x < -20 || x > width + 20 || y < -20 || y > height + 20) continue
-
-            const pulseScale = isCurrent ? 1 + track.currentValue * 0.3 : 1
-
-            ctx.save()
-            ctx.translate(x, y)
-            ctx.rotate(angleRad)
-            ctx.scale(pulseScale, pulseScale)
-
-            if (isHit) {
-              // Glow on current step
-              if (isCurrent && !track.muted && track.currentValue > 0.1) {
-                ctx.shadowColor = CREAM
-                ctx.shadowBlur = 12 + track.currentValue * 15
-                ctx.fillStyle = CREAM
-                ctx.globalAlpha = track.currentValue * baseOpacity * 0.8
-                ctx.fillRect(-blockWidth / 2, -blockHeight / 2, blockWidth, blockHeight)
-                ctx.shadowBlur = 0
-              }
-
-              // Solid block
-              ctx.fillStyle = CREAM
-              ctx.globalAlpha = baseOpacity * (isCurrent ? 1 : 0.55)
-              ctx.fillRect(-blockWidth / 2, -blockHeight / 2, blockWidth, blockHeight)
-            } else {
-              // Dashed/fragmented for rests
-              ctx.strokeStyle = CREAM
-              ctx.globalAlpha = baseOpacity * 0.18
-              ctx.lineWidth = 2
-              ctx.setLineDash([3, 4])
-              ctx.lineDashOffset = -time * 15
-              ctx.beginPath()
-              ctx.moveTo(-blockWidth / 2, 0)
-              ctx.lineTo(blockWidth / 2, 0)
-              ctx.stroke()
-              ctx.setLineDash([])
-            }
-
-            ctx.restore()
+        if (isHit) {
+          opacity = track.muted ? 0.15 : 0.4
+          if (isCurrent) {
+            opacity = 0.7 + track.currentValue * 0.3
           }
         }
-      })
-    })
+
+        // Pulse wave emanating from current steps
+        if (isCurrent && track.currentValue > 0.1 && !track.muted) {
+          const pulse = track.currentValue
+          opacity = Math.min(1, opacity + pulse * 0.5)
+        }
+
+        // Size variation
+        const sizeScale = isHit ? (isCurrent ? 1.2 + track.currentValue * 0.3 : 1) : 0.7
+        const w = blockW * sizeScale
+        const h = blockH * sizeScale
+
+        ctx.save()
+        ctx.translate(x, y)
+        ctx.rotate(angle)
+
+        if (isHit) {
+          // Glow for current hits
+          if (isCurrent && track.currentValue > 0.1 && !track.muted) {
+            ctx.shadowColor = CREAM
+            ctx.shadowBlur = 8 + track.currentValue * 12
+          }
+
+          ctx.fillStyle = CREAM
+          ctx.globalAlpha = opacity
+          ctx.fillRect(-w / 2, -h / 2, w, h)
+          ctx.shadowBlur = 0
+        } else {
+          // Dashed fragments for rests
+          ctx.strokeStyle = CREAM
+          ctx.globalAlpha = opacity
+          ctx.lineWidth = 1.5
+          ctx.setLineDash([2, 3])
+          ctx.lineDashOffset = -time * 20 + col + row
+          ctx.beginPath()
+          ctx.moveTo(-w / 2, 0)
+          ctx.lineTo(w / 2, 0)
+          ctx.stroke()
+          ctx.setLineDash([])
+        }
+
+        ctx.restore()
+      }
+    }
+
+    // Add scanning line effect
+    const scanY = ((time * 80) % (height + 40)) - 20
+    ctx.fillStyle = CREAM
+    ctx.globalAlpha = 0.06
+    ctx.fillRect(0, scanY, width, 2)
+
+    const scanX = ((time * 60) % (width + 40)) - 20
+    ctx.globalAlpha = 0.04
+    ctx.fillRect(scanX, 0, 2, height)
 
     ctx.globalAlpha = 1
   }, [tracks, getPattern, width, height])

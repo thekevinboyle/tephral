@@ -28,128 +28,129 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
     const centerY = height / 2
 
     // ═══════════════════════════════════════════════════════════════
-    // MICRO ELEMENTS - subtle background
+    // GRID MATRIX - step sequencer style
     // ═══════════════════════════════════════════════════════════════
-    for (let i = 0; i < 20; i++) {
-      const seed = i * 137.5
-      const x = centerX + Math.sin(seed) * 120 + Math.cos(time * 0.1 + i) * 20
-      const y = centerY + Math.cos(seed) * 80 + Math.sin(time * 0.15 + i) * 15
+    const cellSize = 16
+    const gap = 2
+    const cellWithGap = cellSize + gap
 
-      if (x < 10 || x > width - 10 || y < 10 || y > height - 10) continue
+    // Grid dimensions based on tracks and max steps
+    const maxSteps = Math.max(...tracks.map(t => t.steps), 8)
+    const rows = tracks.length
+    const cols = maxSteps
 
-      ctx.fillStyle = CREAM
-      ctx.globalAlpha = 0.04 + Math.sin(time * 2 + i) * 0.02
-      ctx.fillRect(x - 2, y - 0.5, 4, 1)
+    const gridWidth = cols * cellWithGap
+    const gridHeight = rows * cellWithGap
+    const startX = centerX - gridWidth / 2
+    const startY = centerY - gridHeight / 2
+
+    // Draw subtle grid background
+    ctx.strokeStyle = CREAM
+    ctx.globalAlpha = 0.06
+    ctx.lineWidth = 1
+    for (let row = 0; row <= rows; row++) {
+      const y = startY + row * cellWithGap
+      ctx.beginPath()
+      ctx.moveTo(startX, y)
+      ctx.lineTo(startX + gridWidth, y)
+      ctx.stroke()
+    }
+    for (let col = 0; col <= cols; col++) {
+      const x = startX + col * cellWithGap
+      ctx.beginPath()
+      ctx.moveTo(x, startY)
+      ctx.lineTo(x, startY + gridHeight)
+      ctx.stroke()
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // STACKED W PATTERN - zigzag rows with waterfall animation
-    // ═══════════════════════════════════════════════════════════════
-    const blockW = 10
-    const blockH = 4
-    const zigzagAmp = 12
-    const colSpacing = 14
-    const rowSpacing = 18
+    // Waterfall animation offset
+    const waterfallSpeed = 30
+    const waterfallOffset = (time * waterfallSpeed) % cellWithGap
 
-    const rowCount = Math.min(tracks.length * 2, 8)
-    const totalHeight = rowCount * rowSpacing
-    const startY = centerY - totalHeight / 2
-
-    const colCount = Math.ceil(width * 0.6 / colSpacing)
-    const totalWidth = colCount * colSpacing
-    const startX = centerX - totalWidth / 2
-
-    // Waterfall speed
-    const waterfallSpeed = 40
-    const waterfallCycle = rowSpacing * rowCount
-
-    for (let row = 0; row < rowCount; row++) {
-      const trackIndex = row % tracks.length
-      const track = tracks[trackIndex]
+    // Draw cells
+    for (let row = 0; row < rows; row++) {
+      const track = tracks[row]
       const pattern = getPattern(track.id)
-      const baseOpacity = track.muted ? 0.1 : 1
+      const baseOpacity = track.muted ? 0.15 : 1
 
-      for (let col = 0; col < colCount; col++) {
-        const patternIdx = col % pattern.length
-        const isHit = pattern[patternIdx]
-        const isCurrent = patternIdx === track.currentStep
+      for (let col = 0; col < track.steps; col++) {
+        const isHit = pattern[col]
+        const isCurrent = col === track.currentStep
 
-        // W shape zigzag
-        let zigzagY: number
-        if (col % 4 === 0) zigzagY = 0
-        else if (col % 4 === 1) zigzagY = -zigzagAmp
-        else if (col % 4 === 2) zigzagY = 0
-        else zigzagY = -zigzagAmp
+        const cellX = startX + col * cellWithGap
+        const cellY = startY + row * cellWithGap
 
-        // Waterfall animation - each column falls at slightly different phase
-        const colPhase = col * 0.15
-        const waterfallOffset = ((time * waterfallSpeed + colPhase * 20) % waterfallCycle)
-
-        // Calculate Y with waterfall - blocks cascade down
-        const baseRowY = startY + row * rowSpacing
-        const y = baseRowY + zigzagY + waterfallOffset - waterfallCycle / 2
-
-        // Fade based on vertical position (fade at edges)
-        const normalizedY = (y - startY) / totalHeight
-        const verticalFade = 1 - Math.abs(normalizedY - 0.5) * 1.5
-        if (verticalFade <= 0) continue
-
-        const x = startX + col * colSpacing
-
-        // Angle follows W slope
-        let angle = 0
-        if (col % 4 === 0) angle = -45
-        else if (col % 4 === 1) angle = 45
-        else if (col % 4 === 2) angle = -45
-        else angle = 45
-
-        const angleRad = (angle * Math.PI) / 180
-        const scale = isCurrent ? 1 + track.currentValue * 0.5 : 1
-
-        ctx.save()
-        ctx.translate(x, y)
-        ctx.rotate(angleRad)
-        ctx.scale(scale, scale)
-
-        const fadeOpacity = Math.max(0, Math.min(1, verticalFade))
+        // Waterfall effect - animate Y position
+        const fallOffset = waterfallOffset * (1 + (col % 3) * 0.2)
+        const animY = cellY + (fallOffset % (cellWithGap * 0.5)) - cellWithGap * 0.25
 
         if (isHit) {
-          if (isCurrent && track.currentValue > 0.05 && !track.muted) {
-            ctx.shadowColor = CREAM
-            ctx.shadowBlur = 6 + track.currentValue * 12
+          // Determine block size based on position and animation
+          const sizeVariation = Math.sin(time * 2 + col * 0.5 + row * 0.3)
+          const baseSize = isCurrent ? cellSize - 2 : cellSize - 4
+          const blockSize = baseSize + sizeVariation * 2
+
+          // Stacking effect - some hits get extra blocks above
+          const stackHeight = isCurrent ? 2 + Math.floor(track.currentValue * 2) : 1 + ((col + row) % 2)
+
+          for (let stack = 0; stack < stackHeight; stack++) {
+            const stackY = animY - stack * (cellSize * 0.4)
+            const stackSize = blockSize * (1 - stack * 0.2)
+            const stackOpacity = 1 - stack * 0.3
+
+            // Glow for current step
+            if (isCurrent && stack === 0 && track.currentValue > 0.05 && !track.muted) {
+              ctx.shadowColor = CREAM
+              ctx.shadowBlur = 8 + track.currentValue * 10
+            }
+
+            ctx.fillStyle = CREAM
+            ctx.globalAlpha = baseOpacity * stackOpacity * (isCurrent ? 0.9 : 0.5)
+
+            const offset = (cellSize - stackSize) / 2
+            ctx.fillRect(
+              cellX + offset + gap / 2,
+              stackY + offset + gap / 2,
+              stackSize,
+              stackSize
+            )
+
+            ctx.shadowBlur = 0
           }
-
-          ctx.fillStyle = CREAM
-          ctx.globalAlpha = baseOpacity * fadeOpacity * (isCurrent ? 0.9 + track.currentValue * 0.1 : 0.5)
-          ctx.fillRect(-blockW / 2, -blockH / 2, blockW, blockH)
-          ctx.shadowBlur = 0
         } else {
-          ctx.strokeStyle = CREAM
-          ctx.globalAlpha = baseOpacity * fadeOpacity * 0.15
-          ctx.lineWidth = 1.5
-          ctx.setLineDash([2, 3])
-          ctx.lineDashOffset = -time * 20
-          ctx.beginPath()
-          ctx.moveTo(-blockW / 2, 0)
-          ctx.lineTo(blockW / 2, 0)
-          ctx.stroke()
-          ctx.setLineDash([])
-        }
+          // Small dot for empty steps
+          ctx.fillStyle = CREAM
+          ctx.globalAlpha = baseOpacity * 0.12
 
-        ctx.restore()
+          const dotSize = 3
+          const dotOffset = (cellSize - dotSize) / 2
+          ctx.beginPath()
+          ctx.arc(
+            cellX + cellSize / 2 + gap / 2,
+            animY + cellSize / 2 + gap / 2,
+            dotSize / 2,
+            0,
+            Math.PI * 2
+          )
+          ctx.fill()
+        }
       }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // CENTER PULSE
+    // MICRO ELEMENTS - floating particles
     // ═══════════════════════════════════════════════════════════════
-    const totalPulse = tracks.reduce((sum, t) => sum + (t.muted ? 0 : t.currentValue), 0) / tracks.length
+    for (let i = 0; i < 15; i++) {
+      const seed = i * 137.5
+      const x = centerX + Math.sin(seed + time * 0.1) * (gridWidth * 0.7)
+      const y = centerY + Math.cos(seed + time * 0.08) * (gridHeight * 0.8)
 
-    ctx.beginPath()
-    ctx.arc(centerX, centerY, 2 + totalPulse * 4, 0, Math.PI * 2)
-    ctx.fillStyle = CREAM
-    ctx.globalAlpha = 0.2 + totalPulse * 0.5
-    ctx.fill()
+      ctx.fillStyle = CREAM
+      ctx.globalAlpha = 0.04 + Math.sin(time * 2 + i) * 0.02
+      ctx.beginPath()
+      ctx.arc(x, y, 1.5, 0, Math.PI * 2)
+      ctx.fill()
+    }
 
     ctx.globalAlpha = 1
   }, [tracks, getPattern, width, height])

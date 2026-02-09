@@ -30,36 +30,36 @@ function padNumber(n: number, digits: number): string {
 
 // Star pattern - default/idle
 function StarPattern({ tick }: { tick: number }) {
-  const pattern = [
-    '        ██        ',
-    '       ████       ',
-    '        ██        ',
-    '  ██    ██    ██  ',
-    '   ████████████   ',
-    '    ██████████    ',
-    '  ████████████████',
-    '    ██████████    ',
-    '   ████████████   ',
-    '  ██    ██    ██  ',
-    '        ██        ',
-    '       ████       ',
-    '        ██        ',
-  ]
+  // 12x12 grid pattern for a star
+  const size = 12
+  const center = size / 2
 
   return (
-    <div className="text-[6px] leading-[6px]" style={{ color: 'var(--text-muted)' }}>
-      {pattern.map((row, i) => (
-        <div key={i} style={{ letterSpacing: '-1px' }}>
-          {row.split('').map((char, j) => (
-            <span
-              key={j}
-              style={{
-                opacity: char === '█' ? (0.3 + Math.sin((tick + i + j) * 0.15) * 0.4) : 0,
-              }}
-            >
-              {char === '█' ? '●' : ' '}
-            </span>
-          ))}
+    <div className="flex flex-col gap-[2px]">
+      {Array.from({ length: size }, (_, y) => (
+        <div key={y} className="flex gap-[2px]">
+          {Array.from({ length: size }, (_, x) => {
+            const dx = x - center + 0.5
+            const dy = y - center + 0.5
+            const angle = Math.atan2(dy, dx)
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            // Star shape: varies radius based on angle (4 points)
+            const starRadius = 4 + Math.cos(angle * 4) * 2
+            const onStar = dist < starRadius && dist > starRadius - 2
+            const inCenter = dist < 2
+            const visible = onStar || inCenter
+            const pulse = Math.sin((tick + x + y) * 0.15)
+            return (
+              <div
+                key={x}
+                className="w-[5px] h-[5px] rounded-full"
+                style={{
+                  backgroundColor: 'var(--text-muted)',
+                  opacity: visible ? (0.3 + pulse * 0.4) : 0,
+                }}
+              />
+            )
+          })}
         </div>
       ))}
     </div>
@@ -68,27 +68,27 @@ function StarPattern({ tick }: { tick: number }) {
 
 // Waveform pattern - for motion/audio effects
 function WaveformPattern({ tick }: { tick: number }) {
-  const width = 24
-  const height = 11
+  const width = 16
+  const height = 10
 
   return (
-    <div className="text-[6px] leading-[6px]" style={{ color: 'var(--accent)' }}>
+    <div className="flex flex-col gap-[2px]">
       {Array.from({ length: height }, (_, y) => (
-        <div key={y} style={{ letterSpacing: '-1px' }}>
+        <div key={y} className="flex gap-[2px]">
           {Array.from({ length: width }, (_, x) => {
-            const wave = Math.sin((x * 0.5) + (tick * 0.2)) * 4
+            const wave = Math.sin((x * 0.5) + (tick * 0.2)) * 3.5
             const centerY = height / 2
             const dist = Math.abs(y - centerY - wave)
             const visible = dist < 1.5
             return (
-              <span
+              <div
                 key={x}
+                className="w-[5px] h-[5px] rounded-full"
                 style={{
+                  backgroundColor: 'var(--accent)',
                   opacity: visible ? (0.8 - dist * 0.3) : 0,
                 }}
-              >
-                ●
-              </span>
+              />
             )
           })}
         </div>
@@ -129,13 +129,13 @@ function GridPulsePattern({ tick }: { tick: number }) {
 
 // Spiral pattern - for acid effects
 function SpiralPattern({ tick }: { tick: number }) {
-  const size = 14
+  const size = 12
   const center = size / 2
 
   return (
-    <div className="text-[6px] leading-[5px]" style={{ color: 'var(--text-secondary)' }}>
+    <div className="flex flex-col gap-[2px]">
       {Array.from({ length: size }, (_, y) => (
-        <div key={y} style={{ letterSpacing: '-1px' }}>
+        <div key={y} className="flex gap-[2px]">
           {Array.from({ length: size }, (_, x) => {
             const dx = x - center + 0.5
             const dy = y - center + 0.5
@@ -144,14 +144,14 @@ function SpiralPattern({ tick }: { tick: number }) {
             const spiral = Math.sin(angle * 3 + dist * 0.5 - tick * 0.15)
             const visible = spiral > 0.3 && dist < center
             return (
-              <span
+              <div
                 key={x}
+                className="w-[5px] h-[5px] rounded-full"
                 style={{
+                  backgroundColor: 'var(--text-secondary)',
                   opacity: visible ? (0.4 + spiral * 0.6) : 0,
                 }}
-              >
-                ●
-              </span>
+              />
             )
           })}
         </div>
@@ -163,22 +163,20 @@ function SpiralPattern({ tick }: { tick: number }) {
 // Hexagon pattern - for strand effects
 function HexagonPattern({ tick }: { tick: number }) {
   const points = [
-    [7, 0], [13, 3], [13, 9], [7, 12], [1, 9], [1, 3]
+    [6, 0], [11, 2.5], [11, 7.5], [6, 10], [1, 7.5], [1, 2.5]
   ]
-  const size = 14
+  const size = 12
 
   return (
-    <div className="text-[6px] leading-[5px]" style={{ color: '#00d4ff' }}>
+    <div className="flex flex-col gap-[2px]">
       {Array.from({ length: size }, (_, y) => (
-        <div key={y} style={{ letterSpacing: '-1px' }}>
+        <div key={y} className="flex gap-[2px]">
           {Array.from({ length: size }, (_, x) => {
             // Check if point is on hexagon edge
-            let onEdge = false
             let minDist = Infinity
             for (let i = 0; i < points.length; i++) {
               const [x1, y1] = points[i]
               const [x2, y2] = points[(i + 1) % points.length]
-              // Distance from point to line segment
               const dx = x2 - x1
               const dy = y2 - y1
               const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy)))
@@ -187,17 +185,17 @@ function HexagonPattern({ tick }: { tick: number }) {
               const dist = Math.sqrt(Math.pow(x - px, 2) + Math.pow(y - py, 2))
               minDist = Math.min(minDist, dist)
             }
-            onEdge = minDist < 1.2
+            const onEdge = minDist < 1.2
             const pulse = Math.sin(tick * 0.1 + minDist * 0.5)
             return (
-              <span
+              <div
                 key={x}
+                className="w-[5px] h-[5px] rounded-full"
                 style={{
+                  backgroundColor: '#00d4ff',
                   opacity: onEdge ? (0.5 + pulse * 0.5) : 0,
                 }}
-              >
-                ●
-              </span>
+              />
             )
           })}
         </div>
@@ -208,13 +206,13 @@ function HexagonPattern({ tick }: { tick: number }) {
 
 // Radar sweep pattern - for vision/tracking effects
 function RadarPattern({ tick }: { tick: number }) {
-  const size = 14
+  const size = 12
   const center = size / 2
 
   return (
-    <div className="text-[6px] leading-[5px]" style={{ color: '#22c55e' }}>
+    <div className="flex flex-col gap-[2px]">
       {Array.from({ length: size }, (_, y) => (
-        <div key={y} style={{ letterSpacing: '-1px' }}>
+        <div key={y} className="flex gap-[2px]">
           {Array.from({ length: size }, (_, x) => {
             const dx = x - center + 0.5
             const dy = y - center + 0.5
@@ -227,14 +225,14 @@ function RadarPattern({ tick }: { tick: number }) {
             const inSweep = angleDiff > -0.5 && angleDiff < 0 && dist < center
             const onRing = Math.abs(dist - center + 1) < 0.8 || Math.abs(dist - center/2) < 0.6
             return (
-              <span
+              <div
                 key={x}
+                className="w-[5px] h-[5px] rounded-full"
                 style={{
+                  backgroundColor: '#22c55e',
                   opacity: inSweep ? (0.8 + angleDiff * 1.5) : (onRing ? 0.3 : 0),
                 }}
-              >
-                ●
-              </span>
+              />
             )
           })}
         </div>
@@ -277,16 +275,16 @@ function CircuitPattern({ tick }: { tick: number }) {
   const paths = [
     [[0,2], [4,2], [4,5], [8,5]],
     [[0,6], [3,6], [3,3], [7,3], [7,7], [10,7]],
-    [[0,10], [5,10], [5,8], [9,8], [9,4], [12,4]],
-    [[2,0], [2,4], [6,4], [6,9], [11,9]],
+    [[0,10], [5,10], [5,8], [9,8], [9,4], [11,4]],
+    [[2,0], [2,4], [6,4], [6,9], [10,9]],
   ]
-  const width = 14
+  const width = 12
   const height = 12
 
   return (
-    <div className="text-[6px] leading-[5px]" style={{ color: 'var(--text-muted)' }}>
+    <div className="flex flex-col gap-[2px]">
       {Array.from({ length: height }, (_, y) => (
-        <div key={y} style={{ letterSpacing: '-1px' }}>
+        <div key={y} className="flex gap-[2px]">
           {Array.from({ length: width }, (_, x) => {
             let onPath = false
             let pathProgress = 0
@@ -306,14 +304,14 @@ function CircuitPattern({ tick }: { tick: number }) {
             })
             const pulse = Math.sin(tick * 0.15 - pathProgress * 20)
             return (
-              <span
+              <div
                 key={x}
+                className="w-[5px] h-[5px]"
                 style={{
+                  backgroundColor: 'var(--text-muted)',
                   opacity: onPath ? (0.3 + pulse * 0.4) : 0,
                 }}
-              >
-                {onPath ? '█' : ' '}
-              </span>
+              />
             )
           })}
         </div>
@@ -324,29 +322,29 @@ function CircuitPattern({ tick }: { tick: number }) {
 
 // Diamond pattern - for color effects
 function DiamondPattern({ tick }: { tick: number }) {
-  const size = 13
-  const center = Math.floor(size / 2)
+  const size = 12
+  const center = size / 2
 
   return (
-    <div className="text-[6px] leading-[5px]" style={{ color: '#f59e0b' }}>
+    <div className="flex flex-col gap-[2px]">
       {Array.from({ length: size }, (_, y) => (
-        <div key={y} style={{ letterSpacing: '-1px' }}>
+        <div key={y} className="flex gap-[2px]">
           {Array.from({ length: size }, (_, x) => {
-            const dist = Math.abs(x - center) + Math.abs(y - center)
+            const dist = Math.abs(x - center + 0.5) + Math.abs(y - center + 0.5)
             const maxDist = center
             const ring1 = Math.abs(dist - maxDist) < 0.8
             const ring2 = Math.abs(dist - maxDist/2) < 0.8
             const ring3 = dist < 1.2
             const pulse = Math.sin(tick * 0.12 - dist * 0.3)
             return (
-              <span
+              <div
                 key={x}
+                className="w-[5px] h-[5px] rounded-full"
                 style={{
+                  backgroundColor: '#f59e0b',
                   opacity: (ring1 || ring2 || ring3) ? (0.4 + pulse * 0.6) : 0,
                 }}
-              >
-                ●
-              </span>
+              />
             )
           })}
         </div>

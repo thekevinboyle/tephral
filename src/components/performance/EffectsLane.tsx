@@ -1101,6 +1101,7 @@ export function EffectsLane() {
           <ModulationPanel />
         )}
       </div>
+
     </div>
   )
 }

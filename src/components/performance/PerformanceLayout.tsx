@@ -12,7 +12,7 @@ import { ModulationLane } from './ModulationLane'
 import { ModulationLines } from './ModulationLines'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
 import { DataTerminal } from '../terminal/DataTerminal'
-// import { PresetDropdownBar } from '../presets/PresetDropdownBar'
+// PresetDropdownBar moved to ExpandedParameterPanel
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 import { useContinuousModulation } from '../../hooks/useContinuousModulation'
@@ -169,9 +169,10 @@ export function PerformanceLayout() {
           {/* Canvas */}
           <div className="flex-1 min-w-0 relative">
             <Canvas ref={canvasRef} />
-            {/* Clip bin always floats in bottom left corner */}
-            <ClipBin />
           </div>
+
+          {/* Clip bin always floats in bottom left corner of entire container */}
+          <ClipBin />
 
           {/* Right placeholder */}
           {showSidePlaceholders && sideWidth > 40 && (
@@ -214,8 +215,6 @@ export function PerformanceLayout() {
           border: '1px solid var(--border)',
         }}
       >
-        {/* Presets hidden for now */}
-        {/* <PresetDropdownBar canvasRef={captureRef} /> */}
         {/* Effects Lane fills remaining space */}
         <div className="flex-1 min-h-0 overflow-hidden">
           <EffectsLane />

@@ -14,6 +14,7 @@ import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS } from '../../config/effects'
 import { SliderRow, ToggleRow, SelectRow, ColorRow } from './controls'
 import { TEXTURE_LIBRARY, type TextureId } from '../overlays/TextureOverlay'
+import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import type { BlendMode } from '../../stores/textureOverlayStore'
 import type { Template, FontFamily, WatermarkPosition } from '../../stores/dataOverlayStore'
 
@@ -33,14 +34,21 @@ export function ExpandedParameterPanel() {
 
   if (!effectId || !effect) {
     return (
-      <div className="h-full flex items-center justify-center border-l" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
-        <span className="text-[14px]" style={{ color: 'var(--text-muted)' }}>Select an effect</span>
+      <div className="h-full flex flex-col border-l" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
+        {/* Presets */}
+        <PresetDropdownBar />
+        <div className="flex-1 flex items-center justify-center">
+          <span className="text-[14px]" style={{ color: 'var(--text-muted)' }}>Select an effect</span>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="h-full flex flex-col border-l" style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
+      {/* Presets */}
+      <PresetDropdownBar />
+
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-surface)' }}>
         <div

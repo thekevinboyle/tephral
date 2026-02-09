@@ -8,16 +8,25 @@ uniform vec2 quadScale;
 uniform vec2 sourceQuadScale;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
-  // Transform UV for source texture (original video) using its own scale
-  vec2 sourceUv = (uv - 0.5) / sourceQuadScale + 0.5;
+  // The processed video (inputColor) is already letterboxed by the quad geometry
+  // The source texture needs to be sampled to match the same letterboxing
 
-  // For letterbox/pillarbox areas, source should be black
-  vec4 source;
-  if (sourceUv.x < 0.0 || sourceUv.x > 1.0 || sourceUv.y < 0.0 || sourceUv.y > 1.0) {
-    source = vec4(0.0, 0.0, 0.0, 1.0);
-  } else {
-    source = texture2D(sourceTexture, sourceUv);
+  // First, check if we're in the visible area (inside the letterbox)
+  // The visible area in UV space is centered, with size = quadScale
+  vec2 visibleMin = (1.0 - quadScale) * 0.5;
+  vec2 visibleMax = visibleMin + quadScale;
+
+  // If we're outside the visible area, both source and processed should be black
+  if (uv.x < visibleMin.x || uv.x > visibleMax.x || uv.y < visibleMin.y || uv.y > visibleMax.y) {
+    outputColor = vec4(0.0, 0.0, 0.0, 1.0);
+    return;
   }
+
+  // Map UV from visible area to 0-1 range for source texture sampling
+  vec2 sourceUv = (uv - visibleMin) / quadScale;
+
+  // Sample source texture (flip Y if needed - video textures are often flipped)
+  vec4 source = texture2D(sourceTexture, sourceUv);
 
   // Blend: SRC (0) = source, FX (1) = processed
   outputColor = mix(source, inputColor, crossfaderPosition);

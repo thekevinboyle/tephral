@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { EffectButton } from './EffectButton'
+import { ClearIcon, BypassIcon } from '../ui/DotMatrixIcons'
 import { getEffectsForPage, PAGE_NAMES } from '../../config/effects'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
@@ -18,7 +19,7 @@ import { useMotionStore } from '../../stores/motionStore'
 export function PerformanceGrid() {
   // Glitch engine store
   const glitch = useGlitchEngineStore()
-  const { soloEffectId, effectMix, setEffectMix } = useGlitchEngineStore()
+  const { soloEffectId, effectMix, setEffectMix, bypassActive } = useGlitchEngineStore()
 
   // Render stores
   const ascii = useAsciiRenderStore()
@@ -924,15 +925,95 @@ export function PerformanceGrid() {
     <div className="h-full w-full flex flex-col p-2">
       {/* Page navigation */}
       <div className="flex items-center justify-between mb-1.5 px-1">
+        {/* Clear button */}
         <button
-          onClick={() => setGridPage(Math.max(0, gridPage - 1))}
-          disabled={gridPage === 0}
-          className="w-5 h-5 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
-          style={{ color: 'var(--text-ghost)' }}
+          onClick={() => {
+            // Clear all effects
+            const glitchState = useGlitchEngineStore.getState()
+            const asciiState = useAsciiRenderStore.getState()
+            const stippleState = useStippleStore.getState()
+            const contourState = useContourStore.getState()
+            const landmarksState = useLandmarksStore.getState()
+            const acidState = useAcidStore.getState()
+            const visionState = useVisionTrackingStore.getState()
+            const strandState = useStrandStore.getState()
+            const motionState = useMotionStore.getState()
+            const textureOverlayState = useTextureOverlayStore.getState()
+            const dataOverlayState = useDataOverlayStore.getState()
+
+            glitchState.setRGBSplitEnabled(false)
+            glitchState.setChromaticAberrationEnabled(false)
+            glitchState.setPosterizeEnabled(false)
+            glitchState.setColorGradeEnabled(false)
+            glitchState.setBlockDisplaceEnabled(false)
+            glitchState.setStaticDisplacementEnabled(false)
+            glitchState.setPixelateEnabled(false)
+            glitchState.setLensDistortionEnabled(false)
+            glitchState.setScanLinesEnabled(false)
+            glitchState.setVHSTrackingEnabled(false)
+            glitchState.setNoiseEnabled(false)
+            glitchState.setDitherEnabled(false)
+            glitchState.setEdgeDetectionEnabled(false)
+            glitchState.setFeedbackLoopEnabled(false)
+            asciiState.setEnabled(false)
+            stippleState.setEnabled(false)
+            contourState.setEnabled(false)
+            landmarksState.setEnabled(false)
+            landmarksState.setCurrentMode('off')
+            acidState.setDotsEnabled(false)
+            acidState.setGlyphEnabled(false)
+            acidState.setIconsEnabled(false)
+            acidState.setContourEnabled(false)
+            acidState.setDecompEnabled(false)
+            acidState.setMirrorEnabled(false)
+            acidState.setSliceEnabled(false)
+            acidState.setThGridEnabled(false)
+            acidState.setCloudEnabled(false)
+            acidState.setLedEnabled(false)
+            acidState.setSlitEnabled(false)
+            acidState.setVoronoiEnabled(false)
+            acidState.setHalftoneEnabled(false)
+            acidState.setHexEnabled(false)
+            acidState.setScanEnabled(false)
+            acidState.setRippleEnabled(false)
+            visionState.setBrightEnabled(false)
+            visionState.setEdgeEnabled(false)
+            visionState.setColorEnabled(false)
+            visionState.setMotionEnabled(false)
+            visionState.setFaceEnabled(false)
+            visionState.setHandsEnabled(false)
+            textureOverlayState.setEnabled(false)
+            dataOverlayState.setEnabled(false)
+            strandState.setHandprintsEnabled(false)
+            strandState.setTarSpreadEnabled(false)
+            strandState.setTimefallEnabled(false)
+            strandState.setVoidOutEnabled(false)
+            strandState.setStrandWebEnabled(false)
+            strandState.setBridgeLinkEnabled(false)
+            strandState.setChiralPathEnabled(false)
+            strandState.setUmbilicalEnabled(false)
+            strandState.setOdradekEnabled(false)
+            strandState.setChiraliumEnabled(false)
+            strandState.setBeachStaticEnabled(false)
+            strandState.setDoomsEnabled(false)
+            strandState.setChiralCloudEnabled(false)
+            strandState.setBBPodEnabled(false)
+            strandState.setSeamEnabled(false)
+            strandState.setExtinctionEnabled(false)
+            motionState.setMotionExtractEnabled(false)
+            motionState.setEchoTrailEnabled(false)
+            motionState.setTimeSmearEnabled(false)
+            motionState.setFreezeMaskEnabled(false)
+          }}
+          title="Clear all effects"
+          className="w-6 h-6 flex items-center justify-center rounded-sm transition-all hover:scale-105"
+          style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--warning)',
+          }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
+          <ClearIcon size={14} />
         </button>
 
         <div className="flex items-center gap-0.5">
@@ -964,15 +1045,22 @@ export function PerformanceGrid() {
           })}
         </div>
 
+        {/* Bypass button */}
         <button
-          onClick={() => setGridPage(Math.min(4, gridPage + 1))}
-          disabled={gridPage === 4}
-          className="w-5 h-5 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
-          style={{ color: 'var(--text-ghost)' }}
+          onClick={() => {
+            const glitchState = useGlitchEngineStore.getState()
+            glitchState.setBypassActive(!glitchState.bypassActive)
+          }}
+          title="Bypass all effects"
+          className="w-6 h-6 flex items-center justify-center rounded-sm transition-all hover:scale-105"
+          style={{
+            backgroundColor: bypassActive ? 'var(--danger)' : 'var(--bg-surface)',
+            border: `1px solid ${bypassActive ? 'var(--danger)' : 'var(--border)'}`,
+            color: bypassActive ? 'white' : 'var(--danger)',
+            boxShadow: bypassActive ? '0 0 8px var(--danger)' : 'none',
+          }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          <BypassIcon size={14} />
         </button>
       </div>
 

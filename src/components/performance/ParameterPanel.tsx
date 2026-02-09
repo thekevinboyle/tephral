@@ -2129,15 +2129,17 @@ export function ParameterPanel() {
     isDragging.current = false
   }, [dragIndex, dragOverIndex, effectOrder, reorderEffect, setSelectedEffect, sortedSections])
 
-  // Control buttons component (compact icon buttons)
-  // Note: position:relative + z-index ensures buttons stay clickable above any overlapping elements
+  // Control buttons component (horizontal row at bottom)
   const ControlButtons = () => (
     <div
-      className="flex gap-1 items-center"
+      className="flex gap-2 items-center justify-center pt-2"
       style={{
         flexShrink: 0,
         position: 'relative',
         zIndex: 20,
+        borderTop: '1px solid var(--border)',
+        marginTop: '8px',
+        paddingTop: '8px',
       }}
     >
       <button
@@ -2145,15 +2147,15 @@ export function ParameterPanel() {
         title="Clear all effects"
         className="flex items-center justify-center rounded-sm transition-all hover:scale-105"
         style={{
-          width: 28,
-          height: 28,
+          width: 32,
+          height: 32,
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border)',
           color: 'var(--warning)',
           cursor: 'pointer',
         }}
       >
-        <ClearIcon size={14} />
+        <ClearIcon size={16} />
       </button>
       <button
         onClick={() => {
@@ -2163,8 +2165,8 @@ export function ParameterPanel() {
         title="Bypass all effects"
         className="flex items-center justify-center rounded-sm transition-all hover:scale-105"
         style={{
-          width: 28,
-          height: 28,
+          width: 32,
+          height: 32,
           backgroundColor: bypassActive ? 'var(--danger)' : 'var(--bg-surface)',
           border: `1px solid ${bypassActive ? 'var(--danger)' : 'var(--border)'}`,
           color: bypassActive ? 'white' : 'var(--danger)',
@@ -2172,7 +2174,7 @@ export function ParameterPanel() {
           cursor: 'pointer',
         }}
       >
-        <BypassIcon size={14} />
+        <BypassIcon size={16} />
       </button>
     </div>
   )
@@ -2180,25 +2182,25 @@ export function ParameterPanel() {
   if (sortedSections.length === 0) {
     return (
       <div
-        className="h-full flex items-stretch gap-3 px-4 py-2"
+        className="h-full flex flex-col px-4 py-2"
         style={{ position: 'relative', zIndex: 10 }}
       >
-        <ControlButtons />
         <div className="flex-1 flex items-center justify-center">
           <span className="text-[13px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
             No active effects — drag to reorder
           </span>
         </div>
+        <ControlButtons />
       </div>
     )
   }
 
   return (
     <div
-      className="h-full flex items-stretch gap-3 overflow-x-auto px-4 py-2"
+      className="h-full flex flex-col px-4 py-2"
       style={{ position: 'relative', zIndex: 10 }}
     >
-      <ControlButtons />
+      <div className="flex-1 flex items-stretch gap-3 overflow-x-auto">
       {sortedSections.map((section, index) => {
         const isBeingDragged = dragIndex === index
         const isDropTarget = dragOverIndex === index && dragIndex !== null && dragIndex !== index
@@ -2361,6 +2363,8 @@ export function ParameterPanel() {
           </div>
         )
       })}
+      </div>
+      <ControlButtons />
     </div>
   )
 }

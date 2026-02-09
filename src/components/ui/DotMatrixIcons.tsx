@@ -861,22 +861,47 @@ export function FxIcon({ size = 16, color = 'currentColor', className }: IconPro
   )
 }
 
-// Clear/reset icon - circular arrow (filled style)
+// Clear/reset icon - dots dispersing outward (dot-matrix style)
 export function ClearIcon({ size = 16, color = 'currentColor', className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
-      {/* Circular arrow - reset symbol */}
-      <path d="M8 2.5V0l3 2.5-3 2.5V3a5 5 0 1 0 5 5h1.5a6.5 6.5 0 1 1-6.5-6.5z" />
+      {/* Center cluster being cleared */}
+      <Dot x={3} y={3} />
+      {/* Dots dispersing outward */}
+      <Dot x={1} y={1} />
+      <Dot x={5} y={1} />
+      <Dot x={0} y={3} />
+      <Dot x={6} y={3} />
+      <Dot x={1} y={5} />
+      <Dot x={5} y={5} />
+      {/* Motion trails */}
+      <Dot x={2} y={2} />
+      <Dot x={4} y={2} />
+      <Dot x={2} y={4} />
+      <Dot x={4} y={4} />
     </svg>
   )
 }
 
-// Bypass icon - diagonal line through circle (filled style)
+// Bypass icon - signal routing around obstacle (dot-matrix style)
 export function BypassIcon({ size = 16, color = 'currentColor', className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
-      {/* Circle with diagonal slash */}
-      <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 1.5a5.5 5.5 0 0 1 4.33 8.89L4.61 3.67A5.47 5.47 0 0 1 8 2.5zm0 11a5.5 5.5 0 0 1-4.33-8.89l7.72 7.72A5.47 5.47 0 0 1 8 13.5z" />
+      {/* Input signal */}
+      <Dot x={0} y={3} />
+      <Dot x={1} y={3} />
+      {/* Route up and over */}
+      <Dot x={2} y={2} />
+      <Dot x={2} y={1} />
+      <Dot x={3} y={0} />
+      <Dot x={4} y={0} />
+      <Dot x={4} y={1} />
+      <Dot x={4} y={2} />
+      {/* Output signal */}
+      <Dot x={5} y={3} />
+      <Dot x={6} y={3} />
+      {/* Blocked center (what we bypass) */}
+      <Dot x={3} y={3} />
     </svg>
   )
 }

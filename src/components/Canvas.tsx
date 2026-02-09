@@ -33,7 +33,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     outputMode: slicerOutputMode,
     wet: slicerWet,
     blendMode: slicerBlendMode,
-    opacity: slicerOpacity
+    opacity: slicerOpacity,
+    processEffects: slicerProcessEffects,
   } = useSlicerStore()
 
   // Slicer output frame
@@ -107,8 +108,11 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   } = useAsciiRenderStore()
 
   // Solo filtering: when soloing, only the soloed effect passes through
+  // Also bypass all effects when slicer is active and processEffects is false
   const isSoloing = soloEffectId !== null
+  const slicerBypassingEffects = slicerEnabled && !slicerProcessEffects
   const getEffectiveEnabled = (effectId: string, actualEnabled: boolean) => {
+    if (slicerBypassingEffects) return false
     if (!isSoloing) return actualEnabled
     return soloEffectId === effectId && actualEnabled
   }
@@ -280,6 +284,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     freezeMask,
     mediaTexture,
     slicerEnabled,
+    slicerProcessEffects,
     effectMix,
     // Vision effects
     dotsEnabled,

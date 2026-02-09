@@ -18,6 +18,8 @@ export function SlicerTransport() {
     enabled,
     setEnabled,
     setImportedClipId,
+    processEffects,
+    setProcessEffects,
   } = useSlicerStore()
 
   const { capture, release, importFrames } = useSlicerBufferStore()
@@ -196,6 +198,21 @@ export function SlicerTransport() {
         title={syncToBpm ? `Synced to ${bpm} BPM` : 'Free running'}
       >
         {syncToBpm ? bpm : 'Free'}
+      </button>
+
+      {/* Process Effects toggle */}
+      <button
+        onClick={() => setProcessEffects(!processEffects)}
+        className="h-6 px-1.5 text-[10px] font-medium rounded-sm"
+        style={{
+          backgroundColor: processEffects ? 'var(--accent)' : 'var(--bg-surface)',
+          border: processEffects ? '1px solid var(--accent)' : '1px solid var(--border)',
+          color: processEffects ? 'var(--text-primary)' : 'var(--text-muted)',
+          boxShadow: processEffects ? '0 0 4px var(--accent-glow)' : 'none',
+        }}
+        title={processEffects ? 'Effects processing enabled' : 'Effects bypassed'}
+      >
+        FX
       </button>
 
       {/* Master On/Off button */}

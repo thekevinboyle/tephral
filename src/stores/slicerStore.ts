@@ -95,6 +95,7 @@ interface SlicerState {
   blendMode: BlendMode
   opacity: number
   enabled: boolean
+  processEffects: boolean  // Whether slicer output goes through effects chain
 
   // Buffer actions
   setBufferSize: (size: number) => void
@@ -135,6 +136,7 @@ interface SlicerState {
   setBlendMode: (mode: BlendMode) => void
   setOpacity: (opacity: number) => void
   setEnabled: (enabled: boolean) => void
+  setProcessEffects: (process: boolean) => void
 
   // Snapshot actions
   getSnapshot: () => SlicerSnapshot
@@ -183,6 +185,7 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
   blendMode: 'normal',
   opacity: 1,
   enabled: false,
+  processEffects: false,  // Bypass effects by default
 
   // Buffer actions
   setBufferSize: (size) => set({ bufferSize: clamp(size, 1, 10) }),
@@ -278,6 +281,7 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
       }
     }
   },
+  setProcessEffects: (processEffects) => set({ processEffects }),
 
   // Snapshot actions
   getSnapshot: () => {

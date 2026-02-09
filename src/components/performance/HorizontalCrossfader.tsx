@@ -43,7 +43,7 @@ export function HorizontalCrossfader() {
   const thumbPosition = crossfaderPosition * 100
 
   return (
-    <div className="px-3 py-3">
+    <div className="px-4 py-3">
       {/* Label row */}
       <div
         className="flex justify-between mb-2 text-[9px] uppercase tracking-widest"
@@ -53,11 +53,11 @@ export function HorizontalCrossfader() {
         <span>FX</span>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {/* Source icon (video camera) */}
         <button
           onClick={snapToSource}
-          className="p-1.5 rounded-sm transition-colors"
+          className="p-2 rounded-sm transition-colors flex-shrink-0"
           style={{
             color: crossfaderPosition < 0.5 ? 'var(--text-primary)' : 'var(--text-ghost)',
             backgroundColor: crossfaderPosition < 0.5 ? 'var(--accent-subtle)' : 'transparent',
@@ -100,7 +100,7 @@ export function HorizontalCrossfader() {
         {/* Processed icon (waveform/effects) */}
         <button
           onClick={snapToProcessed}
-          className="p-1.5 rounded-sm transition-colors"
+          className="p-2 rounded-sm transition-colors flex-shrink-0"
           style={{
             color: crossfaderPosition > 0.5 ? 'var(--text-primary)' : 'var(--text-ghost)',
             backgroundColor: crossfaderPosition > 0.5 ? 'var(--accent-subtle)' : 'transparent',

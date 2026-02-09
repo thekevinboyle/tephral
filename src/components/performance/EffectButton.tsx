@@ -2,6 +2,7 @@ import { useRef, useCallback } from 'react'
 import { useRecordingStore } from '../../stores/recordingStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { useModulationStore } from '../../stores/modulationStore'
 
 const HOLD_THRESHOLD = 200    // ms before hold triggers solo
 const DOUBLE_CLICK_GAP = 300  // ms max between clicks for double-click
@@ -37,6 +38,7 @@ export function EffectButton({
   const isRecording = useRecordingStore((s) => s.isRecording)
   const setSelectedEffect = useUIStore((s) => s.setSelectedEffect)
   const selectEffectForInfoPanel = useUIStore((s) => s.selectEffect)
+  const setSelectedModulator = useModulationStore((s) => s.setSelectedModulator)
 
   // Solo state and actions
   const { soloEffectId, soloLatched, setSolo, clearSolo } = useGlitchEngineStore()
@@ -150,6 +152,7 @@ export function EffectButton({
             // Normal toggle
             onToggle()
             setSelectedEffect(id)
+            setSelectedModulator(null) // Clear modulator selection
             if (isRecording) {
               addEvent({ effect: id, action: active ? 'off' : 'on', mix })
             }
@@ -163,7 +166,7 @@ export function EffectButton({
     dragStartY.current = null
     didDrag.current = false
     isHolding.current = false
-  }, [onToggle, isRecording, addEvent, id, active, mix, setSelectedEffect, selectEffectForInfoPanel, soloEffectId, soloLatched, setSolo, clearSolo])
+  }, [onToggle, isRecording, addEvent, id, active, mix, setSelectedEffect, setSelectedModulator, selectEffectForInfoPanel, soloEffectId, soloLatched, setSolo, clearSolo])
 
   // Handle pointer leave - clear momentary solo if not latched
   const handlePointerLeave = useCallback(() => {

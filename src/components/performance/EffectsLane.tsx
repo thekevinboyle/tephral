@@ -648,6 +648,13 @@ export function EffectsLane() {
     }
   }, [modulation.selectedModulator])
 
+  // Auto-switch to FX tab when an effect is selected
+  useEffect(() => {
+    if (selectedEffectId !== null) {
+      setActiveTab('fx')
+    }
+  }, [selectedEffectId])
+
   // Build list of active effects
   const activeEffects: ActiveEffect[] = []
 

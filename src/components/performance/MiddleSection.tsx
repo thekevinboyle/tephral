@@ -13,6 +13,7 @@ import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
+import { useUIStore } from '../../stores/uiStore'
 import { Button } from '../ui/Button'
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -325,8 +326,12 @@ export function MiddleSection() {
     setSelectedModulator,
   } = useModulationStore()
 
+  const { setSelectedEffect } = useUIStore()
+
   // Handle card click - select and enable, or disable if already selected
   const handleCardClick = (type: 'lfo' | 'random' | 'step' | 'envelope' | 'sampleHold') => {
+    // Clear effect selection when selecting a modulator
+    setSelectedEffect(null)
     // If clicking the already selected one, disable and deselect
     if (selectedModulator === type) {
       switch (type) {

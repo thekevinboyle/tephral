@@ -249,7 +249,7 @@ export function PerformanceLayout() {
           <SequencerContainer />
         </div>
         {/* Modulation lane at the bottom */}
-        <div className="flex-shrink-0" style={{ height: '72px' }}>
+        <div className="flex-shrink-0" style={{ height: '96px' }}>
           <ModulationLane />
         </div>
       </div>

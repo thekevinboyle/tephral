@@ -5,17 +5,18 @@ const fragmentShader = `
 uniform float crossfaderPosition;
 uniform sampler2D sourceTexture;
 uniform vec2 quadScale;
+uniform vec2 sourceQuadScale;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
-  // Transform UV to match how video is rendered (with letterboxing)
-  vec2 adjustedUv = (uv - 0.5) / quadScale + 0.5;
+  // Transform UV for source texture (original video) using its own scale
+  vec2 sourceUv = (uv - 0.5) / sourceQuadScale + 0.5;
 
-  // For letterbox/pillarbox areas, source should be black to match processed
+  // For letterbox/pillarbox areas, source should be black
   vec4 source;
-  if (adjustedUv.x < 0.0 || adjustedUv.x > 1.0 || adjustedUv.y < 0.0 || adjustedUv.y > 1.0) {
+  if (sourceUv.x < 0.0 || sourceUv.x > 1.0 || sourceUv.y < 0.0 || sourceUv.y > 1.0) {
     source = vec4(0.0, 0.0, 0.0, 1.0);
   } else {
-    source = texture2D(sourceTexture, adjustedUv);
+    source = texture2D(sourceTexture, sourceUv);
   }
 
   // Blend: SRC (0) = source, FX (1) = processed
@@ -33,6 +34,7 @@ export class CrossfaderEffect extends Effect {
         ['crossfaderPosition', new THREE.Uniform(1.0)], // Default to fully processed
         ['sourceTexture', new THREE.Uniform(null)],
         ['quadScale', new THREE.Uniform(new THREE.Vector2(1, 1))],
+        ['sourceQuadScale', new THREE.Uniform(new THREE.Vector2(1, 1))],
       ]),
     })
   }
@@ -48,6 +50,10 @@ export class CrossfaderEffect extends Effect {
 
   setQuadScale(scaleX: number, scaleY: number) {
     this.uniforms.get('quadScale')!.value = new THREE.Vector2(scaleX, scaleY)
+  }
+
+  setSourceQuadScale(scaleX: number, scaleY: number) {
+    this.uniforms.get('sourceQuadScale')!.value = new THREE.Vector2(scaleX, scaleY)
   }
 
   getSourceTexture(): THREE.Texture | null {

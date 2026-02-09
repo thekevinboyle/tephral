@@ -266,6 +266,25 @@ export class EffectPipeline {
     }
   }
 
+  // Set source video dimensions (for crossfader aspect ratio when different from main input)
+  setSourceVideoSize(width: number, height: number) {
+    if (!this.crossfaderEffect) return
+
+    const canvasAspect = this.canvasWidth / this.canvasHeight
+    const sourceAspect = (width || 1) / (height || 1)
+
+    let scaleX = 1
+    let scaleY = 1
+
+    if (sourceAspect > canvasAspect) {
+      scaleY = canvasAspect / sourceAspect
+    } else {
+      scaleX = sourceAspect / canvasAspect
+    }
+
+    this.crossfaderEffect.setSourceQuadScale(scaleX, scaleY)
+  }
+
   // Update crossfader position (0 = source, 1 = processed)
   setCrossfaderPosition(position: number) {
     if (this.crossfaderEffect) {

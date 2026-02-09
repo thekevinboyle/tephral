@@ -296,6 +296,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     // Always provide mediaTexture when available - allows crossfading back to source even with slicer active
     if (mediaTexture) {
       pipeline.setSourceTexture(mediaTexture)
+      // Set source video dimensions for crossfader aspect ratio
+      if (videoElement) {
+        pipeline.setSourceVideoSize(videoElement.videoWidth, videoElement.videoHeight)
+      } else if (imageElement) {
+        pipeline.setSourceVideoSize(imageElement.naturalWidth, imageElement.naturalHeight)
+      }
     } else {
       pipeline.setSourceTexture(null)
     }
@@ -320,8 +326,11 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       // Get video/image dimensions for aspect ratio
       if (videoElement) {
         pipeline.setVideoSize(videoElement.videoWidth, videoElement.videoHeight)
+        // When not using slicer, source and input are the same
+        pipeline.setSourceVideoSize(videoElement.videoWidth, videoElement.videoHeight)
       } else if (imageElement) {
         pipeline.setVideoSize(imageElement.naturalWidth, imageElement.naturalHeight)
+        pipeline.setSourceVideoSize(imageElement.naturalWidth, imageElement.naturalHeight)
       }
     } else {
       const size = 256

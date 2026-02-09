@@ -293,9 +293,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     if (!pipeline) return
 
     // Set source texture for crossfader A side
-    // When slicer is active, don't use original media (aspect ratio mismatch)
-    // Only enable crossfader blending when not using slicer
-    if (mediaTexture && !slicerEnabled) {
+    // Always provide mediaTexture when available - allows crossfading back to source even with slicer active
+    if (mediaTexture) {
       pipeline.setSourceTexture(mediaTexture)
     } else {
       pipeline.setSourceTexture(null)

@@ -449,3 +449,278 @@ export function ArrowRightIcon({ size = 16, color = 'currentColor', className }:
     </svg>
   )
 }
+
+// Chevron down icon
+export function ChevronDownIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={1} y={2} /><Dot x={5} y={2} />
+      <Dot x={2} y={3} /><Dot x={4} y={3} />
+      <Dot x={3} y={4} />
+    </svg>
+  )
+}
+
+// Chevron up icon
+export function ChevronUpIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={3} y={2} />
+      <Dot x={2} y={3} /><Dot x={4} y={3} />
+      <Dot x={1} y={4} /><Dot x={5} y={4} />
+    </svg>
+  )
+}
+
+// Chevron left icon
+export function ChevronLeftIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={3} y={1} />
+      <Dot x={2} y={2} />
+      <Dot x={1} y={3} />
+      <Dot x={2} y={4} />
+      <Dot x={3} y={5} />
+    </svg>
+  )
+}
+
+// Chevron right icon
+export function ChevronRightIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={2} y={1} />
+      <Dot x={3} y={2} />
+      <Dot x={4} y={3} />
+      <Dot x={3} y={4} />
+      <Dot x={2} y={5} />
+    </svg>
+  )
+}
+
+// Microphone icon
+export function MicIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={2} y={0} /><Dot x={3} y={0} /><Dot x={4} y={0} />
+      <Dot x={2} y={1} /><Dot x={3} y={1} /><Dot x={4} y={1} />
+      <Dot x={2} y={2} /><Dot x={3} y={2} /><Dot x={4} y={2} />
+      <Dot x={2} y={3} /><Dot x={3} y={3} /><Dot x={4} y={3} />
+      <Dot x={0} y={3} /><Dot x={6} y={3} />
+      <Dot x={0} y={4} /><Dot x={6} y={4} />
+      <Dot x={1} y={5} /><Dot x={5} y={5} />
+      <Dot x={2} y={6} /><Dot x={3} y={6} /><Dot x={4} y={6} />
+    </svg>
+  )
+}
+
+// Routing/connection icon
+export function RoutingIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={1} y={2} /><Dot x={1} y={3} /><Dot x={1} y={4} />
+      <Dot x={2} y={3} /><Dot x={3} y={3} /><Dot x={4} y={3} />
+      <Dot x={5} y={2} /><Dot x={5} y={3} /><Dot x={5} y={4} />
+    </svg>
+  )
+}
+
+// Step sequencer bars icon
+export function StepsIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={0} y={3} /><Dot x={0} y={4} /><Dot x={0} y={5} /><Dot x={0} y={6} />
+      <Dot x={2} y={1} /><Dot x={2} y={2} /><Dot x={2} y={3} /><Dot x={2} y={4} /><Dot x={2} y={5} /><Dot x={2} y={6} />
+      <Dot x={4} y={2} /><Dot x={4} y={3} /><Dot x={4} y={4} /><Dot x={4} y={5} /><Dot x={4} y={6} />
+      <Dot x={6} y={4} /><Dot x={6} y={5} /><Dot x={6} y={6} />
+    </svg>
+  )
+}
+
+// Euclidean circle icon
+export function EuclideanIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={2} y={0} /><Dot x={3} y={0} /><Dot x={4} y={0} />
+      <Dot x={1} y={1} /><Dot x={5} y={1} />
+      <Dot x={0} y={2} /><Dot x={3} y={2} /><Dot x={6} y={2} />
+      <Dot x={0} y={3} /><Dot x={6} y={3} />
+      <Dot x={0} y={4} /><Dot x={6} y={4} />
+      <Dot x={1} y={5} /><Dot x={5} y={5} />
+      <Dot x={2} y={6} /><Dot x={3} y={6} /><Dot x={4} y={6} />
+    </svg>
+  )
+}
+
+// Ricochet triangle icon
+export function RicochetIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={3} y={0} />
+      <Dot x={2} y={1} /><Dot x={3} y={1} /><Dot x={4} y={1} />
+      <Dot x={1} y={2} /><Dot x={3} y={2} /><Dot x={5} y={2} />
+      <Dot x={1} y={3} /><Dot x={2} y={3} /><Dot x={3} y={3} /><Dot x={4} y={3} /><Dot x={5} y={3} />
+      <Dot x={0} y={4} /><Dot x={3} y={4} /><Dot x={6} y={4} />
+      <Dot x={0} y={5} /><Dot x={1} y={5} /><Dot x={2} y={5} /><Dot x={3} y={5} /><Dot x={4} y={5} /><Dot x={5} y={5} /><Dot x={6} y={5} />
+    </svg>
+  )
+}
+
+// Link/chain icon
+export function LinkIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={3} y={0} /><Dot x={4} y={0} /><Dot x={5} y={0} />
+      <Dot x={2} y={1} /><Dot x={4} y={1} /><Dot x={6} y={1} />
+      <Dot x={2} y={2} /><Dot x={3} y={2} /><Dot x={4} y={2} />
+      <Dot x={2} y={3} /><Dot x={3} y={3} /><Dot x={4} y={3} />
+      <Dot x={0} y={4} /><Dot x={2} y={4} /><Dot x={4} y={4} />
+      <Dot x={1} y={5} /><Dot x={2} y={5} /><Dot x={3} y={5} />
+    </svg>
+  )
+}
+
+// Menu/hamburger icon
+export function MenuIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={0} y={1} /><Dot x={1} y={1} /><Dot x={2} y={1} /><Dot x={3} y={1} /><Dot x={4} y={1} /><Dot x={5} y={1} /><Dot x={6} y={1} />
+      <Dot x={0} y={3} /><Dot x={1} y={3} /><Dot x={2} y={3} /><Dot x={3} y={3} /><Dot x={4} y={3} /><Dot x={5} y={3} /><Dot x={6} y={3} />
+      <Dot x={0} y={5} /><Dot x={1} y={5} /><Dot x={2} y={5} /><Dot x={3} y={5} /><Dot x={4} y={5} /><Dot x={5} y={5} /><Dot x={6} y={5} />
+    </svg>
+  )
+}
+
+// Info icon (circle with i)
+export function InfoIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={2} y={0} /><Dot x={3} y={0} /><Dot x={4} y={0} />
+      <Dot x={1} y={1} /><Dot x={3} y={1} /><Dot x={5} y={1} />
+      <Dot x={0} y={2} /><Dot x={6} y={2} />
+      <Dot x={0} y={3} /><Dot x={2} y={3} /><Dot x={3} y={3} /><Dot x={6} y={3} />
+      <Dot x={0} y={4} /><Dot x={3} y={4} /><Dot x={6} y={4} />
+      <Dot x={1} y={5} /><Dot x={2} y={5} /><Dot x={3} y={5} /><Dot x={4} y={5} /><Dot x={5} y={5} />
+      <Dot x={2} y={6} /><Dot x={3} y={6} /><Dot x={4} y={6} />
+    </svg>
+  )
+}
+
+// Volume/speaker icon
+export function VolumeIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={2} y={2} />
+      <Dot x={1} y={2} /><Dot x={1} y={3} /><Dot x={1} y={4} />
+      <Dot x={0} y={3} /><Dot x={0} y={4} />
+      <Dot x={2} y={2} /><Dot x={2} y={3} /><Dot x={2} y={4} /><Dot x={2} y={5} />
+      <Dot x={3} y={1} /><Dot x={3} y={6} />
+      <Dot x={5} y={2} /><Dot x={5} y={5} />
+      <Dot x={6} y={3} /><Dot x={6} y={4} />
+    </svg>
+  )
+}
+
+// Heart icon
+export function HeartIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={1} y={1} /><Dot x={2} y={1} /><Dot x={4} y={1} /><Dot x={5} y={1} />
+      <Dot x={0} y={2} /><Dot x={1} y={2} /><Dot x={2} y={2} /><Dot x={3} y={2} /><Dot x={4} y={2} /><Dot x={5} y={2} /><Dot x={6} y={2} />
+      <Dot x={0} y={3} /><Dot x={1} y={3} /><Dot x={2} y={3} /><Dot x={3} y={3} /><Dot x={4} y={3} /><Dot x={5} y={3} /><Dot x={6} y={3} />
+      <Dot x={1} y={4} /><Dot x={2} y={4} /><Dot x={3} y={4} /><Dot x={4} y={4} /><Dot x={5} y={4} />
+      <Dot x={2} y={5} /><Dot x={3} y={5} /><Dot x={4} y={5} />
+      <Dot x={3} y={6} />
+    </svg>
+  )
+}
+
+// Star icon
+export function StarIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={3} y={0} />
+      <Dot x={3} y={1} />
+      <Dot x={0} y={2} /><Dot x={1} y={2} /><Dot x={2} y={2} /><Dot x={3} y={2} /><Dot x={4} y={2} /><Dot x={5} y={2} /><Dot x={6} y={2} />
+      <Dot x={1} y={3} /><Dot x={2} y={3} /><Dot x={3} y={3} /><Dot x={4} y={3} /><Dot x={5} y={3} />
+      <Dot x={2} y={4} /><Dot x={3} y={4} /><Dot x={4} y={4} />
+      <Dot x={1} y={5} /><Dot x={2} y={5} /><Dot x={4} y={5} /><Dot x={5} y={5} />
+      <Dot x={0} y={6} /><Dot x={6} y={6} />
+    </svg>
+  )
+}
+
+// Trash/delete icon
+export function TrashIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={2} y={0} /><Dot x={3} y={0} /><Dot x={4} y={0} />
+      <Dot x={0} y={1} /><Dot x={1} y={1} /><Dot x={2} y={1} /><Dot x={3} y={1} /><Dot x={4} y={1} /><Dot x={5} y={1} /><Dot x={6} y={1} />
+      <Dot x={1} y={2} /><Dot x={5} y={2} />
+      <Dot x={1} y={3} /><Dot x={2} y={3} /><Dot x={4} y={3} /><Dot x={5} y={3} />
+      <Dot x={1} y={4} /><Dot x={2} y={4} /><Dot x={4} y={4} /><Dot x={5} y={4} />
+      <Dot x={1} y={5} /><Dot x={2} y={5} /><Dot x={4} y={5} /><Dot x={5} y={5} />
+      <Dot x={1} y={6} /><Dot x={2} y={6} /><Dot x={3} y={6} /><Dot x={4} y={6} /><Dot x={5} y={6} />
+    </svg>
+  )
+}
+
+// Copy icon
+export function CopyIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={2} y={0} /><Dot x={3} y={0} /><Dot x={4} y={0} /><Dot x={5} y={0} />
+      <Dot x={2} y={1} /><Dot x={5} y={1} />
+      <Dot x={0} y={2} /><Dot x={1} y={2} /><Dot x={2} y={2} /><Dot x={3} y={2} /><Dot x={5} y={2} />
+      <Dot x={0} y={3} /><Dot x={3} y={3} /><Dot x={4} y={3} /><Dot x={5} y={3} />
+      <Dot x={0} y={4} /><Dot x={3} y={4} />
+      <Dot x={0} y={5} /><Dot x={3} y={5} />
+      <Dot x={0} y={6} /><Dot x={1} y={6} /><Dot x={2} y={6} /><Dot x={3} y={6} />
+    </svg>
+  )
+}
+
+// Paste icon
+export function PasteIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={2} y={0} /><Dot x={3} y={0} /><Dot x={4} y={0} />
+      <Dot x={1} y={1} /><Dot x={2} y={1} /><Dot x={3} y={1} /><Dot x={4} y={1} /><Dot x={5} y={1} />
+      <Dot x={0} y={2} /><Dot x={6} y={2} />
+      <Dot x={0} y={3} /><Dot x={6} y={3} />
+      <Dot x={0} y={4} /><Dot x={6} y={4} />
+      <Dot x={0} y={5} /><Dot x={6} y={5} />
+      <Dot x={0} y={6} /><Dot x={1} y={6} /><Dot x={2} y={6} /><Dot x={3} y={6} /><Dot x={4} y={6} /><Dot x={5} y={6} /><Dot x={6} y={6} />
+    </svg>
+  )
+}
+
+// Search/magnifying glass icon
+export function SearchIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={1} y={0} /><Dot x={2} y={0} /><Dot x={3} y={0} />
+      <Dot x={0} y={1} /><Dot x={4} y={1} />
+      <Dot x={0} y={2} /><Dot x={4} y={2} />
+      <Dot x={0} y={3} /><Dot x={4} y={3} />
+      <Dot x={1} y={4} /><Dot x={2} y={4} /><Dot x={3} y={4} /><Dot x={4} y={4} />
+      <Dot x={5} y={5} />
+      <Dot x={6} y={6} />
+    </svg>
+  )
+}
+
+// Refresh/sync icon
+export function RefreshIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={4} y={0} /><Dot x={5} y={0} /><Dot x={6} y={0} />
+      <Dot x={2} y={1} /><Dot x={3} y={1} /><Dot x={4} y={1} /><Dot x={5} y={1} />
+      <Dot x={1} y={2} /><Dot x={6} y={2} />
+      <Dot x={0} y={3} /><Dot x={6} y={3} />
+      <Dot x={0} y={4} /><Dot x={5} y={4} />
+      <Dot x={1} y={5} /><Dot x={2} y={5} /><Dot x={3} y={5} /><Dot x={4} y={5} />
+      <Dot x={0} y={6} /><Dot x={1} y={6} /><Dot x={2} y={6} />
+    </svg>
+  )
+}

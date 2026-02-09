@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { Button } from '../ui/Button'
+import { PlayIcon, StopIcon, UndoIcon, MicIcon, StepsIcon, EuclideanIcon, RicochetIcon } from '../ui/DotMatrixIcons'
 import { useSequencerStore, type StepResolution, type StepMode } from '../../stores/sequencerStore'
 import { useSequencerPlayback } from '../../hooks/useSequencerPlayback'
 import { useAudioAnalysis } from '../../hooks/useAudioAnalysis'
@@ -29,40 +30,19 @@ const VIEWS: ViewConfig[] = [
     type: 'steps',
     color: 'var(--accent)',
     label: 'Step Sequencer',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <rect x="1" y="3" width="3" height="10" rx="0.5" />
-        <rect x="5" y="6" width="3" height="7" rx="0.5" />
-        <rect x="9" y="4" width="3" height="9" rx="0.5" />
-        <rect x="13" y="8" width="2" height="5" rx="0.5" />
-      </svg>
-    ),
+    icon: <StepsIcon size={16} />,
   },
   {
     type: 'euclidean',
     color: 'var(--accent)',
     label: 'Euclidean Sequencer',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <circle cx="8" cy="8" r="6" />
-        <circle cx="8" cy="2" r="1.5" fill="currentColor" />
-        <circle cx="13" cy="6" r="1.5" fill="currentColor" />
-        <circle cx="11" cy="12" r="1.5" fill="currentColor" />
-        <circle cx="5" cy="12" r="1" />
-        <circle cx="3" cy="6" r="1" />
-      </svg>
-    ),
+    icon: <EuclideanIcon size={16} />,
   },
   {
     type: 'ricochet',
     color: 'var(--accent)',
     label: 'Ricochet Sequencer',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <polygon points="8,1 15,12 1,12" />
-        <circle cx="7" cy="8" r="2" fill="currentColor" />
-      </svg>
-    ),
+    icon: <RicochetIcon size={16} />,
   },
 ]
 
@@ -153,20 +133,9 @@ export function SequencerPanel() {
                 }}
               >
                 {isPlaying ? (
-                  <div
-                    className="w-2.5 h-2.5"
-                    style={{ backgroundColor: 'var(--text-primary)' }}
-                  />
+                  <StopIcon size={12} color="var(--text-primary)" />
                 ) : (
-                  <div
-                    className="w-0 h-0"
-                    style={{
-                      borderTop: '5px solid transparent',
-                      borderBottom: '5px solid transparent',
-                      borderLeft: '8px solid var(--text-muted)',
-                      marginLeft: '2px',
-                    }}
-                  />
+                  <PlayIcon size={12} color="var(--text-muted)" />
                 )}
               </button>
 
@@ -210,11 +179,7 @@ export function SequencerPanel() {
                 }}
                 title="Audio reactive mode - modulates parameters based on audio input"
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" y1="19" x2="12" y2="22" />
-                </svg>
+                <MicIcon size={10} color="currentColor" />
                 {audioReactive && (
                   <div
                     className="w-1 h-2.5 rounded-sm"
@@ -328,10 +293,7 @@ export function SequencerPanel() {
                   className="w-6 px-0 flex items-center justify-center"
                   title="Undo last randomize"
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                    <path d="M3 3v5h5" />
-                  </svg>
+                  <UndoIcon size={12} color="currentColor" />
                 </Button>
               </div>
 

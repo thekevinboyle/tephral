@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import type { Folder, Preset } from '../../stores/presetLibraryStore'
 import { usePresetLibraryStore } from '../../stores/presetLibraryStore'
 import { PresetRow } from './PresetRow'
+import { ChevronDownIcon, FolderIcon } from '../ui/DotMatrixIcons'
 
 interface PresetFolderTreeProps {
   folders: Folder[]
@@ -68,15 +69,11 @@ function FolderNode({
             transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
           }}
         >
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+          <ChevronDownIcon size={10} color="var(--text-muted)" />
         </div>
 
         {/* Folder icon */}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-        </svg>
+        <FolderIcon size={14} color="var(--text-muted)" />
 
         {/* Folder name */}
         <span

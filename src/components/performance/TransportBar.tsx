@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Button } from '../ui/Button'
+import { PlayIcon, PauseIcon, RecordIcon, StopIcon } from '../ui/DotMatrixIcons'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useRecordingStore, type AutomationEvent } from '../../stores/recordingStore'
 import { useClipStore } from '../../stores/clipStore'
@@ -265,9 +266,9 @@ export function TransportBar() {
         title={isRecording ? 'Stop Recording' : 'Start Recording'}
       >
         {isRecording ? (
-          <div className="w-2.5 h-2.5" style={{ backgroundColor: 'var(--text-primary)' }} />
+          <StopIcon size={12} color="var(--text-primary)" />
         ) : (
-          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--accent)' }} />
+          <RecordIcon size={12} color="var(--accent)" />
         )}
       </button>
 
@@ -288,14 +289,9 @@ export function TransportBar() {
         title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
       >
         {isPlaying ? (
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="var(--text-secondary)">
-            <rect x="3" y="2" width="4" height="12" />
-            <rect x="9" y="2" width="4" height="12" />
-          </svg>
+          <PauseIcon size={12} color="var(--text-secondary)" />
         ) : (
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="var(--text-secondary)">
-            <path d="M4 2l10 6-10 6V2z" />
-          </svg>
+          <PlayIcon size={12} color="var(--text-secondary)" />
         )}
       </button>
 

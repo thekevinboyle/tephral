@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { PlayIcon, StopIcon } from '../ui/DotMatrixIcons'
 import { useSlicerStore } from '../../stores/slicerStore'
 import { useSlicerBufferStore } from '../../stores/slicerBufferStore'
 import { useSequencerStore } from '../../stores/sequencerStore'
@@ -168,20 +169,9 @@ export function SlicerTransport() {
         }}
       >
         {isPlaying ? (
-          <div
-            className="w-2 h-2"
-            style={{ backgroundColor: 'var(--text-primary)' }}
-          />
+          <StopIcon size={10} color="var(--text-primary)" />
         ) : (
-          <div
-            className="w-0 h-0"
-            style={{
-              borderTop: '4px solid transparent',
-              borderBottom: '4px solid transparent',
-              borderLeft: '6px solid var(--text-muted)',
-              marginLeft: '1px',
-            }}
-          />
+          <PlayIcon size={10} color="var(--text-muted)" />
         )}
       </button>
 

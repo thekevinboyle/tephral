@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { HorizontalCrossfader } from './HorizontalCrossfader'
+import { RoutingIcon } from '../ui/DotMatrixIcons'
 import { useModulationStore } from '../../stores/modulationStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
@@ -167,31 +168,7 @@ interface ModulationCardProps {
   onAssignClick?: () => void
 }
 
-// Routing icon - shows connection symbol
-function RoutingIcon({ active }: { active: boolean }) {
-  return (
-    <svg width="12" height="12" viewBox="0 0 12 12">
-      <circle
-        cx="3" cy="6" r="2"
-        fill="none"
-        stroke={active ? 'var(--bg-primary)' : 'var(--text-ghost)'}
-        strokeWidth="1.5"
-      />
-      <circle
-        cx="9" cy="6" r="2"
-        fill="none"
-        stroke={active ? 'var(--bg-primary)' : 'var(--text-ghost)'}
-        strokeWidth="1.5"
-      />
-      <path
-        d="M5 6 L7 6"
-        stroke={active ? 'var(--bg-primary)' : 'var(--text-ghost)'}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
+// Use imported RoutingIcon from DotMatrixIcons
 
 function ModulationCard({
   type,
@@ -258,7 +235,7 @@ function ModulationCard({
           }}
           title={isAssigning ? 'Stop assigning' : 'Click to assign to parameters'}
         >
-          <RoutingIcon active={isAssigning} />
+          <RoutingIcon size={12} color={isAssigning ? 'var(--bg-primary)' : 'var(--text-ghost)'} />
         </button>
       </div>
     </div>

@@ -62,7 +62,7 @@ export function PerformanceGrid() {
   const getEffectState = (effectId: string) => {
     switch (effectId) {
       // ═══════════════════════════════════════════════════════════════
-      // PAGE 0: GLITCH EFFECTS
+      // PAGE 2: GLITCH EFFECTS
       // ═══════════════════════════════════════════════════════════════
       case 'rgb_split':
         return {
@@ -226,7 +226,7 @@ export function PerformanceGrid() {
         }
 
       // ═══════════════════════════════════════════════════════════════
-      // PAGE 1: VISION TRACKING EFFECTS
+      // PAGE 1: VISION EFFECTS
       // ═══════════════════════════════════════════════════════════════
 
       // Blob tracking modes
@@ -320,7 +320,7 @@ export function PerformanceGrid() {
         }
 
       // ═══════════════════════════════════════════════════════════════
-      // PAGE 2: ACID EFFECTS
+      // PAGE 0: ACID EFFECTS
       // ═══════════════════════════════════════════════════════════════
 
       case 'acid_dots':
@@ -445,7 +445,7 @@ export function PerformanceGrid() {
         }
 
       // ═══════════════════════════════════════════════════════════════
-      // PAGE 3: OVERLAY EFFECTS
+      // (OVERLAY effects removed - kept handlers for compatibility)
       // ═══════════════════════════════════════════════════════════════
 
       // Texture overlays
@@ -603,7 +603,7 @@ export function PerformanceGrid() {
         }
 
       // ═══════════════════════════════════════════════════════════════
-      // PAGE 4: STRAND EFFECTS
+      // PAGE 3: STRAND EFFECTS
       // ═══════════════════════════════════════════════════════════════
 
       case 'strand_handprints':
@@ -768,7 +768,7 @@ export function PerformanceGrid() {
         }
 
       // ═══════════════════════════════════════════════════════════════
-      // PAGE 5: MOTION EFFECTS
+      // PAGE 4: MOTION EFFECTS
       // ═══════════════════════════════════════════════════════════════
 
       case 'motion_extract':
@@ -835,16 +835,16 @@ export function PerformanceGrid() {
   // Check which pages have active effects
   const pageHasActiveEffects = (pageIndex: number): boolean => {
     switch (pageIndex) {
-      case 0: // VISION
-        return visionTracking.brightEnabled || visionTracking.edgeEnabled ||
-               visionTracking.colorEnabled || visionTracking.motionEnabled ||
-               visionTracking.faceEnabled || visionTracking.handsEnabled ||
-               contour.enabled || landmarks.enabled
-      case 1: // ACID
+      case 0: // ACID
         return acid.dotsEnabled || acid.glyphEnabled || acid.iconsEnabled ||
                acid.contourEnabled || acid.decompEnabled || acid.mirrorEnabled ||
                acid.sliceEnabled || acid.thGridEnabled || acid.cloudEnabled ||
                acid.ledEnabled || acid.slitEnabled || acid.voronoiEnabled
+      case 1: // VISION
+        return visionTracking.brightEnabled || visionTracking.edgeEnabled ||
+               visionTracking.colorEnabled || visionTracking.motionEnabled ||
+               visionTracking.faceEnabled || visionTracking.handsEnabled ||
+               contour.enabled || landmarks.enabled
       case 2: // GLITCH
         return glitch.rgbSplitEnabled || glitch.chromaticAberrationEnabled ||
                glitch.posterizeEnabled || glitch.colorGradeEnabled ||
@@ -854,9 +854,7 @@ export function PerformanceGrid() {
                glitch.noiseEnabled || glitch.ditherEnabled ||
                glitch.edgeDetectionEnabled || glitch.feedbackLoopEnabled ||
                ascii.enabled || stipple.enabled
-      case 3: // OVERLAY
-        return textureOverlay.enabled || dataOverlay.enabled
-      case 4: // STRAND
+      case 3: // STRAND
         return strand.handprintsEnabled || strand.tarSpreadEnabled ||
                strand.timefallEnabled || strand.voidOutEnabled ||
                strand.strandWebEnabled || strand.bridgeLinkEnabled ||
@@ -865,7 +863,7 @@ export function PerformanceGrid() {
                strand.beachStaticEnabled || strand.doomsEnabled ||
                strand.chiralCloudEnabled || strand.bbPodEnabled ||
                strand.seamEnabled || strand.extinctionEnabled
-      case 5: // MOTION
+      case 4: // MOTION
         return motion.motionExtractEnabled || motion.echoTrailEnabled ||
                motion.timeSmearEnabled || motion.freezeMaskEnabled
       default:
@@ -927,8 +925,8 @@ export function PerformanceGrid() {
         </div>
 
         <button
-          onClick={() => setGridPage(Math.min(5, gridPage + 1))}
-          disabled={gridPage === 5}
+          onClick={() => setGridPage(Math.min(4, gridPage + 1))}
+          disabled={gridPage === 4}
           className="w-5 h-5 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
           style={{ color: 'var(--text-ghost)' }}
         >

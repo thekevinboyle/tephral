@@ -20,6 +20,36 @@ import { EFFECTS } from '../../config/effects'
 // MODULATION PARAMETER CONTROLS
 // ════════════════════════════════════════════════════════════════════════════
 
+// Time division options for rate dropdowns
+const RATE_OPTIONS = [
+  { label: '4 bars', division: 0.0625 },
+  { label: '2 bars', division: 0.125 },
+  { label: '1 bar', division: 0.25 },
+  { label: '1/2', division: 0.5 },
+  { label: '1/4', division: 1 },
+  { label: '1/8', division: 2 },
+  { label: '1/16', division: 4 },
+  { label: '1/32', division: 8 },
+  { label: '1/64', division: 16 },
+] as const
+
+// Convert BPM and division multiplier to Hz
+const divisionToHz = (bpm: number, division: number) => (bpm / 60) * division
+
+// Find closest rate option for a given Hz value
+const hzToClosestOption = (hz: number, bpm: number): { label: string; division: number } => {
+  let closest: { label: string; division: number } = RATE_OPTIONS[0]
+  let closestDiff = Math.abs(divisionToHz(bpm, closest.division) - hz)
+  for (const opt of RATE_OPTIONS) {
+    const diff = Math.abs(divisionToHz(bpm, opt.division) - hz)
+    if (diff < closestDiff) {
+      closest = opt
+      closestDiff = diff
+    }
+  }
+  return closest
+}
+
 function ModSlider({
   label,
   value,
@@ -112,6 +142,48 @@ function ModSelect<T extends string>({
   )
 }
 
+function ModRateSelect({
+  label,
+  value,
+  bpm,
+  onChange,
+  color,
+}: {
+  label: string
+  value: number // Hz
+  bpm: number
+  onChange: (hz: number) => void
+  color?: string
+}) {
+  const currentOption = hzToClosestOption(value, bpm)
+
+  return (
+    <div className="flex items-center gap-2 py-0.5">
+      <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+        {label}
+      </span>
+      <select
+        value={currentOption.label}
+        onChange={(e) => {
+          const opt = RATE_OPTIONS.find(o => o.label === e.target.value)
+          if (opt) onChange(divisionToHz(bpm, opt.division))
+        }}
+        className="flex-1 text-[9px] px-1 py-0.5 rounded-sm"
+        style={{
+          backgroundColor: 'var(--bg-elevated)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-secondary)',
+          accentColor: color,
+        }}
+      >
+        {RATE_OPTIONS.map(opt => (
+          <option key={opt.label} value={opt.label}>{opt.label}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
 function ModulatorSection({
   title,
   enabled,
@@ -165,7 +237,7 @@ function ModulatorSection({
 
 function ModulationPanel() {
   const mod = useModulationStore()
-  const { routings } = useSequencerStore()
+  const { routings, bpm } = useSequencerStore()
 
   // Count routings per modulator
   const lfoRoutings = routings.filter(r => r.trackId === 'lfo').length
@@ -197,14 +269,11 @@ function ModulationPanel() {
           onChange={mod.setLFOShape}
           color="#00D4FF"
         />
-        <ModSlider
+        <ModRateSelect
           label="Rate"
           value={mod.lfo.rate}
-          min={0.1}
-          max={20}
-          step={0.1}
+          bpm={bpm}
           onChange={mod.setLFORate}
-          format={(v) => `${v.toFixed(1)}Hz`}
           color="#00D4FF"
         />
         <div className="flex items-center gap-2 mt-1">
@@ -228,14 +297,11 @@ function ModulationPanel() {
         onToggle={mod.toggleRandom}
         color="#FF6B6B"
       >
-        <ModSlider
+        <ModRateSelect
           label="Rate"
           value={mod.random.rate}
-          min={0.1}
-          max={30}
-          step={0.1}
+          bpm={bpm}
           onChange={mod.setRandomRate}
-          format={(v) => `${v.toFixed(1)}/s`}
           color="#FF6B6B"
         />
         <ModSlider
@@ -269,14 +335,11 @@ function ModulationPanel() {
         onToggle={mod.toggleStep}
         color="#4ECDC4"
       >
-        <ModSlider
+        <ModRateSelect
           label="Rate"
           value={mod.step.rate}
-          min={0.1}
-          max={20}
-          step={0.1}
+          bpm={bpm}
           onChange={mod.setStepRate}
-          format={(v) => `${v.toFixed(1)}/s`}
           color="#4ECDC4"
         />
         {/* Step value bars */}

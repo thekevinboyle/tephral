@@ -82,38 +82,38 @@ function drawGridNode(
 ) {
   // Outer ring
   ctx.beginPath()
-  ctx.arc(x, y, size + 2, 0, Math.PI * 2)
+  ctx.arc(x, y, size + 3, 0, Math.PI * 2)
   ctx.strokeStyle = CREAM
-  ctx.globalAlpha = highlight ? 0.5 : 0.15
-  ctx.lineWidth = 1
+  ctx.globalAlpha = highlight ? 0.6 : 0.2
+  ctx.lineWidth = 1.5
   ctx.stroke()
 
   // Inner fill
   if (active) {
-    const pulse = Math.sin(time * 4) * 0.2 + 0.8
+    const pulse = Math.sin(time * 4) * 0.15 + 0.85
     ctx.beginPath()
     ctx.arc(x, y, size * pulse, 0, Math.PI * 2)
     ctx.fillStyle = CREAM
-    ctx.globalAlpha = highlight ? 0.9 : 0.6
+    ctx.globalAlpha = highlight ? 0.95 : 0.7
     ctx.fill()
 
     // Glow
     if (highlight) {
       ctx.shadowColor = CREAM
-      ctx.shadowBlur = 15
+      ctx.shadowBlur = 20
       ctx.fill()
       ctx.shadowBlur = 0
     }
   } else {
-    // Cross pattern for inactive
-    ctx.globalAlpha = 0.2
+    // Cross pattern for inactive - larger and more visible
+    ctx.globalAlpha = 0.25
     ctx.beginPath()
-    ctx.moveTo(x - size * 0.5, y)
-    ctx.lineTo(x + size * 0.5, y)
-    ctx.moveTo(x, y - size * 0.5)
-    ctx.lineTo(x, y + size * 0.5)
+    ctx.moveTo(x - size * 0.6, y)
+    ctx.lineTo(x + size * 0.6, y)
+    ctx.moveTo(x, y - size * 0.6)
+    ctx.lineTo(x, y + size * 0.6)
     ctx.strokeStyle = CREAM
-    ctx.lineWidth = 1
+    ctx.lineWidth = 1.5
     ctx.stroke()
   }
 }
@@ -129,28 +129,36 @@ function drawBBCore(
 ) {
   // Outer container ring
   ctx.beginPath()
-  ctx.arc(x, y, size + 8, 0, Math.PI * 2)
+  ctx.arc(x, y, size + 12, 0, Math.PI * 2)
   ctx.strokeStyle = CREAM
-  ctx.globalAlpha = 0.15
+  ctx.globalAlpha = 0.2
   ctx.lineWidth = 2
   ctx.stroke()
 
-  // Tech ring segments
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 + time * 0.2
-    const segmentLength = 0.3
+  // Second outer ring
+  ctx.beginPath()
+  ctx.arc(x, y, size + 6, 0, Math.PI * 2)
+  ctx.strokeStyle = CREAM
+  ctx.globalAlpha = 0.1
+  ctx.lineWidth = 1
+  ctx.stroke()
+
+  // Tech ring segments - more of them
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2 + time * 0.2
+    const segmentLength = 0.25
     ctx.beginPath()
-    ctx.arc(x, y, size + 4, angle, angle + segmentLength)
+    ctx.arc(x, y, size + 8, angle, angle + segmentLength)
     ctx.strokeStyle = CREAM
-    ctx.globalAlpha = 0.3 + pulse * 0.2
-    ctx.lineWidth = 2
+    ctx.globalAlpha = 0.35 + pulse * 0.25
+    ctx.lineWidth = 2.5
     ctx.stroke()
   }
 
   // Inner glow layers
   const gradient = ctx.createRadialGradient(x, y, 0, x, y, size)
-  gradient.addColorStop(0, `rgba(232, 228, 217, ${0.4 + pulse * 0.4})`)
-  gradient.addColorStop(0.5, `rgba(232, 228, 217, ${0.1 + pulse * 0.2})`)
+  gradient.addColorStop(0, `rgba(232, 228, 217, ${0.5 + pulse * 0.4})`)
+  gradient.addColorStop(0.4, `rgba(232, 228, 217, ${0.15 + pulse * 0.2})`)
   gradient.addColorStop(1, 'rgba(232, 228, 217, 0)')
 
   ctx.beginPath()
@@ -159,14 +167,14 @@ function drawBBCore(
   ctx.globalAlpha = 1
   ctx.fill()
 
-  // Core heartbeat
+  // Core heartbeat - larger
   const heartbeat = Math.pow(Math.sin(time * 2), 8) * pulse
   ctx.beginPath()
-  ctx.arc(x, y, 4 + heartbeat * 8, 0, Math.PI * 2)
+  ctx.arc(x, y, 6 + heartbeat * 12, 0, Math.PI * 2)
   ctx.fillStyle = CREAM
-  ctx.globalAlpha = 0.8
+  ctx.globalAlpha = 0.85
   ctx.shadowColor = CREAM
-  ctx.shadowBlur = 20 + heartbeat * 30
+  ctx.shadowBlur = 25 + heartbeat * 40
   ctx.fill()
   ctx.shadowBlur = 0
 }
@@ -232,12 +240,15 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
     const centerX = width / 2
     const centerY = height / 2
 
+    // Scale factor based on available space
+    const scale = Math.min(width, height) / 200
+
     // Total pulse from all tracks
     const totalPulse = tracks.reduce((sum, t) => sum + (t.muted ? 0 : t.currentValue), 0) / Math.max(tracks.length, 1)
 
     // Mouse influence
     const mouseDist = Math.sqrt(Math.pow(mousePos.x - centerX, 2) + Math.pow(mousePos.y - centerY, 2))
-    const mouseInfluence = isHovering ? Math.max(0, 1 - mouseDist / 150) : 0
+    const mouseInfluence = isHovering ? Math.max(0, 1 - mouseDist / (200 * scale)) : 0
 
     // ═══════════════════════════════════════════════════════════════
     // CLICK RIPPLES
@@ -247,7 +258,7 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
 
     clickRipples.forEach(ripple => {
       const age = (now - ripple.time) / 1000
-      const radius = age * 100
+      const radius = age * 150 * scale
       const opacity = Math.max(0, 1 - age / 1.5)
 
       ctx.beginPath()
@@ -265,24 +276,13 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
     })
 
     // ═══════════════════════════════════════════════════════════════
-    // ELEKTRON-STYLE GRID BASELINE
-    // ═══════════════════════════════════════════════════════════════
-    const gridCols = 16
-    const cellWidth = width / (gridCols + 2)
-    const gridStartY = height * 0.85
-
-    // Draw grid baseline
-    ctx.beginPath()
-    ctx.moveTo(cellWidth, gridStartY)
-    ctx.lineTo(width - cellWidth, gridStartY)
-    ctx.strokeStyle = CREAM
-    ctx.globalAlpha = 0.1
-    ctx.lineWidth = 1
-    ctx.stroke()
-
-    // ═══════════════════════════════════════════════════════════════
     // STRAND NETWORK CONNECTIONS
     // ═══════════════════════════════════════════════════════════════
+
+    // Calculate track spacing to fill available space
+    const maxRadius = Math.min(width, height) * 0.42
+    const minRadius = 25 * scale
+    const trackSpacing = tracks.length > 1 ? (maxRadius - minRadius) / (tracks.length - 1) : 0
 
     // Collect all active node positions
     const activeNodes: { x: number; y: number; intensity: number; trackIndex: number }[] = []
@@ -291,7 +291,7 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
       const pattern = getPattern(track.id)
       if (track.muted) return
 
-      const trackRadius = 30 + trackIndex * 25
+      const trackRadius = minRadius + trackIndex * trackSpacing
       const stepAngle = (Math.PI * 2) / pattern.length
 
       pattern.forEach((isHit, stepIndex) => {
@@ -311,14 +311,15 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
     })
 
     // Draw strands between nearby nodes (Kojima connection style)
+    const strandMaxDist = 120 * scale
     for (let i = 0; i < activeNodes.length; i++) {
       for (let j = i + 1; j < activeNodes.length; j++) {
         const a = activeNodes[i]
         const b = activeNodes[j]
         const dist = Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2))
 
-        if (dist < 80 && dist > 10) {
-          const intensity = (1 - dist / 80) * Math.min(a.intensity, b.intensity)
+        if (dist < strandMaxDist && dist > 10) {
+          const intensity = (1 - dist / strandMaxDist) * Math.min(a.intensity, b.intensity)
           drawStrand(ctx, a.x, a.y, b.x, b.y, time, intensity)
         }
       }
@@ -327,8 +328,9 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
       if (isHovering) {
         const a = activeNodes[i]
         const dist = Math.sqrt(Math.pow(mousePos.x - a.x, 2) + Math.pow(mousePos.y - a.y, 2))
-        if (dist < 100 && dist > 10) {
-          const intensity = (1 - dist / 100) * a.intensity * 0.5
+        const mouseStrandDist = 150 * scale
+        if (dist < mouseStrandDist && dist > 10) {
+          const intensity = (1 - dist / mouseStrandDist) * a.intensity * 0.5
           drawStrand(ctx, a.x, a.y, mousePos.x, mousePos.y, time, intensity)
         }
       }
@@ -356,7 +358,7 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
 
       // Draw node
       ctx.beginPath()
-      ctx.arc(node.x, node.y, node.size * node.life, 0, Math.PI * 2)
+      ctx.arc(node.x, node.y, node.size * node.life * scale, 0, Math.PI * 2)
       ctx.fillStyle = CREAM
       ctx.globalAlpha = node.life * 0.6
       ctx.fill()
@@ -364,12 +366,13 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
       // Connect to nearby active nodes
       for (const active of activeNodes) {
         const dist = Math.sqrt(Math.pow(active.x - node.x, 2) + Math.pow(active.y - node.y, 2))
-        if (dist < 60) {
+        const connectDist = 80 * scale
+        if (dist < connectDist) {
           ctx.beginPath()
           ctx.moveTo(node.x, node.y)
           ctx.lineTo(active.x, active.y)
           ctx.strokeStyle = STRAND_BLUE
-          ctx.globalAlpha = node.life * 0.2 * (1 - dist / 60)
+          ctx.globalAlpha = node.life * 0.2 * (1 - dist / connectDist)
           ctx.lineWidth = 0.5
           ctx.stroke()
         }
@@ -384,16 +387,16 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
       const pattern = getPattern(track.id)
       const baseOpacity = track.muted ? 0.2 : 1
 
-      const trackRadius = 30 + trackIndex * 25
+      const trackRadius = minRadius + trackIndex * trackSpacing
       const stepAngle = (Math.PI * 2) / pattern.length
 
       // Draw orbit arc
       ctx.beginPath()
       ctx.arc(centerX, centerY, trackRadius, 0, Math.PI * 2)
       ctx.strokeStyle = CREAM
-      ctx.globalAlpha = baseOpacity * 0.08
+      ctx.globalAlpha = baseOpacity * 0.1
       ctx.lineWidth = 1
-      ctx.setLineDash([4, 8])
+      ctx.setLineDash([6, 10])
       ctx.stroke()
       ctx.setLineDash([])
 
@@ -407,11 +410,12 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
 
         // Check mouse proximity
         const distToMouse = Math.sqrt(Math.pow(x - mousePos.x, 2) + Math.pow(y - mousePos.y, 2))
-        const isNearMouse = isHovering && distToMouse < 25
+        const isNearMouse = isHovering && distToMouse < 30 * scale
 
-        let size = 4
+        // Larger node sizes
+        let size = 5 * scale
         if (isCurrent && !track.muted) {
-          size += track.currentValue * 4
+          size += track.currentValue * 6 * scale
         }
 
         ctx.globalAlpha = baseOpacity
@@ -421,7 +425,7 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
         if (isCurrent && isHit && !track.muted) {
           ctx.globalAlpha = baseOpacity * track.currentValue * 0.5
           ctx.strokeStyle = CREAM
-          ctx.lineWidth = 1
+          ctx.lineWidth = 1.5
           ctx.beginPath()
           ctx.moveTo(centerX, centerY)
           ctx.lineTo(x, y)
@@ -429,31 +433,31 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
         }
       })
 
-      // Track label
-      ctx.globalAlpha = baseOpacity * 0.4
+      // Track label - positioned outside the orbit
+      ctx.globalAlpha = baseOpacity * 0.5
       ctx.fillStyle = CREAM
-      ctx.font = '9px monospace'
+      ctx.font = `${Math.round(10 * scale)}px monospace`
       ctx.textAlign = 'right'
-      ctx.fillText(`T${trackIndex + 1}`, centerX - trackRadius - 8, centerY + 3)
+      ctx.fillText(`T${trackIndex + 1}`, centerX - trackRadius - 12 * scale, centerY + 4)
     })
 
     // ═══════════════════════════════════════════════════════════════
     // BB POD CORE
     // ═══════════════════════════════════════════════════════════════
-    const coreSize = 15 + totalPulse * 10 + mouseInfluence * 5
+    const coreSize = (20 + totalPulse * 15 + mouseInfluence * 8) * scale
     drawBBCore(ctx, centerX, centerY, coreSize, totalPulse, time)
 
     // Mouse cursor strand to core when hovering
-    if (isHovering && mouseDist > 30) {
+    if (isHovering && mouseDist > 40 * scale) {
       drawStrand(ctx, centerX, centerY, mousePos.x, mousePos.y, time, mouseInfluence * 0.4)
     }
 
     // ═══════════════════════════════════════════════════════════════
     // DATA READOUT (Elektron style)
     // ═══════════════════════════════════════════════════════════════
-    ctx.globalAlpha = 0.4
+    ctx.globalAlpha = 0.5
     ctx.fillStyle = CREAM
-    ctx.font = '8px monospace'
+    ctx.font = `${Math.round(10 * scale)}px monospace`
     ctx.textAlign = 'left'
 
     const activeCount = tracks.filter(t => !t.muted).length
@@ -462,25 +466,17 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
       return sum + p.filter(Boolean).length
     }, 0)
 
-    ctx.fillText(`TRK ${activeCount}/${tracks.length}`, 8, 14)
-    ctx.fillText(`HIT ${String(totalHits).padStart(2, '0')}`, 8, 24)
-    ctx.fillText(`PLS ${(totalPulse * 100).toFixed(0).padStart(3, '0')}`, 8, 34)
+    const textY = 16 * scale
+    const lineHeight = 14 * scale
+    ctx.fillText(`TRK ${activeCount}/${tracks.length}`, 10, textY)
+    ctx.fillText(`HIT ${String(totalHits).padStart(2, '0')}`, 10, textY + lineHeight)
+    ctx.fillText(`PLS ${(totalPulse * 100).toFixed(0).padStart(3, '0')}`, 10, textY + lineHeight * 2)
 
     ctx.textAlign = 'right'
-    ctx.fillText(`${width}×${height}`, width - 8, 14)
+    ctx.fillText(`${width}×${height}`, width - 10, textY)
 
     ctx.globalAlpha = 1
   }, [tracks, getPattern, width, height, mousePos, isHovering, clickRipples])
-
-  useEffect(() => {
-    let animationId: number
-    const loop = (timestamp: number) => {
-      draw(timestamp)
-      animationId = requestAnimationFrame(loop)
-    }
-    animationId = requestAnimationFrame(loop)
-    return () => cancelAnimationFrame(animationId)
-  }, [draw])
 
   useEffect(() => {
     let animationId: number

@@ -10,14 +10,12 @@ import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useAcidStore } from '../../stores/acidStore'
 import { useSlicerStore } from '../../stores/slicerStore'
-import { useThemeStore } from '../../stores/themeStore'
 import { SourceSelector } from '../ui/SourceSelector'
 
 // Note: We use getState() in handleStartRecording to get fresh state at call time
 
 export function TransportBar() {
   const { source, reset, videoElement } = useMediaStore()
-  const { theme, toggleTheme } = useThemeStore()
   const {
     isRecording,
     isPlaying: isRecordingPlaying,
@@ -354,28 +352,6 @@ export function TransportBar() {
       >
         Clear
       </Button>
-
-      {/* Theme toggle */}
-      <button
-        onClick={toggleTheme}
-        className="w-7 h-7 rounded-sm flex items-center justify-center transition-all hover:scale-105"
-        style={{
-          backgroundColor: 'var(--bg-elevated)',
-          border: '1px solid var(--border)',
-        }}
-        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-      >
-        {theme === 'dark' ? (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2">
-            <circle cx="12" cy="12" r="5" />
-            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-          </svg>
-        ) : (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--text-muted)" stroke="none">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-        )}
-      </button>
     </div>
   )
 }

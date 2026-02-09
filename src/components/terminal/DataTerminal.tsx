@@ -10,6 +10,7 @@ import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useModulationStore } from '../../stores/modulationStore'
 import { useSequencerStore } from '../../stores/sequencerStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
+import { useThemeStore } from '../../stores/themeStore'
 
 // Generate random alphanumeric code
 function generateCode(length: number): string {
@@ -750,6 +751,36 @@ function ModulationPattern({ lfoValue, randomValue, stepValue, envValue }: {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// THEME TOGGLE BAR
+// ════════════════════════════════════════════════════════════════════════════
+
+interface ThemeToggleBarProps {
+  source: string
+  patternLabel: string
+  isProcessing: boolean
+}
+
+function ThemeToggleBar({ source, patternLabel, isProcessing }: ThemeToggleBarProps) {
+  const { theme, toggleTheme } = useThemeStore()
+
+  return (
+    <button
+      onClick={toggleTheme}
+      className="flex-shrink-0 w-full px-3 py-1.5 text-center cursor-pointer transition-colors hover:bg-[var(--bg-hover)]"
+      style={{
+        backgroundColor: 'var(--bg-elevated)',
+        borderTop: '1px solid var(--border)',
+      }}
+      title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+    >
+      <span className="text-[8px] uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
+        {theme === 'dark' ? '◐' : '◑'} {source !== 'none' ? 'LINKED' : 'OFFLINE'} · {patternLabel} · {isProcessing ? 'PROCESSING' : 'IDLE'}
+      </span>
+    </button>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -1177,18 +1208,12 @@ export function DataTerminal() {
         </div>
       </div>
 
-      {/* Status bar */}
-      <div
-        className="flex-shrink-0 px-3 py-1.5 text-center"
-        style={{
-          backgroundColor: 'var(--bg-elevated)',
-          borderTop: '1px solid var(--border)',
-        }}
-      >
-        <span className="text-[8px] uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
-          {source !== 'none' ? 'LINKED' : 'OFFLINE'} · {patternLabels[activePattern]} · {activeEffectCount > 0 ? 'PROCESSING' : 'IDLE'}
-        </span>
-      </div>
+      {/* Status bar / Theme toggle */}
+      <ThemeToggleBar
+        source={source}
+        patternLabel={patternLabels[activePattern]}
+        isProcessing={activeEffectCount > 0}
+      />
     </div>
   )
 }

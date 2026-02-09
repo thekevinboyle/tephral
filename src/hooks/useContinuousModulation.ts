@@ -7,6 +7,7 @@ import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useAcidStore } from '../stores/acidStore'
 import { useSlicerStore } from '../stores/slicerStore'
 import { useStrandStore } from '../stores/strandStore'
+import { usePolyEuclidStore } from '../stores/polyEuclidStore'
 
 /**
  * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope)
@@ -341,6 +342,17 @@ export function useContinuousModulation() {
       if (envRoutings.length > 0 && modState.envelope.enabled) {
         for (const routing of envRoutings) {
           const modulatedValue = modState.envelope.currentValue * routing.depth
+          applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
+        }
+      }
+
+      // PolyEuclid routings
+      const polyEuclidState = usePolyEuclidStore.getState()
+      for (const track of polyEuclidState.tracks) {
+        if (track.muted) continue
+        const trackRoutings = currentRoutings.filter(r => r.trackId === `polyEuclid-${track.id}`)
+        for (const routing of trackRoutings) {
+          const modulatedValue = track.currentValue * routing.depth
           applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
         }
       }

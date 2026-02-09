@@ -204,7 +204,6 @@ function ModulationCard({
         height: '100%',
         backgroundColor: active ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
         border: selected ? '2px solid var(--accent)' : active ? '1px solid var(--accent-dim)' : '1px solid var(--border)',
-        boxShadow: selected ? '0 0 12px var(--accent-glow)' : active ? '0 0 8px var(--accent-glow)' : 'none',
       }}
     >
       {/* Graphic area */}

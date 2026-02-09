@@ -30,77 +30,78 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
     // ═══════════════════════════════════════════════════════════════
     // MICRO ELEMENTS - subtle background particles
     // ═══════════════════════════════════════════════════════════════
-    const microCount = 30
+    const microCount = 25
     for (let i = 0; i < microCount; i++) {
-      // Deterministic but animated positions
       const seed = i * 137.5
-      const orbitRadius = 60 + (i % 8) * 25
-      const orbitSpeed = 0.1 + (i % 5) * 0.05
+      const orbitRadius = 70 + (i % 6) * 30
+      const orbitSpeed = 0.08 + (i % 4) * 0.03
       const angle = seed + time * orbitSpeed
 
-      const x = centerX + Math.cos(angle) * orbitRadius + Math.sin(seed) * 80
-      const y = centerY + Math.sin(angle) * orbitRadius * 0.6 + Math.cos(seed) * 50
+      const x = centerX + Math.cos(angle) * orbitRadius + Math.sin(seed) * 60
+      const y = centerY + Math.sin(angle) * orbitRadius * 0.5 + Math.cos(seed) * 40
 
-      // Skip if outside bounds
       if (x < 10 || x > width - 10 || y < 10 || y > height - 10) continue
 
-      // Tiny dots and dashes
       ctx.save()
       ctx.translate(x, y)
       ctx.rotate(angle * 2)
-
       ctx.fillStyle = CREAM
-      ctx.globalAlpha = 0.08 + Math.sin(time * 2 + i) * 0.04
+      ctx.globalAlpha = 0.06 + Math.sin(time * 2 + i) * 0.03
 
       if (i % 3 === 0) {
-        // Tiny dot
         ctx.beginPath()
         ctx.arc(0, 0, 1.5, 0, Math.PI * 2)
         ctx.fill()
       } else {
-        // Tiny dash
-        ctx.fillRect(-3, -0.5, 6, 1)
+        ctx.fillRect(-4, -0.5, 8, 1)
       }
-
       ctx.restore()
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // CENTRAL STARBURST - main focal animation
+    // CENTRAL SAW-WAVE STARBURST
     // ═══════════════════════════════════════════════════════════════
-    const blockW = 14
-    const blockH = 5
-    const gap = 7
+    const blockW = 12
+    const blockH = 4
+    const baseGap = 3
+
+    // Create 8 arms for dense X pattern like the reference
+    const armCount = 8
 
     tracks.forEach((track, trackIndex) => {
       const pattern = getPattern(track.id)
-      const baseOpacity = track.muted ? 0.12 : 1
+      const baseOpacity = track.muted ? 0.1 : 1
 
-      // Each track gets 2 opposing diagonal arms
-      const armAngle = (trackIndex / tracks.length) * 180
-      const angles = [armAngle, armAngle + 180]
+      // Distribute this track's arms
+      const armsPerTrack = Math.ceil(armCount / tracks.length)
+      const startArm = trackIndex * armsPerTrack
 
-      angles.forEach(deg => {
-        const angleRad = (deg * Math.PI) / 180
+      for (let armIdx = 0; armIdx < armsPerTrack; armIdx++) {
+        const armNumber = (startArm + armIdx) % armCount
+        const baseAngle = (armNumber / armCount) * 360
+        const angleRad = (baseAngle * Math.PI) / 180
 
-        // Draw pattern steps radiating outward
+        // Draw saw-wave pattern - blocks staggered to create jagged edge
         for (let i = 0; i < pattern.length; i++) {
           const isHit = pattern[i]
           const isCurrent = i === track.currentStep
 
-          // Distance from center with slight breathing
-          const breathe = 1 + Math.sin(time * 1.5 + trackIndex) * 0.03
-          const distance = (i + 1.5) * (blockW + gap) * breathe
+          // Saw-wave offset - creates jagged edge pattern
+          const sawOffset = (i % 3) * 4 - 4
+          const perpAngle = angleRad + Math.PI / 2
 
-          // Limit radius
-          const maxRadius = Math.min(width, height) * 0.38
+          // Distance with breathing
+          const breathe = 1 + Math.sin(time * 1.2 + trackIndex + armIdx) * 0.04
+          const distance = (i + 2) * (blockW + baseGap) * breathe
+
+          const maxRadius = Math.min(width, height) * 0.4
           if (distance > maxRadius) continue
 
-          const x = centerX + Math.cos(angleRad) * distance
-          const y = centerY + Math.sin(angleRad) * distance
+          // Position with saw-wave perpendicular offset
+          const x = centerX + Math.cos(angleRad) * distance + Math.cos(perpAngle) * sawOffset
+          const y = centerY + Math.sin(angleRad) * distance + Math.sin(perpAngle) * sawOffset
 
-          // Pulse scale for current step
-          const scale = isCurrent ? 1 + track.currentValue * 0.4 : 1
+          const scale = isCurrent ? 1 + track.currentValue * 0.5 : 1
 
           ctx.save()
           ctx.translate(x, y)
@@ -108,23 +109,21 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
           ctx.scale(scale, scale)
 
           if (isHit) {
-            // Glow for active hits
             if (isCurrent && track.currentValue > 0.05 && !track.muted) {
               ctx.shadowColor = CREAM
-              ctx.shadowBlur = 10 + track.currentValue * 18
+              ctx.shadowBlur = 8 + track.currentValue * 15
             }
 
             ctx.fillStyle = CREAM
-            ctx.globalAlpha = baseOpacity * (isCurrent ? 0.9 + track.currentValue * 0.1 : 0.5)
+            ctx.globalAlpha = baseOpacity * (isCurrent ? 0.85 + track.currentValue * 0.15 : 0.45)
             ctx.fillRect(-blockW / 2, -blockH / 2, blockW, blockH)
             ctx.shadowBlur = 0
           } else {
-            // Dashed line for rests
             ctx.strokeStyle = CREAM
-            ctx.globalAlpha = baseOpacity * 0.15
+            ctx.globalAlpha = baseOpacity * 0.12
             ctx.lineWidth = 1.5
-            ctx.setLineDash([3, 4])
-            ctx.lineDashOffset = -time * 12
+            ctx.setLineDash([2, 3])
+            ctx.lineDashOffset = -time * 15
             ctx.beginPath()
             ctx.moveTo(-blockW / 2, 0)
             ctx.lineTo(blockW / 2, 0)
@@ -134,41 +133,82 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
 
           ctx.restore()
         }
-      })
+
+        // Add mirrored arm on opposite side for symmetry
+        const mirrorAngle = angleRad + Math.PI
+
+        for (let i = 0; i < pattern.length; i++) {
+          const isHit = pattern[i]
+          const isCurrent = i === track.currentStep
+
+          const sawOffset = (i % 3) * 4 - 4
+          const perpAngle = mirrorAngle + Math.PI / 2
+
+          const breathe = 1 + Math.sin(time * 1.2 + trackIndex + armIdx) * 0.04
+          const distance = (i + 2) * (blockW + baseGap) * breathe
+
+          const maxRadius = Math.min(width, height) * 0.4
+          if (distance > maxRadius) continue
+
+          const x = centerX + Math.cos(mirrorAngle) * distance + Math.cos(perpAngle) * sawOffset
+          const y = centerY + Math.sin(mirrorAngle) * distance + Math.sin(perpAngle) * sawOffset
+
+          const scale = isCurrent ? 1 + track.currentValue * 0.5 : 1
+
+          ctx.save()
+          ctx.translate(x, y)
+          ctx.rotate(mirrorAngle)
+          ctx.scale(scale, scale)
+
+          if (isHit) {
+            if (isCurrent && track.currentValue > 0.05 && !track.muted) {
+              ctx.shadowColor = CREAM
+              ctx.shadowBlur = 8 + track.currentValue * 15
+            }
+
+            ctx.fillStyle = CREAM
+            ctx.globalAlpha = baseOpacity * (isCurrent ? 0.85 + track.currentValue * 0.15 : 0.45)
+            ctx.fillRect(-blockW / 2, -blockH / 2, blockW, blockH)
+            ctx.shadowBlur = 0
+          } else {
+            ctx.strokeStyle = CREAM
+            ctx.globalAlpha = baseOpacity * 0.12
+            ctx.lineWidth = 1.5
+            ctx.setLineDash([2, 3])
+            ctx.lineDashOffset = -time * 15
+            ctx.beginPath()
+            ctx.moveTo(-blockW / 2, 0)
+            ctx.lineTo(blockW / 2, 0)
+            ctx.stroke()
+            ctx.setLineDash([])
+          }
+
+          ctx.restore()
+        }
+      }
     })
 
     // ═══════════════════════════════════════════════════════════════
-    // CENTER PULSE - breathing core
+    // CENTER CORE
     // ═══════════════════════════════════════════════════════════════
     const totalPulse = tracks.reduce((sum, t) => sum + (t.muted ? 0 : t.currentValue), 0) / tracks.length
-    const coreSize = 3 + totalPulse * 4
 
+    // Inner core
     ctx.beginPath()
-    ctx.arc(centerX, centerY, coreSize, 0, Math.PI * 2)
+    ctx.arc(centerX, centerY, 2 + totalPulse * 3, 0, Math.PI * 2)
     ctx.fillStyle = CREAM
-    ctx.globalAlpha = 0.3 + totalPulse * 0.5
+    ctx.globalAlpha = 0.4 + totalPulse * 0.4
     ctx.fill()
-
-    // Outer ring
-    ctx.beginPath()
-    ctx.arc(centerX, centerY, 8 + totalPulse * 6, 0, Math.PI * 2)
-    ctx.strokeStyle = CREAM
-    ctx.globalAlpha = 0.1 + totalPulse * 0.2
-    ctx.lineWidth = 1
-    ctx.stroke()
 
     ctx.globalAlpha = 1
   }, [tracks, getPattern, width, height])
 
-  // Animation loop
   useEffect(() => {
     let animationId: number
-
     const loop = (timestamp: number) => {
       draw(timestamp)
       animationId = requestAnimationFrame(loop)
     }
-
     animationId = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(animationId)
   }, [draw])
@@ -178,11 +218,7 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
       ref={canvasRef}
       width={width}
       height={height}
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'block',
-      }}
+      style={{ width: '100%', height: '100%', display: 'block' }}
     />
   )
 }

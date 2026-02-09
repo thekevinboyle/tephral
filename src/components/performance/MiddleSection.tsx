@@ -2,6 +2,37 @@ import { useState, useEffect } from 'react'
 import { HorizontalCrossfader } from './HorizontalCrossfader'
 import { SendIcon } from '../ui/DotMatrixIcons'
 import { useModulationStore } from '../../stores/modulationStore'
+import { useSequencerStore } from '../../stores/sequencerStore'
+
+// Time division options for rate dropdowns
+const RATE_OPTIONS = [
+  { label: '4 bars', division: 0.0625 },
+  { label: '2 bars', division: 0.125 },
+  { label: '1 bar', division: 0.25 },
+  { label: '1/2', division: 0.5 },
+  { label: '1/4', division: 1 },
+  { label: '1/8', division: 2 },
+  { label: '1/16', division: 4 },
+  { label: '1/32', division: 8 },
+  { label: '1/64', division: 16 },
+] as const
+
+// Convert BPM and division multiplier to Hz
+const divisionToHz = (bpm: number, division: number) => (bpm / 60) * division
+
+// Find closest rate option for a given Hz value
+const hzToClosestOption = (hz: number, bpm: number): { label: string; division: number } => {
+  let closest: { label: string; division: number } = RATE_OPTIONS[0]
+  let closestDiff = Math.abs(divisionToHz(bpm, closest.division) - hz)
+  for (const opt of RATE_OPTIONS) {
+    const diff = Math.abs(divisionToHz(bpm, opt.division) - hz)
+    if (diff < closestDiff) {
+      closest = opt
+      closestDiff = diff
+    }
+  }
+  return closest
+}
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
@@ -249,6 +280,9 @@ function ModulationCard({
 
 export function MiddleSection() {
   const [tick, setTick] = useState(0)
+
+  // Get BPM from sequencer
+  const { bpm } = useSequencerStore()
 
   // Get modulation state from store
   const {
@@ -501,17 +535,23 @@ export function MiddleSection() {
               <>
                 <div className="flex flex-col gap-1">
                   <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Rate</span>
-                  <input
-                    type="range"
-                    min={0.1}
-                    max={20}
-                    step={0.1}
-                    value={lfo.rate}
-                    onChange={(e) => setLFORate(parseFloat(e.target.value))}
-                    className="w-16"
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                  <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{lfo.rate.toFixed(1)} Hz</span>
+                  <select
+                    value={hzToClosestOption(lfo.rate, bpm).label}
+                    onChange={(e) => {
+                      const opt = RATE_OPTIONS.find(o => o.label === e.target.value)
+                      if (opt) setLFORate(divisionToHz(bpm, opt.division))
+                    }}
+                    className="text-[10px] px-1 py-0.5 rounded-sm"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    {RATE_OPTIONS.map(opt => (
+                      <option key={opt.label} value={opt.label}>{opt.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Shape</span>
@@ -538,17 +578,23 @@ export function MiddleSection() {
               <>
                 <div className="flex flex-col gap-1">
                   <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Rate</span>
-                  <input
-                    type="range"
-                    min={0.1}
-                    max={30}
-                    step={0.1}
-                    value={random.rate}
-                    onChange={(e) => setRandomRate(parseFloat(e.target.value))}
-                    className="w-16"
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                  <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{random.rate.toFixed(1)}/s</span>
+                  <select
+                    value={hzToClosestOption(random.rate, bpm).label}
+                    onChange={(e) => {
+                      const opt = RATE_OPTIONS.find(o => o.label === e.target.value)
+                      if (opt) setRandomRate(divisionToHz(bpm, opt.division))
+                    }}
+                    className="text-[10px] px-1 py-0.5 rounded-sm"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    {RATE_OPTIONS.map(opt => (
+                      <option key={opt.label} value={opt.label}>{opt.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Smooth</span>
@@ -570,17 +616,23 @@ export function MiddleSection() {
               <>
                 <div className="flex flex-col gap-1">
                   <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Rate</span>
-                  <input
-                    type="range"
-                    min={0.1}
-                    max={20}
-                    step={0.1}
-                    value={step.rate}
-                    onChange={(e) => setStepRate(parseFloat(e.target.value))}
-                    className="w-16"
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                  <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{step.rate.toFixed(1)}/s</span>
+                  <select
+                    value={hzToClosestOption(step.rate, bpm).label}
+                    onChange={(e) => {
+                      const opt = RATE_OPTIONS.find(o => o.label === e.target.value)
+                      if (opt) setStepRate(divisionToHz(bpm, opt.division))
+                    }}
+                    className="text-[10px] px-1 py-0.5 rounded-sm"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    {RATE_OPTIONS.map(opt => (
+                      <option key={opt.label} value={opt.label}>{opt.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex gap-[2px] items-end h-8">
                   {step.steps.map((val, i) => (

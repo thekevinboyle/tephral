@@ -229,3 +229,84 @@ body {
     --col-right: 320px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT THEME
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="light"] {
+  /* Backgrounds - light grays */
+  --bg-void: #ffffff;
+  --bg-primary: #f5f5f5;
+  --bg-surface: #ebebeb;
+  --bg-elevated: #e0e0e0;
+  --bg-hover: #d5d5d5;
+
+  /* Dot matrix grid */
+  --grid-dot: #d8d8d8;
+
+  /* Borders */
+  --border: #c5c5c5;
+  --border-emphasis: #b0b0b0;
+  --border-light: #d0d0d0;
+
+  /* Text - dark for contrast */
+  --text-primary: #1a1a1a;
+  --text-secondary: #3a3a3a;
+  --text-muted: #666666;
+  --text-ghost: #999999;
+
+  /* Accent - slightly darker for light bg */
+  --accent: #00a8cc;
+  --accent-dim: #008aa8;
+  --accent-hover: #00c4ee;
+  --accent-glow: rgba(0, 168, 204, 0.25);
+  --accent-subtle: rgba(0, 168, 204, 0.1);
+
+  /* Accent - lime (darker for light bg) */
+  --accent-lime: #7ab800;
+  --accent-lime-dim: #5c8a00;
+  --accent-lime-hover: #8ed000;
+  --accent-lime-glow: rgba(122, 184, 0, 0.25);
+  --accent-lime-subtle: rgba(122, 184, 0, 0.1);
+
+  /* Accent - purple (darker for light bg) */
+  --accent-purple: #8833dd;
+  --accent-purple-dim: #6622aa;
+  --accent-purple-hover: #9944ee;
+  --accent-purple-glow: rgba(136, 51, 221, 0.25);
+  --accent-purple-subtle: rgba(136, 51, 221, 0.1);
+}
+
+/* Light theme panel gradients */
+[data-theme="light"] .panel-gradient {
+  background: linear-gradient(
+    to bottom,
+    var(--bg-surface) 0%,
+    #e5e5e5 100%
+  );
+}
+
+[data-theme="light"] .panel-gradient-up {
+  background: linear-gradient(
+    to top,
+    var(--bg-surface) 0%,
+    #e5e5e5 100%
+  );
+}
+
+[data-theme="light"] .panel-gradient-subtle {
+  background: linear-gradient(
+    to bottom,
+    var(--bg-surface) 0%,
+    #e8e8e8 100%
+  );
+}
+
+[data-theme="light"] .panel-gradient-accent {
+  background: linear-gradient(
+    to bottom,
+    var(--bg-surface) 0%,
+    rgba(0, 168, 204, 0.05) 100%
+  );
+}

@@ -203,7 +203,7 @@ function ModulationCard({
         width: '80px',
         height: '100%',
         backgroundColor: 'var(--bg-elevated)',
-        border: selected ? '2px solid var(--accent)' : active ? '1px solid var(--accent-dim)' : '1px solid var(--border)',
+        border: selected ? '2px solid var(--accent)' : '1px solid var(--border)',
       }}
     >
       {/* Graphic area */}
@@ -275,10 +275,16 @@ export function MiddleSection() {
     releaseEnvelope,
   } = useModulationStore()
 
-  // Handle card click - select and enable if not already
+  // Handle card click - select and enable, or disable if already selected
   const handleCardClick = (type: 'lfo' | 'random' | 'step' | 'envelope') => {
-    // If clicking the already selected one, deselect
+    // If clicking the already selected one, disable and deselect
     if (selectedModulator === type) {
+      switch (type) {
+        case 'lfo': if (lfo.enabled) toggleLFO(); break
+        case 'random': if (random.enabled) toggleRandom(); break
+        case 'step': if (step.enabled) toggleStep(); break
+        case 'envelope': if (envelope.enabled) toggleEnvelope(); break
+      }
       setSelectedModulator(null)
       return
     }

@@ -120,4 +120,46 @@
     });
   });
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // SECTION TABS: Handle Overview/Guidelines/Specs tab switching
+  // ─────────────────────────────────────────────────────────────────────────
+  const tabContainers = document.querySelectorAll('.section-tabs');
+
+  tabContainers.forEach((container) => {
+    const section = container.dataset.section;
+    const tabs = container.querySelectorAll('.section-tab');
+    const contents = document.querySelectorAll(`.tab-content[data-section="${section}"]`);
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+
+        // Update active tab
+        tabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Update visible content
+        contents.forEach((content) => {
+          if (content.dataset.tabContent === targetTab) {
+            content.classList.add('active');
+          } else {
+            content.classList.remove('active');
+          }
+        });
+
+        // Save state to localStorage
+        localStorage.setItem(`docs-tab-${section}`, targetTab);
+      });
+    });
+
+    // Restore saved tab state
+    const savedTab = localStorage.getItem(`docs-tab-${section}`);
+    if (savedTab) {
+      const targetTabButton = container.querySelector(`.section-tab[data-tab="${savedTab}"]`);
+      if (targetTabButton) {
+        targetTabButton.click();
+      }
+    }
+  });
+
 })();

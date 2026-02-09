@@ -52,10 +52,9 @@
 
       <div class="sidebar-section">
         <span class="sidebar-heading">Effects</span>
-        <a href="#effects-vision" class="sidebar-link">VISION</a>
         <a href="#effects-acid" class="sidebar-link">ACID</a>
+        <a href="#effects-vision" class="sidebar-link">VISION</a>
         <a href="#effects-glitch" class="sidebar-link">GLITCH</a>
-        <a href="#effects-overlay" class="sidebar-link">OVERLAY</a>
         <a href="#effects-strand" class="sidebar-link">STRAND</a>
         <a href="#effects-motion" class="sidebar-link">MOTION</a>
       </div>
@@ -109,7 +108,7 @@
             </ul>
 
             <h4>Step 2: Toggle and Adjust Effects</h4>
-            <p>The effect grid shows 16 effects per page across 6 pages (VISION, ACID, GLITCH, OVERLAY, STRAND, MOTION).</p>
+            <p>The effect grid shows 16 effects per page across 5 pages (ACID, VISION, GLITCH, STRAND, MOTION).</p>
             <ul>
               <li><strong>Click</strong> — Toggle effect on/off</li>
               <li><strong>Drag up/down</strong> — Adjust effect intensity</li>
@@ -126,33 +125,128 @@
       <!-- SAMPLE SLICER -->
       <!-- ═══════════════════════════════════════════════════════════════════ -->
       <section class="doc-section" id="slicer">
-        <h2 class="doc-title">SAMPLE SLICER</h2>
-        <p class="doc-summary">Chop video into slices for live performance.</p>
-
-        <div class="doc-screenshot">
-          <img src="assets/screenshots/slicer.png" alt="Sample slicer with waveform visualization">
+        <!-- Component Header -->
+        <div class="component-header">
+          <h2 class="component-title">Sample Slicer</h2>
+          <p class="component-description">Chop video into slices for live performance and real-time triggering.</p>
         </div>
 
-        <ul class="doc-points">
-          <li>Click a slice to jump to that position</li>
-          <li>Hold a slice to loop that section</li>
-          <li>Drag slice edges to adjust boundaries</li>
-          <li>Drag clips from Clip Bin into the slicer</li>
-        </ul>
+        <!-- Section Tabs -->
+        <div class="section-tabs" data-section="slicer">
+          <button class="section-tab active" data-tab="overview">Overview</button>
+          <button class="section-tab" data-tab="guidelines">Guidelines</button>
+          <button class="section-tab" data-tab="specs">Specs</button>
+        </div>
 
-        <details class="doc-details">
-          <summary>Advanced: Slice Controls</summary>
-          <div class="doc-details-content">
-            <h4>Slice Count</h4>
-            <p>Adjust the number of slices using the slice count control. More slices = finer control over playback positions.</p>
+        <!-- Overview Tab -->
+        <div class="tab-content active" data-tab-content="overview" data-section="slicer">
+          <div class="overview-section">
+            <div class="doc-screenshot">
+              <img src="assets/screenshots/slicer.png" alt="Sample slicer with waveform visualization">
+            </div>
 
-            <h4>Instant Load</h4>
-            <p>Paste a video URL directly into the slicer URL field for instant loading without using the input selector.</p>
+            <p class="overview-text">
+              The Sample Slicer divides video content into equal segments that can be triggered individually during playback.
+              Similar to sample choppers in audio production, it enables beat-synced video manipulation and live remixing.
+            </p>
 
-            <h4>Waveform Display</h4>
-            <p>The waveform shows audio amplitude, helping you identify beats and sections visually.</p>
+            <div class="feature-block">
+              <h4>Core Interactions</h4>
+              <ul class="interaction-list">
+                <li><span class="interaction-action">Click</span> a slice to jump to that position</li>
+                <li><span class="interaction-action">Hold</span> a slice button to loop that section indefinitely</li>
+                <li><span class="interaction-action">Drag</span> slice edges to adjust boundaries</li>
+                <li><span class="interaction-action">Drop</span> clips from Clip Bin into the slicer for instant loading</li>
+              </ul>
+            </div>
+
+            <div class="feature-block">
+              <h4>Transport Controls</h4>
+              <p>The transport bar provides play/pause, loop toggle, and bypass controls. When bypassed, the slicer shows a prominent "BYPASSED" overlay and all controls are dimmed.</p>
+            </div>
           </div>
-        </details>
+        </div>
+
+        <!-- Guidelines Tab -->
+        <div class="tab-content" data-tab-content="guidelines" data-section="slicer">
+          <div class="guidelines-section">
+            <h4>Best Practices</h4>
+            <div class="do-dont-grid">
+              <div class="do-card">
+                <span class="do-label">Do</span>
+                <ul>
+                  <li>Match slice count to musical divisions (4, 8, 16)</li>
+                  <li>Use waveform peaks to identify beat positions</li>
+                  <li>Pre-load clips for seamless transitions</li>
+                  <li>Combine with sequencer for automated triggering</li>
+                </ul>
+              </div>
+              <div class="dont-card">
+                <span class="dont-label">Don't</span>
+                <ul>
+                  <li>Use too many slices for short clips</li>
+                  <li>Trigger rapidly without considering transition smoothness</li>
+                  <li>Forget to enable the slicer after loading content</li>
+                </ul>
+              </div>
+            </div>
+
+            <h4>Performance Tips</h4>
+            <ul class="guidelines-list">
+              <li><strong>Beat Alignment:</strong> Use 8 or 16 slices for 4/4 music to align with bars</li>
+              <li><strong>Loop Points:</strong> Hold slice buttons during breakdowns for sustained loops</li>
+              <li><strong>Visual Cueing:</strong> The waveform helps anticipate drops and transitions</li>
+              <li><strong>Quick Load:</strong> Paste URLs directly into the slicer for instant content loading</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Specs Tab -->
+        <div class="tab-content" data-tab-content="specs" data-section="slicer">
+          <table class="specs-table">
+            <thead>
+              <tr>
+                <th class="spec-property">Property</th>
+                <th class="spec-type">Type</th>
+                <th class="spec-default">Default</th>
+                <th class="spec-range">Range</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="spec-property">sliceCount</td>
+                <td class="spec-type">number</td>
+                <td class="spec-default">8</td>
+                <td class="spec-range">2–32</td>
+              </tr>
+              <tr>
+                <td class="spec-property">playbackRate</td>
+                <td class="spec-type">number</td>
+                <td class="spec-default">1.0</td>
+                <td class="spec-range">0.25–4.0</td>
+              </tr>
+              <tr>
+                <td class="spec-property">loop</td>
+                <td class="spec-type">boolean</td>
+                <td class="spec-default">true</td>
+                <td class="spec-range">—</td>
+              </tr>
+              <tr>
+                <td class="spec-property">enabled</td>
+                <td class="spec-type">boolean</td>
+                <td class="spec-default">false</td>
+                <td class="spec-range">—</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Supported Formats</h4>
+          <ul class="specs-list">
+            <li><strong>Video:</strong> MP4, WebM, MOV (browser-dependent)</li>
+            <li><strong>Sources:</strong> File upload, URL paste, Clip Bin drag-drop</li>
+            <li><strong>Resolution:</strong> Maintains source resolution</li>
+          </ul>
+        </div>
       </section>
 
       <!-- ═══════════════════════════════════════════════════════════════════ -->
@@ -226,78 +320,282 @@
       <!-- MODULATION -->
       <!-- ═══════════════════════════════════════════════════════════════════ -->
       <section class="doc-section" id="modulation">
-        <h2 class="doc-title">MODULATION</h2>
-        <p class="doc-summary">Animate parameters with LFO, Random, Step, and Envelope generators.</p>
+        <!-- Component Header -->
+        <div class="component-header">
+          <h2 class="component-title">Modulation</h2>
+          <p class="component-description">Animate parameters with LFO, Random, Step, Envelope, and Sample & Hold generators.</p>
+        </div>
 
-        <ul class="doc-points">
-          <li>4 modulator types: LFO, Random, Step Sequencer, Envelope</li>
-          <li>Drag modulator to any parameter to route</li>
-          <li>Adjust depth, rate, and shape per modulator</li>
-          <li>Stack multiple modulators on the same parameter</li>
-        </ul>
+        <!-- Section Tabs -->
+        <div class="section-tabs" data-section="modulation">
+          <button class="section-tab active" data-tab="overview">Overview</button>
+          <button class="section-tab" data-tab="guidelines">Guidelines</button>
+          <button class="section-tab" data-tab="specs">Specs</button>
+        </div>
 
-        <details class="doc-details">
-          <summary>Advanced: Modulator Types</summary>
-          <div class="doc-details-content">
-            <h4>LFO (Low Frequency Oscillator)</h4>
-            <ul>
-              <li><strong>Rate</strong> — Speed of oscillation (0.1-20 Hz)</li>
-              <li><strong>Shape</strong> — Sine, Triangle, Square, Saw</li>
-              <li><strong>Depth</strong> — Amount of modulation applied</li>
-            </ul>
+        <!-- Overview Tab -->
+        <div class="tab-content active" data-tab-content="overview" data-section="modulation">
+          <div class="overview-section">
+            <p class="overview-text">
+              The modulation system provides five independent generators that can be routed to any effect parameter.
+              Each modulator runs continuously, producing values that animate parameters over time for organic, evolving visuals.
+            </p>
 
-            <h4>Random</h4>
-            <ul>
-              <li><strong>Rate</strong> — How often new random values are generated</li>
-              <li><strong>Smoothing</strong> — Interpolation between random values</li>
-              <li><strong>Range</strong> — Min/max bounds for random values</li>
-            </ul>
+            <div class="modulator-cards">
+              <div class="modulator-card">
+                <h5>LFO</h5>
+                <p>Low-frequency oscillator with sine, triangle, square, and saw waveforms. Creates smooth, rhythmic parameter movement.</p>
+              </div>
+              <div class="modulator-card">
+                <h5>Random</h5>
+                <p>Generates random values at a configurable rate with optional smoothing for organic variation.</p>
+              </div>
+              <div class="modulator-card">
+                <h5>Step</h5>
+                <p>8-step sequencer for precise, repeating patterns. Each step holds a specific value.</p>
+              </div>
+              <div class="modulator-card">
+                <h5>Envelope</h5>
+                <p>ADSR envelope generator for attack-decay-sustain-release shapes, triggered by events.</p>
+              </div>
+              <div class="modulator-card">
+                <h5>S&H</h5>
+                <p>Sample and Hold captures random values at regular intervals, creating stepped random motion.</p>
+              </div>
+            </div>
 
-            <h4>Step Sequencer</h4>
-            <ul>
-              <li><strong>Steps</strong> — 4-16 step values</li>
-              <li><strong>Rate</strong> — Speed through steps</li>
-              <li><strong>Interpolation</strong> — Smooth or stepped transitions</li>
-            </ul>
+            <div class="feature-block">
+              <h4>Routing</h4>
+              <p>Click the routing icon on any modulator card, then click a parameter in the Effects Lane to create a connection. Active routings are shown as colored lines between modulators and parameters.</p>
+            </div>
+          </div>
+        </div>
 
-            <h4>Envelope (ADSR)</h4>
-            <ul>
-              <li><strong>Attack</strong> — Time to reach peak</li>
-              <li><strong>Decay</strong> — Time to reach sustain level</li>
-              <li><strong>Sustain</strong> — Level while held</li>
-              <li><strong>Release</strong> — Time to return to zero</li>
+        <!-- Guidelines Tab -->
+        <div class="tab-content" data-tab-content="guidelines" data-section="modulation">
+          <div class="guidelines-section">
+            <h4>Best Practices</h4>
+            <div class="do-dont-grid">
+              <div class="do-card">
+                <span class="do-label">Do</span>
+                <ul>
+                  <li>Start with subtle depth values and increase gradually</li>
+                  <li>Sync LFO rates to your content's tempo</li>
+                  <li>Stack multiple modulators for complex movement</li>
+                  <li>Use S&H for glitchy, unpredictable variations</li>
+                </ul>
+              </div>
+              <div class="dont-card">
+                <span class="dont-label">Don't</span>
+                <ul>
+                  <li>Route too many modulators to the same parameter at high depth</li>
+                  <li>Use very fast LFO rates on sensitive parameters</li>
+                  <li>Forget to enable the modulator after routing</li>
+                </ul>
+              </div>
+            </div>
+
+            <h4>Creative Techniques</h4>
+            <ul class="guidelines-list">
+              <li><strong>Polyrhythm:</strong> Route LFO and Step at different rates for evolving patterns</li>
+              <li><strong>Organic Drift:</strong> Random + Envelope creates natural, breathing movement</li>
+              <li><strong>Glitch Bursts:</strong> S&H with fast rate for digital chaos</li>
+              <li><strong>Cross-Modulation:</strong> Route to multiple related parameters simultaneously</li>
             </ul>
           </div>
-        </details>
+        </div>
+
+        <!-- Specs Tab -->
+        <div class="tab-content" data-tab-content="specs" data-section="modulation">
+          <h4>LFO Parameters</h4>
+          <table class="specs-table">
+            <thead>
+              <tr>
+                <th class="spec-property">Property</th>
+                <th class="spec-type">Type</th>
+                <th class="spec-default">Default</th>
+                <th class="spec-range">Range</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="spec-property">rate</td>
+                <td class="spec-type">number</td>
+                <td class="spec-default">1.0</td>
+                <td class="spec-range">0.1–20 Hz</td>
+              </tr>
+              <tr>
+                <td class="spec-property">depth</td>
+                <td class="spec-type">number</td>
+                <td class="spec-default">0.5</td>
+                <td class="spec-range">0–1</td>
+              </tr>
+              <tr>
+                <td class="spec-property">shape</td>
+                <td class="spec-type">enum</td>
+                <td class="spec-default">sine</td>
+                <td class="spec-range">sine, triangle, square, saw</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Envelope Parameters</h4>
+          <table class="specs-table">
+            <thead>
+              <tr>
+                <th class="spec-property">Property</th>
+                <th class="spec-type">Type</th>
+                <th class="spec-default">Default</th>
+                <th class="spec-range">Range</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="spec-property">attack</td>
+                <td class="spec-type">number</td>
+                <td class="spec-default">0.1</td>
+                <td class="spec-range">0–2 sec</td>
+              </tr>
+              <tr>
+                <td class="spec-property">decay</td>
+                <td class="spec-type">number</td>
+                <td class="spec-default">0.2</td>
+                <td class="spec-range">0–2 sec</td>
+              </tr>
+              <tr>
+                <td class="spec-property">sustain</td>
+                <td class="spec-type">number</td>
+                <td class="spec-default">0.7</td>
+                <td class="spec-range">0–1</td>
+              </tr>
+              <tr>
+                <td class="spec-property">release</td>
+                <td class="spec-type">number</td>
+                <td class="spec-default">0.3</td>
+                <td class="spec-range">0–2 sec</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Common Properties</h4>
+          <ul class="specs-list">
+            <li><strong>enabled:</strong> boolean — Toggles modulator on/off</li>
+            <li><strong>routings:</strong> array — List of parameter targets</li>
+            <li><strong>bipolar:</strong> boolean — When true, oscillates around center (default: false)</li>
+          </ul>
+        </div>
       </section>
 
       <!-- ═══════════════════════════════════════════════════════════════════ -->
       <!-- CROSSFADER -->
       <!-- ═══════════════════════════════════════════════════════════════════ -->
       <section class="doc-section" id="crossfader">
-        <h2 class="doc-title">CROSSFADER</h2>
-        <p class="doc-summary">Blend between source video and processed effects.</p>
+        <!-- Component Header -->
+        <div class="component-header">
+          <h2 class="component-title">Crossfader</h2>
+          <p class="component-description">Blend between source video and processed effects with DJ-style control.</p>
+        </div>
 
-        <ul class="doc-points">
-          <li>Horizontal slider blends SRC (source) and FX (effects)</li>
-          <li>CLEAR button disables all effects instantly</li>
-          <li>BYPASS shows original source without effects</li>
-        </ul>
+        <!-- Section Tabs -->
+        <div class="section-tabs" data-section="crossfader">
+          <button class="section-tab active" data-tab="overview">Overview</button>
+          <button class="section-tab" data-tab="guidelines">Guidelines</button>
+          <button class="section-tab" data-tab="specs">Specs</button>
+        </div>
 
-        <details class="doc-details">
-          <summary>Advanced: Mix Controls</summary>
-          <div class="doc-details-content">
-            <h4>Crossfader Position</h4>
-            <ul>
-              <li><strong>Full left (SRC)</strong> — Original video only</li>
-              <li><strong>Center</strong> — 50/50 blend</li>
-              <li><strong>Full right (FX)</strong> — Fully processed output</li>
-            </ul>
+        <!-- Overview Tab -->
+        <div class="tab-content active" data-tab-content="overview" data-section="crossfader">
+          <div class="overview-section">
+            <p class="overview-text">
+              The crossfader provides real-time blending between your source video (SRC) and the fully processed output (FX).
+              This enables smooth transitions and A/B comparison during live performance.
+            </p>
 
-            <h4>Quick Actions</h4>
-            <p>Use the CLEAR button for instant effect reset during performance. BYPASS temporarily shows the source without changing your effect settings.</p>
+            <div class="feature-block">
+              <h4>Crossfader Positions</h4>
+              <ul class="interaction-list">
+                <li><span class="interaction-action">Full Left (SRC)</span> Shows original video only, all effects bypassed</li>
+                <li><span class="interaction-action">Center</span> 50/50 blend between source and processed</li>
+                <li><span class="interaction-action">Full Right (FX)</span> Fully processed output with all enabled effects</li>
+              </ul>
+            </div>
+
+            <div class="feature-block">
+              <h4>Quick Actions</h4>
+              <ul class="interaction-list">
+                <li><span class="interaction-action">CLEAR</span> Instantly disables all effects, returns to clean source</li>
+                <li><span class="interaction-action">BYPASS</span> Temporarily shows source without changing effect states</li>
+              </ul>
+            </div>
           </div>
-        </details>
+        </div>
+
+        <!-- Guidelines Tab -->
+        <div class="tab-content" data-tab-content="guidelines" data-section="crossfader">
+          <div class="guidelines-section">
+            <h4>Best Practices</h4>
+            <div class="do-dont-grid">
+              <div class="do-card">
+                <span class="do-label">Do</span>
+                <ul>
+                  <li>Use for dramatic effect reveals during drops</li>
+                  <li>BYPASS to quickly check your source is correct</li>
+                  <li>Route LFO to crossfader for pulsing effect intensity</li>
+                  <li>CLEAR as an emergency reset during performance</li>
+                </ul>
+              </div>
+              <div class="dont-card">
+                <span class="dont-label">Don't</span>
+                <ul>
+                  <li>Confuse CLEAR (disables effects) with BYPASS (temporary)</li>
+                  <li>Leave crossfader at SRC when trying to adjust effects</li>
+                </ul>
+              </div>
+            </div>
+
+            <h4>Performance Techniques</h4>
+            <ul class="guidelines-list">
+              <li><strong>Effect Punch:</strong> Start at SRC, slam to FX on beat hits</li>
+              <li><strong>Gradual Build:</strong> Slowly move from SRC to FX during crescendos</li>
+              <li><strong>A/B Compare:</strong> Toggle between positions to fine-tune effect intensity</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Specs Tab -->
+        <div class="tab-content" data-tab-content="specs" data-section="crossfader">
+          <table class="specs-table">
+            <thead>
+              <tr>
+                <th class="spec-property">Property</th>
+                <th class="spec-type">Type</th>
+                <th class="spec-default">Default</th>
+                <th class="spec-range">Range</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="spec-property">position</td>
+                <td class="spec-type">number</td>
+                <td class="spec-default">1.0</td>
+                <td class="spec-range">0 (SRC) – 1 (FX)</td>
+              </tr>
+              <tr>
+                <td class="spec-property">curve</td>
+                <td class="spec-type">enum</td>
+                <td class="spec-default">linear</td>
+                <td class="spec-range">linear, equal-power</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h4>Behavior</h4>
+          <ul class="specs-list">
+            <li><strong>GPU-accelerated:</strong> Blending happens in the shader pipeline</li>
+            <li><strong>Zero latency:</strong> Position changes are instant</li>
+            <li><strong>Modulatable:</strong> Can be targeted by any modulation source</li>
+          </ul>
+        </div>
       </section>
 
       <!-- ═══════════════════════════════════════════════════════════════════ -->
@@ -663,263 +961,203 @@
         </div>
       </section>
 
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <!-- EFFECTS: OVERLAY -->
-      <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <section class="doc-section" id="effects-overlay">
-        <h2 class="doc-title">
-          <span class="effect-page-indicator" style="background: #a3a3a3"></span>
-          OVERLAY — Textures & Data
-        </h2>
-        <p class="doc-summary">Film textures and data overlays.</p>
-
-        <div class="effect-grid">
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #a3a3a3"></span>
-              <span class="effect-name">Grain</span>
-            </div>
-            <p class="effect-desc">Film grain texture</p>
-            <span class="effect-param">Intensity: 0-100</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #8b8b8b"></span>
-              <span class="effect-name">Dust</span>
-            </div>
-            <p class="effect-desc">Dust particle overlay</p>
-            <span class="effect-param">Intensity: 0-100</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #f97316"></span>
-              <span class="effect-name">Leak</span>
-            </div>
-            <p class="effect-desc">Light leak overlay</p>
-            <span class="effect-param">Intensity: 0-100</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #d4c4a8"></span>
-              <span class="effect-name">Paper</span>
-            </div>
-            <p class="effect-desc">Paper texture</p>
-            <span class="effect-param">Intensity: 0-100</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #c9b896"></span>
-              <span class="effect-name">Canvas</span>
-            </div>
-            <p class="effect-desc">Canvas texture</p>
-            <span class="effect-param">Intensity: 0-100</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #a855f7"></span>
-              <span class="effect-name">VHS</span>
-            </div>
-            <p class="effect-desc">VHS tape texture</p>
-            <span class="effect-param">Intensity: 0-100</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #60a5fa"></span>
-              <span class="effect-name">Watermark</span>
-            </div>
-            <p class="effect-desc">Text watermark overlay</p>
-            <span class="effect-param">Size: 12-48px</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #34d399"></span>
-              <span class="effect-name">Stats</span>
-            </div>
-            <p class="effect-desc">Stats bar overlay</p>
-            <span class="effect-param">Size: 12-48px</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #fbbf24"></span>
-              <span class="effect-name">Title</span>
-            </div>
-            <p class="effect-desc">Title card overlay</p>
-            <span class="effect-param">Size: 12-48px</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #f472b6"></span>
-              <span class="effect-name">Social</span>
-            </div>
-            <p class="effect-desc">Social media overlay</p>
-            <span class="effect-param">Size: 12-48px</span>
-          </div>
-        </div>
-      </section>
 
       <!-- ═══════════════════════════════════════════════════════════════════ -->
       <!-- EFFECTS: STRAND -->
       <!-- ═══════════════════════════════════════════════════════════════════ -->
       <section class="doc-section" id="effects-strand">
-        <h2 class="doc-title">
-          <span class="effect-page-indicator" style="background: #00d4ff"></span>
-          STRAND — Death Stranding FX
-        </h2>
-        <p class="doc-summary">Effects inspired by Death Stranding aesthetics.</p>
+        <!-- Component Header -->
+        <div class="component-header">
+          <h2 class="component-title">
+            <span class="effect-page-indicator" style="background: #00d4ff"></span>
+            STRAND Effects
+          </h2>
+          <p class="component-description">Effects inspired by Death Stranding aesthetics — otherworldly visuals, chiral elements, and connection themes.</p>
+        </div>
 
-        <div class="effect-grid">
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #1a1a1a; border: 1px solid #333"></span>
-              <span class="effect-name">HANDPRINTS</span>
+        <!-- Section Tabs -->
+        <div class="section-tabs" data-section="strand">
+          <button class="section-tab active" data-tab="overview">Overview</button>
+          <button class="section-tab" data-tab="guidelines">Guidelines</button>
+          <button class="section-tab" data-tab="specs">Specs</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div class="tab-content active" data-tab-content="overview" data-section="strand">
+          <div class="overview-section">
+            <p class="overview-text">
+              The STRAND page contains effects that evoke the visual language of Death Stranding — atmospheric distortion, supernatural elements, and themes of connection and isolation.
+              These effects are designed to create haunting, ethereal visuals perfect for cinematic and experimental content.
+            </p>
+
+            <h4>Effect Categories</h4>
+            <div class="effect-category-grid">
+              <div class="effect-category">
+                <h5 style="color: #1a1a1a; background: #fff; padding: 2px 8px; border-radius: 2px;">BT / Supernatural</h5>
+                <p>HANDPRINTS, TAR, TIMEFALL, VOID OUT — Dark, ominous effects representing BT encounters</p>
+              </div>
+              <div class="effect-category">
+                <h5 style="color: #00d4ff;">Chiral / Connection</h5>
+                <p>STRAND WEB, BRIDGE, CHIRAL PATH, UMBILICAL — Glowing blue connection lines and pathways</p>
+              </div>
+              <div class="effect-category">
+                <h5 style="color: #ffd700;">Equipment / Interface</h5>
+                <p>ODRADEK, CHIRALIUM, BEACH, DOOMS — Scanner overlays and equipment interfaces</p>
+              </div>
+              <div class="effect-category">
+                <h5 style="color: #7b68ee;">Dimensional / Extinction</h5>
+                <p>CHIRAL CLOUD, BB POD, SEAM, EXTINCTION — Reality-warping and extinction entity effects</p>
+              </div>
             </div>
-            <p class="effect-desc">BT handprint overlay</p>
-            <span class="effect-param">Count: 1-20</span>
           </div>
 
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #ff6b35"></span>
-              <span class="effect-name">TAR</span>
+          <div class="effect-grid">
+            <div class="effect-card-enhanced">
+              <div class="effect-header">
+                <span class="effect-color" style="background: #1a1a1a; border: 1px solid #333"></span>
+                <span class="effect-name">HANDPRINTS</span>
+              </div>
+              <p class="effect-desc">Ghostly handprints appear and fade across the frame</p>
+              <div class="effect-specs">
+                <span class="effect-param">Count: 1-20</span>
+                <span class="effect-param">Opacity: 0-100</span>
+              </div>
             </div>
-            <p class="effect-desc">Tar/oil spreading</p>
-            <span class="effect-param">Spread: 0-100</span>
-          </div>
 
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #4a5568"></span>
-              <span class="effect-name">TIMEFALL</span>
+            <div class="effect-card-enhanced">
+              <div class="effect-header">
+                <span class="effect-color" style="background: #ff6b35"></span>
+                <span class="effect-name">TAR</span>
+              </div>
+              <p class="effect-desc">Black tar spreads and pools across the image</p>
+              <div class="effect-specs">
+                <span class="effect-param">Spread: 0-100</span>
+                <span class="effect-param">Viscosity: 0-100</span>
+              </div>
             </div>
-            <p class="effect-desc">Rain aging effect</p>
-            <span class="effect-param">Intensity: 0-100</span>
-          </div>
 
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #ff6b35"></span>
-              <span class="effect-name">VOID OUT</span>
+            <div class="effect-card-enhanced">
+              <div class="effect-header">
+                <span class="effect-color" style="background: #4a5568"></span>
+                <span class="effect-name">TIMEFALL</span>
+              </div>
+              <p class="effect-desc">Rain that ages and deteriorates the image over time</p>
+              <div class="effect-specs">
+                <span class="effect-param">Intensity: 0-100</span>
+                <span class="effect-param">Decay: 0-100</span>
+              </div>
             </div>
-            <p class="effect-desc">Explosion shockwave</p>
-            <span class="effect-param">Intensity: 0-100</span>
-          </div>
 
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #00d4ff"></span>
-              <span class="effect-name">STRAND WEB</span>
+            <div class="effect-card-enhanced">
+              <div class="effect-header">
+                <span class="effect-color" style="background: #00d4ff"></span>
+                <span class="effect-name">STRAND WEB</span>
+              </div>
+              <p class="effect-desc">Glowing connection strands linking points in the frame</p>
+              <div class="effect-specs">
+                <span class="effect-param">Density: 0-100</span>
+                <span class="effect-param">Glow: 0-100</span>
+              </div>
             </div>
-            <p class="effect-desc">Connection strands</p>
-            <span class="effect-param">Density: 0-100</span>
-          </div>
 
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #00d4ff"></span>
-              <span class="effect-name">BRIDGE</span>
+            <div class="effect-card-enhanced">
+              <div class="effect-header">
+                <span class="effect-color" style="background: #ffd700"></span>
+                <span class="effect-name">ODRADEK</span>
+              </div>
+              <p class="effect-desc">Scanner radar sweeping across the frame</p>
+              <div class="effect-specs">
+                <span class="effect-param">Range: 0-100</span>
+                <span class="effect-param">Speed: 0-100</span>
+              </div>
             </div>
-            <p class="effect-desc">Bridge construction</p>
-            <span class="effect-param">Count: 8-64</span>
-          </div>
 
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #00d4ff"></span>
-              <span class="effect-name">CHIRAL PATH</span>
+            <div class="effect-card-enhanced">
+              <div class="effect-header">
+                <span class="effect-color" style="background: #7b68ee"></span>
+                <span class="effect-name">EXTINCTION</span>
+              </div>
+              <p class="effect-desc">Reality-distorting extinction entity visuals</p>
+              <div class="effect-specs">
+                <span class="effect-param">Intensity: 0-100</span>
+                <span class="effect-param">Distortion: 0-100</span>
+              </div>
             </div>
-            <p class="effect-desc">Glowing pathways</p>
-            <span class="effect-param">Length: 10-200</span>
           </div>
+        </div>
 
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #00d4ff"></span>
-              <span class="effect-name">UMBILICAL</span>
+        <!-- Guidelines Tab -->
+        <div class="tab-content" data-tab-content="guidelines" data-section="strand">
+          <div class="guidelines-section">
+            <h4>Best Practices</h4>
+            <div class="do-dont-grid">
+              <div class="do-card">
+                <span class="do-label">Do</span>
+                <ul>
+                  <li>Layer complementary effects (TIMEFALL + HANDPRINTS)</li>
+                  <li>Use subtle settings for cinematic atmosphere</li>
+                  <li>Combine STRAND WEB with motion tracking</li>
+                  <li>Build tension gradually with increasing intensity</li>
+                </ul>
+              </div>
+              <div class="dont-card">
+                <span class="dont-label">Don't</span>
+                <ul>
+                  <li>Stack too many heavy effects (TAR + EXTINCTION)</li>
+                  <li>Use maximum intensity on all settings</li>
+                  <li>Ignore the thematic groupings when combining</li>
+                </ul>
+              </div>
             </div>
-            <p class="effect-desc">Cord connections</p>
-            <span class="effect-param">Count: 2-12</span>
-          </div>
 
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #ffd700"></span>
-              <span class="effect-name">ODRADEK</span>
-            </div>
-            <p class="effect-desc">Scanning radar</p>
-            <span class="effect-param">Range: 0-100</span>
+            <h4>Thematic Combinations</h4>
+            <ul class="guidelines-list">
+              <li><strong>BT Encounter:</strong> HANDPRINTS + TAR + TIMEFALL for supernatural dread</li>
+              <li><strong>Network Node:</strong> STRAND WEB + BRIDGE + CHIRAL PATH for connection themes</li>
+              <li><strong>Scanner Mode:</strong> ODRADEK + CHIRALIUM for equipment interface look</li>
+              <li><strong>Void Out:</strong> VOID OUT + EXTINCTION for catastrophic moments</li>
+            </ul>
           </div>
+        </div>
 
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #ffd700"></span>
-              <span class="effect-name">CHIRALIUM</span>
-            </div>
-            <p class="effect-desc">Crystal formations</p>
-            <span class="effect-param">Density: 0-100</span>
-          </div>
+        <!-- Specs Tab -->
+        <div class="tab-content" data-tab-content="specs" data-section="strand">
+          <h4>All STRAND Effects</h4>
+          <table class="specs-table">
+            <thead>
+              <tr>
+                <th class="spec-property">Effect</th>
+                <th class="spec-type">Primary Param</th>
+                <th class="spec-default">Default</th>
+                <th class="spec-range">Range</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>HANDPRINTS</td><td>count</td><td>5</td><td>1–20</td></tr>
+              <tr><td>TAR</td><td>spread</td><td>50</td><td>0–100</td></tr>
+              <tr><td>TIMEFALL</td><td>intensity</td><td>50</td><td>0–100</td></tr>
+              <tr><td>VOID OUT</td><td>intensity</td><td>50</td><td>0–100</td></tr>
+              <tr><td>STRAND WEB</td><td>density</td><td>50</td><td>0–100</td></tr>
+              <tr><td>BRIDGE</td><td>count</td><td>16</td><td>8–64</td></tr>
+              <tr><td>CHIRAL PATH</td><td>length</td><td>100</td><td>10–200</td></tr>
+              <tr><td>UMBILICAL</td><td>count</td><td>4</td><td>2–12</td></tr>
+              <tr><td>ODRADEK</td><td>range</td><td>50</td><td>0–100</td></tr>
+              <tr><td>CHIRALIUM</td><td>density</td><td>50</td><td>0–100</td></tr>
+              <tr><td>BEACH</td><td>intensity</td><td>50</td><td>0–100</td></tr>
+              <tr><td>DOOMS</td><td>level</td><td>50</td><td>0–100</td></tr>
+              <tr><td>CHIRAL CLOUD</td><td>density</td><td>50</td><td>0–100</td></tr>
+              <tr><td>BB POD</td><td>intensity</td><td>50</td><td>0–100</td></tr>
+              <tr><td>SEAM</td><td>width</td><td>50</td><td>0–100</td></tr>
+              <tr><td>EXTINCTION</td><td>intensity</td><td>50</td><td>0–100</td></tr>
+            </tbody>
+          </table>
 
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #ffd700"></span>
-              <span class="effect-name">BEACH</span>
-            </div>
-            <p class="effect-desc">Beach realm effect</p>
-            <span class="effect-param">Intensity: 0-100</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #ffd700"></span>
-              <span class="effect-name">DOOMS</span>
-            </div>
-            <p class="effect-desc">Vision distortion</p>
-            <span class="effect-param">Level: 0-100</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #7b68ee"></span>
-              <span class="effect-name">CHIRAL CLOUD</span>
-            </div>
-            <p class="effect-desc">Atmospheric cloud</p>
-            <span class="effect-param">Density: 0-100</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #7b68ee"></span>
-              <span class="effect-name">BB POD</span>
-            </div>
-            <p class="effect-desc">BB pod interface</p>
-            <span class="effect-param">Intensity: 0-100</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #7b68ee"></span>
-              <span class="effect-name">SEAM</span>
-            </div>
-            <p class="effect-desc">Dimensional seam</p>
-            <span class="effect-param">Width: 0-100</span>
-          </div>
-
-          <div class="effect-card">
-            <div class="effect-header">
-              <span class="effect-color" style="background: #7b68ee"></span>
-              <span class="effect-name">EXTINCTION</span>
-            </div>
-            <p class="effect-desc">Entity effect</p>
-            <span class="effect-param">Intensity: 0-100</span>
-          </div>
+          <h4>Performance Notes</h4>
+          <ul class="specs-list">
+            <li><strong>GPU Load:</strong> Most STRAND effects are medium-weight shaders</li>
+            <li><strong>TAR/EXTINCTION:</strong> Higher GPU usage due to complex displacement</li>
+            <li><strong>Modulatable:</strong> All parameters can be targeted by modulators</li>
+          </ul>
         </div>
       </section>
 
@@ -996,8 +1234,8 @@
               <td>Start / Stop recording</td>
             </tr>
             <tr>
-              <td><kbd>1</kbd> - <kbd>6</kbd></td>
-              <td>Switch effect page (VISION, ACID, GLITCH, OVERLAY, STRAND, MOTION)</td>
+              <td><kbd>1</kbd> - <kbd>5</kbd></td>
+              <td>Switch effect page (ACID, VISION, GLITCH, STRAND, MOTION)</td>
             </tr>
             <tr>
               <td><kbd>←</kbd> <kbd>→</kbd></td>

@@ -159,7 +159,7 @@ function EnvelopeGraphic({ tick }: { tick: number }) {
 
 interface ModulationCardProps {
   type: 'lfo' | 'random' | 'step' | 'envelope'
-  label: string
+  label: React.ReactNode
   tick: number
   active?: boolean
   isAssigning?: boolean
@@ -445,7 +445,15 @@ export function MiddleSection() {
         />
         <ModulationCard
           type="random"
-          label="Random"
+          label={
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="3" cy="3" r="1.5" />
+              <circle cx="13" cy="3" r="1.5" />
+              <circle cx="8" cy="8" r="1.5" />
+              <circle cx="3" cy="13" r="1.5" />
+              <circle cx="13" cy="13" r="1.5" />
+            </svg>
+          }
           tick={tick}
           active={random.enabled}
           isAssigning={assigningModulator === 'random'}

@@ -1,6 +1,7 @@
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { Button } from '../ui/Button'
 import { BankButton } from './BankButton'
+import { ShuffleIcon } from '../ui/DotMatrixIcons'
 import { useBankStore } from '../../stores/bankStore'
 import { useGlitchEngineStore, type GlitchSnapshot } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
@@ -289,13 +290,7 @@ export function BankPanel() {
 
       {/* Action buttons */}
       <Button size="lg" className="h-full" onClick={handleRandom} title="Randomize effects">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <circle cx="3" cy="3" r="1.5" />
-          <circle cx="13" cy="3" r="1.5" />
-          <circle cx="8" cy="8" r="1.5" />
-          <circle cx="3" cy="13" r="1.5" />
-          <circle cx="13" cy="13" r="1.5" />
-        </svg>
+        <ShuffleIcon size={16} />
       </Button>
       <Button size="lg" className="h-full" onClick={handleUndo} disabled={!hasPreviousState}>
         Undo

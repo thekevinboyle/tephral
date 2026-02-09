@@ -43,26 +43,25 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // STACKED W PATTERN - zigzag rows
+    // STACKED W PATTERN - zigzag rows with waterfall animation
     // ═══════════════════════════════════════════════════════════════
     const blockW = 10
     const blockH = 4
-    const zigzagAmp = 12 // Height of the W peaks
+    const zigzagAmp = 12
     const colSpacing = 14
-    const rowSpacing = 20
+    const rowSpacing = 18
 
-    // Number of W rows (tracks control this)
     const rowCount = Math.min(tracks.length * 2, 8)
     const totalHeight = rowCount * rowSpacing
     const startY = centerY - totalHeight / 2
 
-    // Columns across
     const colCount = Math.ceil(width * 0.6 / colSpacing)
     const totalWidth = colCount * colSpacing
     const startX = centerX - totalWidth / 2
 
-    // Animation offset
-    const wavePhase = time * 2
+    // Waterfall speed
+    const waterfallSpeed = 40
+    const waterfallCycle = rowSpacing * rowCount
 
     for (let row = 0; row < rowCount; row++) {
       const trackIndex = row % tracks.length
@@ -70,34 +69,39 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
       const pattern = getPattern(track.id)
       const baseOpacity = track.muted ? 0.1 : 1
 
-      const rowY = startY + row * rowSpacing
-
       for (let col = 0; col < colCount; col++) {
         const patternIdx = col % pattern.length
         const isHit = pattern[patternIdx]
         const isCurrent = patternIdx === track.currentStep
 
-        // W shape: zigzag up and down
+        // W shape zigzag
         let zigzagY: number
+        if (col % 4 === 0) zigzagY = 0
+        else if (col % 4 === 1) zigzagY = -zigzagAmp
+        else if (col % 4 === 2) zigzagY = 0
+        else zigzagY = -zigzagAmp
 
-        // Create W shape: down, up, down, up pattern
-        if (col % 4 === 0) zigzagY = 0           // bottom of V
-        else if (col % 4 === 1) zigzagY = -zigzagAmp  // top left of W
-        else if (col % 4 === 2) zigzagY = 0           // middle bottom of W
-        else zigzagY = -zigzagAmp                     // top right of W
+        // Waterfall animation - each column falls at slightly different phase
+        const colPhase = col * 0.15
+        const waterfallOffset = ((time * waterfallSpeed + colPhase * 20) % waterfallCycle)
 
-        // Animate the W - wave motion
-        const animOffset = Math.sin(wavePhase + col * 0.3 + row * 0.5) * 3
+        // Calculate Y with waterfall - blocks cascade down
+        const baseRowY = startY + row * rowSpacing
+        const y = baseRowY + zigzagY + waterfallOffset - waterfallCycle / 2
+
+        // Fade based on vertical position (fade at edges)
+        const normalizedY = (y - startY) / totalHeight
+        const verticalFade = 1 - Math.abs(normalizedY - 0.5) * 1.5
+        if (verticalFade <= 0) continue
 
         const x = startX + col * colSpacing
-        const y = rowY + zigzagY + animOffset
 
-        // Angle follows the W slope
+        // Angle follows W slope
         let angle = 0
-        if (col % 4 === 0) angle = -45  // going up-left
-        else if (col % 4 === 1) angle = 45   // going down-right
-        else if (col % 4 === 2) angle = -45  // going up-left
-        else angle = 45                       // going down-right
+        if (col % 4 === 0) angle = -45
+        else if (col % 4 === 1) angle = 45
+        else if (col % 4 === 2) angle = -45
+        else angle = 45
 
         const angleRad = (angle * Math.PI) / 180
         const scale = isCurrent ? 1 + track.currentValue * 0.5 : 1
@@ -107,6 +111,8 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
         ctx.rotate(angleRad)
         ctx.scale(scale, scale)
 
+        const fadeOpacity = Math.max(0, Math.min(1, verticalFade))
+
         if (isHit) {
           if (isCurrent && track.currentValue > 0.05 && !track.muted) {
             ctx.shadowColor = CREAM
@@ -114,12 +120,12 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
           }
 
           ctx.fillStyle = CREAM
-          ctx.globalAlpha = baseOpacity * (isCurrent ? 0.9 + track.currentValue * 0.1 : 0.5)
+          ctx.globalAlpha = baseOpacity * fadeOpacity * (isCurrent ? 0.9 + track.currentValue * 0.1 : 0.5)
           ctx.fillRect(-blockW / 2, -blockH / 2, blockW, blockH)
           ctx.shadowBlur = 0
         } else {
           ctx.strokeStyle = CREAM
-          ctx.globalAlpha = baseOpacity * 0.15
+          ctx.globalAlpha = baseOpacity * fadeOpacity * 0.15
           ctx.lineWidth = 1.5
           ctx.setLineDash([2, 3])
           ctx.lineDashOffset = -time * 20

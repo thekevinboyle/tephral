@@ -107,12 +107,12 @@ export const EFFECTS: EffectDefinition[] = [
   // Row 2: More textures + Data
   { id: 'texture_canvas', label: 'Canvas', color: '#c9b896', row: 'texture', page: 3, min: 0, max: 100 },
   { id: 'texture_vhs', label: 'VHS', color: '#a855f7', row: 'texture', page: 3, min: 0, max: 100 },
-  { id: 'data_watermark', label: 'Watermark', color: '#60a5fa', row: 'render', page: 3, min: 12, max: 48 },
-  { id: 'data_stats', label: 'Stats', color: '#34d399', row: 'render', page: 3, min: 12, max: 48 },
+  { id: 'reserved_3_7', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
+  { id: 'reserved_3_8', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
 
-  // Row 3: Data templates
-  { id: 'data_title', label: 'Title', color: '#fbbf24', row: 'render', page: 3, min: 12, max: 48 },
-  { id: 'data_social', label: 'Social', color: '#f472b6', row: 'render', page: 3, min: 12, max: 48 },
+  // Row 3: Reserved
+  { id: 'reserved_3_9', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
+  { id: 'reserved_3_10', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
   { id: 'reserved_3_11', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
   { id: 'reserved_3_12', label: '—', color: '#374151', row: 'reserved', page: 3, min: 0, max: 100 },
 

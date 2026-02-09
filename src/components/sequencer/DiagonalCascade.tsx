@@ -123,7 +123,6 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
           ctx.globalAlpha = baseOpacity * 0.12
 
           const dotSize = 3
-          const dotOffset = (cellSize - dotSize) / 2
           ctx.beginPath()
           ctx.arc(
             cellX + cellSize / 2 + gap / 2,

@@ -137,12 +137,16 @@ export function TransportBar() {
 
   // Handle play/pause
   const handlePlayPause = useCallback(() => {
-    // Bypass slicer when playing source video (not during recording playback)
-    // Use setState directly to avoid source restoration logic that could interfere
+    // Handle slicer being active - need to properly disable and restore source
     const slicerState = useSlicerStore.getState()
     if (slicerState.enabled && !isRecordingMode) {
-      // Just disable slicer and stop its playback - don't trigger full source restore
-      useSlicerStore.setState({ enabled: false, isPlaying: false })
+      // Stop slicer playback
+      useSlicerStore.getState().setIsPlaying(false)
+      // Use the proper setEnabled which coordinates with mediaStore
+      useSlicerStore.getState().setEnabled(false)
+      // setEnabled(false) already restores stashed source and plays it if it was a file
+      // so we're done - don't need to call play() again
+      return
     }
 
     if (isRecordingMode) {

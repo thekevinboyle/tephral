@@ -48,9 +48,6 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
     const centerX = width / 2
     const centerY = height / 2
 
-    // Starburst angles - radiating outward like the reference
-    const burstAngles = [-60, -30, 0, 30, 60, 90, 120, 150]
-
     // Draw each track as radiating diagonal lines from center
     tracks.forEach((track, trackIndex) => {
       const pattern = getPattern(track.id)

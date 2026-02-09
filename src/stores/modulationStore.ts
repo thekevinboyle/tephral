@@ -54,6 +54,10 @@ interface ModulationState {
   setAssigningModulator: (type: ModulatorType | null) => void
   toggleAssignmentMode: (type: ModulatorType) => void
 
+  // Selected modulator - which modulator's params are shown
+  selectedModulator: ModulatorType | null
+  setSelectedModulator: (type: ModulatorType | null) => void
+
   // LFO actions
   toggleLFO: () => void
   setLFOEnabled: (enabled: boolean) => void
@@ -136,6 +140,10 @@ export const useModulationStore = create<ModulationState>((set, get) => ({
   toggleAssignmentMode: (type) => set((state) => ({
     assigningModulator: state.assigningModulator === type ? null : type
   })),
+
+  // Selected modulator
+  selectedModulator: null,
+  setSelectedModulator: (type) => set({ selectedModulator: type }),
 
   // LFO Actions
   toggleLFO: () => set((state) => ({ lfo: { ...state.lfo, enabled: !state.lfo.enabled } })),

@@ -163,6 +163,7 @@ interface ModulationCardProps {
   label: string
   tick: number
   active?: boolean
+  selected?: boolean
   isAssigning?: boolean
   onClick?: () => void
   onAssignClick?: () => void
@@ -175,6 +176,7 @@ function ModulationCard({
   label,
   tick,
   active = false,
+  selected = false,
   isAssigning = false,
   onClick,
   onAssignClick,
@@ -201,8 +203,8 @@ function ModulationCard({
         width: '80px',
         height: '100%',
         backgroundColor: active ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
-        border: active ? '1px solid var(--accent-dim)' : '1px solid var(--border)',
-        boxShadow: active ? '0 0 8px var(--accent-glow)' : 'none',
+        border: selected ? '2px solid var(--accent)' : active ? '1px solid var(--accent-dim)' : '1px solid var(--border)',
+        boxShadow: selected ? '0 0 12px var(--accent-glow)' : active ? '0 0 8px var(--accent-glow)' : 'none',
       }}
     >
       {/* Graphic area */}
@@ -261,7 +263,36 @@ export function MiddleSection() {
     toggleEnvelope,
     assigningModulator,
     toggleAssignmentMode,
+    selectedModulator,
+    setSelectedModulator,
+    setLFORate,
+    setLFOShape,
+    setRandomRate,
+    setRandomSmoothing,
+    setStepRate,
+    setStepValue,
+    setEnvelopeParams,
+    triggerEnvelope,
+    releaseEnvelope,
   } = useModulationStore()
+
+  // Handle card click - select and enable if not already
+  const handleCardClick = (type: 'lfo' | 'random' | 'step' | 'envelope') => {
+    // If clicking the already selected one, deselect
+    if (selectedModulator === type) {
+      setSelectedModulator(null)
+      return
+    }
+    // Select this modulator
+    setSelectedModulator(type)
+    // Enable it if not already
+    switch (type) {
+      case 'lfo': if (!lfo.enabled) toggleLFO(); break
+      case 'random': if (!random.enabled) toggleRandom(); break
+      case 'step': if (!step.enabled) toggleStep(); break
+      case 'envelope': if (!envelope.enabled) toggleEnvelope(); break
+    }
+  }
 
   // Effect stores for Clear/Bypass
   const glitch = useGlitchEngineStore()
@@ -416,8 +447,9 @@ export function MiddleSection() {
           label="LFO"
           tick={tick}
           active={lfo.enabled}
+          selected={selectedModulator === 'lfo'}
           isAssigning={assigningModulator === 'lfo'}
-          onClick={toggleLFO}
+          onClick={() => handleCardClick('lfo')}
           onAssignClick={() => toggleAssignmentMode('lfo')}
         />
         <ModulationCard
@@ -425,8 +457,9 @@ export function MiddleSection() {
           label="Random"
           tick={tick}
           active={random.enabled}
+          selected={selectedModulator === 'random'}
           isAssigning={assigningModulator === 'random'}
-          onClick={toggleRandom}
+          onClick={() => handleCardClick('random')}
           onAssignClick={() => toggleAssignmentMode('random')}
         />
         <ModulationCard
@@ -434,8 +467,9 @@ export function MiddleSection() {
           label="Step"
           tick={tick}
           active={step.enabled}
+          selected={selectedModulator === 'step'}
           isAssigning={assigningModulator === 'step'}
-          onClick={toggleStep}
+          onClick={() => handleCardClick('step')}
           onAssignClick={() => toggleAssignmentMode('step')}
         />
         <ModulationCard
@@ -443,10 +477,193 @@ export function MiddleSection() {
           label="Env"
           tick={tick}
           active={envelope.enabled}
+          selected={selectedModulator === 'envelope'}
           isAssigning={assigningModulator === 'envelope'}
-          onClick={toggleEnvelope}
+          onClick={() => handleCardClick('envelope')}
           onAssignClick={() => toggleAssignmentMode('envelope')}
         />
+
+        {/* Parameter panel for selected modulator */}
+        {selectedModulator && (
+          <div
+            className="flex items-center gap-3 px-3 py-1 rounded-sm ml-2"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            {selectedModulator === 'lfo' && (
+              <>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Rate</span>
+                  <input
+                    type="range"
+                    min={0.1}
+                    max={20}
+                    step={0.1}
+                    value={lfo.rate}
+                    onChange={(e) => setLFORate(parseFloat(e.target.value))}
+                    className="w-16"
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                  <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{lfo.rate.toFixed(1)} Hz</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Shape</span>
+                  <select
+                    value={lfo.shape}
+                    onChange={(e) => setLFOShape(e.target.value as 'sine' | 'triangle' | 'square' | 'saw' | 'random')}
+                    className="text-[10px] px-1 py-0.5 rounded-sm"
+                    style={{
+                      backgroundColor: 'var(--bg-elevated)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    <option value="sine">Sine</option>
+                    <option value="triangle">Tri</option>
+                    <option value="square">Sqr</option>
+                    <option value="saw">Saw</option>
+                    <option value="random">S&H</option>
+                  </select>
+                </div>
+              </>
+            )}
+            {selectedModulator === 'random' && (
+              <>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Rate</span>
+                  <input
+                    type="range"
+                    min={0.1}
+                    max={30}
+                    step={0.1}
+                    value={random.rate}
+                    onChange={(e) => setRandomRate(parseFloat(e.target.value))}
+                    className="w-16"
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                  <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{random.rate.toFixed(1)}/s</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Smooth</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={random.smoothing}
+                    onChange={(e) => setRandomSmoothing(parseFloat(e.target.value))}
+                    className="w-16"
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                  <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{Math.round(random.smoothing * 100)}%</span>
+                </div>
+              </>
+            )}
+            {selectedModulator === 'step' && (
+              <>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Rate</span>
+                  <input
+                    type="range"
+                    min={0.1}
+                    max={20}
+                    step={0.1}
+                    value={step.rate}
+                    onChange={(e) => setStepRate(parseFloat(e.target.value))}
+                    className="w-16"
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                  <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{step.rate.toFixed(1)}/s</span>
+                </div>
+                <div className="flex gap-[2px] items-end h-8">
+                  {step.steps.map((val, i) => (
+                    <div
+                      key={i}
+                      className="w-2 cursor-pointer hover:opacity-80"
+                      style={{
+                        height: `${val * 100}%`,
+                        minHeight: '2px',
+                        backgroundColor: step.currentStep === i ? 'var(--accent)' : 'var(--text-muted)',
+                      }}
+                      onClick={() => setStepValue(i, val > 0.5 ? 0 : 1)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+            {selectedModulator === 'envelope' && (
+              <>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>A</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={2}
+                    step={0.01}
+                    value={envelope.attack}
+                    onChange={(e) => setEnvelopeParams({ attack: parseFloat(e.target.value) })}
+                    className="w-10"
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>D</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={2}
+                    step={0.01}
+                    value={envelope.decay}
+                    onChange={(e) => setEnvelopeParams({ decay: parseFloat(e.target.value) })}
+                    className="w-10"
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>S</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={envelope.sustain}
+                    onChange={(e) => setEnvelopeParams({ sustain: parseFloat(e.target.value) })}
+                    className="w-10"
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>R</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={2}
+                    step={0.01}
+                    value={envelope.release}
+                    onChange={(e) => setEnvelopeParams({ release: parseFloat(e.target.value) })}
+                    className="w-10"
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                </div>
+                <button
+                  onMouseDown={triggerEnvelope}
+                  onMouseUp={releaseEnvelope}
+                  onMouseLeave={releaseEnvelope}
+                  className="px-2 py-1 text-[9px] rounded-sm"
+                  style={{
+                    backgroundColor: envelope.phase !== 'idle' ? 'var(--accent)' : 'var(--bg-elevated)',
+                    border: '1px solid var(--border)',
+                    color: envelope.phase !== 'idle' ? 'var(--text-primary)' : 'var(--text-muted)',
+                  }}
+                >
+                  Trig
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

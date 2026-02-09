@@ -353,6 +353,358 @@ function DiamondPattern({ tick }: { tick: number }) {
   )
 }
 
+// Matrix rain pattern - falling characters
+function MatrixRainPattern({ tick }: { tick: number }) {
+  const width = 16
+  const height = 11
+  const chars = '01アイウエオカキクケコ'
+
+  return (
+    <div className="text-[6px] leading-[5px] font-mono" style={{ color: '#22c55e' }}>
+      {Array.from({ length: height }, (_, y) => (
+        <div key={y} style={{ letterSpacing: '0px' }}>
+          {Array.from({ length: width }, (_, x) => {
+            const col = (x * 7 + 3) % width
+            const drop = ((tick * 0.5 + col * 3) % 15)
+            const dist = y - drop
+            const visible = dist >= -3 && dist <= 0
+            const char = chars[Math.floor((tick + x * 3 + y * 7) % chars.length)]
+            return (
+              <span
+                key={x}
+                style={{
+                  opacity: visible ? (1 + dist * 0.3) : 0.05,
+                }}
+              >
+                {visible ? char : '·'}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Heartbeat/pulse pattern - medical monitor style
+function HeartbeatPattern({ tick }: { tick: number }) {
+  const width = 28
+  const height = 9
+
+  return (
+    <div className="text-[6px] leading-[5px]" style={{ color: '#ef4444' }}>
+      {Array.from({ length: height }, (_, y) => (
+        <div key={y} style={{ letterSpacing: '-1px' }}>
+          {Array.from({ length: width }, (_, x) => {
+            const phase = (x - tick * 0.8) % 14
+            const centerY = height / 2
+            let targetY = centerY
+            if (phase >= 0 && phase < 2) targetY = centerY
+            else if (phase >= 2 && phase < 3) targetY = centerY - 3
+            else if (phase >= 3 && phase < 4) targetY = centerY + 2
+            else if (phase >= 4 && phase < 5) targetY = centerY - 1
+            else if (phase >= 5 && phase < 6) targetY = centerY
+            const dist = Math.abs(y - targetY)
+            return (
+              <span key={x} style={{ opacity: dist < 0.8 ? 1 : 0.05 }}>
+                {dist < 0.8 ? '█' : '·'}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// DNA helix pattern - double helix rotation
+function DNAHelixPattern({ tick }: { tick: number }) {
+  const width = 18
+  const height = 11
+
+  return (
+    <div className="text-[6px] leading-[5px]" style={{ color: '#a855f7' }}>
+      {Array.from({ length: height }, (_, y) => (
+        <div key={y} style={{ letterSpacing: '-1px' }}>
+          {Array.from({ length: width }, (_, x) => {
+            const phase = tick * 0.15 + x * 0.4
+            const strand1 = Math.sin(phase) * 3 + height / 2
+            const strand2 = Math.sin(phase + Math.PI) * 3 + height / 2
+            const onStrand1 = Math.abs(y - strand1) < 0.8
+            const onStrand2 = Math.abs(y - strand2) < 0.8
+            const onBridge = x % 3 === 0 && y > Math.min(strand1, strand2) && y < Math.max(strand1, strand2)
+            return (
+              <span
+                key={x}
+                style={{
+                  opacity: (onStrand1 || onStrand2) ? 1 : onBridge ? 0.5 : 0.05,
+                  color: onStrand1 ? '#a855f7' : onStrand2 ? '#ec4899' : '#666',
+                }}
+              >
+                {(onStrand1 || onStrand2 || onBridge) ? '●' : '·'}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Concentric rings pattern - expanding circles
+function RingsPattern({ tick }: { tick: number }) {
+  const size = 13
+  const center = size / 2
+
+  return (
+    <div className="text-[6px] leading-[5px]" style={{ color: '#06b6d4' }}>
+      {Array.from({ length: size }, (_, y) => (
+        <div key={y} style={{ letterSpacing: '-1px' }}>
+          {Array.from({ length: size }, (_, x) => {
+            const dist = Math.sqrt(Math.pow(x - center + 0.5, 2) + Math.pow(y - center + 0.5, 2))
+            const wave = (dist - tick * 0.3) % 3
+            const visible = wave > 0 && wave < 1
+            return (
+              <span key={x} style={{ opacity: visible ? (1 - wave) : 0.05 }}>
+                {visible ? '○' : '·'}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Maze pattern - animated path finding
+function MazePattern({ tick }: { tick: number }) {
+  const maze = [
+    '██████████████',
+    '█            █',
+    '█ ████ ████ ██',
+    '█ █      █   █',
+    '█ █ ████ ███ █',
+    '█   █  █   █ █',
+    '███ █ ██ █ █ █',
+    '█   █    █   █',
+    '██████████████',
+  ]
+
+  return (
+    <div className="text-[5px] leading-[5px] font-mono" style={{ color: 'var(--text-muted)' }}>
+      {maze.map((row, y) => (
+        <div key={y} style={{ letterSpacing: '-1px' }}>
+          {row.split('').map((char, x) => {
+            const pathPhase = (tick * 0.2 + x * 0.1 + y * 0.1) % 6
+            const isPath = char === ' ' && pathPhase < 1
+            return (
+              <span
+                key={x}
+                style={{
+                  opacity: char === '█' ? 0.4 : isPath ? 1 : 0.15,
+                  color: isPath ? 'var(--accent)' : undefined,
+                }}
+              >
+                {char === '█' ? '█' : isPath ? '●' : '·'}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Constellation pattern - connected stars
+function ConstellationPattern({ tick }: { tick: number }) {
+  const stars = [
+    [2, 1], [5, 2], [9, 1], [12, 3],
+    [1, 5], [6, 6], [10, 5], [13, 7],
+    [3, 9], [7, 8], [11, 10], [4, 11],
+  ]
+  const connections = [[0, 1], [1, 2], [2, 3], [4, 5], [5, 6], [6, 7], [8, 9], [9, 10], [5, 9], [1, 5]]
+  const width = 15
+  const height = 12
+
+  return (
+    <div className="text-[6px] leading-[5px]" style={{ color: '#fbbf24' }}>
+      {Array.from({ length: height }, (_, y) => (
+        <div key={y} style={{ letterSpacing: '-1px' }}>
+          {Array.from({ length: width }, (_, x) => {
+            const isStar = stars.some(([sx, sy]) => sx === x && sy === y)
+            let onLine = false
+            connections.forEach(([a, b]) => {
+              const [x1, y1] = stars[a]
+              const [x2, y2] = stars[b]
+              const dx = x2 - x1, dy = y2 - y1
+              const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy + 0.001)))
+              const dist = Math.sqrt(Math.pow(x - x1 - t * dx, 2) + Math.pow(y - y1 - t * dy, 2))
+              if (dist < 0.7) onLine = true
+            })
+            const twinkle = Math.sin(tick * 0.3 + x * 2 + y * 3) > 0.5
+            return (
+              <span
+                key={x}
+                style={{
+                  opacity: isStar ? (twinkle ? 1 : 0.7) : onLine ? 0.3 : 0.05,
+                }}
+              >
+                {isStar ? '★' : onLine ? '·' : ' '}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Tetris pattern - falling blocks
+function TetrisPattern({ tick }: { tick: number }) {
+  const width = 10
+  const height = 12
+  const pieces = [
+    { x: 2, y: (tick * 0.3) % 14 - 2, shape: [[1, 1], [1, 1]], color: '#fbbf24' },
+    { x: 5, y: (tick * 0.25 + 5) % 14 - 2, shape: [[1, 1, 1, 1]], color: '#06b6d4' },
+    { x: 7, y: (tick * 0.35 + 8) % 14 - 2, shape: [[1, 1, 0], [0, 1, 1]], color: '#22c55e' },
+  ]
+
+  return (
+    <div className="flex flex-col gap-[1px]">
+      {Array.from({ length: height }, (_, y) => (
+        <div key={y} className="flex gap-[1px]">
+          {Array.from({ length: width }, (_, x) => {
+            let filled = false
+            let color = 'var(--bg-elevated)'
+            pieces.forEach(p => {
+              p.shape.forEach((row, py) => {
+                row.forEach((cell, px) => {
+                  if (cell && Math.floor(p.x + px) === x && Math.floor(p.y + py) === y) {
+                    filled = true
+                    color = p.color
+                  }
+                })
+              })
+            })
+            const stacked = y >= 9 && ((x + y) % 3 !== 0)
+            return (
+              <div
+                key={x}
+                className="w-1.5 h-1.5"
+                style={{
+                  backgroundColor: filled ? color : stacked ? 'var(--text-ghost)' : 'var(--bg-elevated)',
+                  opacity: filled ? 1 : stacked ? 0.4 : 0.3,
+                }}
+              />
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Pendulum pattern - swinging motion
+function PendulumPattern({ tick }: { tick: number }) {
+  const width = 16
+  const height = 11
+  const pivotX = width / 2
+  const pivotY = 1
+  const length = 8
+  const angle = Math.sin(tick * 0.12) * 0.8
+
+  const bobX = pivotX + Math.sin(angle) * length
+  const bobY = pivotY + Math.cos(angle) * length
+
+  return (
+    <div className="text-[6px] leading-[5px]" style={{ color: '#f97316' }}>
+      {Array.from({ length: height }, (_, y) => (
+        <div key={y} style={{ letterSpacing: '-1px' }}>
+          {Array.from({ length: width }, (_, x) => {
+            const isPivot = Math.abs(x - pivotX) < 1 && y === pivotY
+            const isBob = Math.sqrt(Math.pow(x - bobX, 2) + Math.pow(y - bobY, 2)) < 1.5
+            // Line from pivot to bob
+            const t = Math.max(0, Math.min(1, ((x - pivotX) * (bobX - pivotX) + (y - pivotY) * (bobY - pivotY)) / (Math.pow(bobX - pivotX, 2) + Math.pow(bobY - pivotY, 2) + 0.001)))
+            const lineX = pivotX + t * (bobX - pivotX)
+            const lineY = pivotY + t * (bobY - pivotY)
+            const onLine = Math.sqrt(Math.pow(x - lineX, 2) + Math.pow(y - lineY, 2)) < 0.6
+            return (
+              <span
+                key={x}
+                style={{ opacity: isPivot ? 0.8 : isBob ? 1 : onLine ? 0.5 : 0.05 }}
+              >
+                {isPivot ? '●' : isBob ? '◉' : onLine ? '│' : '·'}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Binary stream pattern - flowing 0s and 1s
+function BinaryPattern({ tick }: { tick: number }) {
+  const width = 20
+  const height = 9
+
+  return (
+    <div className="text-[6px] leading-[6px] font-mono" style={{ color: '#10b981' }}>
+      {Array.from({ length: height }, (_, y) => (
+        <div key={y} style={{ letterSpacing: '0px' }}>
+          {Array.from({ length: width }, (_, x) => {
+            const flow = (x + tick * 0.5 + y * 2) % 10
+            const active = flow < 5
+            const bit = ((x * 7 + y * 13 + Math.floor(tick * 0.3)) % 2)
+            return (
+              <span key={x} style={{ opacity: active ? 0.8 - flow * 0.1 : 0.1 }}>
+                {bit ? '1' : '0'}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Prism/refraction pattern - light splitting
+function PrismPattern({ tick }: { tick: number }) {
+  const width = 16
+  const height = 11
+  const colors = ['#ef4444', '#f97316', '#fbbf24', '#22c55e', '#06b6d4', '#8b5cf6']
+
+  return (
+    <div className="text-[6px] leading-[5px]">
+      {Array.from({ length: height }, (_, y) => (
+        <div key={y} style={{ letterSpacing: '-1px' }}>
+          {Array.from({ length: width }, (_, x) => {
+            // Triangle prism in center
+            const inPrism = x >= 6 && x <= 9 && y >= 2 && y <= 8 && (x - 6) <= (y - 2) * 0.5 + 1
+            // Light rays
+            const rayIndex = Math.floor((y - 2) * colors.length / 7)
+            const rayX = 10 + (y - 5) * 0.8 + tick * 0.1
+            const onRay = x >= 10 && x < rayX + 3 && rayIndex >= 0 && rayIndex < colors.length && Math.abs(y - (2 + rayIndex * 7 / colors.length)) < 0.8
+            // Incoming light
+            const incoming = x < 6 && Math.abs(y - 5) < 0.8
+            return (
+              <span
+                key={x}
+                style={{
+                  opacity: inPrism ? 0.6 : (onRay || incoming) ? 0.9 : 0.05,
+                  color: onRay ? colors[rayIndex] : incoming ? '#fff' : 'var(--text-muted)',
+                }}
+              >
+                {inPrism ? '▲' : (onRay || incoming) ? '─' : '·'}
+              </span>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // Modulation pattern - shows LFO/modulation waveforms
 function ModulationPattern({ lfoValue, randomValue, stepValue, envValue }: {
   lfoValue: number
@@ -510,6 +862,29 @@ export function DataTerminal() {
   // Animation tick
   const [tick, setTick] = useState(0)
   const [codes, setCodes] = useState<string[]>([])
+  const [idlePatternIndex, setIdlePatternIndex] = useState(0)
+
+  // All idle patterns for random cycling
+  const idlePatterns = useMemo(() => [
+    'star', 'matrix', 'heartbeat', 'dna', 'rings',
+    'maze', 'constellation', 'tetris', 'pendulum', 'binary', 'prism'
+  ] as const, [])
+
+  // Cycle through idle patterns randomly
+  useEffect(() => {
+    if (activePattern === 'idle') {
+      const interval = setInterval(() => {
+        setIdlePatternIndex(prev => {
+          let next = Math.floor(Math.random() * idlePatterns.length)
+          while (next === prev && idlePatterns.length > 1) {
+            next = Math.floor(Math.random() * idlePatterns.length)
+          }
+          return next
+        })
+      }, 5000) // Change every 5 seconds
+      return () => clearInterval(interval)
+    }
+  }, [activePattern, idlePatterns.length])
 
   // Generate initial codes
   useEffect(() => {
@@ -636,6 +1011,25 @@ export function DataTerminal() {
     modulation: 'MOD',
   }
 
+  // Render idle pattern based on cycling index
+  const renderIdlePattern = () => {
+    const pattern = idlePatterns[idlePatternIndex]
+    switch (pattern) {
+      case 'star': return <StarPattern tick={tick} />
+      case 'matrix': return <MatrixRainPattern tick={tick} />
+      case 'heartbeat': return <HeartbeatPattern tick={tick} />
+      case 'dna': return <DNAHelixPattern tick={tick} />
+      case 'rings': return <RingsPattern tick={tick} />
+      case 'maze': return <MazePattern tick={tick} />
+      case 'constellation': return <ConstellationPattern tick={tick} />
+      case 'tetris': return <TetrisPattern tick={tick} />
+      case 'pendulum': return <PendulumPattern tick={tick} />
+      case 'binary': return <BinaryPattern tick={tick} />
+      case 'prism': return <PrismPattern tick={tick} />
+      default: return <StarPattern tick={tick} />
+    }
+  }
+
   // Render the active pattern
   const renderPattern = () => {
     switch (activePattern) {
@@ -655,7 +1049,7 @@ export function DataTerminal() {
           envValue={modulation.envelope.enabled ? modulation.envelope.currentValue : 0}
         />
       )
-      default: return <StarPattern tick={tick} />
+      default: return renderIdlePattern()
     }
   }
 

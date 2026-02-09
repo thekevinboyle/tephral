@@ -150,19 +150,46 @@ interface ModulationCardProps {
   label: string
   tick: number
   active?: boolean
+  isAssigning?: boolean
   onClick?: () => void
+  onAssignClick?: () => void
 }
 
-function ModulationCard({ type, label, tick, active = false, onClick }: ModulationCardProps) {
-  const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData('modulation-source', type)
-    e.dataTransfer.effectAllowed = 'link'
-    // Set drag image to the card
-    if (e.currentTarget instanceof HTMLElement) {
-      e.dataTransfer.setDragImage(e.currentTarget, 40, 30)
-    }
-  }
+// Routing icon - shows connection symbol
+function RoutingIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12">
+      <circle
+        cx="3" cy="6" r="2"
+        fill="none"
+        stroke={active ? 'var(--bg-primary)' : 'var(--text-ghost)'}
+        strokeWidth="1.5"
+      />
+      <circle
+        cx="9" cy="6" r="2"
+        fill="none"
+        stroke={active ? 'var(--bg-primary)' : 'var(--text-ghost)'}
+        strokeWidth="1.5"
+      />
+      <path
+        d="M5 6 L7 6"
+        stroke={active ? 'var(--bg-primary)' : 'var(--text-ghost)'}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
 
+function ModulationCard({
+  type,
+  label,
+  tick,
+  active = false,
+  isAssigning = false,
+  onClick,
+  onAssignClick,
+}: ModulationCardProps) {
   const renderGraphic = () => {
     switch (type) {
       case 'lfo':
@@ -178,17 +205,15 @@ function ModulationCard({ type, label, tick, active = false, onClick }: Modulati
 
   return (
     <div
-      draggable
-      onDragStart={handleDragStart}
       onClick={onClick}
       data-mod-source={type}
-      className="flex flex-col rounded-sm cursor-grab transition-all active:cursor-grabbing"
+      className="flex flex-col rounded-sm cursor-pointer transition-all relative"
       style={{
         width: '80px',
         height: '100%',
-        backgroundColor: active ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
-        border: active ? '1px solid var(--accent-dim)' : '1px solid var(--border)',
-        boxShadow: active ? '0 0 8px var(--accent-glow)' : 'none',
+        backgroundColor: isAssigning ? 'var(--accent)' : active ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
+        border: isAssigning ? '1px solid var(--accent)' : active ? '1px solid var(--accent-dim)' : '1px solid var(--border)',
+        boxShadow: isAssigning ? '0 0 12px var(--accent-glow)' : active ? '0 0 8px var(--accent-glow)' : 'none',
       }}
     >
       {/* Graphic area */}
@@ -199,14 +224,29 @@ function ModulationCard({ type, label, tick, active = false, onClick }: Modulati
         {renderGraphic()}
       </div>
 
-      {/* Label */}
-      <div className="px-2 py-1">
+      {/* Label and assign button */}
+      <div className="px-2 py-1 flex items-center justify-between">
         <span
           className="text-[9px] uppercase tracking-widest"
-          style={{ color: active ? 'var(--accent)' : 'var(--text-muted)' }}
+          style={{ color: isAssigning ? 'var(--bg-primary)' : active ? 'var(--accent)' : 'var(--text-muted)' }}
         >
           {label}
         </span>
+
+        {/* Assignment mode button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onAssignClick?.()
+          }}
+          className="w-5 h-5 rounded-sm flex items-center justify-center transition-all hover:scale-110"
+          style={{
+            backgroundColor: isAssigning ? 'rgba(0,0,0,0.2)' : 'transparent',
+          }}
+          title={isAssigning ? 'Stop assigning' : 'Click to assign to parameters'}
+        >
+          <RoutingIcon active={isAssigning} />
+        </button>
       </div>
     </div>
   )
@@ -229,6 +269,8 @@ export function MiddleSection() {
     toggleRandom,
     toggleStep,
     toggleEnvelope,
+    assigningModulator,
+    toggleAssignmentMode,
   } = useModulationStore()
 
   // Animation tick
@@ -275,28 +317,36 @@ export function MiddleSection() {
           label="LFO"
           tick={tick}
           active={lfo.enabled}
+          isAssigning={assigningModulator === 'lfo'}
           onClick={toggleLFO}
+          onAssignClick={() => toggleAssignmentMode('lfo')}
         />
         <ModulationCard
           type="random"
           label="Random"
           tick={tick}
           active={random.enabled}
+          isAssigning={assigningModulator === 'random'}
           onClick={toggleRandom}
+          onAssignClick={() => toggleAssignmentMode('random')}
         />
         <ModulationCard
           type="step"
           label="Step"
           tick={tick}
           active={step.enabled}
+          isAssigning={assigningModulator === 'step'}
           onClick={toggleStep}
+          onAssignClick={() => toggleAssignmentMode('step')}
         />
         <ModulationCard
           type="envelope"
           label="Env"
           tick={tick}
           active={envelope.enabled}
+          isAssigning={assigningModulator === 'envelope'}
           onClick={toggleEnvelope}
+          onAssignClick={() => toggleAssignmentMode('envelope')}
         />
       </div>
     </div>

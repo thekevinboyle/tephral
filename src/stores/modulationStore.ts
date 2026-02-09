@@ -41,11 +41,18 @@ export interface EnvelopeState {
   phaseStartValue: number
 }
 
+export type ModulatorType = 'lfo' | 'random' | 'step' | 'envelope'
+
 interface ModulationState {
   lfo: LFOState
   random: RandomState
   step: StepState
   envelope: EnvelopeState
+
+  // Assignment mode - which modulator is being assigned to params
+  assigningModulator: ModulatorType | null
+  setAssigningModulator: (type: ModulatorType | null) => void
+  toggleAssignmentMode: (type: ModulatorType) => void
 
   // LFO actions
   toggleLFO: () => void
@@ -122,6 +129,13 @@ export const useModulationStore = create<ModulationState>((set, get) => ({
     phaseStartTime: 0,
     phaseStartValue: 0,
   },
+
+  // Assignment mode
+  assigningModulator: null,
+  setAssigningModulator: (type) => set({ assigningModulator: type }),
+  toggleAssignmentMode: (type) => set((state) => ({
+    assigningModulator: state.assigningModulator === type ? null : type
+  })),
 
   // LFO Actions
   toggleLFO: () => set((state) => ({ lfo: { ...state.lfo, enabled: !state.lfo.enabled } })),

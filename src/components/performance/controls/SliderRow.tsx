@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { useUIStore } from '../../../stores/uiStore'
 import { useSequencerStore } from '../../../stores/sequencerStore'
+import { useModulationStore } from '../../../stores/modulationStore'
 
 // Special sequencer sources (not regular tracks)
 const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
@@ -38,10 +39,14 @@ export function SliderRow({
   const displayValue = format ? format(value) : value.toFixed(1)
   const { sequencerDrag, selectRouting } = useUIStore()
   const { addRouting, routings, tracks, updateRoutingDepth, removeRouting } = useSequencerStore()
+  const { assigningModulator } = useModulationStore()
   const [isDropTarget, setIsDropTarget] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
   const [isDraggingSlider, setIsDraggingSlider] = useState(false)
   const [isModulationDrag, setIsModulationDrag] = useState(false)
+
+  // Check if we're in assignment mode
+  const isInAssignmentMode = assigningModulator !== null && paramId
 
   // Listen for global drag events to show plus icon
   useEffect(() => {
@@ -193,25 +198,47 @@ export function SliderRow({
     }
   }, [firstRouting, removeRouting])
 
+  // Handle click to add routing when in assignment mode
+  const handleAssignmentClick = useCallback(() => {
+    if (!isInAssignmentMode || !paramId || !assigningModulator) return
+    const existingRouting = routings.find(r => r.trackId === assigningModulator && r.targetParam === paramId)
+    if (!existingRouting) {
+      addRouting(assigningModulator, paramId, 0.5)
+    }
+  }, [isInAssignmentMode, paramId, assigningModulator, routings, addRouting])
+
+  // Get color for current assigning modulator
+  const assigningColor = assigningModulator ? SPECIAL_SOURCES[assigningModulator]?.color : undefined
+
   return (
     <div
       className="flex items-center gap-2 py-1 rounded-sm transition-colors relative"
       data-param-id={paramId}
       style={{
-        backgroundColor: isDropTarget ? `${sequencerDrag.trackColor}15` : undefined,
-        outline: isDropTarget ? `1px solid ${sequencerDrag.trackColor}` : undefined,
+        backgroundColor: isInAssignmentMode && !hasRouting
+          ? `${assigningColor}15`
+          : isDropTarget
+            ? `${sequencerDrag.trackColor}15`
+            : undefined,
+        outline: isInAssignmentMode && !hasRouting
+          ? `1px solid ${assigningColor}`
+          : isDropTarget
+            ? `1px solid ${sequencerDrag.trackColor}`
+            : undefined,
+        cursor: isInAssignmentMode && !hasRouting ? 'pointer' : undefined,
       }}
+      onClick={isInAssignmentMode && !hasRouting ? handleAssignmentClick : undefined}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {/* Plus icon when dragging modulation and no routing exists */}
-      {paramId && isModulationDrag && !hasRouting && (
+      {/* Plus icon when in assignment mode or dragging modulation and no routing exists */}
+      {paramId && (isInAssignmentMode || isModulationDrag) && !hasRouting && (
         <div
           className="absolute -right-1 -top-1 w-4 h-4 rounded-full flex items-center justify-center z-10 pointer-events-none"
           style={{
-            backgroundColor: 'var(--accent)',
-            boxShadow: '0 0 6px var(--accent-glow)',
+            backgroundColor: isInAssignmentMode ? assigningColor : 'var(--accent)',
+            boxShadow: isInAssignmentMode ? `0 0 6px ${assigningColor}` : '0 0 6px var(--accent-glow)',
           }}
         >
           <svg width="10" height="10" viewBox="0 0 10 10">

@@ -2,7 +2,6 @@ import { useRef, useEffect, useCallback, useState } from 'react'
 import { usePolyEuclidStore } from '../../stores/polyEuclidStore'
 
 const CREAM = '#E8E4D9'
-const STRAND_BLUE = '#3a7ca5'
 
 interface DiagonalCascadeProps {
   width: number
@@ -17,166 +16,155 @@ interface StrandNode {
   size: number
   life: number
   maxLife: number
-  trackIndex: number
 }
 
-// Kojima-style strand connection drawing
-function drawStrand(
+// Snap to pixel grid
+function snap(value: number, gridSize: number): number {
+  return Math.floor(value / gridSize) * gridSize
+}
+
+// Draw pixelated line (stepped/blocky)
+function drawPixelLine(
   ctx: CanvasRenderingContext2D,
   x1: number,
   y1: number,
   x2: number,
   y2: number,
-  time: number,
-  intensity: number = 1
+  pixelSize: number
 ) {
   const dx = x2 - x1
   const dy = y2 - y1
-  const dist = Math.sqrt(dx * dx + dy * dy)
-  if (dist < 1) return
+  const steps = Math.max(Math.abs(dx), Math.abs(dy)) / pixelSize
 
-  const segments = Math.max(12, Math.floor(dist / 4))
-
-  // Draw multiple strand lines for depth
-  for (let strand = 0; strand < 3; strand++) {
-    const strandOffset = (strand - 1) * 2
-
-    ctx.beginPath()
-    ctx.moveTo(x1, y1)
-
-    for (let i = 1; i <= segments; i++) {
-      const t = i / segments
-      const baseX = x1 + dx * t
-      const baseY = y1 + dy * t
-
-      // Perpendicular for wave
-      const perpX = -dy / dist
-      const perpY = dx / dist
-
-      // Catenary-like sag + wave motion
-      const sag = Math.sin(t * Math.PI) * dist * 0.08
-      const wave = Math.sin(t * Math.PI * 4 - time * 3) * 3 * (1 - Math.abs(t - 0.5) * 2)
-
-      const x = baseX + perpX * (sag + wave + strandOffset)
-      const y = baseY + perpY * (sag + wave + strandOffset) + sag * 0.5
-
-      ctx.lineTo(x, y)
-    }
-
-    ctx.strokeStyle = strand === 1 ? CREAM : STRAND_BLUE
-    ctx.globalAlpha = intensity * (strand === 1 ? 0.6 : 0.2)
-    ctx.lineWidth = strand === 1 ? 1.5 : 0.5
-    ctx.stroke()
+  for (let i = 0; i <= steps; i++) {
+    const t = steps > 0 ? i / steps : 0
+    const x = snap(x1 + dx * t, pixelSize)
+    const y = snap(y1 + dy * t, pixelSize)
+    ctx.fillRect(x, y, pixelSize, pixelSize)
   }
 }
 
-// Elektron-style grid node
-function drawGridNode(
+// Draw pixelated square node
+function drawPixelNode(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   size: number,
   active: boolean,
   highlight: boolean,
-  time: number
+  pixelSize: number
 ) {
-  // Outer ring
-  ctx.beginPath()
-  ctx.arc(x, y, size + 3, 0, Math.PI * 2)
-  ctx.strokeStyle = CREAM
-  ctx.globalAlpha = highlight ? 0.6 : 0.2
-  ctx.lineWidth = 1.5
-  ctx.stroke()
+  const snappedX = snap(x - size / 2, pixelSize)
+  const snappedY = snap(y - size / 2, pixelSize)
+  const snappedSize = Math.max(pixelSize, snap(size, pixelSize))
 
-  // Inner fill
   if (active) {
-    const pulse = Math.sin(time * 4) * 0.15 + 0.85
-    ctx.beginPath()
-    ctx.arc(x, y, size * pulse, 0, Math.PI * 2)
-    ctx.fillStyle = CREAM
+    // Filled square for active
     ctx.globalAlpha = highlight ? 0.95 : 0.7
-    ctx.fill()
+    ctx.fillRect(snappedX, snappedY, snappedSize, snappedSize)
 
-    // Glow
+    // Highlight border
     if (highlight) {
-      ctx.shadowColor = CREAM
-      ctx.shadowBlur = 20
-      ctx.fill()
-      ctx.shadowBlur = 0
+      ctx.globalAlpha = 1
+      // Top and bottom borders
+      ctx.fillRect(snappedX - pixelSize, snappedY - pixelSize, snappedSize + pixelSize * 2, pixelSize)
+      ctx.fillRect(snappedX - pixelSize, snappedY + snappedSize, snappedSize + pixelSize * 2, pixelSize)
+      // Left and right borders
+      ctx.fillRect(snappedX - pixelSize, snappedY, pixelSize, snappedSize)
+      ctx.fillRect(snappedX + snappedSize, snappedY, pixelSize, snappedSize)
     }
   } else {
-    // Cross pattern for inactive - larger and more visible
+    // Cross pattern for inactive
     ctx.globalAlpha = 0.25
-    ctx.beginPath()
-    ctx.moveTo(x - size * 0.6, y)
-    ctx.lineTo(x + size * 0.6, y)
-    ctx.moveTo(x, y - size * 0.6)
-    ctx.lineTo(x, y + size * 0.6)
-    ctx.strokeStyle = CREAM
-    ctx.lineWidth = 1.5
-    ctx.stroke()
+    const halfSize = snappedSize / 2
+    // Horizontal line
+    ctx.fillRect(snappedX, snappedY + halfSize - pixelSize / 2, snappedSize, pixelSize)
+    // Vertical line
+    ctx.fillRect(snappedX + halfSize - pixelSize / 2, snappedY, pixelSize, snappedSize)
   }
 }
 
-// Draw BB pod inspired core
-function drawBBCore(
+// Draw pixelated ring/orbit (octagonal approximation)
+function drawPixelRing(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  radius: number,
+  pixelSize: number,
+  dashed: boolean = false
+) {
+  const segments = 32
+  let dashCounter = 0
+
+  for (let i = 0; i < segments; i++) {
+    if (dashed && Math.floor(dashCounter / 2) % 2 === 1) {
+      dashCounter++
+      continue
+    }
+
+    const angle1 = (i / segments) * Math.PI * 2
+    const angle2 = ((i + 1) / segments) * Math.PI * 2
+
+    const x1 = snap(centerX + Math.cos(angle1) * radius, pixelSize)
+    const y1 = snap(centerY + Math.sin(angle1) * radius, pixelSize)
+    const x2 = snap(centerX + Math.cos(angle2) * radius, pixelSize)
+    const y2 = snap(centerY + Math.sin(angle2) * radius, pixelSize)
+
+    drawPixelLine(ctx, x1, y1, x2, y2, pixelSize)
+    dashCounter++
+  }
+}
+
+// Draw pixelated core
+function drawPixelCore(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   size: number,
   pulse: number,
-  time: number
+  time: number,
+  pixelSize: number
 ) {
-  // Outer container ring
-  ctx.beginPath()
-  ctx.arc(x, y, size + 12, 0, Math.PI * 2)
-  ctx.strokeStyle = CREAM
+  const snappedX = snap(x, pixelSize)
+  const snappedY = snap(y, pixelSize)
+
+  // Outer ring segments
   ctx.globalAlpha = 0.2
-  ctx.lineWidth = 2
-  ctx.stroke()
+  drawPixelRing(ctx, snappedX, snappedY, size + pixelSize * 4, pixelSize, true)
 
-  // Second outer ring
-  ctx.beginPath()
-  ctx.arc(x, y, size + 6, 0, Math.PI * 2)
-  ctx.strokeStyle = CREAM
-  ctx.globalAlpha = 0.1
-  ctx.lineWidth = 1
-  ctx.stroke()
+  // Middle ring
+  ctx.globalAlpha = 0.15
+  drawPixelRing(ctx, snappedX, snappedY, size + pixelSize * 2, pixelSize, false)
 
-  // Tech ring segments - more of them
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2 + time * 0.2
-    const segmentLength = 0.25
-    ctx.beginPath()
-    ctx.arc(x, y, size + 8, angle, angle + segmentLength)
-    ctx.strokeStyle = CREAM
-    ctx.globalAlpha = 0.35 + pulse * 0.25
-    ctx.lineWidth = 2.5
-    ctx.stroke()
+  // Rotating segments around core
+  ctx.globalAlpha = 0.3 + pulse * 0.3
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 + time * 0.3
+    const segX = snap(snappedX + Math.cos(angle) * (size + pixelSize), pixelSize)
+    const segY = snap(snappedY + Math.sin(angle) * (size + pixelSize), pixelSize)
+    ctx.fillRect(segX, segY, pixelSize * 2, pixelSize * 2)
   }
 
-  // Inner glow layers
-  const gradient = ctx.createRadialGradient(x, y, 0, x, y, size)
-  gradient.addColorStop(0, `rgba(232, 228, 217, ${0.5 + pulse * 0.4})`)
-  gradient.addColorStop(0.4, `rgba(232, 228, 217, ${0.15 + pulse * 0.2})`)
-  gradient.addColorStop(1, 'rgba(232, 228, 217, 0)')
+  // Core layers (concentric squares)
+  const layers = 3
+  for (let layer = layers; layer >= 0; layer--) {
+    const layerSize = snap(size * (1 - layer * 0.25), pixelSize)
+    const layerX = snap(snappedX - layerSize / 2, pixelSize)
+    const layerY = snap(snappedY - layerSize / 2, pixelSize)
+    ctx.globalAlpha = 0.2 + (layers - layer) * 0.15 + pulse * 0.2
+    ctx.fillRect(layerX, layerY, layerSize, layerSize)
+  }
 
-  ctx.beginPath()
-  ctx.arc(x, y, size, 0, Math.PI * 2)
-  ctx.fillStyle = gradient
-  ctx.globalAlpha = 1
-  ctx.fill()
-
-  // Core heartbeat - larger
-  const heartbeat = Math.pow(Math.sin(time * 2), 8) * pulse
-  ctx.beginPath()
-  ctx.arc(x, y, 6 + heartbeat * 12, 0, Math.PI * 2)
-  ctx.fillStyle = CREAM
-  ctx.globalAlpha = 0.85
-  ctx.shadowColor = CREAM
-  ctx.shadowBlur = 25 + heartbeat * 40
-  ctx.fill()
-  ctx.shadowBlur = 0
+  // Heartbeat center
+  const heartbeat = Math.pow(Math.sin(time * 2), 8)
+  const centerSize = snap(pixelSize * 2 + heartbeat * pulse * pixelSize * 4, pixelSize)
+  ctx.globalAlpha = 0.8 + pulse * 0.2
+  ctx.fillRect(
+    snap(snappedX - centerSize / 2, pixelSize),
+    snap(snappedY - centerSize / 2, pixelSize),
+    centerSize,
+    centerSize
+  )
 }
 
 export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
@@ -206,24 +194,22 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
 
     setClickRipples(prev => [...prev.slice(-5), { x, y, time: performance.now() }])
 
-    // Spawn strand nodes on click
+    // Spawn pixel nodes on click
     const nodes = strandNodesRef.current
-    for (let i = 0; i < 5; i++) {
-      const angle = Math.random() * Math.PI * 2
-      const speed = 1 + Math.random() * 2
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2
+      const speed = 1.5 + Math.random() * 1.5
       nodes.push({
         x, y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        size: 2 + Math.random() * 3,
+        size: 3 + Math.random() * 2,
         life: 1,
-        maxLife: 2 + Math.random() * 2,
-        trackIndex: Math.floor(Math.random() * tracks.length)
+        maxLife: 1.5 + Math.random() * 1
       })
     }
-    // Limit nodes
     if (nodes.length > 50) nodes.splice(0, nodes.length - 50)
-  }, [width, height, tracks.length])
+  }, [width, height])
 
   const draw = useCallback((timestamp: number) => {
     const canvas = canvasRef.current
@@ -233,85 +219,127 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
 
     const time = timestamp / 1000
 
-    // Clear with fade
-    ctx.fillStyle = 'rgba(10, 10, 10, 0.15)'
+    // Pixel size for the grid
+    const pixelSize = Math.max(2, Math.floor(Math.min(width, height) / 100))
+
+    // Clear with fade (creates trail effect)
+    ctx.fillStyle = 'rgba(10, 10, 10, 0.2)'
     ctx.fillRect(0, 0, width, height)
 
     const centerX = width / 2
     const centerY = height / 2
 
-    // Scale factor based on available space
+    // Scale factor
     const scale = Math.min(width, height) / 200
 
     // Total pulse from all tracks
     const totalPulse = tracks.reduce((sum, t) => sum + (t.muted ? 0 : t.currentValue), 0) / Math.max(tracks.length, 1)
 
-    // Mouse influence
-    const mouseDist = Math.sqrt(Math.pow(mousePos.x - centerX, 2) + Math.pow(mousePos.y - centerY, 2))
-    const mouseInfluence = isHovering ? Math.max(0, 1 - mouseDist / (200 * scale)) : 0
+    // Set fill style to cream for all drawing
+    ctx.fillStyle = CREAM
 
     // ═══════════════════════════════════════════════════════════════
-    // CLICK RIPPLES
+    // CLICK RIPPLES (pixelated expanding squares)
     // ═══════════════════════════════════════════════════════════════
     const now = performance.now()
-    setClickRipples(prev => prev.filter(r => now - r.time < 1500))
+    setClickRipples(prev => prev.filter(r => now - r.time < 1200))
 
     clickRipples.forEach(ripple => {
       const age = (now - ripple.time) / 1000
-      const radius = age * 150 * scale
-      const opacity = Math.max(0, 1 - age / 1.5)
+      const size = snap(age * 120 * scale, pixelSize)
+      const opacity = Math.max(0, 1 - age / 1.2)
 
-      ctx.beginPath()
-      ctx.arc(ripple.x, ripple.y, radius, 0, Math.PI * 2)
-      ctx.strokeStyle = CREAM
       ctx.globalAlpha = opacity * 0.4
-      ctx.lineWidth = 2
-      ctx.stroke()
+      const rx = snap(ripple.x - size / 2, pixelSize)
+      const ry = snap(ripple.y - size / 2, pixelSize)
 
-      // Inner ring
-      ctx.beginPath()
-      ctx.arc(ripple.x, ripple.y, radius * 0.6, 0, Math.PI * 2)
+      // Draw square outline
+      ctx.fillRect(rx, ry, size, pixelSize) // top
+      ctx.fillRect(rx, ry + size - pixelSize, size, pixelSize) // bottom
+      ctx.fillRect(rx, ry, pixelSize, size) // left
+      ctx.fillRect(rx + size - pixelSize, ry, pixelSize, size) // right
+
+      // Inner square
+      const innerSize = snap(size * 0.6, pixelSize)
       ctx.globalAlpha = opacity * 0.2
-      ctx.stroke()
+      const irx = snap(ripple.x - innerSize / 2, pixelSize)
+      const iry = snap(ripple.y - innerSize / 2, pixelSize)
+      ctx.fillRect(irx, iry, innerSize, pixelSize)
+      ctx.fillRect(irx, iry + innerSize - pixelSize, innerSize, pixelSize)
+      ctx.fillRect(irx, iry, pixelSize, innerSize)
+      ctx.fillRect(irx + innerSize - pixelSize, iry, pixelSize, innerSize)
     })
 
     // ═══════════════════════════════════════════════════════════════
-    // STRAND NETWORK CONNECTIONS
+    // TRACK ORBITS AND CONNECTIONS
     // ═══════════════════════════════════════════════════════════════
 
-    // Calculate track spacing to fill available space
     const maxRadius = Math.min(width, height) * 0.42
     const minRadius = 25 * scale
     const trackSpacing = tracks.length > 1 ? (maxRadius - minRadius) / (tracks.length - 1) : 0
 
-    // Collect all active node positions
-    const activeNodes: { x: number; y: number; intensity: number; trackIndex: number }[] = []
+    // Collect active nodes for connections
+    const activeNodes: { x: number; y: number; intensity: number }[] = []
 
     tracks.forEach((track, trackIndex) => {
       const pattern = getPattern(track.id)
-      if (track.muted) return
-
+      const baseOpacity = track.muted ? 0.2 : 1
       const trackRadius = minRadius + trackIndex * trackSpacing
       const stepAngle = (Math.PI * 2) / pattern.length
 
-      pattern.forEach((isHit, stepIndex) => {
-        if (!isHit) return
-        const isCurrent = stepIndex === track.currentStep
+      // Draw pixelated orbit ring
+      ctx.globalAlpha = baseOpacity * 0.12
+      drawPixelRing(ctx, centerX, centerY, trackRadius, pixelSize, true)
 
+      // Draw steps
+      pattern.forEach((isHit, stepIndex) => {
+        const isCurrent = stepIndex === track.currentStep
         const angle = stepAngle * stepIndex - Math.PI / 2 + time * 0.05 * track.clockDivider
+
         const x = centerX + Math.cos(angle) * trackRadius
         const y = centerY + Math.sin(angle) * trackRadius
 
-        activeNodes.push({
-          x, y,
-          intensity: isCurrent ? 0.5 + track.currentValue * 0.5 : 0.2,
-          trackIndex
-        })
+        // Mouse proximity check
+        const distToMouse = Math.sqrt(Math.pow(x - mousePos.x, 2) + Math.pow(y - mousePos.y, 2))
+        const isNearMouse = isHovering && distToMouse < 30 * scale
+
+        // Node size
+        let size = 6 * scale
+        if (isCurrent && !track.muted) {
+          size += track.currentValue * 8 * scale
+        }
+
+        ctx.globalAlpha = baseOpacity
+        drawPixelNode(ctx, x, y, size, isHit, isCurrent || isNearMouse, pixelSize)
+
+        // Store active nodes for connections
+        if (isHit && !track.muted) {
+          activeNodes.push({
+            x: snap(x, pixelSize),
+            y: snap(y, pixelSize),
+            intensity: isCurrent ? 0.5 + track.currentValue * 0.5 : 0.2
+          })
+        }
+
+        // Current step line to center
+        if (isCurrent && isHit && !track.muted) {
+          ctx.globalAlpha = baseOpacity * track.currentValue * 0.4
+          drawPixelLine(ctx, centerX, centerY, x, y, pixelSize)
+        }
       })
+
+      // Track label
+      ctx.globalAlpha = baseOpacity * 0.5
+      ctx.font = `${Math.round(10 * scale)}px monospace`
+      ctx.textAlign = 'right'
+      ctx.fillText(`T${trackIndex + 1}`, snap(centerX - trackRadius - 12 * scale, pixelSize), centerY + 4)
     })
 
-    // Draw strands between nearby nodes (Kojima connection style)
-    const strandMaxDist = 120 * scale
+    // ═══════════════════════════════════════════════════════════════
+    // STRAND CONNECTIONS (pixelated lines between nodes)
+    // ═══════════════════════════════════════════════════════════════
+    const strandMaxDist = 100 * scale
+
     for (let i = 0; i < activeNodes.length; i++) {
       for (let j = i + 1; j < activeNodes.length; j++) {
         const a = activeNodes[i]
@@ -320,24 +348,25 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
 
         if (dist < strandMaxDist && dist > 10) {
           const intensity = (1 - dist / strandMaxDist) * Math.min(a.intensity, b.intensity)
-          drawStrand(ctx, a.x, a.y, b.x, b.y, time, intensity)
+          ctx.globalAlpha = intensity * 0.5
+          drawPixelLine(ctx, a.x, a.y, b.x, b.y, pixelSize)
         }
       }
 
-      // Connect to mouse if hovering
+      // Connect to mouse
       if (isHovering) {
         const a = activeNodes[i]
         const dist = Math.sqrt(Math.pow(mousePos.x - a.x, 2) + Math.pow(mousePos.y - a.y, 2))
-        const mouseStrandDist = 150 * scale
-        if (dist < mouseStrandDist && dist > 10) {
-          const intensity = (1 - dist / mouseStrandDist) * a.intensity * 0.5
-          drawStrand(ctx, a.x, a.y, mousePos.x, mousePos.y, time, intensity)
+        if (dist < strandMaxDist * 1.5 && dist > 10) {
+          const intensity = (1 - dist / (strandMaxDist * 1.5)) * a.intensity
+          ctx.globalAlpha = intensity * 0.35
+          drawPixelLine(ctx, a.x, a.y, snap(mousePos.x, pixelSize), snap(mousePos.y, pixelSize), pixelSize)
         }
       }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // FLOATING STRAND NODES (from clicks)
+    // FLOATING PIXELS (from clicks)
     // ═══════════════════════════════════════════════════════════════
     const nodes = strandNodesRef.current
     const dt = 0.016
@@ -346,9 +375,9 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
       const node = nodes[i]
       node.x += node.vx
       node.y += node.vy
-      node.vy += 0.02 // gentle gravity
-      node.vx *= 0.99
-      node.vy *= 0.99
+      node.vy += 0.03
+      node.vx *= 0.98
+      node.vy *= 0.98
       node.life -= dt / node.maxLife
 
       if (node.life <= 0) {
@@ -356,107 +385,41 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
         continue
       }
 
-      // Draw node
-      ctx.beginPath()
-      ctx.arc(node.x, node.y, node.size * node.life * scale, 0, Math.PI * 2)
-      ctx.fillStyle = CREAM
-      ctx.globalAlpha = node.life * 0.6
-      ctx.fill()
+      // Draw pixel
+      const size = snap(node.size * node.life * scale, pixelSize)
+      ctx.globalAlpha = node.life * 0.7
+      ctx.fillRect(snap(node.x, pixelSize), snap(node.y, pixelSize), Math.max(pixelSize, size), Math.max(pixelSize, size))
 
       // Connect to nearby active nodes
       for (const active of activeNodes) {
         const dist = Math.sqrt(Math.pow(active.x - node.x, 2) + Math.pow(active.y - node.y, 2))
-        const connectDist = 80 * scale
-        if (dist < connectDist) {
-          ctx.beginPath()
-          ctx.moveTo(node.x, node.y)
-          ctx.lineTo(active.x, active.y)
-          ctx.strokeStyle = STRAND_BLUE
-          ctx.globalAlpha = node.life * 0.2 * (1 - dist / connectDist)
-          ctx.lineWidth = 0.5
-          ctx.stroke()
+        if (dist < 60 * scale) {
+          ctx.globalAlpha = node.life * 0.15 * (1 - dist / (60 * scale))
+          drawPixelLine(ctx, snap(node.x, pixelSize), snap(node.y, pixelSize), active.x, active.y, pixelSize)
         }
       }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // TRACK ORBITS WITH ELEKTRON NODES
+    // PIXELATED CORE
     // ═══════════════════════════════════════════════════════════════
+    const coreSize = snap((18 + totalPulse * 12) * scale, pixelSize)
+    drawPixelCore(ctx, centerX, centerY, coreSize, totalPulse, time, pixelSize)
 
-    tracks.forEach((track, trackIndex) => {
-      const pattern = getPattern(track.id)
-      const baseOpacity = track.muted ? 0.2 : 1
-
-      const trackRadius = minRadius + trackIndex * trackSpacing
-      const stepAngle = (Math.PI * 2) / pattern.length
-
-      // Draw orbit arc
-      ctx.beginPath()
-      ctx.arc(centerX, centerY, trackRadius, 0, Math.PI * 2)
-      ctx.strokeStyle = CREAM
-      ctx.globalAlpha = baseOpacity * 0.1
-      ctx.lineWidth = 1
-      ctx.setLineDash([6, 10])
-      ctx.stroke()
-      ctx.setLineDash([])
-
-      // Draw steps as Elektron-style nodes
-      pattern.forEach((isHit, stepIndex) => {
-        const isCurrent = stepIndex === track.currentStep
-        const angle = stepAngle * stepIndex - Math.PI / 2 + time * 0.05 * track.clockDivider
-
-        const x = centerX + Math.cos(angle) * trackRadius
-        const y = centerY + Math.sin(angle) * trackRadius
-
-        // Check mouse proximity
-        const distToMouse = Math.sqrt(Math.pow(x - mousePos.x, 2) + Math.pow(y - mousePos.y, 2))
-        const isNearMouse = isHovering && distToMouse < 30 * scale
-
-        // Larger node sizes
-        let size = 5 * scale
-        if (isCurrent && !track.muted) {
-          size += track.currentValue * 6 * scale
-        }
-
-        ctx.globalAlpha = baseOpacity
-        drawGridNode(ctx, x, y, size, isHit, isCurrent || isNearMouse, time)
-
-        // Current step indicator line
-        if (isCurrent && isHit && !track.muted) {
-          ctx.globalAlpha = baseOpacity * track.currentValue * 0.5
-          ctx.strokeStyle = CREAM
-          ctx.lineWidth = 1.5
-          ctx.beginPath()
-          ctx.moveTo(centerX, centerY)
-          ctx.lineTo(x, y)
-          ctx.stroke()
-        }
-      })
-
-      // Track label - positioned outside the orbit
-      ctx.globalAlpha = baseOpacity * 0.5
-      ctx.fillStyle = CREAM
-      ctx.font = `${Math.round(10 * scale)}px monospace`
-      ctx.textAlign = 'right'
-      ctx.fillText(`T${trackIndex + 1}`, centerX - trackRadius - 12 * scale, centerY + 4)
-    })
-
-    // ═══════════════════════════════════════════════════════════════
-    // BB POD CORE
-    // ═══════════════════════════════════════════════════════════════
-    const coreSize = (20 + totalPulse * 15 + mouseInfluence * 8) * scale
-    drawBBCore(ctx, centerX, centerY, coreSize, totalPulse, time)
-
-    // Mouse cursor strand to core when hovering
-    if (isHovering && mouseDist > 40 * scale) {
-      drawStrand(ctx, centerX, centerY, mousePos.x, mousePos.y, time, mouseInfluence * 0.4)
+    // Mouse connection to core
+    if (isHovering) {
+      const mouseDist = Math.sqrt(Math.pow(mousePos.x - centerX, 2) + Math.pow(mousePos.y - centerY, 2))
+      if (mouseDist > 30 * scale) {
+        const intensity = Math.max(0, 1 - mouseDist / (150 * scale))
+        ctx.globalAlpha = intensity * 0.3
+        drawPixelLine(ctx, snap(centerX, pixelSize), snap(centerY, pixelSize), snap(mousePos.x, pixelSize), snap(mousePos.y, pixelSize), pixelSize)
+      }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // DATA READOUT (Elektron style)
+    // DATA READOUT
     // ═══════════════════════════════════════════════════════════════
-    ctx.globalAlpha = 0.5
-    ctx.fillStyle = CREAM
+    ctx.globalAlpha = 0.6
     ctx.font = `${Math.round(10 * scale)}px monospace`
     ctx.textAlign = 'left'
 
@@ -466,14 +429,14 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
       return sum + p.filter(Boolean).length
     }, 0)
 
-    const textY = 16 * scale
-    const lineHeight = 14 * scale
+    const textY = snap(16 * scale, pixelSize)
+    const lineHeight = snap(14 * scale, pixelSize)
     ctx.fillText(`TRK ${activeCount}/${tracks.length}`, 10, textY)
     ctx.fillText(`HIT ${String(totalHits).padStart(2, '0')}`, 10, textY + lineHeight)
     ctx.fillText(`PLS ${(totalPulse * 100).toFixed(0).padStart(3, '0')}`, 10, textY + lineHeight * 2)
 
     ctx.textAlign = 'right'
-    ctx.fillText(`${width}×${height}`, width - 10, textY)
+    ctx.fillText(`${pixelSize}PX`, width - 10, textY)
 
     ctx.globalAlpha = 1
   }, [tracks, getPattern, width, height, mousePos, isHovering, clickRipples])

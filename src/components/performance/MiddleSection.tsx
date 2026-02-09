@@ -198,7 +198,6 @@ interface ModulationCardProps {
   isAssigning?: boolean
   onClick?: () => void
   onAssignClick?: () => void
-  onContextMenu?: (e: React.MouseEvent) => void
 }
 
 // Use imported RoutingIcon from DotMatrixIcons
@@ -212,7 +211,6 @@ function ModulationCard({
   isAssigning = false,
   onClick,
   onAssignClick,
-  onContextMenu,
 }: ModulationCardProps) {
   const renderGraphic = () => {
     switch (type) {
@@ -230,7 +228,6 @@ function ModulationCard({
   return (
     <div
       onClick={onClick}
-      onContextMenu={onContextMenu}
       data-mod-source={type}
       className="flex flex-col rounded-sm cursor-pointer transition-all relative"
       style={{
@@ -312,24 +309,27 @@ export function MiddleSection() {
     releaseEnvelope,
   } = useModulationStore()
 
-  // Handle card click - just toggle enable/disable
+  // Handle card click - select and enable, or disable if already selected
   const handleCardClick = (type: 'lfo' | 'random' | 'step' | 'envelope') => {
-    switch (type) {
-      case 'lfo': toggleLFO(); break
-      case 'random': toggleRandom(); break
-      case 'step': toggleStep(); break
-      case 'envelope': toggleEnvelope(); break
-    }
-  }
-
-  // Handle right-click - toggle parameter panel visibility
-  const handleCardContextMenu = (type: 'lfo' | 'random' | 'step' | 'envelope', e: React.MouseEvent) => {
-    e.preventDefault()
-    // Toggle selection (showing/hiding params)
+    // If clicking the already selected one, disable and deselect
     if (selectedModulator === type) {
+      switch (type) {
+        case 'lfo': if (lfo.enabled) toggleLFO(); break
+        case 'random': if (random.enabled) toggleRandom(); break
+        case 'step': if (step.enabled) toggleStep(); break
+        case 'envelope': if (envelope.enabled) toggleEnvelope(); break
+      }
       setSelectedModulator(null)
-    } else {
-      setSelectedModulator(type)
+      return
+    }
+    // Select this modulator
+    setSelectedModulator(type)
+    // Enable it if not already
+    switch (type) {
+      case 'lfo': if (!lfo.enabled) toggleLFO(); break
+      case 'random': if (!random.enabled) toggleRandom(); break
+      case 'step': if (!step.enabled) toggleStep(); break
+      case 'envelope': if (!envelope.enabled) toggleEnvelope(); break
     }
   }
 
@@ -489,7 +489,6 @@ export function MiddleSection() {
           selected={selectedModulator === 'lfo'}
           isAssigning={assigningModulator === 'lfo'}
           onClick={() => handleCardClick('lfo')}
-          onContextMenu={(e) => handleCardContextMenu('lfo', e)}
           onAssignClick={() => toggleAssignmentMode('lfo')}
         />
         <ModulationCard
@@ -500,7 +499,6 @@ export function MiddleSection() {
           selected={selectedModulator === 'random'}
           isAssigning={assigningModulator === 'random'}
           onClick={() => handleCardClick('random')}
-          onContextMenu={(e) => handleCardContextMenu('random', e)}
           onAssignClick={() => toggleAssignmentMode('random')}
         />
         <ModulationCard
@@ -511,7 +509,6 @@ export function MiddleSection() {
           selected={selectedModulator === 'step'}
           isAssigning={assigningModulator === 'step'}
           onClick={() => handleCardClick('step')}
-          onContextMenu={(e) => handleCardContextMenu('step', e)}
           onAssignClick={() => toggleAssignmentMode('step')}
         />
         <ModulationCard
@@ -522,7 +519,6 @@ export function MiddleSection() {
           selected={selectedModulator === 'envelope'}
           isAssigning={assigningModulator === 'envelope'}
           onClick={() => handleCardClick('envelope')}
-          onContextMenu={(e) => handleCardContextMenu('envelope', e)}
           onAssignClick={() => toggleAssignmentMode('envelope')}
         />
 

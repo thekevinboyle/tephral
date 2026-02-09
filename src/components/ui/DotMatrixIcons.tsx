@@ -724,3 +724,54 @@ export function RefreshIcon({ size = 16, color = 'currentColor', className }: Ic
     </svg>
   )
 }
+
+// Target/crosshairs icon - for assignment mode
+export function TargetIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      {/* Center dot */}
+      <Dot x={3} y={3} />
+      {/* Crosshairs */}
+      <Dot x={3} y={0} />
+      <Dot x={3} y={1} />
+      <Dot x={3} y={5} />
+      <Dot x={3} y={6} />
+      <Dot x={0} y={3} />
+      <Dot x={1} y={3} />
+      <Dot x={5} y={3} />
+      <Dot x={6} y={3} />
+    </svg>
+  )
+}
+
+// Send/output arrow icon - for modulation routing
+export function SendIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      <Dot x={0} y={3} />
+      <Dot x={1} y={2} /><Dot x={1} y={3} /><Dot x={1} y={4} />
+      <Dot x={2} y={1} /><Dot x={2} y={3} /><Dot x={2} y={5} />
+      <Dot x={3} y={3} />
+      <Dot x={4} y={3} />
+      <Dot x={5} y={3} />
+      <Dot x={6} y={3} />
+    </svg>
+  )
+}
+
+// Modulation wave icon - sine with arrow
+export function ModIcon({ size = 16, color = 'currentColor', className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
+      {/* Small sine wave */}
+      <Dot x={0} y={3} />
+      <Dot x={1} y={2} />
+      <Dot x={2} y={3} />
+      <Dot x={3} y={4} />
+      <Dot x={4} y={3} />
+      {/* Arrow */}
+      <Dot x={5} y={3} />
+      <Dot x={6} y={2} /><Dot x={6} y={3} /><Dot x={6} y={4} />
+    </svg>
+  )
+}

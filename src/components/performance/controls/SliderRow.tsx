@@ -10,7 +10,8 @@ const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
   lfo: { name: 'LFO', color: '#00D4FF' },
   random: { name: 'Random', color: '#FF6B6B' },
   step: { name: 'Step', color: '#4ECDC4' },
-  envelope: { name: 'Envelope', color: '#22c55e' },
+  envelope: { name: 'Envelope', color: '#AA55FF' },
+  sampleHold: { name: 'S&H', color: '#AAFF00' },
 }
 
 interface SliderRowProps {

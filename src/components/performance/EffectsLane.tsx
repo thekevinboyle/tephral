@@ -409,7 +409,7 @@ function ModulationPanel() {
         selected={selectedModulator === 'envelope'}
         onToggle={mod.toggleEnvelope}
         onSelect={() => handleSelect('envelope')}
-        color="#22c55e"
+        color="#AA55FF"
       >
         <ModSlider
           label="Attack"
@@ -419,7 +419,7 @@ function ModulationPanel() {
           step={0.01}
           onChange={(v) => mod.setEnvelopeParams({ attack: v })}
           format={(v) => `${(v * 1000).toFixed(0)}ms`}
-          color="#22c55e"
+          color="#AA55FF"
         />
         <ModSlider
           label="Decay"
@@ -429,7 +429,7 @@ function ModulationPanel() {
           step={0.01}
           onChange={(v) => mod.setEnvelopeParams({ decay: v })}
           format={(v) => `${(v * 1000).toFixed(0)}ms`}
-          color="#22c55e"
+          color="#AA55FF"
         />
         <ModSlider
           label="Sustain"
@@ -439,7 +439,7 @@ function ModulationPanel() {
           step={0.01}
           onChange={(v) => mod.setEnvelopeParams({ sustain: v })}
           format={(v) => `${Math.round(v * 100)}%`}
-          color="#22c55e"
+          color="#AA55FF"
         />
         <ModSlider
           label="Release"
@@ -449,7 +449,7 @@ function ModulationPanel() {
           step={0.01}
           onChange={(v) => mod.setEnvelopeParams({ release: v })}
           format={(v) => `${(v * 1000).toFixed(0)}ms`}
-          color="#22c55e"
+          color="#AA55FF"
         />
         <div className="flex items-center gap-2 mt-1">
           <button
@@ -458,7 +458,7 @@ function ModulationPanel() {
             onMouseLeave={mod.releaseEnvelope}
             className="flex-1 text-[8px] uppercase py-1 rounded-sm"
             style={{
-              backgroundColor: mod.envelope.phase !== 'idle' ? '#22c55e' : 'var(--bg-elevated)',
+              backgroundColor: mod.envelope.phase !== 'idle' ? '#AA55FF' : 'var(--bg-elevated)',
               color: mod.envelope.phase !== 'idle' ? 'white' : 'var(--text-muted)',
               border: '1px solid var(--border)',
             }}
@@ -473,7 +473,7 @@ function ModulationPanel() {
               className="h-full rounded-sm transition-all duration-75"
               style={{
                 width: `${mod.envelope.currentValue * 100}%`,
-                backgroundColor: '#22c55e',
+                backgroundColor: '#AA55FF',
               }}
             />
           </div>
@@ -487,7 +487,7 @@ function ModulationPanel() {
         selected={selectedModulator === 'sampleHold'}
         onToggle={mod.toggleSampleHold}
         onSelect={() => handleSelect('sampleHold')}
-        color="#f59e0b"
+        color="#AAFF00"
       >
         {/* Input (the signal being sampled) */}
         <ModSlider
@@ -498,7 +498,7 @@ function ModulationPanel() {
           step={0.01}
           onChange={mod.setSampleHoldInput}
           format={(v) => `${Math.round(v * 100)}%`}
-          color="#f59e0b"
+          color="#AAFF00"
         />
         {/* Smoothing */}
         <ModSlider
@@ -509,7 +509,7 @@ function ModulationPanel() {
           step={0.01}
           onChange={mod.setSampleHoldSmoothing}
           format={(v) => `${Math.round(v * 100)}%`}
-          color="#f59e0b"
+          color="#AAFF00"
         />
         {/* Rate Mode */}
         <div className="flex items-center gap-2 py-0.5">
@@ -523,7 +523,7 @@ function ModulationPanel() {
                 onClick={() => mod.setSampleHoldRateMode(mode)}
                 className="flex-1 text-[8px] uppercase tracking-wide py-0.5 rounded-sm transition-colors"
                 style={{
-                  backgroundColor: mod.sampleHold.rateMode === mode ? '#f59e0b' : 'var(--bg-elevated)',
+                  backgroundColor: mod.sampleHold.rateMode === mode ? '#AAFF00' : 'var(--bg-elevated)',
                   color: mod.sampleHold.rateMode === mode ? 'white' : 'var(--text-muted)',
                   border: '1px solid var(--border)',
                   opacity: mod.sampleHold.rateMode === mode ? 1 : 0.7,
@@ -541,7 +541,7 @@ function ModulationPanel() {
             value={mod.sampleHold.rateDivision * (bpm / 60)}
             bpm={bpm}
             onChange={(hz) => mod.setSampleHoldRateDivision(hz / (bpm / 60))}
-            color="#f59e0b"
+            color="#AAFF00"
           />
         )}
         {mod.sampleHold.rateMode === 'free' && (
@@ -553,7 +553,7 @@ function ModulationPanel() {
             step={0.1}
             onChange={mod.setSampleHoldRateHz}
             format={(v) => `${v.toFixed(1)}Hz`}
-            color="#f59e0b"
+            color="#AAFF00"
           />
         )}
         {/* Rate Scale */}
@@ -566,7 +566,7 @@ function ModulationPanel() {
             step={0.01}
             onChange={mod.setSampleHoldRateScale}
             format={(v) => `${(v * 100).toFixed(0)}%`}
-            color="#f59e0b"
+            color="#AAFF00"
           />
         )}
         {/* Clock Mode */}
@@ -581,7 +581,7 @@ function ModulationPanel() {
                 onClick={() => mod.setSampleHoldClockMode(mode)}
                 className="flex-1 text-[8px] uppercase tracking-wide py-0.5 rounded-sm transition-colors"
                 style={{
-                  backgroundColor: mod.sampleHold.clockMode === mode ? '#f59e0b' : 'var(--bg-elevated)',
+                  backgroundColor: mod.sampleHold.clockMode === mode ? '#AAFF00' : 'var(--bg-elevated)',
                   color: mod.sampleHold.clockMode === mode ? 'white' : 'var(--text-muted)',
                   border: '1px solid var(--border)',
                   opacity: mod.sampleHold.clockMode === mode ? 1 : 0.7,
@@ -600,7 +600,7 @@ function ModulationPanel() {
               className="h-full rounded-sm transition-all duration-75"
               style={{
                 width: `${mod.sampleHold.currentValue * 100}%`,
-                backgroundColor: '#f59e0b',
+                backgroundColor: '#AAFF00',
               }}
             />
           </div>
@@ -764,7 +764,7 @@ export function EffectsLane() {
     activeEffects.push({
       id: 'posterize',
       label: 'Posterize',
-      color: effect?.color || '#f59e0b',
+      color: effect?.color || '#AAFF00',
       primaryValue: glitch.posterize.levels,
       primaryLabel: 'lvl',
     })
@@ -848,7 +848,7 @@ export function EffectsLane() {
   if (vision.brightEnabled) activeEffects.push({ id: 'track_bright', label: 'Bright', color: '#eab308', primaryValue: vision.brightParams.threshold, primaryLabel: 'thresh' })
   if (vision.edgeEnabled) activeEffects.push({ id: 'track_edge', label: 'Edge Track', color: '#06b6d4', primaryValue: vision.edgeParams.threshold, primaryLabel: 'thresh' })
   if (vision.colorEnabled) activeEffects.push({ id: 'track_color', label: 'Color Track', color: '#ec4899', primaryValue: Math.round(vision.colorParams.colorRange * 100), primaryLabel: 'range' })
-  if (vision.motionEnabled) activeEffects.push({ id: 'track_motion', label: 'Motion Track', color: '#22c55e', primaryValue: vision.motionParams.sensitivity, primaryLabel: 'sens' })
+  if (vision.motionEnabled) activeEffects.push({ id: 'track_motion', label: 'Motion Track', color: '#AA55FF', primaryValue: vision.motionParams.sensitivity, primaryLabel: 'sens' })
   if (vision.faceEnabled) activeEffects.push({ id: 'track_face', label: 'Face Track', color: '#f97316', primaryValue: vision.faceParams.threshold, primaryLabel: 'thresh' })
   if (vision.handsEnabled) activeEffects.push({ id: 'track_hands', label: 'Hands Track', color: '#a855f7', primaryValue: vision.handsParams.threshold, primaryLabel: 'thresh' })
 
@@ -889,7 +889,7 @@ export function EffectsLane() {
   if (strand.extinctionEnabled) activeEffects.push({ id: 'strand_extinction', label: 'Extinction', color: '#7b68ee', primaryValue: Math.round(strand.extinctionParams.erosionSpeed * 100), primaryLabel: 'spd' })
 
   // Motion effects
-  if (motion.motionExtractEnabled) activeEffects.push({ id: 'motion_extract', label: 'Motion Extract', color: '#22c55e', primaryValue: Math.round(motion.motionExtract.threshold * 100), primaryLabel: 'thresh' })
+  if (motion.motionExtractEnabled) activeEffects.push({ id: 'motion_extract', label: 'Motion Extract', color: '#AA55FF', primaryValue: Math.round(motion.motionExtract.threshold * 100), primaryLabel: 'thresh' })
   if (motion.echoTrailEnabled) activeEffects.push({ id: 'echo_trail', label: 'Echo Trail', color: '#06b6d4', primaryValue: Math.round(motion.echoTrail.decay * 100), primaryLabel: 'decay' })
   if (motion.timeSmearEnabled) activeEffects.push({ id: 'time_smear', label: 'Time Smear', color: '#8b5cf6', primaryValue: Math.round(motion.timeSmear.accumulation * 100), primaryLabel: 'acc' })
   if (motion.freezeMaskEnabled) activeEffects.push({ id: 'freeze_mask', label: 'Freeze Mask', color: '#f97316', primaryValue: Math.round(motion.freezeMask.freezeThreshold * 100), primaryLabel: 'thresh' })

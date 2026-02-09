@@ -4,7 +4,8 @@ const SOURCE_COLORS: Record<string, string> = {
   lfo: '#00D4FF',
   random: '#FF6B6B',
   step: '#4ECDC4',
-  envelope: '#22c55e',
+  envelope: '#AA55FF',
+  sampleHold: '#AAFF00',
   euclidean: '#FF0055',
   ricochet: '#FF0055',
 }

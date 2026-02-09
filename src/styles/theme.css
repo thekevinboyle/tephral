@@ -33,12 +33,26 @@
   --text-muted: #A09A94;
   --text-ghost: #706A64;
 
-  /* Accent - cyan */
+  /* Accent - cyan (primary) */
   --accent: #00D4FF;
   --accent-dim: #00A8CC;
   --accent-hover: #33DDFF;
   --accent-glow: rgba(0, 212, 255, 0.3);
   --accent-subtle: rgba(0, 212, 255, 0.08);
+
+  /* Accent - lime (secondary) */
+  --accent-lime: #AAFF00;
+  --accent-lime-dim: #88CC00;
+  --accent-lime-hover: #BBFF33;
+  --accent-lime-glow: rgba(170, 255, 0, 0.3);
+  --accent-lime-subtle: rgba(170, 255, 0, 0.08);
+
+  /* Accent - purple (tertiary) */
+  --accent-purple: #AA55FF;
+  --accent-purple-dim: #8844CC;
+  --accent-purple-hover: #BB77FF;
+  --accent-purple-glow: rgba(170, 85, 255, 0.3);
+  --accent-purple-subtle: rgba(170, 85, 255, 0.08);
 
   /* Typography - slightly larger for readability */
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;

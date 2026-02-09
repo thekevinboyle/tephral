@@ -101,29 +101,29 @@ export const EFFECTS: EffectDefinition[] = [
 // ═══════════════════════════════════════════════════════════════
 
 export const STRAND_EFFECTS: EffectDefinition[] = [
-  // Row 1: Chiral/BT (black/orange)
+  // Row 1: Chiral/BT (dark purple)
   { id: 'strand_handprints', label: 'HANDPRINTS', color: '#1a1a1a', row: 'render', page: 3, min: 1, max: 20 },
-  { id: 'strand_tar', label: 'TAR', color: '#ff6b35', row: 'render', page: 3, min: 0, max: 100 },
-  { id: 'strand_timefall', label: 'TIMEFALL', color: '#4a5568', row: 'render', page: 3, min: 0, max: 100 },
-  { id: 'strand_voidout', label: 'VOID OUT', color: '#ff6b35', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_tar', label: 'TAR', color: '#8844CC', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_timefall', label: 'TIMEFALL', color: '#6633AA', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_voidout', label: 'VOID OUT', color: '#AA55FF', row: 'render', page: 3, min: 0, max: 100 },
 
-  // Row 2: Strand/Connection (cyan)
-  { id: 'strand_web', label: 'STRAND WEB', color: '#00d4ff', row: 'render', page: 3, min: 0, max: 100 },
-  { id: 'strand_bridge', label: 'BRIDGE', color: '#00d4ff', row: 'render', page: 3, min: 8, max: 64 },
-  { id: 'strand_path', label: 'CHIRAL PATH', color: '#00d4ff', row: 'render', page: 3, min: 10, max: 200 },
-  { id: 'strand_umbilical', label: 'UMBILICAL', color: '#00d4ff', row: 'render', page: 3, min: 2, max: 12 },
+  // Row 2: Strand/Connection (bright purple)
+  { id: 'strand_web', label: 'STRAND WEB', color: '#AA55FF', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_bridge', label: 'BRIDGE', color: '#BB77FF', row: 'render', page: 3, min: 8, max: 64 },
+  { id: 'strand_path', label: 'CHIRAL PATH', color: '#AA55FF', row: 'render', page: 3, min: 10, max: 200 },
+  { id: 'strand_umbilical', label: 'UMBILICAL', color: '#9944EE', row: 'render', page: 3, min: 2, max: 12 },
 
-  // Row 3: Chiralium/Tech (gold)
-  { id: 'strand_odradek', label: 'ODRADEK', color: '#ffd700', row: 'render', page: 3, min: 0, max: 100 },
-  { id: 'strand_chiralium', label: 'CHIRALIUM', color: '#ffd700', row: 'render', page: 3, min: 0, max: 100 },
-  { id: 'strand_beach', label: 'BEACH', color: '#ffd700', row: 'render', page: 3, min: 0, max: 100 },
-  { id: 'strand_dooms', label: 'DOOMS', color: '#ffd700', row: 'render', page: 3, min: 0, max: 100 },
+  // Row 3: Chiralium/Tech (light purple)
+  { id: 'strand_odradek', label: 'ODRADEK', color: '#CC88FF', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_chiralium', label: 'CHIRALIUM', color: '#BB77FF', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_beach', label: 'BEACH', color: '#D4A5FF', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_dooms', label: 'DOOMS', color: '#AA55FF', row: 'render', page: 3, min: 0, max: 100 },
 
-  // Row 4: Atmosphere (purple)
-  { id: 'strand_cloud', label: 'CHIRAL CLOUD', color: '#7b68ee', row: 'render', page: 3, min: 0, max: 100 },
-  { id: 'strand_bbpod', label: 'BB POD', color: '#7b68ee', row: 'render', page: 3, min: 0, max: 100 },
-  { id: 'strand_seam', label: 'SEAM', color: '#7b68ee', row: 'render', page: 3, min: 0, max: 100 },
-  { id: 'strand_extinction', label: 'EXTINCTION', color: '#7b68ee', row: 'render', page: 3, min: 0, max: 100 },
+  // Row 4: Atmosphere (muted purple)
+  { id: 'strand_cloud', label: 'CHIRAL CLOUD', color: '#9966DD', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_bbpod', label: 'BB POD', color: '#8855CC', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_seam', label: 'SEAM', color: '#7744BB', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_extinction', label: 'EXTINCTION', color: '#AA55FF', row: 'render', page: 3, min: 0, max: 100 },
 ]
 
 // ═══════════════════════════════════════════════════════════════
@@ -131,11 +131,11 @@ export const STRAND_EFFECTS: EffectDefinition[] = [
 // ═══════════════════════════════════════════════════════════════
 
 export const MOTION_EFFECTS: EffectDefinition[] = [
-  // Row 1: Core motion effects
-  { id: 'motion_extract', label: 'EXTRACT', color: '#22c55e', row: 'render', page: 4, min: 0, max: 100 },
-  { id: 'echo_trail', label: 'ECHO', color: '#06b6d4', row: 'render', page: 4, min: 0, max: 100 },
-  { id: 'time_smear', label: 'SMEAR', color: '#8b5cf6', row: 'render', page: 4, min: 0, max: 100 },
-  { id: 'freeze_mask', label: 'FREEZE', color: '#f97316', row: 'render', page: 4, min: 0, max: 100 },
+  // Row 1: Core motion effects (lime theme)
+  { id: 'motion_extract', label: 'EXTRACT', color: '#AAFF00', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'echo_trail', label: 'ECHO', color: '#88CC00', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'time_smear', label: 'SMEAR', color: '#99DD00', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'freeze_mask', label: 'FREEZE', color: '#BBFF33', row: 'render', page: 4, min: 0, max: 100 },
 
   // Row 2-4: Reserved
   { id: 'motion_reserved_5', label: '—', color: '#374151', row: 'reserved', page: 4, min: 0, max: 100 },

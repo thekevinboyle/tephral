@@ -124,7 +124,7 @@ function SampleHoldGraphic({ tick }: { tick: number }) {
               y1={y}
               x2={x2}
               y2={y}
-              stroke={isActive ? '#f59e0b' : '#f59e0b'}
+              stroke={isActive ? '#AAFF00' : '#AAFF00'}
               strokeWidth="1.5"
               opacity={isActive ? 1 : 0.5}
             />
@@ -135,7 +135,7 @@ function SampleHoldGraphic({ tick }: { tick: number }) {
                 y1={y}
                 x2={x2}
                 y2={2 + (((i + 1 + Math.floor(phase * 10)) * 17 % 100) / 100) * (height - 4)}
-                stroke="#f59e0b"
+                stroke="#AAFF00"
                 strokeWidth="1"
                 opacity={0.3}
               />
@@ -148,7 +148,7 @@ function SampleHoldGraphic({ tick }: { tick: number }) {
         cx={phase * width}
         cy={2 + ((Math.floor(phase * steps) + Math.floor(phase * 10)) * 17 % 100) / 100 * (height - 4)}
         r="2"
-        fill="#f59e0b"
+        fill="#AAFF00"
       />
     </svg>
   )
@@ -189,7 +189,7 @@ function EnvelopeGraphic({ tick }: { tick: number }) {
           return `${x === 0 ? 'M' : 'L'} ${x} ${y}`
         }).join(' ')}
         fill="none"
-        stroke="#22c55e"
+        stroke="#AA55FF"
         strokeWidth="1.5"
         opacity={0.8}
       />

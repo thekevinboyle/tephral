@@ -2,7 +2,7 @@ import { useRef, useEffect, useCallback } from 'react'
 import { usePolyEuclidStore } from '../../stores/polyEuclidStore'
 
 const CREAM = '#E8E4D9'
-const GRID_SIZE = 20
+const GRID_SIZE = 24
 
 interface DiagonalCascadeProps {
   width: number
@@ -11,23 +11,29 @@ interface DiagonalCascadeProps {
 
 export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const timeRef = useRef(0)
   const { tracks, getPattern } = usePolyEuclidStore()
 
-  const draw = useCallback(() => {
+  const draw = useCallback((timestamp: number) => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    // Track time for animations
+    const time = timestamp / 1000
+    timeRef.current = time
+
     // Clear with dark background
-    ctx.fillStyle = '#0a0a0a'
+    ctx.fillStyle = '#0c0c0c'
     ctx.fillRect(0, 0, width, height)
 
-    // Draw subtle grid
+    // Draw subtle animated grid
     ctx.strokeStyle = CREAM
-    ctx.globalAlpha = 0.05
+    ctx.globalAlpha = 0.04
     ctx.lineWidth = 1
-    for (let x = 0; x < width; x += GRID_SIZE) {
+    const gridOffset = (time * 10) % GRID_SIZE
+    for (let x = -GRID_SIZE + gridOffset; x < width + GRID_SIZE; x += GRID_SIZE) {
       ctx.beginPath()
       ctx.moveTo(x, 0)
       ctx.lineTo(x, height)
@@ -41,73 +47,98 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
     }
     ctx.globalAlpha = 1
 
-    // Draw each track's diagonal
-    const centerX = width / 2
-    const centerY = height / 2
+    // Calculate track spacing - distribute vertically as waves
+    const trackCount = tracks.length
+    const trackHeight = height / (trackCount + 1)
+    const angle = -25 // degrees - gentle diagonal
+    const angleRad = (angle * Math.PI) / 180
 
-    for (const track of tracks) {
+    // Draw each track as a wave of diagonal elements
+    tracks.forEach((track, trackIndex) => {
       const pattern = getPattern(track.id)
-      const angleRad = (track.angle * Math.PI) / 180
-      const blockSize = 12
-      const gap = 4
-      const totalLength = pattern.length * (blockSize + gap)
+      const baseY = trackHeight * (trackIndex + 1)
 
-      // Calculate line start position (centered)
-      const startX = centerX - (Math.cos(angleRad) * totalLength) / 2
-      const startY = centerY - (Math.sin(angleRad) * totalLength) / 2
+      // Wave animation offset per track
+      const waveOffset = Math.sin(time * 2 + trackIndex * 0.8) * 8
+      const driftOffset = (time * 15 * track.clockDivider) % 50
 
-      // Track opacity based on mute state and current value
-      const baseOpacity = track.muted ? 0.15 : 1
-      const glowBoost = track.currentValue * 0.3
+      // Block sizing
+      const blockWidth = 16
+      const blockHeight = 6
+      const gap = 12
+      const stepSpacing = blockWidth + gap
 
-      for (let i = 0; i < pattern.length; i++) {
-        const isHit = pattern[i]
-        const isCurrent = i === track.currentStep
+      // Calculate how many steps fit across the width (with extra for scrolling)
+      const stepsVisible = Math.ceil(width / stepSpacing) + 4
 
-        const x = startX + Math.cos(angleRad) * i * (blockSize + gap)
-        const y = startY + Math.sin(angleRad) * i * (blockSize + gap)
+      // Draw repeating pattern across width
+      for (let i = -2; i < stepsVisible; i++) {
+        const patternIndex = ((i % pattern.length) + pattern.length) % pattern.length
+        const isHit = pattern[patternIndex]
+        const isCurrent = patternIndex === track.currentStep
+
+        // Position with wave motion and drift
+        const baseX = i * stepSpacing - driftOffset
+        const x = baseX + Math.cos(angleRad) * (baseY * 0.3)
+        const y = baseY + waveOffset + Math.sin(baseX * 0.02 + time) * 4
+
+        // Skip if off screen
+        if (x < -blockWidth * 2 || x > width + blockWidth * 2) continue
+
+        const baseOpacity = track.muted ? 0.15 : 1
+        const pulseOpacity = isCurrent ? 0.3 + track.currentValue * 0.7 : 0
 
         ctx.save()
         ctx.translate(x, y)
         ctx.rotate(angleRad)
 
         if (isHit) {
-          // Solid block for hits
-          ctx.fillStyle = CREAM
-          ctx.globalAlpha = baseOpacity * (isCurrent ? 1 : 0.7) + (isCurrent ? glowBoost : 0)
-          ctx.fillRect(-blockSize / 2, -blockSize / 4, blockSize, blockSize / 2)
-
-          // Glow on current step
-          if (isCurrent && !track.muted) {
+          // Glow effect for current step
+          if (isCurrent && !track.muted && track.currentValue > 0.1) {
             ctx.shadowColor = CREAM
-            ctx.shadowBlur = 10 + track.currentValue * 15
-            ctx.fillRect(-blockSize / 2, -blockSize / 4, blockSize, blockSize / 2)
+            ctx.shadowBlur = 15 + track.currentValue * 20
+            ctx.fillStyle = CREAM
+            ctx.globalAlpha = pulseOpacity * baseOpacity
+            ctx.fillRect(-blockWidth / 2, -blockHeight / 2, blockWidth, blockHeight)
             ctx.shadowBlur = 0
           }
+
+          // Main solid block
+          ctx.fillStyle = CREAM
+          ctx.globalAlpha = baseOpacity * (isCurrent ? 1 : 0.6)
+          ctx.fillRect(-blockWidth / 2, -blockHeight / 2, blockWidth, blockHeight)
         } else {
-          // Dashed line for rests
+          // Dashed line for rests - animated dash offset
           ctx.strokeStyle = CREAM
-          ctx.globalAlpha = baseOpacity * 0.3
+          ctx.globalAlpha = baseOpacity * 0.2
           ctx.lineWidth = 2
-          ctx.setLineDash([3, 3])
+          ctx.setLineDash([4, 4])
+          ctx.lineDashOffset = -time * 20
           ctx.beginPath()
-          ctx.moveTo(-blockSize / 2, 0)
-          ctx.lineTo(blockSize / 2, 0)
+          ctx.moveTo(-blockWidth / 2, 0)
+          ctx.lineTo(blockWidth / 2, 0)
           ctx.stroke()
           ctx.setLineDash([])
         }
 
         ctx.restore()
       }
-    }
+
+      // Draw track indicator line on the left
+      ctx.fillStyle = CREAM
+      ctx.globalAlpha = track.muted ? 0.1 : 0.3 + track.currentValue * 0.4
+      ctx.fillRect(8, baseY + waveOffset - 1, 3, 2)
+    })
+
+    ctx.globalAlpha = 1
   }, [tracks, getPattern, width, height])
 
   // Animation loop
   useEffect(() => {
     let animationId: number
 
-    const loop = () => {
-      draw()
+    const loop = (timestamp: number) => {
+      draw(timestamp)
       animationId = requestAnimationFrame(loop)
     }
 

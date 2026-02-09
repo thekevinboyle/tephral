@@ -244,6 +244,7 @@ function ModulationPanel() {
   const randomRoutings = routings.filter(r => r.trackId === 'random').length
   const stepRoutings = routings.filter(r => r.trackId === 'step').length
   const envRoutings = routings.filter(r => r.trackId === 'envelope').length
+  const sampleHoldRoutings = routings.filter(r => r.trackId === 'sampleHold').length
 
   const lfoShapes: { value: LFOShape; label: string }[] = [
     { value: 'sine', label: 'Sin' },
@@ -452,6 +453,131 @@ function ModulationPanel() {
           </div>
         </div>
       </ModulatorSection>
+
+      {/* Sample & Hold */}
+      <ModulatorSection
+        title={`S&H${sampleHoldRoutings > 0 ? ` → ${sampleHoldRoutings}` : ''}`}
+        enabled={mod.sampleHold.enabled}
+        onToggle={mod.toggleSampleHold}
+        color="#f59e0b"
+      >
+        {/* Input (the signal being sampled) */}
+        <ModSlider
+          label="Input"
+          value={mod.sampleHold.input}
+          min={0}
+          max={1}
+          step={0.01}
+          onChange={mod.setSampleHoldInput}
+          format={(v) => `${Math.round(v * 100)}%`}
+          color="#f59e0b"
+        />
+        {/* Smoothing */}
+        <ModSlider
+          label="Smooth"
+          value={mod.sampleHold.smoothing}
+          min={0}
+          max={1}
+          step={0.01}
+          onChange={mod.setSampleHoldSmoothing}
+          format={(v) => `${Math.round(v * 100)}%`}
+          color="#f59e0b"
+        />
+        {/* Rate Mode */}
+        <div className="flex items-center gap-2 py-0.5">
+          <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+            Mode
+          </span>
+          <div className="flex-1 flex gap-1">
+            {(['metronomic', 'free', 'hold'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => mod.setSampleHoldRateMode(mode)}
+                className="flex-1 text-[8px] uppercase tracking-wide py-0.5 rounded-sm transition-colors"
+                style={{
+                  backgroundColor: mod.sampleHold.rateMode === mode ? '#f59e0b' : 'var(--bg-elevated)',
+                  color: mod.sampleHold.rateMode === mode ? 'white' : 'var(--text-muted)',
+                  border: '1px solid var(--border)',
+                  opacity: mod.sampleHold.rateMode === mode ? 1 : 0.7,
+                }}
+              >
+                {mode === 'metronomic' ? 'Sync' : mode}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Rate (conditional based on mode) */}
+        {mod.sampleHold.rateMode === 'metronomic' && (
+          <ModRateSelect
+            label="Rate"
+            value={mod.sampleHold.rateDivision * (bpm / 60)}
+            bpm={bpm}
+            onChange={(hz) => mod.setSampleHoldRateDivision(hz / (bpm / 60))}
+            color="#f59e0b"
+          />
+        )}
+        {mod.sampleHold.rateMode === 'free' && (
+          <ModSlider
+            label="Rate"
+            value={mod.sampleHold.rateHz}
+            min={0.1}
+            max={50}
+            step={0.1}
+            onChange={mod.setSampleHoldRateHz}
+            format={(v) => `${v.toFixed(1)}Hz`}
+            color="#f59e0b"
+          />
+        )}
+        {/* Rate Scale */}
+        {mod.sampleHold.rateMode !== 'hold' && (
+          <ModSlider
+            label="Scale"
+            value={mod.sampleHold.rateScale}
+            min={0.02}
+            max={50}
+            step={0.01}
+            onChange={mod.setSampleHoldRateScale}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            color="#f59e0b"
+          />
+        )}
+        {/* Clock Mode */}
+        <div className="flex items-center gap-2 py-0.5">
+          <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+            Clock
+          </span>
+          <div className="flex-1 flex gap-1">
+            {(['free', 'gate', 'sync'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => mod.setSampleHoldClockMode(mode)}
+                className="flex-1 text-[8px] uppercase tracking-wide py-0.5 rounded-sm transition-colors"
+                style={{
+                  backgroundColor: mod.sampleHold.clockMode === mode ? '#f59e0b' : 'var(--bg-elevated)',
+                  color: mod.sampleHold.clockMode === mode ? 'white' : 'var(--text-muted)',
+                  border: '1px solid var(--border)',
+                  opacity: mod.sampleHold.clockMode === mode ? 1 : 0.7,
+                }}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Value display */}
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Value</span>
+          <div className="flex-1 h-1 rounded-sm" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+            <div
+              className="h-full rounded-sm transition-all duration-75"
+              style={{
+                width: `${mod.sampleHold.currentValue * 100}%`,
+                backgroundColor: '#f59e0b',
+              }}
+            />
+          </div>
+        </div>
+      </ModulatorSection>
     </div>
   )
 }
@@ -485,7 +611,7 @@ export function EffectsLane() {
   const modulation = useModulationStore()
 
   // Check if any modulator is active (for tab indicator)
-  const hasActiveModulation = modulation.lfo.enabled || modulation.random.enabled || modulation.step.enabled || modulation.envelope.enabled
+  const hasActiveModulation = modulation.lfo.enabled || modulation.random.enabled || modulation.step.enabled || modulation.envelope.enabled || modulation.sampleHold.enabled
 
   // Build list of active effects
   const activeEffects: ActiveEffect[] = []

@@ -41,13 +41,32 @@ export interface EnvelopeState {
   phaseStartValue: number
 }
 
-export type ModulatorType = 'lfo' | 'random' | 'step' | 'envelope'
+export type SampleHoldRateMode = 'metronomic' | 'free' | 'hold'
+export type SampleHoldClockMode = 'free' | 'gate' | 'sync'
+
+export interface SampleHoldState {
+  enabled: boolean
+  input: number           // 0-1, the signal being sampled (modulated by other modulators)
+  smoothing: number       // 0-1, transition time between samples
+  rateMode: SampleHoldRateMode
+  rateDivision: number    // For metronomic mode (1 = 1/4 note, 0.5 = 1/8, etc.)
+  rateHz: number          // For free mode (Hz)
+  rateScale: number       // 0.02 to 50 multiplier
+  clockMode: SampleHoldClockMode
+  currentValue: number    // Output value
+  targetValue: number     // Sampled target
+  phase: number           // Clock phase accumulator
+  timeSinceSample: number
+}
+
+export type ModulatorType = 'lfo' | 'random' | 'step' | 'envelope' | 'sampleHold'
 
 interface ModulationState {
   lfo: LFOState
   random: RandomState
   step: StepState
   envelope: EnvelopeState
+  sampleHold: SampleHoldState
 
   // Assignment mode - which modulator is being assigned to params
   assigningModulator: ModulatorType | null
@@ -86,6 +105,19 @@ interface ModulationState {
   triggerEnvelope: () => void
   releaseEnvelope: () => void
   updateEnvelope: (delta: number) => void
+
+  // Sample & Hold actions
+  toggleSampleHold: () => void
+  setSampleHoldEnabled: (enabled: boolean) => void
+  setSampleHoldInput: (input: number) => void
+  setSampleHoldSmoothing: (smoothing: number) => void
+  setSampleHoldRateMode: (mode: SampleHoldRateMode) => void
+  setSampleHoldRateDivision: (division: number) => void
+  setSampleHoldRateHz: (hz: number) => void
+  setSampleHoldRateScale: (scale: number) => void
+  setSampleHoldClockMode: (mode: SampleHoldClockMode) => void
+  restartSampleHoldClock: () => void
+  updateSampleHold: (delta: number, bpm: number) => void
 }
 
 const DEFAULT_STEPS = [0, 0.25, 0.5, 0.75, 1, 0.75, 0.5, 0.25]
@@ -132,6 +164,22 @@ export const useModulationStore = create<ModulationState>((set, get) => ({
     currentValue: 0,
     phaseStartTime: 0,
     phaseStartValue: 0,
+  },
+
+  // Sample & Hold State
+  sampleHold: {
+    enabled: false,
+    input: 0.5,
+    smoothing: 0,
+    rateMode: 'metronomic',
+    rateDivision: 1,      // 1/4 notes
+    rateHz: 4,
+    rateScale: 1,
+    clockMode: 'free',
+    currentValue: 0.5,
+    targetValue: 0.5,
+    phase: 0,
+    timeSinceSample: 0,
   },
 
   // Assignment mode
@@ -349,6 +397,78 @@ export const useModulationStore = create<ModulationState>((set, get) => ({
         phase: newPhase,
         phaseStartTime: newStartTime,
         phaseStartValue: newStartValue,
+      }
+    })
+  },
+
+  // Sample & Hold Actions
+  toggleSampleHold: () => set((state) => ({ sampleHold: { ...state.sampleHold, enabled: !state.sampleHold.enabled } })),
+  setSampleHoldEnabled: (enabled) => set((state) => ({ sampleHold: { ...state.sampleHold, enabled } })),
+  setSampleHoldInput: (input) => set((state) => ({ sampleHold: { ...state.sampleHold, input: Math.max(0, Math.min(1, input)) } })),
+  setSampleHoldSmoothing: (smoothing) => set((state) => ({ sampleHold: { ...state.sampleHold, smoothing: Math.max(0, Math.min(1, smoothing)) } })),
+  setSampleHoldRateMode: (rateMode) => set((state) => ({ sampleHold: { ...state.sampleHold, rateMode } })),
+  setSampleHoldRateDivision: (rateDivision) => set((state) => ({ sampleHold: { ...state.sampleHold, rateDivision: Math.max(0.0625, Math.min(16, rateDivision)) } })),
+  setSampleHoldRateHz: (rateHz) => set((state) => ({ sampleHold: { ...state.sampleHold, rateHz: Math.max(0.1, Math.min(100, rateHz)) } })),
+  setSampleHoldRateScale: (rateScale) => set((state) => ({ sampleHold: { ...state.sampleHold, rateScale: Math.max(0.02, Math.min(50, rateScale)) } })),
+  setSampleHoldClockMode: (clockMode) => set((state) => ({ sampleHold: { ...state.sampleHold, clockMode } })),
+  restartSampleHoldClock: () => set((state) => ({ sampleHold: { ...state.sampleHold, phase: 0, timeSinceSample: 0 } })),
+
+  updateSampleHold: (delta, bpm) => {
+    const { sampleHold } = get()
+    if (!sampleHold.enabled) return
+
+    // If hold mode, just apply smoothing to current value but don't sample
+    if (sampleHold.rateMode === 'hold') {
+      // Only smooth toward target, no new samples
+      if (sampleHold.smoothing > 0 && sampleHold.currentValue !== sampleHold.targetValue) {
+        const smoothFactor = 1 - Math.pow(1 - sampleHold.smoothing, delta * 60)
+        const newCurrent = sampleHold.currentValue + (sampleHold.targetValue - sampleHold.currentValue) * smoothFactor
+        set({ sampleHold: { ...sampleHold, currentValue: newCurrent } })
+      }
+      return
+    }
+
+    // Calculate effective rate in Hz
+    let effectiveHz: number
+    if (sampleHold.rateMode === 'metronomic') {
+      // Convert BPM and division to Hz
+      // rateDivision: 1 = quarter note, 0.5 = eighth note, 2 = half note, etc.
+      const beatsPerSecond = bpm / 60
+      effectiveHz = beatsPerSecond * sampleHold.rateDivision
+    } else {
+      // Free mode - use Hz directly
+      effectiveHz = sampleHold.rateHz
+    }
+
+    // Apply rate scale
+    effectiveHz *= sampleHold.rateScale
+
+    const interval = 1 / effectiveHz
+    let newTimeSince = sampleHold.timeSinceSample + delta
+    let newTarget = sampleHold.targetValue
+    let newCurrent = sampleHold.currentValue
+
+    // Check if it's time to sample
+    if (newTimeSince >= interval) {
+      // Sample the input signal
+      newTarget = sampleHold.input
+      newTimeSince = newTimeSince % interval // Keep remainder for accuracy
+    }
+
+    // Apply smoothing
+    if (sampleHold.smoothing > 0) {
+      const smoothFactor = 1 - Math.pow(1 - sampleHold.smoothing, delta * 60)
+      newCurrent = newCurrent + (newTarget - newCurrent) * smoothFactor
+    } else {
+      newCurrent = newTarget
+    }
+
+    set({
+      sampleHold: {
+        ...sampleHold,
+        currentValue: newCurrent,
+        targetValue: newTarget,
+        timeSinceSample: newTimeSince,
       }
     })
   },

@@ -111,6 +111,61 @@ function StepGraphic({ tick }: { tick: number }) {
   )
 }
 
+// Sample & Hold Animation (stepped signal)
+function SampleHoldGraphic({ tick }: { tick: number }) {
+  const width = 32
+  const height = 14
+  const steps = 6
+  const stepWidth = width / steps
+  const phase = (tick * 0.05) % 1
+
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      {/* Stepped horizontal lines */}
+      {Array.from({ length: steps }, (_, i) => {
+        // Pseudo-random heights based on step index and phase
+        const seed = (i + Math.floor(phase * 10)) * 17 % 100
+        const y = 2 + (seed / 100) * (height - 4)
+        const x1 = i * stepWidth
+        const x2 = (i + 1) * stepWidth
+        const isActive = i === Math.floor(phase * steps)
+        return (
+          <g key={i}>
+            <line
+              x1={x1}
+              y1={y}
+              x2={x2}
+              y2={y}
+              stroke={isActive ? '#f59e0b' : '#f59e0b'}
+              strokeWidth="1.5"
+              opacity={isActive ? 1 : 0.5}
+            />
+            {/* Vertical transition line */}
+            {i < steps - 1 && (
+              <line
+                x1={x2}
+                y1={y}
+                x2={x2}
+                y2={2 + (((i + 1 + Math.floor(phase * 10)) * 17 % 100) / 100) * (height - 4)}
+                stroke="#f59e0b"
+                strokeWidth="1"
+                opacity={0.3}
+              />
+            )}
+          </g>
+        )
+      })}
+      {/* Sample indicator dot */}
+      <circle
+        cx={phase * width}
+        cy={2 + ((Math.floor(phase * steps) + Math.floor(phase * 10)) * 17 % 100) / 100 * (height - 4)}
+        r="2"
+        fill="#f59e0b"
+      />
+    </svg>
+  )
+}
+
 // Envelope Animation (ADSR style)
 function EnvelopeGraphic({ tick }: { tick: number }) {
   const width = 32
@@ -159,7 +214,7 @@ function EnvelopeGraphic({ tick }: { tick: number }) {
 // ════════════════════════════════════════════════════════════════════════════
 
 interface ModulationCardProps {
-  type: 'lfo' | 'random' | 'step' | 'envelope'
+  type: 'lfo' | 'random' | 'step' | 'envelope' | 'sampleHold'
   label: string
   tick: number
   active?: boolean
@@ -191,6 +246,8 @@ function ModulationCard({
         return <StepGraphic tick={tick} />
       case 'envelope':
         return <EnvelopeGraphic tick={tick} />
+      case 'sampleHold':
+        return <SampleHoldGraphic tick={tick} />
     }
   }
 
@@ -256,10 +313,12 @@ export function MiddleSection() {
     random,
     step,
     envelope,
+    sampleHold,
     toggleLFO,
     toggleRandom,
     toggleStep,
     toggleEnvelope,
+    toggleSampleHold,
     assigningModulator,
     toggleAssignmentMode,
     selectedModulator,
@@ -267,7 +326,7 @@ export function MiddleSection() {
   } = useModulationStore()
 
   // Handle card click - select and enable, or disable if already selected
-  const handleCardClick = (type: 'lfo' | 'random' | 'step' | 'envelope') => {
+  const handleCardClick = (type: 'lfo' | 'random' | 'step' | 'envelope' | 'sampleHold') => {
     // If clicking the already selected one, disable and deselect
     if (selectedModulator === type) {
       switch (type) {
@@ -275,6 +334,7 @@ export function MiddleSection() {
         case 'random': if (random.enabled) toggleRandom(); break
         case 'step': if (step.enabled) toggleStep(); break
         case 'envelope': if (envelope.enabled) toggleEnvelope(); break
+        case 'sampleHold': if (sampleHold.enabled) toggleSampleHold(); break
       }
       setSelectedModulator(null)
       return
@@ -287,6 +347,7 @@ export function MiddleSection() {
       case 'random': if (!random.enabled) toggleRandom(); break
       case 'step': if (!step.enabled) toggleStep(); break
       case 'envelope': if (!envelope.enabled) toggleEnvelope(); break
+      case 'sampleHold': if (!sampleHold.enabled) toggleSampleHold(); break
     }
   }
 
@@ -477,6 +538,16 @@ export function MiddleSection() {
           isAssigning={assigningModulator === 'envelope'}
           onClick={() => handleCardClick('envelope')}
           onAssignClick={() => toggleAssignmentMode('envelope')}
+        />
+        <ModulationCard
+          type="sampleHold"
+          label="S&H"
+          tick={tick}
+          active={sampleHold.enabled}
+          selected={selectedModulator === 'sampleHold'}
+          isAssigning={assigningModulator === 'sampleHold'}
+          onClick={() => handleCardClick('sampleHold')}
+          onAssignClick={() => toggleAssignmentMode('sampleHold')}
         />
 
       </div>

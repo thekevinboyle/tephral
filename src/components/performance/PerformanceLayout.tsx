@@ -222,15 +222,48 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Row 2: Crossfader Section (spans all columns) */}
+      {/* Row 2, Col 1: Crossfader Section */}
       <div
+        className="rounded-sm overflow-hidden"
         style={{
           gridRow: 2,
-          gridColumn: '1 / 4',
+          gridColumn: 1,
           minHeight: 'var(--row-middle)',
+          border: '1px solid var(--border)',
         }}
       >
         <MiddleSection />
+      </div>
+
+      {/* Row 2-3, Col 2: Slicer Panel + Modulation Lane (spans 2 rows) */}
+      <div
+        className="flex flex-col rounded-sm overflow-hidden panel-gradient-subtle"
+        style={{
+          gridRow: '2 / 4',
+          gridColumn: 2,
+          border: '1px solid var(--border)',
+        }}
+      >
+        {/* Slicer takes most of the space */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <SequencerContainer />
+        </div>
+        {/* Modulation lane at the bottom */}
+        <div className="flex-shrink-0" style={{ height: '72px' }}>
+          <ModulationLane />
+        </div>
+      </div>
+
+      {/* Row 2-3, Col 3: Data Terminal (spans 2 rows) */}
+      <div
+        className="rounded-sm overflow-hidden panel-gradient-accent"
+        style={{
+          gridRow: '2 / 4',
+          gridColumn: 3,
+          border: '1px solid var(--border)',
+        }}
+      >
+        <DataTerminal />
       </div>
 
       {/* Row 3, Col 1: Effects Grid */}
@@ -256,37 +289,6 @@ export function PerformanceLayout() {
         <div className="flex-1 min-h-0">
           <PerformanceGrid />
         </div>
-      </div>
-
-      {/* Row 3, Col 2: Slicer Panel + Modulation Lane */}
-      <div
-        className="flex flex-col rounded-sm overflow-hidden panel-gradient-subtle"
-        style={{
-          gridRow: 3,
-          gridColumn: 2,
-          border: '1px solid var(--border)',
-        }}
-      >
-        {/* Slicer takes most of the space */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <SequencerContainer />
-        </div>
-        {/* Modulation lane at the bottom */}
-        <div className="flex-shrink-0" style={{ height: '72px' }}>
-          <ModulationLane />
-        </div>
-      </div>
-
-      {/* Row 3, Col 3: Data Terminal */}
-      <div
-        className="rounded-sm overflow-hidden panel-gradient-accent"
-        style={{
-          gridRow: 3,
-          gridColumn: 3,
-          border: '1px solid var(--border)',
-        }}
-      >
-        <DataTerminal />
       </div>
 
       {/* Clip detail modal */}

@@ -744,17 +744,23 @@ export function TargetIcon({ size = 16, color = 'currentColor', className }: Ico
   )
 }
 
-// Send/output arrow icon - for modulation routing
+// Send/output arrow icon - for modulation routing (abstract)
 export function SendIcon({ size = 16, color = 'currentColor', className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill={color} className={className}>
-      <Dot x={0} y={3} />
-      <Dot x={1} y={2} /><Dot x={1} y={3} /><Dot x={1} y={4} />
-      <Dot x={2} y={1} /><Dot x={2} y={3} /><Dot x={2} y={5} />
+      {/* Scattered source dots */}
+      <Dot x={0} y={2} />
+      <Dot x={1} y={4} />
+      <Dot x={0} y={5} />
+      {/* Converging flow */}
+      <Dot x={2} y={3} />
       <Dot x={3} y={3} />
-      <Dot x={4} y={3} />
+      {/* Output burst */}
+      <Dot x={5} y={1} />
       <Dot x={5} y={3} />
-      <Dot x={6} y={3} />
+      <Dot x={5} y={5} />
+      <Dot x={6} y={2} />
+      <Dot x={6} y={4} />
     </svg>
   )
 }

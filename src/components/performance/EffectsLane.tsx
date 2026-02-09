@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
@@ -187,56 +187,69 @@ function ModRateSelect({
 function ModulatorSection({
   title,
   enabled,
+  selected,
   onToggle,
+  onSelect,
   color,
   children,
 }: {
   title: string
   enabled: boolean
+  selected: boolean
   onToggle: () => void
+  onSelect: () => void
   color: string
   children: React.ReactNode
 }) {
+  const isExpanded = selected
+
   return (
     <div
       className="rounded-sm overflow-hidden"
       style={{
-        border: enabled ? `1px solid ${color}40` : '1px solid var(--border)',
-        backgroundColor: enabled ? `${color}08` : 'transparent',
+        border: selected ? `1px solid ${color}` : enabled ? `1px solid ${color}40` : '1px solid var(--border)',
+        backgroundColor: selected ? `${color}15` : enabled ? `${color}08` : 'transparent',
       }}
     >
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center gap-2 px-2 py-1.5"
-        style={{ borderBottom: enabled ? '1px solid var(--border)' : 'none' }}
+      <div
+        className="w-full flex items-center gap-2 px-2 py-1.5 cursor-pointer"
+        style={{ borderBottom: isExpanded ? '1px solid var(--border)' : 'none' }}
+        onClick={onSelect}
       >
-        <div
-          className="w-2 h-2 rounded-full"
+        {/* Enable/disable toggle */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggle()
+          }}
+          className="w-3 h-3 rounded-full flex-shrink-0"
           style={{
-            backgroundColor: enabled ? color : 'var(--text-ghost)',
+            backgroundColor: enabled ? color : 'transparent',
+            border: enabled ? 'none' : '1px solid var(--text-ghost)',
             boxShadow: enabled ? `0 0 6px ${color}` : 'none',
           }}
         />
         <span
-          className="text-[10px] uppercase tracking-widest"
+          className="text-[10px] uppercase tracking-widest flex-1"
           style={{ color: enabled ? color : 'var(--text-muted)' }}
         >
           {title}
         </span>
         <span
-          className="ml-auto text-[8px] uppercase"
+          className="text-[8px] uppercase"
           style={{ color: enabled ? color : 'var(--text-ghost)' }}
         >
           {enabled ? 'ON' : 'OFF'}
         </span>
-      </button>
-      {enabled && <div className="px-2 py-1.5">{children}</div>}
+      </div>
+      {isExpanded && <div className="px-2 py-1.5">{children}</div>}
     </div>
   )
 }
 
 function ModulationPanel() {
   const mod = useModulationStore()
+  const { selectedModulator, setSelectedModulator } = useModulationStore()
   const { routings, bpm } = useSequencerStore()
 
   // Count routings per modulator
@@ -245,6 +258,11 @@ function ModulationPanel() {
   const stepRoutings = routings.filter(r => r.trackId === 'step').length
   const envRoutings = routings.filter(r => r.trackId === 'envelope').length
   const sampleHoldRoutings = routings.filter(r => r.trackId === 'sampleHold').length
+
+  // Toggle selection (deselect if already selected)
+  const handleSelect = (type: 'lfo' | 'random' | 'step' | 'envelope' | 'sampleHold') => {
+    setSelectedModulator(selectedModulator === type ? null : type)
+  }
 
   const lfoShapes: { value: LFOShape; label: string }[] = [
     { value: 'sine', label: 'Sin' },
@@ -260,7 +278,9 @@ function ModulationPanel() {
       <ModulatorSection
         title={`LFO${lfoRoutings > 0 ? ` → ${lfoRoutings}` : ''}`}
         enabled={mod.lfo.enabled}
+        selected={selectedModulator === 'lfo'}
         onToggle={mod.toggleLFO}
+        onSelect={() => handleSelect('lfo')}
         color="#00D4FF"
       >
         <ModSelect
@@ -295,7 +315,9 @@ function ModulationPanel() {
       <ModulatorSection
         title={`Random${randomRoutings > 0 ? ` → ${randomRoutings}` : ''}`}
         enabled={mod.random.enabled}
+        selected={selectedModulator === 'random'}
         onToggle={mod.toggleRandom}
+        onSelect={() => handleSelect('random')}
         color="#FF6B6B"
       >
         <ModRateSelect
@@ -333,7 +355,9 @@ function ModulationPanel() {
       <ModulatorSection
         title={`Step${stepRoutings > 0 ? ` → ${stepRoutings}` : ''}`}
         enabled={mod.step.enabled}
+        selected={selectedModulator === 'step'}
         onToggle={mod.toggleStep}
+        onSelect={() => handleSelect('step')}
         color="#4ECDC4"
       >
         <ModRateSelect
@@ -382,7 +406,9 @@ function ModulationPanel() {
       <ModulatorSection
         title={`Envelope${envRoutings > 0 ? ` → ${envRoutings}` : ''}`}
         enabled={mod.envelope.enabled}
+        selected={selectedModulator === 'envelope'}
         onToggle={mod.toggleEnvelope}
+        onSelect={() => handleSelect('envelope')}
         color="#22c55e"
       >
         <ModSlider
@@ -458,7 +484,9 @@ function ModulationPanel() {
       <ModulatorSection
         title={`S&H${sampleHoldRoutings > 0 ? ` → ${sampleHoldRoutings}` : ''}`}
         enabled={mod.sampleHold.enabled}
+        selected={selectedModulator === 'sampleHold'}
         onToggle={mod.toggleSampleHold}
+        onSelect={() => handleSelect('sampleHold')}
         color="#f59e0b"
       >
         {/* Input (the signal being sampled) */}
@@ -612,6 +640,13 @@ export function EffectsLane() {
 
   // Check if any modulator is active (for tab indicator)
   const hasActiveModulation = modulation.lfo.enabled || modulation.random.enabled || modulation.step.enabled || modulation.envelope.enabled || modulation.sampleHold.enabled
+
+  // Auto-switch to MOD tab when a modulator is selected
+  useEffect(() => {
+    if (modulation.selectedModulator !== null) {
+      setActiveTab('mod')
+    }
+  }, [modulation.selectedModulator])
 
   // Build list of active effects
   const activeEffects: ActiveEffect[] = []

@@ -1,129 +1,221 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 import { usePolyEuclidStore } from '../../stores/polyEuclidStore'
 
 const CREAM = '#E8E4D9'
+const STRAND_BLUE = '#3a7ca5'
 
 interface DiagonalCascadeProps {
   width: number
   height: number
 }
 
-// Simple noise function for organic deformation
-function noise(x: number, y: number, seed: number): number {
-  const n = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453
-  return n - Math.floor(n)
+interface StrandNode {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  size: number
+  life: number
+  maxLife: number
+  trackIndex: number
 }
 
-// Draw an organic blob shape
-function drawBlob(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number,
-  time: number,
-  seed: number,
-  lobes: number = 5
-) {
-  ctx.beginPath()
-  const points: [number, number][] = []
-  const segments = lobes * 4
-
-  for (let i = 0; i <= segments; i++) {
-    const angle = (i / segments) * Math.PI * 2
-    const noiseVal = noise(Math.cos(angle) + time * 0.5, Math.sin(angle) + time * 0.5, seed)
-    const lobeFactor = 1 + Math.sin(angle * lobes + time * 2) * 0.3
-    const radius = size * lobeFactor * (0.8 + noiseVal * 0.4)
-    points.push([
-      x + Math.cos(angle) * radius,
-      y + Math.sin(angle) * radius
-    ])
-  }
-
-  // Draw smooth curve through points
-  ctx.moveTo(points[0][0], points[0][1])
-  for (let i = 0; i < points.length - 1; i++) {
-    const xc = (points[i][0] + points[i + 1][0]) / 2
-    const yc = (points[i][1] + points[i + 1][1]) / 2
-    ctx.quadraticCurveTo(points[i][0], points[i][1], xc, yc)
-  }
-  ctx.closePath()
-}
-
-// Draw an organic wavy ring
-function drawOrganicRing(
-  ctx: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-  radius: number,
-  time: number,
-  seed: number,
-  waves: number = 8,
-  amplitude: number = 5
-) {
-  ctx.beginPath()
-  const segments = 64
-
-  for (let i = 0; i <= segments; i++) {
-    const angle = (i / segments) * Math.PI * 2
-    const waveOffset = Math.sin(angle * waves + time * 1.5 + seed) * amplitude
-    const noiseOffset = noise(Math.cos(angle) * 2, Math.sin(angle) * 2, seed + time * 0.3) * amplitude * 0.5
-    const r = radius + waveOffset + noiseOffset
-
-    const x = centerX + Math.cos(angle) * r
-    const y = centerY + Math.sin(angle) * r
-
-    if (i === 0) {
-      ctx.moveTo(x, y)
-    } else {
-      ctx.lineTo(x, y)
-    }
-  }
-  ctx.closePath()
-}
-
-// Draw organic tendril/vine
-function drawTendril(
+// Kojima-style strand connection drawing
+function drawStrand(
   ctx: CanvasRenderingContext2D,
   x1: number,
   y1: number,
   x2: number,
   y2: number,
   time: number,
-  seed: number,
-  thickness: number = 1
+  intensity: number = 1
 ) {
   const dx = x2 - x1
   const dy = y2 - y1
   const dist = Math.sqrt(dx * dx + dy * dy)
-  const segments = Math.max(8, Math.floor(dist / 5))
+  if (dist < 1) return
 
+  const segments = Math.max(12, Math.floor(dist / 4))
+
+  // Draw multiple strand lines for depth
+  for (let strand = 0; strand < 3; strand++) {
+    const strandOffset = (strand - 1) * 2
+
+    ctx.beginPath()
+    ctx.moveTo(x1, y1)
+
+    for (let i = 1; i <= segments; i++) {
+      const t = i / segments
+      const baseX = x1 + dx * t
+      const baseY = y1 + dy * t
+
+      // Perpendicular for wave
+      const perpX = -dy / dist
+      const perpY = dx / dist
+
+      // Catenary-like sag + wave motion
+      const sag = Math.sin(t * Math.PI) * dist * 0.08
+      const wave = Math.sin(t * Math.PI * 4 - time * 3) * 3 * (1 - Math.abs(t - 0.5) * 2)
+
+      const x = baseX + perpX * (sag + wave + strandOffset)
+      const y = baseY + perpY * (sag + wave + strandOffset) + sag * 0.5
+
+      ctx.lineTo(x, y)
+    }
+
+    ctx.strokeStyle = strand === 1 ? CREAM : STRAND_BLUE
+    ctx.globalAlpha = intensity * (strand === 1 ? 0.6 : 0.2)
+    ctx.lineWidth = strand === 1 ? 1.5 : 0.5
+    ctx.stroke()
+  }
+}
+
+// Elektron-style grid node
+function drawGridNode(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  active: boolean,
+  highlight: boolean,
+  time: number
+) {
+  // Outer ring
   ctx.beginPath()
-  ctx.moveTo(x1, y1)
+  ctx.arc(x, y, size + 2, 0, Math.PI * 2)
+  ctx.strokeStyle = CREAM
+  ctx.globalAlpha = highlight ? 0.5 : 0.15
+  ctx.lineWidth = 1
+  ctx.stroke()
 
-  for (let i = 1; i <= segments; i++) {
-    const t = i / segments
-    const baseX = x1 + dx * t
-    const baseY = y1 + dy * t
+  // Inner fill
+  if (active) {
+    const pulse = Math.sin(time * 4) * 0.2 + 0.8
+    ctx.beginPath()
+    ctx.arc(x, y, size * pulse, 0, Math.PI * 2)
+    ctx.fillStyle = CREAM
+    ctx.globalAlpha = highlight ? 0.9 : 0.6
+    ctx.fill()
 
-    // Perpendicular offset for wave
-    const perpX = -dy / dist
-    const perpY = dx / dist
-    const wave = Math.sin(t * Math.PI * 3 + time * 2 + seed) * (1 - t) * 8
-    const noiseOff = noise(t * 10, seed, time) * 4 - 2
+    // Glow
+    if (highlight) {
+      ctx.shadowColor = CREAM
+      ctx.shadowBlur = 15
+      ctx.fill()
+      ctx.shadowBlur = 0
+    }
+  } else {
+    // Cross pattern for inactive
+    ctx.globalAlpha = 0.2
+    ctx.beginPath()
+    ctx.moveTo(x - size * 0.5, y)
+    ctx.lineTo(x + size * 0.5, y)
+    ctx.moveTo(x, y - size * 0.5)
+    ctx.lineTo(x, y + size * 0.5)
+    ctx.strokeStyle = CREAM
+    ctx.lineWidth = 1
+    ctx.stroke()
+  }
+}
 
-    const x = baseX + perpX * (wave + noiseOff)
-    const y = baseY + perpY * (wave + noiseOff)
+// Draw BB pod inspired core
+function drawBBCore(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  pulse: number,
+  time: number
+) {
+  // Outer container ring
+  ctx.beginPath()
+  ctx.arc(x, y, size + 8, 0, Math.PI * 2)
+  ctx.strokeStyle = CREAM
+  ctx.globalAlpha = 0.15
+  ctx.lineWidth = 2
+  ctx.stroke()
 
-    ctx.lineTo(x, y)
+  // Tech ring segments
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 + time * 0.2
+    const segmentLength = 0.3
+    ctx.beginPath()
+    ctx.arc(x, y, size + 4, angle, angle + segmentLength)
+    ctx.strokeStyle = CREAM
+    ctx.globalAlpha = 0.3 + pulse * 0.2
+    ctx.lineWidth = 2
+    ctx.stroke()
   }
 
-  ctx.lineWidth = thickness
-  ctx.stroke()
+  // Inner glow layers
+  const gradient = ctx.createRadialGradient(x, y, 0, x, y, size)
+  gradient.addColorStop(0, `rgba(232, 228, 217, ${0.4 + pulse * 0.4})`)
+  gradient.addColorStop(0.5, `rgba(232, 228, 217, ${0.1 + pulse * 0.2})`)
+  gradient.addColorStop(1, 'rgba(232, 228, 217, 0)')
+
+  ctx.beginPath()
+  ctx.arc(x, y, size, 0, Math.PI * 2)
+  ctx.fillStyle = gradient
+  ctx.globalAlpha = 1
+  ctx.fill()
+
+  // Core heartbeat
+  const heartbeat = Math.pow(Math.sin(time * 2), 8) * pulse
+  ctx.beginPath()
+  ctx.arc(x, y, 4 + heartbeat * 8, 0, Math.PI * 2)
+  ctx.fillStyle = CREAM
+  ctx.globalAlpha = 0.8
+  ctx.shadowColor = CREAM
+  ctx.shadowBlur = 20 + heartbeat * 30
+  ctx.fill()
+  ctx.shadowBlur = 0
 }
 
 export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const { tracks, getPattern } = usePolyEuclidStore()
+  const [mousePos, setMousePos] = useState({ x: width / 2, y: height / 2 })
+  const [isHovering, setIsHovering] = useState(false)
+  const [clickRipples, setClickRipples] = useState<{ x: number; y: number; time: number }[]>([])
+  const strandNodesRef = useRef<StrandNode[]>([])
+
+  // Mouse handlers
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setMousePos({
+      x: (e.clientX - rect.left) * (width / rect.width),
+      y: (e.clientY - rect.top) * (height / rect.height)
+    })
+  }, [width, height])
+
+  const handleMouseEnter = useCallback(() => setIsHovering(true), [])
+  const handleMouseLeave = useCallback(() => setIsHovering(false), [])
+
+  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = (e.clientX - rect.left) * (width / rect.width)
+    const y = (e.clientY - rect.top) * (height / rect.height)
+
+    setClickRipples(prev => [...prev.slice(-5), { x, y, time: performance.now() }])
+
+    // Spawn strand nodes on click
+    const nodes = strandNodesRef.current
+    for (let i = 0; i < 5; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const speed = 1 + Math.random() * 2
+      nodes.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: 2 + Math.random() * 3,
+        life: 1,
+        maxLife: 2 + Math.random() * 2,
+        trackIndex: Math.floor(Math.random() * tracks.length)
+      })
+    }
+    // Limit nodes
+    if (nodes.length > 50) nodes.splice(0, nodes.length - 50)
+  }, [width, height, tracks.length])
 
   const draw = useCallback((timestamp: number) => {
     const canvas = canvasRef.current
@@ -133,8 +225,8 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
 
     const time = timestamp / 1000
 
-    // Clear with slight fade for trails
-    ctx.fillStyle = 'rgba(10, 10, 10, 0.1)'
+    // Clear with fade
+    ctx.fillStyle = 'rgba(10, 10, 10, 0.15)'
     ctx.fillRect(0, 0, width, height)
 
     const centerX = width / 2
@@ -143,187 +235,252 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
     // Total pulse from all tracks
     const totalPulse = tracks.reduce((sum, t) => sum + (t.muted ? 0 : t.currentValue), 0) / Math.max(tracks.length, 1)
 
+    // Mouse influence
+    const mouseDist = Math.sqrt(Math.pow(mousePos.x - centerX, 2) + Math.pow(mousePos.y - centerY, 2))
+    const mouseInfluence = isHovering ? Math.max(0, 1 - mouseDist / 150) : 0
+
     // ═══════════════════════════════════════════════════════════════
-    // ORGANIC GRID BACKGROUND
+    // CLICK RIPPLES
     // ═══════════════════════════════════════════════════════════════
-    const gridSize = 12
-    const dotSpacing = Math.min(width, height) / gridSize
-    const gridOffsetX = (width - (gridSize - 1) * dotSpacing) / 2
-    const gridOffsetY = (height - (gridSize - 1) * dotSpacing) / 2
+    const now = performance.now()
+    setClickRipples(prev => prev.filter(r => now - r.time < 1500))
 
-    ctx.fillStyle = CREAM
+    clickRipples.forEach(ripple => {
+      const age = (now - ripple.time) / 1000
+      const radius = age * 100
+      const opacity = Math.max(0, 1 - age / 1.5)
 
-    for (let row = 0; row < gridSize; row++) {
-      for (let col = 0; col < gridSize; col++) {
-        const baseX = gridOffsetX + col * dotSpacing
-        const baseY = gridOffsetY + row * dotSpacing
+      ctx.beginPath()
+      ctx.arc(ripple.x, ripple.y, radius, 0, Math.PI * 2)
+      ctx.strokeStyle = CREAM
+      ctx.globalAlpha = opacity * 0.4
+      ctx.lineWidth = 2
+      ctx.stroke()
 
-        // Organic drift
-        const drift = noise(col * 0.5, row * 0.5, time * 0.2) * 6 - 3
-        const x = baseX + Math.sin(time + col * 0.5) * drift
-        const y = baseY + Math.cos(time + row * 0.5) * drift
+      // Inner ring
+      ctx.beginPath()
+      ctx.arc(ripple.x, ripple.y, radius * 0.6, 0, Math.PI * 2)
+      ctx.globalAlpha = opacity * 0.2
+      ctx.stroke()
+    })
 
-        // Distance from center
-        const dx = x - centerX
-        const dy = y - centerY
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        const maxDist = Math.min(width, height) / 2
+    // ═══════════════════════════════════════════════════════════════
+    // ELEKTRON-STYLE GRID BASELINE
+    // ═══════════════════════════════════════════════════════════════
+    const gridCols = 16
+    const cellWidth = width / (gridCols + 2)
+    const gridStartY = height * 0.85
 
-        // Ripple waves from center
-        const ripple = Math.sin(dist * 0.06 - time * 1.5 + totalPulse * 3) * 0.5 + 0.5
+    // Draw grid baseline
+    ctx.beginPath()
+    ctx.moveTo(cellWidth, gridStartY)
+    ctx.lineTo(width - cellWidth, gridStartY)
+    ctx.strokeStyle = CREAM
+    ctx.globalAlpha = 0.1
+    ctx.lineWidth = 1
+    ctx.stroke()
 
-        // Base opacity
-        const baseOpacity = 0.04 + ripple * 0.08 * (1 - dist / maxDist)
-        const blobSize = 2 + ripple * totalPulse * 3
+    // ═══════════════════════════════════════════════════════════════
+    // STRAND NETWORK CONNECTIONS
+    // ═══════════════════════════════════════════════════════════════
 
-        ctx.globalAlpha = baseOpacity
-        drawBlob(ctx, x, y, blobSize, time, col * 13.7 + row * 7.3, 3)
-        ctx.fill()
+    // Collect all active node positions
+    const activeNodes: { x: number; y: number; intensity: number; trackIndex: number }[] = []
+
+    tracks.forEach((track, trackIndex) => {
+      const pattern = getPattern(track.id)
+      if (track.muted) return
+
+      const trackRadius = 30 + trackIndex * 25
+      const stepAngle = (Math.PI * 2) / pattern.length
+
+      pattern.forEach((isHit, stepIndex) => {
+        if (!isHit) return
+        const isCurrent = stepIndex === track.currentStep
+
+        const angle = stepAngle * stepIndex - Math.PI / 2 + time * 0.05 * track.clockDivider
+        const x = centerX + Math.cos(angle) * trackRadius
+        const y = centerY + Math.sin(angle) * trackRadius
+
+        activeNodes.push({
+          x, y,
+          intensity: isCurrent ? 0.5 + track.currentValue * 0.5 : 0.2,
+          trackIndex
+        })
+      })
+    })
+
+    // Draw strands between nearby nodes (Kojima connection style)
+    for (let i = 0; i < activeNodes.length; i++) {
+      for (let j = i + 1; j < activeNodes.length; j++) {
+        const a = activeNodes[i]
+        const b = activeNodes[j]
+        const dist = Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2))
+
+        if (dist < 80 && dist > 10) {
+          const intensity = (1 - dist / 80) * Math.min(a.intensity, b.intensity)
+          drawStrand(ctx, a.x, a.y, b.x, b.y, time, intensity)
+        }
+      }
+
+      // Connect to mouse if hovering
+      if (isHovering) {
+        const a = activeNodes[i]
+        const dist = Math.sqrt(Math.pow(mousePos.x - a.x, 2) + Math.pow(mousePos.y - a.y, 2))
+        if (dist < 100 && dist > 10) {
+          const intensity = (1 - dist / 100) * a.intensity * 0.5
+          drawStrand(ctx, a.x, a.y, mousePos.x, mousePos.y, time, intensity)
+        }
       }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // ORGANIC TRACK ORBITS
+    // FLOATING STRAND NODES (from clicks)
+    // ═══════════════════════════════════════════════════════════════
+    const nodes = strandNodesRef.current
+    const dt = 0.016
+
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const node = nodes[i]
+      node.x += node.vx
+      node.y += node.vy
+      node.vy += 0.02 // gentle gravity
+      node.vx *= 0.99
+      node.vy *= 0.99
+      node.life -= dt / node.maxLife
+
+      if (node.life <= 0) {
+        nodes.splice(i, 1)
+        continue
+      }
+
+      // Draw node
+      ctx.beginPath()
+      ctx.arc(node.x, node.y, node.size * node.life, 0, Math.PI * 2)
+      ctx.fillStyle = CREAM
+      ctx.globalAlpha = node.life * 0.6
+      ctx.fill()
+
+      // Connect to nearby active nodes
+      for (const active of activeNodes) {
+        const dist = Math.sqrt(Math.pow(active.x - node.x, 2) + Math.pow(active.y - node.y, 2))
+        if (dist < 60) {
+          ctx.beginPath()
+          ctx.moveTo(node.x, node.y)
+          ctx.lineTo(active.x, active.y)
+          ctx.strokeStyle = STRAND_BLUE
+          ctx.globalAlpha = node.life * 0.2 * (1 - dist / 60)
+          ctx.lineWidth = 0.5
+          ctx.stroke()
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // TRACK ORBITS WITH ELEKTRON NODES
     // ═══════════════════════════════════════════════════════════════
 
     tracks.forEach((track, trackIndex) => {
       const pattern = getPattern(track.id)
-      const baseOpacity = track.muted ? 0.15 : 1
+      const baseOpacity = track.muted ? 0.2 : 1
 
-      // Each track gets an organic ring at different radius
-      const trackRadius = 25 + trackIndex * 24
+      const trackRadius = 30 + trackIndex * 25
       const stepAngle = (Math.PI * 2) / pattern.length
 
-      // Draw organic orbit ring
+      // Draw orbit arc
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, trackRadius, 0, Math.PI * 2)
       ctx.strokeStyle = CREAM
-      ctx.globalAlpha = baseOpacity * 0.1
+      ctx.globalAlpha = baseOpacity * 0.08
       ctx.lineWidth = 1
-      drawOrganicRing(ctx, centerX, centerY, trackRadius, time, trackIndex * 17, 6 + trackIndex * 2, 3 + trackIndex)
+      ctx.setLineDash([4, 8])
       ctx.stroke()
+      ctx.setLineDash([])
 
-      // Draw each step on the ring
+      // Draw steps as Elektron-style nodes
       pattern.forEach((isHit, stepIndex) => {
         const isCurrent = stepIndex === track.currentStep
-        const baseAngle = stepAngle * stepIndex - Math.PI / 2
-        const rotationOffset = time * 0.08 * track.clockDivider
+        const angle = stepAngle * stepIndex - Math.PI / 2 + time * 0.05 * track.clockDivider
 
-        // Get position on organic ring
-        const waveOffset = Math.sin(baseAngle * (6 + trackIndex * 2) + time * 1.5 + trackIndex * 17) * (3 + trackIndex)
-        const effectiveRadius = trackRadius + waveOffset
+        const x = centerX + Math.cos(angle) * trackRadius
+        const y = centerY + Math.sin(angle) * trackRadius
 
-        const angle = baseAngle + rotationOffset
-        const x = centerX + Math.cos(angle) * effectiveRadius
-        const y = centerY + Math.sin(angle) * effectiveRadius
+        // Check mouse proximity
+        const distToMouse = Math.sqrt(Math.pow(x - mousePos.x, 2) + Math.pow(y - mousePos.y, 2))
+        const isNearMouse = isHovering && distToMouse < 25
 
-        // Size based on hit and current state
-        let size = isHit ? 4 : 2
+        let size = 4
         if (isCurrent && !track.muted) {
-          size += track.currentValue * 6
+          size += track.currentValue * 4
         }
 
-        // Opacity varies
-        let opacity = isHit ? 0.5 : 0.12
-        if (isCurrent) {
-          opacity = 0.75 + track.currentValue * 0.25
-        }
+        ctx.globalAlpha = baseOpacity
+        drawGridNode(ctx, x, y, size, isHit, isCurrent || isNearMouse, time)
 
-        ctx.globalAlpha = baseOpacity * opacity
-        ctx.fillStyle = CREAM
-
-        // Glow on active hits
-        if (isCurrent && track.currentValue > 0.1 && !track.muted) {
-          ctx.shadowColor = CREAM
-          ctx.shadowBlur = 10 + track.currentValue * 15
-        }
-
-        // Draw organic blob for hits, smaller blob for rests
-        const lobes = isHit ? 5 + Math.floor(track.currentValue * 3) : 3
-        drawBlob(ctx, x, y, size, time, stepIndex * 31.7 + trackIndex * 47, lobes)
-        ctx.fill()
-
-        ctx.shadowBlur = 0
-
-        // Draw organic connection to next step for rests
-        if (!isHit && stepIndex < pattern.length - 1) {
-          const nextAngle = baseAngle + stepAngle + rotationOffset
-          const nextWave = Math.sin((baseAngle + stepAngle) * (6 + trackIndex * 2) + time * 1.5 + trackIndex * 17) * (3 + trackIndex)
-          const nextRadius = trackRadius + nextWave
-          const x2 = centerX + Math.cos(nextAngle) * nextRadius
-          const y2 = centerY + Math.sin(nextAngle) * nextRadius
-
-          ctx.globalAlpha = baseOpacity * 0.06
+        // Current step indicator line
+        if (isCurrent && isHit && !track.muted) {
+          ctx.globalAlpha = baseOpacity * track.currentValue * 0.5
           ctx.strokeStyle = CREAM
-          ctx.setLineDash([3, 5])
+          ctx.lineWidth = 1
           ctx.beginPath()
-          ctx.moveTo(x, y)
-          ctx.lineTo(x2, y2)
-          ctx.lineWidth = 0.5
+          ctx.moveTo(centerX, centerY)
+          ctx.lineTo(x, y)
           ctx.stroke()
-          ctx.setLineDash([])
         }
       })
 
-      // Draw organic tendril from current hit to center
-      const currentHit = pattern[track.currentStep]
-      if (currentHit && track.currentValue > 0.15 && !track.muted) {
-        const baseAngle = stepAngle * track.currentStep - Math.PI / 2
-        const rotationOffset = time * 0.08 * track.clockDivider
-        const waveOffset = Math.sin(baseAngle * (6 + trackIndex * 2) + time * 1.5 + trackIndex * 17) * (3 + trackIndex)
-        const effectiveRadius = trackRadius + waveOffset
-        const angle = baseAngle + rotationOffset
-
-        const x = centerX + Math.cos(angle) * effectiveRadius
-        const y = centerY + Math.sin(angle) * effectiveRadius
-
-        ctx.globalAlpha = baseOpacity * track.currentValue * 0.35
-        ctx.strokeStyle = CREAM
-        drawTendril(ctx, centerX, centerY, x, y, time, trackIndex * 23 + track.currentStep * 7, 1 + track.currentValue)
-      }
+      // Track label
+      ctx.globalAlpha = baseOpacity * 0.4
+      ctx.fillStyle = CREAM
+      ctx.font = '9px monospace'
+      ctx.textAlign = 'right'
+      ctx.fillText(`T${trackIndex + 1}`, centerX - trackRadius - 8, centerY + 3)
     })
 
     // ═══════════════════════════════════════════════════════════════
-    // ORGANIC BREATHING CORE
+    // BB POD CORE
     // ═══════════════════════════════════════════════════════════════
-    const breathe = Math.sin(time * 1.5) * 0.2 + 1
-    const coreSize = (12 + totalPulse * 15) * breathe
+    const coreSize = 15 + totalPulse * 10 + mouseInfluence * 5
+    drawBBCore(ctx, centerX, centerY, coreSize, totalPulse, time)
 
-    // Outer organic glow layers
-    for (let layer = 3; layer >= 0; layer--) {
-      const layerSize = coreSize + layer * 8
-      const layerOpacity = (0.08 - layer * 0.015) + totalPulse * 0.1
-
-      ctx.globalAlpha = layerOpacity
-      ctx.fillStyle = CREAM
-      drawBlob(ctx, centerX, centerY, layerSize, time * 0.7, layer * 11, 6 + layer)
-      ctx.fill()
+    // Mouse cursor strand to core when hovering
+    if (isHovering && mouseDist > 30) {
+      drawStrand(ctx, centerX, centerY, mousePos.x, mousePos.y, time, mouseInfluence * 0.4)
     }
 
-    // Core blob
-    ctx.globalAlpha = 0.4 + totalPulse * 0.4
+    // ═══════════════════════════════════════════════════════════════
+    // DATA READOUT (Elektron style)
+    // ═══════════════════════════════════════════════════════════════
+    ctx.globalAlpha = 0.4
     ctx.fillStyle = CREAM
-    ctx.shadowColor = CREAM
-    ctx.shadowBlur = 15 + totalPulse * 20
-    drawBlob(ctx, centerX, centerY, coreSize * 0.6, time, 777, 7)
-    ctx.fill()
-    ctx.shadowBlur = 0
+    ctx.font = '8px monospace'
+    ctx.textAlign = 'left'
 
-    // ═══════════════════════════════════════════════════════════════
-    // EXPANDING ORGANIC WAVES
-    // ═══════════════════════════════════════════════════════════════
-    for (let wave = 0; wave < 3; wave++) {
-      const wavePhase = (time * 0.4 + wave * 0.33) % 1
-      const waveRadius = 15 + wavePhase * 90
-      const waveOpacity = (1 - wavePhase) * 0.12 * (0.5 + totalPulse * 0.5)
+    const activeCount = tracks.filter(t => !t.muted).length
+    const totalHits = tracks.reduce((sum, t) => {
+      const p = getPattern(t.id)
+      return sum + p.filter(Boolean).length
+    }, 0)
 
-      ctx.strokeStyle = CREAM
-      ctx.globalAlpha = waveOpacity
-      ctx.lineWidth = 1 + (1 - wavePhase) * 0.5
-      drawOrganicRing(ctx, centerX, centerY, waveRadius, time, wave * 37, 5 + wave * 2, 4 + wavePhase * 3)
-      ctx.stroke()
-    }
+    ctx.fillText(`TRK ${activeCount}/${tracks.length}`, 8, 14)
+    ctx.fillText(`HIT ${String(totalHits).padStart(2, '0')}`, 8, 24)
+    ctx.fillText(`PLS ${(totalPulse * 100).toFixed(0).padStart(3, '0')}`, 8, 34)
+
+    ctx.textAlign = 'right'
+    ctx.fillText(`${width}×${height}`, width - 8, 14)
 
     ctx.globalAlpha = 1
-  }, [tracks, getPattern, width, height])
+  }, [tracks, getPattern, width, height, mousePos, isHovering, clickRipples])
+
+  useEffect(() => {
+    let animationId: number
+    const loop = (timestamp: number) => {
+      draw(timestamp)
+      animationId = requestAnimationFrame(loop)
+    }
+    animationId = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(animationId)
+  }, [draw])
 
   useEffect(() => {
     let animationId: number
@@ -340,7 +497,11 @@ export function DiagonalCascade({ width, height }: DiagonalCascadeProps) {
       ref={canvasRef}
       width={width}
       height={height}
-      style={{ width: '100%', height: '100%', display: 'block' }}
+      style={{ width: '100%', height: '100%', display: 'block', cursor: 'crosshair' }}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
     />
   )
 }

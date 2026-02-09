@@ -2,37 +2,6 @@ import { useState, useEffect } from 'react'
 import { HorizontalCrossfader } from './HorizontalCrossfader'
 import { SendIcon } from '../ui/DotMatrixIcons'
 import { useModulationStore } from '../../stores/modulationStore'
-import { useSequencerStore } from '../../stores/sequencerStore'
-
-// Time division options for rate dropdowns
-const RATE_OPTIONS = [
-  { label: '4 bars', division: 0.0625 },
-  { label: '2 bars', division: 0.125 },
-  { label: '1 bar', division: 0.25 },
-  { label: '1/2', division: 0.5 },
-  { label: '1/4', division: 1 },
-  { label: '1/8', division: 2 },
-  { label: '1/16', division: 4 },
-  { label: '1/32', division: 8 },
-  { label: '1/64', division: 16 },
-] as const
-
-// Convert BPM and division multiplier to Hz
-const divisionToHz = (bpm: number, division: number) => (bpm / 60) * division
-
-// Find closest rate option for a given Hz value
-const hzToClosestOption = (hz: number, bpm: number): { label: string; division: number } => {
-  let closest: { label: string; division: number } = RATE_OPTIONS[0]
-  let closestDiff = Math.abs(divisionToHz(bpm, closest.division) - hz)
-  for (const opt of RATE_OPTIONS) {
-    const diff = Math.abs(divisionToHz(bpm, opt.division) - hz)
-    if (diff < closestDiff) {
-      closest = opt
-      closestDiff = diff
-    }
-  }
-  return closest
-}
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
@@ -281,9 +250,6 @@ function ModulationCard({
 export function MiddleSection() {
   const [tick, setTick] = useState(0)
 
-  // Get BPM from sequencer
-  const { bpm } = useSequencerStore()
-
   // Get modulation state from store
   const {
     lfo,
@@ -298,15 +264,6 @@ export function MiddleSection() {
     toggleAssignmentMode,
     selectedModulator,
     setSelectedModulator,
-    setLFORate,
-    setLFOShape,
-    setRandomRate,
-    setRandomSmoothing,
-    setStepRate,
-    setStepValue,
-    setEnvelopeParams,
-    triggerEnvelope,
-    releaseEnvelope,
   } = useModulationStore()
 
   // Handle card click - select and enable, or disable if already selected
@@ -522,205 +479,6 @@ export function MiddleSection() {
           onAssignClick={() => toggleAssignmentMode('envelope')}
         />
 
-        {/* Parameter panel for selected modulator */}
-        {selectedModulator && (
-          <div
-            className="flex items-center gap-3 px-3 py-1 rounded-sm ml-2"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            {selectedModulator === 'lfo' && (
-              <>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Rate</span>
-                  <select
-                    value={hzToClosestOption(lfo.rate, bpm).label}
-                    onChange={(e) => {
-                      const opt = RATE_OPTIONS.find(o => o.label === e.target.value)
-                      if (opt) setLFORate(divisionToHz(bpm, opt.division))
-                    }}
-                    className="text-[10px] px-1 py-0.5 rounded-sm"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    {RATE_OPTIONS.map(opt => (
-                      <option key={opt.label} value={opt.label}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Shape</span>
-                  <select
-                    value={lfo.shape}
-                    onChange={(e) => setLFOShape(e.target.value as 'sine' | 'triangle' | 'square' | 'saw' | 'random')}
-                    className="text-[10px] px-1 py-0.5 rounded-sm"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    <option value="sine">Sine</option>
-                    <option value="triangle">Tri</option>
-                    <option value="square">Sqr</option>
-                    <option value="saw">Saw</option>
-                    <option value="random">S&H</option>
-                  </select>
-                </div>
-              </>
-            )}
-            {selectedModulator === 'random' && (
-              <>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Rate</span>
-                  <select
-                    value={hzToClosestOption(random.rate, bpm).label}
-                    onChange={(e) => {
-                      const opt = RATE_OPTIONS.find(o => o.label === e.target.value)
-                      if (opt) setRandomRate(divisionToHz(bpm, opt.division))
-                    }}
-                    className="text-[10px] px-1 py-0.5 rounded-sm"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    {RATE_OPTIONS.map(opt => (
-                      <option key={opt.label} value={opt.label}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Smooth</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={random.smoothing}
-                    onChange={(e) => setRandomSmoothing(parseFloat(e.target.value))}
-                    className="w-16"
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                  <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{Math.round(random.smoothing * 100)}%</span>
-                </div>
-              </>
-            )}
-            {selectedModulator === 'step' && (
-              <>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Rate</span>
-                  <select
-                    value={hzToClosestOption(step.rate, bpm).label}
-                    onChange={(e) => {
-                      const opt = RATE_OPTIONS.find(o => o.label === e.target.value)
-                      if (opt) setStepRate(divisionToHz(bpm, opt.division))
-                    }}
-                    className="text-[10px] px-1 py-0.5 rounded-sm"
-                    style={{
-                      backgroundColor: 'var(--bg-elevated)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    {RATE_OPTIONS.map(opt => (
-                      <option key={opt.label} value={opt.label}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex gap-[2px] items-end h-8">
-                  {step.steps.map((val, i) => (
-                    <div
-                      key={i}
-                      className="w-2 cursor-pointer hover:opacity-80"
-                      style={{
-                        height: `${val * 100}%`,
-                        minHeight: '2px',
-                        backgroundColor: step.currentStep === i ? 'var(--accent)' : 'var(--text-muted)',
-                      }}
-                      onClick={() => setStepValue(i, val > 0.5 ? 0 : 1)}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-            {selectedModulator === 'envelope' && (
-              <>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>A</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={2}
-                    step={0.01}
-                    value={envelope.attack}
-                    onChange={(e) => setEnvelopeParams({ attack: parseFloat(e.target.value) })}
-                    className="w-10"
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>D</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={2}
-                    step={0.01}
-                    value={envelope.decay}
-                    onChange={(e) => setEnvelopeParams({ decay: parseFloat(e.target.value) })}
-                    className="w-10"
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>S</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={envelope.sustain}
-                    onChange={(e) => setEnvelopeParams({ sustain: parseFloat(e.target.value) })}
-                    className="w-10"
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>R</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={2}
-                    step={0.01}
-                    value={envelope.release}
-                    onChange={(e) => setEnvelopeParams({ release: parseFloat(e.target.value) })}
-                    className="w-10"
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                </div>
-                <button
-                  onMouseDown={triggerEnvelope}
-                  onMouseUp={releaseEnvelope}
-                  onMouseLeave={releaseEnvelope}
-                  className="px-2 py-1 text-[9px] rounded-sm"
-                  style={{
-                    backgroundColor: envelope.phase !== 'idle' ? 'var(--accent)' : 'var(--bg-elevated)',
-                    border: '1px solid var(--border)',
-                    color: envelope.phase !== 'idle' ? 'var(--text-primary)' : 'var(--text-muted)',
-                  }}
-                >
-                  Trig
-                </button>
-              </>
-            )}
-          </div>
-        )}
       </div>
     </div>
   )

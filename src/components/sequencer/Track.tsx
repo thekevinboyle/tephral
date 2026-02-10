@@ -23,7 +23,6 @@ const STEP_COLOR = '#FF9500'
 export function Track({ track }: TrackProps) {
   const {
     updateTrack,
-    removeTrack,
     setTrackLength,
     getRoutingsForTrack,
     fillTrack,
@@ -121,10 +120,6 @@ export function Track({ track }: TrackProps) {
     randomizeTrack(track.id)
   }, [track.id, randomizeTrack])
 
-  const handleRemove = useCallback(() => {
-    removeTrack(track.id)
-  }, [track.id, removeTrack])
-
   const isActive = isPlaying && routings.length > 0 && !track.solo
 
   return (
@@ -171,41 +166,6 @@ export function Track({ track }: TrackProps) {
         {track.modeOverride ? MODE_LABELS[track.modeOverride] : '→'}
       </button>
 
-      {/* Route button with SendIcon - click to enter assignment mode */}
-      <button
-        className="w-7 h-7 rounded-sm flex items-center justify-center transition-all hover:scale-110"
-        style={{
-          backgroundColor: isAssigning ? STEP_COLOR : 'transparent',
-          boxShadow: isAssigning
-            ? `0 0 8px ${STEP_COLOR}`
-            : isActive
-              ? `0 0 4px ${STEP_COLOR}40`
-              : 'none',
-          animation: isActive && !isAssigning ? 'pulse-route 1.5s ease-in-out infinite' : 'none',
-        }}
-        onClick={(e) => {
-          e.stopPropagation()
-          toggleAssignmentMode(track.id)
-        }}
-        title={isAssigning ? 'Click parameter to route (ESC to cancel)' : 'Click to route to parameters'}
-      >
-        <SendIcon
-          size={16}
-          color={isAssigning ? 'var(--bg-primary)' : isActive ? STEP_COLOR : 'var(--text-ghost)'}
-        />
-      </button>
-      {routings.length > 0 && (
-        <span
-          className="text-[16px] font-bold"
-          style={{
-            color: STEP_COLOR,
-            opacity: isActive ? 1 : 0.6,
-          }}
-        >
-          {routings.length}
-        </span>
-      )}
-
       {/* Step grid - pattern preview style */}
       <div className="flex gap-[2px] ml-auto">
         <StepGrid track={track} />
@@ -235,16 +195,29 @@ export function Track({ track }: TrackProps) {
         RAND
       </button>
 
-      {/* Remove button */}
-      {(
-        <button
-          onClick={handleRemove}
-          className="text-[18px] ml-2 font-bold"
-          style={{ color: 'var(--danger)' }}
-        >
-          ×
-        </button>
-      )}
+      {/* Route button with SendIcon - click to enter assignment mode */}
+      <button
+        className="w-7 h-7 rounded-sm flex items-center justify-center transition-all hover:scale-110"
+        style={{
+          backgroundColor: isAssigning ? STEP_COLOR : 'transparent',
+          boxShadow: isAssigning
+            ? `0 0 8px ${STEP_COLOR}`
+            : isActive
+              ? `0 0 4px ${STEP_COLOR}40`
+              : 'none',
+          animation: isActive && !isAssigning ? 'pulse-route 1.5s ease-in-out infinite' : 'none',
+        }}
+        onClick={(e) => {
+          e.stopPropagation()
+          toggleAssignmentMode(track.id)
+        }}
+        title={isAssigning ? 'Click parameter to route (ESC to cancel)' : 'Click to route to parameters'}
+      >
+        <SendIcon
+          size={16}
+          color={isAssigning ? 'var(--bg-primary)' : isActive ? STEP_COLOR : 'var(--text-ghost)'}
+        />
+      </button>
     </div>
   )
 }

@@ -4,28 +4,19 @@ import { useClipStore } from '../stores/clipStore'
 
 const ARROW_SEQUENCE_TIMEOUT = 500
 const COMBO_TIMEOUT = 1000
-const ESCAPE_HOLD_DURATION = 2000
 
 export function useDestructionMode() {
-  const { active, activate, deactivate, setEscapeHeldStart } = useDestructionModeStore()
+  const { active, activate, deactivate } = useDestructionModeStore()
 
   const arrowPressesRef = useRef<number[]>([])
   const awaitingComboRef = useRef(false)
   const pressedKeysRef = useRef(new Set<string>())
   const comboTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const escapeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const clearComboTimeout = useCallback(() => {
     if (comboTimeoutRef.current) {
       clearTimeout(comboTimeoutRef.current)
       comboTimeoutRef.current = null
-    }
-  }, [])
-
-  const clearEscapeInterval = useCallback(() => {
-    if (escapeIntervalRef.current) {
-      clearInterval(escapeIntervalRef.current)
-      escapeIntervalRef.current = null
     }
   }, [])
 
@@ -41,23 +32,16 @@ export function useDestructionMode() {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const key = e.key.toLowerCase()
 
-    // Handle escape hold for exit
+    // Handle escape to exit destruction mode immediately
     if (active && e.key === 'Escape') {
-      if (!escapeIntervalRef.current) {
-        setEscapeHeldStart(Date.now())
-        escapeIntervalRef.current = setInterval(() => {
-          const start = useDestructionModeStore.getState().escapeHeldStart
-          if (start && Date.now() - start >= ESCAPE_HOLD_DURATION) {
-            clearEscapeInterval()
-            // Capture screenshot before deactivating
-            const canvas = document.querySelector('canvas') as HTMLCanvasElement
-            if (canvas) {
-              useClipStore.getState().captureDestructionFrame(canvas)
-            }
-            deactivate()
-          }
-        }, 100)
+      e.preventDefault()
+      e.stopPropagation()
+      // Capture screenshot before deactivating
+      const canvas = document.querySelector('[data-video-canvas-container] canvas') as HTMLCanvasElement
+      if (canvas) {
+        useClipStore.getState().captureDestructionFrame(canvas)
       }
+      deactivate()
       return
     }
 
@@ -100,17 +84,10 @@ export function useDestructionMode() {
       }
       checkCombo()
     }
-  }, [active, activate, deactivate, setEscapeHeldStart, clearComboTimeout, clearEscapeInterval, checkCombo])
+  }, [active, activate, deactivate, clearComboTimeout, checkCombo])
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
     const key = e.key.toLowerCase()
-
-    // Clear escape hold timer
-    if (e.key === 'Escape') {
-      clearEscapeInterval()
-      setEscapeHeldStart(null)
-      return
-    }
 
     // Remove from pressed keys
     if (key === 'shift' || !e.shiftKey) {
@@ -122,7 +99,7 @@ export function useDestructionMode() {
     if (key === 'm') {
       pressedKeysRef.current.delete('m')
     }
-  }, [clearEscapeInterval, setEscapeHeldStart])
+  }, [])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
@@ -132,9 +109,8 @@ export function useDestructionMode() {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
       clearComboTimeout()
-      clearEscapeInterval()
     }
-  }, [handleKeyDown, handleKeyUp, clearComboTimeout, clearEscapeInterval])
+  }, [handleKeyDown, handleKeyUp, clearComboTimeout])
 
   return { active }
 }

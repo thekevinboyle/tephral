@@ -8,7 +8,7 @@ interface StepGridProps {
 
 export function StepGrid({ track }: StepGridProps) {
   const { toggleStep, isPlaying } = useSequencerStore()
-  const { selectStep } = useUIStore()
+  const { selectStep, selectTrack } = useUIStore()
   const [isDragging, setIsDragging] = useState(false)
   const [dragValue, setDragValue] = useState<boolean | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
@@ -26,6 +26,12 @@ export function StepGrid({ track }: StepGridProps) {
   }
 
   const handleMouseDown = useCallback((stepIndex: number, e: React.MouseEvent) => {
+    // Stop propagation to prevent parent track row from toggling selection
+    e.stopPropagation()
+
+    // Always select this track on interaction
+    selectTrack(track.id)
+
     if (e.shiftKey) {
       selectStep(track.id, stepIndex)
       return
@@ -39,7 +45,7 @@ export function StepGrid({ track }: StepGridProps) {
     if (track.steps[stepIndex].active !== newValue) {
       toggleStep(track.id, stepIndex)
     }
-  }, [track.id, track.steps, toggleStep, selectStep])
+  }, [track.id, track.steps, toggleStep, selectStep, selectTrack])
 
   const handleMouseEnter = useCallback((stepIndex: number) => {
     if (isDragging && dragValue !== null) {
@@ -87,6 +93,7 @@ export function StepGrid({ track }: StepGridProps) {
               key={actualIndex}
               onMouseDown={(e) => handleMouseDown(actualIndex, e)}
               onMouseEnter={() => handleMouseEnter(actualIndex)}
+              onClick={(e) => e.stopPropagation()}
               className="w-[14px] h-[14px] cursor-pointer"
               style={{
                 backgroundColor: step.active ? 'var(--text-primary)' : 'transparent',

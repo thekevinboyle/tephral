@@ -84,6 +84,7 @@ export function Track({ track }: TrackProps) {
   ) => {
     const lengths = [4, 8, 12, 16, 24, 32, 48, 64]
     const startIndex = lengths.indexOf(startValue)
+    selectTrack(track.id)
 
     const handleMove = (e: MouseEvent) => {
       const deltaY = startY - e.clientY
@@ -101,33 +102,33 @@ export function Track({ track }: TrackProps) {
 
     window.addEventListener('mousemove', handleMove)
     window.addEventListener('mouseup', handleUp)
-  }, [track.id, track.length, setTrackLength])
+  }, [track.id, track.length, setTrackLength, selectTrack])
 
   const handleTrackClick = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement
     if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.closest('button')) {
       return
     }
-    if (isSelected) {
-      clearInfoPanelSelection()
-    } else {
-      selectTrack(track.id)
-    }
-  }, [track.id, isSelected, selectTrack, clearInfoPanelSelection])
+    // Always select this track (no toggle - LCD click returns to global)
+    selectTrack(track.id)
+  }, [track.id, selectTrack])
 
   const handleModeSelect = useCallback((mode: StepMode | null) => {
     updateTrack(track.id, { modeOverride: mode })
     setModeDropdownOpen(false)
-  }, [track.id, updateTrack])
+    selectTrack(track.id)
+  }, [track.id, updateTrack, selectTrack])
 
   const handleResolutionSelect = useCallback((resolution: StepResolution | null) => {
     updateTrack(track.id, { resolutionOverride: resolution })
     setResolutionDropdownOpen(false)
-  }, [track.id, updateTrack])
+    selectTrack(track.id)
+  }, [track.id, updateTrack, selectTrack])
 
   const handleSoloClick = useCallback(() => {
     updateTrack(track.id, { solo: !track.solo })
-  }, [track.id, track.solo, updateTrack])
+    selectTrack(track.id)
+  }, [track.id, track.solo, updateTrack, selectTrack])
 
   const handleFillClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -137,12 +138,14 @@ export function Track({ track }: TrackProps) {
     } else {
       fillTrack(track.id)
     }
-  }, [track.id, track.steps, track.length, fillTrack, clearTrack])
+    selectTrack(track.id)
+  }, [track.id, track.steps, track.length, fillTrack, clearTrack, selectTrack])
 
   const handleRandomClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     randomizeTrack(track.id)
-  }, [track.id, randomizeTrack])
+    selectTrack(track.id)
+  }, [track.id, randomizeTrack, selectTrack])
 
   const isActive = isPlaying && routings.length > 0 && !track.solo
 
@@ -155,6 +158,7 @@ export function Track({ track }: TrackProps) {
         backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
       }}
       onClick={handleTrackClick}
+      onDoubleClick={(e) => e.stopPropagation()}
     >
       {/* Track number / mute toggle */}
       <button
@@ -167,12 +171,12 @@ export function Track({ track }: TrackProps) {
 
       {/* Length - drag to adjust */}
       <div
-        className="cursor-ns-resize select-none"
+        className="cursor-ns-resize select-none flex items-end gap-1"
         style={{ color: 'var(--text-secondary)' }}
         onMouseDown={(e) => handleDrag('length', e.clientY, track.length)}
       >
-        <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>LEN</span>{' '}
-        <span className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>
+        <span className="text-[9px] uppercase tracking-wider pb-[3px]" style={{ color: 'var(--text-ghost)' }}>LEN</span>
+        <span className="text-[20px] font-bold leading-none" style={{ color: 'var(--text-primary)' }}>
           {String(track.length).padStart(2, '0')}
         </span>
       </div>

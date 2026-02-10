@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSequencerStore } from '../../stores/sequencerStore'
+import { useUIStore } from '../../stores/uiStore'
 
 // Format number with leading zeros
 function padNumber(n: number, digits: number): string {
@@ -306,10 +307,22 @@ const IDLE_PATTERNS = [
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════════════════════
 
+// Step sequencer accent color
+const STEP_COLOR = '#FF9500'
+
 export function StepLCDDisplay() {
   const [tick, setTick] = useState(0)
   const [patternIndex, setPatternIndex] = useState(0)
   const { tracks, isPlaying, bpm, stepResolution, globalMode } = useSequencerStore()
+  const { infoPanelSelection, clearInfoPanelSelection } = useUIStore()
+
+  // Get selected track if any
+  const selectedTrack = useMemo(() => {
+    if (infoPanelSelection?.type === 'track') {
+      return tracks.find(t => t.id === infoPanelSelection.trackId)
+    }
+    return null
+  }, [infoPanelSelection, tracks])
 
   // Animation loop
   useEffect(() => {
@@ -332,8 +345,8 @@ export function StepLCDDisplay() {
   // Get current idle pattern component
   const IdlePattern = IDLE_PATTERNS[patternIndex]
 
-  // Calculate stats
-  const stats = useMemo(() => {
+  // Calculate global stats
+  const globalStats = useMemo(() => {
     const totalSteps = tracks.reduce((sum, t) => sum + t.length, 0)
     const activeSteps = tracks.reduce((sum, t) =>
       sum + t.steps.slice(0, t.length).filter(s => s.active).length, 0
@@ -344,22 +357,44 @@ export function StepLCDDisplay() {
     return { totalSteps, activeSteps, density, currentStep, maxLength }
   }, [tracks])
 
+  // Calculate track-specific stats when a track is selected
+  const trackStats = useMemo(() => {
+    if (!selectedTrack) return null
+    const activeSteps = selectedTrack.steps.slice(0, selectedTrack.length).filter(s => s.active).length
+    const density = selectedTrack.length > 0 ? Math.round((activeSteps / selectedTrack.length) * 100) : 0
+    return {
+      trackNum: selectedTrack.name.replace(/[^0-9]/g, '') || '1',
+      length: selectedTrack.length,
+      activeSteps,
+      density,
+      currentStep: selectedTrack.currentStep,
+      resolution: selectedTrack.resolutionOverride ?? stepResolution,
+      mode: selectedTrack.modeOverride ?? globalMode,
+    }
+  }, [selectedTrack, stepResolution, globalMode])
+
   // Mode labels
-  const modeLabel = {
+  const MODE_LABELS: Record<string, string> = {
     forward: 'FWD',
     backward: 'BWD',
     pendulum: 'PND',
     random: 'RND',
-  }[globalMode] || 'FWD'
+  }
+
+  const globalModeLabel = MODE_LABELS[globalMode] || 'FWD'
 
   return (
     <div
       className="flex gap-4 px-3 py-2 relative grid-substrate"
       style={{
         '--grid-dot': 'var(--border)',
+        backgroundColor: 'var(--bg-surface)',
         borderBottom: '1px solid var(--border)',
         fontFamily: 'var(--font-mono, monospace)',
+        cursor: trackStats ? 'pointer' : 'default',
       } as React.CSSProperties}
+      onClick={trackStats ? clearInfoPanelSelection : undefined}
+      title={trackStats ? 'Click to return to global view' : undefined}
     >
       {/* Animated pattern display */}
       <div
@@ -378,52 +413,109 @@ export function StepLCDDisplay() {
         )}
       </div>
 
-      {/* Data readouts - BIG TEXT */}
+      {/* Data readouts - context-aware */}
       <div className="flex-1 flex flex-col justify-center">
-        {/* Top row - Track info */}
-        <div className="flex items-baseline gap-6">
-          <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
-            TRK{' '}
-            <span className="text-[28px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
-              {padNumber(tracks.length, 2)}
-            </span>
-          </span>
-          <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
-            STP{' '}
-            <span className="text-[28px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
-              {padNumber(stats.activeSteps, 3)}
-            </span>
-          </span>
-          <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
-            DNS{' '}
-            <span className="text-[28px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
-              {padNumber(stats.density, 2)}
-            </span>
-            <span className="text-[18px]" style={{ color: 'var(--text-muted)' }}>%</span>
-          </span>
-        </div>
+        {trackStats ? (
+          <>
+            {/* Track-specific view */}
+            <div className="flex items-baseline gap-6">
+              <span
+                className="text-[28px] font-bold"
+                style={{ color: STEP_COLOR }}
+              >
+                T{trackStats.trackNum}
+              </span>
+              <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+                LEN{' '}
+                <span className="text-[28px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                  {padNumber(trackStats.length, 2)}
+                </span>
+              </span>
+              <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+                STP{' '}
+                <span className="text-[28px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                  {padNumber(trackStats.activeSteps, 2)}
+                </span>
+              </span>
+              <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+                DNS{' '}
+                <span className="text-[28px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                  {padNumber(trackStats.density, 2)}
+                </span>
+                <span className="text-[18px]" style={{ color: 'var(--text-muted)' }}>%</span>
+              </span>
+            </div>
 
-        {/* Bottom row - Playback info */}
-        <div className="flex items-baseline gap-6 mt-1">
-          <span
-            className="text-[18px] font-bold"
-            style={{ color: isPlaying ? '#FF0055' : 'var(--text-ghost)' }}
-          >
-            {isPlaying ? '▶ PLAY' : '■ STOP'}
-          </span>
-          <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
-            <span className="text-[24px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
-              {padNumber(bpm, 3)}
-            </span>
-            {' '}BPM
-          </span>
-          <span className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>
-            {stepResolution}
-          </span>
-          <span className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>
-            {modeLabel}
-          </span>
-        </div>
+            {/* Track settings row */}
+            <div className="flex items-baseline gap-6 mt-1">
+              <span
+                className="text-[18px] font-bold"
+                style={{ color: isPlaying ? STEP_COLOR : 'var(--text-ghost)' }}
+              >
+                {isPlaying ? '▶ PLAY' : '■ STOP'}
+              </span>
+              <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+                <span className="text-[24px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                  {padNumber(bpm, 3)}
+                </span>
+                {' '}BPM
+              </span>
+              <span className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>
+                {trackStats.resolution}
+              </span>
+              <span className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>
+                {MODE_LABELS[trackStats.mode] || 'FWD'}
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Global view */}
+            <div className="flex items-baseline gap-6">
+              <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+                TRK{' '}
+                <span className="text-[28px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                  {padNumber(tracks.length, 2)}
+                </span>
+              </span>
+              <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+                STP{' '}
+                <span className="text-[28px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                  {padNumber(globalStats.activeSteps, 3)}
+                </span>
+              </span>
+              <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+                DNS{' '}
+                <span className="text-[28px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                  {padNumber(globalStats.density, 2)}
+                </span>
+                <span className="text-[18px]" style={{ color: 'var(--text-muted)' }}>%</span>
+              </span>
+            </div>
+
+            {/* Global playback info */}
+            <div className="flex items-baseline gap-6 mt-1">
+              <span
+                className="text-[18px] font-bold"
+                style={{ color: isPlaying ? '#FF0055' : 'var(--text-ghost)' }}
+              >
+                {isPlaying ? '▶ PLAY' : '■ STOP'}
+              </span>
+              <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+                <span className="text-[24px] font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                  {padNumber(bpm, 3)}
+                </span>
+                {' '}BPM
+              </span>
+              <span className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>
+                {stepResolution}
+              </span>
+              <span className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>
+                {globalModeLabel}
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Step position indicator */}
@@ -432,15 +524,15 @@ export function StepLCDDisplay() {
           <span
             className="text-[48px] font-bold tabular-nums"
             style={{
-              color: 'var(--text-primary)',
+              color: trackStats ? STEP_COLOR : 'var(--text-primary)',
               lineHeight: 1,
-              textShadow: '0 0 12px rgba(255, 255, 255, 0.4)',
+              textShadow: trackStats ? `0 0 12px ${STEP_COLOR}40` : '0 0 12px rgba(255, 255, 255, 0.4)',
             }}
           >
-            {padNumber(stats.currentStep + 1, 2)}
+            {padNumber((trackStats?.currentStep ?? globalStats.currentStep) + 1, 2)}
           </span>
           <span className="text-[9px]" style={{ color: 'var(--text-ghost)' }}>
-            /{padNumber(stats.maxLength, 2)}
+            /{padNumber(trackStats?.length ?? globalStats.maxLength, 2)}
           </span>
         </div>
       )}

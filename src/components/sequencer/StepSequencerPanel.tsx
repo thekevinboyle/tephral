@@ -205,37 +205,31 @@ export function StepSequencerPanel() {
         </button>
       </div>
 
-      {/* Track list - scrollable */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      {/* Track list - scrollable with double-click to add */}
+      <div
+        className="flex-1 overflow-y-auto min-h-0 flex flex-col"
+        onDoubleClick={addTrack}
+        title="Double-click to add a track"
+      >
         {tracks.length === 0 ? (
           <div
-            className="flex items-center justify-center h-full text-[11px] cursor-pointer uppercase tracking-wider"
+            className="flex items-center justify-center h-full text-[11px] uppercase tracking-wider"
             style={{ color: 'var(--text-ghost)' }}
-            onDoubleClick={addTrack}
-            title="Double-click to add a track"
           >
-            No tracks
+            Double-click to add a track
           </div>
         ) : (
-          <div className="flex flex-col">
-            {tracks.map((track) => (
-              <Track key={track.id} track={track} />
-            ))}
-          </div>
+          <>
+            <div className="flex flex-col">
+              {tracks.map((track) => (
+                <Track key={track.id} track={track} />
+              ))}
+            </div>
+            {/* Empty area below tracks - fills remaining space */}
+            <div className="flex-1 min-h-[60px]" />
+          </>
         )}
       </div>
-
-      {/* Add Track button */}
-      <button
-        onClick={addTrack}
-        className="text-[11px] uppercase tracking-wider py-2 text-center"
-        style={{
-          color: 'var(--text-muted)',
-          borderTop: '1px solid var(--border)',
-        }}
-      >
-        + ADD TRACK
-      </button>
     </div>
   )
 }

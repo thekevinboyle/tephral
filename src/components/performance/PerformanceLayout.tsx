@@ -20,7 +20,10 @@ import { useEuclideanEngine } from '../../hooks/useEuclideanEngine'
 import { useRicochetEngine } from '../../hooks/useRicochetEngine'
 import { usePolyEuclidEngine } from '../../hooks/usePolyEuclidEngine'
 import { useModulationEngine } from '../../hooks/useModulationEngine'
+import { useDestructionMode } from '../../hooks/useDestructionMode'
+import { useDestructionChaos } from '../../hooks/useDestructionChaos'
 import { useMediaStore } from '../../stores/mediaStore'
+import { DestructionOverlay } from '../DestructionOverlay'
 // InfoPanel kept for future use
 // import { InfoPanel } from '../panels/InfoPanel'
 
@@ -50,6 +53,10 @@ export function PerformanceLayout() {
 
   // Initialize continuous modulation for special sources (euclidean, ricochet, lfo, random, step, envelope)
   useContinuousModulation()
+
+  // Initialize destruction mode (hidden feature)
+  useDestructionMode()
+  useDestructionChaos()
 
   // Create a ref object that useRecordingCapture can use
   const captureRef = useRef<HTMLCanvasElement | null>(null)
@@ -297,6 +304,9 @@ export function PerformanceLayout() {
 
       {/* Modulation connection lines overlay */}
       <ModulationLines />
+
+      {/* Destruction mode overlay */}
+      <DestructionOverlay />
     </div>
   )
 }

@@ -10,6 +10,7 @@ import { useAsciiRenderStore } from '../stores/asciiRenderStore'
 import { useMediaStore } from '../stores/mediaStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useRecordingStore } from '../stores/recordingStore'
+import { useDestructionModeStore } from '../stores/destructionModeStore'
 import { useSlicerStore } from '../stores/slicerStore'
 import { useSlicerBufferStore } from '../stores/slicerBufferStore'
 import { SlicerCompositor } from '../effects/SlicerCompositor'
@@ -26,6 +27,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   const mediaTexture = useVideoTexture()
   const { videoElement, imageElement } = useMediaStore()
   const { previewTime } = useRecordingStore()
+  const destructionActive = useDestructionModeStore((state) => state.active)
 
   // Slicer state
   const {
@@ -231,6 +233,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       // Vision effects (GPU overlay versions) - not affected by glitchEnabled
       dotsEnabled: getEffectiveEnabled('acid_dots', dotsEnabled && !effectBypassed['acid_dots']),
       asciiEnabled: getEffectiveEnabled('ascii', asciiEnabled && !effectBypassed['ascii'] && asciiParams.mode !== 'matrix'),
+      // Destruction mode datamosh effect
+      datamoshEnabled: destructionActive,
       bypassActive,
       crossfaderPosition,
       hasSourceTexture: !!mediaTexture && !slicerEnabled,
@@ -291,6 +295,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     dotsParams,
     asciiEnabled,
     asciiParams,
+    // Destruction mode
+    destructionActive,
   ])
 
   // Update input texture and video dimensions

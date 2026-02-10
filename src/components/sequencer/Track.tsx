@@ -26,9 +26,9 @@ export function Track({ track }: TrackProps) {
     removeTrack,
     setTrackLength,
     getRoutingsForTrack,
-    fillModeActive,
     fillTrack,
     clearTrack,
+    randomizeTrack,
     isPlaying,
     assigningTrack,
     toggleAssignmentMode,
@@ -106,16 +106,20 @@ export function Track({ track }: TrackProps) {
     updateTrack(track.id, { solo: !track.solo })
   }, [track.id, track.solo, updateTrack])
 
-  const handleFillClick = useCallback(() => {
-    if (fillModeActive) {
-      const isAllFilled = track.steps.slice(0, track.length).every(s => s.active)
-      if (isAllFilled) {
-        clearTrack(track.id)
-      } else {
-        fillTrack(track.id)
-      }
+  const handleFillClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    const isAllFilled = track.steps.slice(0, track.length).every(s => s.active)
+    if (isAllFilled) {
+      clearTrack(track.id)
+    } else {
+      fillTrack(track.id)
     }
-  }, [track.id, track.steps, track.length, fillModeActive, fillTrack, clearTrack])
+  }, [track.id, track.steps, track.length, fillTrack, clearTrack])
+
+  const handleRandomClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    randomizeTrack(track.id)
+  }, [track.id, randomizeTrack])
 
   const handleRemove = useCallback(() => {
     removeTrack(track.id)
@@ -131,7 +135,7 @@ export function Track({ track }: TrackProps) {
         borderBottom: '1px solid var(--border)',
         backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
       }}
-      onClick={fillModeActive ? handleFillClick : handleTrackClick}
+      onClick={handleTrackClick}
     >
       {/* Track number / mute toggle */}
       <button
@@ -165,6 +169,30 @@ export function Track({ track }: TrackProps) {
         title={track.modeOverride ? `Mode: ${track.modeOverride}` : 'Using global mode'}
       >
         {track.modeOverride ? MODE_LABELS[track.modeOverride] : '→'}
+      </button>
+
+      {/* Fill button */}
+      <button
+        onClick={handleFillClick}
+        className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm"
+        style={{
+          color: 'var(--text-secondary)',
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        FILL
+      </button>
+
+      {/* Random button */}
+      <button
+        onClick={handleRandomClick}
+        className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm"
+        style={{
+          color: 'var(--text-secondary)',
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        RAND
       </button>
 
       {/* Route button with SendIcon - click to enter assignment mode */}

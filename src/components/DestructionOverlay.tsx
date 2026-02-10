@@ -12,11 +12,30 @@ const ARROWS = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖']
 const GEOMETRIC = ['⬢', '◯', '▲', '◼', '◆', '●', '■', '▶', '△', '□', '◇']
 const BLOCKS = ['█', '▓', '▒', '░', '▄', '▀']
 const CHAOS = ['✕', '✖', '⚡', '☠', '⚠', '⌧', '⊗', '⊘']
+const SMILEYS = ['☺', '☻', '㋡', 'ツ', '웃', '유']
 
 // Configuration
 const FADE_DURATION = 500
 const SPAWN_RATE = 3 // glyphs per frame
 const MAX_GLYPHS = 400
+const MAX_SMILEYS = 50
+const SMILEY_SPAWN_CHANCE = 0.02
+
+interface SpiralingSmiley {
+  x: number
+  y: number
+  centerX: number
+  centerY: number
+  angle: number
+  radius: number
+  radiusSpeed: number
+  angleSpeed: number
+  scale: number
+  alpha: number
+  char: string
+  hue: number
+  duplicateTimer: number
+}
 
 interface FallingGlyph {
   x: number
@@ -43,6 +62,7 @@ export function DestructionOverlay() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationFrameRef = useRef<number>(0)
   const glyphsRef = useRef<FallingGlyph[]>([])
+  const smileysRef = useRef<SpiralingSmiley[]>([])
   const lastTimeRef = useRef<number>(0)
 
   // Visibility and fade states
@@ -107,6 +127,27 @@ export function DestructionOverlay() {
     }
   }, [getRandomGlyph])
 
+  // Create a spiraling smiley
+  const createSmiley = useCallback((width: number, height: number, fromSmiley?: SpiralingSmiley): SpiralingSmiley => {
+    const centerX = fromSmiley ? fromSmiley.x : Math.random() * width
+    const centerY = fromSmiley ? fromSmiley.y : Math.random() * height
+    return {
+      x: centerX,
+      y: centerY,
+      centerX,
+      centerY,
+      angle: fromSmiley ? fromSmiley.angle + Math.PI / 4 : Math.random() * Math.PI * 2,
+      radius: fromSmiley ? 5 : 0,
+      radiusSpeed: 0.5 + Math.random() * 1.5,
+      angleSpeed: (Math.random() > 0.5 ? 1 : -1) * (0.05 + Math.random() * 0.1),
+      scale: fromSmiley ? fromSmiley.scale * 0.85 : 1.0 + Math.random() * 1.5,
+      alpha: 0.6 + Math.random() * 0.4,
+      char: SMILEYS[Math.floor(Math.random() * SMILEYS.length)],
+      hue: Math.random() * 360,
+      duplicateTimer: 20 + Math.random() * 40,
+    }
+  }, [])
+
   // Animation loop
   const animate = useCallback((time: number) => {
     const canvas = canvasRef.current
@@ -134,6 +175,11 @@ export function DestructionOverlay() {
       for (let i = 0; i < SPAWN_RATE; i++) {
         glyphsRef.current.push(createGlyph(width))
       }
+    }
+
+    // Spawn new smileys occasionally
+    if (smileysRef.current.length < MAX_SMILEYS && Math.random() < SMILEY_SPAWN_CHANCE) {
+      smileysRef.current.push(createSmiley(width, height))
     }
 
     // Update and draw glyphs
@@ -187,6 +233,54 @@ export function DestructionOverlay() {
 
       ctx.restore()
     }
+
+    // Update and draw spiraling smileys
+    const smileys = smileysRef.current
+    const newSmileys: SpiralingSmiley[] = []
+    for (let i = smileys.length - 1; i >= 0; i--) {
+      const s = smileys[i]
+
+      // Update spiral position
+      s.angle += s.angleSpeed * deltaTime
+      s.radius += s.radiusSpeed * deltaTime
+      s.x = s.centerX + Math.cos(s.angle) * s.radius
+      s.y = s.centerY + Math.sin(s.angle) * s.radius
+
+      // Fade out as it expands
+      s.alpha -= 0.003 * deltaTime
+      s.scale *= 1 + (0.005 * deltaTime)
+
+      // Duplicate timer
+      s.duplicateTimer -= deltaTime
+      if (s.duplicateTimer <= 0 && smileys.length + newSmileys.length < MAX_SMILEYS && s.alpha > 0.2) {
+        newSmileys.push(createSmiley(width, height, s))
+        s.duplicateTimer = 15 + Math.random() * 25
+      }
+
+      // Remove if faded or off screen
+      if (s.alpha <= 0 || s.x < -100 || s.x > width + 100 || s.y < -100 || s.y > height + 100) {
+        smileys.splice(i, 1)
+        continue
+      }
+
+      // Draw smiley
+      ctx.save()
+      ctx.translate(s.x, s.y)
+      ctx.rotate(s.angle * 2) // spin as it spirals
+      ctx.scale(s.scale, s.scale)
+
+      // Acid colors - cycle through hue
+      s.hue = (s.hue + deltaTime * 5) % 360
+      ctx.fillStyle = `hsla(${s.hue}, 100%, 60%, ${s.alpha})`
+      ctx.font = `${24}px sans-serif`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(s.char, 0, 0)
+
+      ctx.restore()
+    }
+    // Add duplicated smileys
+    smileysRef.current.push(...newSmileys)
 
     // HEAVY horizontal glitch lines
     if (Math.random() < 0.2) {
@@ -272,7 +366,7 @@ export function DestructionOverlay() {
     }
 
     animationFrameRef.current = requestAnimationFrame(animate)
-  }, [createGlyph, getRandomGlyph])
+  }, [createGlyph, createSmiley, getRandomGlyph])
 
   // Handle activation/deactivation with fade
   useEffect(() => {
@@ -284,6 +378,7 @@ export function DestructionOverlay() {
       const timeout = setTimeout(() => {
         setIsVisible(false)
         glyphsRef.current = [] // Clear glyphs on hide
+        smileysRef.current = [] // Clear smileys on hide
       }, FADE_DURATION)
       return () => clearTimeout(timeout)
     }
@@ -300,6 +395,7 @@ export function DestructionOverlay() {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
       glyphsRef.current = [] // Reset glyphs on resize
+      smileysRef.current = [] // Reset smileys on resize
     }
 
     updateSize()

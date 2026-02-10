@@ -6,7 +6,7 @@ function padNumber(n: number, digits: number): string {
   return String(Math.abs(Math.floor(n))).padStart(digits, '0')
 }
 
-const GRID_WIDTH = 16
+const GRID_WIDTH = 32
 const GRID_HEIGHT = 12
 
 // ════════════════════════════════════════════════════════════════════════════

@@ -407,7 +407,7 @@ export function StepLCDDisplay() {
         }}
       >
         {isPlaying ? (
-          <RunningPattern tick={tick} currentStep={stats.currentStep} length={stats.maxLength} />
+          <RunningPattern tick={tick} currentStep={globalStats.currentStep} length={globalStats.maxLength} />
         ) : (
           <IdlePattern tick={tick} />
         )}

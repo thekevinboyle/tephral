@@ -36,7 +36,7 @@ export function Track({ track }: TrackProps) {
     setAssigningTrack,
   } = useSequencerStore()
 
-  const { infoPanelSelection, selectTrack, clearInfoPanelSelection } = useUIStore()
+  const { infoPanelSelection, selectTrack } = useUIStore()
   const { stepResolution: globalResolution, globalMode } = useSequencerStore()
   const routings = getRoutingsForTrack(track.id)
   const isSelected = infoPanelSelection?.type === 'track' && infoPanelSelection.trackId === track.id

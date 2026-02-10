@@ -64,3 +64,6 @@ export type { DotsEffectParams } from './DotsEffect'
 
 export { AsciiEffect, DEFAULT_ASCII_EFFECT_PARAMS } from './AsciiEffect'
 export type { AsciiEffectParams, AsciiEffectMode, AsciiColorMode } from './AsciiEffect'
+
+export { DatamoshEffect, DEFAULT_DATAMOSH_PARAMS } from './DatamoshEffect'
+export type { DatamoshParams } from './DatamoshEffect'

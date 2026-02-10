@@ -356,7 +356,7 @@ export function StepLCDDisplay() {
     <div
       className="flex gap-4 px-3 py-2"
       style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        backgroundColor: 'var(--bg-primary)',
         borderBottom: '1px solid var(--border)',
         fontFamily: 'var(--font-mono, monospace)',
       }}
@@ -366,8 +366,9 @@ export function StepLCDDisplay() {
         className="flex-shrink-0"
         style={{
           padding: '4px',
-          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
           borderRadius: '2px',
+          border: '1px solid var(--border)',
         }}
       >
         {isPlaying ? (

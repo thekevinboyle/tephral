@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useDestructionModeStore } from '../stores/destructionModeStore'
+import { useClipStore } from '../stores/clipStore'
 
 const ARROW_SEQUENCE_TIMEOUT = 500
 const COMBO_TIMEOUT = 1000
@@ -48,6 +49,11 @@ export function useDestructionMode() {
           const start = useDestructionModeStore.getState().escapeHeldStart
           if (start && Date.now() - start >= ESCAPE_HOLD_DURATION) {
             clearEscapeInterval()
+            // Capture screenshot before deactivating
+            const canvas = document.querySelector('canvas') as HTMLCanvasElement
+            if (canvas) {
+              useClipStore.getState().captureDestructionFrame(canvas)
+            }
             deactivate()
           }
         }, 100)

@@ -40,6 +40,9 @@ interface ClipState {
   setExportQuality: (quality: ExportQuality) => void
   setExportFrameRate: (frameRate: ExportFrameRate) => void
   setExportFormat: (format: ExportFormat) => void
+
+  // Destruction mode capture
+  captureDestructionFrame: (canvas: HTMLCanvasElement) => Promise<void>
 }
 
 /**
@@ -184,5 +187,34 @@ export const useClipStore = create<ClipState>((set, get) => ({
 
   setExportFormat: (format: ExportFormat) => {
     set({ exportFormat: format })
+  },
+
+  captureDestructionFrame: async (canvas: HTMLCanvasElement) => {
+    try {
+      const dataUrl = canvas.toDataURL('image/png')
+      const response = await fetch(dataUrl)
+      const blob = await response.blob()
+
+      const id = generateUUID()
+      const url = URL.createObjectURL(blob)
+
+      set((state) => ({
+        clips: [
+          ...state.clips,
+          {
+            id,
+            blob,
+            url,
+            thumbnailUrl: dataUrl,
+            duration: 0,
+            createdAt: Date.now(),
+            frames: [],
+          },
+        ],
+      }))
+    } catch (error) {
+      console.error('Failed to capture destruction frame:', error)
+      // Silently fail - screenshot is a bonus
+    }
   },
 }))

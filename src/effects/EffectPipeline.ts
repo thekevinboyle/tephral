@@ -22,6 +22,7 @@ import {
   FreezeMaskEffect,
   DotsEffect,
   AsciiEffect,
+  DatamoshEffect,
 } from './glitch-engine'
 
 export class EffectPipeline {
@@ -56,6 +57,9 @@ export class EffectPipeline {
   // Vision effects (GPU versions of overlays)
   dotsEffect: DotsEffect | null = null
   asciiEffect: AsciiEffect | null = null
+
+  // Destruction effects
+  datamosh: DatamoshEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -111,6 +115,9 @@ export class EffectPipeline {
 
     // Crossfader for A/B source blending
     this.crossfaderEffect = new CrossfaderEffect()
+
+    // Destruction effects
+    this.datamosh = new DatamoshEffect()
   }
 
   // Map effect IDs to effect instances
@@ -136,6 +143,7 @@ export class EffectPipeline {
       case 'freeze_mask': return this.freezeMask
       case 'acid_dots': return this.dotsEffect
       case 'ascii': return this.asciiEffect
+      case 'datamosh': return this.datamosh
       default: return null
     }
   }
@@ -164,6 +172,8 @@ export class EffectPipeline {
     // Vision effects (GPU overlays)
     dotsEnabled: boolean
     asciiEnabled: boolean
+    // Destruction effects
+    datamoshEnabled: boolean
     bypassActive: boolean
     crossfaderPosition: number
     hasSourceTexture: boolean
@@ -212,6 +222,7 @@ export class EffectPipeline {
       freeze_mask: config.freezeMaskEnabled,
       acid_dots: config.dotsEnabled,
       ascii: config.asciiEnabled,
+      datamosh: config.datamoshEnabled,
     }
 
     // Collect enabled effects in the specified order
@@ -339,6 +350,7 @@ export class EffectPipeline {
 
     if (renderer && outputBuffer) {
       this.feedbackLoop?.captureFrame(renderer, outputBuffer)
+      this.datamosh?.captureFrame(renderer, outputBuffer)
       this.motionExtract?.captureFrame(renderer, outputBuffer)
       this.echoTrail?.captureFrame(renderer, outputBuffer)
       this.timeSmear?.captureFrame(renderer, outputBuffer)
@@ -370,6 +382,7 @@ export class EffectPipeline {
     this.freezeMask?.dispose()
     this.dotsEffect?.dispose()
     this.asciiEffect?.dispose()
+    this.datamosh?.dispose()
   }
 
   // Capture frame for temporal effects (call after render)

@@ -17,8 +17,8 @@ const MODE_LABELS: Record<StepMode, string> = {
 
 const MODE_ORDER: StepMode[] = ['forward', 'backward', 'pendulum', 'random']
 
-// Accent color matching slicer/euclid
-const ACCENT_COLOR = '#FF0055'
+// Step sequencer accent color (distinct from euclidean #FF0055)
+const STEP_COLOR = '#FF9500'
 
 export function Track({ track }: TrackProps) {
   const {
@@ -137,7 +137,7 @@ export function Track({ track }: TrackProps) {
       <button
         onClick={handleSoloClick}
         className="text-[11px] font-bold uppercase"
-        style={{ color: track.solo ? ACCENT_COLOR : 'var(--text-primary)' }}
+        style={{ color: track.solo ? STEP_COLOR : 'var(--text-primary)' }}
       >
         T{track.name.replace(/[^0-9]/g, '') || '1'}
       </button>
@@ -171,11 +171,11 @@ export function Track({ track }: TrackProps) {
       <button
         className="w-5 h-5 rounded-sm flex items-center justify-center transition-all hover:scale-110"
         style={{
-          backgroundColor: isAssigning ? ACCENT_COLOR : 'transparent',
+          backgroundColor: isAssigning ? STEP_COLOR : 'transparent',
           boxShadow: isAssigning
-            ? `0 0 8px ${ACCENT_COLOR}`
+            ? `0 0 8px ${STEP_COLOR}`
             : isActive
-              ? `0 0 4px ${ACCENT_COLOR}40`
+              ? `0 0 4px ${STEP_COLOR}40`
               : 'none',
           animation: isActive && !isAssigning ? 'pulse-route 1.5s ease-in-out infinite' : 'none',
         }}
@@ -187,14 +187,14 @@ export function Track({ track }: TrackProps) {
       >
         <SendIcon
           size={12}
-          color={isAssigning ? 'var(--bg-primary)' : isActive ? ACCENT_COLOR : 'var(--text-ghost)'}
+          color={isAssigning ? 'var(--bg-primary)' : isActive ? STEP_COLOR : 'var(--text-ghost)'}
         />
       </button>
       {routings.length > 0 && (
         <span
           className="text-[10px] font-bold"
           style={{
-            color: ACCENT_COLOR,
+            color: STEP_COLOR,
             opacity: isActive ? 1 : 0.6,
           }}
         >

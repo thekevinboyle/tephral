@@ -18,6 +18,9 @@ const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
 // Color for polyEuclid tracks (matches slicer accent)
 const POLY_EUCLID_COLOR = '#FF0055'
 
+// Color for step sequencer tracks (distinct orange)
+const STEP_SEQ_COLOR = '#FF9500'
+
 interface SliderRowProps {
   label: string
   value: number
@@ -105,7 +108,7 @@ export function SliderRow({
     const stepTrack = seqTracks.find(t => t.id === firstRouting.trackId)
     if (stepTrack) {
       const trackIndex = seqTracks.indexOf(stepTrack)
-      return { name: `Step T${trackIndex + 1}`, color: stepTrack.color }
+      return { name: `Step T${trackIndex + 1}`, color: STEP_SEQ_COLOR }
     }
 
     // Check special sources (modulators)
@@ -264,7 +267,7 @@ export function SliderRow({
     : assigningPolyEuclid
       ? POLY_EUCLID_COLOR
       : assigningStepTrack
-        ? seqTracks.find(t => t.id === assigningStepTrack)?.color || POLY_EUCLID_COLOR
+        ? STEP_SEQ_COLOR
         : undefined
 
   return (

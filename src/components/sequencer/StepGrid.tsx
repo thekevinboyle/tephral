@@ -60,7 +60,7 @@ export function StepGrid({ track }: StepGridProps) {
 
   return (
     <div
-      className="flex gap-[3px]"
+      className="flex gap-[5px]"
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
@@ -73,7 +73,7 @@ export function StepGrid({ track }: StepGridProps) {
             key={index}
             onMouseDown={(e) => handleMouseDown(index, e)}
             onMouseEnter={() => handleMouseEnter(index)}
-            className="w-[6px] h-[20px] cursor-pointer"
+            className="w-[14px] h-[14px] cursor-pointer"
             style={{
               backgroundColor: step.active ? 'var(--text-primary)' : 'rgba(255, 255, 255, 0.15)',
               opacity: isCurrentStep ? 1 : (step.active ? (hasProbability ? 0.6 : 0.8) : 1),

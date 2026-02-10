@@ -268,7 +268,11 @@ export function BankPanel() {
 
   return (
     <div
-      className="h-full flex items-center gap-2 px-2 py-1.5"
+      className="h-full flex items-center"
+      style={{
+        padding: 'var(--space-1) var(--panel-padding-sm)',
+        gap: 'var(--gap-sm)',
+      }}
     >
       {/* Bank buttons */}
       {BANK_LABELS.map((label, index) => (

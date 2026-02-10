@@ -50,7 +50,15 @@ export function ExpandedParameterPanel() {
       <PresetDropdownBar />
 
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-surface)' }}>
+      <div
+        className="flex items-center border-b"
+        style={{
+          borderColor: 'var(--border)',
+          backgroundColor: 'var(--bg-surface)',
+          padding: 'var(--panel-padding-sm) var(--panel-padding)',
+          gap: 'var(--gap-sm)',
+        }}
+      >
         <div
           className="w-2 h-2 rounded-full"
           style={{
@@ -64,7 +72,10 @@ export function ExpandedParameterPanel() {
       </div>
 
       {/* Parameters - scrollable */}
-      <div className="flex-1 overflow-y-auto px-3 py-2">
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{ padding: 'var(--panel-padding-sm) var(--panel-padding)' }}
+      >
         <EffectParameters effectId={effectId} />
         <TextureOverlaySection />
         <DataOverlaySection />

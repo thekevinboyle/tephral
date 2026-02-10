@@ -20,7 +20,7 @@ export function SequencerContainer() {
         className="flex-shrink-0 flex flex-col"
         style={{
           borderRight: '1px solid var(--border)',
-          width: '36px',
+          width: 'var(--sidebar-width)',
         }}
       >
         <button

@@ -151,11 +151,16 @@ export function Track({ track }: TrackProps) {
 
   return (
     <div
-      className="flex items-center gap-4 px-4 py-3"
+      className="flex items-center"
       style={{
         fontFamily: 'var(--font-mono, monospace)',
         borderBottom: '1px solid var(--border)',
         backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
+        paddingLeft: 'var(--panel-padding)',
+        paddingRight: 'var(--panel-padding)',
+        paddingTop: 'var(--panel-padding)',
+        paddingBottom: 'var(--panel-padding)',
+        gap: 'var(--gap-lg)',
       }}
       onClick={handleTrackClick}
       onDoubleClick={(e) => e.stopPropagation()}

@@ -987,10 +987,11 @@ export function EffectsLane() {
       >
         <button
           onClick={() => setActiveTab('fx')}
-          className="flex-1 px-3 py-2 flex items-center justify-between transition-colors"
+          className="flex-1 flex items-center justify-between transition-colors"
           style={{
             backgroundColor: activeTab === 'fx' ? 'var(--bg-elevated)' : 'transparent',
             borderRight: '1px solid var(--border)',
+            padding: 'var(--panel-padding-sm) var(--panel-padding)',
           }}
         >
           <span
@@ -1005,9 +1006,10 @@ export function EffectsLane() {
         </button>
         <button
           onClick={() => setActiveTab('mod')}
-          className="flex-1 px-3 py-2 flex items-center justify-between transition-colors"
+          className="flex-1 flex items-center justify-between transition-colors"
           style={{
             backgroundColor: activeTab === 'mod' ? 'var(--bg-elevated)' : 'transparent',
+            padding: 'var(--panel-padding-sm) var(--panel-padding)',
           }}
         >
           <span
@@ -1029,7 +1031,7 @@ export function EffectsLane() {
       <div className="flex-1 min-h-0 overflow-y-auto">
         {activeTab === 'fx' ? (
           /* Effects list */
-          <div className="px-2 py-2">
+          <div style={{ padding: 'var(--panel-padding-sm)' }}>
             {sortedEffects.length === 0 ? (
               <div className="h-full flex items-center justify-center py-8">
                 <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>

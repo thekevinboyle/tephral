@@ -351,10 +351,14 @@ export function ModulationLane() {
 
   return (
     <div
-      className="h-full flex items-center px-3 py-3 gap-2 overflow-x-auto"
+      className="h-full flex items-center gap-2 overflow-x-auto"
       style={{
         backgroundColor: 'var(--bg-surface)',
         borderTop: '1px solid var(--border)',
+        paddingLeft: 'var(--sidebar-width)',
+        paddingRight: 'var(--panel-padding)',
+        paddingTop: 'var(--panel-padding)',
+        paddingBottom: 'var(--panel-padding)',
       }}
     >
       {/* Modulation cards */}

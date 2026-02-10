@@ -83,8 +83,15 @@ export function StepSequencerPanel() {
 
       {/* Header - Euclid style controls */}
       <div
-        className="flex items-center gap-3 px-3 py-1.5"
-        style={{ borderBottom: '1px solid var(--border)' }}
+        className="flex items-center"
+        style={{
+          borderBottom: '1px solid var(--border)',
+          paddingLeft: 'var(--sidebar-width)',
+          paddingRight: 'var(--panel-padding)',
+          paddingTop: 'var(--space-1)',
+          paddingBottom: 'var(--space-1)',
+          gap: 'var(--gap-md)',
+        }}
       >
         {/* Play/Stop */}
         <button

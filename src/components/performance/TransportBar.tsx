@@ -239,7 +239,13 @@ export function TransportBar() {
   }, [isRecording, setCurrentTime, addThumbnail, videoElement])
 
   return (
-    <div className="h-full flex items-center gap-4 px-4 py-1.5">
+    <div
+      className="h-full flex items-center"
+      style={{
+        padding: 'var(--space-1) var(--panel-padding)',
+        gap: 'var(--gap-lg)',
+      }}
+    >
       {/* Source selector */}
       <div className="flex items-center gap-2">
         <span className="text-[9px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>

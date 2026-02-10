@@ -17,6 +17,32 @@
   --row-middle: 100px;
   --gap: 3px;
 
+  /* Spacing scale (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Component spacing */
+  --panel-padding: var(--space-3);       /* 12px - standard panel padding */
+  --panel-padding-sm: var(--space-2);    /* 8px - compact panel padding */
+  --card-padding: var(--space-2);        /* 8px - card internal padding */
+  --card-padding-sm: var(--space-1);     /* 4px - compact card padding */
+  --sidebar-width: 36px;
+  --header-height: 32px;
+  --control-height: 24px;
+
+  /* Element gaps */
+  --gap-xs: var(--space-1);              /* 4px - tight elements */
+  --gap-sm: var(--space-2);              /* 8px - related elements */
+  --gap-md: var(--space-3);              /* 12px - grouped sections */
+  --gap-lg: var(--space-4);              /* 16px - separate sections */
+
   /* Dot matrix grid - visible dots */
   --grid-dot: #1a1a1a;
   --grid-size: 16px;
@@ -309,4 +335,49 @@ body {
     var(--bg-surface) 0%,
     rgba(0, 168, 204, 0.05) 100%
   );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPACING UTILITIES
+   Standard spacing classes using design tokens
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Panel padding - use for main content areas */
+.panel-pad {
+  padding: var(--panel-padding);
+}
+
+.panel-pad-x {
+  padding-left: var(--panel-padding);
+  padding-right: var(--panel-padding);
+}
+
+.panel-pad-y {
+  padding-top: var(--panel-padding);
+  padding-bottom: var(--panel-padding);
+}
+
+/* Compact panel padding */
+.panel-pad-sm {
+  padding: var(--panel-padding-sm);
+}
+
+/* Header/control row - consistent height and padding */
+.control-row {
+  height: var(--header-height);
+  padding-left: var(--panel-padding);
+  padding-right: var(--panel-padding);
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
+/* Card padding */
+.card-pad {
+  padding: var(--card-padding);
+}
+
+/* Sidebar alignment - left padding to align with sidebar */
+.sidebar-align {
+  padding-left: var(--sidebar-width);
 }

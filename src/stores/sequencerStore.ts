@@ -26,6 +26,7 @@ export interface Track {
   color: string
   length: number
   modeOverride: StepMode | null
+  resolutionOverride: StepResolution | null
   steps: Step[]
   solo: boolean
   currentStep: number
@@ -90,7 +91,7 @@ interface SequencerState {
   // Track actions
   addTrack: () => void
   removeTrack: (trackId: string) => void
-  updateTrack: (trackId: string, updates: Partial<Pick<Track, 'name' | 'color' | 'length' | 'modeOverride' | 'solo'>>) => void
+  updateTrack: (trackId: string, updates: Partial<Pick<Track, 'name' | 'color' | 'length' | 'modeOverride' | 'resolutionOverride' | 'solo'>>) => void
   reorderTracks: (fromIndex: number, toIndex: number) => void
   setTrackLength: (trackId: string, length: number) => void
 
@@ -152,6 +153,7 @@ const createDefaultTrack = (id: string, index: number): Track => ({
   color: TRACK_COLORS[index % TRACK_COLORS.length],
   length: 16,
   modeOverride: null,
+  resolutionOverride: null,
   steps: Array.from({ length: 64 }, createDefaultStep),
   solo: false,
   currentStep: 0,

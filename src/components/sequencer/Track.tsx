@@ -1,5 +1,5 @@
-import { useCallback, useEffect } from 'react'
-import { useSequencerStore, type Track as TrackType, type StepMode } from '../../stores/sequencerStore'
+import { useCallback, useEffect, useState, useRef } from 'react'
+import { useSequencerStore, type Track as TrackType, type StepMode, type StepResolution } from '../../stores/sequencerStore'
 import { useUIStore } from '../../stores/uiStore'
 import { StepGrid } from './StepGrid'
 import { SendIcon } from '../ui/DotMatrixIcons'
@@ -16,6 +16,8 @@ const MODE_LABELS: Record<StepMode, string> = {
 }
 
 const MODE_ORDER: StepMode[] = ['forward', 'backward', 'pendulum', 'random']
+
+const RESOLUTION_OPTIONS: StepResolution[] = ['1/4', '1/8', '1/16', '1/32']
 
 // Step sequencer accent color (distinct from euclidean #FF0055)
 const STEP_COLOR = '#FF9500'
@@ -35,9 +37,30 @@ export function Track({ track }: TrackProps) {
   } = useSequencerStore()
 
   const { infoPanelSelection, selectTrack, clearInfoPanelSelection } = useUIStore()
+  const { stepResolution: globalResolution, globalMode } = useSequencerStore()
   const routings = getRoutingsForTrack(track.id)
   const isSelected = infoPanelSelection?.type === 'track' && infoPanelSelection.trackId === track.id
   const isAssigning = assigningTrack === track.id
+
+  // Dropdown state
+  const [resolutionDropdownOpen, setResolutionDropdownOpen] = useState(false)
+  const [modeDropdownOpen, setModeDropdownOpen] = useState(false)
+  const resolutionRef = useRef<HTMLDivElement>(null)
+  const modeRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (resolutionRef.current && !resolutionRef.current.contains(e.target as Node)) {
+        setResolutionDropdownOpen(false)
+      }
+      if (modeRef.current && !modeRef.current.contains(e.target as Node)) {
+        setModeDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // ESC key to cancel assignment mode
   useEffect(() => {
@@ -92,14 +115,15 @@ export function Track({ track }: TrackProps) {
     }
   }, [track.id, isSelected, selectTrack, clearInfoPanelSelection])
 
-  const handleModeClick = useCallback(() => {
-    const currentIndex = track.modeOverride
-      ? MODE_ORDER.indexOf(track.modeOverride)
-      : -1
-    const nextIndex = currentIndex + 1
-    const nextMode = nextIndex >= MODE_ORDER.length ? null : MODE_ORDER[nextIndex]
-    updateTrack(track.id, { modeOverride: nextMode })
-  }, [track.id, track.modeOverride, updateTrack])
+  const handleModeSelect = useCallback((mode: StepMode | null) => {
+    updateTrack(track.id, { modeOverride: mode })
+    setModeDropdownOpen(false)
+  }, [track.id, updateTrack])
+
+  const handleResolutionSelect = useCallback((resolution: StepResolution | null) => {
+    updateTrack(track.id, { resolutionOverride: resolution })
+    setResolutionDropdownOpen(false)
+  }, [track.id, updateTrack])
 
   const handleSoloClick = useCallback(() => {
     updateTrack(track.id, { solo: !track.solo })
@@ -153,18 +177,122 @@ export function Track({ track }: TrackProps) {
         </span>
       </div>
 
-      {/* Mode */}
-      <button
-        onClick={handleModeClick}
-        className="text-[20px] font-bold px-2 py-1 rounded-sm"
-        style={{
-          color: 'var(--text-primary)',
-          backgroundColor: track.modeOverride ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.08)',
-        }}
-        title={track.modeOverride ? `Mode: ${track.modeOverride}` : 'Using global mode'}
-      >
-        {track.modeOverride ? MODE_LABELS[track.modeOverride] : '→'}
-      </button>
+      {/* Resolution Dropdown */}
+      <div ref={resolutionRef} className="relative">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setResolutionDropdownOpen(!resolutionDropdownOpen)
+            setModeDropdownOpen(false)
+          }}
+          className="text-[16px] font-bold px-2 py-1 rounded-sm min-w-[52px] text-center"
+          style={{
+            color: 'var(--text-primary)',
+            backgroundColor: track.resolutionOverride ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.08)',
+          }}
+          title={track.resolutionOverride ? `Resolution: ${track.resolutionOverride}` : 'Using global resolution'}
+        >
+          {track.resolutionOverride ?? globalResolution}
+        </button>
+        {resolutionDropdownOpen && (
+          <div
+            className="absolute top-full left-0 mt-1 rounded-sm overflow-hidden z-50"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+            }}
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleResolutionSelect(null)
+              }}
+              className="block w-full text-left px-3 py-1.5 text-[14px] font-bold hover:bg-white/10"
+              style={{
+                color: !track.resolutionOverride ? STEP_COLOR : 'var(--text-muted)',
+              }}
+            >
+              GLOBAL
+            </button>
+            {RESOLUTION_OPTIONS.map((res) => (
+              <button
+                key={res}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleResolutionSelect(res)
+                }}
+                className="block w-full text-left px-3 py-1.5 text-[14px] font-bold hover:bg-white/10"
+                style={{
+                  color: track.resolutionOverride === res ? STEP_COLOR : 'var(--text-primary)',
+                }}
+              >
+                {res}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Mode Dropdown */}
+      <div ref={modeRef} className="relative">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setModeDropdownOpen(!modeDropdownOpen)
+            setResolutionDropdownOpen(false)
+          }}
+          className="text-[20px] font-bold px-2 py-1 rounded-sm min-w-[40px] text-center"
+          style={{
+            color: 'var(--text-primary)',
+            backgroundColor: track.modeOverride ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.08)',
+          }}
+          title={track.modeOverride ? `Mode: ${track.modeOverride}` : 'Using global mode'}
+        >
+          {track.modeOverride ? MODE_LABELS[track.modeOverride] : MODE_LABELS[globalMode]}
+        </button>
+        {modeDropdownOpen && (
+          <div
+            className="absolute top-full left-0 mt-1 rounded-sm overflow-hidden z-50"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+            }}
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleModeSelect(null)
+              }}
+              className="block w-full text-left px-3 py-1.5 text-[14px] font-bold hover:bg-white/10"
+              style={{
+                color: !track.modeOverride ? STEP_COLOR : 'var(--text-muted)',
+              }}
+            >
+              GLOBAL
+            </button>
+            {MODE_ORDER.map((mode) => (
+              <button
+                key={mode}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleModeSelect(mode)
+                }}
+                className="block w-full text-left px-3 py-1.5 text-[14px] font-bold hover:bg-white/10 flex items-center gap-2"
+                style={{
+                  color: track.modeOverride === mode ? STEP_COLOR : 'var(--text-primary)',
+                }}
+              >
+                <span className="w-5">{MODE_LABELS[mode]}</span>
+                <span className="text-[11px] uppercase" style={{ color: 'var(--text-muted)' }}>
+                  {mode.slice(0, 3)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Step grid - pattern preview style */}
       <div className="flex gap-[2px] ml-auto">

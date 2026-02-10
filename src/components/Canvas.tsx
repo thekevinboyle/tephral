@@ -209,8 +209,13 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       mix: getMix('ascii'),
     })
 
+    // Add datamosh to effect order when destruction mode is active
+    const activeEffectOrder = destructionActive
+      ? ['datamosh', ...effectOrder]
+      : effectOrder
+
     pipeline.updateEffects({
-      effectOrder,
+      effectOrder: activeEffectOrder,
       rgbSplitEnabled: getEffectiveEnabled('rgb_split', glitchEnabled && rgbSplitEnabled && !effectBypassed['rgb_split']),
       chromaticAberrationEnabled: getEffectiveEnabled('chromatic', glitchEnabled && chromaticAberrationEnabled && !effectBypassed['chromatic']),
       posterizeEnabled: getEffectiveEnabled('posterize', glitchEnabled && posterizeEnabled && !effectBypassed['posterize']),
@@ -233,7 +238,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       // Vision effects (GPU overlay versions) - not affected by glitchEnabled
       dotsEnabled: getEffectiveEnabled('acid_dots', dotsEnabled && !effectBypassed['acid_dots']),
       asciiEnabled: getEffectiveEnabled('ascii', asciiEnabled && !effectBypassed['ascii'] && asciiParams.mode !== 'matrix'),
-      // Destruction mode datamosh effect
+      // Destruction mode datamosh effect - CRANKED TO MAX
       datamoshEnabled: destructionActive,
       bypassActive,
       crossfaderPosition,
@@ -241,6 +246,16 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       videoWidth: videoElement?.videoWidth || imageElement?.naturalWidth || 1,
       videoHeight: videoElement?.videoHeight || imageElement?.naturalHeight || 1,
     })
+
+    // Crank datamosh params when destruction mode is active
+    if (destructionActive && pipeline.datamosh) {
+      pipeline.datamosh.updateParams({
+        intensity: 0.95,
+        blockSize: 12,
+        keyframeChance: 0.01,
+        mix: 1.0,
+      })
+    }
   }, [
     pipeline,
     glitchEnabled,
@@ -415,6 +430,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     <div
       ref={containerRef}
       className="w-full h-full bg-black relative"
+      data-video-canvas-container
     >
       {/* Empty state when no media loaded */}
       {!hasMedia && (

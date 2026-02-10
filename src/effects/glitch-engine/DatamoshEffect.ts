@@ -38,7 +38,33 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   }
 
   vec2 blockCoord = getBlockCoord(uv, blockSize);
-  float blockHash = hash(blockCoord + floor(time * 0.5));
+  float blockHash = hash(blockCoord + floor(time * 2.0));
+  float timeHash = hash(vec2(floor(time * 15.0), blockHash));
+
+  // Random frame drops - entire screen flickers to prev frame
+  if (random(vec2(floor(time * 20.0), 0.5)) < intensity * 0.15) {
+    vec3 prev = texture2D(prevFrameTexture, uv).rgb;
+    outputColor = vec4(prev, inputColor.a);
+    return;
+  }
+
+  // Random block dropouts - blocks show corrupted data
+  if (timeHash < intensity * 0.3) {
+    // Severe block corruption
+    vec2 corruptOffset = vec2(
+      (random(blockCoord + time) - 0.5) * 0.3,
+      (random(blockCoord - time) - 0.5) * 0.3
+    );
+    vec3 corrupt = texture2D(prevFrameTexture, uv + corruptOffset).rgb;
+
+    // Color channel massacre
+    float r = texture2D(prevFrameTexture, uv + corruptOffset + vec2(0.02, 0.0)).r;
+    float g = corrupt.g;
+    float b = texture2D(prevFrameTexture, uv + corruptOffset - vec2(0.02, 0.0)).b;
+
+    outputColor = vec4(r, g, b, inputColor.a);
+    return;
+  }
 
   // Keyframe check - occasionally reset to current frame
   if (random(blockCoord + time * 0.1) < keyframeChance) {
@@ -53,22 +79,30 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   // Calculate luminance difference for motion-based corruption
   float lumDiff = abs(luminance(current) - luminance(prev));
 
-  // Motion-based offset - chaotic displacement based on luminance difference
-  float motionStrength = lumDiff * intensity * 5.0;
+  // CRANKED motion strength
+  float motionStrength = lumDiff * intensity * 12.0;
 
-  // Create chaotic motion vectors based on block position and time
+  // Create chaotic motion vectors
   vec2 motionOffset = vec2(
-    sin(blockHash * 6.28 + time * 2.0) * motionStrength,
-    cos(blockHash * 6.28 + time * 1.7) * motionStrength
+    sin(blockHash * 6.28 + time * 5.0) * motionStrength,
+    cos(blockHash * 6.28 + time * 4.0) * motionStrength
   );
 
   // Add extra chaos based on neighboring blocks
   vec2 neighborOffset = vec2(blockSize / resolution.x, blockSize / resolution.y);
   float neighborHash = hash(blockCoord + neighborOffset);
   motionOffset += vec2(
-    cos(neighborHash * 6.28) * motionStrength * 0.5,
-    sin(neighborHash * 6.28) * motionStrength * 0.5
+    cos(neighborHash * 6.28 + time * 3.0) * motionStrength,
+    sin(neighborHash * 6.28 + time * 2.5) * motionStrength
   );
+
+  // Random large jumps
+  if (random(blockCoord + floor(time * 8.0)) < intensity * 0.2) {
+    motionOffset += vec2(
+      (random(blockCoord * time) - 0.5) * 0.4,
+      (random(blockCoord / time) - 0.5) * 0.4
+    );
+  }
 
   // Sample previous frame with motion offset
   vec2 moshUV = uv + motionOffset * blockSize / resolution;
@@ -76,32 +110,42 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
   vec3 moshColor = texture2D(prevFrameTexture, moshUV).rgb;
 
-  // Block edge artifacts
+  // Block edge artifacts - MORE PRONOUNCED
   vec2 blockUV = fract(uv * resolution / blockSize);
-  float edgeFactor = 1.0 - smoothstep(0.0, 0.1, min(min(blockUV.x, 1.0 - blockUV.x), min(blockUV.y, 1.0 - blockUV.y)));
+  float edgeFactor = 1.0 - smoothstep(0.0, 0.15, min(min(blockUV.x, 1.0 - blockUV.x), min(blockUV.y, 1.0 - blockUV.y)));
 
-  // Color channel separation for corruption effect
-  vec2 channelOffset = motionOffset * 0.3 * intensity;
-  float r = texture2D(prevFrameTexture, moshUV + channelOffset * 1.0).r;
-  float g = texture2D(prevFrameTexture, moshUV).g;
-  float b = texture2D(prevFrameTexture, moshUV - channelOffset * 0.8).b;
+  // EXTREME color channel separation
+  vec2 channelOffset = motionOffset * intensity * 1.5;
+  float r = texture2D(prevFrameTexture, moshUV + channelOffset * 1.5).r;
+  float g = texture2D(prevFrameTexture, moshUV - channelOffset * 0.3).g;
+  float b = texture2D(prevFrameTexture, moshUV - channelOffset * 1.2).b;
 
   vec3 separatedColor = vec3(r, g, b);
 
   // Mix based on motion and block edges
-  float moshAmount = clamp(motionStrength + edgeFactor * intensity * 0.5, 0.0, 1.0);
+  float moshAmount = clamp(motionStrength + edgeFactor * intensity, 0.0, 1.0);
 
   // Blend mosh color with separated channels at edges
-  vec3 corruptedColor = mix(moshColor, separatedColor, edgeFactor * intensity);
+  vec3 corruptedColor = mix(moshColor, separatedColor, edgeFactor * intensity + 0.3);
 
-  // Final blend between current and corrupted
-  // More motion = more corruption from previous frame
-  float blendFactor = clamp(lumDiff * intensity * 3.0 + intensity * 0.3, 0.0, 1.0);
+  // Final blend - MORE CORRUPTION
+  float blendFactor = clamp(lumDiff * intensity * 8.0 + intensity * 0.5, 0.0, 1.0);
   vec3 result = mix(current, corruptedColor, blendFactor);
 
-  // Add slight block discontinuity artifacts
-  if (edgeFactor > 0.5 && blockHash > 0.7 * (1.0 - intensity)) {
-    result = mix(result, prev, 0.5 * intensity);
+  // Block discontinuity artifacts - MORE FREQUENT
+  if (edgeFactor > 0.3 && blockHash > 0.5 * (1.0 - intensity)) {
+    result = mix(result, prev, 0.7 * intensity);
+  }
+
+  // Random block inversions
+  if (random(blockCoord + floor(time * 12.0)) < intensity * 0.08) {
+    result = 1.0 - result;
+  }
+
+  // Horizontal line tears
+  float linePos = fract(uv.y * 100.0 + time * 50.0);
+  if (linePos < 0.02 && random(vec2(floor(uv.y * 100.0), time)) < intensity * 0.3) {
+    result = texture2D(prevFrameTexture, uv + vec2(0.1, 0.0)).rgb;
   }
 
   vec4 effectColor = vec4(result, inputColor.a);

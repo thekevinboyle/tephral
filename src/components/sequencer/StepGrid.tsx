@@ -14,11 +14,6 @@ export function StepGrid({ track }: StepGridProps) {
 
   const visibleSteps = track.steps.slice(0, track.length)
 
-  // Scale cell size based on track length
-  const cellSize = track.length <= 16 ? 14 : track.length <= 32 ? 10 : track.length <= 48 ? 7 : 5
-  const gapSize = track.length <= 16 ? 5 : track.length <= 32 ? 3 : track.length <= 48 ? 2 : 1
-  const borderWidth = track.length <= 32 ? 2 : 1
-
   const handleMouseDown = useCallback((stepIndex: number, e: React.MouseEvent) => {
     if (e.shiftKey) {
       selectStep(track.id, stepIndex)
@@ -65,8 +60,7 @@ export function StepGrid({ track }: StepGridProps) {
 
   return (
     <div
-      className="flex"
-      style={{ gap: `${gapSize}px` }}
+      className="flex gap-[5px]"
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
@@ -79,12 +73,10 @@ export function StepGrid({ track }: StepGridProps) {
             key={index}
             onMouseDown={(e) => handleMouseDown(index, e)}
             onMouseEnter={() => handleMouseEnter(index)}
-            className="cursor-pointer"
+            className="w-[14px] h-[14px] cursor-pointer"
             style={{
-              width: `${cellSize}px`,
-              height: `${cellSize}px`,
               backgroundColor: step.active ? 'var(--text-primary)' : 'transparent',
-              border: step.active ? 'none' : `${borderWidth}px solid var(--text-primary)`,
+              border: step.active ? 'none' : '2px solid var(--text-primary)',
               opacity: isCurrentStep ? 1 : (step.active ? (hasProbability ? 0.6 : 0.8) : 0.4),
               boxShadow: isCurrentStep && step.active ? '0 0 4px var(--text-primary)' : 'none',
             }}

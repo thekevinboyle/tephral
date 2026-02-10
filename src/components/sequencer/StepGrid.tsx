@@ -11,8 +11,19 @@ export function StepGrid({ track }: StepGridProps) {
   const { selectStep } = useUIStore()
   const [isDragging, setIsDragging] = useState(false)
   const [dragValue, setDragValue] = useState<boolean | null>(null)
+  const [currentPage, setCurrentPage] = useState(0)
 
-  const visibleSteps = track.steps.slice(0, track.length)
+  // Page-based display (16 steps per page, like Elektron)
+  const stepsPerPage = 16
+  const totalPages = Math.ceil(track.length / stepsPerPage)
+  const pageStart = currentPage * stepsPerPage
+  const pageEnd = Math.min(pageStart + stepsPerPage, track.length)
+  const visibleSteps = track.steps.slice(pageStart, pageEnd)
+
+  // Reset page if track length changes and current page is invalid
+  if (currentPage >= totalPages && totalPages > 0) {
+    setCurrentPage(totalPages - 1)
+  }
 
   const handleMouseDown = useCallback((stepIndex: number, e: React.MouseEvent) => {
     if (e.shiftKey) {
@@ -59,31 +70,67 @@ export function StepGrid({ track }: StepGridProps) {
   }
 
   return (
-    <div
-      className="flex gap-[5px]"
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-    >
-      {visibleSteps.map((step, index) => {
-        const isCurrentStep = isPlaying && track.currentStep === index
-        const hasProbability = step.probability < 1
+    <div className="flex items-center gap-3">
+      {/* Step grid */}
+      <div
+        className="flex gap-[5px]"
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        {visibleSteps.map((step, index) => {
+          const actualIndex = pageStart + index
+          const isCurrentStep = isPlaying && track.currentStep === actualIndex
+          const hasProbability = step.probability < 1
 
-        return (
-          <div
-            key={index}
-            onMouseDown={(e) => handleMouseDown(index, e)}
-            onMouseEnter={() => handleMouseEnter(index)}
-            className="w-[14px] h-[14px] cursor-pointer"
-            style={{
-              backgroundColor: step.active ? 'var(--text-primary)' : 'transparent',
-              border: step.active ? 'none' : '2px solid var(--text-primary)',
-              opacity: isCurrentStep ? 1 : (step.active ? (hasProbability ? 0.6 : 0.8) : 0.4),
-              boxShadow: isCurrentStep && step.active ? '0 0 4px var(--text-primary)' : 'none',
-            }}
-            title={`Step ${index + 1}`}
-          />
-        )
-      })}
+          return (
+            <div
+              key={actualIndex}
+              onMouseDown={(e) => handleMouseDown(actualIndex, e)}
+              onMouseEnter={() => handleMouseEnter(actualIndex)}
+              className="w-[14px] h-[14px] cursor-pointer"
+              style={{
+                backgroundColor: step.active ? 'var(--text-primary)' : 'transparent',
+                border: step.active ? 'none' : '2px solid var(--text-primary)',
+                opacity: isCurrentStep ? 1 : (step.active ? (hasProbability ? 0.6 : 0.8) : 0.4),
+                boxShadow: isCurrentStep && step.active ? '0 0 4px var(--text-primary)' : 'none',
+              }}
+              title={`Step ${actualIndex + 1}`}
+            />
+          )
+        })}
+      </div>
+
+      {/* Page dots (Elektron-style) - always show 4 */}
+      <div className="flex gap-1">
+        {Array.from({ length: 4 }, (_, pageIndex) => {
+          const isActivePage = pageIndex === currentPage
+          const pageExists = pageIndex < totalPages
+          const pageHasPlayhead = isPlaying &&
+            track.currentStep >= pageIndex * stepsPerPage &&
+            track.currentStep < (pageIndex + 1) * stepsPerPage
+          return (
+            <button
+              key={pageIndex}
+              onClick={(e) => {
+                e.stopPropagation()
+                if (pageExists) setCurrentPage(pageIndex)
+              }}
+              className="w-3 h-3 rounded-full transition-all"
+              style={{
+                backgroundColor: isActivePage
+                  ? 'var(--text-primary)'
+                  : pageHasPlayhead
+                    ? 'var(--text-muted)'
+                    : 'transparent',
+                border: `2px solid ${pageExists ? (isActivePage ? 'var(--text-primary)' : 'var(--text-muted)') : 'var(--text-ghost)'}`,
+                opacity: pageExists ? (isActivePage ? 1 : 0.5) : 0.2,
+                cursor: pageExists ? 'pointer' : 'default',
+              }}
+              title={pageExists ? `Page ${pageIndex + 1}` : 'Not available'}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }

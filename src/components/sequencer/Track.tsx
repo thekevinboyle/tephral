@@ -125,7 +125,7 @@ export function Track({ track }: TrackProps) {
 
   return (
     <div
-      className="flex items-center gap-3 px-3 py-1.5"
+      className="flex items-center gap-4 px-4 py-3"
       style={{
         fontFamily: 'var(--font-mono, monospace)',
         borderBottom: '1px solid var(--border)',
@@ -136,7 +136,7 @@ export function Track({ track }: TrackProps) {
       {/* Track number / mute toggle */}
       <button
         onClick={handleSoloClick}
-        className="text-[11px] font-bold uppercase"
+        className="text-[24px] font-bold uppercase"
         style={{ color: track.solo ? STEP_COLOR : 'var(--text-primary)' }}
       >
         T{track.name.replace(/[^0-9]/g, '') || '1'}
@@ -144,12 +144,12 @@ export function Track({ track }: TrackProps) {
 
       {/* Length - drag to adjust */}
       <div
-        className="text-[11px] cursor-ns-resize select-none"
+        className="cursor-ns-resize select-none"
         style={{ color: 'var(--text-secondary)' }}
         onMouseDown={(e) => handleDrag('length', e.clientY, track.length)}
       >
-        <span style={{ opacity: 0.6 }}>LEN</span>{' '}
-        <span className="font-bold" style={{ color: 'var(--text-primary)' }}>
+        <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>LEN</span>{' '}
+        <span className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>
           {String(track.length).padStart(2, '0')}
         </span>
       </div>
@@ -157,7 +157,7 @@ export function Track({ track }: TrackProps) {
       {/* Mode */}
       <button
         onClick={handleModeClick}
-        className="text-[11px] font-bold px-1.5 py-0.5 rounded-sm"
+        className="text-[20px] font-bold px-2 py-1 rounded-sm"
         style={{
           color: 'var(--text-primary)',
           backgroundColor: track.modeOverride ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.08)',
@@ -169,7 +169,7 @@ export function Track({ track }: TrackProps) {
 
       {/* Route button with SendIcon - click to enter assignment mode */}
       <button
-        className="w-5 h-5 rounded-sm flex items-center justify-center transition-all hover:scale-110"
+        className="w-7 h-7 rounded-sm flex items-center justify-center transition-all hover:scale-110"
         style={{
           backgroundColor: isAssigning ? STEP_COLOR : 'transparent',
           boxShadow: isAssigning
@@ -186,13 +186,13 @@ export function Track({ track }: TrackProps) {
         title={isAssigning ? 'Click parameter to route (ESC to cancel)' : 'Click to route to parameters'}
       >
         <SendIcon
-          size={12}
+          size={16}
           color={isAssigning ? 'var(--bg-primary)' : isActive ? STEP_COLOR : 'var(--text-ghost)'}
         />
       </button>
       {routings.length > 0 && (
         <span
-          className="text-[10px] font-bold"
+          className="text-[16px] font-bold"
           style={{
             color: STEP_COLOR,
             opacity: isActive ? 1 : 0.6,
@@ -211,7 +211,7 @@ export function Track({ track }: TrackProps) {
       {(
         <button
           onClick={handleRemove}
-          className="text-[11px] ml-1 font-bold"
+          className="text-[18px] ml-2 font-bold"
           style={{ color: 'var(--danger)' }}
         >
           ×

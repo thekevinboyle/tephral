@@ -26,7 +26,6 @@ export function StepSequencerPanel() {
     fillModeActive,
     previousStepsSnapshot,
     audioReactive,
-    audioLevel,
     play,
     stop,
     setBpm,
@@ -83,106 +82,60 @@ export function StepSequencerPanel() {
 
       {/* Header - Euclid style controls */}
       <div
-        className="flex items-center gap-3 px-3 py-1.5"
+        className="flex items-center gap-4 px-4 py-3"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         {/* Play/Stop */}
         <button
           onClick={isPlaying ? stop : play}
-          className="w-6 h-6 flex items-center justify-center rounded-sm transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-sm transition-colors"
           style={{
             backgroundColor: isPlaying ? ACCENT_COLOR : 'rgba(255, 255, 255, 0.08)',
             boxShadow: isPlaying ? `0 0 8px ${ACCENT_COLOR}` : 'none',
           }}
         >
           {isPlaying ? (
-            <StopIcon size={10} color="var(--bg-primary)" />
+            <StopIcon size={14} color="var(--bg-primary)" />
           ) : (
-            <PlayIcon size={10} color="var(--text-muted)" />
+            <PlayIcon size={14} color="var(--text-muted)" />
           )}
         </button>
 
-        {/* BPM - drag to adjust */}
-        <div
-          className="text-[11px] cursor-ns-resize select-none"
-          style={{ color: 'var(--text-secondary)' }}
-          onMouseDown={(e) => handleBpmDrag(e.clientY, bpm)}
-        >
-          <span style={{ opacity: 0.6 }}>BPM</span>{' '}
-          <span className="font-bold" style={{ color: 'var(--text-primary)' }}>
-            {String(bpm).padStart(3, '0')}
-          </span>
-        </div>
+        {/* Spacer to align with track T1 + LEN */}
+        <div className="w-[100px]" />
 
-        {/* Resolution */}
-        <button
-          onClick={handleResolutionCycle}
-          className="text-[11px] font-bold px-1.5 py-0.5 rounded-sm"
-          style={{
-            color: 'var(--text-primary)',
-            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-          }}
-        >
-          {stepResolution}
-        </button>
-
-        {/* Mode */}
+        {/* Mode - aligns with track mode */}
         <button
           onClick={handleModeCycle}
-          className="text-[11px] font-bold px-1.5 py-0.5 rounded-sm"
+          className="text-[20px] font-bold px-2 py-1 rounded-sm"
           style={{
             color: 'var(--text-primary)',
             backgroundColor: 'rgba(255, 255, 255, 0.08)',
           }}
         >
-          {MODE_OPTIONS.find(m => m.value === globalMode)?.label || '→ FWD'}
+          {MODE_OPTIONS.find(m => m.value === globalMode)?.label.split(' ')[0] || '→'}
         </button>
 
-        {/* Audio Reactive Toggle */}
-        <button
-          onClick={() => setAudioReactive(!audioReactive)}
-          className="w-5 h-5 flex items-center justify-center rounded-sm transition-all"
-          style={{
-            backgroundColor: audioReactive ? ACCENT_COLOR : 'transparent',
-            boxShadow: audioReactive ? `0 0 8px ${ACCENT_COLOR}` : 'none',
-          }}
-          title="Audio reactive mode"
-        >
-          <MicIcon size={10} color={audioReactive ? 'var(--bg-primary)' : 'var(--text-ghost)'} />
-        </button>
-        {audioReactive && (
-          <div
-            className="w-1 h-3 rounded-sm"
-            style={{
-              backgroundColor: ACCENT_COLOR,
-              opacity: 0.3 + audioLevel * 0.7,
-              transform: `scaleY(${0.3 + audioLevel * 0.7})`,
-            }}
-          />
-        )}
-
-        <div className="flex-1" />
-
-        {/* Fill */}
+        {/* Fill - aligns with track FILL */}
         <button
           onClick={() => setFillModeActive(!fillModeActive)}
-          className="text-[11px] font-bold px-1.5 py-0.5 rounded-sm transition-colors"
+          className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm transition-colors"
           style={{
-            color: fillModeActive ? 'var(--bg-primary)' : 'var(--text-primary)',
+            color: fillModeActive ? 'var(--bg-primary)' : 'var(--text-secondary)',
             backgroundColor: fillModeActive ? ACCENT_COLOR : 'rgba(255, 255, 255, 0.08)',
             boxShadow: fillModeActive ? `0 0 8px ${ACCENT_COLOR}` : 'none',
           }}
-          title={fillModeActive ? 'Click a track to fill/clear' : 'Enter fill mode'}
+          title={fillModeActive ? 'Click a track to fill/clear' : 'Fill all tracks'}
         >
           FILL
         </button>
 
-        {/* Random */}
+        {/* Random - aligns with track RAND */}
         <button
           onClick={() => randomizeAllTracks()}
-          className="text-[11px] font-bold px-1.5 py-0.5 rounded-sm"
+          className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm"
           style={{
-            color: 'var(--text-primary)',
+            color: 'var(--text-secondary)',
             backgroundColor: 'rgba(255, 255, 255, 0.08)',
           }}
           title="Randomize all tracks"
@@ -190,19 +143,60 @@ export function StepSequencerPanel() {
           RAND
         </button>
 
-        {/* Undo */}
-        <button
-          onClick={undoRandomize}
-          disabled={!previousStepsSnapshot}
-          className="w-5 h-5 flex items-center justify-center rounded-sm"
-          style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-            opacity: previousStepsSnapshot ? 1 : 0.4,
-          }}
-          title="Undo last randomize"
-        >
-          <UndoIcon size={10} color="var(--text-muted)" />
-        </button>
+        <div className="flex-1" />
+
+        {/* Right-aligned transport controls */}
+        <div className="flex items-center gap-3">
+          {/* BPM - drag to adjust */}
+          <div
+            className="cursor-ns-resize select-none"
+            onMouseDown={(e) => handleBpmDrag(e.clientY, bpm)}
+          >
+            <span className="text-[11px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>BPM</span>{' '}
+            <span className="text-[20px] font-bold" style={{ color: 'var(--text-primary)' }}>
+              {String(bpm).padStart(3, '0')}
+            </span>
+          </div>
+
+          {/* Resolution */}
+          <button
+            onClick={handleResolutionCycle}
+            className="text-[20px] font-bold px-2 py-1 rounded-sm"
+            style={{
+              color: 'var(--text-primary)',
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            {stepResolution}
+          </button>
+
+          {/* Audio Reactive Toggle */}
+          <button
+            onClick={() => setAudioReactive(!audioReactive)}
+            className="w-7 h-7 flex items-center justify-center rounded-sm transition-all"
+            style={{
+              backgroundColor: audioReactive ? ACCENT_COLOR : 'transparent',
+              boxShadow: audioReactive ? `0 0 8px ${ACCENT_COLOR}` : 'none',
+            }}
+            title="Audio reactive mode"
+          >
+            <MicIcon size={14} color={audioReactive ? 'var(--bg-primary)' : 'var(--text-ghost)'} />
+          </button>
+
+          {/* Undo */}
+          <button
+            onClick={undoRandomize}
+            disabled={!previousStepsSnapshot}
+            className="w-7 h-7 flex items-center justify-center rounded-sm"
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              opacity: previousStepsSnapshot ? 1 : 0.4,
+            }}
+            title="Undo last randomize"
+          >
+            <UndoIcon size={14} color="var(--text-muted)" />
+          </button>
+        </div>
       </div>
 
       {/* Track list - scrollable */}

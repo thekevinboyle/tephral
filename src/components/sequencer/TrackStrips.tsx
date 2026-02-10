@@ -1,4 +1,7 @@
+import { useEffect } from 'react'
 import { usePolyEuclidStore } from '../../stores/polyEuclidStore'
+import { useSequencerStore } from '../../stores/sequencerStore'
+import { SendIcon } from '../ui/DotMatrixIcons'
 
 const CLOCK_DIVIDERS = [
   { label: '/4', value: 0.25 },
@@ -8,8 +11,26 @@ const CLOCK_DIVIDERS = [
   { label: '4x', value: 4 },
 ]
 
+// Color for polyEuclid routing (matches slicer accent)
+const POLY_EUCLID_COLOR = '#FF0055'
+
 export function TrackStrips() {
-  const { tracks, maxTracks, addTrack, removeTrack, updateTrack, getPattern } = usePolyEuclidStore()
+  const { tracks, maxTracks, addTrack, removeTrack, updateTrack, getPattern, assigningTrack, toggleAssignmentMode, setAssigningTrack } = usePolyEuclidStore()
+  const { routings, isPlaying } = useSequencerStore()
+
+  // ESC key to cancel assignment mode
+  useEffect(() => {
+    if (!assigningTrack) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setAssigningTrack(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [assigningTrack, setAssigningTrack])
 
   const cycleClockDivider = (trackId: string, current: number) => {
     const currentIndex = CLOCK_DIVIDERS.findIndex(d => d.value === current)
@@ -120,16 +141,48 @@ export function TrackStrips() {
               <span style={{ opacity: 0.6 }}>DCY</span> <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{track.decay.toFixed(1)}</span>
             </div>
 
-            {/* Route handle - drag to connect to parameters */}
-            <div
-              className="text-[11px] px-1.5 py-0.5 rounded-sm cursor-grab active:cursor-grabbing"
-              style={{ color: 'var(--text-primary)', backgroundColor: 'rgba(255, 255, 255, 0.08)' }}
-              draggable
-              onDragStart={(e) => handleRouteDragStart(track.id, e)}
-              title="Drag to parameter to route"
-            >
-              ⊕
-            </div>
+            {/* Route button - click to enter assignment mode */}
+            {(() => {
+              const trackRouteId = `polyEuclid-${track.id}`
+              const routeCount = routings.filter(r => r.trackId === trackRouteId).length
+              const isAssigning = assigningTrack === track.id
+              const isActive = isPlaying && routeCount > 0 && !track.muted
+
+              return (
+                <>
+                  <button
+                    className="w-5 h-5 rounded-sm flex items-center justify-center transition-all hover:scale-110"
+                    style={{
+                      backgroundColor: isAssigning ? POLY_EUCLID_COLOR : 'transparent',
+                      boxShadow: isAssigning
+                        ? `0 0 8px ${POLY_EUCLID_COLOR}`
+                        : isActive
+                          ? `0 0 4px ${POLY_EUCLID_COLOR}40`
+                          : 'none',
+                      animation: isActive ? 'pulse-route 1.5s ease-in-out infinite' : 'none',
+                    }}
+                    onClick={() => toggleAssignmentMode(track.id)}
+                    title={isAssigning ? 'Click parameter to route (ESC to cancel)' : 'Click to route to parameters'}
+                  >
+                    <SendIcon
+                      size={12}
+                      color={isAssigning ? 'var(--bg-primary)' : isActive ? POLY_EUCLID_COLOR : 'var(--text-ghost)'}
+                    />
+                  </button>
+                  {routeCount > 0 && (
+                    <span
+                      className="text-[10px] font-bold"
+                      style={{
+                        color: POLY_EUCLID_COLOR,
+                        opacity: isActive ? 1 : 0.6,
+                      }}
+                    >
+                      {routeCount}
+                    </span>
+                  )}
+                </>
+              )
+            })()}
 
             {/* Mini pattern preview */}
             <div className="flex gap-[2px] ml-auto">

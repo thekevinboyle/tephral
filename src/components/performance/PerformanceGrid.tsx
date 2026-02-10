@@ -922,7 +922,12 @@ export function PerformanceGrid() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col p-2">
+    <div
+      className="h-full w-full flex flex-col p-2"
+      style={{
+        background: 'radial-gradient(ellipse at center, rgba(0, 212, 255, 0.03) 0%, transparent 70%)',
+      }}
+    >
       {/* Page navigation */}
       <div className="flex items-center justify-between mb-1.5 px-1">
         {/* Clear button */}

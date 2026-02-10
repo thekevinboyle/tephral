@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { useUIStore } from '../../../stores/uiStore'
 import { useSequencerStore } from '../../../stores/sequencerStore'
 import { useModulationStore } from '../../../stores/modulationStore'
+import { usePolyEuclidStore } from '../../../stores/polyEuclidStore'
 
 // Special sequencer sources (not regular tracks)
 const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
@@ -13,6 +14,9 @@ const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
   envelope: { name: 'Envelope', color: '#AA55FF' },
   sampleHold: { name: 'S&H', color: '#AAFF00' },
 }
+
+// Color for polyEuclid tracks (matches slicer accent)
+const POLY_EUCLID_COLOR = '#FF0055'
 
 interface SliderRowProps {
   label: string
@@ -41,13 +45,15 @@ export function SliderRow({
   const { sequencerDrag, selectRouting } = useUIStore()
   const { addRouting, routings, tracks, updateRoutingDepth, removeRouting } = useSequencerStore()
   const { assigningModulator } = useModulationStore()
+  const { assigningTrack: assigningPolyEuclid, tracks: polyEuclidTracks, setAssigningTrack: setAssigningPolyEuclid } = usePolyEuclidStore()
   const [isDropTarget, setIsDropTarget] = useState(false)
   const trackRef = useRef<HTMLDivElement>(null)
   const [isDraggingSlider, setIsDraggingSlider] = useState(false)
   const [isModulationDrag, setIsModulationDrag] = useState(false)
 
-  // Check if we're in assignment mode
-  const isInAssignmentMode = assigningModulator !== null && paramId
+  // Check if we're in assignment mode (either modulator or polyEuclid)
+  const isInAssignmentMode = (assigningModulator !== null || assigningPolyEuclid !== null) && paramId
+  const isPolyEuclidAssignment = assigningPolyEuclid !== null && paramId
 
   // Listen for global drag events to show plus icon
   useEffect(() => {
@@ -74,13 +80,27 @@ export function SliderRow({
   const hasRouting = paramRoutings.length > 0
   const firstRouting = hasRouting ? paramRoutings[0] : null
 
-  // Get source info (either from tracks or special sources)
+  // Get source info (either from tracks, polyEuclid tracks, or special sources)
   const sourceInfo = useMemo(() => {
     if (!firstRouting) return null
+
+    // Check if it's a polyEuclid track (prefixed with 'polyEuclid-')
+    if (firstRouting.trackId.startsWith('polyEuclid-')) {
+      const polyTrackId = firstRouting.trackId.replace('polyEuclid-', '')
+      const polyTrack = polyEuclidTracks.find(t => t.id === polyTrackId)
+      if (polyTrack) {
+        const trackIndex = polyEuclidTracks.indexOf(polyTrack)
+        return { name: `Euclid T${trackIndex + 1}`, color: POLY_EUCLID_COLOR }
+      }
+    }
+
+    // Check regular sequencer tracks
     const track = tracks.find(t => t.id === firstRouting.trackId)
     if (track) return { name: track.name, color: track.color }
+
+    // Check special sources (modulators)
     return SPECIAL_SOURCES[firstRouting.trackId] || null
-  }, [firstRouting, tracks])
+  }, [firstRouting, tracks, polyEuclidTracks])
 
   // Calculate thumb position (0-1), clamped to prevent overflow when modulation exceeds bounds
   const normalizedValue = Math.max(0, Math.min(1, (value - min) / (max - min)))
@@ -201,15 +221,34 @@ export function SliderRow({
 
   // Handle click to add routing when in assignment mode
   const handleAssignmentClick = useCallback(() => {
-    if (!isInAssignmentMode || !paramId || !assigningModulator) return
-    const existingRouting = routings.find(r => r.trackId === assigningModulator && r.targetParam === paramId)
-    if (!existingRouting) {
-      addRouting(assigningModulator, paramId, 0.5)
-    }
-  }, [isInAssignmentMode, paramId, assigningModulator, routings, addRouting])
+    if (!isInAssignmentMode || !paramId) return
 
-  // Get color for current assigning modulator
-  const assigningColor = assigningModulator ? SPECIAL_SOURCES[assigningModulator]?.color : undefined
+    // Determine the track ID based on which assignment mode is active
+    let trackId: string | null = null
+    if (assigningModulator) {
+      trackId = assigningModulator
+    } else if (assigningPolyEuclid) {
+      trackId = `polyEuclid-${assigningPolyEuclid}`
+    }
+
+    if (!trackId) return
+
+    const existingRouting = routings.find(r => r.trackId === trackId && r.targetParam === paramId)
+    if (!existingRouting) {
+      addRouting(trackId, paramId, 0.5)
+      // Clear assignment mode after successfully adding a routing
+      if (assigningPolyEuclid) {
+        setAssigningPolyEuclid(null)
+      }
+    }
+  }, [isInAssignmentMode, paramId, assigningModulator, assigningPolyEuclid, routings, addRouting, setAssigningPolyEuclid])
+
+  // Get color for current assigning modulator or polyEuclid track
+  const assigningColor = assigningModulator
+    ? SPECIAL_SOURCES[assigningModulator]?.color
+    : assigningPolyEuclid
+      ? POLY_EUCLID_COLOR
+      : undefined
 
   return (
     <div

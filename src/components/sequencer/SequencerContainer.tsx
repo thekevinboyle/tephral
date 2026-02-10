@@ -6,35 +6,40 @@ export function SequencerContainer() {
   const { activeSequencer, setActiveSequencer } = useSequencerContainerStore()
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-full" style={{ backgroundColor: 'var(--bg-surface)' }}>
       {/* Tab bar */}
       <div
-        className="flex items-center gap-1 px-2"
-        style={{
-          height: '28px',
-          borderBottom: '1px solid var(--border)',
-          backgroundColor: 'var(--bg-elevated)',
-        }}
+        className="flex-shrink-0 flex"
+        style={{ borderBottom: '1px solid var(--border)' }}
       >
         <button
-          className="text-[9px] font-medium uppercase tracking-widest px-2 py-1"
-          style={{
-            color: activeSequencer === 'slicer' ? 'var(--accent)' : 'var(--text-ghost)',
-            borderBottom: activeSequencer === 'slicer' ? '1px solid var(--accent)' : '1px solid transparent',
-          }}
           onClick={() => setActiveSequencer('slicer')}
+          className="flex-1 px-3 py-2 flex items-center justify-center transition-colors"
+          style={{
+            backgroundColor: activeSequencer === 'slicer' ? 'var(--bg-elevated)' : 'transparent',
+            borderRight: '1px solid var(--border)',
+          }}
         >
-          Slicer
+          <span
+            className="text-[9px] uppercase tracking-widest"
+            style={{ color: activeSequencer === 'slicer' ? 'var(--accent)' : 'var(--text-ghost)' }}
+          >
+            Slicer
+          </span>
         </button>
         <button
-          className="text-[9px] font-medium uppercase tracking-widest px-2 py-1"
-          style={{
-            color: activeSequencer === 'euclid' ? '#E8E4D9' : 'var(--text-ghost)',
-            borderBottom: activeSequencer === 'euclid' ? '1px solid #E8E4D9' : '1px solid transparent',
-          }}
           onClick={() => setActiveSequencer('euclid')}
+          className="flex-1 px-3 py-2 flex items-center justify-center transition-colors"
+          style={{
+            backgroundColor: activeSequencer === 'euclid' ? 'var(--bg-elevated)' : 'transparent',
+          }}
         >
-          Euclid
+          <span
+            className="text-[9px] uppercase tracking-widest"
+            style={{ color: activeSequencer === 'euclid' ? 'var(--accent)' : 'var(--text-ghost)' }}
+          >
+            Euclid
+          </span>
         </button>
       </div>
 

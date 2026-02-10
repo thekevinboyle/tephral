@@ -58,6 +58,11 @@ interface PolyEuclidState {
   tracks: PolyEuclidTrack[]
   maxTracks: number
 
+  // Assignment mode - which track is being routed to parameters
+  assigningTrack: string | null
+  setAssigningTrack: (trackId: string | null) => void
+  toggleAssignmentMode: (trackId: string) => void
+
   addTrack: () => void
   removeTrack: (id: string) => void
   updateTrack: (id: string, updates: Partial<PolyEuclidTrack>) => void
@@ -92,6 +97,13 @@ export const usePolyEuclidStore = create<PolyEuclidState>((set, get) => ({
     createTrack(3),
   ],
   maxTracks: 8,
+
+  // Assignment mode
+  assigningTrack: null,
+  setAssigningTrack: (trackId) => set({ assigningTrack: trackId }),
+  toggleAssignmentMode: (trackId) => set((state) => ({
+    assigningTrack: state.assigningTrack === trackId ? null : trackId
+  })),
 
   addTrack: () => {
     const { tracks, maxTracks } = get()

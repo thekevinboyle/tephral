@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useSequencerStore, type Track } from '../../stores/sequencerStore'
 import { useUIStore } from '../../stores/uiStore'
 
@@ -11,31 +11,24 @@ export function StepGrid({ track }: StepGridProps) {
   const { selectStep } = useUIStore()
   const [isDragging, setIsDragging] = useState(false)
   const [dragValue, setDragValue] = useState<boolean | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
 
   const visibleSteps = track.steps.slice(0, track.length)
 
-  const handleStepClick = useCallback((stepIndex: number, e: React.MouseEvent) => {
+  const handleMouseDown = useCallback((stepIndex: number, e: React.MouseEvent) => {
     if (e.shiftKey) {
       selectStep(track.id, stepIndex)
-    } else {
-      toggleStep(track.id, stepIndex)
+      return
     }
-  }, [track.id, toggleStep, selectStep])
-
-  const handleMouseDown = useCallback((stepIndex: number, e: React.MouseEvent) => {
-    if (e.shiftKey) return // Don't start drag on shift+click
 
     e.preventDefault()
     setIsDragging(true)
     const newValue = !track.steps[stepIndex].active
     setDragValue(newValue)
 
-    // Set first step
     if (track.steps[stepIndex].active !== newValue) {
       toggleStep(track.id, stepIndex)
     }
-  }, [track.id, track.steps, toggleStep])
+  }, [track.id, track.steps, toggleStep, selectStep])
 
   const handleMouseEnter = useCallback((stepIndex: number) => {
     if (isDragging && dragValue !== null) {
@@ -67,59 +60,28 @@ export function StepGrid({ track }: StepGridProps) {
 
   return (
     <div
-      ref={containerRef}
-      className="flex gap-px"
+      className="flex gap-[2px]"
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
       {visibleSteps.map((step, index) => {
         const isCurrentStep = isPlaying && track.currentStep === index
         const hasProbability = step.probability < 1
-        const hasRatchet = step.ratchetDivision > 1
 
         return (
-          <button
+          <div
             key={index}
             onMouseDown={(e) => handleMouseDown(index, e)}
             onMouseEnter={() => handleMouseEnter(index)}
-            onClick={(e) => {
-              if (e.shiftKey) handleStepClick(index, e)
-            }}
-            className="flex-1 min-w-0 aspect-square rounded-sm relative transition-all"
+            className="w-[5px] h-[10px] cursor-pointer"
             style={{
-              maxWidth: '12px',
-              maxHeight: '12px',
-              backgroundColor: step.active ? track.color : 'var(--border)',
-              opacity: step.active ? (hasProbability ? 0.6 : 1) : 0.4,
-              border: isCurrentStep ? `2px solid ${track.color}` : 'none',
-              boxShadow: isCurrentStep ? `0 0 4px ${track.color}` : 'none',
+              backgroundColor: step.active ? 'var(--text-primary)' : 'transparent',
+              border: step.active ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
+              opacity: isCurrentStep ? 1 : (step.active ? (hasProbability ? 0.6 : 0.8) : 0.5),
+              boxShadow: isCurrentStep && step.active ? '0 0 4px var(--text-primary)' : 'none',
             }}
-            title={`Step ${index + 1}${step.active ? ' (active)' : ''}${hasProbability ? ` - ${Math.round(step.probability * 100)}% prob` : ''}${hasRatchet ? ` - ${step.ratchetDivision}x ratchet` : ''}\nShift+click for details`}
-          >
-            {/* Probability indicator - partial fill */}
-            {step.active && hasProbability && (
-              <div
-                className="absolute bottom-0 left-0 right-0 rounded-sm"
-                style={{
-                  height: `${step.probability * 100}%`,
-                  backgroundColor: track.color,
-                  opacity: 0.5,
-                }}
-              />
-            )}
-
-            {/* Ratchet indicator - notches */}
-            {step.active && hasRatchet && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div
-                  className="text-white font-bold"
-                  style={{ fontSize: '6px', lineHeight: 1 }}
-                >
-                  {step.ratchetDivision}
-                </div>
-              </div>
-            )}
-          </button>
+            title={`Step ${index + 1}`}
+          />
         )
       })}
     </div>

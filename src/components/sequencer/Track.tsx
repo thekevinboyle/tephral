@@ -1,26 +1,26 @@
-import { useCallback, useState, useRef } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useSequencerStore, type Track as TrackType, type StepMode } from '../../stores/sequencerStore'
 import { useUIStore } from '../../stores/uiStore'
 import { StepGrid } from './StepGrid'
+import { SendIcon } from '../ui/DotMatrixIcons'
 
 interface TrackProps {
   track: TrackType
 }
 
 const MODE_LABELS: Record<StepMode, string> = {
-  forward: '>',
-  backward: '<',
-  pendulum: '<>',
+  forward: '→',
+  backward: '←',
+  pendulum: '↔',
   random: '?',
 }
 
 const MODE_ORDER: StepMode[] = ['forward', 'backward', 'pendulum', 'random']
 
-export function Track({ track }: TrackProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editName, setEditName] = useState(track.name)
-  const inputRef = useRef<HTMLInputElement>(null)
+// Accent color matching slicer/euclid
+const ACCENT_COLOR = '#FF0055'
 
+export function Track({ track }: TrackProps) {
   const {
     updateTrack,
     removeTrack,
@@ -29,47 +29,69 @@ export function Track({ track }: TrackProps) {
     fillModeActive,
     fillTrack,
     clearTrack,
+    isPlaying,
+    assigningTrack,
+    toggleAssignmentMode,
+    setAssigningTrack,
   } = useSequencerStore()
 
-  const { startSequencerDrag, endSequencerDrag, infoPanelSelection, selectTrack, clearInfoPanelSelection } = useUIStore()
+  const { infoPanelSelection, selectTrack, clearInfoPanelSelection } = useUIStore()
   const routings = getRoutingsForTrack(track.id)
-  const [isRoutingDrag, setIsRoutingDrag] = useState(false)
   const isSelected = infoPanelSelection?.type === 'track' && infoPanelSelection.trackId === track.id
+  const isAssigning = assigningTrack === track.id
+
+  // ESC key to cancel assignment mode
+  useEffect(() => {
+    if (!isAssigning) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setAssigningTrack(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isAssigning, setAssigningTrack])
+
+  // Drag handlers for adjustable values
+  const handleDrag = useCallback((
+    _param: 'length',
+    startY: number,
+    startValue: number
+  ) => {
+    const lengths = [4, 8, 12, 16, 24, 32, 48, 64]
+    const startIndex = lengths.indexOf(startValue)
+
+    const handleMove = (e: MouseEvent) => {
+      const deltaY = startY - e.clientY
+      const indexDelta = Math.round(deltaY / 20)
+      const newIndex = Math.max(0, Math.min(lengths.length - 1, startIndex + indexDelta))
+      if (lengths[newIndex] !== track.length) {
+        setTrackLength(track.id, lengths[newIndex])
+      }
+    }
+
+    const handleUp = () => {
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleUp)
+    }
+
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleUp)
+  }, [track.id, track.length, setTrackLength])
 
   const handleTrackClick = useCallback((e: React.MouseEvent) => {
-    // Don't select if clicking on buttons or inputs
     const target = e.target as HTMLElement
     if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.closest('button')) {
       return
     }
-    // Toggle selection
     if (isSelected) {
       clearInfoPanelSelection()
     } else {
       selectTrack(track.id)
     }
   }, [track.id, isSelected, selectTrack, clearInfoPanelSelection])
-
-  const handleNameDoubleClick = useCallback(() => {
-    setEditName(track.name)
-    setIsEditing(true)
-    setTimeout(() => inputRef.current?.select(), 0)
-  }, [track.name])
-
-  const handleNameSubmit = useCallback(() => {
-    if (editName.trim()) {
-      updateTrack(track.id, { name: editName.trim() })
-    }
-    setIsEditing(false)
-  }, [track.id, editName, updateTrack])
-
-  const handleNameKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleNameSubmit()
-    } else if (e.key === 'Escape') {
-      setIsEditing(false)
-    }
-  }, [handleNameSubmit])
 
   const handleModeClick = useCallback(() => {
     const currentIndex = track.modeOverride
@@ -84,17 +106,8 @@ export function Track({ track }: TrackProps) {
     updateTrack(track.id, { solo: !track.solo })
   }, [track.id, track.solo, updateTrack])
 
-  const handleLengthClick = useCallback(() => {
-    // Cycle through common lengths
-    const lengths = [4, 8, 12, 16, 24, 32, 48, 64]
-    const currentIndex = lengths.indexOf(track.length)
-    const nextIndex = (currentIndex + 1) % lengths.length
-    setTrackLength(track.id, lengths[nextIndex])
-  }, [track.id, track.length, setTrackLength])
-
   const handleFillClick = useCallback(() => {
     if (fillModeActive) {
-      // Check if track is already filled
       const isAllFilled = track.steps.slice(0, track.length).every(s => s.active)
       if (isAllFilled) {
         clearTrack(track.id)
@@ -108,138 +121,102 @@ export function Track({ track }: TrackProps) {
     removeTrack(track.id)
   }, [track.id, removeTrack])
 
+  const isActive = isPlaying && routings.length > 0 && !track.solo
+
   return (
     <div
-      className="flex items-center gap-2 px-2 py-1 rounded-sm group cursor-pointer"
+      className="flex items-center gap-3 px-3 py-1.5"
       style={{
-        backgroundColor: isSelected ? `${track.color}10` : 'var(--bg-surface)',
-        border: `1px solid ${isSelected ? track.color : 'var(--border)'}`,
+        fontFamily: 'var(--font-mono, monospace)',
+        borderBottom: '1px solid var(--border)',
+        backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
       }}
       onClick={fillModeActive ? handleFillClick : handleTrackClick}
     >
-      {/* Drag handle for routing */}
-      <div
-        className="w-3 h-3 flex flex-col justify-center gap-0.5 cursor-grab opacity-30 group-hover:opacity-80 transition-opacity"
-        title="Drag to effect parameter to create modulation route"
-        draggable
-        onDragStart={(e) => {
-          e.dataTransfer.setData('sequencer-track', track.id)
-          e.dataTransfer.effectAllowed = 'link'
-          startSequencerDrag(track.id, track.color)
-          setIsRoutingDrag(true)
-        }}
-        onDragEnd={() => {
-          endSequencerDrag()
-          setIsRoutingDrag(false)
-        }}
-        style={{
-          backgroundColor: isRoutingDrag ? track.color : undefined,
-          borderRadius: isRoutingDrag ? '2px' : undefined,
-        }}
+      {/* Track number / mute toggle */}
+      <button
+        onClick={handleSoloClick}
+        className="text-[11px] font-bold uppercase"
+        style={{ color: track.solo ? ACCENT_COLOR : 'var(--text-primary)' }}
       >
-        <div className="w-full h-px rounded-sm" style={{ backgroundColor: isRoutingDrag ? 'var(--text-primary)' : 'var(--text-ghost)' }} />
-        <div className="w-full h-px rounded-sm" style={{ backgroundColor: isRoutingDrag ? 'var(--text-primary)' : 'var(--text-ghost)' }} />
-        <div className="w-full h-px rounded-sm" style={{ backgroundColor: isRoutingDrag ? 'var(--text-primary)' : 'var(--text-ghost)' }} />
+        T{track.name.replace(/[^0-9]/g, '') || '1'}
+      </button>
+
+      {/* Length - drag to adjust */}
+      <div
+        className="text-[11px] cursor-ns-resize select-none"
+        style={{ color: 'var(--text-secondary)' }}
+        onMouseDown={(e) => handleDrag('length', e.clientY, track.length)}
+      >
+        <span style={{ opacity: 0.6 }}>LEN</span>{' '}
+        <span className="font-bold" style={{ color: 'var(--text-primary)' }}>
+          {String(track.length).padStart(2, '0')}
+        </span>
       </div>
 
-      {/* Track name with color dot */}
-      <div className="flex items-center gap-1.5 w-14 flex-shrink-0">
-        <div
-          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-          style={{ backgroundColor: track.color, boxShadow: `0 0 4px ${track.color}` }}
+      {/* Mode */}
+      <button
+        onClick={handleModeClick}
+        className="text-[11px] font-bold px-1.5 py-0.5 rounded-sm"
+        style={{
+          color: 'var(--text-primary)',
+          backgroundColor: track.modeOverride ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.08)',
+        }}
+        title={track.modeOverride ? `Mode: ${track.modeOverride}` : 'Using global mode'}
+      >
+        {track.modeOverride ? MODE_LABELS[track.modeOverride] : '→'}
+      </button>
+
+      {/* Route button with SendIcon - click to enter assignment mode */}
+      <button
+        className="w-5 h-5 rounded-sm flex items-center justify-center transition-all hover:scale-110"
+        style={{
+          backgroundColor: isAssigning ? ACCENT_COLOR : 'transparent',
+          boxShadow: isAssigning
+            ? `0 0 8px ${ACCENT_COLOR}`
+            : isActive
+              ? `0 0 4px ${ACCENT_COLOR}40`
+              : 'none',
+          animation: isActive && !isAssigning ? 'pulse-route 1.5s ease-in-out infinite' : 'none',
+        }}
+        onClick={(e) => {
+          e.stopPropagation()
+          toggleAssignmentMode(track.id)
+        }}
+        title={isAssigning ? 'Click parameter to route (ESC to cancel)' : 'Click to route to parameters'}
+      >
+        <SendIcon
+          size={12}
+          color={isAssigning ? 'var(--bg-primary)' : isActive ? ACCENT_COLOR : 'var(--text-ghost)'}
         />
-        {isEditing ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            onBlur={handleNameSubmit}
-            onKeyDown={handleNameKeyDown}
-            className="w-full text-[11px] px-1 py-0.5 rounded-sm"
-            style={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-secondary)',
-            }}
-          />
-        ) : (
-          <span
-            className="text-[11px] font-medium truncate cursor-text"
-            style={{ color: 'var(--text-muted)' }}
-            onDoubleClick={handleNameDoubleClick}
-            title="Double-click to rename"
-          >
-            {track.name}
-          </span>
-        )}
-        {/* Routing indicator dots */}
-        {routings.length > 0 && (
-          <div className="flex gap-0.5">
-            {routings.slice(0, 3).map((_, i) => (
-              <div
-                key={i}
-                className="w-1 h-1 rounded-full"
-                style={{ backgroundColor: track.color }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      </button>
+      {routings.length > 0 && (
+        <span
+          className="text-[10px] font-bold"
+          style={{
+            color: ACCENT_COLOR,
+            opacity: isActive ? 1 : 0.6,
+          }}
+        >
+          {routings.length}
+        </span>
+      )}
 
-      {/* Step grid */}
-      <div className="flex-1 min-w-0">
+      {/* Step grid - pattern preview style */}
+      <div className="flex gap-[2px] ml-auto">
         <StepGrid track={track} />
       </div>
 
-      {/* Length */}
-      <button
-        onClick={handleLengthClick}
-        className="w-5 text-[10px] font-mono text-center rounded-sm"
-        style={{ color: 'var(--text-muted)' }}
-        title="Click to change length"
-      >
-        {track.length}
-      </button>
-
-      {/* Mode override */}
-      <button
-        onClick={handleModeClick}
-        className="w-4 text-[11px] font-mono text-center rounded-sm"
-        style={{ color: track.modeOverride ? 'var(--text-secondary)' : 'var(--text-ghost)' }}
-        title={track.modeOverride ? `Mode: ${track.modeOverride}` : 'Using global mode'}
-      >
-        {track.modeOverride ? MODE_LABELS[track.modeOverride] : '-'}
-      </button>
-
-      {/* Solo toggle */}
-      <button
-        onClick={handleSoloClick}
-        className="w-4 h-4 text-[10px] font-medium rounded-sm"
-        style={{
-          backgroundColor: track.solo ? 'var(--accent)' : 'transparent',
-          color: track.solo ? 'var(--text-primary)' : 'var(--text-ghost)',
-          border: track.solo ? '1px solid var(--accent)' : '1px solid var(--border)',
-          boxShadow: track.solo ? '0 0 4px var(--accent-glow)' : 'none',
-        }}
-        title={track.solo ? 'Solo (click to unsolo)' : 'Solo this track'}
-      >
-        S
-      </button>
-
-      {/* Remove button (shown on hover) */}
-      <button
-        onClick={handleRemove}
-        className="w-3.5 h-3.5 flex items-center justify-center rounded-sm opacity-0 group-hover:opacity-60 transition-opacity"
-        style={{ color: 'var(--text-ghost)' }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent)')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-ghost)')}
-        title="Remove track"
-      >
-        <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
-          <path d="M1 1L7 7M7 1L1 7" stroke="currentColor" strokeWidth="1.5" />
-        </svg>
-      </button>
+      {/* Remove button */}
+      {(
+        <button
+          onClick={handleRemove}
+          className="text-[11px] ml-1 font-bold"
+          style={{ color: 'var(--danger)' }}
+        >
+          ×
+        </button>
+      )}
     </div>
   )
 }

@@ -43,7 +43,15 @@ export function SliderRow({
 }: SliderRowProps) {
   const displayValue = format ? format(value) : value.toFixed(1)
   const { sequencerDrag, selectRouting } = useUIStore()
-  const { addRouting, routings, tracks, updateRoutingDepth, removeRouting } = useSequencerStore()
+  const {
+    addRouting,
+    routings,
+    tracks: seqTracks,
+    updateRoutingDepth,
+    removeRouting,
+    assigningTrack: assigningStepTrack,
+    setAssigningTrack: setAssigningStepTrack,
+  } = useSequencerStore()
   const { assigningModulator } = useModulationStore()
   const { assigningTrack: assigningPolyEuclid, tracks: polyEuclidTracks, setAssigningTrack: setAssigningPolyEuclid } = usePolyEuclidStore()
   const [isDropTarget, setIsDropTarget] = useState(false)
@@ -51,9 +59,8 @@ export function SliderRow({
   const [isDraggingSlider, setIsDraggingSlider] = useState(false)
   const [isModulationDrag, setIsModulationDrag] = useState(false)
 
-  // Check if we're in assignment mode (either modulator or polyEuclid)
-  const isInAssignmentMode = (assigningModulator !== null || assigningPolyEuclid !== null) && paramId
-  const isPolyEuclidAssignment = assigningPolyEuclid !== null && paramId
+  // Check if we're in assignment mode (modulator, polyEuclid, or step sequencer)
+  const isInAssignmentMode = (assigningModulator !== null || assigningPolyEuclid !== null || assigningStepTrack !== null) && paramId
 
   // Listen for global drag events to show plus icon
   useEffect(() => {
@@ -80,7 +87,7 @@ export function SliderRow({
   const hasRouting = paramRoutings.length > 0
   const firstRouting = hasRouting ? paramRoutings[0] : null
 
-  // Get source info (either from tracks, polyEuclid tracks, or special sources)
+  // Get source info (either from step sequencer tracks, polyEuclid tracks, or special sources)
   const sourceInfo = useMemo(() => {
     if (!firstRouting) return null
 
@@ -94,13 +101,16 @@ export function SliderRow({
       }
     }
 
-    // Check regular sequencer tracks
-    const track = tracks.find(t => t.id === firstRouting.trackId)
-    if (track) return { name: track.name, color: track.color }
+    // Check step sequencer tracks
+    const stepTrack = seqTracks.find(t => t.id === firstRouting.trackId)
+    if (stepTrack) {
+      const trackIndex = seqTracks.indexOf(stepTrack)
+      return { name: `Step T${trackIndex + 1}`, color: stepTrack.color }
+    }
 
     // Check special sources (modulators)
     return SPECIAL_SOURCES[firstRouting.trackId] || null
-  }, [firstRouting, tracks, polyEuclidTracks])
+  }, [firstRouting, seqTracks, polyEuclidTracks])
 
   // Calculate thumb position (0-1), clamped to prevent overflow when modulation exceeds bounds
   const normalizedValue = Math.max(0, Math.min(1, (value - min) / (max - min)))
@@ -229,6 +239,8 @@ export function SliderRow({
       trackId = assigningModulator
     } else if (assigningPolyEuclid) {
       trackId = `polyEuclid-${assigningPolyEuclid}`
+    } else if (assigningStepTrack) {
+      trackId = assigningStepTrack  // Step sequencer uses track ID directly
     }
 
     if (!trackId) return
@@ -240,15 +252,20 @@ export function SliderRow({
       if (assigningPolyEuclid) {
         setAssigningPolyEuclid(null)
       }
+      if (assigningStepTrack) {
+        setAssigningStepTrack(null)
+      }
     }
-  }, [isInAssignmentMode, paramId, assigningModulator, assigningPolyEuclid, routings, addRouting, setAssigningPolyEuclid])
+  }, [isInAssignmentMode, paramId, assigningModulator, assigningPolyEuclid, assigningStepTrack, routings, addRouting, setAssigningPolyEuclid, setAssigningStepTrack])
 
-  // Get color for current assigning modulator or polyEuclid track
+  // Get color for current assigning source
   const assigningColor = assigningModulator
     ? SPECIAL_SOURCES[assigningModulator]?.color
     : assigningPolyEuclid
       ? POLY_EUCLID_COLOR
-      : undefined
+      : assigningStepTrack
+        ? seqTracks.find(t => t.id === assigningStepTrack)?.color || POLY_EUCLID_COLOR
+        : undefined
 
   return (
     <div

@@ -71,6 +71,11 @@ interface SequencerState {
   audioReactive: boolean
   audioLevel: number
 
+  // Assignment mode - which track is being routed to parameters
+  assigningTrack: string | null
+  setAssigningTrack: (trackId: string | null) => void
+  toggleAssignmentMode: (trackId: string) => void
+
   // Transport actions
   play: () => void
   stop: () => void
@@ -181,6 +186,13 @@ export const useSequencerStore = create<SequencerState>((set, get) => ({
   // Audio reactive
   audioReactive: false,
   audioLevel: 0,
+
+  // Assignment mode
+  assigningTrack: null,
+  setAssigningTrack: (trackId) => set({ assigningTrack: trackId }),
+  toggleAssignmentMode: (trackId) => set((state) => ({
+    assigningTrack: state.assigningTrack === trackId ? null : trackId
+  })),
 
   // Transport actions
   play: () => set({ isPlaying: true }),

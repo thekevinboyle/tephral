@@ -66,11 +66,6 @@ export function TrackStrips() {
     window.addEventListener('mouseup', handleUp)
   }
 
-  const handleRouteDragStart = (trackId: string, e: React.DragEvent) => {
-    e.dataTransfer.setData('sequencer-track', `polyEuclid-${trackId}`)
-    e.dataTransfer.effectAllowed = 'link'
-  }
-
   return (
     <div className="flex flex-col" style={{ fontFamily: 'var(--font-mono, monospace)' }}>
       {tracks.map((track, index) => {

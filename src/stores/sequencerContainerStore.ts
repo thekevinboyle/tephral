@@ -1,8 +1,7 @@
 import { create } from 'zustand'
 
-// SequencerContainer holds both Slicer and Euclidean sequencers as tabs
-// Ricochet sequencer is in SequencerPanel
-export type SequencerType = 'slicer' | 'euclid'
+// SequencerContainer holds Slicer, Euclidean, and Step sequencers as tabs
+export type SequencerType = 'slicer' | 'euclid' | 'steps'
 
 interface SequencerContainerState {
   activeSequencer: SequencerType

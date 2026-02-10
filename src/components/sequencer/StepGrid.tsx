@@ -75,7 +75,7 @@ export function StepGrid({ track }: StepGridProps) {
             onMouseEnter={() => handleMouseEnter(index)}
             className="w-[14px] h-[14px] cursor-pointer"
             style={{
-              backgroundColor: step.active ? 'var(--text-primary)' : 'rgba(255, 255, 255, 0.15)',
+              backgroundColor: step.active ? 'var(--text-primary)' : 'rgba(255, 255, 255, 0.25)',
               opacity: isCurrentStep ? 1 : (step.active ? (hasProbability ? 0.6 : 0.8) : 1),
               boxShadow: isCurrentStep && step.active ? '0 0 4px var(--text-primary)' : 'none',
             }}

@@ -171,30 +171,6 @@ export function Track({ track }: TrackProps) {
         {track.modeOverride ? MODE_LABELS[track.modeOverride] : '→'}
       </button>
 
-      {/* Fill button */}
-      <button
-        onClick={handleFillClick}
-        className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm"
-        style={{
-          color: 'var(--text-secondary)',
-          backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        }}
-      >
-        FILL
-      </button>
-
-      {/* Random button */}
-      <button
-        onClick={handleRandomClick}
-        className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm"
-        style={{
-          color: 'var(--text-secondary)',
-          backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        }}
-      >
-        RAND
-      </button>
-
       {/* Route button with SendIcon - click to enter assignment mode */}
       <button
         className="w-7 h-7 rounded-sm flex items-center justify-center transition-all hover:scale-110"
@@ -234,6 +210,30 @@ export function Track({ track }: TrackProps) {
       <div className="flex gap-[2px] ml-auto">
         <StepGrid track={track} />
       </div>
+
+      {/* Fill button */}
+      <button
+        onClick={handleFillClick}
+        className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm"
+        style={{
+          color: 'var(--text-secondary)',
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        FILL
+      </button>
+
+      {/* Random button */}
+      <button
+        onClick={handleRandomClick}
+        className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm"
+        style={{
+          color: 'var(--text-secondary)',
+          backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        }}
+      >
+        RAND
+      </button>
 
       {/* Remove button */}
       {(

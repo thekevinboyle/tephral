@@ -22,10 +22,13 @@ export function SequencerContainer() {
           }}
         >
           <span
-            className="text-[9px] uppercase tracking-widest"
-            style={{ color: activeSequencer === 'slicer' ? 'var(--accent)' : 'var(--text-ghost)' }}
+            className="text-[10px] tracking-widest"
+            style={{
+              color: activeSequencer === 'slicer' ? 'var(--accent)' : 'var(--text-ghost)',
+              fontFamily: 'var(--font-mono, monospace)',
+            }}
           >
-            Slicer
+            CHI_R0N
           </span>
         </button>
         <button
@@ -37,10 +40,13 @@ export function SequencerContainer() {
           }}
         >
           <span
-            className="text-[9px] uppercase tracking-widest"
-            style={{ color: activeSequencer === 'euclid' ? 'var(--accent)' : 'var(--text-ghost)' }}
+            className="text-[10px] tracking-widest"
+            style={{
+              color: activeSequencer === 'euclid' ? 'var(--accent)' : 'var(--text-ghost)',
+              fontFamily: 'var(--font-mono, monospace)',
+            }}
           >
-            Euclid
+            T3S:S¥L
           </span>
         </button>
         <button
@@ -51,10 +57,13 @@ export function SequencerContainer() {
           }}
         >
           <span
-            className="text-[9px] uppercase tracking-widest"
-            style={{ color: activeSequencer === 'steps' ? 'var(--accent)' : 'var(--text-ghost)' }}
+            className="text-[10px] tracking-widest"
+            style={{
+              color: activeSequencer === 'steps' ? 'var(--accent)' : 'var(--text-ghost)',
+              fontFamily: 'var(--font-mono, monospace)',
+            }}
           >
-            Steps
+            PÜL.$YX
           </span>
         </button>
       </div>

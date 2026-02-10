@@ -37,14 +37,18 @@ export function useDestructionChaos() {
       // Enable chaos effects with extreme values
       glitchStore.setRGBSplitEnabled(true)
       glitchStore.updateRGBSplit({
-        amount: 50,
-        angle: Math.random() * 360,
+        amount: 0.5,
+        redOffsetX: 0.03,
+        redOffsetY: -0.01,
+        blueOffsetX: -0.03,
+        blueOffsetY: 0.01,
       })
 
       glitchStore.setBlockDisplaceEnabled(true)
       glitchStore.updateBlockDisplace({
-        intensity: 0.8,
-        blockSize: 32,
+        displaceChance: 0.8,
+        displaceDistance: 0.1,
+        blockSize: 0.03,
       })
 
       glitchStore.setFeedbackLoopEnabled(true)
@@ -57,18 +61,20 @@ export function useDestructionChaos() {
 
       glitchStore.setChromaticAberrationEnabled(true)
       glitchStore.updateChromaticAberration({
-        offset: 20,
+        intensity: 0.8,
+        radialAmount: 0.7,
       })
 
       glitchStore.setVHSTrackingEnabled(true)
       glitchStore.updateVHSTracking({
-        intensity: 0.8,
-        noiseIntensity: 0.5,
+        tearIntensity: 0.8,
+        headSwitchNoise: 0.5,
+        colorBleed: 0.6,
       })
 
       glitchStore.setNoiseEnabled(true)
       glitchStore.updateNoise({
-        intensity: 0.4,
+        amount: 0.4,
       })
 
       glitchStore.setStaticDisplacementEnabled(true)
@@ -82,14 +88,18 @@ export function useDestructionChaos() {
 
         // Randomly tweak RGB split
         store.updateRGBSplit({
-          amount: randomInRange(30, 70),
-          angle: Math.random() * 360,
+          amount: randomInRange(0.3, 0.7),
+          redOffsetX: randomInRange(-0.05, 0.05),
+          redOffsetY: randomInRange(-0.02, 0.02),
+          blueOffsetX: randomInRange(-0.05, 0.05),
+          blueOffsetY: randomInRange(-0.02, 0.02),
         })
 
         // Randomly tweak block displace
         store.updateBlockDisplace({
-          intensity: randomInRange(0.5, 1.0),
-          blockSize: Math.floor(randomInRange(8, 56)),
+          displaceChance: randomInRange(0.5, 1.0),
+          displaceDistance: randomInRange(0.05, 0.15),
+          blockSize: randomInRange(0.01, 0.06),
         })
 
         // Randomly tweak feedback loop
@@ -101,7 +111,7 @@ export function useDestructionChaos() {
 
         // Randomly tweak noise
         store.updateNoise({
-          intensity: randomInRange(0.2, 0.6),
+          amount: randomInRange(0.2, 0.6),
         })
 
         // Schedule next modulation at random interval

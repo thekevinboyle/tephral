@@ -1,7 +1,7 @@
 /**
  * DestructionOverlay.tsx
- * Full-screen matrix rain / glitch overlay for Destruction Mode
- * Covers entire screen with animated chaos effects
+ * UI dimming overlay with matrix rain effects for Destruction Mode
+ * Covers UI elements but excludes the canvas area
  */
 
 import { useRef, useEffect, useState, useCallback } from 'react'
@@ -30,6 +30,13 @@ interface Drop {
   reversed: boolean
 }
 
+interface CanvasBounds {
+  top: number
+  left: number
+  width: number
+  height: number
+}
+
 export function DestructionOverlay() {
   const active = useDestructionModeStore((s) => s.active)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -40,6 +47,37 @@ export function DestructionOverlay() {
   // Visibility and fade states
   const [isVisible, setIsVisible] = useState(false)
   const [opacity, setOpacity] = useState(0)
+  const [canvasBounds, setCanvasBounds] = useState<CanvasBounds | null>(null)
+
+  // Track the video canvas position
+  useEffect(() => {
+    if (!active) return
+
+    const updateCanvasBounds = () => {
+      // Find the main video canvas (the one inside the Canvas component)
+      const videoCanvas = document.querySelector('canvas[data-engine="three.js"]') as HTMLCanvasElement
+      if (videoCanvas) {
+        const rect = videoCanvas.getBoundingClientRect()
+        setCanvasBounds({
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        })
+      }
+    }
+
+    updateCanvasBounds()
+    window.addEventListener('resize', updateCanvasBounds)
+
+    // Update periodically in case layout shifts
+    const interval = setInterval(updateCanvasBounds, 100)
+
+    return () => {
+      window.removeEventListener('resize', updateCanvasBounds)
+      clearInterval(interval)
+    }
+  }, [active])
 
   // Initialize drops
   const initDrops = useCallback((width: number) => {
@@ -242,21 +280,57 @@ export function DestructionOverlay() {
 
   if (!isVisible) return null
 
+  // Create clip-path to exclude the canvas area
+  // polygon() creates a shape that covers everything EXCEPT the canvas
+  const clipPath = canvasBounds
+    ? `polygon(
+        0% 0%,
+        0% 100%,
+        ${canvasBounds.left}px 100%,
+        ${canvasBounds.left}px ${canvasBounds.top}px,
+        ${canvasBounds.left + canvasBounds.width}px ${canvasBounds.top}px,
+        ${canvasBounds.left + canvasBounds.width}px ${canvasBounds.top + canvasBounds.height}px,
+        ${canvasBounds.left}px ${canvasBounds.top + canvasBounds.height}px,
+        ${canvasBounds.left}px 100%,
+        100% 100%,
+        100% 0%
+      )`
+    : undefined
+
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 9999,
-        pointerEvents: 'none',
-        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-        opacity,
-        transition: `opacity ${FADE_DURATION}ms ease-out`,
-      }}
-    />
+    <>
+      {/* Dark dim layer with hole for canvas */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 9998,
+          pointerEvents: 'none',
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          clipPath,
+          opacity,
+          transition: `opacity ${FADE_DURATION}ms ease-out`,
+        }}
+      />
+      {/* Glitch overlay canvas with hole for video canvas */}
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 9999,
+          pointerEvents: 'none',
+          clipPath,
+          opacity,
+          transition: `opacity ${FADE_DURATION}ms ease-out`,
+        }}
+      />
+    </>
   )
 }

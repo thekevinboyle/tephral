@@ -6,10 +6,17 @@ uniform float crossfaderPosition;
 uniform sampler2D sourceTexture;
 uniform vec2 quadScale;
 uniform vec2 sourceQuadScale;
+uniform float sourceTextureValid;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   // Quick path: fully at FX position, just output processed
   if (crossfaderPosition >= 0.999) {
+    outputColor = inputColor;
+    return;
+  }
+
+  // If no source texture is set, just output the processed video
+  if (sourceTextureValid < 0.5) {
     outputColor = inputColor;
     return;
   }
@@ -31,7 +38,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   // Map UV from visible area to 0-1 range for source texture sampling
   vec2 sourceUv = (uv - visibleMin) / quadScale;
 
-  // Sample source texture (will be black if texture is null/not set)
+  // Sample source texture
   vec4 source = texture2D(sourceTexture, sourceUv);
 
   // Blend: SRC (0) = source, FX (1) = processed
@@ -50,6 +57,7 @@ export class CrossfaderEffect extends Effect {
         ['sourceTexture', new THREE.Uniform(null)],
         ['quadScale', new THREE.Uniform(new THREE.Vector2(1, 1))],
         ['sourceQuadScale', new THREE.Uniform(new THREE.Vector2(1, 1))],
+        ['sourceTextureValid', new THREE.Uniform(0.0)], // Use float instead of bool for GLSL compatibility
       ]),
     })
   }
@@ -61,6 +69,7 @@ export class CrossfaderEffect extends Effect {
   setSourceTexture(texture: THREE.Texture | null) {
     this.sourceTexture = texture
     this.uniforms.get('sourceTexture')!.value = texture
+    this.uniforms.get('sourceTextureValid')!.value = texture ? 1.0 : 0.0
   }
 
   setQuadScale(scaleX: number, scaleY: number) {

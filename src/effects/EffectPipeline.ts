@@ -73,8 +73,6 @@ export class EffectPipeline {
   private videoWidth = 1
   private videoHeight = 1
 
-  // Original source texture for crossfader A side (separate from inputTexture)
-  private originalSourceTexture: THREE.Texture | null = null
 
   constructor(renderer: THREE.WebGLRenderer) {
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
@@ -275,7 +273,6 @@ export class EffectPipeline {
 
   // Set the original source texture for crossfader A side
   setSourceTexture(texture: THREE.Texture | null) {
-    this.originalSourceTexture = texture
     if (this.crossfaderEffect) {
       this.crossfaderEffect.setSourceTexture(texture)
     }

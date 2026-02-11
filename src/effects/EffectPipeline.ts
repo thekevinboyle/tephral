@@ -249,10 +249,9 @@ export class EffectPipeline {
     }
 
     // Add crossfader pass for A/B blending (source vs processed)
-    // Use originalSourceTexture (the raw source before any effects) for the A side
-    const sourceForCrossfader = this.originalSourceTexture || this.inputTexture
-    if (this.crossfaderEffect && sourceForCrossfader) {
-      this.crossfaderEffect.setSourceTexture(sourceForCrossfader)
+    // Always add the pass - source texture is set separately via setSourceTexture()
+    // and may be called after updateEffects() due to React effect ordering
+    if (this.crossfaderEffect) {
       // Calculate quad scale from config dimensions
       const canvasAspect = this.canvasWidth / this.canvasHeight
       const videoAspect = config.videoWidth / config.videoHeight

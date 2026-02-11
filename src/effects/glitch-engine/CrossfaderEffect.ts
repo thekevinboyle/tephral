@@ -9,37 +9,14 @@ uniform vec2 sourceQuadScale;
 uniform float sourceTextureValid;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
-  // Quick path: fully at FX position, just output processed
-  if (crossfaderPosition >= 0.999) {
+  // If no source texture is set or fully at FX position, just output the processed video
+  if (sourceTextureValid < 0.5 || crossfaderPosition >= 0.999) {
     outputColor = inputColor;
     return;
   }
 
-  // If no source texture is set, just output the processed video
-  if (sourceTextureValid < 0.5) {
-    outputColor = inputColor;
-    return;
-  }
-
-  // The processed video (inputColor) is already letterboxed by the quad geometry
-  // The source texture needs to be sampled to match the same letterboxing
-
-  // First, check if we're in the visible area (inside the letterbox)
-  // The visible area in UV space is centered, with size = quadScale
-  vec2 visibleMin = (1.0 - quadScale) * 0.5;
-  vec2 visibleMax = visibleMin + quadScale;
-
-  // If we're outside the visible area, both source and processed should be black
-  if (uv.x < visibleMin.x || uv.x > visibleMax.x || uv.y < visibleMin.y || uv.y > visibleMax.y) {
-    outputColor = vec4(0.0, 0.0, 0.0, 1.0);
-    return;
-  }
-
-  // Map UV from visible area to 0-1 range for source texture sampling
-  vec2 sourceUv = (uv - visibleMin) / quadScale;
-
-  // Sample source texture
-  vec4 source = texture2D(sourceTexture, sourceUv);
+  // Sample source texture at the same UV
+  vec4 source = texture2D(sourceTexture, uv);
 
   // Blend: SRC (0) = source, FX (1) = processed
   outputColor = mix(source, inputColor, crossfaderPosition);

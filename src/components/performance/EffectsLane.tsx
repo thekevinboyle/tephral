@@ -10,6 +10,7 @@ import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
+import { useDestructionStore } from '../../stores/destructionStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useModulationStore, type LFOShape } from '../../stores/modulationStore'
@@ -634,6 +635,7 @@ export function EffectsLane() {
   const dataOverlay = useDataOverlayStore()
   const strand = useStrandStore()
   const motion = useMotionStore()
+  const destruction = useDestructionStore()
   const { selectedEffectId, setSelectedEffect } = useUIStore()
   const { effectOrder, reorderEffect } = useRoutingStore()
   const modulation = useModulationStore()
@@ -893,6 +895,10 @@ export function EffectsLane() {
   if (motion.echoTrailEnabled) activeEffects.push({ id: 'echo_trail', label: 'Echo Trail', color: '#06b6d4', primaryValue: Math.round(motion.echoTrail.decay * 100), primaryLabel: 'decay' })
   if (motion.timeSmearEnabled) activeEffects.push({ id: 'time_smear', label: 'Time Smear', color: '#8b5cf6', primaryValue: Math.round(motion.timeSmear.accumulation * 100), primaryLabel: 'acc' })
   if (motion.freezeMaskEnabled) activeEffects.push({ id: 'freeze_mask', label: 'Freeze Mask', color: '#f97316', primaryValue: Math.round(motion.freezeMask.freezeThreshold * 100), primaryLabel: 'thresh' })
+
+  // Destruction effects
+  if (destruction.datamoshEnabled) activeEffects.push({ id: 'datamosh', label: 'Datamosh', color: '#ff0000', primaryValue: Math.round(destruction.datamoshParams.intensity * 100), primaryLabel: 'int' })
+  if (destruction.pixelSortEnabled) activeEffects.push({ id: 'pixelSort', label: 'Pixel Sort', color: '#ff3366', primaryValue: Math.round(destruction.pixelSortParams.intensity * 100), primaryLabel: 'int' })
 
   // Sort effects by effectOrder
   const sortedEffects = [...activeEffects].sort((a, b) => {

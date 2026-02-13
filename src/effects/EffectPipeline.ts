@@ -81,7 +81,7 @@ export class EffectPipeline {
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
 
-  private effectPass: EffectPass | null = null
+  private effectPasses: EffectPass[] = []
   private crossfaderPass: EffectPass | null = null
 
   // Dimensions for aspect ratio
@@ -224,10 +224,10 @@ export class EffectPipeline {
     videoHeight: number
   }) {
     // Remove existing passes
-    if (this.effectPass) {
-      this.composer.removePass(this.effectPass)
-      this.effectPass = null
+    for (const pass of this.effectPasses) {
+      this.composer.removePass(pass)
     }
+    this.effectPasses = []
     if (this.crossfaderPass) {
       this.composer.removePass(this.crossfaderPass)
       this.crossfaderPass = null
@@ -276,24 +276,17 @@ export class EffectPipeline {
       track_hands: config.handsTraceEnabled,
     }
 
-    // Collect enabled effects in the specified order
-    const effects: Effect[] = []
-    const effectIds: string[] = []
-
+    // Add individual effect passes in order (like guitar pedals in a chain)
+    // Each effect processes the output of the previous one
     for (const effectId of config.effectOrder) {
       if (enabledMap[effectId]) {
         const effect = this.getEffectById(effectId)
         if (effect) {
-          effects.push(effect)
-          effectIds.push(effectId)
+          const pass = new EffectPass(this.camera, effect)
+          this.composer.addPass(pass)
+          this.effectPasses.push(pass)
         }
       }
-    }
-
-    // Add effect pass if there are effects
-    if (effects.length > 0) {
-      this.effectPass = new EffectPass(this.camera, ...effects)
-      this.composer.addPass(this.effectPass)
     }
 
     // Add crossfader pass for A/B blending (source vs processed)

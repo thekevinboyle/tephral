@@ -11,6 +11,7 @@ import { useMediaStore } from '../stores/mediaStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useRecordingStore } from '../stores/recordingStore'
 import { useDestructionModeStore } from '../stores/destructionModeStore'
+import { useDestructionStore } from '../stores/destructionStore'
 import { useSlicerStore } from '../stores/slicerStore'
 import { useSlicerBufferStore } from '../stores/slicerBufferStore'
 import { SlicerCompositor } from '../effects/SlicerCompositor'
@@ -28,6 +29,14 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   const { videoElement, imageElement } = useMediaStore()
   const { previewTime } = useRecordingStore()
   const destructionActive = useDestructionModeStore((state) => state.active)
+
+  // Destruction store (performance grid controlled datamosh and pixel sort)
+  const {
+    datamoshEnabled,
+    datamoshParams,
+    pixelSortEnabled,
+    pixelSortParams,
+  } = useDestructionStore()
 
   // Slicer state
   const {
@@ -238,8 +247,10 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       // Vision effects (GPU overlay versions) - not affected by glitchEnabled
       dotsEnabled: getEffectiveEnabled('acid_dots', dotsEnabled && !effectBypassed['acid_dots']),
       asciiEnabled: getEffectiveEnabled('ascii', asciiEnabled && !effectBypassed['ascii'] && asciiParams.mode !== 'matrix'),
-      // Destruction mode datamosh effect - CRANKED TO MAX
-      datamoshEnabled: destructionActive,
+      // Destruction mode datamosh effect - enabled via destruction mode OR performance grid
+      datamoshEnabled: getEffectiveEnabled('datamosh', (destructionActive || datamoshEnabled) && !effectBypassed['datamosh']),
+      // Pixel sort - performance grid only
+      pixelSortEnabled: getEffectiveEnabled('pixelSort', pixelSortEnabled && !effectBypassed['pixelSort']),
       bypassActive,
       crossfaderPosition,
       hasSourceTexture: !!mediaTexture && !slicerEnabled,
@@ -247,14 +258,29 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       videoHeight: videoElement?.videoHeight || imageElement?.naturalHeight || 1,
     })
 
-    // Crank datamosh params when destruction mode is active
-    if (destructionActive && pipeline.datamosh) {
-      pipeline.datamosh.updateParams({
-        intensity: 0.95,
-        blockSize: 12,
-        keyframeChance: 0.01,
-        mix: 1.0,
-      })
+    // Update datamosh params - destruction mode overrides with max settings
+    if (pipeline.datamosh) {
+      if (destructionActive) {
+        // Crank to max when destruction mode is active
+        pipeline.datamosh.updateParams({
+          intensity: 0.95,
+          blockSize: 12,
+          keyframeChance: 0.01,
+          chaos: 1.0,
+          feedback: 0.9, // High recursive feedback for maximum melt
+          mix: 1.0,
+        })
+      } else if (datamoshEnabled) {
+        // Use store params when enabled via performance grid
+        const getMix = (id: string) => effectMix[id] ?? 1
+        pipeline.datamosh.updateParams({ ...datamoshParams, mix: getMix('datamosh') })
+      }
+    }
+
+    // Update pixel sort params
+    if (pipeline.pixelSort && pixelSortEnabled) {
+      const getMix = (id: string) => effectMix[id] ?? 1
+      pipeline.pixelSort.updateParams({ ...pixelSortParams, mix: getMix('pixelSort') })
     }
   }, [
     pipeline,
@@ -312,6 +338,11 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     asciiParams,
     // Destruction mode
     destructionActive,
+    // Destruction store (performance grid)
+    datamoshEnabled,
+    datamoshParams,
+    pixelSortEnabled,
+    pixelSortParams,
   ])
 
   // Update input texture and video dimensions

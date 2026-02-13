@@ -59,17 +59,18 @@ export function SlicerPanel() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {/* Bypassed overlay */}
+      {/* Bypassed overlay - click to enable */}
       {!enabled && (
         <div
-          className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
+          className="absolute inset-0 z-40 flex items-center justify-center cursor-pointer"
           style={{
             backgroundColor: 'rgba(0, 0, 0, 0.7)',
             backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)',
           }}
+          onClick={() => setEnabled(true)}
         >
           <span
-            className="text-[14px] font-bold uppercase tracking-widest px-4 py-2 rounded-sm"
+            className="text-[14px] font-bold uppercase tracking-widest px-4 py-2 rounded-sm pointer-events-none"
             style={{
               color: '#ef4444',
               backgroundColor: 'var(--bg-primary)',

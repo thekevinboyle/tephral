@@ -9,9 +9,10 @@ import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useAcidStore } from '../../stores/acidStore'
 import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
+import { useDestructionStore } from '../../stores/destructionStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
-import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS } from '../../config/effects'
+import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS, DESTRUCTION_EFFECTS } from '../../config/effects'
 import { SliderRow, ToggleRow, SelectRow, ColorRow } from './controls'
 import { TEXTURE_LIBRARY, type TextureId } from '../overlays/TextureOverlay'
 import { PresetDropdownBar } from '../presets/PresetDropdownBar'
@@ -30,7 +31,7 @@ export function ExpandedParameterPanel() {
   }, [selectedEffectId])
 
   const effectId = selectedEffectId || lastEffectId
-  const effect = EFFECTS.find((e) => e.id === effectId) || STRAND_EFFECTS.find((e) => e.id === effectId) || MOTION_EFFECTS.find((e) => e.id === effectId)
+  const effect = EFFECTS.find((e) => e.id === effectId) || STRAND_EFFECTS.find((e) => e.id === effectId) || MOTION_EFFECTS.find((e) => e.id === effectId) || DESTRUCTION_EFFECTS.find((e) => e.id === effectId)
 
   if (!effectId || !effect) {
     return (
@@ -94,6 +95,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
   const acid = useAcidStore()
   const strand = useStrandStore()
   const motion = useMotionStore()
+  const destruction = useDestructionStore()
 
   switch (effectId) {
     case 'rgb_split':
@@ -3250,6 +3252,198 @@ function EffectParameters({ effectId }: { effectId: string }) {
             value={motion.freezeMask.invertMask}
             onChange={(v) => motion.updateFreezeMask({ invertMask: v })}
           />
+        </div>
+      )
+
+    // ═══════════════════════════════════════════════════════════════
+    // DESTRUCTION EFFECTS
+    // ═══════════════════════════════════════════════════════════════
+
+    case 'datamosh':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Intensity"
+            value={destruction.datamoshParams.intensity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => destruction.updateDatamoshParams({ intensity: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="datamosh.intensity"
+          />
+          <SliderRow
+            label="Chaos"
+            value={destruction.datamoshParams.chaos ?? 0.5}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => destruction.updateDatamoshParams({ chaos: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="datamosh.chaos"
+          />
+          <SliderRow
+            label="Block Size"
+            value={destruction.datamoshParams.blockSize}
+            min={4}
+            max={32}
+            step={1}
+            onChange={(v) => destruction.updateDatamoshParams({ blockSize: v })}
+            format={(v) => `${v.toFixed(0)}px`}
+            paramId="datamosh.blockSize"
+          />
+          <SliderRow
+            label="Keyframe Chance"
+            value={destruction.datamoshParams.keyframeChance}
+            min={0}
+            max={0.1}
+            step={0.001}
+            onChange={(v) => destruction.updateDatamoshParams({ keyframeChance: v })}
+            format={(v) => `${(v * 100).toFixed(1)}%`}
+            paramId="datamosh.keyframeChance"
+          />
+          <SliderRow
+            label="Feedback"
+            value={destruction.datamoshParams.feedback ?? 0.7}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => destruction.updateDatamoshParams({ feedback: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="datamosh.feedback"
+          />
+          <SliderRow
+            label="Mix"
+            value={destruction.datamoshParams.mix}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => destruction.updateDatamoshParams({ mix: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="datamosh.mix"
+          />
+        </div>
+      )
+
+    case 'pixelSort':
+      return (
+        <div className="space-y-1">
+          <SliderRow
+            label="Intensity"
+            value={destruction.pixelSortParams.intensity}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => destruction.updatePixelSortParams({ intensity: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="pixelSort.intensity"
+          />
+          <SliderRow
+            label="Threshold"
+            value={destruction.pixelSortParams.threshold}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => destruction.updatePixelSortParams({ threshold: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="pixelSort.threshold"
+          />
+          <SliderRow
+            label="Streak Length"
+            value={destruction.pixelSortParams.streakLength}
+            min={1}
+            max={500}
+            step={1}
+            onChange={(v) => destruction.updatePixelSortParams({ streakLength: v })}
+            format={(v) => `${v.toFixed(0)}px`}
+            paramId="pixelSort.streakLength"
+          />
+          <SliderRow
+            label="Randomness"
+            value={destruction.pixelSortParams.randomness}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => destruction.updatePixelSortParams({ randomness: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="pixelSort.randomness"
+          />
+          <SliderRow
+            label="Mix"
+            value={destruction.pixelSortParams.mix}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={(v) => destruction.updatePixelSortParams({ mix: v })}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
+            paramId="pixelSort.mix"
+          />
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => destruction.updatePixelSortParams({ direction: 'horizontal' })}
+              className={`flex-1 py-1 px-2 text-xs rounded ${
+                destruction.pixelSortParams.direction === 'horizontal'
+                  ? 'bg-[#ff3366] text-black'
+                  : 'bg-gray-800 text-gray-400'
+              }`}
+            >
+              HORIZ
+            </button>
+            <button
+              onClick={() => destruction.updatePixelSortParams({ direction: 'vertical' })}
+              className={`flex-1 py-1 px-2 text-xs rounded ${
+                destruction.pixelSortParams.direction === 'vertical'
+                  ? 'bg-[#ff3366] text-black'
+                  : 'bg-gray-800 text-gray-400'
+              }`}
+            >
+              VERT
+            </button>
+          </div>
+          <div className="flex gap-2 mt-1">
+            <button
+              onClick={() => destruction.updatePixelSortParams({ sortMode: 'brightness' })}
+              className={`flex-1 py-1 px-2 text-xs rounded ${
+                destruction.pixelSortParams.sortMode === 'brightness'
+                  ? 'bg-[#ff3366] text-black'
+                  : 'bg-gray-800 text-gray-400'
+              }`}
+            >
+              BRIGHT
+            </button>
+            <button
+              onClick={() => destruction.updatePixelSortParams({ sortMode: 'saturation' })}
+              className={`flex-1 py-1 px-2 text-xs rounded ${
+                destruction.pixelSortParams.sortMode === 'saturation'
+                  ? 'bg-[#ff3366] text-black'
+                  : 'bg-gray-800 text-gray-400'
+              }`}
+            >
+              SAT
+            </button>
+            <button
+              onClick={() => destruction.updatePixelSortParams({ sortMode: 'hue' })}
+              className={`flex-1 py-1 px-2 text-xs rounded ${
+                destruction.pixelSortParams.sortMode === 'hue'
+                  ? 'bg-[#ff3366] text-black'
+                  : 'bg-gray-800 text-gray-400'
+              }`}
+            >
+              HUE
+            </button>
+          </div>
+          <div className="flex gap-2 mt-1">
+            <button
+              onClick={() => destruction.updatePixelSortParams({ reverse: !destruction.pixelSortParams.reverse })}
+              className={`flex-1 py-1 px-2 text-xs rounded ${
+                destruction.pixelSortParams.reverse
+                  ? 'bg-[#ff3366] text-black'
+                  : 'bg-gray-800 text-gray-400'
+              }`}
+            >
+              REVERSE
+            </button>
+          </div>
         </div>
       )
 

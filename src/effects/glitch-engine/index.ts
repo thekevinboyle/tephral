@@ -67,3 +67,6 @@ export type { AsciiEffectParams, AsciiEffectMode, AsciiColorMode } from './Ascii
 
 export { DatamoshEffect, DEFAULT_DATAMOSH_PARAMS } from './DatamoshEffect'
 export type { DatamoshParams } from './DatamoshEffect'
+
+export { PixelSortEffect, DEFAULT_PIXEL_SORT_PARAMS } from './PixelSortEffect'
+export type { PixelSortParams } from './PixelSortEffect'

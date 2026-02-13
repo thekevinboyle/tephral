@@ -15,6 +15,7 @@ import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
+import { useDestructionStore } from '../../stores/destructionStore'
 
 export function PerformanceGrid() {
   // Glitch engine store
@@ -42,6 +43,9 @@ export function PerformanceGrid() {
 
   // Motion store
   const motion = useMotionStore()
+
+  // Destruction store
+  const destruction = useDestructionStore()
 
   // Routing store for effect order
   const { effectOrder, setEffectOrder } = useRoutingStore()
@@ -853,6 +857,32 @@ export function PerformanceGrid() {
           onValueChange: (v: number) => motion.updateFreezeMask({ freezeThreshold: v / 100 }),
         }
 
+      // ═══════════════════════════════════════════════════════════════
+      // PAGE 5: DESTRUCTION EFFECTS
+      // ═══════════════════════════════════════════════════════════════
+
+      case 'datamosh':
+        return {
+          active: destruction.datamoshEnabled,
+          value: destruction.datamoshParams.intensity * 100,
+          onToggle: () => {
+            if (!destruction.datamoshEnabled) moveToEndOfChain(effectId)
+            destruction.setDatamoshEnabled(!destruction.datamoshEnabled)
+          },
+          onValueChange: (v: number) => destruction.updateDatamoshParams({ intensity: v / 100 }),
+        }
+
+      case 'pixelSort':
+        return {
+          active: destruction.pixelSortEnabled,
+          value: destruction.pixelSortParams.intensity * 100,
+          onToggle: () => {
+            if (!destruction.pixelSortEnabled) moveToEndOfChain(effectId)
+            destruction.setPixelSortEnabled(!destruction.pixelSortEnabled)
+          },
+          onValueChange: (v: number) => destruction.updatePixelSortParams({ intensity: v / 100 }),
+        }
+
       // Reserved / empty slots
       default:
         if (effectId.startsWith('reserved')) {
@@ -907,6 +937,8 @@ export function PerformanceGrid() {
       case 4: // MOTION
         return motion.motionExtractEnabled || motion.echoTrailEnabled ||
                motion.timeSmearEnabled || motion.freezeMaskEnabled
+      case 5: // DESTRUCTION
+        return destruction.datamoshEnabled
       default:
         return false
     }
@@ -943,6 +975,7 @@ export function PerformanceGrid() {
             const visionState = useVisionTrackingStore.getState()
             const strandState = useStrandStore.getState()
             const motionState = useMotionStore.getState()
+            const destructionState = useDestructionStore.getState()
             const textureOverlayState = useTextureOverlayStore.getState()
             const dataOverlayState = useDataOverlayStore.getState()
 
@@ -1009,6 +1042,7 @@ export function PerformanceGrid() {
             motionState.setEchoTrailEnabled(false)
             motionState.setTimeSmearEnabled(false)
             motionState.setFreezeMaskEnabled(false)
+            destructionState.setDatamoshEnabled(false)
           }}
           title="Clear all effects"
           className="w-6 h-6 flex items-center justify-center rounded-sm transition-all hover:scale-105"

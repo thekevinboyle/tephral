@@ -23,6 +23,7 @@ import {
   DotsEffect,
   AsciiEffect,
   DatamoshEffect,
+  PixelSortEffect,
 } from './glitch-engine'
 
 export class EffectPipeline {
@@ -60,6 +61,7 @@ export class EffectPipeline {
 
   // Destruction effects
   datamosh: DatamoshEffect | null = null
+  pixelSort: PixelSortEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -119,6 +121,7 @@ export class EffectPipeline {
 
     // Destruction effects
     this.datamosh = new DatamoshEffect()
+    this.pixelSort = new PixelSortEffect()
   }
 
   // Map effect IDs to effect instances
@@ -145,6 +148,7 @@ export class EffectPipeline {
       case 'acid_dots': return this.dotsEffect
       case 'ascii': return this.asciiEffect
       case 'datamosh': return this.datamosh
+      case 'pixelSort': return this.pixelSort
       default: return null
     }
   }
@@ -175,6 +179,7 @@ export class EffectPipeline {
     asciiEnabled: boolean
     // Destruction effects
     datamoshEnabled: boolean
+    pixelSortEnabled: boolean
     bypassActive: boolean
     crossfaderPosition: number
     hasSourceTexture: boolean
@@ -224,6 +229,7 @@ export class EffectPipeline {
       acid_dots: config.dotsEnabled,
       ascii: config.asciiEnabled,
       datamosh: config.datamoshEnabled,
+      pixelSort: config.pixelSortEnabled,
     }
 
     // Collect enabled effects in the specified order
@@ -384,6 +390,7 @@ export class EffectPipeline {
     this.dotsEffect?.dispose()
     this.asciiEffect?.dispose()
     this.datamosh?.dispose()
+    this.pixelSort?.dispose()
   }
 
   // Capture frame for temporal effects (call after render)

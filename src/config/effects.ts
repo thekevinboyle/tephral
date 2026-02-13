@@ -9,7 +9,7 @@ export interface EffectDefinition {
 }
 
 // Page names for UI
-export const PAGE_NAMES = ['ACID', 'VISION', 'GLITCH', 'STRAND', 'MOTION']
+export const PAGE_NAMES = ['ACID', 'VISION', 'GLITCH', 'STRAND', 'MOTION', 'DESTRUCTION']
 
 export const EFFECTS: EffectDefinition[] = [
   // ═══════════════════════════════════════════════════════════════
@@ -152,10 +152,41 @@ export const MOTION_EFFECTS: EffectDefinition[] = [
   { id: 'motion_reserved_16', label: '—', color: '#374151', row: 'reserved', page: 4, min: 0, max: 100 },
 ]
 
+// ═══════════════════════════════════════════════════════════════
+// PAGE 5: DESTRUCTION (Datamosh, corruption, destructive effects)
+// ═══════════════════════════════════════════════════════════════
+
+export const DESTRUCTION_EFFECTS: EffectDefinition[] = [
+  // Row 1: Core destruction effects (red theme)
+  { id: 'datamosh', label: 'MOSH', color: '#ff0000', row: 'color', page: 5, min: 0, max: 1 },
+  { id: 'pixelSort', label: 'SORT', color: '#ff3366', row: 'color', page: 5, min: 0, max: 1 },
+  { id: 'destruction_reserved_3', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'destruction_reserved_4', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+
+  // Row 2: Reserved
+  { id: 'destruction_reserved_5', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'destruction_reserved_6', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'destruction_reserved_7', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'destruction_reserved_8', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+
+  // Row 3: Reserved
+  { id: 'destruction_reserved_9', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'destruction_reserved_10', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'destruction_reserved_11', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'destruction_reserved_12', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+
+  // Row 4: Reserved
+  { id: 'destruction_reserved_13', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'destruction_reserved_14', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'destruction_reserved_15', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'destruction_reserved_16', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+]
+
 // Get effects for a specific page
 export const getEffectsForPage = (page: number): EffectDefinition[] => {
   if (page === 3) return STRAND_EFFECTS
   if (page === 4) return MOTION_EFFECTS
+  if (page === 5) return DESTRUCTION_EFFECTS
   return EFFECTS.filter(e => e.page === page)
 }
 

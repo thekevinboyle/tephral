@@ -63,6 +63,7 @@ import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
+import { useDestructionStore } from '../../stores/destructionStore'
 
 interface ParameterSection {
   id: string
@@ -119,6 +120,7 @@ export function ParameterPanel() {
   const dataOverlay = useDataOverlayStore()
   const strand = useStrandStore()
   const motion = useMotionStore()
+  const destruction = useDestructionStore()
 
   // Clear all effects
   const handleClear = useCallback(() => {
@@ -191,7 +193,10 @@ export function ParameterPanel() {
     motion.setEchoTrailEnabled(false)
     motion.setTimeSmearEnabled(false)
     motion.setFreezeMaskEnabled(false)
-  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion])
+    // Clear destruction effects
+    destruction.setDatamoshEnabled(false)
+    destruction.setPixelSortEnabled(false)
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion, destruction])
 
   // Build active effect sections
   const sections: ParameterSection[] = []
@@ -1815,6 +1820,38 @@ export function ParameterPanel() {
     })
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // DESTRUCTION EFFECTS
+  // ═══════════════════════════════════════════════════════════════
+
+  if (destruction.datamoshEnabled) {
+    sections.push({
+      id: 'datamosh',
+      label: 'DATAMOSH',
+      color: '#ff0000',
+      visualizer: <BlockDisplaceViz amount={destruction.datamoshParams.intensity * 100} seed={0} color="#ff0000" />,
+      params: [
+        { label: 'Intensity', value: destruction.datamoshParams.intensity * 100, min: 0, max: 100, onChange: (v) => destruction.updateDatamoshParams({ intensity: v / 100 }), paramId: 'datamosh.intensity' },
+        { label: 'Chaos', value: (destruction.datamoshParams.chaos ?? 0.5) * 100, min: 0, max: 100, onChange: (v) => destruction.updateDatamoshParams({ chaos: v / 100 }), paramId: 'datamosh.chaos' },
+        { label: 'Block Size', value: destruction.datamoshParams.blockSize, min: 4, max: 32, onChange: (v) => destruction.updateDatamoshParams({ blockSize: v }), paramId: 'datamosh.blockSize' },
+      ],
+    })
+  }
+
+  if (destruction.pixelSortEnabled) {
+    sections.push({
+      id: 'pixelSort',
+      label: 'PIXEL SORT',
+      color: '#ff3366',
+      visualizer: <BlockDisplaceViz amount={destruction.pixelSortParams.streakLength / 5} seed={destruction.pixelSortParams.threshold * 10} color="#ff3366" />,
+      params: [
+        { label: 'Intensity', value: destruction.pixelSortParams.intensity * 100, min: 0, max: 100, onChange: (v) => destruction.updatePixelSortParams({ intensity: v / 100 }), paramId: 'pixelSort.intensity' },
+        { label: 'Threshold', value: destruction.pixelSortParams.threshold * 100, min: 0, max: 100, onChange: (v) => destruction.updatePixelSortParams({ threshold: v / 100 }), paramId: 'pixelSort.threshold' },
+        { label: 'Streak', value: destruction.pixelSortParams.streakLength, min: 1, max: 500, onChange: (v) => destruction.updatePixelSortParams({ streakLength: v }), paramId: 'pixelSort.streakLength' },
+      ],
+    })
+  }
+
   const { selectedEffectId, setSelectedEffect, sequencerDrag } = useUIStore()
   const { effectOrder, reorderEffect } = useRoutingStore()
   const { addRouting } = useSequencerStore()
@@ -2032,12 +2069,19 @@ export function ParameterPanel() {
       case 'freeze_mask':
         motion.setFreezeMaskEnabled(false)
         break
+      // Destruction effects
+      case 'datamosh':
+        destruction.setDatamoshEnabled(false)
+        break
+      case 'pixelSort':
+        destruction.setPixelSortEnabled(false)
+        break
     }
     // Clear selection if this effect was selected
     if (selectedEffectId === effectId) {
       setSelectedEffect(null)
     }
-  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion, selectedEffectId, setSelectedEffect])
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion, destruction, selectedEffectId, setSelectedEffect])
 
   // Sort sections by effectOrder
   // Effects not in effectOrder get sorted to the end (using Infinity for missing indices)

@@ -24,6 +24,13 @@ import {
   AsciiEffect,
   DatamoshEffect,
   PixelSortEffect,
+  // Trace effects
+  BrightTraceEffect,
+  MotionTraceEffect,
+  EdgeTraceEffect,
+  ColorTraceEffect,
+  FaceTraceEffect,
+  HandsTraceEffect,
 } from './glitch-engine'
 
 export class EffectPipeline {
@@ -62,6 +69,14 @@ export class EffectPipeline {
   // Destruction effects
   datamosh: DatamoshEffect | null = null
   pixelSort: PixelSortEffect | null = null
+
+  // Trace effects (mask generation)
+  brightTrace: BrightTraceEffect | null = null
+  motionTrace: MotionTraceEffect | null = null
+  edgeTrace: EdgeTraceEffect | null = null
+  colorTrace: ColorTraceEffect | null = null
+  faceTrace: FaceTraceEffect | null = null
+  handsTrace: HandsTraceEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -122,6 +137,14 @@ export class EffectPipeline {
     // Destruction effects
     this.datamosh = new DatamoshEffect()
     this.pixelSort = new PixelSortEffect()
+
+    // Trace effects (for mask generation)
+    this.brightTrace = new BrightTraceEffect()
+    this.motionTrace = new MotionTraceEffect()
+    this.edgeTrace = new EdgeTraceEffect()
+    this.colorTrace = new ColorTraceEffect()
+    this.faceTrace = new FaceTraceEffect()
+    this.handsTrace = new HandsTraceEffect()
   }
 
   // Map effect IDs to effect instances
@@ -149,6 +172,13 @@ export class EffectPipeline {
       case 'ascii': return this.asciiEffect
       case 'datamosh': return this.datamosh
       case 'pixelSort': return this.pixelSort
+      // Trace effects
+      case 'track_bright': return this.brightTrace
+      case 'track_motion': return this.motionTrace
+      case 'track_edge': return this.edgeTrace
+      case 'track_color': return this.colorTrace
+      case 'track_face': return this.faceTrace
+      case 'track_hands': return this.handsTrace
       default: return null
     }
   }
@@ -180,6 +210,13 @@ export class EffectPipeline {
     // Destruction effects
     datamoshEnabled: boolean
     pixelSortEnabled: boolean
+    // Trace effects
+    brightTraceEnabled: boolean
+    motionTraceEnabled: boolean
+    edgeTraceEnabled: boolean
+    colorTraceEnabled: boolean
+    faceTraceEnabled: boolean
+    handsTraceEnabled: boolean
     bypassActive: boolean
     crossfaderPosition: number
     hasSourceTexture: boolean
@@ -230,6 +267,13 @@ export class EffectPipeline {
       ascii: config.asciiEnabled,
       datamosh: config.datamoshEnabled,
       pixelSort: config.pixelSortEnabled,
+      // Trace effects
+      track_bright: config.brightTraceEnabled,
+      track_motion: config.motionTraceEnabled,
+      track_edge: config.edgeTraceEnabled,
+      track_color: config.colorTraceEnabled,
+      track_face: config.faceTraceEnabled,
+      track_hands: config.handsTraceEnabled,
     }
 
     // Collect enabled effects in the specified order
@@ -362,6 +406,25 @@ export class EffectPipeline {
       this.echoTrail?.captureFrame(renderer, outputBuffer)
       this.timeSmear?.captureFrame(renderer, outputBuffer)
       this.freezeMask?.captureFrame(renderer, outputBuffer)
+
+      // Capture frames for trace effects (motion trace needs history)
+      this.motionTrace?.captureFrame(renderer, outputBuffer)
+    }
+  }
+
+  /**
+   * Get trace mask texture by effect ID.
+   * Returns the mask texture that can be used by other effects.
+   */
+  getTraceMask(id: string): THREE.Texture | null {
+    switch (id) {
+      case 'track_bright': return this.brightTrace?.getTraceMask() ?? null
+      case 'track_motion': return this.motionTrace?.getTraceMask() ?? null
+      case 'track_edge': return this.edgeTrace?.getTraceMask() ?? null
+      case 'track_color': return this.colorTrace?.getTraceMask() ?? null
+      case 'track_face': return this.faceTrace?.getTraceMask() ?? null
+      case 'track_hands': return this.handsTrace?.getTraceMask() ?? null
+      default: return null
     }
   }
 
@@ -391,6 +454,13 @@ export class EffectPipeline {
     this.asciiEffect?.dispose()
     this.datamosh?.dispose()
     this.pixelSort?.dispose()
+    // Trace effects
+    this.brightTrace?.dispose()
+    this.motionTrace?.dispose()
+    this.edgeTrace?.dispose()
+    this.colorTrace?.dispose()
+    this.faceTrace?.dispose()
+    this.handsTrace?.dispose()
   }
 
   // Capture frame for temporal effects (call after render)

@@ -8,20 +8,31 @@ uniform float displaceDistance;
 uniform float time;
 uniform float seed;
 uniform float effectMix;
+uniform sampler2D traceMask;
+uniform bool useTraceMask;
+uniform bool invertTraceMask;
 
 float random(vec2 st) {
   return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
 }
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+  // Calculate mask value (1.0 = full effect, 0.0 = no effect)
+  float mask = 1.0;
+  if (useTraceMask) {
+    mask = texture2D(traceMask, uv).r;
+    if (invertTraceMask) mask = 1.0 - mask;
+  }
+
   vec2 blockCoord = floor(uv / blockSize) * blockSize;
   float rand = random(blockCoord + seed + floor(time * 10.0));
 
   vec2 sampleUv = uv;
 
-  if (rand < displaceChance) {
-    float displaceX = (random(blockCoord + 0.1 + seed) - 0.5) * 2.0 * displaceDistance;
-    float displaceY = (random(blockCoord + 0.2 + seed) - 0.5) * 2.0 * displaceDistance;
+  // Apply displacement scaled by mask
+  if (rand < displaceChance * mask) {
+    float displaceX = (random(blockCoord + 0.1 + seed) - 0.5) * 2.0 * displaceDistance * mask;
+    float displaceY = (random(blockCoord + 0.2 + seed) - 0.5) * 2.0 * displaceDistance * mask;
     sampleUv += vec2(displaceX, displaceY);
   }
 
@@ -63,6 +74,9 @@ export class BlockDisplaceEffect extends Effect {
         ['time', new THREE.Uniform(0)],
         ['seed', new THREE.Uniform(p.seed)],
         ['effectMix', new THREE.Uniform(p.mix)],
+        ['traceMask', new THREE.Uniform(null)],
+        ['useTraceMask', new THREE.Uniform(false)],
+        ['invertTraceMask', new THREE.Uniform(false)],
       ]),
     })
 
@@ -93,5 +107,14 @@ export class BlockDisplaceEffect extends Effect {
 
   randomize() {
     this.uniforms.get('seed')!.value = Math.random() * 1000
+  }
+
+  /**
+   * Set trace mask texture for selective effect application.
+   */
+  setTraceMask(texture: THREE.Texture | null, invert: boolean = false) {
+    this.uniforms.get('traceMask')!.value = texture
+    this.uniforms.get('useTraceMask')!.value = texture !== null
+    this.uniforms.get('invertTraceMask')!.value = invert
   }
 }

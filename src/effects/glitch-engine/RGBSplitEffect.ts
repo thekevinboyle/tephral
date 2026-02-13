@@ -7,18 +7,28 @@ uniform vec2 greenOffset;
 uniform vec2 blueOffset;
 uniform float amount;
 uniform float effectMix;
+uniform sampler2D traceMask;
+uniform bool useTraceMask;
+uniform bool invertTraceMask;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
-  vec2 rUv = uv + redOffset * amount;
-  vec2 gUv = uv + greenOffset * amount;
-  vec2 bUv = uv + blueOffset * amount;
+  // Calculate mask value (1.0 = full effect, 0.0 = no effect)
+  float mask = 1.0;
+  if (useTraceMask) {
+    mask = texture2D(traceMask, uv).r;
+    if (invertTraceMask) mask = 1.0 - mask;
+  }
+
+  vec2 rUv = uv + redOffset * amount * mask;
+  vec2 gUv = uv + greenOffset * amount * mask;
+  vec2 bUv = uv + blueOffset * amount * mask;
 
   float r = texture2D(inputBuffer, rUv).r;
   float g = texture2D(inputBuffer, gUv).g;
   float b = texture2D(inputBuffer, bUv).b;
 
   vec4 effectColor = vec4(r, g, b, inputColor.a);
-  outputColor = mix(inputColor, effectColor, effectMix);
+  outputColor = mix(inputColor, effectColor, effectMix * mask);
 }
 `
 
@@ -56,6 +66,9 @@ export class RGBSplitEffect extends Effect {
         ['blueOffset', new THREE.Uniform(new THREE.Vector2(p.blueOffsetX, p.blueOffsetY))],
         ['amount', new THREE.Uniform(p.amount)],
         ['effectMix', new THREE.Uniform(p.mix)],
+        ['traceMask', new THREE.Uniform(null)],
+        ['useTraceMask', new THREE.Uniform(false)],
+        ['invertTraceMask', new THREE.Uniform(false)],
       ]),
     })
   }
@@ -82,5 +95,15 @@ export class RGBSplitEffect extends Effect {
     if (params.mix !== undefined) {
       this.uniforms.get('effectMix')!.value = params.mix
     }
+  }
+
+  /**
+   * Set trace mask texture for selective effect application.
+   * The effect will only be applied where mask value > 0.
+   */
+  setTraceMask(texture: THREE.Texture | null, invert: boolean = false) {
+    this.uniforms.get('traceMask')!.value = texture
+    this.uniforms.get('useTraceMask')!.value = texture !== null
+    this.uniforms.get('invertTraceMask')!.value = invert
   }
 }

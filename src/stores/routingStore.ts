@@ -40,6 +40,10 @@ interface RoutingState {
   // Previous state for undo randomize
   previousState: RoutingPreset | null
 
+  // Trace mask routing: maps effect IDs to their mask source
+  // e.g., { 'rgb_split': 'track_motion', 'block_displace': 'track_bright' }
+  effectTraceMask: Record<string, string>
+
   // Actions
   reorderEffect: (fromIndex: number, toIndex: number) => void
   setEffectOrder: (order: string[]) => void
@@ -55,6 +59,10 @@ interface RoutingState {
   pastePreset: (presetIndex: number) => void
 
   setModified: (modified: boolean) => void
+
+  // Trace mask routing
+  setEffectTraceMask: (effectId: string, maskSource: string) => void
+  getEffectTraceMask: (effectId: string) => string
 
   // Full state management
   captureFullState: () => Omit<RoutingPreset, 'name'>
@@ -82,6 +90,7 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
   isModified: false,
   clipboard: null,
   previousState: null,
+  effectTraceMask: {}, // No trace masks applied by default
 
   reorderEffect: (fromIndex, toIndex) => {
     set((state) => {
@@ -188,6 +197,20 @@ export const useRoutingStore = create<RoutingState>((set, get) => ({
 
   setModified: (modified) => {
     set({ isModified: modified })
+  },
+
+  setEffectTraceMask: (effectId, maskSource) => {
+    set((state) => ({
+      effectTraceMask: {
+        ...state.effectTraceMask,
+        [effectId]: maskSource,
+      },
+      isModified: true,
+    }))
+  },
+
+  getEffectTraceMask: (effectId) => {
+    return get().effectTraceMask[effectId] || 'none'
   },
 
   captureFullState: () => {

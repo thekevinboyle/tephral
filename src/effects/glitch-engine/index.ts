@@ -70,3 +70,25 @@ export type { DatamoshParams } from './DatamoshEffect'
 
 export { PixelSortEffect, DEFAULT_PIXEL_SORT_PARAMS } from './PixelSortEffect'
 export type { PixelSortParams } from './PixelSortEffect'
+
+// Trace effects (mask generation for selective glitch application)
+export { TraceEffect, DEFAULT_TRACE_PARAMS } from './TraceEffect'
+export type { TraceParams } from './TraceEffect'
+
+export { BrightTraceEffect, DEFAULT_BRIGHT_TRACE_PARAMS } from './BrightTraceEffect'
+export type { BrightTraceParams } from './BrightTraceEffect'
+
+export { MotionTraceEffect, DEFAULT_MOTION_TRACE_PARAMS } from './MotionTraceEffect'
+export type { MotionTraceParams } from './MotionTraceEffect'
+
+export { EdgeTraceEffect, DEFAULT_EDGE_TRACE_PARAMS } from './EdgeTraceEffect'
+export type { EdgeTraceParams } from './EdgeTraceEffect'
+
+export { ColorTraceEffect, DEFAULT_COLOR_TRACE_PARAMS } from './ColorTraceEffect'
+export type { ColorTraceParams } from './ColorTraceEffect'
+
+export { FaceTraceEffect, DEFAULT_FACE_TRACE_PARAMS } from './FaceTraceEffect'
+export type { FaceTraceParams, FaceLandmarkData } from './FaceTraceEffect'
+
+export { HandsTraceEffect, DEFAULT_HANDS_TRACE_PARAMS } from './HandsTraceEffect'
+export type { HandsTraceParams, HandLandmarkData } from './HandsTraceEffect'

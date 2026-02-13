@@ -18,6 +18,9 @@ uniform vec2 resolution;
 uniform bool hasPrevFrame;
 uniform bool hasFreezeFrame;
 uniform float effectMix;
+uniform sampler2D traceMask;
+uniform bool useTraceMask;
+uniform bool invertTraceMask;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NOISE FUNCTIONS - For organic irregularity
@@ -143,6 +146,22 @@ vec2 getOrganicMotion(vec2 uv, vec2 blockCoord) {
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   if (!hasPrevFrame || intensity <= 0.0) {
+    outputColor = inputColor;
+    return;
+  }
+
+  // Calculate mask value (1.0 = full effect, 0.0 = no effect)
+  float mask = 1.0;
+  if (useTraceMask) {
+    mask = texture2D(traceMask, uv).r;
+    if (invertTraceMask) mask = 1.0 - mask;
+  }
+
+  // Scale intensity by mask
+  float maskedIntensity = intensity * mask;
+
+  // If mask is very low, skip processing
+  if (maskedIntensity < 0.01) {
     outputColor = inputColor;
     return;
   }
@@ -397,10 +416,11 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   // Motion-based clean blend with noise
   float cleanNoise = fbm(uv * 30.0 - time);
   float cleanBlend = (1.0 - smoothstep(0.0, 0.03, motionMag)) * cleanNoise;
-  result = mix(result, current, cleanBlend * (1.0 - intensity * 0.9));
+  result = mix(result, current, cleanBlend * (1.0 - maskedIntensity * 0.9));
 
   vec4 effectColor = vec4(result, inputColor.a);
-  outputColor = mix(inputColor, effectColor, effectMix);
+  // Apply mask to final mix
+  outputColor = mix(inputColor, effectColor, effectMix * mask);
 }
 `
 
@@ -455,6 +475,9 @@ export class DatamoshEffect extends Effect {
         ['hasPrevFrame', new THREE.Uniform(false)],
         ['hasFreezeFrame', new THREE.Uniform(false)],
         ['effectMix', new THREE.Uniform(p.mix)],
+        ['traceMask', new THREE.Uniform(null)],
+        ['useTraceMask', new THREE.Uniform(false)],
+        ['invertTraceMask', new THREE.Uniform(false)],
       ]),
     })
   }
@@ -566,6 +589,15 @@ export class DatamoshEffect extends Effect {
   // Reset freeze frame - call this to capture new reference
   resetFreezeFrame() {
     this.hasCapturedFreezeFrame = false
+  }
+
+  /**
+   * Set trace mask texture for selective effect application.
+   */
+  setTraceMask(texture: THREE.Texture | null, invert: boolean = false) {
+    this.uniforms.get('traceMask')!.value = texture
+    this.uniforms.get('useTraceMask')!.value = texture !== null
+    this.uniforms.get('invertTraceMask')!.value = invert
   }
 
   dispose() {

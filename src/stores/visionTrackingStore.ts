@@ -17,6 +17,29 @@ export interface TrackingModeParams {
   lineStyle: 'straight' | 'web'  // straight=direct lines, web=kojima-style curved strands
 }
 
+// GPU trace effect params (for TouchDesigner-style tracing with trails)
+export interface TraceEffectParams {
+  trailEnabled: boolean       // whether trail persistence is enabled
+  trailDecay: number          // 0-1: how quickly trails fade (higher = faster fade)
+  outputMode: 'overlay' | 'mask'  // show effect or just output mask
+}
+
+export interface ColorTraceExtendedParams extends TraceEffectParams {
+  targetHue: number           // 0-1: target hue to track
+  hueRange: number            // 0-0.5: hue variation tolerance
+  satMin: number              // 0-1: minimum saturation required
+  valMin: number              // 0-1: minimum brightness required
+}
+
+export interface MotionTraceExtendedParams extends TraceEffectParams {
+  sensitivity: number         // 1-10: motion amplification
+}
+
+export interface LandmarkTraceParams extends TraceEffectParams {
+  feather: number             // 0-0.5: edge feathering
+  fillMode: string            // depends on effect type
+}
+
 const DEFAULT_PARAMS: TrackingModeParams = {
   threshold: 128,
   minSize: 20,
@@ -30,6 +53,12 @@ const DEFAULT_PARAMS: TrackingModeParams = {
   boxFilterIntensity: 50,
   boxShape: 'square',
   lineStyle: 'straight',
+}
+
+const DEFAULT_TRACE_EFFECT_PARAMS: TraceEffectParams = {
+  trailEnabled: true,
+  trailDecay: 0.95,
+  outputMode: 'overlay',
 }
 
 interface VisionTrackingState {
@@ -46,13 +75,21 @@ interface VisionTrackingState {
   // Global display options
   linesOnly: boolean  // Black out video, show only tracking lines/boxes
 
-  // Per-mode parameters
+  // Per-mode parameters (legacy overlay tracking)
   brightParams: TrackingModeParams
   edgeParams: TrackingModeParams
   colorParams: TrackingModeParams & { targetColor: string; colorRange: number }
   motionParams: TrackingModeParams & { sensitivity: number }
   faceParams: TrackingModeParams
   handsParams: TrackingModeParams
+
+  // GPU trace effect params (TouchDesigner-style tracing)
+  brightTraceParams: TraceEffectParams
+  edgeTraceParams: TraceEffectParams
+  colorTraceParams: ColorTraceExtendedParams
+  motionTraceParams: MotionTraceExtendedParams
+  faceTraceParams: LandmarkTraceParams
+  handsTraceParams: LandmarkTraceParams
 
   // Actions
   setBrightEnabled: (enabled: boolean) => void
@@ -69,6 +106,14 @@ interface VisionTrackingState {
   updateMotionParams: (params: Partial<TrackingModeParams & { sensitivity: number }>) => void
   updateFaceParams: (params: Partial<TrackingModeParams>) => void
   updateHandsParams: (params: Partial<TrackingModeParams>) => void
+
+  // GPU trace param updaters
+  updateBrightTraceParams: (params: Partial<TraceEffectParams>) => void
+  updateEdgeTraceParams: (params: Partial<TraceEffectParams>) => void
+  updateColorTraceParams: (params: Partial<ColorTraceExtendedParams>) => void
+  updateMotionTraceParams: (params: Partial<MotionTraceExtendedParams>) => void
+  updateFaceTraceParams: (params: Partial<LandmarkTraceParams>) => void
+  updateHandsTraceParams: (params: Partial<LandmarkTraceParams>) => void
 }
 
 export const useVisionTrackingStore = create<VisionTrackingState>((set) => ({
@@ -122,6 +167,35 @@ export const useVisionTrackingStore = create<VisionTrackingState>((set) => ({
     lineColor: 'rgba(255, 255, 255, 0.6)',
   },
 
+  // GPU trace effect params
+  brightTraceParams: {
+    ...DEFAULT_TRACE_EFFECT_PARAMS,
+  },
+  edgeTraceParams: {
+    ...DEFAULT_TRACE_EFFECT_PARAMS,
+  },
+  colorTraceParams: {
+    ...DEFAULT_TRACE_EFFECT_PARAMS,
+    targetHue: 0.0,      // Default to red
+    hueRange: 0.1,       // ±10% hue tolerance
+    satMin: 0.3,         // Require some saturation
+    valMin: 0.2,         // Require some brightness
+  },
+  motionTraceParams: {
+    ...DEFAULT_TRACE_EFFECT_PARAMS,
+    sensitivity: 3.0,
+  },
+  faceTraceParams: {
+    ...DEFAULT_TRACE_EFFECT_PARAMS,
+    feather: 0.02,
+    fillMode: 'oval',
+  },
+  handsTraceParams: {
+    ...DEFAULT_TRACE_EFFECT_PARAMS,
+    feather: 0.02,
+    fillMode: 'hull',
+  },
+
   // Setters
   setBrightEnabled: (enabled) => set({ brightEnabled: enabled }),
   setEdgeEnabled: (enabled) => set({ edgeEnabled: enabled }),
@@ -149,5 +223,25 @@ export const useVisionTrackingStore = create<VisionTrackingState>((set) => ({
   })),
   updateHandsParams: (params) => set((state) => ({
     handsParams: { ...state.handsParams, ...params },
+  })),
+
+  // GPU trace param updaters
+  updateBrightTraceParams: (params) => set((state) => ({
+    brightTraceParams: { ...state.brightTraceParams, ...params },
+  })),
+  updateEdgeTraceParams: (params) => set((state) => ({
+    edgeTraceParams: { ...state.edgeTraceParams, ...params },
+  })),
+  updateColorTraceParams: (params) => set((state) => ({
+    colorTraceParams: { ...state.colorTraceParams, ...params },
+  })),
+  updateMotionTraceParams: (params) => set((state) => ({
+    motionTraceParams: { ...state.motionTraceParams, ...params },
+  })),
+  updateFaceTraceParams: (params) => set((state) => ({
+    faceTraceParams: { ...state.faceTraceParams, ...params },
+  })),
+  updateHandsTraceParams: (params) => set((state) => ({
+    handsTraceParams: { ...state.handsTraceParams, ...params },
   })),
 }))

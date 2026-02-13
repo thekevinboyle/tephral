@@ -10,6 +10,7 @@ import { useAcidStore } from '../../stores/acidStore'
 import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
+import { useRoutingStore } from '../../stores/routingStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS, DESTRUCTION_EFFECTS } from '../../config/effects'
@@ -96,6 +97,16 @@ function EffectParameters({ effectId }: { effectId: string }) {
   const strand = useStrandStore()
   const motion = useMotionStore()
   const destruction = useDestructionStore()
+  const routing = useRoutingStore()
+
+  // Trace mask options for glitch effects
+  const traceMaskOptions = [
+    { value: 'none', label: 'None' },
+    { value: 'track_bright', label: 'Bright' },
+    { value: 'track_motion', label: 'Motion' },
+    { value: 'track_edge', label: 'Edge' },
+    { value: 'track_color', label: 'Color' },
+  ]
 
   switch (effectId) {
     case 'rgb_split':
@@ -105,7 +116,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Amount"
             value={glitch.rgbSplit.amount}
             min={0}
-            max={2}
+            max={5}
             step={0.01}
             onChange={(v) => glitch.updateRGBSplit({ amount: v })}
             paramId="rgb_split.amount"
@@ -113,8 +124,8 @@ function EffectParameters({ effectId }: { effectId: string }) {
           <SliderRow
             label="Red X"
             value={glitch.rgbSplit.redOffsetX}
-            min={-0.05}
-            max={0.05}
+            min={-0.3}
+            max={0.3}
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ redOffsetX: v })}
             format={(v) => (v * 100).toFixed(1)}
@@ -123,8 +134,8 @@ function EffectParameters({ effectId }: { effectId: string }) {
           <SliderRow
             label="Red Y"
             value={glitch.rgbSplit.redOffsetY}
-            min={-0.05}
-            max={0.05}
+            min={-0.3}
+            max={0.3}
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ redOffsetY: v })}
             format={(v) => (v * 100).toFixed(1)}
@@ -133,8 +144,8 @@ function EffectParameters({ effectId }: { effectId: string }) {
           <SliderRow
             label="Green X"
             value={glitch.rgbSplit.greenOffsetX}
-            min={-0.05}
-            max={0.05}
+            min={-0.3}
+            max={0.3}
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ greenOffsetX: v })}
             format={(v) => (v * 100).toFixed(1)}
@@ -143,8 +154,8 @@ function EffectParameters({ effectId }: { effectId: string }) {
           <SliderRow
             label="Green Y"
             value={glitch.rgbSplit.greenOffsetY}
-            min={-0.05}
-            max={0.05}
+            min={-0.3}
+            max={0.3}
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ greenOffsetY: v })}
             format={(v) => (v * 100).toFixed(1)}
@@ -153,8 +164,8 @@ function EffectParameters({ effectId }: { effectId: string }) {
           <SliderRow
             label="Blue X"
             value={glitch.rgbSplit.blueOffsetX}
-            min={-0.05}
-            max={0.05}
+            min={-0.3}
+            max={0.3}
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ blueOffsetX: v })}
             format={(v) => (v * 100).toFixed(1)}
@@ -163,12 +174,19 @@ function EffectParameters({ effectId }: { effectId: string }) {
           <SliderRow
             label="Blue Y"
             value={glitch.rgbSplit.blueOffsetY}
-            min={-0.05}
-            max={0.05}
+            min={-0.3}
+            max={0.3}
             step={0.001}
             onChange={(v) => glitch.updateRGBSplit({ blueOffsetY: v })}
             format={(v) => (v * 100).toFixed(1)}
             paramId="rgb_split.blueOffsetY"
+          />
+          <SectionLabel label="Trace Mask" />
+          <SelectRow
+            label="Mask Source"
+            value={routing.getEffectTraceMask('rgb_split')}
+            options={traceMaskOptions}
+            onChange={(v) => routing.setEffectTraceMask('rgb_split', v)}
           />
         </div>
       )
@@ -179,9 +197,9 @@ function EffectParameters({ effectId }: { effectId: string }) {
           <SliderRow
             label="Block Size"
             value={glitch.blockDisplace.blockSize}
-            min={0.01}
-            max={0.2}
-            step={0.01}
+            min={0.005}
+            max={0.5}
+            step={0.005}
             onChange={(v) => glitch.updateBlockDisplace({ blockSize: v })}
             format={(v) => (v * 100).toFixed(0)}
             paramId="block_displace.blockSize"
@@ -200,7 +218,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Distance"
             value={glitch.blockDisplace.displaceDistance}
             min={0}
-            max={0.1}
+            max={0.5}
             step={0.001}
             onChange={(v) => glitch.updateBlockDisplace({ displaceDistance: v })}
             format={(v) => (v * 100).toFixed(1)}
@@ -220,6 +238,13 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Animated"
             value={glitch.blockDisplace.animated}
             onChange={(v) => glitch.updateBlockDisplace({ animated: v })}
+          />
+          <SectionLabel label="Trace Mask" />
+          <SelectRow
+            label="Mask Source"
+            value={routing.getEffectTraceMask('block_displace')}
+            options={traceMaskOptions}
+            onChange={(v) => routing.setEffectTraceMask('block_displace', v)}
           />
         </div>
       )
@@ -267,7 +292,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Amount"
             value={glitch.noise.amount}
             min={0}
-            max={1}
+            max={3}
             step={0.01}
             onChange={(v) => glitch.updateNoise({ amount: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
@@ -277,7 +302,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Speed"
             value={glitch.noise.speed}
             min={1}
-            max={50}
+            max={200}
             step={1}
             onChange={(v) => glitch.updateNoise({ speed: v })}
             format={(v) => v.toFixed(0)}
@@ -837,8 +862,8 @@ function EffectParameters({ effectId }: { effectId: string }) {
           <SliderRow
             label="Offset X"
             value={glitch.feedbackLoop.offsetX}
-            min={-0.1}
-            max={0.1}
+            min={-0.3}
+            max={0.3}
             step={0.001}
             onChange={(v) => glitch.updateFeedbackLoop({ offsetX: v })}
             format={(v) => (v * 100).toFixed(1)}
@@ -847,8 +872,8 @@ function EffectParameters({ effectId }: { effectId: string }) {
           <SliderRow
             label="Offset Y"
             value={glitch.feedbackLoop.offsetY}
-            min={-0.1}
-            max={0.1}
+            min={-0.3}
+            max={0.3}
             step={0.001}
             onChange={(v) => glitch.updateFeedbackLoop({ offsetY: v })}
             format={(v) => (v * 100).toFixed(1)}
@@ -857,28 +882,28 @@ function EffectParameters({ effectId }: { effectId: string }) {
           <SliderRow
             label="Zoom"
             value={glitch.feedbackLoop.zoom}
-            min={0.9}
-            max={1.1}
-            step={0.001}
+            min={0.5}
+            max={2.0}
+            step={0.01}
             onChange={(v) => glitch.updateFeedbackLoop({ zoom: v })}
-            format={(v) => `${(v * 100).toFixed(1)}%`}
+            format={(v) => `${(v * 100).toFixed(0)}%`}
             paramId="feedback.zoom"
           />
           <SliderRow
             label="Rotation"
             value={glitch.feedbackLoop.rotation}
-            min={-10}
-            max={10}
-            step={0.1}
+            min={-180}
+            max={180}
+            step={1}
             onChange={(v) => glitch.updateFeedbackLoop({ rotation: v })}
-            format={(v) => `${v.toFixed(1)}°`}
+            format={(v) => `${v.toFixed(0)}°`}
             paramId="feedback.rotation"
           />
           <SliderRow
             label="Hue Shift"
             value={glitch.feedbackLoop.hueShift}
             min={0}
-            max={60}
+            max={360}
             step={1}
             onChange={(v) => glitch.updateFeedbackLoop({ hueShift: v })}
             format={(v) => `${v.toFixed(0)}°`}
@@ -1314,6 +1339,24 @@ function EffectParameters({ effectId }: { effectId: string }) {
             value={visionTracking.linesOnly}
             onChange={(v) => visionTracking.setLinesOnly(v)}
           />
+          <SectionLabel label="GPU Trace" />
+          <ToggleRow
+            label="Trail Enabled"
+            value={visionTracking.brightTraceParams.trailEnabled}
+            onChange={(v) => visionTracking.updateBrightTraceParams({ trailEnabled: v })}
+          />
+          {visionTracking.brightTraceParams.trailEnabled && (
+            <SliderRow
+              label="Trail Decay"
+              value={visionTracking.brightTraceParams.trailDecay}
+              min={0.8}
+              max={0.99}
+              step={0.01}
+              onChange={(v) => visionTracking.updateBrightTraceParams({ trailDecay: v })}
+              format={(v) => `${Math.round((1 - v) * 100)}%`}
+              paramId="track_bright.trailDecay"
+            />
+          )}
         </div>
       )
 
@@ -1401,6 +1444,24 @@ function EffectParameters({ effectId }: { effectId: string }) {
             value={visionTracking.linesOnly}
             onChange={(v) => visionTracking.setLinesOnly(v)}
           />
+          <SectionLabel label="GPU Trace" />
+          <ToggleRow
+            label="Trail Enabled"
+            value={visionTracking.edgeTraceParams.trailEnabled}
+            onChange={(v) => visionTracking.updateEdgeTraceParams({ trailEnabled: v })}
+          />
+          {visionTracking.edgeTraceParams.trailEnabled && (
+            <SliderRow
+              label="Trail Decay"
+              value={visionTracking.edgeTraceParams.trailDecay}
+              min={0.8}
+              max={0.99}
+              step={0.01}
+              onChange={(v) => visionTracking.updateEdgeTraceParams({ trailDecay: v })}
+              format={(v) => `${Math.round((1 - v) * 100)}%`}
+              paramId="track_edge.trailDecay"
+            />
+          )}
         </div>
       )
 
@@ -1484,6 +1545,44 @@ function EffectParameters({ effectId }: { effectId: string }) {
             value={visionTracking.linesOnly}
             onChange={(v) => visionTracking.setLinesOnly(v)}
           />
+          <SectionLabel label="GPU Trace" />
+          <ToggleRow
+            label="Trail Enabled"
+            value={visionTracking.colorTraceParams.trailEnabled}
+            onChange={(v) => visionTracking.updateColorTraceParams({ trailEnabled: v })}
+          />
+          {visionTracking.colorTraceParams.trailEnabled && (
+            <SliderRow
+              label="Trail Decay"
+              value={visionTracking.colorTraceParams.trailDecay}
+              min={0.8}
+              max={0.99}
+              step={0.01}
+              onChange={(v) => visionTracking.updateColorTraceParams({ trailDecay: v })}
+              format={(v) => `${Math.round((1 - v) * 100)}%`}
+              paramId="track_color.trailDecay"
+            />
+          )}
+          <SliderRow
+            label="Hue Range"
+            value={visionTracking.colorTraceParams.hueRange}
+            min={0.01}
+            max={0.5}
+            step={0.01}
+            onChange={(v) => visionTracking.updateColorTraceParams({ hueRange: v })}
+            format={(v) => `${Math.round(v * 100)}%`}
+            paramId="track_color.hueRange"
+          />
+          <SliderRow
+            label="Min Saturation"
+            value={visionTracking.colorTraceParams.satMin}
+            min={0}
+            max={1}
+            step={0.05}
+            onChange={(v) => visionTracking.updateColorTraceParams({ satMin: v })}
+            format={(v) => `${Math.round(v * 100)}%`}
+            paramId="track_color.satMin"
+          />
         </div>
       )
 
@@ -1561,6 +1660,34 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Lines Only"
             value={visionTracking.linesOnly}
             onChange={(v) => visionTracking.setLinesOnly(v)}
+          />
+          <SectionLabel label="GPU Trace" />
+          <ToggleRow
+            label="Trail Enabled"
+            value={visionTracking.motionTraceParams.trailEnabled}
+            onChange={(v) => visionTracking.updateMotionTraceParams({ trailEnabled: v })}
+          />
+          {visionTracking.motionTraceParams.trailEnabled && (
+            <SliderRow
+              label="Trail Decay"
+              value={visionTracking.motionTraceParams.trailDecay}
+              min={0.8}
+              max={0.99}
+              step={0.01}
+              onChange={(v) => visionTracking.updateMotionTraceParams({ trailDecay: v })}
+              format={(v) => `${Math.round((1 - v) * 100)}%`}
+              paramId="track_motion.trailDecay"
+            />
+          )}
+          <SliderRow
+            label="Motion Sensitivity"
+            value={visionTracking.motionTraceParams.sensitivity}
+            min={1}
+            max={10}
+            step={0.5}
+            onChange={(v) => visionTracking.updateMotionTraceParams({ sensitivity: v })}
+            format={(v) => `${v.toFixed(1)}x`}
+            paramId="track_motion.sensitivity"
           />
         </div>
       )
@@ -1649,6 +1776,44 @@ function EffectParameters({ effectId }: { effectId: string }) {
             value={visionTracking.linesOnly}
             onChange={(v) => visionTracking.setLinesOnly(v)}
           />
+          <SectionLabel label="GPU Trace" />
+          <ToggleRow
+            label="Trail Enabled"
+            value={visionTracking.faceTraceParams.trailEnabled}
+            onChange={(v) => visionTracking.updateFaceTraceParams({ trailEnabled: v })}
+          />
+          {visionTracking.faceTraceParams.trailEnabled && (
+            <SliderRow
+              label="Trail Decay"
+              value={visionTracking.faceTraceParams.trailDecay}
+              min={0.8}
+              max={0.99}
+              step={0.01}
+              onChange={(v) => visionTracking.updateFaceTraceParams({ trailDecay: v })}
+              format={(v) => `${Math.round((1 - v) * 100)}%`}
+              paramId="track_face.trailDecay"
+            />
+          )}
+          <SliderRow
+            label="Edge Feather"
+            value={visionTracking.faceTraceParams.feather}
+            min={0}
+            max={0.2}
+            step={0.01}
+            onChange={(v) => visionTracking.updateFaceTraceParams({ feather: v })}
+            format={(v) => `${Math.round(v * 100)}%`}
+            paramId="track_face.feather"
+          />
+          <SelectRow
+            label="Fill Mode"
+            value={visionTracking.faceTraceParams.fillMode}
+            options={[
+              { value: 'oval', label: 'Oval' },
+              { value: 'mesh', label: 'Mesh' },
+              { value: 'bbox', label: 'Box' },
+            ]}
+            onChange={(v) => visionTracking.updateFaceTraceParams({ fillMode: v })}
+          />
         </div>
       )
 
@@ -1735,6 +1900,44 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Lines Only"
             value={visionTracking.linesOnly}
             onChange={(v) => visionTracking.setLinesOnly(v)}
+          />
+          <SectionLabel label="GPU Trace" />
+          <ToggleRow
+            label="Trail Enabled"
+            value={visionTracking.handsTraceParams.trailEnabled}
+            onChange={(v) => visionTracking.updateHandsTraceParams({ trailEnabled: v })}
+          />
+          {visionTracking.handsTraceParams.trailEnabled && (
+            <SliderRow
+              label="Trail Decay"
+              value={visionTracking.handsTraceParams.trailDecay}
+              min={0.8}
+              max={0.99}
+              step={0.01}
+              onChange={(v) => visionTracking.updateHandsTraceParams({ trailDecay: v })}
+              format={(v) => `${Math.round((1 - v) * 100)}%`}
+              paramId="track_hands.trailDecay"
+            />
+          )}
+          <SliderRow
+            label="Edge Feather"
+            value={visionTracking.handsTraceParams.feather}
+            min={0}
+            max={0.2}
+            step={0.01}
+            onChange={(v) => visionTracking.updateHandsTraceParams({ feather: v })}
+            format={(v) => `${Math.round(v * 100)}%`}
+            paramId="track_hands.feather"
+          />
+          <SelectRow
+            label="Fill Mode"
+            value={visionTracking.handsTraceParams.fillMode}
+            options={[
+              { value: 'hull', label: 'Hull' },
+              { value: 'skeleton', label: 'Skeleton' },
+              { value: 'bbox', label: 'Box' },
+            ]}
+            onChange={(v) => visionTracking.updateHandsTraceParams({ fillMode: v })}
           />
         </div>
       )
@@ -3131,7 +3334,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Trail Count"
             value={motion.echoTrail.trailCount}
             min={2}
-            max={16}
+            max={32}
             step={1}
             onChange={(v) => motion.updateEchoTrail({ trailCount: v })}
             paramId="echo_trail.trailCount"
@@ -3150,7 +3353,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Offset"
             value={motion.echoTrail.offset}
             min={0}
-            max={0.1}
+            max={0.3}
             step={0.001}
             onChange={(v) => motion.updateEchoTrail({ offset: v })}
             format={(v) => `${(v * 100).toFixed(1)}`}
@@ -3166,7 +3369,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
               label="Hue Amount"
               value={motion.echoTrail.hueAmount}
               min={0}
-              max={60}
+              max={360}
               step={1}
               onChange={(v) => motion.updateEchoTrail({ hueAmount: v })}
               format={(v) => `${v.toFixed(0)}°`}
@@ -3285,8 +3488,8 @@ function EffectParameters({ effectId }: { effectId: string }) {
           <SliderRow
             label="Block Size"
             value={destruction.datamoshParams.blockSize}
-            min={4}
-            max={32}
+            min={2}
+            max={128}
             step={1}
             onChange={(v) => destruction.updateDatamoshParams({ blockSize: v })}
             format={(v) => `${v.toFixed(0)}px`}
@@ -3296,7 +3499,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Keyframe Chance"
             value={destruction.datamoshParams.keyframeChance}
             min={0}
-            max={0.1}
+            max={0.5}
             step={0.001}
             onChange={(v) => destruction.updateDatamoshParams({ keyframeChance: v })}
             format={(v) => `${(v * 100).toFixed(1)}%`}
@@ -3321,6 +3524,13 @@ function EffectParameters({ effectId }: { effectId: string }) {
             onChange={(v) => destruction.updateDatamoshParams({ mix: v })}
             format={(v) => `${(v * 100).toFixed(0)}%`}
             paramId="datamosh.mix"
+          />
+          <SectionLabel label="Trace Mask" />
+          <SelectRow
+            label="Mask Source"
+            value={routing.getEffectTraceMask('datamosh')}
+            options={traceMaskOptions}
+            onChange={(v) => routing.setEffectTraceMask('datamosh', v)}
           />
         </div>
       )
@@ -3352,7 +3562,7 @@ function EffectParameters({ effectId }: { effectId: string }) {
             label="Streak Length"
             value={destruction.pixelSortParams.streakLength}
             min={1}
-            max={500}
+            max={2000}
             step={1}
             onChange={(v) => destruction.updatePixelSortParams({ streakLength: v })}
             format={(v) => `${v.toFixed(0)}px`}

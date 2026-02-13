@@ -12,6 +12,8 @@ import { useRoutingStore } from '../stores/routingStore'
 import { useRecordingStore } from '../stores/recordingStore'
 import { useDestructionModeStore } from '../stores/destructionModeStore'
 import { useDestructionStore } from '../stores/destructionStore'
+import { useVisionTrackingStore } from '../stores/visionTrackingStore'
+import { useLandmarksStore } from '../stores/landmarksStore'
 import { useSlicerStore } from '../stores/slicerStore'
 import { useSlicerBufferStore } from '../stores/slicerBufferStore'
 import { SlicerCompositor } from '../effects/SlicerCompositor'
@@ -117,6 +119,28 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     enabled: asciiEnabled,
     params: asciiParams,
   } = useAsciiRenderStore()
+
+  // Vision tracking (trace effects)
+  const {
+    brightEnabled,
+    edgeEnabled,
+    colorEnabled,
+    motionEnabled,
+    faceEnabled,
+    handsEnabled,
+    brightTraceParams,
+    edgeTraceParams,
+    colorTraceParams,
+    motionTraceParams,
+    faceTraceParams,
+    handsTraceParams,
+  } = useVisionTrackingStore()
+
+  // Landmarks for face/hands trace effects
+  const { faces, hands } = useLandmarksStore()
+
+  // Trace mask routing
+  const { effectTraceMask } = useRoutingStore()
 
   // Solo filtering: when soloing, only the soloed effect passes through
   // Also bypass all effects when slicer is active and processEffects is false
@@ -251,6 +275,13 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       datamoshEnabled: getEffectiveEnabled('datamosh', (destructionActive || datamoshEnabled) && !effectBypassed['datamosh']),
       // Pixel sort - performance grid only
       pixelSortEnabled: getEffectiveEnabled('pixelSort', pixelSortEnabled && !effectBypassed['pixelSort']),
+      // Trace effects
+      brightTraceEnabled: getEffectiveEnabled('track_bright', brightEnabled),
+      motionTraceEnabled: getEffectiveEnabled('track_motion', motionEnabled),
+      edgeTraceEnabled: getEffectiveEnabled('track_edge', edgeEnabled),
+      colorTraceEnabled: getEffectiveEnabled('track_color', colorEnabled),
+      faceTraceEnabled: getEffectiveEnabled('track_face', faceEnabled),
+      handsTraceEnabled: getEffectiveEnabled('track_hands', handsEnabled),
       bypassActive,
       crossfaderPosition,
       hasSourceTexture: !!mediaTexture && !slicerEnabled,
@@ -281,6 +312,99 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     if (pipeline.pixelSort && pixelSortEnabled) {
       const getMix = (id: string) => effectMix[id] ?? 1
       pipeline.pixelSort.updateParams({ ...pixelSortParams, mix: getMix('pixelSort') })
+    }
+
+    // Update trace effect params - mix: 0 because trace effects generate masks internally,
+    // they don't display the mask directly (other effects sample the mask via getTraceMask())
+    if (pipeline.brightTrace && brightEnabled) {
+      pipeline.brightTrace.updateParams({
+        threshold: brightTraceParams.trailEnabled ? 0.5 : 0.5, // use default for now
+        trailEnabled: brightTraceParams.trailEnabled,
+        trailDecay: brightTraceParams.trailDecay,
+        mix: 0,
+      })
+    }
+    if (pipeline.motionTrace && motionEnabled) {
+      pipeline.motionTrace.updateParams({
+        threshold: 0.1,
+        trailEnabled: motionTraceParams.trailEnabled,
+        trailDecay: motionTraceParams.trailDecay,
+        sensitivity: motionTraceParams.sensitivity,
+        mix: 0,
+      })
+    }
+    if (pipeline.edgeTrace && edgeEnabled) {
+      pipeline.edgeTrace.updateParams({
+        threshold: 0.15,
+        trailEnabled: edgeTraceParams.trailEnabled,
+        trailDecay: edgeTraceParams.trailDecay,
+        mix: 0,
+      })
+    }
+    if (pipeline.colorTrace && colorEnabled) {
+      pipeline.colorTrace.updateParams({
+        threshold: 0.5,
+        trailEnabled: colorTraceParams.trailEnabled,
+        trailDecay: colorTraceParams.trailDecay,
+        targetHue: colorTraceParams.targetHue,
+        hueRange: colorTraceParams.hueRange,
+        satMin: colorTraceParams.satMin,
+        valMin: colorTraceParams.valMin,
+        mix: 0,
+      })
+    }
+    if (pipeline.faceTrace && faceEnabled) {
+      // Pass face landmarks to effect
+      const faceData = faces.map(f => ({
+        points: f.points.map(p => ({ x: p.point.x, y: p.point.y })),
+        boundingBox: f.boundingBox,
+      }))
+      pipeline.faceTrace.setFaceLandmarks(faceData)
+      pipeline.faceTrace.updateParams({
+        trailEnabled: faceTraceParams.trailEnabled,
+        trailDecay: faceTraceParams.trailDecay,
+        feather: faceTraceParams.feather,
+        fillMode: faceTraceParams.fillMode as 'mesh' | 'oval' | 'bbox',
+        mix: 0,
+      })
+    }
+    if (pipeline.handsTrace && handsEnabled) {
+      // Pass hand landmarks to effect
+      const handData = hands.map(h => ({
+        points: h.points.map(p => ({ x: p.point.x, y: p.point.y })),
+        handedness: h.handedness,
+      }))
+      pipeline.handsTrace.setHandLandmarks(handData)
+      pipeline.handsTrace.updateParams({
+        trailEnabled: handsTraceParams.trailEnabled,
+        trailDecay: handsTraceParams.trailDecay,
+        feather: handsTraceParams.feather,
+        fillMode: handsTraceParams.fillMode as 'skeleton' | 'hull' | 'bbox',
+        mix: 0,
+      })
+    }
+
+    // Apply trace masks to glitch effects
+    const applyTraceMask = (effectId: string) => {
+      const maskSource = effectTraceMask[effectId]
+      if (!maskSource || maskSource === 'none') return null
+      return pipeline.getTraceMask(maskSource)
+    }
+
+    // Apply masks to supported effects
+    const rgbMask = applyTraceMask('rgb_split')
+    if (pipeline.rgbSplit) {
+      pipeline.rgbSplit.setTraceMask(rgbMask)
+    }
+
+    const blockMask = applyTraceMask('block_displace')
+    if (pipeline.blockDisplace) {
+      pipeline.blockDisplace.setTraceMask(blockMask)
+    }
+
+    const datamoshMask = applyTraceMask('datamosh')
+    if (pipeline.datamosh) {
+      pipeline.datamosh.setTraceMask(datamoshMask)
     }
   }, [
     pipeline,
@@ -343,6 +467,22 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     datamoshParams,
     pixelSortEnabled,
     pixelSortParams,
+    // Trace effects
+    brightEnabled,
+    edgeEnabled,
+    colorEnabled,
+    motionEnabled,
+    faceEnabled,
+    handsEnabled,
+    brightTraceParams,
+    edgeTraceParams,
+    colorTraceParams,
+    motionTraceParams,
+    faceTraceParams,
+    handsTraceParams,
+    faces,
+    hands,
+    effectTraceMask,
   ])
 
   // Update input texture and video dimensions
@@ -433,6 +573,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       pipeline.asciiEffect?.setResolution(container.clientWidth, container.clientHeight)
       pipeline.edgeDetection?.setResolution(container.clientWidth, container.clientHeight)
       pipeline.pixelate?.setResolution(container.clientWidth, container.clientHeight)
+      pipeline.edgeTrace?.setResolution(container.clientWidth, container.clientHeight)
     }
 
     updateSize()

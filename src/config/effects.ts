@@ -51,8 +51,6 @@ export const EFFECTS: EffectDefinition[] = [
   { id: 'track_motion', label: 'MOTION', color: '#22c55e', row: 'vision', page: 1, min: 0, max: 100 },
 
   // Row 2: Body Tracking
-  { id: 'track_face', label: 'FACE', color: '#f97316', row: 'vision', page: 1, min: 10, max: 90 },
-  { id: 'track_hands', label: 'HANDS', color: '#a855f7', row: 'vision', page: 1, min: 10, max: 90 },
   { id: 'contour', label: 'CONTOUR', color: '#00ffff', row: 'vision', page: 1, min: 0, max: 100 },
   { id: 'landmarks', label: 'LANDMARKS', color: '#FF0055', row: 'vision', page: 1, min: 10, max: 90 },
 

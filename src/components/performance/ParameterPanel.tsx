@@ -120,6 +120,11 @@ export function ParameterPanel() {
   const dataOverlay = useDataOverlayStore()
   const strand = useStrandStore()
   const motion = useMotionStore()
+  // Explicitly subscribe to destruction state values to ensure re-renders
+  const datamoshEnabled = useDestructionStore((state) => state.datamoshEnabled)
+  const datamoshParams = useDestructionStore((state) => state.datamoshParams)
+  const pixelSortEnabled = useDestructionStore((state) => state.pixelSortEnabled)
+  const pixelSortParams = useDestructionStore((state) => state.pixelSortParams)
   const destruction = useDestructionStore()
 
   // Clear all effects
@@ -1824,30 +1829,30 @@ export function ParameterPanel() {
   // DESTRUCTION EFFECTS
   // ═══════════════════════════════════════════════════════════════
 
-  if (destruction.datamoshEnabled) {
+  if (datamoshEnabled) {
     sections.push({
       id: 'datamosh',
       label: 'DATAMOSH',
       color: '#ff0000',
-      visualizer: <BlockDisplaceViz amount={destruction.datamoshParams.intensity * 100} seed={0} color="#ff0000" />,
+      visualizer: <BlockDisplaceViz amount={datamoshParams.intensity * 100} seed={0} color="#ff0000" />,
       params: [
-        { label: 'Intensity', value: destruction.datamoshParams.intensity * 100, min: 0, max: 100, onChange: (v) => destruction.updateDatamoshParams({ intensity: v / 100 }), paramId: 'datamosh.intensity' },
-        { label: 'Chaos', value: (destruction.datamoshParams.chaos ?? 0.5) * 100, min: 0, max: 100, onChange: (v) => destruction.updateDatamoshParams({ chaos: v / 100 }), paramId: 'datamosh.chaos' },
-        { label: 'Block Size', value: destruction.datamoshParams.blockSize, min: 4, max: 32, onChange: (v) => destruction.updateDatamoshParams({ blockSize: v }), paramId: 'datamosh.blockSize' },
+        { label: 'Intensity', value: datamoshParams.intensity * 100, min: 0, max: 100, onChange: (v) => destruction.updateDatamoshParams({ intensity: v / 100 }), paramId: 'datamosh.intensity' },
+        { label: 'Chaos', value: (datamoshParams.chaos ?? 0.5) * 100, min: 0, max: 100, onChange: (v) => destruction.updateDatamoshParams({ chaos: v / 100 }), paramId: 'datamosh.chaos' },
+        { label: 'Block Size', value: datamoshParams.blockSize, min: 4, max: 32, onChange: (v) => destruction.updateDatamoshParams({ blockSize: v }), paramId: 'datamosh.blockSize' },
       ],
     })
   }
 
-  if (destruction.pixelSortEnabled) {
+  if (pixelSortEnabled) {
     sections.push({
       id: 'pixelSort',
       label: 'PIXEL SORT',
       color: '#ff3366',
-      visualizer: <BlockDisplaceViz amount={destruction.pixelSortParams.streakLength / 5} seed={destruction.pixelSortParams.threshold * 10} color="#ff3366" />,
+      visualizer: <BlockDisplaceViz amount={pixelSortParams.streakLength / 5} seed={pixelSortParams.threshold * 10} color="#ff3366" />,
       params: [
-        { label: 'Intensity', value: destruction.pixelSortParams.intensity * 100, min: 0, max: 100, onChange: (v) => destruction.updatePixelSortParams({ intensity: v / 100 }), paramId: 'pixelSort.intensity' },
-        { label: 'Threshold', value: destruction.pixelSortParams.threshold * 100, min: 0, max: 100, onChange: (v) => destruction.updatePixelSortParams({ threshold: v / 100 }), paramId: 'pixelSort.threshold' },
-        { label: 'Streak', value: destruction.pixelSortParams.streakLength, min: 1, max: 500, onChange: (v) => destruction.updatePixelSortParams({ streakLength: v }), paramId: 'pixelSort.streakLength' },
+        { label: 'Intensity', value: pixelSortParams.intensity * 100, min: 0, max: 100, onChange: (v) => destruction.updatePixelSortParams({ intensity: v / 100 }), paramId: 'pixelSort.intensity' },
+        { label: 'Threshold', value: pixelSortParams.threshold * 100, min: 0, max: 100, onChange: (v) => destruction.updatePixelSortParams({ threshold: v / 100 }), paramId: 'pixelSort.threshold' },
+        { label: 'Streak', value: pixelSortParams.streakLength, min: 1, max: 500, onChange: (v) => destruction.updatePixelSortParams({ streakLength: v }), paramId: 'pixelSort.streakLength' },
       ],
     })
   }

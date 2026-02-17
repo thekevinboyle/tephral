@@ -1,25 +1,7 @@
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
-import { useUIStore } from '../../../stores/uiStore'
-import { useSequencerStore } from '../../../stores/sequencerStore'
-import { useModulationStore } from '../../../stores/modulationStore'
-import { usePolyEuclidStore } from '../../../stores/polyEuclidStore'
+import { Knob } from '../Knob'
+import { usePLockContext } from '../../../contexts/PLockContext'
 
-// Special sequencer sources (not regular tracks)
-const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
-  euclidean: { name: 'Euclidean', color: '#FF0055' },
-  ricochet: { name: 'Ricochet', color: '#FF0055' },
-  lfo: { name: 'LFO', color: '#00D4FF' },
-  random: { name: 'Random', color: '#FF6B6B' },
-  step: { name: 'Step', color: '#4ECDC4' },
-  envelope: { name: 'Envelope', color: '#AA55FF' },
-  sampleHold: { name: 'S&H', color: '#AAFF00' },
-}
-
-// Color for polyEuclid tracks (matches slicer accent)
-const POLY_EUCLID_COLOR = '#FF0055'
-
-// Color for step sequencer tracks (distinct orange)
-const STEP_SEQ_COLOR = '#FF9500'
+const PLOCK = '#FFB830'
 
 interface SliderRowProps {
   label: string
@@ -29,10 +11,8 @@ interface SliderRowProps {
   step?: number
   onChange: (value: number) => void
   format?: (value: number) => string
-  paramId?: string  // e.g., 'rgb_split.amount' for routing
+  paramId?: string
 }
-
-const DOT_COUNT = 7 // Number of dots to show on the track
 
 export function SliderRow({
   label,
@@ -44,351 +24,35 @@ export function SliderRow({
   format,
   paramId,
 }: SliderRowProps) {
-  const displayValue = format ? format(value) : value.toFixed(1)
-  const { sequencerDrag, selectRouting } = useUIStore()
-  const {
-    addRouting,
-    routings,
-    tracks: seqTracks,
-    updateRoutingDepth,
-    removeRouting,
-    assigningTrack: assigningStepTrack,
-    setAssigningTrack: setAssigningStepTrack,
-  } = useSequencerStore()
-  const { assigningModulator } = useModulationStore()
-  const { assigningTrack: assigningPolyEuclid, tracks: polyEuclidTracks, setAssigningTrack: setAssigningPolyEuclid } = usePolyEuclidStore()
-  const [isDropTarget, setIsDropTarget] = useState(false)
-  const trackRef = useRef<HTMLDivElement>(null)
-  const [isDraggingSlider, setIsDraggingSlider] = useState(false)
-  const [isModulationDrag, setIsModulationDrag] = useState(false)
+  const plock = usePLockContext()
 
-  // Check if we're in assignment mode (modulator, polyEuclid, or step sequencer)
-  const isInAssignmentMode = (assigningModulator !== null || assigningPolyEuclid !== null || assigningStepTrack !== null) && paramId
+  // Extract short param name from "effectId.paramName" format
+  const shortParam = paramId?.split('.')[1]
+  const isPlockActive = plock?.active && !!shortParam
+  const isLocked = isPlockActive && shortParam in plock.locks
 
-  // Listen for global drag events to show plus icon
-  useEffect(() => {
-    const handleGlobalDragStart = (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes('modulation-source') ||
-          e.dataTransfer?.types.includes('sequencer-track')) {
-        setIsModulationDrag(true)
+  // In p-lock mode: show lock value and record lock + apply to effect
+  const effectiveValue = isLocked ? plock!.locks[shortParam!] as number : value
+  const effectiveOnChange = isPlockActive
+    ? (v: number) => {
+        plock!.setLock(shortParam!, v)
+        onChange(v) // Apply to effect for live preview
       }
-    }
-    const handleGlobalDragEnd = () => {
-      setIsModulationDrag(false)
-    }
-
-    document.addEventListener('dragstart', handleGlobalDragStart)
-    document.addEventListener('dragend', handleGlobalDragEnd)
-    return () => {
-      document.removeEventListener('dragstart', handleGlobalDragStart)
-      document.removeEventListener('dragend', handleGlobalDragEnd)
-    }
-  }, [])
-
-  // Check if this param has routings
-  const paramRoutings = paramId ? routings.filter(r => r.targetParam === paramId) : []
-  const hasRouting = paramRoutings.length > 0
-  const firstRouting = hasRouting ? paramRoutings[0] : null
-
-  // Get source info (either from step sequencer tracks, polyEuclid tracks, or special sources)
-  const sourceInfo = useMemo(() => {
-    if (!firstRouting) return null
-
-    // Check if it's a polyEuclid track (prefixed with 'polyEuclid-')
-    if (firstRouting.trackId.startsWith('polyEuclid-')) {
-      const polyTrackId = firstRouting.trackId.replace('polyEuclid-', '')
-      const polyTrack = polyEuclidTracks.find(t => t.id === polyTrackId)
-      if (polyTrack) {
-        const trackIndex = polyEuclidTracks.indexOf(polyTrack)
-        return { name: `Euclid T${trackIndex + 1}`, color: POLY_EUCLID_COLOR }
-      }
-    }
-
-    // Check step sequencer tracks
-    const stepTrack = seqTracks.find(t => t.id === firstRouting.trackId)
-    if (stepTrack) {
-      const trackIndex = seqTracks.indexOf(stepTrack)
-      return { name: `Step T${trackIndex + 1}`, color: STEP_SEQ_COLOR }
-    }
-
-    // Check special sources (modulators)
-    return SPECIAL_SOURCES[firstRouting.trackId] || null
-  }, [firstRouting, seqTracks, polyEuclidTracks])
-
-  // Calculate thumb position (0-1), clamped to prevent overflow when modulation exceeds bounds
-  const normalizedValue = Math.max(0, Math.min(1, (value - min) / (max - min)))
-
-  const handleDragOver = (e: React.DragEvent) => {
-    if (paramId && (
-      sequencerDrag.isDragging ||
-      e.dataTransfer.types.includes('sequencer-track') ||
-      e.dataTransfer.types.includes('modulation-source')
-    )) {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = 'link'
-      setIsDropTarget(true)
-    }
-  }
-
-  const handleDragLeave = () => {
-    setIsDropTarget(false)
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    const trackId = e.dataTransfer.getData('sequencer-track') ||
-                    e.dataTransfer.getData('modulation-source')
-    if (trackId && paramId) {
-      const existingRouting = routings.find(r => r.trackId === trackId && r.targetParam === paramId)
-      if (!existingRouting) {
-        addRouting(trackId, paramId, 0.5)
-      }
-    }
-    setIsDropTarget(false)
-  }
-
-  // Slider interaction
-  const updateValueFromPosition = useCallback((clientX: number) => {
-    if (!trackRef.current) return
-    const rect = trackRef.current.getBoundingClientRect()
-    const padding = 12 // Account for thumb radius
-    const trackWidth = rect.width - padding * 2
-    const x = Math.max(0, Math.min(trackWidth, clientX - rect.left - padding))
-    const ratio = x / trackWidth
-    let newValue = min + ratio * (max - min)
-
-    // Snap to step
-    newValue = Math.round(newValue / step) * step
-    newValue = Math.max(min, Math.min(max, newValue))
-
-    onChange(newValue)
-  }, [min, max, step, onChange])
-
-  const handleTrackPointerDown = useCallback((e: React.PointerEvent) => {
-    e.preventDefault()
-    setIsDraggingSlider(true)
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-    updateValueFromPosition(e.clientX)
-  }, [updateValueFromPosition])
-
-  const handleTrackPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDraggingSlider) return
-    updateValueFromPosition(e.clientX)
-  }, [isDraggingSlider, updateValueFromPosition])
-
-  const handleTrackPointerUp = useCallback((e: React.PointerEvent) => {
-    setIsDraggingSlider(false)
-    try {
-      ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
-    } catch {}
-  }, [])
-
-  // Routing indicator drag
-  const isDraggingDepth = useRef(false)
-  const didDragDepth = useRef(false)
-  const dragStartY = useRef(0)
-  const dragStartDepth = useRef(0)
-
-  const handleIndicatorPointerDown = useCallback((e: React.PointerEvent) => {
-    if (!firstRouting) return
-    e.preventDefault()
-    e.stopPropagation()
-    isDraggingDepth.current = true
-    didDragDepth.current = false
-    dragStartY.current = e.clientY
-    dragStartDepth.current = firstRouting.depth
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-  }, [firstRouting])
-
-  const handleIndicatorPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDraggingDepth.current || !firstRouting) return
-    e.stopPropagation()
-    const deltaY = dragStartY.current - e.clientY
-    if (Math.abs(deltaY) > 3) {
-      didDragDepth.current = true
-      const deltaDepth = deltaY / 50
-      const newDepth = Math.max(-1, Math.min(1, dragStartDepth.current + deltaDepth))
-      updateRoutingDepth(firstRouting.id, newDepth)
-    }
-  }, [firstRouting, updateRoutingDepth])
-
-  const handleIndicatorPointerUp = useCallback((e: React.PointerEvent) => {
-    const wasDrag = didDragDepth.current
-    isDraggingDepth.current = false
-    didDragDepth.current = false
-    try {
-      ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
-    } catch {}
-    // If it was a click (not a drag), select the routing for info panel
-    if (!wasDrag && firstRouting) {
-      selectRouting(firstRouting.id)
-    }
-  }, [firstRouting, selectRouting])
-
-  const handleIndicatorDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (firstRouting) {
-      removeRouting(firstRouting.id)
-    }
-  }, [firstRouting, removeRouting])
-
-  // Handle click to add routing when in assignment mode
-  const handleAssignmentClick = useCallback(() => {
-    if (!isInAssignmentMode || !paramId) return
-
-    // Determine the track ID based on which assignment mode is active
-    let trackId: string | null = null
-    if (assigningModulator) {
-      trackId = assigningModulator
-    } else if (assigningPolyEuclid) {
-      trackId = `polyEuclid-${assigningPolyEuclid}`
-    } else if (assigningStepTrack) {
-      trackId = assigningStepTrack  // Step sequencer uses track ID directly
-    }
-
-    if (!trackId) return
-
-    const existingRouting = routings.find(r => r.trackId === trackId && r.targetParam === paramId)
-    if (!existingRouting) {
-      addRouting(trackId, paramId, 0.5)
-      // Clear assignment mode after successfully adding a routing
-      if (assigningPolyEuclid) {
-        setAssigningPolyEuclid(null)
-      }
-      if (assigningStepTrack) {
-        setAssigningStepTrack(null)
-      }
-    }
-  }, [isInAssignmentMode, paramId, assigningModulator, assigningPolyEuclid, assigningStepTrack, routings, addRouting, setAssigningPolyEuclid, setAssigningStepTrack])
-
-  // Get color for current assigning source
-  const assigningColor = assigningModulator
-    ? SPECIAL_SOURCES[assigningModulator]?.color
-    : assigningPolyEuclid
-      ? POLY_EUCLID_COLOR
-      : assigningStepTrack
-        ? STEP_SEQ_COLOR
-        : undefined
+    : onChange
 
   return (
-    <div
-      className="flex items-center gap-2 py-1 rounded-sm transition-colors relative"
-      data-param-id={paramId}
-      style={{
-        backgroundColor: isInAssignmentMode && !hasRouting
-          ? `${assigningColor}15`
-          : isDropTarget
-            ? `${sequencerDrag.trackColor}15`
-            : undefined,
-        outline: isInAssignmentMode && !hasRouting
-          ? `1px solid ${assigningColor}`
-          : isDropTarget
-            ? `1px solid ${sequencerDrag.trackColor}`
-            : undefined,
-        cursor: isInAssignmentMode && !hasRouting ? 'pointer' : undefined,
-      }}
-      onClick={isInAssignmentMode && !hasRouting ? handleAssignmentClick : undefined}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      {/* Plus icon when in assignment mode or dragging modulation and no routing exists */}
-      {paramId && (isInAssignmentMode || isModulationDrag) && !hasRouting && (
-        <div
-          className="absolute -right-1 -top-1 w-4 h-4 rounded-full flex items-center justify-center z-10 pointer-events-none"
-          style={{
-            backgroundColor: isInAssignmentMode ? assigningColor : 'var(--accent)',
-            boxShadow: isInAssignmentMode ? `0 0 6px ${assigningColor}` : '0 0 6px var(--accent-glow)',
-          }}
-        >
-          <svg width="10" height="10" viewBox="0 0 10 10">
-            <path d="M5 2v6M2 5h6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </div>
-      )}
-      <span className="text-[11px] w-16 shrink-0 flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-        {hasRouting && firstRouting && sourceInfo && (
-          <span
-            className="w-3 h-3 flex-shrink-0 cursor-ns-resize hover:scale-110 transition-transform flex items-center justify-center rounded-full"
-            style={{
-              backgroundColor: sourceInfo.color,
-              boxShadow: `0 0 4px ${sourceInfo.color}`,
-            }}
-            title={`${sourceInfo.name}: ${Math.round(firstRouting.depth * 100)}% — Drag to adjust, double-click to remove`}
-            onPointerDown={handleIndicatorPointerDown}
-            onPointerMove={handleIndicatorPointerMove}
-            onPointerUp={handleIndicatorPointerUp}
-            onPointerCancel={handleIndicatorPointerUp}
-            onDoubleClick={handleIndicatorDoubleClick}
-          >
-            <svg width="10" height="10" viewBox="0 0 12 12">
-              <circle cx="6" cy="6" r="4" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
-              <circle
-                cx="6" cy="6" r="4" fill="none" stroke="white" strokeWidth="2"
-                strokeDasharray={`${Math.abs(firstRouting.depth) * 25} 100`}
-                strokeDashoffset="0" transform="rotate(-90 6 6)"
-              />
-            </svg>
-          </span>
-        )}
-        {label}
-      </span>
-
-      {/* Custom dot slider */}
-      <div
-        ref={trackRef}
-        className="flex-1 h-5 rounded-sm relative cursor-pointer select-none"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-        }}
-        onPointerDown={handleTrackPointerDown}
-        onPointerMove={handleTrackPointerMove}
-        onPointerUp={handleTrackPointerUp}
-        onPointerCancel={handleTrackPointerUp}
-      >
-        {/* Track fill */}
-        <div
-          className="absolute left-0.5 top-0.5 bottom-0.5 rounded-sm pointer-events-none"
-          style={{
-            width: `calc((100% - 4px) * ${normalizedValue})`,
-            backgroundColor: 'var(--accent)',
-            opacity: 0.3,
-          }}
-        />
-
-        {/* Dot markers */}
-        <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
-          {Array.from({ length: DOT_COUNT }).map((_, i) => {
-            const dotPosition = i / (DOT_COUNT - 1)
-            const isBeforeThumb = dotPosition <= normalizedValue
-            return (
-              <div
-                key={i}
-                className="w-0.5 h-0.5 rounded-full transition-colors"
-                style={{
-                  backgroundColor: isBeforeThumb ? 'var(--text-muted)' : 'var(--border)',
-                }}
-              />
-            )
-          })}
-        </div>
-
-        {/* Thumb */}
-        <div
-          className="absolute top-1/2 w-3 h-3 rounded-sm pointer-events-none transition-shadow"
-          style={{
-            left: `calc(6px + (100% - 12px) * ${normalizedValue})`,
-            transform: `translate(-50%, -50%)`,
-            backgroundColor: isDraggingSlider ? 'var(--accent)' : 'var(--text-muted)',
-            boxShadow: isDraggingSlider ? '0 0 6px var(--accent-glow)' : 'none',
-          }}
-        />
-      </div>
-
-      <span className="text-[10px] w-9 text-right tabular-nums" style={{ color: 'var(--text-secondary)' }}>
-        {displayValue}
-      </span>
-    </div>
+    <Knob
+      label={label}
+      value={effectiveValue}
+      min={min}
+      max={max}
+      step={step}
+      onChange={effectiveOnChange}
+      formatValue={format}
+      paramId={paramId}
+      color={isLocked ? PLOCK : undefined}
+      showArc
+      showValue
+    />
   )
 }

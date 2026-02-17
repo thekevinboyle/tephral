@@ -205,7 +205,7 @@ export function EffectButton({
       }}
     >
       {/* Main content area */}
-      <div className="flex-1 flex flex-col justify-between">
+      <div className="flex-1 flex flex-col justify-center">
         {/* Label */}
         <span
           className="text-[11px] font-semibold truncate uppercase tracking-wide"
@@ -213,23 +213,13 @@ export function EffectButton({
         >
           {label}
         </span>
-
-        {/* Mix percentage */}
-        <span
-          className="text-[11px] tabular-nums font-medium tracking-wider"
-          style={{
-            color: active ? 'var(--accent)' : 'var(--text-muted)',
-            fontFamily: "'JetBrains Mono', monospace",
-          }}
-        >
-          {mixPercent}%
-        </span>
       </div>
 
       {/* Vertical progress bar on the right - shows mix level */}
       <div
-        className="w-0.5 rounded-sm ml-1.5 relative overflow-hidden"
+        className="rounded-sm ml-1.5 relative overflow-hidden"
         style={{
+          width: 4,
           backgroundColor: 'var(--border)',
         }}
       >

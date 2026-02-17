@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useSequencerStore } from '../stores/sequencerStore'
+import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../stores/asciiRenderStore'
 import { useStippleStore } from '../stores/stippleStore'
@@ -353,6 +354,10 @@ export function useSequencerPlayback() {
   // Start/stop playback
   useEffect(() => {
     if (isPlaying) {
+      // Mutual exclusion: stop the effect sequencer
+      const effectSeq = useEffectSequencerStore.getState()
+      if (effectSeq.isPlaying) effectSeq.stop()
+
       lastStepTime.current = performance.now()
       animationFrameId.current = requestAnimationFrame(playbackLoop)
     } else {

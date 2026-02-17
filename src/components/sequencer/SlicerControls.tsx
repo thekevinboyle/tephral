@@ -80,7 +80,7 @@ export function SlicerControls() {
         >
           Grain
         </h4>
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Size"
             value={grainSize}
@@ -253,7 +253,7 @@ export function SlicerControls() {
         )}
 
         {outputMode === 'layer' && (
-          <div className="space-y-1">
+          <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
             <div className="flex items-center gap-2 py-1.5">
               <span
                 className="text-[14px] w-20 shrink-0"

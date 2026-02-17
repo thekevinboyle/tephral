@@ -16,6 +16,7 @@ import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
+import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 
 export function PerformanceGrid() {
   // Glitch engine store
@@ -46,6 +47,9 @@ export function PerformanceGrid() {
 
   // Destruction store
   const destruction = useDestructionStore()
+
+  // Effect sequencer store — ensure tracks exist when toggling effects
+  const ensureTrack = useEffectSequencerStore((s) => s.ensureTrack)
 
   // Routing store for effect order
   const { effectOrder, setEffectOrder } = useRoutingStore()
@@ -1121,6 +1125,11 @@ export function PerformanceGrid() {
           }
 
           const state = getEffectState(effect.id)
+          const originalToggle = state.onToggle
+          const wrappedToggle = () => {
+            originalToggle()
+            ensureTrack(effect.id)
+          }
 
           // Reserved slot styling
           if ('isReserved' in state && state.isReserved) {
@@ -1149,7 +1158,7 @@ export function PerformanceGrid() {
               color={effect.color}
               active={state.active}
               mix={effectMix[effect.id] ?? 1}
-              onToggle={state.onToggle}
+              onToggle={wrappedToggle}
               onMixChange={(v) => setEffectMix(effect.id, v)}
               isSoloed={isSoloed}
               isMuted={isMuted}

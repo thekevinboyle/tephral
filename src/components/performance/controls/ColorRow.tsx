@@ -6,15 +6,20 @@ interface ColorRowProps {
 
 export function ColorRow({ label, value, onChange }: ColorRowProps) {
   return (
-    <div className="flex items-center gap-2 py-1">
-      <span className="text-[13px] text-gray-500 w-20 shrink-0">{label}</span>
+    <div className="flex flex-col items-center" style={{ gap: 3, minWidth: 64 }}>
+      <span
+        className="text-[9px] uppercase tracking-wide leading-none font-medium"
+        style={{ color: 'var(--text-secondary)' }}
+      >
+        {label}
+      </span>
       <input
         type="color"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-6 h-6 rounded border border-gray-200 cursor-pointer"
+        className="w-8 h-8 rounded cursor-pointer"
+        style={{ border: '1px solid var(--border)', backgroundColor: 'transparent' }}
       />
-      <span className="text-[13px] text-gray-400 tabular-nums">{value}</span>
     </div>
   )
 }

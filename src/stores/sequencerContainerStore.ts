@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
-// SequencerContainer holds Slicer, Euclidean, and Step sequencers as tabs
-export type SequencerType = 'slicer' | 'euclid' | 'steps'
+// SequencerContainer holds Effect Sequencer, Slicer, Euclidean, and Step sequencers as tabs
+export type SequencerType = 'effects' | 'slicer' | 'euclid' | 'steps'
 
 interface SequencerContainerState {
   activeSequencer: SequencerType
@@ -9,6 +9,6 @@ interface SequencerContainerState {
 }
 
 export const useSequencerContainerStore = create<SequencerContainerState>((set) => ({
-  activeSequencer: 'slicer',
+  activeSequencer: 'effects',
   setActiveSequencer: (id) => set({ activeSequencer: id }),
 }))

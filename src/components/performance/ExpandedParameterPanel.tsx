@@ -111,7 +111,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
   switch (effectId) {
     case 'rgb_split':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Amount"
             value={glitch.rgbSplit.amount}
@@ -193,7 +193,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'block_displace':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Block Size"
             value={glitch.blockDisplace.blockSize}
@@ -251,7 +251,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'scan_lines':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Line Count"
             value={glitch.scanLines.lineCount}
@@ -287,7 +287,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'noise':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Amount"
             value={glitch.noise.amount}
@@ -313,7 +313,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'pixelate':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Pixel Size"
             value={glitch.pixelate.pixelSize}
@@ -329,7 +329,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'edges':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Threshold"
             value={glitch.edgeDetection.threshold}
@@ -360,7 +360,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'chromatic':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Intensity"
             value={glitch.chromaticAberration.intensity}
@@ -416,7 +416,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'vhs':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Tear Intensity"
             value={glitch.vhsTracking.tearIntensity}
@@ -471,7 +471,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'lens':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Curvature"
             value={glitch.lensDistortion.curvature}
@@ -547,9 +547,10 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'dither':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SelectRow
             label="Mode"
+            paramId="dither.mode"
             value={glitch.dither.mode}
             options={[
               { value: 'ordered', label: 'Ordered' },
@@ -603,7 +604,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'posterize':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Levels"
             value={glitch.posterize.levels}
@@ -616,6 +617,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Mode"
+            paramId="posterize.mode"
             value={glitch.posterize.mode}
             options={[
               { value: 'rgb', label: 'RGB' },
@@ -648,7 +650,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'static_displace':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Intensity"
             value={glitch.staticDisplacement.intensity}
@@ -680,6 +682,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Direction"
+            paramId="static_displace.direction"
             value={glitch.staticDisplacement.direction}
             options={[
               { value: 'both', label: 'Both' },
@@ -690,6 +693,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Noise Type"
+            paramId="static_displace.noiseType"
             value={glitch.staticDisplacement.noiseType}
             options={[
               { value: 'white', label: 'White' },
@@ -702,7 +706,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'color_grade':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SectionLabel label="Lift (Shadows)" />
           <SliderRow
             label="Red"
@@ -835,6 +839,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Tint Mode"
+            paramId="color_grade.tintMode"
             value={glitch.colorGrade.tintMode}
             options={[
               { value: 'overlay', label: 'Overlay' },
@@ -848,7 +853,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'feedback':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Decay"
             value={glitch.feedbackLoop.decay}
@@ -915,9 +920,10 @@ export function EffectParameters({ effectId }: { effectId: string }) {
     case 'ascii':
     case 'matrix':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SelectRow
             label="Mode"
+            paramId="ascii.mode"
             value={ascii.params.mode}
             options={[
               { value: 'standard', label: 'ASCII' },
@@ -958,6 +964,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Color"
+            paramId="ascii.colorMode"
             value={ascii.params.colorMode}
             options={[
               { value: 'mono', label: 'Mono' },
@@ -1014,7 +1021,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'stipple':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Size"
             value={stipple.params.particleSize}
@@ -1065,6 +1072,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Color"
+            paramId="stipple.colorMode"
             value={stipple.params.colorMode}
             options={[
               { value: 'mono', label: 'Mono' },
@@ -1093,7 +1101,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'contour':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Threshold"
             value={contour.params.threshold}
@@ -1165,6 +1173,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Detection"
+            paramId="contour.mode"
             value={contour.params.mode}
             options={[
               { value: 'brightness', label: 'Brightness' },
@@ -1176,6 +1185,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Fade Mode"
+            paramId="contour.fadeMode"
             value={contour.params.fadeMode}
             options={[
               { value: 'fade', label: 'Fade' },
@@ -1189,9 +1199,10 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'landmarks':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SelectRow
             label="Mode"
+            paramId="landmarks.currentMode"
             value={landmarks.currentMode}
             options={[
               { value: 'face', label: 'Face' },
@@ -1257,7 +1268,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'track_bright':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Threshold"
             value={visionTracking.brightParams.threshold}
@@ -1362,7 +1373,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'track_edge':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Threshold"
             value={visionTracking.edgeParams.threshold}
@@ -1467,7 +1478,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'track_color':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <ColorRow
             label="Target Color"
             value={visionTracking.colorParams.targetColor}
@@ -1588,7 +1599,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'track_motion':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Sensitivity"
             value={visionTracking.motionParams.sensitivity}
@@ -1694,7 +1705,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'track_face':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Sensitivity"
             value={visionTracking.faceParams.threshold}
@@ -1806,6 +1817,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Fill Mode"
+            paramId="track_face.fillMode"
             value={visionTracking.faceTraceParams.fillMode}
             options={[
               { value: 'oval', label: 'Oval' },
@@ -1819,7 +1831,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'track_hands':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Sensitivity"
             value={visionTracking.handsParams.threshold}
@@ -1931,6 +1943,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Fill Mode"
+            paramId="track_hands.fillMode"
             value={visionTracking.handsTraceParams.fillMode}
             options={[
               { value: 'hull', label: 'Hull' },
@@ -1948,7 +1961,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_dots':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Grid Size"
             value={acid.dotsParams.gridSize}
@@ -1980,6 +1993,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Shape"
+            paramId="acid_dots.shape"
             value={acid.dotsParams.shape}
             options={[
               { value: 'circle', label: 'Circle' },
@@ -1999,7 +2013,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_glyph':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Grid Size"
             value={acid.glyphParams.gridSize}
@@ -2012,6 +2026,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Charset"
+            paramId="acid_glyph.charset"
             value={acid.glyphParams.charset}
             options={[
               { value: 'geometric', label: 'Geometric' },
@@ -2047,7 +2062,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_icons':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Grid Size"
             value={acid.iconsParams.gridSize}
@@ -2060,6 +2075,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Icon Set"
+            paramId="acid_icons.iconSet"
             value={acid.iconsParams.iconSet}
             options={[
               { value: 'tech', label: 'Tech' },
@@ -2081,6 +2097,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Color Mode"
+            paramId="acid_icons.colorMode"
             value={acid.iconsParams.colorMode}
             options={[
               { value: 'mono', label: 'Mono' },
@@ -2100,7 +2117,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_contour':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Levels"
             value={acid.contourParams.levels}
@@ -2147,7 +2164,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_decomp':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Min Block"
             value={acid.decompParams.minBlock}
@@ -2185,6 +2202,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Fill Mode"
+            paramId="acid_decomp.fillMode"
             value={acid.decompParams.fillMode}
             options={[
               { value: 'solid', label: 'Solid' },
@@ -2204,7 +2222,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_mirror':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Segments"
             value={acid.mirrorParams.segments}
@@ -2256,7 +2274,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_slice':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Slice Count"
             value={acid.sliceParams.sliceCount}
@@ -2269,6 +2287,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Direction"
+            paramId="acid_slice.direction"
             value={acid.sliceParams.direction}
             options={[
               { value: 'horizontal', label: 'Horizontal' },
@@ -2303,7 +2322,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_thgrid':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Threshold"
             value={acid.thGridParams.threshold}
@@ -2355,7 +2374,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_cloud':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Density"
             value={acid.cloudParams.density}
@@ -2401,7 +2420,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_led':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Grid Size"
             value={acid.ledParams.gridSize}
@@ -2452,7 +2471,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_slit':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Slit Position"
             value={acid.slitParams.slitPosition}
@@ -2465,6 +2484,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Direction"
+            paramId="acid_slit.direction"
             value={acid.slitParams.direction}
             options={[
               { value: 'horizontal', label: 'Horizontal' },
@@ -2503,7 +2523,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_voronoi':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Cell Count"
             value={acid.voronoiParams.cellCount}
@@ -2516,6 +2536,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Seed Mode"
+            paramId="acid_voronoi.seedMode"
             value={acid.voronoiParams.seedMode}
             options={[
               { value: 'random', label: 'Random' },
@@ -2531,6 +2552,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Fill Mode"
+            paramId="acid_voronoi.fillMode"
             value={acid.voronoiParams.fillMode}
             options={[
               { value: 'average', label: 'Average' },
@@ -2550,7 +2572,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_halftone':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Dot Size"
             value={acid.halftoneParams.dotSize}
@@ -2571,6 +2593,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Color Mode"
+            paramId="acid_halftone.colorMode"
             value={acid.halftoneParams.colorMode}
             options={[
               { value: 'mono', label: 'Mono' },
@@ -2600,7 +2623,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_hex':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Cell Size"
             value={acid.hexParams.cellSize}
@@ -2612,6 +2635,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Fill Mode"
+            paramId="acid_hex.fillMode"
             value={acid.hexParams.fillMode}
             options={[
               { value: 'average', label: 'Average' },
@@ -2646,7 +2670,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_scan':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Speed"
             value={acid.scanParams.speed}
@@ -2667,6 +2691,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Direction"
+            paramId="acid_scan.direction"
             value={acid.scanParams.direction}
             options={[
               { value: 'horizontal', label: 'Horizontal' },
@@ -2696,7 +2721,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'acid_ripple':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Frequency"
             value={acid.rippleParams.frequency}
@@ -2745,7 +2770,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_handprints':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Density"
             value={strand.handprintsParams.density}
@@ -2778,7 +2803,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_tar':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Spread Speed"
             value={strand.tarSpreadParams.spreadSpeed}
@@ -2811,7 +2836,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_timefall':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Intensity"
             value={strand.timefallParams.intensity}
@@ -2844,7 +2869,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_voidout':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Speed"
             value={strand.voidOutParams.speed}
@@ -2877,7 +2902,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_web':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Threshold"
             value={strand.strandWebParams.threshold}
@@ -2910,7 +2935,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_bridge':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Grid Size"
             value={strand.bridgeLinkParams.gridSize}
@@ -2943,7 +2968,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_path':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Particle Count"
             value={strand.chiralPathParams.particleCount}
@@ -2976,7 +3001,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_umbilical':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Tendril Count"
             value={strand.umbilicalParams.tendrilCount}
@@ -3009,7 +3034,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_odradek':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Sweep Speed"
             value={strand.odradekParams.sweepSpeed}
@@ -3042,7 +3067,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_chiralium':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Threshold"
             value={strand.chiraliumParams.threshold}
@@ -3075,7 +3100,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_beach':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Grain Amount"
             value={strand.beachStaticParams.grainAmount}
@@ -3108,7 +3133,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_dooms':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Halo Size"
             value={strand.doomsParams.haloSize}
@@ -3141,7 +3166,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_cloud':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Density"
             value={strand.chiralCloudParams.density}
@@ -3174,7 +3199,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_bbpod':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Vignette Size"
             value={strand.bbPodParams.vignetteSize}
@@ -3207,7 +3232,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_seam':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Rift Width"
             value={strand.seamParams.riftWidth}
@@ -3240,7 +3265,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'strand_extinction':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Erosion Speed"
             value={strand.extinctionParams.erosionSpeed}
@@ -3277,7 +3302,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'motion_extract':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Threshold"
             value={motion.motionExtract.threshold}
@@ -3329,7 +3354,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'echo_trail':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Trail Count"
             value={motion.echoTrail.trailCount}
@@ -3381,7 +3406,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'time_smear':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Accumulation"
             value={motion.timeSmear.accumulation}
@@ -3394,6 +3419,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
           />
           <SelectRow
             label="Direction"
+            paramId="time_smear.direction"
             value={motion.timeSmear.direction}
             options={[
               { value: 'both', label: 'Both' },
@@ -3424,7 +3450,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'freeze_mask':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Freeze Threshold"
             value={motion.freezeMask.freezeThreshold}
@@ -3464,7 +3490,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'datamosh':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Intensity"
             value={destruction.datamoshParams.intensity}
@@ -3537,7 +3563,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
     case 'pixelSort':
       return (
-        <div className="space-y-1">
+        <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Intensity"
             value={destruction.pixelSortParams.intensity}
@@ -3669,7 +3695,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 function SectionLabel({ label }: { label: string }) {
   return (
     <div
-      className="text-[13px] font-semibold uppercase tracking-wide pt-3 pb-1 border-t mt-2 first:mt-0 first:border-0 first:pt-0"
+      className="w-full text-[9px] font-semibold uppercase tracking-wider pt-2 pb-0.5 border-t mt-1 first:mt-0 first:border-0 first:pt-0"
       style={{ color: 'var(--text-muted)', borderColor: 'var(--border)' }}
     >
       {label}

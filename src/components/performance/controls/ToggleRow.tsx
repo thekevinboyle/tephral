@@ -6,23 +6,26 @@ interface ToggleRowProps {
 
 export function ToggleRow({ label, value, onChange }: ToggleRowProps) {
   return (
-    <div className="flex items-center justify-between py-1">
-      <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{label}</span>
+    <div className="flex flex-col items-center" style={{ gap: 3, minWidth: 64 }}>
+      <span
+        className="text-[9px] uppercase tracking-wide leading-none font-medium"
+        style={{ color: 'var(--text-secondary)' }}
+      >
+        {label}
+      </span>
       <button
         onClick={() => onChange(!value)}
-        className="w-7 h-3.5 rounded-sm transition-colors relative"
+        className="text-[9px] tabular-nums font-bold"
         style={{
-          backgroundColor: value ? 'var(--accent)' : 'var(--bg-surface)',
-          border: value ? '1px solid var(--accent)' : '1px solid var(--border)',
-          boxShadow: value ? '0 0 4px var(--accent-glow)' : 'none',
+          border: `1px solid ${value ? 'var(--accent-dim)' : 'var(--border)'}`,
+          borderRadius: 3,
+          padding: '2px 6px',
+          backgroundColor: value ? 'rgba(0, 212, 255, 0.1)' : 'var(--bg-surface)',
+          color: value ? 'var(--accent)' : 'var(--text-ghost)',
+          minWidth: 48,
         }}
       >
-        <div
-          className={`absolute top-0.5 w-2 h-2 rounded-sm transition-all ${
-            value ? 'left-3.5' : 'left-0.5'
-          }`}
-          style={{ backgroundColor: value ? 'var(--text-primary)' : 'var(--text-ghost)' }}
-        />
+        {value ? 'ON' : 'OFF'}
       </button>
     </div>
   )

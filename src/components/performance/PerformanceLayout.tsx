@@ -1,14 +1,12 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
-import { TransportBar } from './TransportBar'
+import { HeaderBar } from './HeaderBar'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
 import { ClipBin } from './ClipBin'
 import { ClipDetailModal } from './ClipDetailModal'
-import { EffectCardStack } from './EffectCardStack'
 import { EffectsLane } from './EffectsLane'
 import { MiddleSection } from './MiddleSection'
-import { ModulationLane } from './ModulationLane'
 import { ModulationLines } from './ModulationLines'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
 import { DataTerminal } from '../terminal/DataTerminal'
@@ -133,148 +131,100 @@ export function PerformanceLayout() {
       className="w-screen h-screen overflow-hidden grid-substrate"
       style={{
         display: 'grid',
-        gridTemplateRows: '1fr auto 1fr',
+        gridTemplateRows: 'var(--row-header) 1fr 1fr',
         gridTemplateColumns: 'var(--col-left) 1fr var(--col-right)',
         gap: 'var(--gap)',
         padding: 'var(--gap)',
       }}
     >
-      {/* Row 1, Col 1: Effect Info Panel */}
+      {/* Row 1: Header Bar (spans all columns) */}
       <div
-        className="rounded-sm overflow-hidden panel-gradient-subtle"
+        className="rounded-sm overflow-hidden"
         style={{
           gridRow: 1,
-          gridColumn: 1,
+          gridColumn: '1 / -1',
           border: '1px solid var(--border)',
         }}
       >
-        <EffectCardStack />
+        <HeaderBar />
       </div>
 
-      {/* Row 1, Col 2: Canvas + Transport */}
+      {/* Row 2, Col 1: (reserved) */}
       <div
-        className="relative flex flex-col rounded-sm overflow-hidden"
+        className="rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
-          gridRow: 1,
+          gridRow: 2,
+          gridColumn: 1,
+          border: '1px solid var(--border)',
+        }}
+      />
+
+      {/* Row 2, Col 2: Canvas */}
+      <div
+        ref={canvasContainerRef}
+        className="relative rounded-sm overflow-hidden flex"
+        style={{
+          gridRow: 2,
           gridColumn: 2,
           backgroundColor: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
         }}
       >
-        {/* Canvas with side placeholders */}
-        <div ref={canvasContainerRef} className="flex-1 min-h-0 relative flex">
-          {/* Left placeholder */}
-          {showSidePlaceholders && sideWidth > 40 && (
-            <div
-              className="flex-shrink-0 flex items-center justify-center"
-              style={{
-                width: sideWidth,
-                backgroundColor: '#1e3a5f',
-                borderRight: '1px solid var(--border)',
-              }}
-            />
-          )}
+        {/* Left placeholder */}
+        {showSidePlaceholders && sideWidth > 40 && (
+          <div
+            className="flex-shrink-0 flex items-center justify-center"
+            style={{
+              width: sideWidth,
+              backgroundColor: '#1e3a5f',
+              borderRight: '1px solid var(--border)',
+            }}
+          />
+        )}
 
-          {/* Canvas */}
-          <div className="flex-1 min-w-0 relative">
-            <Canvas ref={canvasRef} />
-          </div>
+        {/* Canvas */}
+        <div className="flex-1 min-w-0 relative">
+          <Canvas ref={canvasRef} />
+        </div>
 
-          {/* Clip bin always floats in bottom left corner of entire container */}
-          <ClipBin />
+        {/* Clip bin always floats in bottom left corner of entire container */}
+        <ClipBin />
 
-          {/* Right placeholder */}
-          {showSidePlaceholders && sideWidth > 40 && (
-            <div
-              className="flex-shrink-0 flex items-center justify-center"
-              style={{
-                width: sideWidth,
-                backgroundColor: '#1e3a5f',
-                borderLeft: '1px solid var(--border)',
-              }}
+        {/* Right placeholder */}
+        {showSidePlaceholders && sideWidth > 40 && (
+          <div
+            className="flex-shrink-0 flex items-center justify-center"
+            style={{
+              width: sideWidth,
+              backgroundColor: '#1e3a5f',
+              borderLeft: '1px solid var(--border)',
+            }}
+          >
+            <span
+              className="text-[11px] uppercase tracking-wider"
+              style={{ color: 'var(--text-muted)', opacity: 0.5 }}
             >
-              <span
-                className="text-[11px] uppercase tracking-wider"
-                style={{ color: 'var(--text-muted)', opacity: 0.5 }}
-              >
-                {/* Empty placeholder */}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Transport bar at bottom of preview */}
-        <div
-          className="flex-shrink-0"
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            borderTop: '1px solid var(--border)',
-          }}
-        >
-          <TransportBar />
-        </div>
+              {/* Empty placeholder */}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Row 1, Col 3: FX Chain / Modulation */}
+      {/* Row 2, Col 3: FX Chain / Modulation */}
       <div
         className="flex flex-col rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
-          gridRow: 1,
+          gridRow: 2,
           gridColumn: 3,
           border: '1px solid var(--border)',
         }}
       >
-        {/* Effects Lane fills remaining space */}
         <div className="flex-1 min-h-0 overflow-hidden">
           <EffectsLane />
         </div>
       </div>
 
-      {/* Row 2, Col 1: Crossfader Section */}
-      <div
-        className="rounded-sm overflow-hidden"
-        style={{
-          gridRow: 2,
-          gridColumn: 1,
-          minHeight: 'var(--row-middle)',
-          border: '1px solid var(--border)',
-        }}
-      >
-        <MiddleSection />
-      </div>
-
-      {/* Row 2-3, Col 2: Slicer Panel + Modulation Lane (spans 2 rows) */}
-      <div
-        className="flex flex-col rounded-sm overflow-hidden panel-gradient-subtle"
-        style={{
-          gridRow: '2 / 4',
-          gridColumn: 2,
-          border: '1px solid var(--border)',
-        }}
-      >
-        {/* Slicer takes most of the space */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <SequencerContainer />
-        </div>
-        {/* Modulation lane at the bottom */}
-        <div className="flex-shrink-0" style={{ height: '96px' }}>
-          <ModulationLane />
-        </div>
-      </div>
-
-      {/* Row 2-3, Col 3: Data Terminal (spans 2 rows) */}
-      <div
-        className="rounded-sm overflow-hidden panel-gradient-accent"
-        style={{
-          gridRow: '2 / 4',
-          gridColumn: 3,
-          border: '1px solid var(--border)',
-        }}
-      >
-        <DataTerminal />
-      </div>
-
-      {/* Row 3, Col 1: Effects Grid */}
+      {/* Row 3, Col 1: Crossfader + Bank + Performance Grid */}
       <div
         className="flex flex-col rounded-sm overflow-hidden panel-gradient"
         style={{
@@ -283,6 +233,13 @@ export function PerformanceLayout() {
           border: '1px solid var(--border)',
         }}
       >
+        {/* Crossfader section */}
+        <div
+          className="flex-shrink-0"
+          style={{ minHeight: 'var(--row-middle)' }}
+        >
+          <MiddleSection />
+        </div>
         {/* Bank row header */}
         <div
           className="flex-shrink-0"
@@ -297,6 +254,30 @@ export function PerformanceLayout() {
         <div className="flex-1 min-h-0">
           <PerformanceGrid />
         </div>
+      </div>
+
+      {/* Row 3, Col 2: Sequencer */}
+      <div
+        className="rounded-sm overflow-hidden panel-gradient-subtle"
+        style={{
+          gridRow: 3,
+          gridColumn: 2,
+          border: '1px solid var(--border)',
+        }}
+      >
+        <SequencerContainer />
+      </div>
+
+      {/* Row 3, Col 3: Data Terminal */}
+      <div
+        className="rounded-sm overflow-hidden panel-gradient-accent"
+        style={{
+          gridRow: 3,
+          gridColumn: 3,
+          border: '1px solid var(--border)',
+        }}
+      >
+        <DataTerminal />
       </div>
 
       {/* Clip detail modal */}

@@ -14,6 +14,7 @@
   /* Layout grid */
   --col-left: 400px;
   --col-right: 200px;
+  --row-header: 40px;
   --row-middle: 100px;
   --gap: 3px;
 
@@ -79,6 +80,11 @@
   --accent-purple-hover: #BB77FF;
   --accent-purple-glow: rgba(170, 85, 255, 0.3);
   --accent-purple-subtle: rgba(170, 85, 255, 0.08);
+
+  /* Sequencer accent - violet */
+  --seq-accent: #9580FF;
+  --seq-accent-dim: #7B6BE0;
+  --seq-accent-glow: rgba(149, 128, 255, 0.3);
 
   /* Typography - slightly larger for readability */
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;

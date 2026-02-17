@@ -1,0 +1,189 @@
+import { useCallback } from 'react'
+import { PlayIcon, StopIcon } from '../ui/DotMatrixIcons'
+
+const RESOLUTION_OPTIONS = ['1/4', '1/8', '1/16', '1/32'] as const
+
+interface SequencerTransportProps {
+  isPlaying: boolean
+  bpm: number
+  resolution: string
+  swing: number
+  currentStep: number
+  stepPage: number
+  onPlay: () => void
+  onStop: () => void
+  onBpmChange: (bpm: number) => void
+  onResolutionChange: (res: string) => void
+  onSwingChange: (swing: number) => void
+  onPageChange: (page: number) => void
+}
+
+export function SequencerTransport({
+  isPlaying,
+  bpm,
+  resolution,
+  swing,
+  currentStep,
+  stepPage,
+  onPlay,
+  onStop,
+  onBpmChange,
+  onResolutionChange,
+  onSwingChange,
+  onPageChange,
+}: SequencerTransportProps) {
+  const handleBpmDrag = useCallback(
+    (e: React.MouseEvent) => {
+      const startY = e.clientY
+      const startBpm = bpm
+
+      const handleMove = (ev: MouseEvent) => {
+        const deltaY = startY - ev.clientY
+        onBpmChange(Math.round(startBpm + deltaY / 2))
+      }
+      const handleUp = () => {
+        window.removeEventListener('mousemove', handleMove)
+        window.removeEventListener('mouseup', handleUp)
+      }
+      window.addEventListener('mousemove', handleMove)
+      window.addEventListener('mouseup', handleUp)
+    },
+    [bpm, onBpmChange],
+  )
+
+  const handleSwingDrag = useCallback(
+    (e: React.MouseEvent) => {
+      const startY = e.clientY
+      const startSwing = swing
+
+      const handleMove = (ev: MouseEvent) => {
+        const deltaY = startY - ev.clientY
+        onSwingChange(Math.round(startSwing + deltaY / 2))
+      }
+      const handleUp = () => {
+        window.removeEventListener('mousemove', handleMove)
+        window.removeEventListener('mouseup', handleUp)
+      }
+      window.addEventListener('mousemove', handleMove)
+      window.addEventListener('mouseup', handleUp)
+    },
+    [swing, onSwingChange],
+  )
+
+  const handleResolutionCycle = useCallback(() => {
+    const idx = RESOLUTION_OPTIONS.indexOf(resolution as (typeof RESOLUTION_OPTIONS)[number])
+    const next = (idx + 1) % RESOLUTION_OPTIONS.length
+    onResolutionChange(RESOLUTION_OPTIONS[next])
+  }, [resolution, onResolutionChange])
+
+  return (
+    <div
+      className="flex-shrink-0 flex items-center"
+      style={{
+        padding: '0 var(--panel-padding)',
+        gap: 'var(--gap-sm)',
+        height: 28,
+        borderBottom: '1px solid var(--border)',
+      }}
+    >
+      {/* Play/Stop */}
+      <button
+        onClick={isPlaying ? onStop : onPlay}
+        className="w-5 h-5 flex items-center justify-center rounded-sm transition-all"
+        style={{
+          backgroundColor: isPlaying ? 'var(--seq-accent)' : 'var(--bg-elevated)',
+          border: `1px solid ${isPlaying ? 'var(--seq-accent)' : 'var(--border)'}`,
+          boxShadow: isPlaying ? '0 0 8px var(--seq-accent-glow)' : 'none',
+        }}
+      >
+        {isPlaying ? (
+          <StopIcon size={8} color="var(--bg-primary)" />
+        ) : (
+          <PlayIcon size={8} color="var(--text-muted)" />
+        )}
+      </button>
+
+      {/* BPM */}
+      <div
+        className="text-[10px] cursor-ns-resize select-none"
+        style={{ color: 'var(--text-secondary)' }}
+        onMouseDown={handleBpmDrag}
+      >
+        <span style={{ opacity: 0.5 }}>BPM</span>{' '}
+        <span className="font-bold" style={{ color: 'var(--text-primary)' }}>
+          {String(bpm).padStart(3, '0')}
+        </span>
+      </div>
+
+      {/* Divider */}
+      <div className="w-px h-3" style={{ backgroundColor: 'var(--border)' }} />
+
+      {/* Resolution */}
+      <button
+        onClick={handleResolutionCycle}
+        className="text-[9px] font-bold px-1.5 py-0.5 rounded-sm"
+        style={{
+          color: 'var(--text-secondary)',
+          backgroundColor: 'var(--bg-elevated)',
+          border: '1px solid var(--border)',
+        }}
+      >
+        {resolution}
+      </button>
+
+      {/* Swing */}
+      <div
+        className="text-[9px] cursor-ns-resize select-none"
+        style={{ color: 'var(--text-muted)' }}
+        onMouseDown={handleSwingDrag}
+      >
+        <span style={{ opacity: 0.5 }}>SWG</span>{' '}
+        <span>{swing}</span>
+      </div>
+
+      {/* Divider */}
+      <div className="w-px h-3" style={{ backgroundColor: 'var(--border)' }} />
+
+      {/* Step position */}
+      <span
+        className="text-[9px] tabular-nums"
+        style={{ color: 'var(--text-ghost)' }}
+      >
+        {(currentStep % 8) + 1}/8
+      </span>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Page dots */}
+      <div className="flex items-center gap-1">
+        {[0, 1, 2, 3].map((page) => {
+          const isActive = page === stepPage
+          const hasPlayhead =
+            isPlaying &&
+            currentStep >= page * 8 &&
+            currentStep < (page + 1) * 8
+          return (
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              className="w-2 h-2 rounded-full transition-all"
+              style={{
+                backgroundColor: isActive
+                  ? 'var(--text-primary)'
+                  : hasPlayhead
+                    ? 'var(--text-muted)'
+                    : 'transparent',
+                border: `1.5px solid ${
+                  isActive ? 'var(--text-primary)' : 'var(--text-muted)'
+                }`,
+                opacity: isActive ? 1 : 0.4,
+              }}
+              title={`Page ${page + 1}`}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+}

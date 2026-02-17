@@ -1,58 +1,57 @@
+import { usePLockContext } from '../../../contexts/PLockContext'
+
+const PLOCK = '#FFB830'
+
 interface SelectRowProps {
   label: string
   value: string
   options: { value: string; label: string }[]
   onChange: (value: string) => void
+  paramId?: string
 }
 
-export function SelectRow({ label, value, options, onChange }: SelectRowProps) {
+export function SelectRow({ label, value, options, onChange, paramId }: SelectRowProps) {
+  const plock = usePLockContext()
+
+  const shortParam = paramId?.split('.')[1]
+  const isPlockActive = plock?.active && !!shortParam
+  const isLocked = isPlockActive && shortParam in plock.locks
+
+  const effectiveValue = isLocked ? String(plock!.locks[shortParam!]) : value
+  const effectiveOnChange = isPlockActive
+    ? (v: string) => {
+        plock!.setLock(shortParam!, v)
+        onChange(v) // Apply to effect for live preview
+      }
+    : onChange
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '4px 0',
-      }}
-    >
+    <div className="flex flex-col items-center" style={{ gap: 3, minWidth: 64 }}>
       <span
-        style={{
-          fontSize: '11px',
-          color: 'var(--text-muted)',
-        }}
+        className="text-[9px] uppercase tracking-wide leading-none font-medium"
+        style={{ color: isLocked ? PLOCK : 'var(--text-secondary)' }}
       >
         {label}
       </span>
-      <div style={{ display: 'flex', gap: '2px' }}>
-        {options.map((option) => (
-          <button
-            key={option.value}
-            onClick={() => onChange(option.value)}
-            style={{
-              padding: '2px 6px',
-              fontSize: '10px',
-              borderRadius: '2px',
-              transition: 'background-color 0.15s, color 0.15s, box-shadow 0.15s',
-              border: value === option.value ? '1px solid var(--accent)' : '1px solid var(--border)',
-              cursor: 'pointer',
-              backgroundColor:
-                value === option.value
-                  ? 'var(--accent)'
-                  : 'var(--bg-surface)',
-              color:
-                value === option.value
-                  ? 'var(--text-primary)'
-                  : 'var(--text-muted)',
-              boxShadow:
-                value === option.value
-                  ? '0 0 4px var(--accent-glow)'
-                  : 'none',
-            }}
-          >
-            {option.label}
-          </button>
+      <select
+        value={effectiveValue}
+        onChange={(e) => effectiveOnChange(e.target.value)}
+        className="text-[9px] tabular-nums text-center cursor-pointer"
+        style={{
+          border: `1px solid ${isLocked ? PLOCK + '60' : 'var(--border)'}`,
+          borderRadius: 3,
+          padding: '2px 6px',
+          backgroundColor: isLocked ? PLOCK + '10' : 'var(--bg-surface)',
+          color: isLocked ? PLOCK : 'var(--text-secondary)',
+          minWidth: 48,
+        }}
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
         ))}
-      </div>
+      </select>
     </div>
   )
 }

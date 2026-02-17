@@ -30,6 +30,9 @@ interface UIState {
   // Info panel selection (unified)
   infoPanelSelection: InfoPanelSelection
 
+  // Card view mode for EffectCardStack
+  cardViewMode: 'compact' | 'full'
+
   setSelectedEffect: (id: string | null) => void
   setSelectedParamIndex: (index: number) => void
 
@@ -49,6 +52,10 @@ interface UIState {
   selectRouting: (routingId: string) => void
   selectPreset: (presetId: string) => void
   clearInfoPanelSelection: () => void
+
+  // Card view mode actions
+  setCardViewMode: (mode: 'compact' | 'full') => void
+  toggleCardViewMode: () => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -63,6 +70,7 @@ export const useUIStore = create<UIState>((set) => ({
   },
 
   infoPanelSelection: null,
+  cardViewMode: 'compact',
 
   setSelectedEffect: (id) => set({ selectedEffectId: id, selectedParamIndex: 0 }),
   setSelectedParamIndex: (index) => set({ selectedParamIndex: index }),
@@ -85,4 +93,9 @@ export const useUIStore = create<UIState>((set) => ({
   selectRouting: (routingId) => set({ infoPanelSelection: { type: 'routing', routingId } }),
   selectPreset: (presetId) => set({ infoPanelSelection: { type: 'preset', presetId } }),
   clearInfoPanelSelection: () => set({ infoPanelSelection: null }),
+
+  setCardViewMode: (mode) => set({ cardViewMode: mode }),
+  toggleCardViewMode: () => set((state) => ({
+    cardViewMode: state.cardViewMode === 'compact' ? 'full' : 'compact',
+  })),
 }))

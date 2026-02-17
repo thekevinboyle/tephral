@@ -29,6 +29,12 @@ export function useContinuousModulation() {
       const slicer = useSlicerStore.getState()
       const strand = useStrandStore.getState()
 
+      // Handle bypass modulation for any effect (paramName === 'bypass')
+      if (paramName === 'bypass') {
+        glitch.setEffectBypassed(effectId, value > 0.5)
+        return
+      }
+
       // Apply to the appropriate store based on effect ID
       switch (effectId) {
         // ═══════════════════════════════════════════════════════════════════════
@@ -342,6 +348,15 @@ export function useContinuousModulation() {
       if (envRoutings.length > 0 && modState.envelope.enabled) {
         for (const routing of envRoutings) {
           const modulatedValue = modState.envelope.currentValue * routing.depth
+          applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
+        }
+      }
+
+      // Sample & Hold routings
+      const sampleHoldRoutings = currentRoutings.filter(r => r.trackId === 'sampleHold')
+      if (sampleHoldRoutings.length > 0 && modState.sampleHold.enabled) {
+        for (const routing of sampleHoldRoutings) {
+          const modulatedValue = modState.sampleHold.currentValue * routing.depth
           applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
         }
       }

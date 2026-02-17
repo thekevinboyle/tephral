@@ -61,6 +61,12 @@ export function useSequencerPlayback() {
 
     previousValues.current.set(targetParam, value)
 
+    // Handle bypass modulation for any effect
+    if (paramName === 'bypass') {
+      glitch.setEffectBypassed(effectId, value > 0.5)
+      return
+    }
+
     // Apply to the appropriate store based on effect ID
     switch (effectId) {
       case 'rgb_split':

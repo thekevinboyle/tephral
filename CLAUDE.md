@@ -21,22 +21,26 @@ When adding a new effect page or new effects, you MUST update ALL of the followi
 - Add case to `pageHasActiveEffects()` for new page
 - Update navigation button max page index
 
-### 4. Parameter Panel (`src/components/performance/ParameterPanel.tsx`)
+### 4. Active Effects Hook (`src/hooks/useActiveEffects.ts`)
 - Import the new store
-- Add store hook call
-- Add new effects to `handleClear()` function
-- Add effect sections with visualizers and params (the cards in the lane)
-- Add cases to `disableEffect()` function (for X button on cards)
-- Update dependency arrays for `handleClear` and `disableEffect`
+- Add enabled check and `activeEffects.push()` for each new effect
+- Include primaryValue/primaryLabel for card display
 
-### 5. Canvas (`src/components/Canvas.tsx`)
+### 5. Effect Disable Hook (`src/hooks/useEffectDisable.ts`)
+- Add case to the switch statement mapping effectId to store setter
+
+### 6. Compact Effect Params (`src/components/performance/CompactEffectParams.tsx`)
+- Add a switch case with 2-3 Knob components for the most important parameters
+- Uses the same store hooks as the full parameters
+
+### 7. Canvas (`src/components/Canvas.tsx`)
 - Import the new store
 - Subscribe to enabled states and params
 - Pass to `pipeline.updateEffects()`
 - Sync effect params with `pipeline.effect?.updateParams()`
 - Add to useEffect dependency array
 
-### 6. Effect Pipeline (`src/effects/EffectPipeline.ts`)
+### 8. Effect Pipeline (`src/effects/EffectPipeline.ts`)
 - Import new effect classes
 - Add effect instance properties
 - Initialize effects in constructor
@@ -45,29 +49,38 @@ When adding a new effect page or new effects, you MUST update ALL of the followi
 - Add to `dispose()` cleanup
 - If temporal effect: add to `render()` captureFrame calls
 
-### 7. Expanded Parameter Panel (`src/components/performance/ExpandedParameterPanel.tsx`)
+### 9. Expanded Parameter Panel (`src/components/performance/ExpandedParameterPanel.tsx`)
 - Import the new store and effects config
 - Add store hook call to `EffectParameters`
 - Add effect lookup to include new effects array
-- Add switch cases with parameter controls
+- Add switch cases with full parameter controls (SliderRow, SelectRow, etc.)
 
-### 8. Routing Store (`src/stores/routingStore.ts`)
+### 10. Routing Store (`src/stores/routingStore.ts`)
 - Import new effects array
 - Include in `defaultEffectOrder`
 
+## Architecture
+
+### Effect Card Stack (`src/components/performance/EffectCardStack.tsx`)
+The left column shows a vertically scrolling stack of effect cards. Each card has:
+- **Compact mode**: LED + label + 2-3 inline knobs + bypass + remove
+- **Full mode**: Header + full parameter controls (reuses `EffectParameters` from ExpandedParameterPanel)
+- Drag-and-drop reordering updates `routingStore.effectOrder`
+- View mode toggle (compact/full) stored in `uiStore.cardViewMode`
+
+### Effects Lane (`src/components/performance/EffectsLane.tsx`)
+The right column shows only the Modulation panel (LFO, Random, Step, Envelope, S&H).
+
 ## Common Issues
-
-### Clear/Bypass buttons stop working (not calling handlers)
-The `handleClear()` function in `ParameterPanel.tsx` must include all effect stores. When adding new effects, add their disable calls to the `handleClear` callback.
-
-### Clear/Bypass buttons not clickable (z-index/overlay issue)
-If buttons appear but don't respond to clicks (especially if they work when dev tools is open), check for:
-1. Elements with `fixed inset-0` or `absolute inset-0` without `pointer-events-none`
-2. The ControlButtons container in `ParameterPanel.tsx` has `position: relative` and `zIndex: 20` to ensure it stays clickable above any overlapping elements
-3. Modals/dropdowns that might not be properly hidden when closed
 
 ### Page navigation doesn't reach new pages
 Check `uiStore.ts` - the `setGridPage`, `nextGridPage`, `prevGridPage` functions have hardcoded max values.
 
 ### Effects don't appear in grid
 Check `getEffectsForPage()` returns the right array and `pageHasActiveEffects()` includes the new page.
+
+### Effects don't appear in card stack
+Check `useActiveEffects.ts` has the enabled check for the new effect, and the effect ID is in `routingStore.defaultEffectOrder`.
+
+### Remove button doesn't work on a card
+Check `useEffectDisable.ts` has a case for the effect ID mapping to the correct store setter.

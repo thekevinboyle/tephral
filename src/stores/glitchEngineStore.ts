@@ -128,6 +128,7 @@ interface GlitchEngineState {
   // Per-effect bypass (double-click to mute)
   effectBypassed: Record<string, boolean>
   toggleEffectBypassed: (effectId: string) => void
+  setEffectBypassed: (effectId: string, bypassed: boolean) => void
 
   // Per-effect mix (dry/wet, 0-1)
   effectMix: Record<string, number>
@@ -218,6 +219,13 @@ export const useGlitchEngineStore = create<GlitchEngineState>((set, get) => ({
     effectBypassed: {
       ...state.effectBypassed,
       [effectId]: !state.effectBypassed[effectId]
+    }
+  })),
+
+  setEffectBypassed: (effectId, bypassed) => set((state) => ({
+    effectBypassed: {
+      ...state.effectBypassed,
+      [effectId]: bypassed
     }
   })),
 

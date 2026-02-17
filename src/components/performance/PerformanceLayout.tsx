@@ -5,7 +5,7 @@ import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
 import { ClipBin } from './ClipBin'
 import { ClipDetailModal } from './ClipDetailModal'
-import { ExpandedParameterPanel } from './ExpandedParameterPanel'
+import { EffectCardStack } from './EffectCardStack'
 import { EffectsLane } from './EffectsLane'
 import { MiddleSection } from './MiddleSection'
 import { ModulationLane } from './ModulationLane'
@@ -148,7 +148,7 @@ export function PerformanceLayout() {
           border: '1px solid var(--border)',
         }}
       >
-        <ExpandedParameterPanel />
+        <EffectCardStack />
       </div>
 
       {/* Row 1, Col 2: Canvas + Transport */}

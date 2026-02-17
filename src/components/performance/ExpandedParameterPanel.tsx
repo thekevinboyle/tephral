@@ -86,7 +86,7 @@ export function ExpandedParameterPanel() {
   )
 }
 
-function EffectParameters({ effectId }: { effectId: string }) {
+export function EffectParameters({ effectId }: { effectId: string }) {
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
   const stipple = useStippleStore()

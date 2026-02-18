@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { PlayIcon, StopIcon } from '../ui/DotMatrixIcons'
+import { PlayIcon, StopIcon, DiceIcon, ShuffleIcon, ClearIcon } from '../ui/DotMatrixIcons'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useUIStore } from '../../stores/uiStore'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
@@ -17,16 +17,15 @@ function RandomizeButton() {
   return (
     <button
       onClick={handleClick}
-      className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm"
+      className="w-7 h-7 flex items-center justify-center rounded-sm"
       style={{
-        color: selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)',
         backgroundColor: 'var(--bg-elevated)',
         border: '1px solid var(--border)',
         opacity: selectedEffectId ? 1 : 0.5,
       }}
       title="Randomize steps on selected track"
     >
-      RND
+      <DiceIcon size={14} color={selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)'} />
     </button>
   )
 }
@@ -34,33 +33,72 @@ function RandomizeButton() {
 function RandomizeLocksButton() {
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)
   const randomizeLocks = useEffectSequencerStore((s) => s.randomizeLocks)
+  const setAutomationParam = useEffectSequencerStore((s) => s.setAutomationParam)
 
   const handleClick = useCallback(() => {
     if (!selectedEffectId) return
     const entry = EFFECT_PARAM_REGISTRY[selectedEffectId]
     if (!entry) return
-    const params = entry.getParams().map((p) => ({
+    const allParams = entry.getParams()
+    const params = allParams.map((p) => ({
       id: p.id,
       min: p.min,
       max: p.max,
       step: p.step,
     }))
     randomizeLocks(selectedEffectId, params)
-  }, [selectedEffectId, randomizeLocks])
+
+    // Auto-set automation target to first param so user can adjust locks
+    if (allParams.length > 0) {
+      const p = allParams[0]
+      setAutomationParam({
+        effectId: selectedEffectId,
+        paramId: p.id,
+        fullParamId: `${selectedEffectId}.${p.id}`,
+        label: p.label,
+        min: p.min,
+        max: p.max,
+        step: p.step,
+      })
+    }
+  }, [selectedEffectId, randomizeLocks, setAutomationParam])
 
   return (
     <button
       onClick={handleClick}
-      className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm"
+      className="w-7 h-7 flex items-center justify-center rounded-sm"
       style={{
-        color: selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)',
         backgroundColor: 'var(--bg-elevated)',
         border: '1px solid var(--border)',
         opacity: selectedEffectId ? 1 : 0.5,
       }}
       title="Randomize p-locks on selected track"
     >
-      P-RND
+      <ShuffleIcon size={14} color={selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)'} />
+    </button>
+  )
+}
+
+function ClearTrackButton() {
+  const selectedEffectId = useUIStore((s) => s.selectedEffectId)
+  const clearTrack = useEffectSequencerStore((s) => s.clearTrack)
+
+  const handleClick = useCallback(() => {
+    if (selectedEffectId) clearTrack(selectedEffectId)
+  }, [selectedEffectId, clearTrack])
+
+  return (
+    <button
+      onClick={handleClick}
+      className="w-7 h-7 flex items-center justify-center rounded-sm"
+      style={{
+        backgroundColor: 'var(--bg-elevated)',
+        border: '1px solid var(--border)',
+        opacity: selectedEffectId ? 1 : 0.5,
+      }}
+      title="Clear steps on selected track"
+    >
+      <ClearIcon size={14} color={selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)'} />
     </button>
   )
 }
@@ -217,9 +255,10 @@ export function SequencerTransport({
       {/* Divider */}
       <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
 
-      {/* Randomize */}
+      {/* Track tools */}
       <RandomizeButton />
       <RandomizeLocksButton />
+      <ClearTrackButton />
 
       {/* Spacer */}
       <div className="flex-1" />

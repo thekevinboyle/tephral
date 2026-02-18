@@ -82,6 +82,7 @@ interface EffectSequencerState {
   // Utilities
   randomizeTrack: (effectId: string, density?: number) => void
   randomizeLocks: (effectId: string, params: { id: string; min: number; max: number; step: number }[]) => void
+  clearTrack: (effectId: string) => void
 
   // Playback engine
   advanceStep: () => void
@@ -346,6 +347,19 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
         }
         return { ...step, locks }
       })
+      return { tracks: { ...state.tracks, [effectId]: { ...track, steps: newSteps } } }
+    })
+  },
+
+  clearTrack: (effectId) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      const newSteps = track.steps.map((step) => ({
+        ...step,
+        active: false,
+        locks: {},
+      }))
       return { tracks: { ...state.tracks, [effectId]: { ...track, steps: newSteps } } }
     })
   },

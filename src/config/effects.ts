@@ -35,7 +35,7 @@ export const EFFECTS: EffectDefinition[] = [
   { id: 'acid_voronoi', label: 'VORONOI', color: '#818cf8', row: 'render', page: 0, min: 16, max: 256 },
 
   // Row 4: Print/Geometric
-  { id: 'acid_halftone', label: 'HALFTONE', color: '#fbbf24', row: 'render', page: 0, min: 4, max: 24 },
+  { id: 'acid_halftone', label: 'HALF', color: '#fbbf24', row: 'render', page: 0, min: 4, max: 24 },
   { id: 'acid_hex', label: 'HEX', color: '#f59e0b', row: 'render', page: 0, min: 8, max: 48 },
   { id: 'acid_scan', label: 'SCAN', color: '#f97316', row: 'render', page: 0, min: 1, max: 10 },
   { id: 'acid_ripple', label: 'RIPPLE', color: '#ef4444', row: 'render', page: 0, min: 1, max: 20 },
@@ -52,7 +52,7 @@ export const EFFECTS: EffectDefinition[] = [
 
   // Row 2: Body Tracking
   { id: 'contour', label: 'CONTOUR', color: '#00ffff', row: 'vision', page: 1, min: 0, max: 100 },
-  { id: 'landmarks', label: 'LANDMARKS', color: '#FF0055', row: 'vision', page: 1, min: 10, max: 90 },
+  { id: 'landmarks', label: 'LNDMRK', color: '#FF0055', row: 'vision', page: 1, min: 10, max: 90 },
 
   // Row 3-4: Reserved
   { id: 'reserved_v3', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },
@@ -88,7 +88,7 @@ export const EFFECTS: EffectDefinition[] = [
 
   // Row 4: Render Modes
   { id: 'edges', label: 'EDGES', color: '#f59e0b', row: 'render', page: 2, min: 10, max: 100 },
-  { id: 'feedback', label: 'FEEDBACK', color: '#d97706', row: 'render', page: 2, min: 0, max: 100 },
+  { id: 'feedback', label: 'FDBK', color: '#d97706', row: 'render', page: 2, min: 0, max: 100 },
   { id: 'ascii', label: 'ASCII', color: '#b45309', row: 'render', page: 2, min: 6, max: 20 },
   { id: 'stipple', label: 'STIPPLE', color: '#92400e', row: 'render', page: 2, min: 1, max: 8 },
 
@@ -100,28 +100,28 @@ export const EFFECTS: EffectDefinition[] = [
 
 export const STRAND_EFFECTS: EffectDefinition[] = [
   // Row 1: Chiral/BT (dark purple)
-  { id: 'strand_handprints', label: 'HANDPRINTS', color: '#1a1a1a', row: 'render', page: 3, min: 1, max: 20 },
+  { id: 'strand_handprints', label: 'HANDS', color: '#1a1a1a', row: 'render', page: 3, min: 1, max: 20 },
   { id: 'strand_tar', label: 'TAR', color: '#8844CC', row: 'render', page: 3, min: 0, max: 100 },
   { id: 'strand_timefall', label: 'TIMEFALL', color: '#6633AA', row: 'render', page: 3, min: 0, max: 100 },
   { id: 'strand_voidout', label: 'VOID OUT', color: '#AA55FF', row: 'render', page: 3, min: 0, max: 100 },
 
   // Row 2: Strand/Connection (bright purple)
-  { id: 'strand_web', label: 'STRAND WEB', color: '#AA55FF', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_web', label: 'WEB', color: '#AA55FF', row: 'render', page: 3, min: 0, max: 100 },
   { id: 'strand_bridge', label: 'BRIDGE', color: '#BB77FF', row: 'render', page: 3, min: 8, max: 64 },
-  { id: 'strand_path', label: 'CHIRAL PATH', color: '#AA55FF', row: 'render', page: 3, min: 10, max: 200 },
-  { id: 'strand_umbilical', label: 'UMBILICAL', color: '#9944EE', row: 'render', page: 3, min: 2, max: 12 },
+  { id: 'strand_path', label: 'C-PATH', color: '#AA55FF', row: 'render', page: 3, min: 10, max: 200 },
+  { id: 'strand_umbilical', label: 'UMBIL', color: '#9944EE', row: 'render', page: 3, min: 2, max: 12 },
 
   // Row 3: Chiralium/Tech (light purple)
   { id: 'strand_odradek', label: 'ODRADEK', color: '#CC88FF', row: 'render', page: 3, min: 0, max: 100 },
-  { id: 'strand_chiralium', label: 'CHIRALIUM', color: '#BB77FF', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_chiralium', label: 'CHIRAL', color: '#BB77FF', row: 'render', page: 3, min: 0, max: 100 },
   { id: 'strand_beach', label: 'BEACH', color: '#D4A5FF', row: 'render', page: 3, min: 0, max: 100 },
   { id: 'strand_dooms', label: 'DOOMS', color: '#AA55FF', row: 'render', page: 3, min: 0, max: 100 },
 
   // Row 4: Atmosphere (muted purple)
-  { id: 'strand_cloud', label: 'CHIRAL CLOUD', color: '#9966DD', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_cloud', label: 'C-CLOUD', color: '#9966DD', row: 'render', page: 3, min: 0, max: 100 },
   { id: 'strand_bbpod', label: 'BB POD', color: '#8855CC', row: 'render', page: 3, min: 0, max: 100 },
   { id: 'strand_seam', label: 'SEAM', color: '#7744BB', row: 'render', page: 3, min: 0, max: 100 },
-  { id: 'strand_extinction', label: 'EXTINCTION', color: '#AA55FF', row: 'render', page: 3, min: 0, max: 100 },
+  { id: 'strand_extinction', label: 'EXTINCT', color: '#AA55FF', row: 'render', page: 3, min: 0, max: 100 },
 ]
 
 // ═══════════════════════════════════════════════════════════════

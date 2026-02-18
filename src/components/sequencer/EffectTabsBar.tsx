@@ -101,6 +101,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
           height: 64,
           padding: '0 var(--panel-padding)',
           borderBottom: '1px solid var(--border)',
+          backgroundColor: 'var(--bg-surface)',
         }}
       >
         <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
@@ -117,6 +118,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
         height: 64,
         borderBottom: '1px solid var(--border)',
         scrollbarWidth: 'none',
+        backgroundColor: 'var(--bg-surface)',
       }}
     >
       {activeEffectIds.map((effectId) => {

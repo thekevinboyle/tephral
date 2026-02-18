@@ -29,6 +29,8 @@ export function useEffectSequencerPlayback() {
   const preLockValues = useRef<Record<string, Record<string, number | string>>>({})
   // Track which param ids were locked on the previous step (per effect)
   const prevLockedParams = useRef<Record<string, Set<string>>>({})
+  // Track which effects were bypassed by mute/solo (to restore on stop/unmute)
+  const muteBypassed = useRef<Set<string>>(new Set())
 
   // ─── Timing ────────────────────────────────────────────────────────────
 
@@ -56,6 +58,7 @@ export function useEffectSequencerPlayback() {
     baseMix.current = mixSnapshot
     preLockValues.current = {}
     prevLockedParams.current = {}
+    muteBypassed.current = new Set()
   }, [])
 
   const restoreBaseValues = useCallback(() => {
@@ -88,6 +91,12 @@ export function useEffectSequencerPlayback() {
       }
     }
 
+    // Un-bypass any effects that were bypassed by mute/solo
+    for (const effectId of muteBypassed.current) {
+      ge.setEffectBypassed(effectId, false)
+    }
+    muteBypassed.current = new Set()
+
     preLockValues.current = {}
     prevLockedParams.current = {}
   }, [])
@@ -106,8 +115,6 @@ export function useEffectSequencerPlayback() {
     for (const effectId of effectOrder) {
       const track = currentTracks[effectId]
       if (!track) continue
-      if (track.muted) continue
-      if (hasSolo && !track.soloed) continue
 
       const entry = EFFECT_PARAM_REGISTRY[effectId]
       if (!entry) continue
@@ -120,6 +127,20 @@ export function useEffectSequencerPlayback() {
       }
 
       if (!prePlayEnabled.current[effectId]) continue
+
+      // Mute/solo: bypass the effect
+      const isMuted = track.muted || (hasSolo && !track.soloed)
+      if (isMuted) {
+        if (!muteBypassed.current.has(effectId)) {
+          useGlitchEngineStore.getState().setEffectBypassed(effectId, true)
+          muteBypassed.current.add(effectId)
+        }
+        continue
+      } else if (muteBypassed.current.has(effectId)) {
+        // Was muted, now unmuted — remove bypass
+        useGlitchEngineStore.getState().setEffectBypassed(effectId, false)
+        muteBypassed.current.delete(effectId)
+      }
 
       const stepIndex = currentStep % track.length
       const step = track.steps[stepIndex]

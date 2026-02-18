@@ -167,9 +167,10 @@ export function EffectTrackRow({
         <div className="flex items-center gap-1.5">
           {/* Mode toggle */}
           <button
-            onClick={() =>
+            onClick={(e) => {
+              e.stopPropagation()
               setTrackMode(effectId, track.mode === 'gate' ? 'param' : 'gate')
-            }
+            }}
             className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm"
             style={{
               backgroundColor: `${SEQ}20`,
@@ -187,7 +188,10 @@ export function EffectTrackRow({
 
           {/* Mute */}
           <button
-            onClick={() => setTrackMuted(effectId, !track.muted)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setTrackMuted(effectId, !track.muted)
+            }}
             className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm"
             style={{
               backgroundColor: track.muted
@@ -203,7 +207,10 @@ export function EffectTrackRow({
 
           {/* Solo */}
           <button
-            onClick={() => setTrackSoloed(effectId, !track.soloed)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setTrackSoloed(effectId, !track.soloed)
+            }}
             className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm"
             style={{
               backgroundColor: track.soloed

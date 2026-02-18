@@ -79,7 +79,7 @@ export function EffectCardStack() {
               {/* Effect name */}
               <span
                 className="text-[11px] uppercase tracking-wide font-semibold flex-shrink-0"
-                style={{ color: isBypassed ? 'var(--text-ghost)' : effectColor }}
+                style={{ color: isBypassed ? 'var(--text-ghost)' : 'var(--text-secondary)' }}
               >
                 {effectLabel}
               </span>

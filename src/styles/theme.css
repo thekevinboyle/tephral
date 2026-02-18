@@ -12,7 +12,8 @@
   --bg-hover: #262626;
 
   /* Layout grid */
-  --col-left: 400px;
+  --col-left: 320px;
+  --col-grid: 480px;
   --col-right: 200px;
   --col-canvas: 480px;
   --row-header: 40px;
@@ -248,21 +249,24 @@ body {
 
 @media (min-width: 1280px) {
   :root {
-    --col-left: 440px;
+    --col-left: 360px;
+    --col-grid: 520px;
     --col-right: 240px;
   }
 }
 
 @media (min-width: 1536px) {
   :root {
-    --col-left: 480px;
+    --col-left: 400px;
+    --col-grid: 560px;
     --col-right: 280px;
   }
 }
 
 @media (min-width: 1920px) {
   :root {
-    --col-left: 520px;
+    --col-left: 440px;
+    --col-grid: 600px;
     --col-right: 320px;
   }
 }

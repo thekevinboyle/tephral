@@ -354,20 +354,6 @@ export function EffectParameters({ effectId }: { effectId: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Primary sliders — full width, stacked */}
-      {sliders.map((param) => (
-        <HorizontalSlider
-          key={param.id}
-          label={param.label}
-          value={param.read()}
-          min={param.min}
-          max={param.max}
-          step={param.step}
-          onChange={(v) => param.apply(v)}
-          paramId={`${effectId}.${param.id}`}
-        />
-      ))}
-
       {/* Knobs + steppers — flex-wrap row, dense */}
       {(knobs.length > 0 || steppers.length > 0) && (
         <div className="flex flex-wrap gap-x-4 gap-y-3 items-start">
@@ -398,9 +384,38 @@ export function EffectParameters({ effectId }: { effectId: string }) {
         </div>
       )}
 
+      {/* Toggles — inline flex row */}
+      {toggles.length > 0 && (
+        <div className="flex flex-wrap gap-x-4 gap-y-3 items-start">
+          {toggles.map((param) => (
+            <ToggleRow
+              key={param.id}
+              label={param.label}
+              value={param.read() >= 0.5}
+              onChange={(v) => param.apply(v ? 1 : 0)}
+              paramId={`${effectId}.${param.id}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Primary sliders — full width, stacked */}
+      {sliders.map((param) => (
+        <HorizontalSlider
+          key={param.id}
+          label={param.label}
+          value={param.read()}
+          min={param.min}
+          max={param.max}
+          step={param.step}
+          onChange={(v) => param.apply(v)}
+          paramId={`${effectId}.${param.id}`}
+        />
+      ))}
+
       {/* Segmented buttons — full width each */}
       {selectParams.length > 0 && (
-        <div className="flex flex-col gap-2 pt-1">
+        <div className="flex flex-col gap-2">
           {selectParams.map((param) => (
             <SegmentedRow
               key={param.id}
@@ -408,21 +423,6 @@ export function EffectParameters({ effectId }: { effectId: string }) {
               value={param.read()}
               options={param.options}
               onChange={(v) => param.apply(v)}
-              paramId={`${effectId}.${param.id}`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Toggles — inline flex row */}
-      {toggles.length > 0 && (
-        <div className="flex flex-wrap gap-x-4 gap-y-3 items-start pt-1">
-          {toggles.map((param) => (
-            <ToggleRow
-              key={param.id}
-              label={param.label}
-              value={param.read() >= 0.5}
-              onChange={(v) => param.apply(v ? 1 : 0)}
               paramId={`${effectId}.${param.id}`}
             />
           ))}

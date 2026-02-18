@@ -62,7 +62,7 @@ export function HorizontalCrossfader() {
         {/* Crossfader track */}
         <div
           ref={trackRef}
-          className="flex-1 h-5 relative cursor-pointer rounded-sm"
+          className="flex-1 h-7 relative cursor-pointer rounded-sm"
           style={{ backgroundColor: 'var(--bg-elevated)' }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -77,11 +77,14 @@ export function HorizontalCrossfader() {
 
           {/* Thumb */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-sm transition-shadow"
+            className="absolute top-1/2 -translate-y-1/2 rounded-sm transition-shadow"
             style={{
-              left: `calc(${thumbPosition}% - 6px)`,
+              width: 24,
+              height: 28,
+              left: `calc(${thumbPosition}% - 12px)`,
               backgroundColor: 'var(--accent)',
               boxShadow: '0 0 6px var(--accent-glow)',
+              border: '1px solid rgba(255,255,255,0.15)',
             }}
           />
         </div>

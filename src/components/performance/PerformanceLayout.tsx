@@ -70,7 +70,7 @@ export function PerformanceLayout() {
       style={{
         display: 'grid',
         gridTemplateRows: 'var(--row-header) 1fr 1fr',
-        gridTemplateColumns: '1fr var(--col-canvas)',
+        gridTemplateColumns: 'var(--col-left) 1fr',
         gap: 'var(--gap)',
         padding: 'var(--gap)',
       }}
@@ -87,11 +87,11 @@ export function PerformanceLayout() {
         <HeaderBar />
       </div>
 
-      {/* Row 2, Col 1: Effect Card Stack + Parameters */}
+      {/* Rows 2-3, Col 1: Effect Card Stack + Parameters (full height) */}
       <div
         className="rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
-          gridRow: 2,
+          gridRow: '2 / 4',
           gridColumn: 1,
           border: '1px solid var(--border)',
         }}
@@ -115,30 +115,24 @@ export function PerformanceLayout() {
         <TransportBar />
       </div>
 
-      {/* Row 3: Crossfader + Bank + Grid + Sequencer (spans full width) */}
+      {/* Row 3, Col 2: Grid + Crossfader + Sequencer */}
       <div
         className="flex rounded-sm overflow-hidden"
         style={{
           gridRow: 3,
-          gridColumn: '1 / -1',
+          gridColumn: 2,
           gap: 'var(--gap)',
         }}
       >
-        {/* Left: Crossfader + Bank + Grid */}
+        {/* Left: Bank + Grid + Crossfader */}
         <div
           className="flex flex-col rounded-sm overflow-hidden panel-gradient"
           style={{
-            width: 'var(--col-left)',
+            width: 'var(--col-grid)',
             flexShrink: 0,
             border: '1px solid var(--border)',
           }}
         >
-          <div
-            className="flex-shrink-0"
-            style={{ minHeight: 'var(--row-middle)' }}
-          >
-            <MiddleSection />
-          </div>
           <div
             className="flex-shrink-0"
             style={{
@@ -150,6 +144,15 @@ export function PerformanceLayout() {
           </div>
           <div className="flex-1 min-h-0">
             <PerformanceGrid />
+          </div>
+          <div
+            className="flex-shrink-0"
+            style={{
+              minHeight: 'var(--row-middle)',
+              borderTop: '1px solid var(--border)',
+            }}
+          >
+            <MiddleSection />
           </div>
         </div>
 

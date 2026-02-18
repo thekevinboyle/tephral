@@ -130,6 +130,7 @@ export function UnifiedSequencerPanel() {
         }
         case 'Escape': {
           state.clearSelection()
+          state.clearAutomationParam()
           break
         }
         case 'ArrowRight': {

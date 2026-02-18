@@ -60,6 +60,7 @@ export function Knob({
   // Automation target state
   const automationParam = useEffectSequencerStore((s) => s.automationParam)
   const setAutomationParam = useEffectSequencerStore((s) => s.setAutomationParam)
+  const clearAutomationParam = useEffectSequencerStore((s) => s.clearAutomationParam)
   const isAutomationTarget = paramId != null && automationParam?.fullParamId === paramId
 
   // Modulation routing state — only subscribe when paramId is provided
@@ -183,24 +184,28 @@ export function Knob({
       ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
     } catch {}
 
-    // Click (not drag) → select as automation target
+    // Click (not drag) → toggle automation target
     if (!didDrag.current && !isInAssignmentMode && paramId) {
-      const parts = paramId.split('.')
-      if (parts.length === 2) {
-        setAutomationParam({
-          effectId: parts[0],
-          paramId: parts[1],
-          fullParamId: paramId,
-          label: label,
-          min: min,
-          max: max,
-          step: step ?? 0.01,
-        })
+      if (isAutomationTarget) {
+        clearAutomationParam()
+      } else {
+        const parts = paramId.split('.')
+        if (parts.length === 2) {
+          setAutomationParam({
+            effectId: parts[0],
+            paramId: parts[1],
+            fullParamId: paramId,
+            label: label,
+            min: min,
+            max: max,
+            step: step ?? 0.01,
+          })
+        }
       }
     }
 
     dragStartY.current = null
-  }, [isInAssignmentMode, paramId, label, min, max, step, setAutomationParam])
+  }, [isInAssignmentMode, isAutomationTarget, paramId, label, min, max, step, setAutomationParam, clearAutomationParam])
 
   // Drop target handlers
   const handleDragOver = useCallback((e: React.DragEvent) => {

@@ -46,6 +46,7 @@ function HorizontalSlider({
 }) {
   const automationParam = useEffectSequencerStore((s) => s.automationParam)
   const setAutomationParam = useEffectSequencerStore((s) => s.setAutomationParam)
+  const clearAutomationParam = useEffectSequencerStore((s) => s.clearAutomationParam)
   const isAutomationTarget = paramId != null && automationParam?.fullParamId === paramId
 
   const normalized = (value - min) / (max - min)
@@ -92,20 +93,24 @@ function HorizontalSlider({
       ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
     } catch {}
 
-    // Click (no drag) on the slider label area → select as automation target
+    // Click (no drag) → toggle automation target
     if (!didDrag.current && paramId) {
-      const parts = paramId.split('.')
-      if (parts.length === 2) {
-        setAutomationParam({
-          effectId: parts[0],
-          paramId: parts[1],
-          fullParamId: paramId,
-          label,
-          min, max, step,
-        })
+      if (isAutomationTarget) {
+        clearAutomationParam()
+      } else {
+        const parts = paramId.split('.')
+        if (parts.length === 2) {
+          setAutomationParam({
+            effectId: parts[0],
+            paramId: parts[1],
+            fullParamId: paramId,
+            label,
+            min, max, step,
+          })
+        }
       }
     }
-  }, [paramId, label, min, max, step, setAutomationParam])
+  }, [paramId, label, min, max, step, isAutomationTarget, setAutomationParam, clearAutomationParam])
 
   const commitEdit = useCallback((raw: string) => {
     const parsed = parseFloat(raw)

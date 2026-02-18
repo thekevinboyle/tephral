@@ -961,7 +961,7 @@ export function PerformanceGrid() {
     <div
       className="h-full w-full flex flex-col p-2"
       style={{
-        background: 'radial-gradient(ellipse at center, rgba(0, 212, 255, 0.03) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse at center, rgba(112, 112, 112, 0.03) 0%, transparent 70%)',
       }}
     >
       {/* Page navigation */}

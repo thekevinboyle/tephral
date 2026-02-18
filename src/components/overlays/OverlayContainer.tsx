@@ -9,6 +9,7 @@ import { TextureOverlay } from './TextureOverlay'
 import { DataOverlay } from './DataOverlay'
 import { StrandOverlay } from './StrandOverlay'
 import { useLandmarkDetection } from '../../hooks/useLandmarkDetection'
+import { useRoutingStore } from '../../stores/routingStore'
 
 interface OverlayContainerProps {
   containerRef: React.RefObject<HTMLDivElement | null>
@@ -17,6 +18,7 @@ interface OverlayContainerProps {
 
 export function OverlayContainer({ containerRef, glCanvas }: OverlayContainerProps) {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
+  const crossfaderPosition = useRoutingStore((s) => s.crossfaderPosition)
 
   // Initialize detection hooks
   useLandmarkDetection()
@@ -43,8 +45,12 @@ export function OverlayContainer({ containerRef, glCanvas }: OverlayContainerPro
     }
   }, [containerRef])
 
+  // Crossfader at 0 = fully dry (no effects), at 1 = fully processed
+  // Fade overlays with crossfader since they render outside the WebGL pipeline
+  const overlayOpacity = crossfaderPosition
+
   return (
-    <>
+    <div style={{ opacity: overlayOpacity, pointerEvents: overlayOpacity < 0.01 ? 'none' : 'auto' }}>
       {/* Stipple renders first (replaces background) */}
       <StippleOverlay width={dimensions.width} height={dimensions.height} glCanvas={glCanvas} />
 
@@ -71,6 +77,6 @@ export function OverlayContainer({ containerRef, glCanvas }: OverlayContainerPro
 
       {/* Strand effects overlay */}
       <StrandOverlay sourceCanvas={glCanvas} width={dimensions.width} height={dimensions.height} />
-    </>
+    </div>
   )
 }

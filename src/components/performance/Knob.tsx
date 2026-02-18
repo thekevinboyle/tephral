@@ -4,12 +4,13 @@ import { useModulationStore } from '../../stores/modulationStore'
 import { usePolyEuclidStore } from '../../stores/polyEuclidStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
+import { ModulationContextMenu } from './controls/ModulationContextMenu'
 
 // Modulation source colors (same as SliderRow)
 const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
   euclidean: { name: 'Euclidean', color: '#FF0055' },
   ricochet: { name: 'Ricochet', color: '#FF0055' },
-  lfo: { name: 'LFO', color: '#00D4FF' },
+  lfo: { name: 'LFO', color: '#707070' },
   random: { name: 'Random', color: '#FF6B6B' },
   step: { name: 'Step', color: '#4ECDC4' },
   envelope: { name: 'Envelope', color: '#AA55FF' },
@@ -80,6 +81,7 @@ export function Knob({
   const { selectRouting } = useUIStore()
   const [isDropTarget, setIsDropTarget] = useState(false)
   const [isModulationDrag, setIsModulationDrag] = useState(false)
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
 
   // Check assignment mode
   const isInAssignmentMode = (assigningModulator !== null || assigningPolyEuclid !== null || assigningStepTrack !== null) && !!paramId
@@ -296,6 +298,10 @@ export function Knob({
       onDragOver={paramId ? handleDragOver : undefined}
       onDragLeave={paramId ? handleDragLeave : undefined}
       onDrop={paramId ? handleDrop : undefined}
+      onContextMenu={paramId ? (e) => {
+        e.preventDefault()
+        setContextMenuPos({ x: e.clientX, y: e.clientY })
+      } : undefined}
     >
       {/* Label — above the knob */}
       <span
@@ -436,6 +442,15 @@ export function Knob({
         >
           {displayValue}
         </div>
+      )}
+
+      {/* Modulation context menu */}
+      {contextMenuPos && paramId && (
+        <ModulationContextMenu
+          paramId={paramId}
+          position={contextMenuPos}
+          onClose={() => setContextMenuPos(null)}
+        />
       )}
     </div>
   )

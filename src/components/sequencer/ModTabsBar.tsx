@@ -1,7 +1,7 @@
 export type ParamView = 'effect' | 'lfo' | 'random' | 'step' | 'envelope' | 'sh'
 
 const MOD_SOURCES: { id: ParamView; label: string; color: string }[] = [
-  { id: 'lfo', label: 'LFO', color: '#00D4FF' },
+  { id: 'lfo', label: 'LFO', color: '#707070' },
   { id: 'random', label: 'Random', color: '#FF6B6B' },
   { id: 'step', label: 'Step', color: '#4ECDC4' },
   { id: 'envelope', label: 'Env', color: '#AA55FF' },
@@ -18,7 +18,7 @@ export function ModTabsBar({ activeView, onSelectMod }: ModTabsBarProps) {
     <div
       className="flex-shrink-0 flex items-center"
       style={{
-        height: 28,
+        height: 64,
         padding: '0 var(--panel-padding)',
         gap: 4,
         borderBottom: '1px solid var(--border)',

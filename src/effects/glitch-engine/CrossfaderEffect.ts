@@ -15,8 +15,17 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     return;
   }
 
-  // Sample source texture at the same UV
-  vec4 source = texture2D(sourceTexture, uv);
+  // Remap UV to account for source video letterboxing/pillarboxing
+  // sourceQuadScale encodes how the source video fits within the canvas
+  vec2 remappedUV = (uv - 0.5) / sourceQuadScale + 0.5;
+
+  // Outside the source quad area — show black (matching letterbox bars)
+  vec4 source;
+  if (remappedUV.x < 0.0 || remappedUV.x > 1.0 || remappedUV.y < 0.0 || remappedUV.y > 1.0) {
+    source = vec4(0.0, 0.0, 0.0, 1.0);
+  } else {
+    source = texture2D(sourceTexture, remappedUV);
+  }
 
   // Blend: SRC (0) = source, FX (1) = processed
   outputColor = mix(source, inputColor, crossfaderPosition);

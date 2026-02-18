@@ -103,7 +103,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
       <div
         className="flex-shrink-0 flex items-center"
         style={{
-          height: 50,
+          height: 64,
           padding: '0 var(--panel-padding)',
           borderBottom: '1px solid var(--border)',
         }}
@@ -119,7 +119,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
     <div
       className="flex-shrink-0 flex items-stretch overflow-x-auto"
       style={{
-        height: 50,
+        height: 64,
         borderBottom: '1px solid var(--border)',
         scrollbarWidth: 'none',
       }}
@@ -151,7 +151,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
               color: isBypassed ? 'var(--text-ghost)' : isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
               opacity: isBypassed ? 0.4 : 1,
               borderLeft: isDragTarget && dragSide === 'left' ? '2px solid var(--seq-accent)' : undefined,
-              borderRight: isDragTarget && dragSide === 'right' ? '2px solid var(--seq-accent)' : undefined,
+              borderRight: isDragTarget && dragSide === 'right' ? '2px solid var(--seq-accent)' : '1px solid var(--border)',
             }}
           >
             {/* LED — click to bypass */}

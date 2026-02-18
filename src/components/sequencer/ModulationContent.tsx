@@ -340,7 +340,7 @@ interface WrappedModProps {
 }
 
 function LFOContent({ mod, bpm, wrapped, selected, onSelect, routingCount }: { mod: ModStore; bpm: number } & WrappedModProps) {
-  const color = '#00D4FF'
+  const color = '#707070'
   const controls = (
     <>
       <ModSelect

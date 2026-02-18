@@ -179,16 +179,16 @@ export function EffectSequencer() {
       <div
         className="flex-shrink-0 flex items-center"
         style={{
-          height: 'var(--header-height)',
+          height: 56,
           padding: '0 var(--panel-padding)',
-          gap: 'var(--gap-sm)',
+          gap: 'var(--space-3)',
           borderBottom: '1px solid var(--border)',
         }}
       >
         {/* Play/Stop */}
         <button
           onClick={isPlaying ? stop : play}
-          className="w-6 h-6 flex items-center justify-center rounded-sm transition-all"
+          className="w-8 h-8 flex items-center justify-center rounded-sm transition-all"
           style={{
             backgroundColor: isPlaying ? 'var(--accent)' : 'var(--bg-elevated)',
             border: `1px solid ${isPlaying ? 'var(--accent)' : 'var(--border)'}`,
@@ -196,15 +196,15 @@ export function EffectSequencer() {
           }}
         >
           {isPlaying ? (
-            <StopIcon size={10} color="var(--bg-primary)" />
+            <StopIcon size={12} color="var(--bg-primary)" />
           ) : (
-            <PlayIcon size={10} color="var(--text-muted)" />
+            <PlayIcon size={12} color="var(--text-muted)" />
           )}
         </button>
 
         {/* BPM */}
         <div
-          className="text-[11px] cursor-ns-resize select-none"
+          className="text-[13px] cursor-ns-resize select-none"
           style={{ color: 'var(--text-secondary)' }}
           onMouseDown={handleBpmDrag}
         >
@@ -215,12 +215,12 @@ export function EffectSequencer() {
         </div>
 
         {/* Divider */}
-        <div className="w-px h-3" style={{ backgroundColor: 'var(--border)' }} />
+        <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
 
         {/* Resolution */}
         <button
           onClick={handleResolutionCycle}
-          className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm"
+          className="text-[12px] font-bold px-2 py-1 rounded-sm"
           style={{
             color: 'var(--text-secondary)',
             backgroundColor: 'var(--bg-elevated)',
@@ -232,7 +232,7 @@ export function EffectSequencer() {
 
         {/* Swing */}
         <div
-          className="text-[10px] cursor-ns-resize select-none"
+          className="text-[12px] cursor-ns-resize select-none"
           style={{ color: 'var(--text-muted)' }}
           onMouseDown={handleSwingDrag}
         >
@@ -241,11 +241,11 @@ export function EffectSequencer() {
         </div>
 
         {/* Divider */}
-        <div className="w-px h-3" style={{ backgroundColor: 'var(--border)' }} />
+        <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
 
         {/* Step position */}
         <span
-          className="text-[10px] tabular-nums"
+          className="text-[12px] tabular-nums"
           style={{ color: 'var(--text-ghost)' }}
         >
           {(currentStep % 16) + 1}/16
@@ -255,7 +255,7 @@ export function EffectSequencer() {
         <div className="flex-1" />
 
         {/* Page dots */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {[0, 1, 2, 3].map((page) => {
             const isActive = page === stepPage
             const hasPlayhead =
@@ -266,7 +266,7 @@ export function EffectSequencer() {
               <button
                 key={page}
                 onClick={() => setStepPage(page)}
-                className="w-2.5 h-2.5 rounded-full transition-all"
+                className="w-3 h-3 rounded-full transition-all"
                 style={{
                   backgroundColor: isActive
                     ? 'var(--text-primary)'

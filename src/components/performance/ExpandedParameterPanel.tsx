@@ -17,6 +17,7 @@ import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS, DESTRUCTION_EFFECTS } from '../../config/effects'
 import { SliderRow, ToggleRow, SelectRow, ColorRow, SegmentedRow, StepperRow } from './controls'
+import { ModulationContextMenu } from './controls/ModulationContextMenu'
 import { classifyParam } from '../../utils/classifyParam'
 import type { LockableParam } from '../../config/effectParams'
 import { TEXTURE_LIBRARY, type TextureId } from '../overlays/TextureOverlay'
@@ -56,6 +57,7 @@ function HorizontalSlider({
   // Click-to-edit state
   const [isEditing, setIsEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
 
   const applyFromPointer = useCallback((clientX: number) => {
     if (!trackRef.current) return
@@ -127,6 +129,10 @@ function HorizontalSlider({
         borderLeft: isAutomationTarget ? '2px solid #FF4060' : '2px solid transparent',
         paddingLeft: 4,
       }}
+      onContextMenu={paramId ? (e) => {
+        e.preventDefault()
+        setContextMenuPos({ x: e.clientX, y: e.clientY })
+      } : undefined}
     >
       {/* Label */}
       <span
@@ -206,6 +212,15 @@ function HorizontalSlider({
         >
           {displayValue}
         </span>
+      )}
+
+      {/* Modulation context menu */}
+      {contextMenuPos && paramId && (
+        <ModulationContextMenu
+          paramId={paramId}
+          position={contextMenuPos}
+          onClose={() => setContextMenuPos(null)}
+        />
       )}
     </div>
   )

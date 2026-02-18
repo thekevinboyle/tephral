@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 
 const SOURCE_COLORS: Record<string, string> = {
-  lfo: '#00D4FF',
+  lfo: '#707070',
   random: '#FF6B6B',
   step: '#4ECDC4',
   envelope: '#AA55FF',

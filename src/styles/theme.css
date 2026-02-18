@@ -4,12 +4,12 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Backgrounds - increased contrast between layers */
+  /* Backgrounds — 2 tones: dark base (#0D) + panel surface (#1A) */
   --bg-void: #000000;
-  --bg-primary: #0a0a0a;
-  --bg-surface: #141414;
-  --bg-elevated: #1e1e1e;
-  --bg-hover: #282828;
+  --bg-primary: #0D0D0D;
+  --bg-surface: #1A1A1A;
+  --bg-elevated: #1A1A1A;
+  --bg-hover: #262626;
 
   /* Layout grid */
   --col-left: 400px;
@@ -17,7 +17,7 @@
   --col-canvas: 480px;
   --row-header: 40px;
   --row-middle: 100px;
-  --gap: 3px;
+  --gap: 4px;
 
   /* Spacing scale (4px base) */
   --space-1: 4px;
@@ -46,46 +46,44 @@
   --gap-lg: var(--space-4);              /* 16px - separate sections */
 
   /* Dot matrix grid - visible dots */
-  --grid-dot: #1a1a1a;
+  --grid-dot: #252525;
   --grid-size: 16px;
   --dot-size: 1px;
 
-  /* Borders - more visible structure */
-  --border: #333333;
-  --border-emphasis: #444444;
-  --border-light: #444444;
+  /* Borders — bright, high contrast */
+  --border: #4A4A4A;
+  --border-emphasis: #5A5A5A;
+  --border-light: #5A5A5A;
 
-  /* Text - high contrast for readability */
-  --text-primary: #F0EDE8;
-  --text-secondary: #D0CDC8;
-  --text-muted: #A09A94;
-  --text-ghost: #706A64;
+  /* Text — high contrast */
+  --text-primary: #F5F0EB;
+  --text-secondary: #D5D0CB;
+  --text-muted: #9A948E;
+  --text-ghost: #5A5450;
 
-  /* Accent - cyan (primary) */
-  --accent: #00D4FF;
-  --accent-dim: #00A8CC;
-  --accent-hover: #33DDFF;
-  --accent-glow: rgba(0, 212, 255, 0.3);
-  --accent-subtle: rgba(0, 212, 255, 0.08);
+  /* Accent — dark gray (monochrome) */
+  --accent: #707070;
+  --accent-dim: #585858;
+  --accent-hover: #888888;
+  --accent-glow: rgba(112, 112, 112, 0.2);
+  --accent-subtle: rgba(112, 112, 112, 0.06);
 
-  /* Accent - lime (secondary) */
-  --accent-lime: #AAFF00;
-  --accent-lime-dim: #88CC00;
-  --accent-lime-hover: #BBFF33;
-  --accent-lime-glow: rgba(170, 255, 0, 0.3);
-  --accent-lime-subtle: rgba(170, 255, 0, 0.08);
+  /* Accent aliases — collapsed to cyan */
+  --accent-lime: var(--accent);
+  --accent-lime-dim: var(--accent-dim);
+  --accent-lime-hover: var(--accent-hover);
+  --accent-lime-glow: var(--accent-glow);
+  --accent-lime-subtle: var(--accent-subtle);
 
-  /* Accent - purple (tertiary) */
-  --accent-purple: #AA55FF;
-  --accent-purple-dim: #8844CC;
-  --accent-purple-hover: #BB77FF;
-  --accent-purple-glow: rgba(170, 85, 255, 0.3);
-  --accent-purple-subtle: rgba(170, 85, 255, 0.08);
+  --accent-purple: var(--accent);
+  --accent-purple-dim: var(--accent-dim);
+  --accent-purple-hover: var(--accent-hover);
+  --accent-purple-glow: var(--accent-glow);
+  --accent-purple-subtle: var(--accent-subtle);
 
-  /* Sequencer accent - violet */
-  --seq-accent: #9580FF;
-  --seq-accent-dim: #7B6BE0;
-  --seq-accent-glow: rgba(149, 128, 255, 0.3);
+  --seq-accent: var(--accent);
+  --seq-accent-dim: var(--accent-dim);
+  --seq-accent-glow: var(--accent-glow);
 
   /* Typography - slightly larger for readability */
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
@@ -216,7 +214,7 @@ body {
   background: linear-gradient(
     to bottom,
     var(--bg-surface) 0%,
-    #0e0e0e 100%
+    #141414 100%
   );
 }
 
@@ -224,7 +222,7 @@ body {
   background: linear-gradient(
     to top,
     var(--bg-surface) 0%,
-    #0e0e0e 100%
+    #141414 100%
   );
 }
 
@@ -232,7 +230,7 @@ body {
   background: linear-gradient(
     to bottom,
     var(--bg-surface) 0%,
-    #111111 100%
+    #171717 100%
   );
 }
 
@@ -240,7 +238,7 @@ body {
   background: linear-gradient(
     to bottom,
     var(--bg-surface) 0%,
-    rgba(0, 212, 255, 0.02) 100%
+    rgba(112, 112, 112, 0.02) 100%
   );
 }
 
@@ -274,47 +272,50 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 [data-theme="light"] {
-  /* Backgrounds - light grays */
+  /* Backgrounds — 2 tones */
   --bg-void: #ffffff;
-  --bg-primary: #f5f5f5;
-  --bg-surface: #ebebeb;
+  --bg-primary: #f0f0f0;
+  --bg-surface: #e0e0e0;
   --bg-elevated: #e0e0e0;
-  --bg-hover: #d5d5d5;
+  --bg-hover: #d0d0d0;
 
   /* Dot matrix grid */
-  --grid-dot: #d8d8d8;
+  --grid-dot: #d0d0d0;
 
-  /* Borders */
-  --border: #c5c5c5;
-  --border-emphasis: #b0b0b0;
-  --border-light: #d0d0d0;
+  /* Borders — high contrast */
+  --border: #aaaaaa;
+  --border-emphasis: #999999;
+  --border-light: #999999;
 
-  /* Text - dark for contrast */
+  /* Text — dark for contrast */
   --text-primary: #1a1a1a;
   --text-secondary: #3a3a3a;
   --text-muted: #666666;
   --text-ghost: #999999;
 
-  /* Accent - slightly darker for light bg */
-  --accent: #00a8cc;
-  --accent-dim: #008aa8;
-  --accent-hover: #00c4ee;
-  --accent-glow: rgba(0, 168, 204, 0.25);
-  --accent-subtle: rgba(0, 168, 204, 0.1);
+  /* Accent — dark gray (monochrome) */
+  --accent: #606060;
+  --accent-dim: #484848;
+  --accent-hover: #787878;
+  --accent-glow: rgba(96, 96, 96, 0.2);
+  --accent-subtle: rgba(96, 96, 96, 0.08);
 
-  /* Accent - lime (darker for light bg) */
-  --accent-lime: #7ab800;
-  --accent-lime-dim: #5c8a00;
-  --accent-lime-hover: #8ed000;
-  --accent-lime-glow: rgba(122, 184, 0, 0.25);
-  --accent-lime-subtle: rgba(122, 184, 0, 0.1);
+  /* Aliases — all collapsed to cyan */
+  --accent-lime: var(--accent);
+  --accent-lime-dim: var(--accent-dim);
+  --accent-lime-hover: var(--accent-hover);
+  --accent-lime-glow: var(--accent-glow);
+  --accent-lime-subtle: var(--accent-subtle);
 
-  /* Accent - purple (darker for light bg) */
-  --accent-purple: #8833dd;
-  --accent-purple-dim: #6622aa;
-  --accent-purple-hover: #9944ee;
-  --accent-purple-glow: rgba(136, 51, 221, 0.25);
-  --accent-purple-subtle: rgba(136, 51, 221, 0.1);
+  --accent-purple: var(--accent);
+  --accent-purple-dim: var(--accent-dim);
+  --accent-purple-hover: var(--accent-hover);
+  --accent-purple-glow: var(--accent-glow);
+  --accent-purple-subtle: var(--accent-subtle);
+
+  --seq-accent: var(--accent);
+  --seq-accent-dim: var(--accent-dim);
+  --seq-accent-glow: var(--accent-glow);
 }
 
 /* Light theme panel gradients */
@@ -322,7 +323,7 @@ body {
   background: linear-gradient(
     to bottom,
     var(--bg-surface) 0%,
-    #e5e5e5 100%
+    #d8d8d8 100%
   );
 }
 
@@ -330,7 +331,7 @@ body {
   background: linear-gradient(
     to top,
     var(--bg-surface) 0%,
-    #e5e5e5 100%
+    #d8d8d8 100%
   );
 }
 
@@ -338,7 +339,7 @@ body {
   background: linear-gradient(
     to bottom,
     var(--bg-surface) 0%,
-    #e8e8e8 100%
+    #dcdcdc 100%
   );
 }
 
@@ -346,7 +347,7 @@ body {
   background: linear-gradient(
     to bottom,
     var(--bg-surface) 0%,
-    rgba(0, 168, 204, 0.05) 100%
+    rgba(96, 96, 96, 0.05) 100%
   );
 }
 

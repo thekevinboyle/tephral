@@ -41,7 +41,7 @@ export function ToggleRow({ label, value, onChange, paramId }: ToggleRowProps) {
           border: `1px solid ${isAutomationTarget ? '#FF4060' : value ? 'var(--accent-dim)' : 'var(--border)'}`,
           borderRadius: 3,
           padding: '2px 6px',
-          backgroundColor: value ? 'rgba(0, 212, 255, 0.1)' : 'var(--bg-surface)',
+          backgroundColor: value ? 'var(--accent-subtle)' : 'var(--bg-surface)',
           color: value ? 'var(--accent)' : 'var(--text-ghost)',
           minWidth: 48,
         }}

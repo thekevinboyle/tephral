@@ -192,7 +192,7 @@ function HexagonPattern({ tick }: { tick: number }) {
                 key={x}
                 className="w-[5px] h-[5px] rounded-full"
                 style={{
-                  backgroundColor: '#00d4ff',
+                  backgroundColor: '#707070',
                   opacity: onEdge ? (0.5 + pulse * 0.5) : 0,
                 }}
               />
@@ -718,7 +718,7 @@ function ModulationPattern({ lfoValue, randomValue, stepValue, envValue }: {
     <div className="flex flex-col gap-[2px]">
       {/* Four horizontal waveform bars */}
       {[
-        { value: lfoValue, color: '#00D4FF', label: 'L' },
+        { value: lfoValue, color: '#707070', label: 'L' },
         { value: randomValue, color: '#FF6B6B', label: 'R' },
         { value: stepValue, color: '#4ECDC4', label: 'S' },
         { value: envValue, color: '#22c55e', label: 'E' },
@@ -962,7 +962,7 @@ export function DataTerminal() {
           label: 'L',
           type: `${modulation.lfo.shape.toUpperCase().slice(0, 3)} ${modulation.lfo.rate.toFixed(1)}Hz`,
           value: padNumber(Math.floor(modulation.lfo.currentValue * 9999), 4),
-          color: '#00D4FF',
+          color: '#707070',
         })
       }
       if (modulation.random.enabled) {

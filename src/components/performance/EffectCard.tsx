@@ -11,7 +11,7 @@ import { EffectParameters } from './ExpandedParameterPanel'
 const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
   euclidean: { name: 'Euclidean', color: '#FF0055' },
   ricochet: { name: 'Ricochet', color: '#FF0055' },
-  lfo: { name: 'LFO', color: '#00D4FF' },
+  lfo: { name: 'LFO', color: '#707070' },
   random: { name: 'Random', color: '#FF6B6B' },
   step: { name: 'Step', color: '#4ECDC4' },
   envelope: { name: 'Envelope', color: '#AA55FF' },

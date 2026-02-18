@@ -82,14 +82,14 @@ export function SequencerTransport({
       style={{
         padding: '0 var(--panel-padding)',
         gap: 'var(--gap-sm)',
-        height: 28,
+        height: 64,
         borderBottom: '1px solid var(--border)',
       }}
     >
       {/* Play/Stop */}
       <button
         onClick={isPlaying ? onStop : onPlay}
-        className="w-5 h-5 flex items-center justify-center rounded-sm transition-all"
+        className="w-7 h-7 flex items-center justify-center rounded-sm transition-all"
         style={{
           backgroundColor: isPlaying ? 'var(--seq-accent)' : 'var(--bg-elevated)',
           border: `1px solid ${isPlaying ? 'var(--seq-accent)' : 'var(--border)'}`,
@@ -97,15 +97,15 @@ export function SequencerTransport({
         }}
       >
         {isPlaying ? (
-          <StopIcon size={8} color="var(--bg-primary)" />
+          <StopIcon size={10} color="var(--bg-primary)" />
         ) : (
-          <PlayIcon size={8} color="var(--text-muted)" />
+          <PlayIcon size={10} color="var(--text-muted)" />
         )}
       </button>
 
       {/* BPM */}
       <div
-        className="text-[10px] cursor-ns-resize select-none"
+        className="text-[13px] cursor-ns-resize select-none"
         style={{ color: 'var(--text-secondary)' }}
         onMouseDown={handleBpmDrag}
       >
@@ -116,12 +116,12 @@ export function SequencerTransport({
       </div>
 
       {/* Divider */}
-      <div className="w-px h-3" style={{ backgroundColor: 'var(--border)' }} />
+      <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
 
       {/* Resolution */}
       <button
         onClick={handleResolutionCycle}
-        className="text-[9px] font-bold px-1.5 py-0.5 rounded-sm"
+        className="text-[12px] font-bold px-2 py-0.5 rounded-sm"
         style={{
           color: 'var(--text-secondary)',
           backgroundColor: 'var(--bg-elevated)',
@@ -133,7 +133,7 @@ export function SequencerTransport({
 
       {/* Swing */}
       <div
-        className="text-[9px] cursor-ns-resize select-none"
+        className="text-[12px] cursor-ns-resize select-none"
         style={{ color: 'var(--text-muted)' }}
         onMouseDown={handleSwingDrag}
       >
@@ -142,11 +142,11 @@ export function SequencerTransport({
       </div>
 
       {/* Divider */}
-      <div className="w-px h-3" style={{ backgroundColor: 'var(--border)' }} />
+      <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
 
       {/* Step position */}
       <span
-        className="text-[9px] tabular-nums"
+        className="text-[12px] tabular-nums"
         style={{ color: 'var(--text-ghost)' }}
       >
         {(currentStep % 8) + 1}/8
@@ -167,7 +167,7 @@ export function SequencerTransport({
             <button
               key={page}
               onClick={() => onPageChange(page)}
-              className="w-2 h-2 rounded-full transition-all"
+              className="w-2.5 h-2.5 rounded-full transition-all"
               style={{
                 backgroundColor: isActive
                   ? 'var(--text-primary)'

@@ -211,7 +211,7 @@ export function UnifiedSequencerPanel() {
       />
 
       {/* ─── Zone 5: Track list ──────────────────────────────────────── */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
         {activeTrackIds.length === 0 ? (
           <div
             className="flex items-center justify-center h-full text-[10px] uppercase tracking-wider"
@@ -234,6 +234,7 @@ export function UnifiedSequencerPanel() {
                 color={def?.color ?? 'var(--text-muted)'}
                 label={def?.label ?? effectId}
                 isSelectedTrack={isSelectedTrack}
+                onSelectTrack={handleEffectTabSelect}
               />
             )
           })

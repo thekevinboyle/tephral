@@ -79,6 +79,10 @@ interface EffectSequencerState {
   clearAllStepLocks: (effectId: string, stepIndex: number) => void
   setStepProbability: (effectId: string, stepIndex: number, prob: number) => void
 
+  // Utilities
+  randomizeTrack: (effectId: string, density?: number) => void
+  randomizeLocks: (effectId: string, params: { id: string; min: number; max: number; step: number }[]) => void
+
   // Playback engine
   advanceStep: () => void
   resetPlayhead: () => void
@@ -308,6 +312,42 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
         probability: Math.max(0, Math.min(1, prob)),
       })),
     }))
+  },
+
+  // ─── Utilities ────────────────────────────────────────────────────────
+
+  randomizeTrack: (effectId, density = 0.4) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      const newSteps = track.steps.map((step, i) => ({
+        ...step,
+        active: i < track.length ? Math.random() < density : step.active,
+      }))
+      return { tracks: { ...state.tracks, [effectId]: { ...track, steps: newSteps } } }
+    })
+  },
+
+  randomizeLocks: (effectId, params) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track || params.length === 0) return state
+      // Pick a random subset of parameters (1 to half, at least 1)
+      const count = Math.max(1, Math.floor(Math.random() * Math.ceil(params.length / 2)) + 1)
+      const shuffled = [...params].sort(() => Math.random() - 0.5)
+      const chosen = shuffled.slice(0, count)
+      const newSteps = track.steps.map((step, i) => {
+        if (i >= track.length || !step.active) return step
+        const locks = { ...step.locks }
+        for (const p of chosen) {
+          const range = p.max - p.min
+          const raw = p.min + Math.random() * range
+          locks[p.id] = Math.round(raw / p.step) * p.step
+        }
+        return { ...step, locks }
+      })
+      return { tracks: { ...state.tracks, [effectId]: { ...track, steps: newSteps } } }
+    })
   },
 
   // ─── Playback Engine ───────────────────────────────────────────────────

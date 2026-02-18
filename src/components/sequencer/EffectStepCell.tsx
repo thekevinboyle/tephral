@@ -20,6 +20,8 @@ interface EffectStepCellProps {
   lockValue: number | undefined
   onSetLock: (stepIndex: number, value: number) => void
   onActivateStep: (stepIndex: number) => void
+  // Generic lock fill (0-1) when no specific automation param is targeted
+  genericLockFill?: number
 }
 
 export const EffectStepCell = memo(function EffectStepCell({
@@ -37,6 +39,7 @@ export const EffectStepCell = memo(function EffectStepCell({
   lockValue,
   onSetLock,
   onActivateStep,
+  genericLockFill,
 }: EffectStepCellProps) {
   const hasLocks = Object.keys(step.locks).length > 0
   const hasProbability = step.probability < 1
@@ -97,6 +100,12 @@ export const EffectStepCell = memo(function EffectStepCell({
     ? (lockValue - automationMin) / (automationMax - automationMin || 1)
     : 0
 
+  // Show fill: either specific automation lock or generic lock fill
+  const showLockBar = (lockValue != null && automationParamId != null) || (genericLockFill != null && genericLockFill > 0)
+  const lockBarHeight = lockValue != null && automationParamId != null
+    ? lockNormalized
+    : (genericLockFill ?? 0)
+
   return (
     <div
       onMouseDown={(e) => {
@@ -133,12 +142,12 @@ export const EffectStepCell = memo(function EffectStepCell({
       title={`Step ${stepIndex + 1}${hasLocks ? ` (${Object.keys(step.locks).length} lock${Object.keys(step.locks).length > 1 ? 's' : ''})` : ''}${lockValue != null ? ` [${automationParamId}: ${lockValue.toFixed(2)}]` : ''}`}
     >
       {/* Lock value bar — proportional fill above trig bar */}
-      {lockValue != null && automationParamId != null && (
+      {showLockBar && (
         <div
           className="absolute left-0 right-0"
           style={{
             bottom: step.active ? 10 : 3,
-            height: `${Math.max(2, lockNormalized * 36)}px`,
+            height: `${Math.max(2, lockBarHeight * 36)}px`,
             margin: '0 3px',
             borderRadius: 1,
             backgroundColor: `${PLOCK}60`,

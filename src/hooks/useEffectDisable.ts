@@ -27,6 +27,9 @@ export function useEffectDisable() {
   const destruction = useDestructionStore()
 
   const disableEffect = useCallback((effectId: string) => {
+    // Clear bypass state so re-enabling starts fresh
+    glitch.setEffectBypassed(effectId, false)
+
     switch (effectId) {
       // Glitch effects
       case 'rgb_split': glitch.setRGBSplitEnabled(false); break

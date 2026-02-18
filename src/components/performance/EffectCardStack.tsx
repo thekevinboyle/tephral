@@ -120,10 +120,10 @@ export function EffectCardStack() {
               {/* Bypass */}
               <button
                 onClick={() => toggleEffectBypassed(validSelectedId)}
-                className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full"
+                className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-sm hover:bg-white/10 transition-all"
                 style={{
                   opacity: isBypassed ? 0.8 : 0.4,
-                  transition: 'opacity 150ms',
+                  border: '1px solid var(--border)',
                 }}
                 title={isBypassed ? 'Enable effect' : 'Bypass effect'}
               >
@@ -135,12 +135,12 @@ export function EffectCardStack() {
               {/* Remove */}
               <button
                 onClick={() => disableEffect(validSelectedId)}
-                className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full opacity-30 hover:opacity-100 transition-opacity"
+                className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-sm opacity-50 hover:opacity-100 hover:bg-white/10 transition-all"
+                style={{ border: '1px solid var(--border)' }}
                 title="Remove effect"
               >
-                <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                  <line x1="4" y1="4" x2="10" y2="10" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />
-                  <line x1="10" y1="4" x2="4" y2="10" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 2l8 8M10 2l-8 8" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </button>
             </div>

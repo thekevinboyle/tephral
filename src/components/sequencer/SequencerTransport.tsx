@@ -1,7 +1,69 @@
 import { useCallback } from 'react'
 import { PlayIcon, StopIcon } from '../ui/DotMatrixIcons'
+import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
+import { useUIStore } from '../../stores/uiStore'
+import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 
 const RESOLUTION_OPTIONS = ['1/4', '1/8', '1/16', '1/32'] as const
+
+function RandomizeButton() {
+  const selectedEffectId = useUIStore((s) => s.selectedEffectId)
+  const randomizeTrack = useEffectSequencerStore((s) => s.randomizeTrack)
+
+  const handleClick = useCallback(() => {
+    if (selectedEffectId) randomizeTrack(selectedEffectId)
+  }, [selectedEffectId, randomizeTrack])
+
+  return (
+    <button
+      onClick={handleClick}
+      className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm"
+      style={{
+        color: selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)',
+        backgroundColor: 'var(--bg-elevated)',
+        border: '1px solid var(--border)',
+        opacity: selectedEffectId ? 1 : 0.5,
+      }}
+      title="Randomize steps on selected track"
+    >
+      RND
+    </button>
+  )
+}
+
+function RandomizeLocksButton() {
+  const selectedEffectId = useUIStore((s) => s.selectedEffectId)
+  const randomizeLocks = useEffectSequencerStore((s) => s.randomizeLocks)
+
+  const handleClick = useCallback(() => {
+    if (!selectedEffectId) return
+    const entry = EFFECT_PARAM_REGISTRY[selectedEffectId]
+    if (!entry) return
+    const params = entry.getParams().map((p) => ({
+      id: p.id,
+      min: p.min,
+      max: p.max,
+      step: p.step,
+    }))
+    randomizeLocks(selectedEffectId, params)
+  }, [selectedEffectId, randomizeLocks])
+
+  return (
+    <button
+      onClick={handleClick}
+      className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm"
+      style={{
+        color: selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)',
+        backgroundColor: 'var(--bg-elevated)',
+        border: '1px solid var(--border)',
+        opacity: selectedEffectId ? 1 : 0.5,
+      }}
+      title="Randomize p-locks on selected track"
+    >
+      P-RND
+    </button>
+  )
+}
 
 interface SequencerTransportProps {
   isPlaying: boolean
@@ -151,6 +213,13 @@ export function SequencerTransport({
       >
         {(currentStep % 8) + 1}/8
       </span>
+
+      {/* Divider */}
+      <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
+
+      {/* Randomize */}
+      <RandomizeButton />
+      <RandomizeLocksButton />
 
       {/* Spacer */}
       <div className="flex-1" />

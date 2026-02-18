@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useEffectDisable } from '../../hooks/useEffectDisable'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import {
   EFFECTS,
   STRAND_EFFECTS,
@@ -90,13 +91,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
   }, [])
 
   const { toggleEffectBypassed, effectBypassed } = useGlitchEngineStore()
-
-  const handleDoubleClick = useCallback(
-    (effectId: string) => {
-      toggleEffectBypassed(effectId)
-    },
-    [toggleEffectBypassed],
-  )
+  const removeTrack = useEffectSequencerStore((s) => s.removeTrack)
 
   if (activeEffectIds.length === 0) {
     return (
@@ -141,8 +136,18 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(effectId, e)}
             onDragEnd={handleDragEnd}
-            onClick={() => onSelect(effectId)}
-            onDoubleClick={() => handleDoubleClick(effectId)}
+            onClick={(e) => {
+              if (e.shiftKey) {
+                e.stopPropagation()
+                toggleEffectBypassed(effectId)
+              } else {
+                onSelect(effectId)
+              }
+            }}
+            onDoubleClick={() => {
+              disableEffect(effectId)
+              removeTrack(effectId)
+            }}
             className="flex-shrink-0 flex items-center gap-1.5 px-3 transition-colors relative cursor-grab active:cursor-grabbing"
             style={{
               minWidth: 100,
@@ -154,19 +159,14 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
               borderRight: isDragTarget && dragSide === 'right' ? '2px solid var(--seq-accent)' : '1px solid var(--border)',
             }}
           >
-            {/* LED — click to bypass */}
+            {/* LED */}
             <span
-              onClick={(e) => {
-                e.stopPropagation()
-                disableEffect(effectId)
-              }}
-              className="w-1.5 h-1.5 rounded-full flex-shrink-0 cursor-pointer hover:scale-150 transition-transform"
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{
                 backgroundColor: isBypassed ? 'var(--text-ghost)' : color,
                 opacity: isBypassed ? 0.3 : isSelected ? 1 : 0.4,
                 boxShadow: isBypassed ? 'none' : isSelected ? `0 0 4px ${color}` : 'none',
               }}
-              title="Bypass effect"
             />
             <span className="text-[12px] font-bold uppercase tracking-wider whitespace-nowrap">
               {label}

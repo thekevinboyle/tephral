@@ -18,6 +18,7 @@ import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS, DESTRUCTION_EFFECTS } from '../../config/effects'
 import { SliderRow, ToggleRow, SelectRow, ColorRow, SegmentedRow, StepperRow } from './controls'
 import { ModulationContextMenu } from './controls/ModulationContextMenu'
+import { useEffectDisable } from '../../hooks/useEffectDisable'
 import { classifyParam } from '../../utils/classifyParam'
 import type { LockableParam } from '../../config/effectParams'
 import { TEXTURE_LIBRARY, type TextureId } from '../overlays/TextureOverlay'
@@ -258,26 +259,7 @@ export function ExpandedParameterPanel() {
       <PresetDropdownBar />
 
       {/* Header */}
-      <div
-        className="flex items-center border-b"
-        style={{
-          borderColor: 'var(--border)',
-          backgroundColor: 'var(--bg-surface)',
-          padding: 'var(--panel-padding-sm) var(--panel-padding)',
-          gap: 'var(--gap-sm)',
-        }}
-      >
-        <div
-          className="w-2 h-2 rounded-full"
-          style={{
-            backgroundColor: effect.color,
-            boxShadow: `0 0 6px ${effect.color}`,
-          }}
-        />
-        <span className="text-[14px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-primary)' }}>
-          {effect.label}
-        </span>
-      </div>
+      <EffectHeader effectId={effectId} label={effect.label} color={effect.color} />
 
       {/* Parameters - scrollable */}
       <div
@@ -288,6 +270,43 @@ export function ExpandedParameterPanel() {
         <TextureOverlaySection />
         <DataOverlaySection />
       </div>
+    </div>
+  )
+}
+
+function EffectHeader({ effectId, label, color }: { effectId: string; label: string; color: string }) {
+  const { disableEffect } = useEffectDisable()
+
+  return (
+    <div
+      className="flex items-center border-b"
+      style={{
+        borderColor: 'var(--border)',
+        backgroundColor: 'var(--bg-surface)',
+        padding: 'var(--panel-padding-sm) var(--panel-padding)',
+        gap: 'var(--gap-sm)',
+      }}
+    >
+      <div
+        className="w-2 h-2 rounded-full flex-shrink-0"
+        style={{
+          backgroundColor: color,
+          boxShadow: `0 0 6px ${color}`,
+        }}
+      />
+      <span className="text-[14px] font-semibold uppercase tracking-wide flex-1" style={{ color: 'var(--text-primary)' }}>
+        {label}
+      </span>
+      <button
+        onClick={() => disableEffect(effectId)}
+        className="w-6 h-6 flex items-center justify-center rounded-sm hover:bg-white/10 transition-colors"
+        style={{ color: 'var(--text-muted)' }}
+        title="Disable effect"
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12">
+          <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </button>
     </div>
   )
 }

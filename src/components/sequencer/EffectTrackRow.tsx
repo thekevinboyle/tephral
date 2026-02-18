@@ -1,6 +1,7 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useMemo } from 'react'
 import { useEffectSequencerStore, type EffectTrack } from '../../stores/effectSequencerStore'
 import { EffectStepCell } from './EffectStepCell'
+import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 
 const SEQ = '#9580FF'
 
@@ -13,6 +14,7 @@ interface EffectTrackRowProps {
   color: string
   label: string
   isSelectedTrack?: boolean
+  onSelectTrack?: (effectId: string) => void
 }
 
 export function EffectTrackRow({
@@ -24,6 +26,7 @@ export function EffectTrackRow({
   color,
   label,
   isSelectedTrack,
+  onSelectTrack,
 }: EffectTrackRowProps) {
   const {
     setTrackMode,
@@ -49,6 +52,17 @@ export function EffectTrackRow({
   const automationMin = automationTargetsThis ? automationParam!.min : 0
   const automationMax = automationTargetsThis ? automationParam!.max : 1
   const automationStep = automationTargetsThis ? automationParam!.step : 0.01
+
+  // Build param range map for generic lock fill normalization
+  const paramRanges = useMemo(() => {
+    const entry = EFFECT_PARAM_REGISTRY[effectId]
+    if (!entry) return null
+    const map = new Map<string, { min: number; max: number }>()
+    for (const p of entry.getParams()) {
+      map.set(p.id, { min: p.min, max: p.max })
+    }
+    return map
+  }, [effectId])
 
   const handleCellMouseDown = useCallback(
     (stepIndex: number, e: React.MouseEvent) => {
@@ -122,37 +136,41 @@ export function EffectTrackRow({
     <div
       className="flex"
       style={{
-        borderBottom: '1px solid var(--border)',
-        borderLeft: isSelectedTrack ? `3px solid ${color}` : '3px solid transparent',
+        borderBottom: isSelectedTrack ? '2px solid var(--border)' : '1px solid transparent',
+        borderTop: isSelectedTrack ? '2px solid var(--border)' : '1px solid transparent',
+        borderLeft: isSelectedTrack ? '3px solid var(--border)' : '3px solid transparent',
+        borderRight: isSelectedTrack ? '2px solid var(--border)' : '1px solid transparent',
         opacity: track.muted ? 0.4 : hasAnyActiveSteps ? 1 : 0.55,
         transition: 'opacity 0.15s, border-color 0.1s',
       }}
     >
       {/* Track header */}
       <div
-        className="flex-shrink-0 flex flex-col justify-center gap-1"
+        className="flex-shrink-0 flex flex-col justify-center gap-1 cursor-pointer"
         style={{
-          width: 100,
-          padding: '4px 8px',
-          borderRight: '1px solid var(--border)',
+          width: 130,
+          padding: '4px 10px',
+          borderRight: '2px solid var(--border)',
+          backgroundColor: 'var(--bg-primary)',
         }}
+        onClick={() => onSelectTrack?.(effectId)}
       >
         {/* Effect label */}
         <span
-          className="text-[9px] font-bold uppercase tracking-wider truncate"
-          style={{ color }}
+          className="text-[11px] font-bold uppercase tracking-wider truncate"
+          style={{ color: 'var(--text-secondary)' }}
         >
           {label}
         </span>
 
         {/* Controls row: Mode, Mute, Solo */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {/* Mode toggle */}
           <button
             onClick={() =>
               setTrackMode(effectId, track.mode === 'gate' ? 'param' : 'gate')
             }
-            className="text-[9px] font-bold px-1 rounded-sm"
+            className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm"
             style={{
               backgroundColor: `${SEQ}20`,
               color: SEQ,
@@ -170,12 +188,12 @@ export function EffectTrackRow({
           {/* Mute */}
           <button
             onClick={() => setTrackMuted(effectId, !track.muted)}
-            className="text-[9px] font-bold px-1 rounded-sm"
+            className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm"
             style={{
               backgroundColor: track.muted
                 ? 'rgba(255, 100, 100, 0.2)'
                 : 'transparent',
-              color: track.muted ? '#ff6666' : 'var(--text-ghost)',
+              color: track.muted ? '#ff6666' : 'var(--border)',
               border: '1px solid var(--border)',
             }}
             title="Mute track"
@@ -186,12 +204,12 @@ export function EffectTrackRow({
           {/* Solo */}
           <button
             onClick={() => setTrackSoloed(effectId, !track.soloed)}
-            className="text-[9px] font-bold px-1 rounded-sm"
+            className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm"
             style={{
               backgroundColor: track.soloed
                 ? `${SEQ}30`
                 : 'transparent',
-              color: track.soloed ? SEQ : 'var(--text-ghost)',
+              color: track.soloed ? SEQ : 'var(--border)',
               border: '1px solid var(--border)',
             }}
             title="Solo track"
@@ -222,6 +240,21 @@ export function EffectTrackRow({
             ? step.locks[automationParamId] as number | undefined
             : undefined
 
+          // Compute generic lock fill when no automation param is targeted
+          let genericLockFill: number | undefined
+          if (automationParamId == null && paramRanges && Object.keys(step.locks).length > 0) {
+            let sum = 0
+            let count = 0
+            for (const [paramId, val] of Object.entries(step.locks)) {
+              const range = paramRanges.get(paramId)
+              if (range && typeof val === 'number') {
+                sum += (val - range.min) / (range.max - range.min || 1)
+                count++
+              }
+            }
+            if (count > 0) genericLockFill = sum / count
+          }
+
           return (
             <EffectStepCell
               key={actualIndex}
@@ -237,6 +270,7 @@ export function EffectTrackRow({
               automationMax={automationMax}
               automationStep={automationStep}
               lockValue={lockValue}
+              genericLockFill={genericLockFill}
               onSetLock={handleSetLock}
               onActivateStep={handleActivateStep}
             />

@@ -8,7 +8,7 @@ const SEQUENCER_ICONS = {
   slicer: '⊗',   // Slice/cut - crosshair circle
 } as const
 
-export function SequencerContainer() {
+export function SequencerContainer({ hideTabsBar = false }: { hideTabsBar?: boolean } = {}) {
   const { activeSequencer, setActiveSequencer } = useSequencerContainerStore()
 
   return (
@@ -63,7 +63,7 @@ export function SequencerContainer() {
 
       {/* Content */}
       <div className="flex-1 min-h-0 min-w-0">
-        {activeSequencer === 'effects' && <UnifiedSequencerPanel />}
+        {activeSequencer === 'effects' && <UnifiedSequencerPanel hideTabsBar={hideTabsBar} />}
         {activeSequencer === 'slicer' && <SlicerPanel />}
       </div>
     </div>

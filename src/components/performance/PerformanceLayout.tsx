@@ -10,6 +10,7 @@ import { TransportBar } from './TransportBar'
 import { MiddleSection } from './MiddleSection'
 import { ModulationLines } from './ModulationLines'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
+import { SharedEffectTabsBar } from '../sequencer/SharedEffectTabsBar'
 // DataTerminal stashed — component file kept, just not rendered
 // import { DataTerminal } from '../terminal/DataTerminal'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
@@ -69,7 +70,7 @@ export function PerformanceLayout() {
       className="w-screen h-screen overflow-hidden grid-substrate"
       style={{
         display: 'grid',
-        gridTemplateRows: 'var(--row-header) 1fr 1fr',
+        gridTemplateRows: 'var(--row-header) 1fr auto 1fr',
         gridTemplateColumns: 'var(--col-left) 1fr',
         gap: 'var(--gap)',
         padding: 'var(--gap)',
@@ -87,16 +88,27 @@ export function PerformanceLayout() {
         <HeaderBar />
       </div>
 
-      {/* Rows 2-3, Col 1: Effect Card Stack + Parameters (full height) */}
+      {/* Rows 2-4, Col 1: Effect Card Stack + Crossfader */}
       <div
-        className="rounded-sm overflow-hidden panel-gradient-subtle"
+        className="flex flex-col rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
-          gridRow: '2 / 4',
+          gridRow: '2 / 5',
           gridColumn: 1,
           border: '1px solid var(--border)',
         }}
       >
-        <EffectCardStack />
+        <div className="flex-1 min-h-0">
+          <EffectCardStack />
+        </div>
+        <div
+          className="flex-shrink-0"
+          style={{
+            borderTop: '1px solid var(--border)',
+            minHeight: 'var(--row-middle)',
+          }}
+        >
+          <MiddleSection />
+        </div>
       </div>
 
       {/* Row 2, Col 2: Canvas + Transport */}
@@ -115,16 +127,28 @@ export function PerformanceLayout() {
         <TransportBar />
       </div>
 
-      {/* Row 3, Col 2: Grid + Crossfader + Sequencer */}
+      {/* Row 3, Col 2: Effect Tabs Bar */}
+      <div
+        className="rounded-sm overflow-hidden"
+        style={{
+          gridRow: 3,
+          gridColumn: 2,
+          border: '1px solid var(--border)',
+        }}
+      >
+        <SharedEffectTabsBar />
+      </div>
+
+      {/* Row 4, Col 2: Grid + Sequencer */}
       <div
         className="flex rounded-sm overflow-hidden"
         style={{
-          gridRow: 3,
+          gridRow: 4,
           gridColumn: 2,
           gap: 'var(--gap)',
         }}
       >
-        {/* Left: Bank + Grid + Crossfader */}
+        {/* Left: Bank + Grid */}
         <div
           className="flex flex-col rounded-sm overflow-hidden panel-gradient"
           style={{
@@ -145,23 +169,14 @@ export function PerformanceLayout() {
           <div className="flex-1 min-h-0">
             <PerformanceGrid />
           </div>
-          <div
-            className="flex-shrink-0"
-            style={{
-              minHeight: 'var(--row-middle)',
-              borderTop: '1px solid var(--border)',
-            }}
-          >
-            <MiddleSection />
-          </div>
         </div>
 
-        {/* Right: Sequencer */}
+        {/* Right: Sequencer (tabs hidden, shown above) */}
         <div
           className="flex-1 min-w-0 rounded-sm overflow-hidden panel-gradient-subtle"
           style={{ border: '1px solid var(--border)' }}
         >
-          <SequencerContainer />
+          <SequencerContainer hideTabsBar />
         </div>
       </div>
 

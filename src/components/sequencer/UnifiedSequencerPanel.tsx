@@ -25,7 +25,7 @@ const ALL_EFFECTS: EffectDefinition[] = [
 ]
 const EFFECT_MAP = new Map(ALL_EFFECTS.map((e) => [e.id, e]))
 
-export function UnifiedSequencerPanel() {
+export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: boolean } = {}) {
   // Local state for param view switching
   const [paramView, setParamView] = useState<ParamView>('effect')
 
@@ -172,11 +172,13 @@ export function UnifiedSequencerPanel() {
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--bg-surface)' }}>
       {/* ─── Zone 1: Effect tabs ─────────────────────────────────────── */}
-      <EffectTabsBar
-        activeEffectIds={activeEffectIds}
-        selectedEffectId={selectedEffectId}
-        onSelect={handleEffectTabSelect}
-      />
+      {!hideTabsBar && (
+        <EffectTabsBar
+          activeEffectIds={activeEffectIds}
+          selectedEffectId={selectedEffectId}
+          onSelect={handleEffectTabSelect}
+        />
+      )}
 
       {/* ─── Zone 2: Modulation content ────────────────────────────── */}
       {paramView !== 'effect' && (

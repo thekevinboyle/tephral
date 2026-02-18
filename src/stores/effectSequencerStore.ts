@@ -23,6 +23,16 @@ export interface EffectTrack {
   soloed: boolean
 }
 
+export interface AutomationParam {
+  effectId: string
+  paramId: string      // short name: "amount"
+  fullParamId: string  // full: "rgb_split.amount"
+  label: string
+  min: number
+  max: number
+  step: number
+}
+
 interface EffectSequencerState {
   // State
   tracks: Record<string, EffectTrack>
@@ -35,6 +45,11 @@ interface EffectSequencerState {
   selectedSteps: { effectId: string; stepIndex: number }[]
   swing: number
   fillModeActive: boolean
+  automationParam: AutomationParam | null
+
+  // Automation
+  setAutomationParam: (param: AutomationParam) => void
+  clearAutomationParam: () => void
 
   // Transport
   play: () => void
@@ -119,6 +134,7 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
   selectedSteps: [],
   swing: 0,
   fillModeActive: false,
+  automationParam: null,
 
   // ─── Transport ─────────────────────────────────────────────────────────
 
@@ -135,6 +151,12 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
   setStepPage: (page) => set({ stepPage: Math.max(0, Math.min(3, page)) }),
 
   setFillModeActive: (active) => set({ fillModeActive: active }),
+
+  // ─── Automation Target ──────────────────────────────────────────────────
+
+  setAutomationParam: (param) => set({ automationParam: param }),
+
+  clearAutomationParam: () => set({ automationParam: null }),
 
   // ─── Track Management ──────────────────────────────────────────────────
 

@@ -21,6 +21,7 @@ export interface LockableParam {
   min: number
   max: number
   step: number
+  controlType?: 'slider' | 'knob' | 'stepper' | 'toggle'
   apply: (value: number) => void
   read: () => number
 }
@@ -1002,6 +1003,8 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
         apply: (v) => mot().updateMotionExtract({ frameCount: v }), read: () => mot().motionExtract.frameCount },
       { id: 'originalMix', label: 'OMIX', min: 0, max: 1, step: 0.01,
         apply: (v) => mot().updateMotionExtract({ originalMix: v }), read: () => mot().motionExtract.originalMix },
+      { id: 'showOriginal', label: 'SHOW', min: 0, max: 1, step: 1,
+        apply: (v) => mot().updateMotionExtract({ showOriginal: v >= 0.5 }), read: () => mot().motionExtract.showOriginal ? 1 : 0 },
     ],
     setEnabled: (v) => mot().setMotionExtractEnabled(v),
     getEnabled: () => mot().motionExtractEnabled,
@@ -1016,6 +1019,8 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
         apply: (v) => mot().updateEchoTrail({ offset: v }), read: () => mot().echoTrail.offset },
       { id: 'hueAmount', label: 'HUE', min: 0, max: 360, step: 1,
         apply: (v) => mot().updateEchoTrail({ hueAmount: v }), read: () => mot().echoTrail.hueAmount },
+      { id: 'colorShift', label: 'CSHIFT', min: 0, max: 1, step: 1,
+        apply: (v) => mot().updateEchoTrail({ colorShift: v >= 0.5 }), read: () => mot().echoTrail.colorShift ? 1 : 0 },
     ],
     setEnabled: (v) => mot().setEchoTrailEnabled(v),
     getEnabled: () => mot().echoTrailEnabled,
@@ -1026,6 +1031,8 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
         apply: (v) => mot().updateTimeSmear({ accumulation: v }), read: () => mot().timeSmear.accumulation },
       { id: 'threshold', label: 'THRSH', min: 0, max: 0.5, step: 0.01,
         apply: (v) => mot().updateTimeSmear({ threshold: v }), read: () => mot().timeSmear.threshold },
+      { id: 'motionOnly', label: 'MOT ONLY', min: 0, max: 1, step: 1,
+        apply: (v) => mot().updateTimeSmear({ motionOnly: v >= 0.5 }), read: () => mot().timeSmear.motionOnly ? 1 : 0 },
     ],
     getSelectParams: () => [
       { id: 'direction', label: 'DIR', type: 'select' as const,
@@ -1041,6 +1048,10 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
         apply: (v) => mot().updateFreezeMask({ freezeThreshold: v }), read: () => mot().freezeMask.freezeThreshold },
       { id: 'updateSpeed', label: 'SPD', min: 0, max: 0.1, step: 0.001,
         apply: (v) => mot().updateFreezeMask({ updateSpeed: v }), read: () => mot().freezeMask.updateSpeed },
+      { id: 'showFreeze', label: 'SHOW', min: 0, max: 1, step: 1,
+        apply: (v) => mot().updateFreezeMask({ showFreeze: v >= 0.5 }), read: () => mot().freezeMask.showFreeze ? 1 : 0 },
+      { id: 'invertMask', label: 'INVERT', min: 0, max: 1, step: 1,
+        apply: (v) => mot().updateFreezeMask({ invertMask: v >= 0.5 }), read: () => mot().freezeMask.invertMask ? 1 : 0 },
     ],
     setEnabled: (v) => mot().setFreezeMaskEnabled(v),
     getEnabled: () => mot().freezeMaskEnabled,

@@ -20,12 +20,15 @@ export function useEffectSequencerPlayback() {
 
   const lastStepTime = useRef(0)
   const animationFrameId = useRef<number | null>(null)
-  // Base values snapshot: { effectId: { paramId: value } }
-  const baseValues = useRef<Record<string, Record<string, number | string>>>({})
   // Track which effects were enabled before playback (for gate mode restore)
   const prePlayEnabled = useRef<Record<string, boolean>>({})
   // Base mix values snapshot for gate mode (gate uses mix=0 instead of setEnabled)
   const baseMix = useRef<Record<string, number>>({})
+  // Pre-lock values: captured right before a lock is applied, used to restore when lock goes away
+  // { effectId: { paramId: value } }
+  const preLockValues = useRef<Record<string, Record<string, number | string>>>({})
+  // Track which param ids were locked on the previous step (per effect)
+  const prevLockedParams = useRef<Record<string, Set<string>>>({})
 
   // ─── Timing ────────────────────────────────────────────────────────────
 
@@ -37,7 +40,6 @@ export function useEffectSequencerPlayback() {
   // ─── Base value capture ────────────────────────────────────────────────
 
   const captureBaseValues = useCallback(() => {
-    const snapshot: Record<string, Record<string, number | string>> = {}
     const enabledSnapshot: Record<string, boolean> = {}
     const mixSnapshot: Record<string, number> = {}
     const currentTracks = useEffectSequencerStore.getState().tracks
@@ -48,21 +50,12 @@ export function useEffectSequencerPlayback() {
       if (!entry) continue
       enabledSnapshot[effectId] = entry.getEnabled()
       mixSnapshot[effectId] = ge.getEffectMix(effectId)
-      snapshot[effectId] = {}
-      for (const param of entry.getParams()) {
-        snapshot[effectId][param.id] = param.read()
-      }
-      // Capture select param base values
-      if (entry.getSelectParams) {
-        for (const param of entry.getSelectParams()) {
-          snapshot[effectId][param.id] = param.read()
-        }
-      }
     }
 
-    baseValues.current = snapshot
     prePlayEnabled.current = enabledSnapshot
     baseMix.current = mixSnapshot
+    preLockValues.current = {}
+    prevLockedParams.current = {}
   }, [])
 
   const restoreBaseValues = useCallback(() => {
@@ -78,23 +71,25 @@ export function useEffectSequencerPlayback() {
         ge.setEffectMix(effectId, baseMix.current[effectId])
       }
 
-      // Restore parameter values
-      const base = baseValues.current[effectId]
-      if (!base) continue
+      // Restore any params that were locked back to their pre-lock values
+      const saved = preLockValues.current[effectId]
+      if (!saved) continue
       for (const param of entry.getParams()) {
-        if (param.id in base) {
-          param.apply(base[param.id] as number)
+        if (param.id in saved) {
+          param.apply(saved[param.id] as number)
         }
       }
-      // Restore select param values
       if (entry.getSelectParams) {
         for (const param of entry.getSelectParams()) {
-          if (param.id in base) {
-            param.apply(base[param.id] as string)
+          if (param.id in saved) {
+            param.apply(saved[param.id] as string)
           }
         }
       }
     }
+
+    preLockValues.current = {}
+    prevLockedParams.current = {}
   }, [])
 
   // ─── Step execution ────────────────────────────────────────────────────
@@ -117,20 +112,11 @@ export function useEffectSequencerPlayback() {
       const entry = EFFECT_PARAM_REGISTRY[effectId]
       if (!entry) continue
 
-      // Dynamically capture base values for newly added effects during playback
+      // Dynamically capture enabled/mix for newly added effects during playback
       if (!(effectId in prePlayEnabled.current)) {
         const ge = useGlitchEngineStore.getState()
         prePlayEnabled.current[effectId] = entry.getEnabled()
         baseMix.current[effectId] = ge.getEffectMix(effectId)
-        baseValues.current[effectId] = {}
-        for (const param of entry.getParams()) {
-          baseValues.current[effectId][param.id] = param.read()
-        }
-        if (entry.getSelectParams) {
-          for (const param of entry.getSelectParams()) {
-            baseValues.current[effectId][param.id] = param.read()
-          }
-        }
       }
 
       if (!prePlayEnabled.current[effectId]) continue
@@ -151,58 +137,61 @@ export function useEffectSequencerPlayback() {
       // Probability check
       const shouldFire = step.active && Math.random() < step.probability
 
-      const base = baseValues.current[effectId]
       const origMix = baseMix.current[effectId] ?? 1
 
-      // Helper: for each param, apply lock value if it exists, else base (global)
-      const applyParamsForStep = () => {
-        for (const param of entry.getParams()) {
-          if (param.id in step.locks) {
-            param.apply(step.locks[param.id] as number)
-          } else if (base && param.id in base) {
-            param.apply(base[param.id] as number)
-          }
-        }
-        if (entry.getSelectParams) {
-          for (const param of entry.getSelectParams()) {
-            if (param.id in step.locks) {
-              param.apply(step.locks[param.id] as string)
-            } else if (base && param.id in base) {
-              param.apply(base[param.id] as string)
-            }
-          }
-        }
+      // Collect current step's locked param ids
+      const currentLockedIds = new Set(Object.keys(step.locks))
+      const prevLocked = prevLockedParams.current[effectId] ?? new Set<string>()
+
+      // Ensure preLockValues entry exists for this effect
+      if (!preLockValues.current[effectId]) {
+        preLockValues.current[effectId] = {}
+      }
+      const saved = preLockValues.current[effectId]
+
+      // Build a map of all params by id for quick lookup
+      const allParams = new Map<string, { apply: (v: any) => void; read: () => any }>()
+      for (const p of entry.getParams()) allParams.set(p.id, p)
+      if (entry.getSelectParams) {
+        for (const p of entry.getSelectParams()) allParams.set(p.id, p)
       }
 
-      const restoreAllToBase = () => {
-        if (!base) return
-        for (const param of entry.getParams()) {
-          if (param.id in base) param.apply(base[param.id] as number)
-        }
-        if (entry.getSelectParams) {
-          for (const param of entry.getSelectParams()) {
-            if (param.id in base) param.apply(base[param.id] as string)
+      if (shouldFire) {
+        // 1. Restore params that were locked last step but aren't locked now
+        for (const pid of prevLocked) {
+          if (!currentLockedIds.has(pid) && pid in saved) {
+            const param = allParams.get(pid)
+            if (param) param.apply(saved[pid])
+            delete saved[pid]
           }
         }
-      }
 
-      if (track.mode === 'gate') {
-        // Gate uses mix=0/1 instead of setEnabled — avoids full pipeline
-        // chain rebuild on every step, only changes a shader uniform
-        if (shouldFire) {
-          ge.setEffectMix(effectId, origMix)
-          applyParamsForStep()
-        } else {
-          ge.setEffectMix(effectId, 0)
-          restoreAllToBase()
+        // 2. For current locks: capture live value before applying if not already saved
+        for (const [pid, lockValue] of Object.entries(step.locks)) {
+          const param = allParams.get(pid)
+          if (!param) continue
+          if (!(pid in saved)) {
+            saved[pid] = param.read()
+          }
+          param.apply(lockValue)
         }
       } else {
-        // param mode: effect stays on, only params change
-        if (shouldFire) {
-          applyParamsForStep()
-        } else {
-          restoreAllToBase()
+        // Step not firing — restore all previously locked params
+        for (const pid of prevLocked) {
+          if (pid in saved) {
+            const param = allParams.get(pid)
+            if (param) param.apply(saved[pid])
+            delete saved[pid]
+          }
         }
+      }
+
+      // Update prev locked set for next step
+      prevLockedParams.current[effectId] = shouldFire ? currentLockedIds : new Set()
+
+      // Gate mode mix handling (independent of param locks)
+      if (track.mode === 'gate') {
+        ge.setEffectMix(effectId, shouldFire ? origMix : 0)
       }
     }
 

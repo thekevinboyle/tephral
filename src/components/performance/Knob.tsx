@@ -3,6 +3,7 @@ import { useSequencerStore } from '../../stores/sequencerStore'
 import { useModulationStore } from '../../stores/modulationStore'
 import { usePolyEuclidStore } from '../../stores/polyEuclidStore'
 import { useUIStore } from '../../stores/uiStore'
+import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 
 // Modulation source colors (same as SliderRow)
 const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
@@ -53,6 +54,12 @@ export function Knob({
 }: KnobProps) {
   const dragStartY = useRef<number | null>(null)
   const dragStartValue = useRef<number>(0)
+  const didDrag = useRef(false)
+
+  // Automation target state
+  const automationParam = useEffectSequencerStore((s) => s.automationParam)
+  const setAutomationParam = useEffectSequencerStore((s) => s.setAutomationParam)
+  const isAutomationTarget = paramId != null && automationParam?.fullParamId === paramId
 
   // Modulation routing state — only subscribe when paramId is provided
   const {
@@ -150,6 +157,7 @@ export function Knob({
       return
     }
 
+    didDrag.current = false
     dragStartY.current = e.clientY
     dragStartValue.current = value
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
@@ -158,6 +166,7 @@ export function Knob({
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (dragStartY.current === null) return
     const deltaY = dragStartY.current - e.clientY
+    if (Math.abs(deltaY) > 3) didDrag.current = true
     const range = max - min
     const sensitivity = range / 150
     let newValue = Math.min(max, Math.max(min, dragStartValue.current + deltaY * sensitivity))
@@ -171,8 +180,25 @@ export function Knob({
     try {
       ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
     } catch {}
+
+    // Click (not drag) → select as automation target
+    if (!didDrag.current && !isInAssignmentMode && paramId) {
+      const parts = paramId.split('.')
+      if (parts.length === 2) {
+        setAutomationParam({
+          effectId: parts[0],
+          paramId: parts[1],
+          fullParamId: paramId,
+          label: label,
+          min: min,
+          max: max,
+          step: step ?? 0.01,
+        })
+      }
+    }
+
     dragStartY.current = null
-  }, [])
+  }, [isInAssignmentMode, paramId, label, min, max, step, setAutomationParam])
 
   // Drop target handlers
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -294,11 +320,13 @@ export function Knob({
         style={{
           width: dimensions.outer,
           height: dimensions.outer,
-          outline: isInAssignmentMode && !hasRouting
-            ? `2px solid ${assigningColor}`
-            : isDropTarget
-              ? '2px solid var(--accent)'
-              : 'none',
+          outline: isAutomationTarget
+            ? '2px solid #FF4060'
+            : isInAssignmentMode && !hasRouting
+              ? `2px solid ${assigningColor}`
+              : isDropTarget
+                ? '2px solid var(--accent)'
+                : 'none',
           outlineOffset: 2,
           borderRadius: '50%',
         }}

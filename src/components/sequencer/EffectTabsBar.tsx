@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useEffectDisable } from '../../hooks/useEffectDisable'
+import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import {
   EFFECTS,
   STRAND_EFFECTS,
@@ -88,11 +89,13 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
     draggedId.current = null
   }, [])
 
+  const { toggleEffectBypassed, effectBypassed } = useGlitchEngineStore()
+
   const handleDoubleClick = useCallback(
     (effectId: string) => {
-      disableEffect(effectId)
+      toggleEffectBypassed(effectId)
     },
-    [disableEffect],
+    [toggleEffectBypassed],
   )
 
   if (activeEffectIds.length === 0) {
@@ -100,7 +103,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
       <div
         className="flex-shrink-0 flex items-center"
         style={{
-          height: 28,
+          height: 50,
           padding: '0 var(--panel-padding)',
           borderBottom: '1px solid var(--border)',
         }}
@@ -116,7 +119,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
     <div
       className="flex-shrink-0 flex items-stretch overflow-x-auto"
       style={{
-        height: 28,
+        height: 50,
         borderBottom: '1px solid var(--border)',
         scrollbarWidth: 'none',
       }}
@@ -126,6 +129,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
         const color = def?.color ?? 'var(--text-muted)'
         const label = def?.label ?? effectId
         const isSelected = effectId === selectedEffectId
+        const isBypassed = effectBypassed[effectId] || false
         const isDragTarget = dragOverId === effectId
 
         return (
@@ -141,9 +145,11 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
             onDoubleClick={() => handleDoubleClick(effectId)}
             className="flex-shrink-0 flex items-center gap-1.5 px-3 transition-colors relative cursor-grab active:cursor-grabbing"
             style={{
+              minWidth: 100,
               backgroundColor: isSelected ? 'var(--bg-elevated)' : 'transparent',
               borderBottom: isSelected ? '2px solid var(--seq-accent)' : '2px solid transparent',
-              color: isSelected ? 'var(--text-primary)' : 'var(--text-ghost)',
+              color: isBypassed ? 'var(--text-ghost)' : isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+              opacity: isBypassed ? 0.4 : 1,
               borderLeft: isDragTarget && dragSide === 'left' ? '2px solid var(--seq-accent)' : undefined,
               borderRight: isDragTarget && dragSide === 'right' ? '2px solid var(--seq-accent)' : undefined,
             }}
@@ -156,13 +162,13 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
               }}
               className="w-1.5 h-1.5 rounded-full flex-shrink-0 cursor-pointer hover:scale-150 transition-transform"
               style={{
-                backgroundColor: color,
-                opacity: isSelected ? 1 : 0.4,
-                boxShadow: isSelected ? `0 0 4px ${color}` : 'none',
+                backgroundColor: isBypassed ? 'var(--text-ghost)' : color,
+                opacity: isBypassed ? 0.3 : isSelected ? 1 : 0.4,
+                boxShadow: isBypassed ? 'none' : isSelected ? `0 0 4px ${color}` : 'none',
               }}
               title="Bypass effect"
             />
-            <span className="text-[9px] font-bold uppercase tracking-wider whitespace-nowrap">
+            <span className="text-[12px] font-bold uppercase tracking-wider whitespace-nowrap">
               {label}
             </span>
           </div>

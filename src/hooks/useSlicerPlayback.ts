@@ -134,8 +134,16 @@ export function useSlicerPlayback() {
 
     if (!captureCanvas.current) {
       captureCanvas.current = document.createElement('canvas')
-      captureCanvas.current.width = 480
-      captureCanvas.current.height = 270
+    }
+    // Match the video's actual aspect ratio, scaled to fit within 480px
+    const vw = videoElement.videoWidth || 480
+    const vh = videoElement.videoHeight || 270
+    const scale = Math.min(480 / vw, 480 / vh)
+    const cw = Math.round(vw * scale)
+    const ch = Math.round(vh * scale)
+    if (captureCanvas.current.width !== cw || captureCanvas.current.height !== ch) {
+      captureCanvas.current.width = cw
+      captureCanvas.current.height = ch
     }
 
     const canvas = captureCanvas.current

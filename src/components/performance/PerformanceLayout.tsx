@@ -1,16 +1,17 @@
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { HeaderBar } from './HeaderBar'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
 import { ClipBin } from './ClipBin'
 import { ClipDetailModal } from './ClipDetailModal'
-import { EffectsLane } from './EffectsLane'
+import { EffectCardStack } from './EffectCardStack'
+import { TransportBar } from './TransportBar'
 import { MiddleSection } from './MiddleSection'
 import { ModulationLines } from './ModulationLines'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
-import { DataTerminal } from '../terminal/DataTerminal'
-// PresetDropdownBar moved to ExpandedParameterPanel
+// DataTerminal stashed — component file kept, just not rendered
+// import { DataTerminal } from '../terminal/DataTerminal'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
 import { useContinuousModulation } from '../../hooks/useContinuousModulation'
@@ -20,23 +21,11 @@ import { usePolyEuclidEngine } from '../../hooks/usePolyEuclidEngine'
 import { useModulationEngine } from '../../hooks/useModulationEngine'
 import { useDestructionMode } from '../../hooks/useDestructionMode'
 import { useDestructionChaos } from '../../hooks/useDestructionChaos'
-import { useMediaStore } from '../../stores/mediaStore'
 import { DestructionOverlay } from '../DestructionOverlay'
-// InfoPanel kept for future use
-// import { InfoPanel } from '../panels/InfoPanel'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
-  const canvasContainerRef = useRef<HTMLDivElement>(null)
-  // Use state so that when canvas becomes available, it triggers a re-render
-  // which allows useRecordingCapture to properly initialize
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null)
-
-  // Track video dimensions for dynamic sizing
-  const { videoElement, imageElement, source } = useMediaStore()
-  const [videoAspect, setVideoAspect] = useState<number | null>(null)
-  const [containerWidth, setContainerWidth] = useState(0)
-  const [containerHeight, setContainerHeight] = useState(0)
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
   useAutomationPlayback()
@@ -56,74 +45,23 @@ export function PerformanceLayout() {
   useDestructionMode()
   useDestructionChaos()
 
-  // Create a ref object that useRecordingCapture can use
   const captureRef = useRef<HTMLCanvasElement | null>(null)
 
-  // Keep captureRef in sync with the canvas element
   useEffect(() => {
     const checkCanvas = () => {
       if (canvasRef.current) {
         const canvas = canvasRef.current.getCanvas()
         if (canvas && canvas !== captureRef.current) {
           captureRef.current = canvas
-          setCanvasElement(canvas) // Trigger re-render when canvas is found
+          setCanvasElement(canvas)
         }
       }
     }
-    // Check immediately and also on a short interval until we get it
     checkCanvas()
     const interval = setInterval(checkCanvas, 100)
     return () => clearInterval(interval)
   }, [])
 
-  // Track video/image aspect ratio
-  useEffect(() => {
-    if (videoElement) {
-      const updateAspect = () => {
-        if (videoElement.videoWidth && videoElement.videoHeight) {
-          setVideoAspect(videoElement.videoWidth / videoElement.videoHeight)
-        }
-      }
-      updateAspect()
-      videoElement.addEventListener('loadedmetadata', updateAspect)
-      return () => videoElement.removeEventListener('loadedmetadata', updateAspect)
-    } else if (imageElement) {
-      if (imageElement.naturalWidth && imageElement.naturalHeight) {
-        setVideoAspect(imageElement.naturalWidth / imageElement.naturalHeight)
-      }
-    } else {
-      setVideoAspect(null)
-    }
-  }, [videoElement, imageElement])
-
-  // Track container size
-  const updateContainerSize = useCallback(() => {
-    if (canvasContainerRef.current) {
-      const rect = canvasContainerRef.current.getBoundingClientRect()
-      setContainerWidth(rect.width)
-      setContainerHeight(rect.height)
-    }
-  }, [])
-
-  useEffect(() => {
-    updateContainerSize()
-    window.addEventListener('resize', updateContainerSize)
-    return () => window.removeEventListener('resize', updateContainerSize)
-  }, [updateContainerSize])
-
-  // Calculate if we need side placeholders
-  const hasMedia = source !== 'none'
-  const containerAspect = containerHeight > 0 ? containerWidth / containerHeight : 16/9
-  const showSidePlaceholders = hasMedia && videoAspect !== null && videoAspect < containerAspect
-
-  // Calculate the width the video actually needs
-  const videoWidth = showSidePlaceholders && videoAspect
-    ? Math.floor(containerHeight * videoAspect)
-    : containerWidth
-  const sideWidth = showSidePlaceholders ? Math.floor((containerWidth - videoWidth) / 2) : 0
-
-  // Use recording capture hook - captures canvas during recording
-  // Pass canvasElement as a dependency hint so hook re-runs when canvas is available
   useRecordingCapture(captureRef, canvasElement)
 
   return (
@@ -132,7 +70,7 @@ export function PerformanceLayout() {
       style={{
         display: 'grid',
         gridTemplateRows: 'var(--row-header) 1fr 1fr',
-        gridTemplateColumns: 'var(--col-left) 1fr var(--col-right)',
+        gridTemplateColumns: '1fr var(--col-canvas)',
         gap: 'var(--gap)',
         padding: 'var(--gap)',
       }}
@@ -149,7 +87,7 @@ export function PerformanceLayout() {
         <HeaderBar />
       </div>
 
-      {/* Row 2, Col 1: (reserved) */}
+      {/* Row 2, Col 1: Effect Card Stack + Parameters */}
       <div
         className="rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
@@ -157,136 +95,75 @@ export function PerformanceLayout() {
           gridColumn: 1,
           border: '1px solid var(--border)',
         }}
-      />
+      >
+        <EffectCardStack />
+      </div>
 
-      {/* Row 2, Col 2: Canvas */}
+      {/* Row 2, Col 2: Canvas + Transport */}
       <div
-        ref={canvasContainerRef}
-        className="relative rounded-sm overflow-hidden flex"
+        className="flex flex-col rounded-sm overflow-hidden"
         style={{
           gridRow: 2,
           gridColumn: 2,
-          backgroundColor: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
         }}
       >
-        {/* Left placeholder */}
-        {showSidePlaceholders && sideWidth > 40 && (
-          <div
-            className="flex-shrink-0 flex items-center justify-center"
-            style={{
-              width: sideWidth,
-              backgroundColor: '#1e3a5f',
-              borderRight: '1px solid var(--border)',
-            }}
-          />
-        )}
-
-        {/* Canvas */}
-        <div className="flex-1 min-w-0 relative">
+        <div className="relative flex-1 min-h-0" style={{ backgroundColor: 'var(--bg-elevated)' }}>
           <Canvas ref={canvasRef} />
+          <ClipBin />
         </div>
-
-        {/* Clip bin always floats in bottom left corner of entire container */}
-        <ClipBin />
-
-        {/* Right placeholder */}
-        {showSidePlaceholders && sideWidth > 40 && (
-          <div
-            className="flex-shrink-0 flex items-center justify-center"
-            style={{
-              width: sideWidth,
-              backgroundColor: '#1e3a5f',
-              borderLeft: '1px solid var(--border)',
-            }}
-          >
-            <span
-              className="text-[11px] uppercase tracking-wider"
-              style={{ color: 'var(--text-muted)', opacity: 0.5 }}
-            >
-              {/* Empty placeholder */}
-            </span>
-          </div>
-        )}
+        <TransportBar />
       </div>
 
-      {/* Row 2, Col 3: FX Chain / Modulation */}
+      {/* Row 3: Crossfader + Bank + Grid + Sequencer (spans full width) */}
       <div
-        className="flex flex-col rounded-sm overflow-hidden panel-gradient-subtle"
-        style={{
-          gridRow: 2,
-          gridColumn: 3,
-          border: '1px solid var(--border)',
-        }}
-      >
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <EffectsLane />
-        </div>
-      </div>
-
-      {/* Row 3, Col 1: Crossfader + Bank + Performance Grid */}
-      <div
-        className="flex flex-col rounded-sm overflow-hidden panel-gradient"
+        className="flex rounded-sm overflow-hidden"
         style={{
           gridRow: 3,
-          gridColumn: 1,
-          border: '1px solid var(--border)',
+          gridColumn: '1 / -1',
+          gap: 'var(--gap)',
         }}
       >
-        {/* Crossfader section */}
+        {/* Left: Crossfader + Bank + Grid */}
         <div
-          className="flex-shrink-0"
-          style={{ minHeight: 'var(--row-middle)' }}
-        >
-          <MiddleSection />
-        </div>
-        {/* Bank row header */}
-        <div
-          className="flex-shrink-0"
+          className="flex flex-col rounded-sm overflow-hidden panel-gradient"
           style={{
-            height: '52px',
-            borderBottom: '1px solid var(--border)',
+            width: 'var(--col-left)',
+            flexShrink: 0,
+            border: '1px solid var(--border)',
           }}
         >
-          <BankPanel />
+          <div
+            className="flex-shrink-0"
+            style={{ minHeight: 'var(--row-middle)' }}
+          >
+            <MiddleSection />
+          </div>
+          <div
+            className="flex-shrink-0"
+            style={{
+              height: '52px',
+              borderBottom: '1px solid var(--border)',
+            }}
+          >
+            <BankPanel />
+          </div>
+          <div className="flex-1 min-h-0">
+            <PerformanceGrid />
+          </div>
         </div>
-        {/* Grid */}
-        <div className="flex-1 min-h-0">
-          <PerformanceGrid />
+
+        {/* Right: Sequencer */}
+        <div
+          className="flex-1 min-w-0 rounded-sm overflow-hidden panel-gradient-subtle"
+          style={{ border: '1px solid var(--border)' }}
+        >
+          <SequencerContainer />
         </div>
       </div>
 
-      {/* Row 3, Col 2: Sequencer */}
-      <div
-        className="rounded-sm overflow-hidden panel-gradient-subtle"
-        style={{
-          gridRow: 3,
-          gridColumn: 2,
-          border: '1px solid var(--border)',
-        }}
-      >
-        <SequencerContainer />
-      </div>
-
-      {/* Row 3, Col 3: Data Terminal */}
-      <div
-        className="rounded-sm overflow-hidden panel-gradient-accent"
-        style={{
-          gridRow: 3,
-          gridColumn: 3,
-          border: '1px solid var(--border)',
-        }}
-      >
-        <DataTerminal />
-      </div>
-
-      {/* Clip detail modal */}
       <ClipDetailModal />
-
-      {/* Modulation connection lines overlay */}
       <ModulationLines />
-
-      {/* Destruction mode overlay */}
       <DestructionOverlay />
     </div>
   )

@@ -1,117 +1,36 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useMemo } from 'react'
 import { useActiveEffects } from '../../hooks/useActiveEffects'
 import { useEffectDisable } from '../../hooks/useEffectDisable'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
-import { useRoutingStore } from '../../stores/routingStore'
 import { useUIStore } from '../../stores/uiStore'
+import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { PresetDropdownBar } from '../presets/PresetDropdownBar'
-import { EffectCard } from './EffectCard'
+import { EffectParameters } from './ExpandedParameterPanel'
+
+const PLOCK = '#FF4060'
 
 export function EffectCardStack() {
   const { sortedEffects } = useActiveEffects()
   const { disableEffect } = useEffectDisable()
   const { toggleEffectBypassed, effectBypassed } = useGlitchEngineStore()
-  const { effectOrder, reorderEffect } = useRoutingStore()
-  const { selectedEffectId, setSelectedEffect } = useUIStore()
+  const { selectedEffectId } = useUIStore()
 
-  // Expanded card — only one at a time, takes over the panel
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-  const toggleExpanded = useCallback((id: string) => {
-    setExpandedId(prev => prev === id ? null : id)
-  }, [])
+  // Automation state from sequencer
+  const automationParam = useEffectSequencerStore((s) => s.automationParam)
+  const clearAutomationParam = useEffectSequencerStore((s) => s.clearAutomationParam)
 
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const listRef = useRef<HTMLDivElement>(null)
+  const activeEffectIds = useMemo(
+    () => sortedEffects.map((e) => e.id),
+    [sortedEffects],
+  )
 
-  // Scroll to selected effect card
-  useEffect(() => {
-    if (selectedEffectId && scrollRef.current) {
-      const card = scrollRef.current.querySelector(`[data-effect-id="${selectedEffectId}"]`)
-      if (card) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-      }
-    }
-  }, [selectedEffectId])
-
-  // Collapse expanded card if it gets disabled
-  useEffect(() => {
-    if (expandedId && !sortedEffects.find(e => e.id === expandedId)) {
-      setExpandedId(null)
-    }
-  }, [expandedId, sortedEffects])
-
-  // Drag state
-  const [dragIndex, setDragIndex] = useState<number | null>(null)
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
-  const dragStartY = useRef<number>(0)
-  const isPointerDown = useRef(false)
-  const isDragging = useRef(false)
-  const pointerDownIndex = useRef<number>(0)
-
-  const handlePointerDown = useCallback((e: React.PointerEvent, index: number) => {
-    dragStartY.current = e.clientY
-    isPointerDown.current = true
-    isDragging.current = false
-    pointerDownIndex.current = index
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-  }, [])
-
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isPointerDown.current) return
-
-    const deltaY = Math.abs(e.clientY - dragStartY.current)
-
-    // Require meaningful vertical movement to start drag
-    if (!isDragging.current && deltaY > 15) {
-      isDragging.current = true
-      setDragIndex(pointerDownIndex.current)
-    }
-
-    if (isDragging.current && listRef.current) {
-      const wrappers = Array.from(listRef.current.children) as HTMLElement[]
-      for (let i = 0; i < wrappers.length; i++) {
-        const rect = wrappers[i].getBoundingClientRect()
-        const midY = rect.top + rect.height / 2
-        if (e.clientY < midY) {
-          setDragOverIndex(i)
-          return
-        }
-      }
-      setDragOverIndex(wrappers.length)
-    }
-  }, [])
-
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    try {
-      ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
-    } catch {}
-
-    if (isDragging.current && dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
-      const fromEffectId = sortedEffects[dragIndex].id
-      const fromOrderIndex = effectOrder.indexOf(fromEffectId)
-
-      let toOrderIndex: number
-      if (dragOverIndex >= sortedEffects.length) {
-        toOrderIndex = effectOrder.indexOf(sortedEffects[sortedEffects.length - 1].id) + 1
-      } else if (dragOverIndex === 0) {
-        toOrderIndex = effectOrder.indexOf(sortedEffects[0].id)
-      } else {
-        toOrderIndex = effectOrder.indexOf(sortedEffects[dragOverIndex].id)
-      }
-
-      if (fromOrderIndex !== -1 && toOrderIndex !== -1 && fromOrderIndex !== toOrderIndex) {
-        reorderEffect(fromOrderIndex, toOrderIndex)
-      }
-    }
-
-    setDragIndex(null)
-    setDragOverIndex(null)
-    isDragging.current = false
-    isPointerDown.current = false
-  }, [dragIndex, dragOverIndex, effectOrder, reorderEffect, sortedEffects])
+  const validSelectedId =
+    selectedEffectId && activeEffectIds.includes(selectedEffectId)
+      ? selectedEffectId
+      : null
 
   return (
-    <div className="h-full flex flex-col" style={{ backgroundColor: '#0f0f1a' }}>
+    <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Header: Preset bar */}
       <PresetDropdownBar />
 
@@ -131,67 +50,119 @@ export function EffectCardStack() {
         </span>
       </div>
 
-      {/* Content area */}
-      {expandedId && sortedEffects.find(e => e.id === expandedId) ? (
-        // Expanded detail view — single card fills the panel
-        (() => {
-          const effect = sortedEffects.find(e => e.id === expandedId)!
-          return (
-            <div className="flex-1 min-h-0 flex flex-col">
-              <EffectCard
-                effect={effect}
-                mode="full"
-                isBypassed={effectBypassed[effect.id] || false}
-                isSelected={true}
-                onBypass={() => toggleEffectBypassed(effect.id)}
-                onRemove={() => { disableEffect(effect.id); setExpandedId(null) }}
-                onSelect={() => setSelectedEffect(effect.id)}
-                onToggleExpand={() => setExpandedId(null)}
-                onPointerDown={() => {}}
-                onPointerMove={() => {}}
-                onPointerUp={() => {}}
-                isDragging={false}
-                isDropTarget={false}
+      {/* Full parameters panel */}
+      {validSelectedId ? (() => {
+        const selectedEffect = sortedEffects.find(e => e.id === validSelectedId)
+        const effectColor = selectedEffect?.color ?? 'var(--text-muted)'
+        const effectLabel = selectedEffect?.label ?? validSelectedId
+        const isBypassed = effectBypassed[validSelectedId] || false
+
+        return (
+          <div className="flex-1 min-h-0 flex flex-col">
+            {/* Effect header: name + bypass + remove */}
+            <div
+              className="flex-shrink-0 flex items-center gap-1.5 px-2"
+              style={{
+                height: 28,
+                borderBottom: `1px solid ${effectColor}20`,
+              }}
+            >
+              {/* LED */}
+              <span
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{
+                  backgroundColor: isBypassed ? 'var(--text-ghost)' : effectColor,
+                  opacity: isBypassed ? 0.3 : 1,
+                  boxShadow: isBypassed ? 'none' : `0 0 4px ${effectColor}`,
+                }}
               />
-            </div>
-          )
-        })()
-      ) : (
-        // Compact card list
-        <div
-          ref={scrollRef}
-          className="flex-1 min-h-0 overflow-y-auto"
-          style={{ padding: 'var(--panel-padding-sm)' }}
-        >
-          {sortedEffects.length === 0 ? (
-            <div className="h-full flex items-center justify-center">
-              <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
-                Enable effects from the grid below
+              {/* Effect name */}
+              <span
+                className="text-[11px] uppercase tracking-wide font-semibold flex-shrink-0"
+                style={{ color: isBypassed ? 'var(--text-ghost)' : effectColor }}
+              >
+                {effectLabel}
               </span>
+              {/* Horizontal rule */}
+              <div
+                className="flex-1 h-px"
+                style={{ backgroundColor: `${effectColor}30` }}
+              />
+
+              {/* Automation indicator (inline) */}
+              {automationParam && (
+                <>
+                  <span
+                    className="text-[8px] font-bold uppercase tracking-wider flex-shrink-0"
+                    style={{ color: PLOCK }}
+                  >
+                    P-LOCK
+                  </span>
+                  <span
+                    className="text-[9px] tabular-nums flex-shrink-0"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {automationParam.label}
+                  </span>
+                  <button
+                    onClick={clearAutomationParam}
+                    className="text-[8px] uppercase tracking-wider px-1 py-0.5 rounded-sm flex-shrink-0"
+                    style={{
+                      color: 'var(--text-ghost)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    ×
+                  </button>
+                </>
+              )}
+
+              {/* Bypass */}
+              <button
+                onClick={() => toggleEffectBypassed(validSelectedId)}
+                className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full"
+                style={{
+                  opacity: isBypassed ? 0.8 : 0.4,
+                  transition: 'opacity 150ms',
+                }}
+                title={isBypassed ? 'Enable effect' : 'Bypass effect'}
+              >
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="7" r="5" stroke={isBypassed ? effectColor : 'var(--text-muted)'} strokeWidth="1.2" />
+                  {isBypassed && <line x1="3.5" y1="3.5" x2="10.5" y2="10.5" stroke={effectColor} strokeWidth="1.2" strokeLinecap="round" />}
+                </svg>
+              </button>
+              {/* Remove */}
+              <button
+                onClick={() => disableEffect(validSelectedId)}
+                className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full opacity-30 hover:opacity-100 transition-opacity"
+                title="Remove effect"
+              >
+                <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                  <line x1="4" y1="4" x2="10" y2="10" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />
+                  <line x1="10" y1="4" x2="4" y2="10" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
             </div>
-          ) : (
-            <div ref={listRef} className="flex flex-col gap-2">
-              {sortedEffects.map((effect, index) => (
-                <div key={effect.id} data-effect-id={effect.id}>
-                  <EffectCard
-                    effect={effect}
-                    mode="compact"
-                    isBypassed={effectBypassed[effect.id] || false}
-                    isSelected={selectedEffectId === effect.id}
-                    onBypass={() => toggleEffectBypassed(effect.id)}
-                    onRemove={() => disableEffect(effect.id)}
-                    onSelect={() => setSelectedEffect(effect.id)}
-                    onToggleExpand={() => toggleExpanded(effect.id)}
-                    onPointerDown={(e) => handlePointerDown(e, index)}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                    isDragging={dragIndex === index}
-                    isDropTarget={dragOverIndex === index && dragIndex !== null && dragIndex !== index}
-                  />
-                </div>
-              ))}
+
+            {/* Scrollable parameters */}
+            <div
+              className="flex-1 min-h-0 overflow-y-auto"
+              style={{
+                padding: 'var(--panel-padding-sm) var(--panel-padding)',
+                opacity: isBypassed ? 0.4 : 1,
+                transition: 'opacity 150ms',
+              }}
+            >
+              <EffectParameters effectId={validSelectedId} />
             </div>
-          )}
+          </div>
+        )
+      })() : (
+        <div className="flex-1 min-h-0 flex items-center justify-center">
+          <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
+            Enable effects from the grid below
+          </span>
         </div>
       )}
     </div>

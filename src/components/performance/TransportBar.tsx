@@ -10,9 +10,6 @@ import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useAcidStore } from '../../stores/acidStore'
 import { useSlicerStore } from '../../stores/slicerStore'
-import { SourceSelector } from '../ui/SourceSelector'
-
-// Note: We use getState() in handleStartRecording to get fresh state at call time
 
 export function TransportBar() {
   const { source, reset, videoElement } = useMediaStore()
@@ -31,21 +28,16 @@ export function TransportBar() {
   } = useRecordingStore()
 
   const { clips, clearAllClips } = useClipStore()
-
   const { resetEffects } = useAutomationPlayback()
 
-  // Capture initial effect state and start recording
-  // Use getState() to get current state at call time (not stale closure state)
   const handleStartRecording = useCallback(() => {
     const initialEvents: AutomationEvent[] = []
 
-    // Get current state from stores at call time
     const glitch = useGlitchEngineStore.getState()
     const ascii = useAsciiRenderStore.getState()
     const stipple = useStippleStore.getState()
     const acid = useAcidStore.getState()
 
-    // Capture glitch effects that are currently enabled
     if (glitch.rgbSplitEnabled) initialEvents.push({ t: 0, effect: 'rgb_split', action: 'on' })
     if (glitch.blockDisplaceEnabled) initialEvents.push({ t: 0, effect: 'block_displace', action: 'on' })
     if (glitch.scanLinesEnabled) initialEvents.push({ t: 0, effect: 'scan_lines', action: 'on' })
@@ -61,11 +53,9 @@ export function TransportBar() {
     if (glitch.colorGradeEnabled) initialEvents.push({ t: 0, effect: 'color_grade', action: 'on' })
     if (glitch.feedbackLoopEnabled) initialEvents.push({ t: 0, effect: 'feedback', action: 'on' })
 
-    // Capture render effects
     if (ascii.enabled) initialEvents.push({ t: 0, effect: 'ascii', action: 'on' })
     if (stipple.enabled) initialEvents.push({ t: 0, effect: 'stipple', action: 'on' })
 
-    // Capture acid effects
     if (acid.dotsEnabled) initialEvents.push({ t: 0, effect: 'acid_dots', action: 'on' })
     if (acid.glyphEnabled) initialEvents.push({ t: 0, effect: 'acid_glyph', action: 'on' })
     if (acid.iconsEnabled) initialEvents.push({ t: 0, effect: 'acid_icons', action: 'on' })
@@ -79,11 +69,9 @@ export function TransportBar() {
     if (acid.slitEnabled) initialEvents.push({ t: 0, effect: 'acid_slit', action: 'on' })
     if (acid.voronoiEnabled) initialEvents.push({ t: 0, effect: 'acid_voronoi', action: 'on' })
 
-    console.log('[Recording] Starting with initial events:', initialEvents)
     startRecording(initialEvents)
   }, [startRecording])
 
-  // Source video playback state
   const [sourceVideoTime, setSourceVideoTime] = useState(0)
   const [sourceVideoDuration, setSourceVideoDuration] = useState(0)
   const [isSourcePlaying, setIsSourcePlaying] = useState(false)
@@ -92,26 +80,20 @@ export function TransportBar() {
   const hasRecording = recordingDuration > 0 && !isRecording
   const hasSourceVideo = source === 'file' && videoElement && sourceVideoDuration > 0
 
-  // Determine which mode we're in: recording playback or source video playback
   const isRecordingMode = hasRecording
   const isPlaying = isRecordingMode ? isRecordingPlaying : isSourcePlaying
   const currentTime = isRecordingMode ? recordingTime : sourceVideoTime
   const duration = isRecordingMode ? recordingDuration : sourceVideoDuration
 
-  // Track source video time
   useEffect(() => {
     if (!videoElement || source !== 'file') return
 
-    const handleTimeUpdate = () => {
-      setSourceVideoTime(videoElement.currentTime)
-    }
-
+    const handleTimeUpdate = () => setSourceVideoTime(videoElement.currentTime)
     const handleDurationChange = () => {
       if (videoElement.duration && isFinite(videoElement.duration)) {
         setSourceVideoDuration(videoElement.duration)
       }
     }
-
     const handlePlay = () => setIsSourcePlaying(true)
     const handlePause = () => setIsSourcePlaying(false)
 
@@ -121,7 +103,6 @@ export function TransportBar() {
     videoElement.addEventListener('play', handlePlay)
     videoElement.addEventListener('pause', handlePause)
 
-    // Initialize duration if already loaded
     if (videoElement.duration && isFinite(videoElement.duration)) {
       setSourceVideoDuration(videoElement.duration)
     }
@@ -136,17 +117,11 @@ export function TransportBar() {
     }
   }, [videoElement, source])
 
-  // Handle play/pause
   const handlePlayPause = useCallback(() => {
-    // Handle slicer being active - need to properly disable and restore source
     const slicerState = useSlicerStore.getState()
     if (slicerState.enabled && !isRecordingMode) {
-      // Stop slicer playback
       useSlicerStore.getState().setIsPlaying(false)
-      // Use the proper setEnabled which coordinates with mediaStore
       useSlicerStore.getState().setEnabled(false)
-      // setEnabled(false) already restores stashed source and plays it if it was a file
-      // so we're done - don't need to call play() again
       return
     }
 
@@ -154,9 +129,7 @@ export function TransportBar() {
       if (isRecordingPlaying) {
         pauseRecording()
       } else {
-        if (recordingTime === 0) {
-          resetEffects()
-        }
+        if (recordingTime === 0) resetEffects()
         playRecording()
       }
     } else if (videoElement) {
@@ -168,12 +141,10 @@ export function TransportBar() {
     }
   }, [isRecordingMode, isRecordingPlaying, pauseRecording, recordingTime, resetEffects, playRecording, videoElement])
 
-  // Handle timeline click to seek
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
     const x = e.clientX - rect.left
-    const percentage = x / rect.width
-    const seekTime = percentage * duration
+    const seekTime = (x / rect.width) * duration
 
     if (isRecordingMode) {
       seekRecording(seekTime)
@@ -182,18 +153,15 @@ export function TransportBar() {
     }
   }
 
-  // Calculate progress percentage
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
   const hasPlayableContent = hasRecording || hasSourceVideo
 
-  // Format time as MM:SS.mm
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = Math.floor(seconds % 60)
     const ms = Math.floor((seconds % 1) * 100)
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`
   }
-
 
   // Recording timer
   useEffect(() => {
@@ -209,13 +177,10 @@ export function TransportBar() {
 
     const captureInterval = setInterval(updateTime, 100)
 
-    // Capture thumbnails every 2 seconds
     if (videoElement) {
       thumbnailInterval = window.setInterval(() => {
         try {
-          // Check if video has data before trying to capture
-          if (videoElement.readyState < 2) return // HAVE_CURRENT_DATA
-
+          if (videoElement.readyState < 2) return
           const canvas = document.createElement('canvas')
           canvas.width = 64
           canvas.height = 64
@@ -240,28 +205,20 @@ export function TransportBar() {
 
   return (
     <div
-      className="h-full flex items-center"
+      className="flex items-center flex-shrink-0"
       style={{
-        padding: 'var(--space-1) var(--panel-padding)',
-        gap: 'var(--gap-lg)',
+        height: 32,
+        padding: '0 var(--space-2)',
+        gap: 'var(--space-2)',
+        backgroundColor: 'var(--bg-surface)',
+        borderTop: '1px solid var(--border)',
       }}
     >
-      {/* Source selector */}
-      <div className="flex items-center gap-2">
-        <span className="text-[9px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
-          SRC
-        </span>
-        <SourceSelector variant="compact" />
-      </div>
-
-      {/* Divider */}
-      <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
-
-      {/* Record/Stop button */}
+      {/* Record/Stop */}
       <button
         onClick={isRecording ? stopRecording : handleStartRecording}
         disabled={!hasSource}
-        className="w-7 h-7 rounded-sm flex items-center justify-center transition-all"
+        className="w-6 h-6 rounded-sm flex items-center justify-center transition-all flex-shrink-0"
         style={{
           backgroundColor: isRecording ? 'var(--accent)' : 'var(--bg-elevated)',
           border: `1px solid ${isRecording ? 'var(--accent)' : 'var(--border)'}`,
@@ -272,20 +229,17 @@ export function TransportBar() {
         title={isRecording ? 'Stop Recording' : 'Start Recording'}
       >
         {isRecording ? (
-          <StopIcon size={12} color="var(--text-primary)" />
+          <StopIcon size={10} color="var(--text-primary)" />
         ) : (
-          <RecordIcon size={12} color="var(--accent)" />
+          <RecordIcon size={10} color="var(--accent)" />
         )}
       </button>
 
-      {/* Divider */}
-      <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
-
-      {/* Play/Pause button */}
+      {/* Play/Pause */}
       <button
         onClick={handlePlayPause}
         disabled={!hasPlayableContent}
-        className="w-7 h-7 rounded-sm flex items-center justify-center transition-all"
+        className="w-6 h-6 rounded-sm flex items-center justify-center transition-all flex-shrink-0"
         style={{
           backgroundColor: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
@@ -295,24 +249,22 @@ export function TransportBar() {
         title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
       >
         {isPlaying ? (
-          <PauseIcon size={12} color="var(--text-secondary)" />
+          <PauseIcon size={10} color="var(--text-secondary)" />
         ) : (
-          <PlayIcon size={12} color="var(--text-secondary)" />
+          <PlayIcon size={10} color="var(--text-secondary)" />
         )}
       </button>
 
       {/* Timeline */}
       <div
-        className="h-1 rounded-sm relative overflow-hidden group"
+        className="flex-1 h-1 rounded-sm relative overflow-hidden"
         onClick={hasPlayableContent ? handleTimelineClick : undefined}
         style={{
-          width: '180px',
           backgroundColor: 'var(--bg-elevated)',
           cursor: hasPlayableContent ? 'pointer' : 'default',
           opacity: hasPlayableContent ? 1 : 0.5,
         }}
       >
-        {/* Progress fill */}
         <div
           className="absolute inset-y-0 left-0 rounded-sm"
           style={{
@@ -323,10 +275,10 @@ export function TransportBar() {
         />
       </div>
 
-      {/* Playback timecode */}
-      <div className="flex items-center gap-1">
+      {/* Timecode */}
+      <div className="flex items-center gap-1 flex-shrink-0">
         <span
-          className="text-[11px] tabular-nums tracking-wide"
+          className="text-[10px] tabular-nums"
           style={{
             color: hasPlayableContent ? 'var(--text-secondary)' : 'var(--text-ghost)',
             letterSpacing: '0.05em',
@@ -334,22 +286,16 @@ export function TransportBar() {
         >
           {formatTime(currentTime)}
         </span>
-        <span style={{ color: 'var(--text-ghost)' }}>\</span>
+        <span className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>/</span>
         <span
-          className="text-[11px] tabular-nums tracking-wide"
-          style={{
-            color: 'var(--text-muted)',
-            letterSpacing: '0.05em',
-          }}
+          className="text-[10px] tabular-nums"
+          style={{ color: 'var(--text-muted)', letterSpacing: '0.05em' }}
         >
           {formatTime(duration)}
         </span>
       </div>
 
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Clear button */}
+      {/* Clear */}
       <Button
         size="sm"
         onClick={clips.length > 0 ? clearAllClips : reset}

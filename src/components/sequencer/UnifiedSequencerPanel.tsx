@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
-import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 import { useSequencerContainerStore } from '../../stores/sequencerContainerStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useEffectSequencerPlayback } from '../../hooks/useEffectSequencerPlayback'
 import { useActiveEffects } from '../../hooks/useActiveEffects'
-import { PLockProvider, type PLockContextValue } from '../../contexts/PLockContext'
 import {
   EFFECTS,
   STRAND_EFFECTS,
@@ -13,15 +11,11 @@ import {
   DESTRUCTION_EFFECTS,
   type EffectDefinition,
 } from '../../config/effects'
-import { EffectParameters } from '../performance/ExpandedParameterPanel'
 import { EffectTabsBar } from './EffectTabsBar'
 import { ModTabsBar, type ParamView } from './ModTabsBar'
 import { ModulationContent } from './ModulationContent'
 import { SequencerTransport } from './SequencerTransport'
 import { EffectTrackRow } from './EffectTrackRow'
-
-const SEQ = '#9580FF'
-const PLOCK = '#FFB830'
 
 const ALL_EFFECTS: EffectDefinition[] = [
   ...EFFECTS,
@@ -54,10 +48,7 @@ export function UnifiedSequencerPanel() {
     setResolution,
     setStepPage,
     setSwing,
-    setStepLock,
-    clearStepLock,
-    clearAllStepLocks,
-    clearSelection,
+    ensureTrack,
   } = useEffectSequencerStore()
 
   // Initialize playback engine
@@ -69,6 +60,13 @@ export function UnifiedSequencerPanel() {
     () => sortedEffects.map((e) => e.id),
     [sortedEffects],
   )
+
+  // Ensure all active effects have sequencer tracks
+  useEffect(() => {
+    for (const id of activeEffectIds) {
+      ensureTrack(id)
+    }
+  }, [activeEffectIds, ensureTrack])
 
   // Active tracks (enabled effects that also have sequencer tracks)
   const activeTrackIds = useMemo(
@@ -96,96 +94,6 @@ export function UnifiedSequencerPanel() {
       setParamView('effect')
     }
   }, [selectedStep, selectedEffectId, setSelectedEffect])
-
-  // ─── Step preview: apply locks to effect when step is selected ───────
-  const previewBaseRef = useRef<Record<string, number | string>>({})
-  const selectedStepKey = selectedStep
-    ? `${selectedStep.effectId}:${selectedStep.stepIndex}`
-    : null
-
-  useEffect(() => {
-    if (!selectedStep || isPlaying) return
-
-    const entry = EFFECT_PARAM_REGISTRY[selectedStep.effectId]
-    if (!entry) return
-
-    // Always capture current param values as base on step selection.
-    // This is critical: the onChange calls during p-lock editing modify
-    // the store directly for live preview. Without capturing/restoring,
-    // the base values get corrupted and playback sees no difference.
-    const base: Record<string, number | string> = {}
-    for (const param of entry.getParams()) {
-      base[param.id] = param.read()
-    }
-    if (entry.getSelectParams) {
-      for (const param of entry.getSelectParams()) {
-        base[param.id] = param.read()
-      }
-    }
-    previewBaseRef.current = base
-
-    // Apply any existing lock values for immediate preview
-    const currentTracks = useEffectSequencerStore.getState().tracks
-    const track = currentTracks[selectedStep.effectId]
-    const step = track?.steps[selectedStep.stepIndex]
-    if (step && Object.keys(step.locks).length > 0) {
-      for (const param of entry.getParams()) {
-        if (param.id in step.locks) {
-          param.apply(step.locks[param.id] as number)
-        }
-      }
-      if (entry.getSelectParams) {
-        for (const param of entry.getSelectParams()) {
-          if (param.id in step.locks) {
-            param.apply(step.locks[param.id] as string)
-          }
-        }
-      }
-    }
-
-    // Cleanup: restore base values on deselect or step change
-    return () => {
-      const restoreBase = previewBaseRef.current
-      const restoreEntry = EFFECT_PARAM_REGISTRY[selectedStep.effectId]
-      if (!restoreEntry || Object.keys(restoreBase).length === 0) return
-
-      for (const param of restoreEntry.getParams()) {
-        if (param.id in restoreBase) {
-          param.apply(restoreBase[param.id] as number)
-        }
-      }
-      if (restoreEntry.getSelectParams) {
-        for (const param of restoreEntry.getSelectParams()) {
-          if (param.id in restoreBase) {
-            param.apply(restoreBase[param.id] as string)
-          }
-        }
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStepKey, isPlaying])
-
-  // ─── P-lock context ───────────────────────────────────────────────────
-  const plockContext = useMemo((): PLockContextValue | null => {
-    if (!selectedStep || !validSelectedId) return null
-    if (selectedStep.effectId !== validSelectedId) return null
-
-    const track = tracks[selectedStep.effectId]
-    if (!track) return null
-    const step = track.steps[selectedStep.stepIndex]
-    if (!step) return null
-
-    return {
-      active: true,
-      effectId: selectedStep.effectId,
-      stepIndex: selectedStep.stepIndex,
-      locks: step.locks,
-      setLock: (paramId: string, value: number) =>
-        setStepLock(selectedStep.effectId, selectedStep.stepIndex, paramId, value),
-      clearLock: (paramId: string) =>
-        clearStepLock(selectedStep.effectId, selectedStep.stepIndex, paramId),
-    }
-  }, [selectedStep, validSelectedId, tracks, setStepLock, clearStepLock])
 
   // ─── Effect tab click → switch to effect params ────────────────────────
   const handleEffectTabSelect = useCallback(
@@ -260,13 +168,6 @@ export function UnifiedSequencerPanel() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [activeSequencer])
 
-  // ─── P-lock header data ───────────────────────────────────────────────
-  const selectedStepData = selectedStep
-    ? tracks[selectedStep.effectId]?.steps[selectedStep.stepIndex]
-    : null
-  const selectedDef = selectedStep ? EFFECT_MAP.get(selectedStep.effectId) : null
-  const lockCount = selectedStepData ? Object.keys(selectedStepData.locks).length : 0
-
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--bg-surface)' }}>
       {/* ─── Zone 1: Effect tabs ─────────────────────────────────────── */}
@@ -276,84 +177,19 @@ export function UnifiedSequencerPanel() {
         onSelect={handleEffectTabSelect}
       />
 
-      {/* ─── Zone 2: Param area (always rendered for stable layout) ──── */}
-      <div
-        className="flex-shrink-0 overflow-y-auto"
-        style={{
-          height: 200,
-          borderBottom: '1px solid var(--border)',
-          padding: (validSelectedId || paramView !== 'effect')
-            ? 'var(--panel-padding-sm) var(--panel-padding)'
-            : 0,
-        }}
-      >
-          {/* P-lock mode header */}
-          {plockContext && paramView === 'effect' && selectedDef && (
-            <div
-              className="flex items-center justify-between"
-              style={{ marginBottom: 6 }}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-[9px] font-bold uppercase tracking-wider"
-                  style={{ color: PLOCK }}
-                >
-                  P-Lock
-                </span>
-                <span
-                  className="text-[10px] tabular-nums"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  Step {selectedStep!.stepIndex + 1}
-                </span>
-                {lockCount > 0 && (
-                  <span
-                    className="text-[9px] tabular-nums"
-                    style={{ color: PLOCK, opacity: 0.6 }}
-                  >
-                    {lockCount} lock{lockCount !== 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {lockCount > 0 && (
-                  <button
-                    onClick={() => clearAllStepLocks(selectedStep!.effectId, selectedStep!.stepIndex)}
-                    className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm"
-                    style={{
-                      color: 'var(--text-ghost)',
-                      border: '1px solid var(--border)',
-                    }}
-                  >
-                    Clear All
-                  </button>
-                )}
-                <button
-                  onClick={clearSelection}
-                  className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm"
-                  style={{
-                    color: 'var(--text-ghost)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          )}
-
-          {paramView === 'effect' && validSelectedId ? (
-            plockContext ? (
-              <PLockProvider value={plockContext}>
-                <EffectParameters effectId={validSelectedId} />
-              </PLockProvider>
-            ) : (
-              <EffectParameters effectId={validSelectedId} />
-            )
-          ) : paramView !== 'effect' ? (
-            <ModulationContent activeModulator={paramView} />
-          ) : null}
-      </div>
+      {/* ─── Zone 2: Modulation content ────────────────────────────── */}
+      {paramView !== 'effect' && (
+        <div
+          className="flex-shrink-0 overflow-y-auto"
+          style={{
+            maxHeight: 200,
+            borderBottom: '1px solid var(--border)',
+            padding: 'var(--panel-padding-sm) var(--panel-padding)',
+          }}
+        >
+          <ModulationContent activeModulator={paramView} />
+        </div>
+      )}
 
       {/* ─── Zone 3: Mod tabs ────────────────────────────────────────── */}
       <ModTabsBar activeView={paramView} onSelectMod={handleModSelect} />

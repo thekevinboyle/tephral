@@ -230,7 +230,7 @@ export function EffectCard({
         onDoubleClick={onRemove}
         className="select-none touch-none cursor-grab active:cursor-grabbing"
         style={{
-          backgroundColor: '#1a1a2e',
+          backgroundColor: 'var(--bg-surface)',
           borderRadius: 6,
           opacity: isBypassed ? 0.35 : isDragging ? 0.8 : 1,
           transform: isDragging ? 'scale(1.02)' : 'scale(1)',
@@ -307,7 +307,7 @@ export function EffectCard({
       style={{
         flex: 1,
         minHeight: 0,
-        backgroundColor: '#1a1a2e',
+        backgroundColor: 'var(--bg-surface)',
         borderRadius: 6,
         opacity: isBypassed ? 0.4 : 1,
         overflow: 'hidden',

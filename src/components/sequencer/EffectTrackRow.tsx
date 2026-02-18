@@ -1,9 +1,8 @@
-import { useCallback, useState, useEffect, useRef } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useEffectSequencerStore, type EffectTrack } from '../../stores/effectSequencerStore'
 import { EffectStepCell } from './EffectStepCell'
 
 const SEQ = '#9580FF'
-const HOLD_MS = 250
 
 interface EffectTrackRowProps {
   effectId: string
@@ -31,31 +30,25 @@ export function EffectTrackRow({
     setTrackMuted,
     setTrackSoloed,
     setStepActive,
-    selectStep,
+    setStepLock,
     addToSelection,
-    clearSelection,
+    automationParam,
   } = useEffectSequencerStore()
 
   // Drag-to-draw state
   const [isDragging, setIsDragging] = useState(false)
   const [dragValue, setDragValue] = useState<boolean | null>(null)
 
-  // Hold-to-plock state
-  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const holdStep = useRef<number | null>(null)
-  const didHold = useRef(false)
-
   // Page-based display (8 steps per page)
   const pageStart = stepPage * 8
   const visibleSteps = track.steps.slice(pageStart, pageStart + 8)
 
-  const cancelHold = useCallback(() => {
-    if (holdTimer.current !== null) {
-      clearTimeout(holdTimer.current)
-      holdTimer.current = null
-    }
-    holdStep.current = null
-  }, [])
+  // Does automation target this track?
+  const automationTargetsThis = automationParam?.effectId === effectId
+  const automationParamId = automationTargetsThis ? automationParam!.paramId : null
+  const automationMin = automationTargetsThis ? automationParam!.min : 0
+  const automationMax = automationTargetsThis ? automationParam!.max : 1
+  const automationStep = automationTargetsThis ? automationParam!.step : 0.01
 
   const handleCellMouseDown = useCallback(
     (stepIndex: number, e: React.MouseEvent) => {
@@ -67,91 +60,57 @@ export function EffectTrackRow({
         return
       }
 
-      // Start hold detection
-      didHold.current = false
-      holdStep.current = stepIndex
-      holdTimer.current = setTimeout(() => {
-        didHold.current = true
-        holdTimer.current = null
-        // Hold fired → enter p-lock mode
-        const step = track.steps[stepIndex]
-        if (!step.active) {
-          setStepActive(effectId, stepIndex, true)
-        }
-        selectStep(effectId, stepIndex)
-      }, HOLD_MS)
-    },
-    [effectId, track.steps, selectStep, addToSelection, setStepActive],
-  )
-
-  const handleCellMouseUp = useCallback(
-    (stepIndex: number) => {
-      if (didHold.current) return // Hold already handled
-      cancelHold()
-
-      // Short click → toggle on/off
+      // Immediate toggle on left click
       const step = track.steps[stepIndex]
-      setStepActive(effectId, stepIndex, !step.active)
-      if (step.active) {
-        // Turning off → clear selection if this step was selected
-        if (
-          selectedStep?.effectId === effectId &&
-          selectedStep?.stepIndex === stepIndex
-        ) {
-          clearSelection()
-        }
-      }
+      const newValue = !step.active
+      setStepActive(effectId, stepIndex, newValue)
+
+      // Start drag-to-paint
+      setIsDragging(true)
+      setDragValue(newValue)
     },
-    [effectId, track.steps, setStepActive, clearSelection, selectedStep, cancelHold],
+    [effectId, track.steps, addToSelection, setStepActive],
   )
 
   const handleCellMouseEnter = useCallback(
     (stepIndex: number) => {
-      // If we're mid-hold and mouse moves to another cell, cancel hold + start drag paint
-      if (holdStep.current !== null && holdStep.current !== stepIndex) {
-        const wasActive = track.steps[holdStep.current]?.active
-        cancelHold()
-        didHold.current = true // Prevent mouseUp toggle
-        const paintValue = !wasActive
-        setIsDragging(true)
-        setDragValue(paintValue)
-        // Paint the original cell
-        if (track.steps[holdStep.current]?.active !== paintValue) {
-          setStepActive(effectId, holdStep.current, paintValue)
-        }
-        // Paint the entered cell
-        if (track.steps[stepIndex]?.active !== paintValue) {
-          setStepActive(effectId, stepIndex, paintValue)
-        }
-        return
-      }
-
       if (isDragging && dragValue !== null) {
         if (track.steps[stepIndex].active !== dragValue) {
           setStepActive(effectId, stepIndex, dragValue)
         }
       }
     },
-    [isDragging, dragValue, effectId, track.steps, setStepActive, cancelHold],
+    [isDragging, dragValue, effectId, track.steps, setStepActive],
   )
 
-  const handleCellDoubleClick = useCallback(
-    (_stepIndex: number) => {
-      // No-op: click toggles, hold enters p-lock
+  const handleSetLock = useCallback(
+    (stepIndex: number, value: number) => {
+      if (!automationParamId) return
+      setStepLock(effectId, stepIndex, automationParamId, value)
     },
-    [],
+    [effectId, automationParamId, setStepLock],
   )
 
-  // Global mouseup to end drag + cancel any pending hold
+  const handleActivateStep = useCallback(
+    (stepIndex: number) => {
+      setStepActive(effectId, stepIndex, true)
+    },
+    [effectId, setStepActive],
+  )
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+  }, [])
+
+  // Global mouseup to end drag
   useEffect(() => {
     const handleUp = () => {
-      cancelHold()
       setIsDragging(false)
       setDragValue(null)
     }
     window.addEventListener('mouseup', handleUp)
     return () => window.removeEventListener('mouseup', handleUp)
-  }, [cancelHold])
+  }, [])
 
   const isPlayheadOnPage =
     currentStep >= pageStart && currentStep < pageStart + 8
@@ -195,10 +154,7 @@ export function EffectTrackRow({
             }
             className="text-[9px] font-bold px-1 rounded-sm"
             style={{
-              backgroundColor:
-                track.mode === 'gate'
-                  ? `${SEQ}20`
-                  : `${SEQ}20`,
+              backgroundColor: `${SEQ}20`,
               color: SEQ,
               border: `1px solid ${SEQ}40`,
             }}
@@ -262,6 +218,10 @@ export function EffectTrackRow({
             selectedStep?.effectId === effectId &&
             selectedStep?.stepIndex === actualIndex
 
+          const lockValue = automationParamId != null
+            ? step.locks[automationParamId] as number | undefined
+            : undefined
+
           return (
             <EffectStepCell
               key={actualIndex}
@@ -270,9 +230,15 @@ export function EffectTrackRow({
               isCurrentStep={isCurrent}
               isSelected={isSelected}
               onMouseDown={handleCellMouseDown}
-              onMouseUp={handleCellMouseUp}
               onMouseEnter={handleCellMouseEnter}
-              onDoubleClick={handleCellDoubleClick}
+              onContextMenu={handleContextMenu}
+              automationParamId={automationParamId}
+              automationMin={automationMin}
+              automationMax={automationMax}
+              automationStep={automationStep}
+              lockValue={lockValue}
+              onSetLock={handleSetLock}
+              onActivateStep={handleActivateStep}
             />
           )
         })}

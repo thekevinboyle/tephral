@@ -61,7 +61,7 @@ export interface SampleHoldState {
 
 export type ModulatorType = 'lfo' | 'random' | 'step' | 'envelope' | 'sampleHold'
 
-interface ModulationState {
+export interface ModulationState {
   lfo: LFOState
   random: RandomState
   step: StepState

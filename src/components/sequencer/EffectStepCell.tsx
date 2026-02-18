@@ -28,7 +28,7 @@ export const EffectStepCell = memo(function EffectStepCell({
   stepIndex,
   step,
   isCurrentStep,
-  isSelected,
+  isSelected: _isSelected,
   onMouseDown,
   onMouseEnter,
   onContextMenu,
@@ -41,6 +41,7 @@ export const EffectStepCell = memo(function EffectStepCell({
   onActivateStep,
   genericLockFill,
 }: EffectStepCellProps) {
+  void _isSelected
   const hasLocks = Object.keys(step.locks).length > 0
   const hasProbability = step.probability < 1
   const isPlayheadHit = isCurrentStep && step.active

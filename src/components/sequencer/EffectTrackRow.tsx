@@ -23,11 +23,12 @@ export function EffectTrackRow({
   stepPage,
   currentStep,
   selectedStep,
-  color,
+  color: _color,
   label,
   isSelectedTrack,
   onSelectTrack,
 }: EffectTrackRowProps) {
+  void _color
   const {
     setTrackMode,
     setTrackMuted,

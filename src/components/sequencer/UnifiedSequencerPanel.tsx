@@ -75,10 +75,6 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
   )
 
   // ─── Auto-select / clear stale selection ──────────────────────────────
-  const validSelectedId = selectedEffectId && activeEffectIds.includes(selectedEffectId)
-    ? selectedEffectId
-    : null
-
   useEffect(() => {
     if (selectedEffectId && !activeEffectIds.includes(selectedEffectId)) {
       setSelectedEffect(activeEffectIds.length > 0 ? activeEffectIds[0] : null)

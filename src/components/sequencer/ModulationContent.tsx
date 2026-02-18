@@ -1,4 +1,4 @@
-import { useModulationStore, type LFOShape } from '../../stores/modulationStore'
+import { useModulationStore, type LFOShape, type ModulationState } from '../../stores/modulationStore'
 import { useSequencerStore } from '../../stores/sequencerStore'
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -330,7 +330,7 @@ export function ModulationPanel() {
 // ════════════════════════════════════════════════════════════════════════════
 
 // Common modulator store type
-type ModStore = ReturnType<typeof useModulationStore>
+type ModStore = ModulationState
 
 interface WrappedModProps {
   wrapped?: boolean

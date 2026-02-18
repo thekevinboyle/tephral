@@ -80,7 +80,7 @@ export function PLockDetail({ effectId, stepIndex, step, color, label }: PLockDe
             param={param}
             effectId={effectId}
             stepIndex={stepIndex}
-            lockedValue={step.locks[param.id]}
+            lockedValue={step.locks[param.id] as number | undefined}
             isLocked={param.id in step.locks}
             onLock={setStepLock}
             onClear={clearStepLock}

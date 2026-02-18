@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { PlayIcon, StopIcon, DiceIcon, ShuffleIcon, ClearIcon } from '../ui/DotMatrixIcons'
-import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
+import { useEffectSequencerStore, type EffectStepResolution } from '../../stores/effectSequencerStore'
 import { useUIStore } from '../../stores/uiStore'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 
@@ -113,7 +113,7 @@ interface SequencerTransportProps {
   onPlay: () => void
   onStop: () => void
   onBpmChange: (bpm: number) => void
-  onResolutionChange: (res: string) => void
+  onResolutionChange: (res: EffectStepResolution) => void
   onSwingChange: (swing: number) => void
   onPageChange: (page: number) => void
 }

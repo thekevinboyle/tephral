@@ -158,7 +158,7 @@ export const DESTRUCTION_EFFECTS: EffectDefinition[] = [
   // Row 1: Core destruction effects (red theme)
   { id: 'datamosh', label: 'MOSH', color: '#ff0000', row: 'color', page: 5, min: 0, max: 1 },
   { id: 'pixelSort', label: 'SORT', color: '#ff3366', row: 'color', page: 5, min: 0, max: 1 },
-  { id: 'destruction_reserved_3', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'sonify', label: 'SONIFY', color: '#ff6600', row: 'color', page: 5, min: 0, max: 1 },
   { id: 'destruction_reserved_4', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
 
   // Row 2: Reserved

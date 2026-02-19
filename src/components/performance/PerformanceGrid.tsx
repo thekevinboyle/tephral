@@ -887,6 +887,17 @@ export function PerformanceGrid() {
           onValueChange: (v: number) => destruction.updatePixelSortParams({ intensity: v / 100 }),
         }
 
+      case 'sonify':
+        return {
+          active: destruction.sonifyEnabled,
+          value: destruction.sonifyParams.sampleRate * 100,
+          onToggle: () => {
+            if (!destruction.sonifyEnabled) moveToEndOfChain(effectId)
+            destruction.setSonifyEnabled(!destruction.sonifyEnabled)
+          },
+          onValueChange: (v: number) => destruction.updateSonifyParams({ sampleRate: v / 100 }),
+        }
+
       // Reserved / empty slots
       default:
         if (effectId.startsWith('reserved')) {
@@ -942,7 +953,7 @@ export function PerformanceGrid() {
         return motion.motionExtractEnabled || motion.echoTrailEnabled ||
                motion.timeSmearEnabled || motion.freezeMaskEnabled
       case 5: // DESTRUCTION
-        return destruction.datamoshEnabled
+        return destruction.datamoshEnabled || destruction.pixelSortEnabled || destruction.sonifyEnabled
       default:
         return false
     }
@@ -1047,6 +1058,8 @@ export function PerformanceGrid() {
             motionState.setTimeSmearEnabled(false)
             motionState.setFreezeMaskEnabled(false)
             destructionState.setDatamoshEnabled(false)
+            destructionState.setPixelSortEnabled(false)
+            destructionState.setSonifyEnabled(false)
           }}
           title="Clear all effects"
           className="w-6 h-6 flex items-center justify-center rounded-sm transition-all hover:scale-105"

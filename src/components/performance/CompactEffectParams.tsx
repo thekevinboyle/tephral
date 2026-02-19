@@ -653,6 +653,15 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
             onChange={v => destruction.updatePixelSortParams({ threshold: v })} paramId="pixelSort.threshold" {...knobProps} />
         </div>
       )
+    case 'sonify':
+      return (
+        <div className="flex gap-4">
+          <Knob label="RATE" value={destruction.sonifyParams.sampleRate} min={0.01} max={1} step={0.01}
+            onChange={v => destruction.updateSonifyParams({ sampleRate: v })} paramId="sonify.sampleRate" {...knobProps} />
+          <Knob label="BITS" value={destruction.sonifyParams.bitDepth} min={1} max={16} step={1}
+            onChange={v => destruction.updateSonifyParams({ bitDepth: v })} paramId="sonify.bitDepth" {...knobProps} />
+        </div>
+      )
 
     default:
       return null

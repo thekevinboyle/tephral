@@ -2,27 +2,33 @@ import { create } from 'zustand'
 import {
   DEFAULT_DATAMOSH_PARAMS,
   DEFAULT_PIXEL_SORT_PARAMS,
+  DEFAULT_SONIFY_PARAMS,
   type DatamoshParams,
   type PixelSortParams,
+  type SonifyParams,
 } from '../effects/glitch-engine'
 
 // Re-export for convenience
-export type { DatamoshParams, PixelSortParams }
+export type { DatamoshParams, PixelSortParams, SonifyParams }
 
 interface DestructionState {
   // Enable states
   datamoshEnabled: boolean
   pixelSortEnabled: boolean
+  sonifyEnabled: boolean
 
   // Parameters
   datamoshParams: DatamoshParams
   pixelSortParams: PixelSortParams
+  sonifyParams: SonifyParams
 
   // Actions
   setDatamoshEnabled: (enabled: boolean) => void
   updateDatamoshParams: (params: Partial<DatamoshParams>) => void
   setPixelSortEnabled: (enabled: boolean) => void
   updatePixelSortParams: (params: Partial<PixelSortParams>) => void
+  setSonifyEnabled: (enabled: boolean) => void
+  updateSonifyParams: (params: Partial<SonifyParams>) => void
 
   // Snapshot for presets
   getSnapshot: () => DestructionSnapshot
@@ -34,6 +40,8 @@ export interface DestructionSnapshot {
   datamoshParams: DatamoshParams
   pixelSortEnabled: boolean
   pixelSortParams: PixelSortParams
+  sonifyEnabled: boolean
+  sonifyParams: SonifyParams
 }
 
 export const useDestructionStore = create<DestructionState>((set, get) => ({
@@ -42,6 +50,9 @@ export const useDestructionStore = create<DestructionState>((set, get) => ({
 
   pixelSortEnabled: false,
   pixelSortParams: { ...DEFAULT_PIXEL_SORT_PARAMS },
+
+  sonifyEnabled: false,
+  sonifyParams: { ...DEFAULT_SONIFY_PARAMS },
 
   setDatamoshEnabled: (enabled) => set({ datamoshEnabled: enabled }),
   updateDatamoshParams: (params) => set((state) => ({
@@ -53,6 +64,11 @@ export const useDestructionStore = create<DestructionState>((set, get) => ({
     pixelSortParams: { ...state.pixelSortParams, ...params },
   })),
 
+  setSonifyEnabled: (enabled) => set({ sonifyEnabled: enabled }),
+  updateSonifyParams: (params) => set((state) => ({
+    sonifyParams: { ...state.sonifyParams, ...params },
+  })),
+
   getSnapshot: () => {
     const state = get()
     return {
@@ -60,6 +76,8 @@ export const useDestructionStore = create<DestructionState>((set, get) => ({
       datamoshParams: { ...state.datamoshParams },
       pixelSortEnabled: state.pixelSortEnabled,
       pixelSortParams: { ...state.pixelSortParams },
+      sonifyEnabled: state.sonifyEnabled,
+      sonifyParams: { ...state.sonifyParams },
     }
   },
 
@@ -68,5 +86,7 @@ export const useDestructionStore = create<DestructionState>((set, get) => ({
     datamoshParams: { ...snapshot.datamoshParams },
     pixelSortEnabled: snapshot.pixelSortEnabled,
     pixelSortParams: { ...snapshot.pixelSortParams },
+    sonifyEnabled: snapshot.sonifyEnabled ?? false,
+    sonifyParams: snapshot.sonifyParams ? { ...snapshot.sonifyParams } : { ...DEFAULT_SONIFY_PARAMS },
   }),
 }))

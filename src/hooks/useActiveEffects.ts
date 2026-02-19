@@ -175,6 +175,7 @@ export function useActiveEffects() {
     // Destruction effects
     if (destruction.datamoshEnabled) activeEffects.push({ id: 'datamosh', label: 'Datamosh', color: '#ff0000', primaryValue: Math.round(destruction.datamoshParams.intensity * 100), primaryLabel: 'int' })
     if (destruction.pixelSortEnabled) activeEffects.push({ id: 'pixelSort', label: 'Pixel Sort', color: '#ff3366', primaryValue: Math.round(destruction.pixelSortParams.intensity * 100), primaryLabel: 'int' })
+    if (destruction.sonifyEnabled) activeEffects.push({ id: 'sonify', label: 'Sonify', color: '#ff6600', primaryValue: Math.round(destruction.sonifyParams.sampleRate * 100), primaryLabel: 'rate' })
 
     // Sort by effectOrder
     return [...activeEffects].sort((a, b) => {

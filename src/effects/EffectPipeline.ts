@@ -24,6 +24,7 @@ import {
   AsciiEffect,
   DatamoshEffect,
   PixelSortEffect,
+  SonifyEffect,
   // Trace effects
   BrightTraceEffect,
   MotionTraceEffect,
@@ -69,6 +70,7 @@ export class EffectPipeline {
   // Destruction effects
   datamosh: DatamoshEffect | null = null
   pixelSort: PixelSortEffect | null = null
+  sonify: SonifyEffect | null = null
 
   // Trace effects (mask generation)
   brightTrace: BrightTraceEffect | null = null
@@ -137,6 +139,7 @@ export class EffectPipeline {
     // Destruction effects
     this.datamosh = new DatamoshEffect()
     this.pixelSort = new PixelSortEffect()
+    this.sonify = new SonifyEffect()
 
     // Trace effects (for mask generation)
     this.brightTrace = new BrightTraceEffect()
@@ -172,6 +175,7 @@ export class EffectPipeline {
       case 'ascii': return this.asciiEffect
       case 'datamosh': return this.datamosh
       case 'pixelSort': return this.pixelSort
+      case 'sonify': return this.sonify
       // Trace effects
       case 'track_bright': return this.brightTrace
       case 'track_motion': return this.motionTrace
@@ -210,6 +214,7 @@ export class EffectPipeline {
     // Destruction effects
     datamoshEnabled: boolean
     pixelSortEnabled: boolean
+    sonifyEnabled: boolean
     // Trace effects
     brightTraceEnabled: boolean
     motionTraceEnabled: boolean
@@ -267,6 +272,7 @@ export class EffectPipeline {
       ascii: config.asciiEnabled,
       datamosh: config.datamoshEnabled,
       pixelSort: config.pixelSortEnabled,
+      sonify: config.sonifyEnabled,
       // Trace effects
       track_bright: config.brightTraceEnabled,
       track_motion: config.motionTraceEnabled,
@@ -447,6 +453,7 @@ export class EffectPipeline {
     this.asciiEffect?.dispose()
     this.datamosh?.dispose()
     this.pixelSort?.dispose()
+    this.sonify?.dispose()
     // Trace effects
     this.brightTrace?.dispose()
     this.motionTrace?.dispose()

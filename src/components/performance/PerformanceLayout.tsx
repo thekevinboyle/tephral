@@ -10,6 +10,7 @@ import { TransportBar } from './TransportBar'
 import { MiddleSection } from './MiddleSection'
 import { ModulationLines } from './ModulationLines'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
+import { AudioSourceRow } from '../sequencer/AudioSourceRow'
 import { SharedEffectTabsBar } from '../sequencer/SharedEffectTabsBar'
 // DataTerminal stashed — component file kept, just not rendered
 // import { DataTerminal } from '../terminal/DataTerminal'
@@ -22,7 +23,10 @@ import { usePolyEuclidEngine } from '../../hooks/usePolyEuclidEngine'
 import { useModulationEngine } from '../../hooks/useModulationEngine'
 import { useDestructionMode } from '../../hooks/useDestructionMode'
 import { useDestructionChaos } from '../../hooks/useDestructionChaos'
+import { useUnifiedAudioAnalysis } from '../../hooks/useUnifiedAudioAnalysis'
+import { useAudioReactive } from '../../hooks/useAudioReactive'
 import { DestructionOverlay } from '../DestructionOverlay'
+import { LFOEditorPanel } from './LFOEditorPanel'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
@@ -45,6 +49,12 @@ export function PerformanceLayout() {
   // Initialize destruction mode (hidden feature)
   useDestructionMode()
   useDestructionChaos()
+
+  // Audio analysis (always runs — feeds waveform display + audio gate)
+  useUnifiedAudioAnalysis()
+
+  // Audio reactive DSP (FFT band splitting + envelope following)
+  useAudioReactive()
 
   const captureRef = useRef<HTMLCanvasElement | null>(null)
 
@@ -71,7 +81,7 @@ export function PerformanceLayout() {
       style={{
         display: 'grid',
         gridTemplateRows: 'var(--row-header) 1fr auto 1fr',
-        gridTemplateColumns: 'var(--col-left) 1fr',
+        gridTemplateColumns: 'var(--col-left) var(--col-grid) 1fr',
         gap: 'var(--gap)',
         padding: 'var(--gap)',
       }}
@@ -111,12 +121,24 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Row 2, Col 2: Canvas + Transport */}
+      {/* Row 2, Col 2: Modulation editor */}
+      <div
+        className="rounded-sm overflow-hidden"
+        style={{
+          gridRow: 2,
+          gridColumn: 2,
+          border: '1px solid var(--border)',
+        }}
+      >
+        <LFOEditorPanel />
+      </div>
+
+      {/* Row 2, Col 3: Canvas + Transport */}
       <div
         className="flex flex-col rounded-sm overflow-hidden"
         style={{
           gridRow: 2,
-          gridColumn: 2,
+          gridColumn: 3,
           border: '1px solid var(--border)',
         }}
       >
@@ -124,27 +146,28 @@ export function PerformanceLayout() {
           <Canvas ref={canvasRef} />
           <ClipBin />
         </div>
+        <AudioSourceRow />
         <TransportBar />
       </div>
 
-      {/* Row 3, Col 2: Effect Tabs Bar */}
+      {/* Row 3, Cols 2-3: Effect Tabs Bar */}
       <div
         className="rounded-sm overflow-hidden"
         style={{
           gridRow: 3,
-          gridColumn: 2,
+          gridColumn: '2 / -1',
           border: '1px solid var(--border)',
         }}
       >
         <SharedEffectTabsBar />
       </div>
 
-      {/* Row 4, Col 2: Grid + Sequencer */}
+      {/* Row 4, Cols 2-3: Grid + Sequencer */}
       <div
         className="flex rounded-sm overflow-hidden"
         style={{
           gridRow: 4,
-          gridColumn: 2,
+          gridColumn: '2 / -1',
           gap: 'var(--gap)',
         }}
       >

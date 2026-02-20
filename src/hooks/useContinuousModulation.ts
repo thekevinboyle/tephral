@@ -8,6 +8,10 @@ import { useAcidStore } from '../stores/acidStore'
 import { useSlicerStore } from '../stores/slicerStore'
 import { useStrandStore } from '../stores/strandStore'
 import { usePolyEuclidStore } from '../stores/polyEuclidStore'
+import { useMIDIStore } from '../stores/midiStore'
+import { useAudioReactiveStore } from '../stores/audioReactiveStore'
+import { useMotionStore } from '../stores/motionStore'
+import { useDestructionStore } from '../stores/destructionStore'
 
 /**
  * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope)
@@ -288,6 +292,96 @@ export function useContinuousModulation() {
           if (paramName === 'spray') slicer.updateGrainParams({ spray: value })
           if (paramName === 'wet') slicer.setWet(value)
           break
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // ACID EFFECTS (continued — halftone, hex, scan, ripple)
+        // ═══════════════════════════════════════════════════════════════════════
+        case 'acid_halftone':
+          if (paramName === 'dotSize') acid.updateHalftoneParams({ dotSize: 1 + Math.floor(value * 63) })
+          if (paramName === 'angle') acid.updateHalftoneParams({ angle: value * 360 })
+          if (paramName === 'contrast') acid.updateHalftoneParams({ contrast: value * 2 })
+          break
+        case 'acid_hex':
+          if (paramName === 'cellSize') acid.updateHexParams({ cellSize: 2 + Math.floor(value * 126) })
+          if (paramName === 'rotation') acid.updateHexParams({ rotation: value * 360 })
+          break
+        case 'acid_scan':
+          if (paramName === 'speed') acid.updateScanParams({ speed: 0.1 + value * 19.9 })
+          if (paramName === 'width') acid.updateScanParams({ width: 1 + Math.floor(value * 99) })
+          if (paramName === 'trail') acid.updateScanParams({ trail: value })
+          break
+        case 'acid_ripple':
+          if (paramName === 'frequency') acid.updateRippleParams({ frequency: 0.1 + value * 49.9 })
+          if (paramName === 'amplitude') acid.updateRippleParams({ amplitude: value * 100 })
+          if (paramName === 'speed') acid.updateRippleParams({ speed: 0.1 + value * 9.9 })
+          if (paramName === 'decay') acid.updateRippleParams({ decay: value })
+          break
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // MOTION EFFECTS
+        // ═══════════════════════════════════════════════════════════════════════
+        case 'motion_extract': {
+          const motionStore = useMotionStore.getState()
+          if (paramName === 'threshold') motionStore.updateMotionExtract({ threshold: value })
+          if (paramName === 'frameCount') motionStore.updateMotionExtract({ frameCount: 2 + Math.floor(value * 6) })
+          if (paramName === 'amplify') motionStore.updateMotionExtract({ amplify: 1 + value * 9 })
+          if (paramName === 'originalMix') motionStore.updateMotionExtract({ originalMix: value })
+          break
+        }
+        case 'echo_trail': {
+          const motionStore = useMotionStore.getState()
+          if (paramName === 'trailCount') motionStore.updateEchoTrail({ trailCount: 2 + Math.floor(value * 14) })
+          if (paramName === 'decay') motionStore.updateEchoTrail({ decay: value })
+          if (paramName === 'offset') motionStore.updateEchoTrail({ offset: value * 0.1 })
+          if (paramName === 'hueAmount') motionStore.updateEchoTrail({ hueAmount: value * 60 })
+          break
+        }
+        case 'time_smear': {
+          const motionStore = useMotionStore.getState()
+          if (paramName === 'accumulation') motionStore.updateTimeSmear({ accumulation: value })
+          if (paramName === 'threshold') motionStore.updateTimeSmear({ threshold: value })
+          break
+        }
+        case 'freeze_mask': {
+          const motionStore = useMotionStore.getState()
+          if (paramName === 'freezeThreshold') motionStore.updateFreezeMask({ freezeThreshold: value })
+          if (paramName === 'updateSpeed') motionStore.updateFreezeMask({ updateSpeed: value })
+          break
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // DESTRUCTION EFFECTS
+        // ═══════════════════════════════════════════════════════════════════════
+        case 'datamosh': {
+          const dest = useDestructionStore.getState()
+          if (paramName === 'intensity') dest.updateDatamoshParams({ intensity: value })
+          if (paramName === 'blockSize') dest.updateDatamoshParams({ blockSize: 4 + Math.floor(value * 28) })
+          if (paramName === 'keyframeChance') dest.updateDatamoshParams({ keyframeChance: value * 0.1 })
+          if (paramName === 'chaos') dest.updateDatamoshParams({ chaos: value })
+          if (paramName === 'feedback') dest.updateDatamoshParams({ feedback: value })
+          if (paramName === 'mix') dest.updateDatamoshParams({ mix: value })
+          break
+        }
+        case 'pixelSort': {
+          const dest = useDestructionStore.getState()
+          if (paramName === 'threshold') dest.updatePixelSortParams({ threshold: value })
+          if (paramName === 'streakLength') dest.updatePixelSortParams({ streakLength: 1 + Math.floor(value * 499) })
+          if (paramName === 'intensity') dest.updatePixelSortParams({ intensity: value })
+          if (paramName === 'randomness') dest.updatePixelSortParams({ randomness: value })
+          if (paramName === 'mix') dest.updatePixelSortParams({ mix: value })
+          break
+        }
+        case 'sonify': {
+          const dest = useDestructionStore.getState()
+          if (paramName === 'sampleRate') dest.updateSonifyParams({ sampleRate: 0.01 + value * 0.99 })
+          if (paramName === 'bitDepth') dest.updateSonifyParams({ bitDepth: 1 + Math.floor(value * 15) })
+          if (paramName === 'drive') dest.updateSonifyParams({ drive: value })
+          if (paramName === 'filterCutoff') dest.updateSonifyParams({ filterCutoff: value })
+          if (paramName === 'byteOffset') dest.updateSonifyParams({ byteOffset: value })
+          if (paramName === 'intensity') dest.updateSonifyParams({ intensity: value })
+          if (paramName === 'mix') dest.updateSonifyParams({ mix: value })
+          break
+        }
       }
     }
 
@@ -316,12 +410,14 @@ export function useContinuousModulation() {
         }
       }
 
-      // LFO routings
-      const lfoRoutings = currentRoutings.filter(r => r.trackId === 'lfo')
-      if (lfoRoutings.length > 0 && modState.lfo.enabled) {
-        for (const routing of lfoRoutings) {
-          const modulatedValue = modState.lfo.currentValue * routing.depth
-          applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
+      // LFO routings (8 independent LFOs)
+      for (let i = 0; i < modState.lfos.length; i++) {
+        const lfoRoutings = currentRoutings.filter(r => r.trackId === `lfo-${i}`)
+        if (lfoRoutings.length > 0 && modState.lfos[i].enabled) {
+          for (const routing of lfoRoutings) {
+            const modulatedValue = modState.lfos[i].currentValue * routing.depth
+            applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
+          }
         }
       }
 
@@ -369,6 +465,35 @@ export function useContinuousModulation() {
         for (const routing of trackRoutings) {
           const modulatedValue = track.currentValue * routing.depth
           applyModulation(routing.targetParam, Math.max(0, Math.min(1, modulatedValue)))
+        }
+      }
+
+      // MIDI CC routings
+      const midiState = useMIDIStore.getState()
+      const midiCCRoutings = currentRoutings.filter(r => r.trackId.startsWith('midi-cc-'))
+      if (midiCCRoutings.length > 0) {
+        for (const routing of midiCCRoutings) {
+          const ccNumber = parseInt(routing.trackId.split('-')[2])
+          const rawValue = midiState.ccValues[ccNumber] ?? 0
+          const normalizedValue = rawValue / 127
+          applyModulation(routing.targetParam, Math.max(0, Math.min(1, normalizedValue * routing.depth)))
+        }
+      }
+
+      // Audio reactive band routings
+      const audioReactive = useAudioReactiveStore.getState()
+      if (audioReactive.enabled) {
+        const audioBands: Record<string, number> = {
+          'audio-sub': audioReactive.sub,
+          'audio-mid': audioReactive.mid,
+          'audio-high': audioReactive.high,
+          'audio-hit': audioReactive.hit,
+        }
+        for (const [trackId, value] of Object.entries(audioBands)) {
+          const bandRoutings = currentRoutings.filter(r => r.trackId === trackId)
+          for (const routing of bandRoutings) {
+            applyModulation(routing.targetParam, Math.max(0, Math.min(1, value * routing.depth)))
+          }
         }
       }
 

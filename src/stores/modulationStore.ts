@@ -59,30 +59,34 @@ export interface SampleHoldState {
   timeSinceSample: number
 }
 
+export const LFO_COUNT = 8
+
 export type ModulatorType = 'lfo' | 'random' | 'step' | 'envelope' | 'sampleHold'
 
 export interface ModulationState {
-  lfo: LFOState
+  lfos: LFOState[]
+  selectedLFOIndex: number
+  setSelectedLFOIndex: (index: number) => void
   random: RandomState
   step: StepState
   envelope: EnvelopeState
   sampleHold: SampleHoldState
 
   // Assignment mode - which modulator is being assigned to params
-  assigningModulator: ModulatorType | null
-  setAssigningModulator: (type: ModulatorType | null) => void
-  toggleAssignmentMode: (type: ModulatorType) => void
+  assigningModulator: string | null
+  setAssigningModulator: (type: string | null) => void
+  toggleAssignmentMode: (type: string) => void
 
   // Selected modulator - which modulator's params are shown
-  selectedModulator: ModulatorType | null
-  setSelectedModulator: (type: ModulatorType | null) => void
+  selectedModulator: string | null
+  setSelectedModulator: (type: string | null) => void
 
-  // LFO actions
-  toggleLFO: () => void
-  setLFOEnabled: (enabled: boolean) => void
-  setLFORate: (rate: number) => void
-  setLFOShape: (shape: LFOShape) => void
-  updateLFO: (delta: number) => void
+  // LFO actions (now with index)
+  toggleLFO: (index: number) => void
+  setLFOEnabled: (index: number, enabled: boolean) => void
+  setLFORate: (index: number, rate: number) => void
+  setLFOShape: (index: number, shape: LFOShape) => void
+  updateAllLFOs: (delta: number) => void
 
   // Random actions
   toggleRandom: () => void
@@ -122,16 +126,59 @@ export interface ModulationState {
 
 const DEFAULT_STEPS = [0, 0.25, 0.5, 0.75, 1, 0.75, 0.5, 0.25]
 
-export const useModulationStore = create<ModulationState>((set, get) => ({
-  // LFO State
-  lfo: {
+function createDefaultLFO(): LFOState {
+  return {
     enabled: false,
     rate: 1,
     shape: 'sine',
     phase: 0,
     currentValue: 0.5,
     holdValue: Math.random(),
-  },
+  }
+}
+
+function updateLFOAt(lfos: LFOState[], index: number, partial: Partial<LFOState>): LFOState[] {
+  const result = lfos.slice()
+  result[index] = { ...result[index], ...partial }
+  return result
+}
+
+function computeLFOValue(lfo: LFOState, delta: number): LFOState {
+  let newPhase = (lfo.phase + delta * lfo.rate) % 1
+  let newValue: number
+  let newHoldValue = lfo.holdValue
+
+  switch (lfo.shape) {
+    case 'sine':
+      newValue = Math.sin(newPhase * Math.PI * 2) * 0.5 + 0.5
+      break
+    case 'triangle':
+      newValue = 1 - Math.abs(newPhase * 2 - 1)
+      break
+    case 'square':
+      newValue = newPhase < 0.5 ? 1 : 0
+      break
+    case 'saw':
+      newValue = newPhase
+      break
+    case 'random':
+      if (newPhase < lfo.phase) {
+        newHoldValue = Math.random()
+      }
+      newValue = newHoldValue
+      break
+    default:
+      newValue = 0.5
+  }
+
+  return { ...lfo, phase: newPhase, currentValue: newValue, holdValue: newHoldValue }
+}
+
+export const useModulationStore = create<ModulationState>((set, get) => ({
+  // LFO State — 8 independent LFOs
+  lfos: Array.from({ length: LFO_COUNT }, () => createDefaultLFO()),
+  selectedLFOIndex: 0,
+  setSelectedLFOIndex: (index) => set({ selectedLFOIndex: Math.max(0, Math.min(LFO_COUNT - 1, index)) }),
 
   // Random State
   random: {
@@ -193,48 +240,29 @@ export const useModulationStore = create<ModulationState>((set, get) => ({
   selectedModulator: null,
   setSelectedModulator: (type) => set({ selectedModulator: type }),
 
-  // LFO Actions
-  toggleLFO: () => set((state) => ({ lfo: { ...state.lfo, enabled: !state.lfo.enabled } })),
-  setLFOEnabled: (enabled) => set((state) => ({ lfo: { ...state.lfo, enabled } })),
-  setLFORate: (rate) => set((state) => ({ lfo: { ...state.lfo, rate: Math.max(0.1, Math.min(20, rate)) } })),
-  setLFOShape: (shape) => set((state) => ({ lfo: { ...state.lfo, shape } })),
+  // LFO Actions (indexed)
+  toggleLFO: (index) => set((state) => ({
+    lfos: updateLFOAt(state.lfos, index, { enabled: !state.lfos[index].enabled })
+  })),
+  setLFOEnabled: (index, enabled) => set((state) => ({
+    lfos: updateLFOAt(state.lfos, index, { enabled })
+  })),
+  setLFORate: (index, rate) => set((state) => ({
+    lfos: updateLFOAt(state.lfos, index, { rate: Math.max(0.1, Math.min(20, rate)) })
+  })),
+  setLFOShape: (index, shape) => set((state) => ({
+    lfos: updateLFOAt(state.lfos, index, { shape })
+  })),
 
-  updateLFO: (delta) => {
-    const { lfo } = get()
-    if (!lfo.enabled) return
-
-    // Advance phase
-    let newPhase = (lfo.phase + delta * lfo.rate) % 1
-    let newValue: number
-    let newHoldValue = lfo.holdValue
-
-    // Calculate value based on shape
-    switch (lfo.shape) {
-      case 'sine':
-        newValue = Math.sin(newPhase * Math.PI * 2) * 0.5 + 0.5
-        break
-      case 'triangle':
-        newValue = 1 - Math.abs(newPhase * 2 - 1)
-        break
-      case 'square':
-        newValue = newPhase < 0.5 ? 1 : 0
-        break
-      case 'saw':
-        newValue = newPhase
-        break
-      case 'random':
-        // Sample and hold - new random value at each cycle
-        if (newPhase < lfo.phase) {
-          // Phase wrapped - new cycle
-          newHoldValue = Math.random()
-        }
-        newValue = newHoldValue
-        break
-      default:
-        newValue = 0.5
-    }
-
-    set({ lfo: { ...lfo, phase: newPhase, currentValue: newValue, holdValue: newHoldValue } })
+  updateAllLFOs: (delta) => {
+    const { lfos } = get()
+    let anyEnabled = false
+    const newLfos = lfos.map(lfo => {
+      if (!lfo.enabled) return lfo
+      anyEnabled = true
+      return computeLFOValue(lfo, delta)
+    })
+    if (anyEnabled) set({ lfos: newLfos })
   },
 
   // Random Actions

@@ -13,7 +13,7 @@
 
   /* Layout grid */
   --col-left: 320px;
-  --col-grid: 480px;
+  --col-grid: 380px;
   --col-right: 200px;
   --col-canvas: 480px;
   --row-header: 40px;
@@ -250,7 +250,7 @@ body {
 @media (min-width: 1280px) {
   :root {
     --col-left: 360px;
-    --col-grid: 520px;
+    --col-grid: 420px;
     --col-right: 240px;
   }
 }
@@ -258,7 +258,7 @@ body {
 @media (min-width: 1536px) {
   :root {
     --col-left: 400px;
-    --col-grid: 560px;
+    --col-grid: 460px;
     --col-right: 280px;
   }
 }
@@ -266,7 +266,7 @@ body {
 @media (min-width: 1920px) {
   :root {
     --col-left: 440px;
-    --col-grid: 600px;
+    --col-grid: 500px;
     --col-right: 320px;
   }
 }

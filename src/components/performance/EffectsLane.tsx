@@ -3,7 +3,7 @@ import { ModulationPanel } from '../sequencer/ModulationContent'
 
 export function EffectsLane() {
   const modulation = useModulationStore()
-  const hasActiveModulation = modulation.lfo.enabled || modulation.random.enabled || modulation.step.enabled || modulation.envelope.enabled || modulation.sampleHold.enabled
+  const hasActiveModulation = modulation.lfos.some(l => l.enabled) || modulation.random.enabled || modulation.step.enabled || modulation.envelope.enabled || modulation.sampleHold.enabled
 
   return (
     <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--bg-surface)' }}>

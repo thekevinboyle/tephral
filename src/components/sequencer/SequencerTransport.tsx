@@ -1,8 +1,11 @@
 import { useCallback } from 'react'
 import { PlayIcon, StopIcon, DiceIcon, ShuffleIcon, ClearIcon } from '../ui/DotMatrixIcons'
 import { useEffectSequencerStore, type EffectStepResolution } from '../../stores/effectSequencerStore'
+import { useMIDIStore } from '../../stores/midiStore'
 import { useUIStore } from '../../stores/uiStore'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
+
+const MIDI_COLOR = '#00AAFF'
 
 const RESOLUTION_OPTIONS = ['1/4', '1/8', '1/16', '1/32'] as const
 
@@ -132,6 +135,12 @@ export function SequencerTransport({
   onSwingChange,
   onPageChange,
 }: SequencerTransportProps) {
+  const clockSyncEnabled = useMIDIStore((s) => s.clockSyncEnabled)
+  const clockBpm = useMIDIStore((s) => s.clockBpm)
+  const isConnected = useMIDIStore((s) => s.isConnected)
+  const midiInputs = useMIDIStore((s) => s.inputs)
+  const setClockSyncEnabled = useMIDIStore((s) => s.setClockSyncEnabled)
+
   const handleBpmDrag = useCallback(
     (e: React.MouseEvent) => {
       const startY = e.clientY
@@ -205,15 +214,34 @@ export function SequencerTransport({
 
       {/* BPM */}
       <div
-        className="text-[13px] cursor-ns-resize select-none"
-        style={{ color: 'var(--text-secondary)' }}
-        onMouseDown={handleBpmDrag}
+        className="text-[13px] select-none"
+        style={{
+          color: clockSyncEnabled ? MIDI_COLOR : 'var(--text-secondary)',
+          cursor: clockSyncEnabled ? 'default' : 'ns-resize',
+        }}
+        onMouseDown={clockSyncEnabled ? undefined : handleBpmDrag}
       >
         <span style={{ opacity: 0.5 }}>BPM</span>{' '}
-        <span className="font-bold" style={{ color: 'var(--text-primary)' }}>
-          {String(bpm).padStart(3, '0')}
+        <span className="font-bold" style={{ color: clockSyncEnabled ? MIDI_COLOR : 'var(--text-primary)' }}>
+          {String(clockSyncEnabled && clockBpm ? clockBpm : bpm).padStart(3, '0')}
         </span>
       </div>
+
+      {/* SYNC toggle */}
+      {isConnected && midiInputs.length > 0 && (
+        <button
+          onClick={() => setClockSyncEnabled(!clockSyncEnabled)}
+          className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-sm"
+          style={{
+            backgroundColor: clockSyncEnabled ? `${MIDI_COLOR}20` : 'transparent',
+            color: clockSyncEnabled ? MIDI_COLOR : 'var(--text-ghost)',
+            border: `1px solid ${clockSyncEnabled ? `${MIDI_COLOR}40` : 'var(--border)'}`,
+          }}
+          title={clockSyncEnabled ? 'MIDI clock sync active' : 'Enable MIDI clock sync'}
+        >
+          SYNC
+        </button>
+      )}
 
       {/* Divider */}
       <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />

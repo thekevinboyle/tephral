@@ -18,9 +18,7 @@ export function useModulationEngine() {
       const store = useModulationStore.getState()
 
       // Update each enabled modulator
-      if (store.lfo.enabled) {
-        store.updateLFO(delta)
-      }
+      store.updateAllLFOs(delta)
       if (store.random.enabled) {
         store.updateRandom(delta)
       }

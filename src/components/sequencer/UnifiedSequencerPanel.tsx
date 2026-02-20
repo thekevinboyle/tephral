@@ -3,6 +3,8 @@ import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useSequencerContainerStore } from '../../stores/sequencerContainerStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useEffectSequencerPlayback } from '../../hooks/useEffectSequencerPlayback'
+import { useWebMIDI } from '../../hooks/useWebMIDI'
+import { useMIDINoteGate } from '../../hooks/useMIDINoteGate'
 import { useActiveEffects } from '../../hooks/useActiveEffects'
 import {
   EFFECTS,
@@ -53,6 +55,8 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
 
   // Initialize playback engine
   useEffectSequencerPlayback()
+  useWebMIDI()
+  useMIDINoteGate()
 
   // ─── Active effects (reactive to all store changes) ─────────────────────
   const { sortedEffects } = useActiveEffects()

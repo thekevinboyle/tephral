@@ -21,6 +21,8 @@ export interface EffectTrack {
   length: number                 // active step count (default 16)
   muted: boolean
   soloed: boolean
+  audioGate: boolean             // live mic amplitude gates effect on/off
+  midiGate: boolean              // MIDI note gates effect on/off
 }
 
 export interface AutomationParam {
@@ -46,6 +48,7 @@ interface EffectSequencerState {
   swing: number
   fillModeActive: boolean
   automationParam: AutomationParam | null
+  audioGateLevel: number             // 0-1 amplitude from video audio (for UI display)
 
   // Automation
   setAutomationParam: (param: AutomationParam) => void
@@ -66,6 +69,9 @@ interface EffectSequencerState {
   setTrackMode: (effectId: string, mode: 'gate' | 'param') => void
   setTrackMuted: (effectId: string, muted: boolean) => void
   setTrackSoloed: (effectId: string, soloed: boolean) => void
+  setTrackAudioGate: (effectId: string, enabled: boolean) => void
+  setTrackMidiGate: (effectId: string, enabled: boolean) => void
+  setAudioGateLevel: (level: number) => void
   setTrackLength: (effectId: string, length: number) => void
 
   // Step editing
@@ -107,6 +113,8 @@ const createDefaultTrack = (effectId: string): EffectTrack => ({
   length: 8,
   muted: false,
   soloed: false,
+  audioGate: false,
+  midiGate: false,
 })
 
 // Immutable step update helper
@@ -140,6 +148,7 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
   swing: 0,
   fillModeActive: false,
   automationParam: null,
+  audioGateLevel: 0,
 
   // ─── Transport ─────────────────────────────────────────────────────────
 
@@ -202,6 +211,24 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
       return { tracks: { ...state.tracks, [effectId]: { ...track, soloed } } }
     })
   },
+
+  setTrackAudioGate: (effectId, enabled) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      return { tracks: { ...state.tracks, [effectId]: { ...track, audioGate: enabled } } }
+    })
+  },
+
+  setTrackMidiGate: (effectId, enabled) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      return { tracks: { ...state.tracks, [effectId]: { ...track, midiGate: enabled } } }
+    })
+  },
+
+  setAudioGateLevel: (level) => set({ audioGateLevel: level }),
 
   setTrackLength: (effectId, length) => {
     set((state) => {

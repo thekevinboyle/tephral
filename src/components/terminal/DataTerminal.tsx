@@ -810,11 +810,11 @@ export function DataTerminal() {
 
   // Count modulation routings
   const modRoutingCount = useMemo(() => {
-    return routings.filter(r => ['lfo', 'random', 'step', 'envelope'].includes(r.trackId)).length
+    return routings.filter(r => r.trackId.startsWith('lfo-') || ['random', 'step', 'envelope'].includes(r.trackId)).length
   }, [routings])
 
   // Check if any modulation source is active
-  const hasModulation = modulation.lfo.enabled || modulation.random.enabled || modulation.step.enabled || modulation.envelope.enabled
+  const hasModulation = modulation.lfos.some(l => l.enabled) || modulation.random.enabled || modulation.step.enabled || modulation.envelope.enabled
 
   // Determine which pattern to show based on selected effect or active effects
   const activePattern = useMemo((): PatternType => {
@@ -957,11 +957,14 @@ export function DataTerminal() {
     if (hasModulation) {
       // Show modulation-specific data
       const data: { label: string; type: string; value: string; color?: string }[] = []
-      if (modulation.lfo.enabled) {
+      // Show first enabled LFO in terminal
+      const activeLfo = modulation.lfos.find(l => l.enabled)
+      if (activeLfo) {
+        const activeLfoIdx = modulation.lfos.indexOf(activeLfo)
         data.push({
-          label: 'L',
-          type: `${modulation.lfo.shape.toUpperCase().slice(0, 3)} ${modulation.lfo.rate.toFixed(1)}Hz`,
-          value: padNumber(Math.floor(modulation.lfo.currentValue * 9999), 4),
+          label: `L${activeLfoIdx + 1}`,
+          type: `${activeLfo.shape.toUpperCase().slice(0, 3)} ${activeLfo.rate.toFixed(1)}Hz`,
+          value: padNumber(Math.floor(activeLfo.currentValue * 9999), 4),
           color: '#707070',
         })
       }
@@ -1083,7 +1086,7 @@ export function DataTerminal() {
       case 'media': return <BarsPattern tick={tick} />
       case 'modulation': return (
         <ModulationPattern
-          lfoValue={modulation.lfo.enabled ? modulation.lfo.currentValue : 0}
+          lfoValue={modulation.lfos.some(l => l.enabled) ? (modulation.lfos.find(l => l.enabled)?.currentValue ?? 0) : 0}
           randomValue={modulation.random.enabled ? modulation.random.currentValue : 0}
           stepValue={modulation.step.enabled ? modulation.step.currentValue : 0}
           envValue={modulation.envelope.enabled ? modulation.envelope.currentValue : 0}

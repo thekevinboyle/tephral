@@ -211,7 +211,8 @@ export function useEffectSequencerPlayback() {
       prevLockedParams.current[effectId] = shouldFire ? currentLockedIds : new Set()
 
       // Gate mode mix handling (independent of param locks)
-      if (track.mode === 'gate') {
+      // Skip if audio gate is active — it controls mix independently
+      if (track.mode === 'gate' && !track.audioGate && !track.midiGate) {
         ge.setEffectMix(effectId, shouldFire ? origMix : 0)
       }
     }

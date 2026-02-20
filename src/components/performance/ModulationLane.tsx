@@ -295,7 +295,8 @@ export function ModulationLane() {
 
   // Get modulation state from store
   const {
-    lfo,
+    lfos,
+    selectedLFOIndex,
     random,
     step,
     envelope,
@@ -311,6 +312,8 @@ export function ModulationLane() {
     setSelectedModulator,
   } = useModulationStore()
 
+  const lfo = lfos[selectedLFOIndex]
+
   const { setSelectedEffect } = useUIStore()
 
   // Handle card click - select and enable, or disable if already selected
@@ -320,7 +323,7 @@ export function ModulationLane() {
     // If clicking the already selected one, disable and deselect
     if (selectedModulator === type) {
       switch (type) {
-        case 'lfo': if (lfo.enabled) toggleLFO(); break
+        case 'lfo': if (lfo.enabled) toggleLFO(selectedLFOIndex); break
         case 'random': if (random.enabled) toggleRandom(); break
         case 'step': if (step.enabled) toggleStep(); break
         case 'envelope': if (envelope.enabled) toggleEnvelope(); break
@@ -333,7 +336,7 @@ export function ModulationLane() {
     setSelectedModulator(type)
     // Enable it if not already
     switch (type) {
-      case 'lfo': if (!lfo.enabled) toggleLFO(); break
+      case 'lfo': if (!lfo.enabled) toggleLFO(selectedLFOIndex); break
       case 'random': if (!random.enabled) toggleRandom(); break
       case 'step': if (!step.enabled) toggleStep(); break
       case 'envelope': if (!envelope.enabled) toggleEnvelope(); break
@@ -364,13 +367,13 @@ export function ModulationLane() {
       {/* Modulation cards */}
       <ModulationCard
         type="lfo"
-        label="LFO"
+        label={`LFO ${selectedLFOIndex + 1}`}
         tick={tick}
         active={lfo.enabled}
         selected={selectedModulator === 'lfo'}
-        isAssigning={assigningModulator === 'lfo'}
+        isAssigning={assigningModulator?.startsWith('lfo-') ?? false}
         onClick={() => handleCardClick('lfo')}
-        onAssignClick={() => toggleAssignmentMode('lfo')}
+        onAssignClick={() => toggleAssignmentMode(`lfo-${selectedLFOIndex}`)}
       />
       <ModulationCard
         type="random"

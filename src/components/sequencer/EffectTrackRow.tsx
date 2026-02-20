@@ -1,9 +1,19 @@
 import { useCallback, useState, useEffect, useMemo } from 'react'
 import { useEffectSequencerStore, type EffectTrack } from '../../stores/effectSequencerStore'
+import { useAudioSourceStore } from '../../stores/audioSourceStore'
+import { useMIDIStore } from '../../stores/midiStore'
 import { EffectStepCell } from './EffectStepCell'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 
 const SEQ = '#9580FF'
+const MIDI_COLOR = '#00AAFF'
+
+// MIDI note number to name
+function midiNoteName(note: number): string {
+  const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+  const octave = Math.floor(note / 12) - 1
+  return `${names[note % 12]}${octave}`
+}
 
 interface EffectTrackRowProps {
   effectId: string
@@ -33,11 +43,41 @@ export function EffectTrackRow({
     setTrackMode,
     setTrackMuted,
     setTrackSoloed,
+    setTrackAudioGate,
+    setTrackMidiGate,
     setStepActive,
     setStepLock,
     addToSelection,
     automationParam,
   } = useEffectSequencerStore()
+
+  const audioGateLevel = useEffectSequencerStore((s) => s.audioGateLevel)
+  const gateThreshold = useAudioSourceStore((s) => s.gateThreshold)
+  const trackNoteMap = useMIDIStore((s) => s.trackNoteMap)
+  const noteStates = useMIDIStore((s) => s.noteStates)
+  const setNoteForTrack = useMIDIStore((s) => s.setNoteForTrack)
+  const removeNoteMapping = useMIDIStore((s) => s.removeNoteMapping)
+
+  const [midiLearnMode, setMidiLearnMode] = useState(false)
+  const mappedNote = trackNoteMap[effectId]
+
+  // MIDI learn: listen for next note
+  useEffect(() => {
+    if (!midiLearnMode) return
+    let prevNoteStates = { ...useMIDIStore.getState().noteStates }
+    const unsubscribe = useMIDIStore.subscribe((state) => {
+      for (const [noteStr, isOn] of Object.entries(state.noteStates)) {
+        if (isOn && !prevNoteStates[parseInt(noteStr)]) {
+          const note = parseInt(noteStr)
+          setNoteForTrack(effectId, note)
+          setMidiLearnMode(false)
+          break
+        }
+      }
+      prevNoteStates = { ...state.noteStates }
+    })
+    return () => unsubscribe()
+  }, [midiLearnMode, effectId, setNoteForTrack])
 
   // Drag-to-draw state
   const [isDragging, setIsDragging] = useState(false)
@@ -141,7 +181,7 @@ export function EffectTrackRow({
         borderTop: isSelectedTrack ? '2px solid var(--border)' : '1px solid transparent',
         borderLeft: isSelectedTrack ? '3px solid var(--border)' : '3px solid transparent',
         borderRight: isSelectedTrack ? '2px solid var(--border)' : '1px solid transparent',
-        opacity: track.muted ? 0.4 : hasAnyActiveSteps ? 1 : 0.55,
+        opacity: track.muted ? 0.4 : (hasAnyActiveSteps || track.audioGate || track.midiGate) ? 1 : 0.55,
         transition: 'opacity 0.15s, border-color 0.1s',
       }}
     >
@@ -223,6 +263,89 @@ export function EffectTrackRow({
             title="Solo track"
           >
             S
+          </button>
+
+          {/* Audio Gate */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setTrackAudioGate(effectId, !track.audioGate)
+            }}
+            className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm relative overflow-hidden"
+            style={{
+              backgroundColor: track.audioGate
+                ? 'rgba(255, 204, 0, 0.2)'
+                : 'transparent',
+              color: track.audioGate ? '#FFCC00' : 'var(--border)',
+              border: `1px solid ${track.audioGate ? '#FFCC0060' : 'var(--border)'}`,
+            }}
+            title="Audio gate: video audio amplitude triggers effect"
+          >
+            {track.audioGate && (
+              <span
+                className="absolute inset-0 rounded-sm"
+                style={{
+                  backgroundColor: '#FFCC00',
+                  opacity: audioGateLevel > gateThreshold ? 0.5 : 0,
+                  transition: 'opacity 0.05s',
+                }}
+              />
+            )}
+            <span className="relative z-10">A</span>
+          </button>
+
+          {/* MIDI Note Gate */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (track.midiGate && mappedNote !== undefined) {
+                // Already mapped — click to clear and re-learn
+                removeNoteMapping(effectId)
+                setTrackMidiGate(effectId, false)
+                setMidiLearnMode(false)
+              } else if (midiLearnMode) {
+                // Cancel learn mode
+                setMidiLearnMode(false)
+                if (mappedNote === undefined) setTrackMidiGate(effectId, false)
+              } else {
+                // Enter learn mode
+                setTrackMidiGate(effectId, true)
+                setMidiLearnMode(true)
+              }
+            }}
+            className="text-[11px] font-bold h-6 flex items-center justify-center rounded-sm relative overflow-hidden"
+            style={{
+              minWidth: 24,
+              paddingLeft: 2,
+              paddingRight: 2,
+              backgroundColor: track.midiGate
+                ? `${MIDI_COLOR}20`
+                : 'transparent',
+              color: midiLearnMode ? MIDI_COLOR : track.midiGate ? MIDI_COLOR : 'var(--border)',
+              border: `1px solid ${track.midiGate ? `${MIDI_COLOR}60` : 'var(--border)'}`,
+              animation: midiLearnMode ? 'pulse 0.8s infinite' : 'none',
+            }}
+            title={
+              midiLearnMode
+                ? 'Waiting for MIDI note...'
+                : track.midiGate && mappedNote !== undefined
+                  ? `MIDI note: ${midiNoteName(mappedNote)} (click to clear)`
+                  : 'MIDI note gate: assign a MIDI note to trigger this effect'
+            }
+          >
+            {track.midiGate && mappedNote !== undefined && (noteStates[mappedNote] ?? false) && (
+              <span
+                className="absolute inset-0 rounded-sm"
+                style={{
+                  backgroundColor: MIDI_COLOR,
+                  opacity: 0.5,
+                  transition: 'opacity 0.05s',
+                }}
+              />
+            )}
+            <span className="relative z-10 text-[9px]">
+              {midiLearnMode ? '...' : mappedNote !== undefined ? midiNoteName(mappedNote) : 'N'}
+            </span>
           </button>
         </div>
       </div>

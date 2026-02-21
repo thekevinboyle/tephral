@@ -159,7 +159,7 @@ export const DESTRUCTION_EFFECTS: EffectDefinition[] = [
   { id: 'datamosh', label: 'MOSH', color: '#ff0000', row: 'color', page: 5, min: 0, max: 1 },
   { id: 'pixelSort', label: 'SORT', color: '#ff3366', row: 'color', page: 5, min: 0, max: 1 },
   { id: 'sonify', label: 'SONIFY', color: '#ff6600', row: 'color', page: 5, min: 0, max: 1 },
-  { id: 'destruction_reserved_4', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'point_cloud', label: 'PTCLD', color: '#ff9900', row: 'color', page: 5, min: 0, max: 1 },
 
   // Row 2: Reserved
   { id: 'destruction_reserved_5', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },

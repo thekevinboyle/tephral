@@ -897,6 +897,17 @@ export function PerformanceGrid() {
           onValueChange: (v: number) => destruction.updateSonifyParams({ sampleRate: v / 100 }),
         }
 
+      case 'point_cloud':
+        return {
+          active: destruction.pointCloudEnabled,
+          value: destruction.pointCloudParams.depthMultiplier * 100,
+          onToggle: () => {
+            if (!destruction.pointCloudEnabled) moveToEndOfChain(effectId)
+            destruction.setPointCloudEnabled(!destruction.pointCloudEnabled)
+          },
+          onValueChange: (v: number) => destruction.updatePointCloudParams({ depthMultiplier: v / 100 }),
+        }
+
       // Reserved / empty slots
       default:
         if (effectId.startsWith('reserved')) {
@@ -952,7 +963,7 @@ export function PerformanceGrid() {
         return motion.motionExtractEnabled || motion.echoTrailEnabled ||
                motion.timeSmearEnabled || motion.freezeMaskEnabled
       case 5: // DESTRUCTION
-        return destruction.datamoshEnabled || destruction.pixelSortEnabled || destruction.sonifyEnabled
+        return destruction.datamoshEnabled || destruction.pixelSortEnabled || destruction.sonifyEnabled || destruction.pointCloudEnabled
       default:
         return false
     }

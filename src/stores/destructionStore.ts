@@ -3,24 +3,28 @@ import {
   DEFAULT_DATAMOSH_PARAMS,
   DEFAULT_PIXEL_SORT_PARAMS,
   DEFAULT_SONIFY_PARAMS,
+  DEFAULT_POINT_CLOUD_PARAMS,
   type DatamoshParams,
   type PixelSortParams,
   type SonifyParams,
+  type PointCloudParams,
 } from '../effects/glitch-engine'
 
 // Re-export for convenience
-export type { DatamoshParams, PixelSortParams, SonifyParams }
+export type { DatamoshParams, PixelSortParams, SonifyParams, PointCloudParams }
 
 interface DestructionState {
   // Enable states
   datamoshEnabled: boolean
   pixelSortEnabled: boolean
   sonifyEnabled: boolean
+  pointCloudEnabled: boolean
 
   // Parameters
   datamoshParams: DatamoshParams
   pixelSortParams: PixelSortParams
   sonifyParams: SonifyParams
+  pointCloudParams: PointCloudParams
 
   // Actions
   setDatamoshEnabled: (enabled: boolean) => void
@@ -29,6 +33,8 @@ interface DestructionState {
   updatePixelSortParams: (params: Partial<PixelSortParams>) => void
   setSonifyEnabled: (enabled: boolean) => void
   updateSonifyParams: (params: Partial<SonifyParams>) => void
+  setPointCloudEnabled: (enabled: boolean) => void
+  updatePointCloudParams: (params: Partial<PointCloudParams>) => void
 
   // Snapshot for presets
   getSnapshot: () => DestructionSnapshot
@@ -42,6 +48,8 @@ export interface DestructionSnapshot {
   pixelSortParams: PixelSortParams
   sonifyEnabled: boolean
   sonifyParams: SonifyParams
+  pointCloudEnabled: boolean
+  pointCloudParams: PointCloudParams
 }
 
 export const useDestructionStore = create<DestructionState>((set, get) => ({
@@ -53,6 +61,9 @@ export const useDestructionStore = create<DestructionState>((set, get) => ({
 
   sonifyEnabled: false,
   sonifyParams: { ...DEFAULT_SONIFY_PARAMS },
+
+  pointCloudEnabled: false,
+  pointCloudParams: { ...DEFAULT_POINT_CLOUD_PARAMS },
 
   setDatamoshEnabled: (enabled) => set({ datamoshEnabled: enabled }),
   updateDatamoshParams: (params) => set((state) => ({
@@ -69,6 +80,11 @@ export const useDestructionStore = create<DestructionState>((set, get) => ({
     sonifyParams: { ...state.sonifyParams, ...params },
   })),
 
+  setPointCloudEnabled: (enabled) => set({ pointCloudEnabled: enabled }),
+  updatePointCloudParams: (params) => set((state) => ({
+    pointCloudParams: { ...state.pointCloudParams, ...params },
+  })),
+
   getSnapshot: () => {
     const state = get()
     return {
@@ -78,6 +94,8 @@ export const useDestructionStore = create<DestructionState>((set, get) => ({
       pixelSortParams: { ...state.pixelSortParams },
       sonifyEnabled: state.sonifyEnabled,
       sonifyParams: { ...state.sonifyParams },
+      pointCloudEnabled: state.pointCloudEnabled,
+      pointCloudParams: { ...state.pointCloudParams },
     }
   },
 
@@ -88,5 +106,7 @@ export const useDestructionStore = create<DestructionState>((set, get) => ({
     pixelSortParams: { ...snapshot.pixelSortParams },
     sonifyEnabled: snapshot.sonifyEnabled ?? false,
     sonifyParams: snapshot.sonifyParams ? { ...snapshot.sonifyParams } : { ...DEFAULT_SONIFY_PARAMS },
+    pointCloudEnabled: snapshot.pointCloudEnabled ?? false,
+    pointCloudParams: snapshot.pointCloudParams ? { ...snapshot.pointCloudParams } : { ...DEFAULT_POINT_CLOUD_PARAMS },
   }),
 }))

@@ -104,6 +104,7 @@ export function useEffectDisable() {
       case 'datamosh': destruction.setDatamoshEnabled(false); break
       case 'pixelSort': destruction.setPixelSortEnabled(false); break
       case 'sonify': destruction.setSonifyEnabled(false); break
+      case 'point_cloud': destruction.setPointCloudEnabled(false); break
     }
   }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion, destruction])
 

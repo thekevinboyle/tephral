@@ -25,6 +25,7 @@ import {
   DatamoshEffect,
   PixelSortEffect,
   SonifyEffect,
+  PointCloudEffect,
   // Trace effects
   BrightTraceEffect,
   MotionTraceEffect,
@@ -71,6 +72,7 @@ export class EffectPipeline {
   datamosh: DatamoshEffect | null = null
   pixelSort: PixelSortEffect | null = null
   sonify: SonifyEffect | null = null
+  pointCloud: PointCloudEffect | null = null
 
   // Trace effects (mask generation)
   brightTrace: BrightTraceEffect | null = null
@@ -140,6 +142,7 @@ export class EffectPipeline {
     this.datamosh = new DatamoshEffect()
     this.pixelSort = new PixelSortEffect()
     this.sonify = new SonifyEffect()
+    this.pointCloud = new PointCloudEffect()
 
     // Trace effects (for mask generation)
     this.brightTrace = new BrightTraceEffect()
@@ -176,6 +179,7 @@ export class EffectPipeline {
       case 'datamosh': return this.datamosh
       case 'pixelSort': return this.pixelSort
       case 'sonify': return this.sonify
+      case 'point_cloud': return this.pointCloud
       // Trace effects
       case 'track_bright': return this.brightTrace
       case 'track_motion': return this.motionTrace
@@ -215,6 +219,7 @@ export class EffectPipeline {
     datamoshEnabled: boolean
     pixelSortEnabled: boolean
     sonifyEnabled: boolean
+    pointCloudEnabled: boolean
     // Trace effects
     brightTraceEnabled: boolean
     motionTraceEnabled: boolean
@@ -273,6 +278,7 @@ export class EffectPipeline {
       datamosh: config.datamoshEnabled,
       pixelSort: config.pixelSortEnabled,
       sonify: config.sonifyEnabled,
+      point_cloud: config.pointCloudEnabled,
       // Trace effects
       track_bright: config.brightTraceEnabled,
       track_motion: config.motionTraceEnabled,
@@ -454,6 +460,7 @@ export class EffectPipeline {
     this.datamosh?.dispose()
     this.pixelSort?.dispose()
     this.sonify?.dispose()
+    this.pointCloud?.dispose()
     // Trace effects
     this.brightTrace?.dispose()
     this.motionTrace?.dispose()

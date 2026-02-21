@@ -176,6 +176,7 @@ export function useActiveEffects() {
     if (destruction.datamoshEnabled) activeEffects.push({ id: 'datamosh', label: 'Datamosh', color: '#ff0000', primaryValue: Math.round(destruction.datamoshParams.intensity * 100), primaryLabel: 'int' })
     if (destruction.pixelSortEnabled) activeEffects.push({ id: 'pixelSort', label: 'Pixel Sort', color: '#ff3366', primaryValue: Math.round(destruction.pixelSortParams.intensity * 100), primaryLabel: 'int' })
     if (destruction.sonifyEnabled) activeEffects.push({ id: 'sonify', label: 'Sonify', color: '#ff6600', primaryValue: Math.round(destruction.sonifyParams.sampleRate * 100), primaryLabel: 'rate' })
+    if (destruction.pointCloudEnabled) activeEffects.push({ id: 'point_cloud', label: 'Point Cloud', color: '#ff9900', primaryValue: Math.round(destruction.pointCloudParams.depthMultiplier * 100), primaryLabel: 'depth' })
 
     // Sort by effectOrder
     return [...activeEffects].sort((a, b) => {

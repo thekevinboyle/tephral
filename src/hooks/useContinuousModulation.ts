@@ -382,6 +382,21 @@ export function useContinuousModulation() {
           if (paramName === 'mix') dest.updateSonifyParams({ mix: value })
           break
         }
+        case 'point_cloud': {
+          const dest = useDestructionStore.getState()
+          if (paramName === 'density') dest.updatePointCloudParams({ density: 64 + Math.floor(value * 448) })
+          if (paramName === 'pointSize') dest.updatePointCloudParams({ pointSize: 1 + value * 19 })
+          if (paramName === 'depthMultiplier') dest.updatePointCloudParams({ depthMultiplier: value * 2 })
+          if (paramName === 'noiseDisplace') dest.updatePointCloudParams({ noiseDisplace: value })
+          if (paramName === 'noiseScale') dest.updatePointCloudParams({ noiseScale: 0.1 + value * 9.9 })
+          if (paramName === 'noiseSpeed') dest.updatePointCloudParams({ noiseSpeed: value * 2 })
+          if (paramName === 'opacity') dest.updatePointCloudParams({ opacity: value })
+          if (paramName === 'rotateX') dest.updatePointCloudParams({ rotateX: (value * 2 - 1) * Math.PI })
+          if (paramName === 'rotateY') dest.updatePointCloudParams({ rotateY: (value - 0.5) * Math.PI })
+          if (paramName === 'zoom') dest.updatePointCloudParams({ zoom: 0.5 + value * 4.5 })
+          if (paramName === 'mix') dest.updatePointCloudParams({ mix: value })
+          break
+        }
       }
     }
 

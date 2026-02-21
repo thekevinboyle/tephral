@@ -40,6 +40,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     pixelSortParams,
     sonifyEnabled,
     sonifyParams,
+    pointCloudEnabled,
+    pointCloudParams,
   } = useDestructionStore()
 
   // Slicer state
@@ -279,6 +281,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       pixelSortEnabled: getEffectiveEnabled('pixelSort', pixelSortEnabled && !effectBypassed['pixelSort']),
       // Sonify - performance grid only
       sonifyEnabled: getEffectiveEnabled('sonify', sonifyEnabled && !effectBypassed['sonify']),
+      // Point cloud - performance grid only
+      pointCloudEnabled: getEffectiveEnabled('point_cloud', pointCloudEnabled && !effectBypassed['point_cloud']),
       // Trace effects
       brightTraceEnabled: getEffectiveEnabled('track_bright', brightEnabled),
       motionTraceEnabled: getEffectiveEnabled('track_motion', motionEnabled),
@@ -322,6 +326,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     if (pipeline.sonify && sonifyEnabled) {
       const getMix = (id: string) => effectMix[id] ?? 1
       pipeline.sonify.updateParams({ ...sonifyParams, mix: getMix('sonify') })
+    }
+
+    // Update point cloud params
+    if (pipeline.pointCloud && pointCloudEnabled) {
+      const getMix = (id: string) => effectMix[id] ?? 1
+      pipeline.pointCloud.updateParams({ ...pointCloudParams, mix: getMix('point_cloud') })
     }
 
     // Update trace effect params - mix: 0 because trace effects generate masks internally,
@@ -479,6 +489,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     pixelSortParams,
     sonifyEnabled,
     sonifyParams,
+    pointCloudEnabled,
+    pointCloudParams,
     // Trace effects
     brightEnabled,
     edgeEnabled,

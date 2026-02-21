@@ -74,6 +74,9 @@ export type { PixelSortParams } from './PixelSortEffect'
 export { SonifyEffect, DEFAULT_SONIFY_PARAMS } from './SonifyEffect'
 export type { SonifyParams, SonifyChannelMode } from './SonifyEffect'
 
+export { PointCloudEffect, DEFAULT_POINT_CLOUD_PARAMS } from './PointCloudEffect'
+export type { PointCloudParams, PointCloudDepthChannel } from './PointCloudEffect'
+
 // Trace effects (mask generation for selective glitch application)
 export { TraceEffect, DEFAULT_TRACE_PARAMS } from './TraceEffect'
 export type { TraceParams } from './TraceEffect'

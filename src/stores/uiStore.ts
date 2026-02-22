@@ -33,6 +33,10 @@ interface UIState {
   // Card view mode for EffectCardStack
   cardViewMode: 'compact' | 'full'
 
+  // Bottom panel state
+  bottomPanelTab: string | null  // null = collapsed, string = active tab name
+  bottomPanelPage: number        // 1-indexed page within active tab
+
   setSelectedEffect: (id: string | null) => void
   setSelectedParamIndex: (index: number) => void
 
@@ -56,6 +60,12 @@ interface UIState {
   // Card view mode actions
   setCardViewMode: (mode: 'compact' | 'full') => void
   toggleCardViewMode: () => void
+
+  // Bottom panel actions
+  toggleBottomPanelTab: (tab: string) => void
+  setBottomPanelPage: (page: number) => void
+  nextBottomPanelPage: () => void
+  prevBottomPanelPage: () => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -71,6 +81,8 @@ export const useUIStore = create<UIState>((set) => ({
 
   infoPanelSelection: null,
   cardViewMode: 'compact',
+  bottomPanelTab: null,
+  bottomPanelPage: 1,
 
   setSelectedEffect: (id) => set({ selectedEffectId: id, selectedParamIndex: 0 }),
   setSelectedParamIndex: (index) => set({ selectedParamIndex: index }),
@@ -98,4 +110,12 @@ export const useUIStore = create<UIState>((set) => ({
   toggleCardViewMode: () => set((state) => ({
     cardViewMode: state.cardViewMode === 'compact' ? 'full' : 'compact',
   })),
+
+  toggleBottomPanelTab: (tab) => set((state) => ({
+    bottomPanelTab: state.bottomPanelTab === tab ? null : tab,
+    bottomPanelPage: state.bottomPanelTab === tab ? state.bottomPanelPage : 1,
+  })),
+  setBottomPanelPage: (page) => set({ bottomPanelPage: Math.max(1, Math.min(4, page)) }),
+  nextBottomPanelPage: () => set((state) => ({ bottomPanelPage: Math.min(4, state.bottomPanelPage + 1) })),
+  prevBottomPanelPage: () => set((state) => ({ bottomPanelPage: Math.max(1, state.bottomPanelPage - 1) })),
 }))

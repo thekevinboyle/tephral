@@ -27,6 +27,7 @@ import { useUnifiedAudioAnalysis } from '../../hooks/useUnifiedAudioAnalysis'
 import { useAudioReactive } from '../../hooks/useAudioReactive'
 import { DestructionOverlay } from '../DestructionOverlay'
 import { LFOEditorPanel } from './LFOEditorPanel'
+import { BottomPanel } from './BottomPanel'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
@@ -80,7 +81,7 @@ export function PerformanceLayout() {
       className="w-screen h-screen overflow-hidden grid-substrate"
       style={{
         display: 'grid',
-        gridTemplateRows: 'var(--row-header) 1fr auto 1fr',
+        gridTemplateRows: 'var(--row-header) 1fr auto 1fr auto',
         gridTemplateColumns: 'var(--col-left) var(--col-grid) 1fr',
         gap: 'var(--gap)',
         padding: 'var(--gap)',
@@ -98,17 +99,36 @@ export function PerformanceLayout() {
         <HeaderBar />
       </div>
 
-      {/* Rows 2-4, Col 1: Effect Card Stack + Crossfader */}
+      {/* Rows 2-5, Col 1: Effect Card Stack + Grid + Crossfader */}
       <div
         className="flex flex-col rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
-          gridRow: '2 / 5',
+          gridRow: '2 / 6',
           gridColumn: 1,
           border: '1px solid var(--border)',
         }}
       >
         <div className="flex-1 min-h-0">
           <EffectCardStack />
+        </div>
+        <div
+          className="flex-shrink-0"
+          style={{
+            borderTop: '1px solid var(--border)',
+          }}
+        >
+          <div
+            className="flex-shrink-0"
+            style={{
+              height: '52px',
+              borderBottom: '1px solid var(--border)',
+            }}
+          >
+            <BankPanel />
+          </div>
+          <div style={{ height: 200 }}>
+            <PerformanceGrid />
+          </div>
         </div>
         <div
           className="flex-shrink-0"
@@ -162,45 +182,21 @@ export function PerformanceLayout() {
         <SharedEffectTabsBar />
       </div>
 
-      {/* Row 4, Cols 2-3: Grid + Sequencer */}
+      {/* Row 4, Cols 2-3: Sequencer */}
       <div
-        className="flex rounded-sm overflow-hidden"
+        className="flex-1 min-w-0 rounded-sm overflow-hidden panel-gradient-subtle"
         style={{
           gridRow: 4,
           gridColumn: '2 / -1',
-          gap: 'var(--gap)',
+          border: '1px solid var(--border)',
         }}
       >
-        {/* Left: Bank + Grid */}
-        <div
-          className="flex flex-col rounded-sm overflow-hidden panel-gradient"
-          style={{
-            width: 'var(--col-grid)',
-            flexShrink: 0,
-            border: '1px solid var(--border)',
-          }}
-        >
-          <div
-            className="flex-shrink-0"
-            style={{
-              height: '52px',
-              borderBottom: '1px solid var(--border)',
-            }}
-          >
-            <BankPanel />
-          </div>
-          <div className="flex-1 min-h-0">
-            <PerformanceGrid />
-          </div>
-        </div>
+        <SequencerContainer hideTabsBar />
+      </div>
 
-        {/* Right: Sequencer (tabs hidden, shown above) */}
-        <div
-          className="flex-1 min-w-0 rounded-sm overflow-hidden panel-gradient-subtle"
-          style={{ border: '1px solid var(--border)' }}
-        >
-          <SequencerContainer hideTabsBar />
-        </div>
+      {/* Row 5, Cols 2-3: Bottom Panel */}
+      <div style={{ gridRow: 5, gridColumn: '2 / -1' }}>
+        <BottomPanel />
       </div>
 
       <ClipDetailModal />

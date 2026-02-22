@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patterns / Surfaces</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style-guide/shared.css">
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head><body>
+<div class="frame">
+  <div class="page-header">
+    <div><span class="page-num">07</span> <span class="page-title">Patterns / Surfaces &amp; Motion</span></div>
+    <span class="page-sys">SEG_F4ULT Design System</span>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Dot Matrix Grid Background</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background-color:#0D0D0D;background-image:radial-gradient(circle,#252525 1px,transparent 1px);background-size:16px 16px;height:140px;border:1px solid var(--border-subtle);border-radius:6px;display:flex;align-items:center;justify-content:center"><span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em">Standard &mdash; 16px grid &bull; 1px dot &bull; #252525</span></div>
+      <div style="background-color:#0D0D0D;background-image:radial-gradient(circle,#252525 1px,transparent 1px);background-size:8px 8px;height:140px;border:1px solid var(--border-subtle);border-radius:6px;display:flex;align-items:center;justify-content:center"><span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em">Dense &mdash; 8px grid</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Panel Gradients</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+      <div style="background:linear-gradient(to bottom,var(--bg-surface) 0%,#141414 100%);height:160px;border:1px solid var(--border-subtle);border-radius:6px;padding:16px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em">Gradient Down</span><span style="font-family:var(--mono);font-size:8px;color:var(--text-ghost)">#1A1A1A &rarr; #141414</span></div>
+      <div style="background:linear-gradient(to top,var(--bg-surface) 0%,#141414 100%);height:160px;border:1px solid var(--border-subtle);border-radius:6px;padding:16px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em">Gradient Up</span><span style="font-family:var(--mono);font-size:8px;color:var(--text-ghost)">#141414 &rarr; #1A1A1A</span></div>
+      <div style="background:linear-gradient(to bottom,var(--bg-surface) 0%,#171717 100%);height:160px;border:1px solid var(--border-subtle);border-radius:6px;padding:16px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em">Gradient Subtle</span><span style="font-family:var(--mono);font-size:8px;color:var(--text-ghost)">#1A1A1A &rarr; #171717</span></div>
+      <div style="background:linear-gradient(to bottom,var(--bg-surface) 0%,rgba(112,112,112,0.02) 100%);height:160px;border:1px solid var(--border-subtle);border-radius:6px;padding:16px;display:flex;flex-direction:column;justify-content:space-between"><span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em">Gradient Accent</span><span style="font-family:var(--mono);font-size:8px;color:var(--text-ghost)">surface &rarr; accent 2%</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Surface Patterns</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div class="card">
+        <div class="card-label">Flat Card</div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:8px;padding:16px;margin-top:8px">
+          <div style="font-size:11px;color:var(--text-secondary)">Content area with standard card styling. 8px radius, subtle border.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Panel</div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:8px;padding:16px;margin-top:8px">
+          <div style="font-size:11px;color:var(--text-secondary)">Standard panel with 16px padding. Same base as card.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Accent Active</div>
+        <div style="border:1px solid var(--accent);background:rgba(112,112,112,0.06);border-radius:8px;padding:16px;margin-top:8px;box-shadow:0 0 8px var(--accent-glow)">
+          <div style="font-size:11px;color:var(--text-secondary)">Active state with accent border and glow shadow.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Animations</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div class="card" style="display:flex;align-items:center;gap:16px">
+        <div style="width:48px;height:48px;border-radius:4px;background:var(--accent);animation:pulse-glow 2s ease-in-out infinite"></div>
+        <div><div style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">Pulse Glow</div><div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost)">2s ease-in-out infinite<br>opacity 1.0 &rarr; 0.5</div></div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;gap:16px">
+        <div style="width:24px;height:24px;border-radius:50%;background:#FF3333;animation:recording-pulse 1s ease infinite;margin:12px"></div>
+        <div><div style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">Recording Pulse</div><div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost)">1s ease infinite<br>red outset glow 0 &rarr; 8px</div></div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;gap:16px">
+        <div style="width:48px;height:48px;border-radius:4px;border:2px solid #FF4060;background:var(--bg-surface);animation:plock-flash 0.6s ease infinite"></div>
+        <div><div style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">P-Lock Flash</div><div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost)">0.6s ease infinite<br>#FF4060 border + shadow</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Data Readout Patterns</div>
+    <div class="card">
+      <div class="card-label">Machine Language Aesthetic</div>
+      <div style="display:flex;gap:16px;font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);font-variant-numeric:tabular-nums;margin-top:8px">
+        <span><span style="color:var(--text-ghost)">SRC</span> <span style="color:var(--text-secondary)">WEBCAM</span></span>
+        <span style="color:var(--text-ghost)">&middot;</span>
+        <span><span style="color:var(--text-ghost)">FPS</span> <span style="color:var(--text-secondary)">60.0</span></span>
+        <span style="color:var(--text-ghost)">&middot;</span>
+        <span><span style="color:var(--text-ghost)">RES</span> <span style="color:var(--text-secondary)">1920x1080</span></span>
+        <span style="color:var(--text-ghost)">|</span>
+        <span><span style="color:var(--text-ghost)">T</span> <span style="color:var(--text-secondary)">00:12:34.56</span></span>
+        <span style="color:var(--text-ghost)">|</span>
+        <span><span style="color:var(--text-ghost)">EVENTS</span> <span style="color:var(--text-secondary)">1,247</span></span>
+      </div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:12px">
+        label: text-ghost &bull; value: text-secondary &bull; separator: &middot; or | &bull; font-variant-numeric: tabular-nums
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

@@ -6,7 +6,7 @@ import { Knob } from './Knob'
 // WAVEFORM SHAPES — mini thumbnails and display waveform
 // ════════════════════════════════════════════════════════════════════════════
 
-const SHAPES: { id: LFOShape; label: string }[] = [
+export const SHAPES: { id: LFOShape; label: string }[] = [
   { id: 'sine', label: 'Sine' },
   { id: 'triangle', label: 'Tri' },
   { id: 'square', label: 'Sqr' },
@@ -14,7 +14,7 @@ const SHAPES: { id: LFOShape; label: string }[] = [
   { id: 'random', label: 'Rnd' },
 ]
 
-function getWaveY(shape: LFOShape, t: number): number {
+export function getWaveY(shape: LFOShape, t: number): number {
   switch (shape) {
     case 'sine':
       return Math.sin(t * Math.PI * 2) * 0.5 + 0.5
@@ -42,7 +42,7 @@ const VB_PAD = 6
 const WAVE_CYCLES = 2
 const WAVE_STEPS = 128
 
-function buildWavePath(shape: LFOShape): string {
+export function buildWavePath(shape: LFOShape): string {
   const pts: string[] = []
   for (let i = 0; i <= WAVE_STEPS; i++) {
     const t = (i / WAVE_STEPS) * WAVE_CYCLES
@@ -54,7 +54,7 @@ function buildWavePath(shape: LFOShape): string {
   return pts.join(' ')
 }
 
-function WaveformDisplay({ shape, phase }: { shape: LFOShape; phase: number }) {
+export function WaveformDisplay({ shape, phase }: { shape: LFOShape; phase: number }) {
   const wavePath = buildWavePath(shape)
 
   // Phase maps 0-1 across the full display width
@@ -107,7 +107,7 @@ function WaveformDisplay({ shape, phase }: { shape: LFOShape; phase: number }) {
 // SHAPE THUMBNAILS — small waveform previews
 // ════════════════════════════════════════════════════════════════════════════
 
-function ShapeThumbnail({
+export function ShapeThumbnail({
   shape,
   selected,
   onClick,

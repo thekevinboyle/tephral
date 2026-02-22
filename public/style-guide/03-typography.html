@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations / Typography</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style-guide/shared.css">
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head><body>
+<div class="frame">
+  <div class="page-header">
+    <div><span class="page-num">03</span> <span class="page-title">Foundations / Typography</span></div>
+    <span class="page-sys">SEG_F4ULT Design System</span>
+  </div>
+
+  <div class="section">
+    <div class="section-label">ISO &mdash; Primary Typeface</div>
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px">
+      <div class="card"><div class="card-label">Thin 100</div><div style="font-family:var(--sans);font-weight:100;font-size:28px;color:var(--text-primary)">Strand Tracer</div></div>
+      <div class="card"><div class="card-label">Light 300</div><div style="font-family:var(--sans);font-weight:300;font-size:28px;color:var(--text-primary)">Strand Tracer</div></div>
+      <div class="card"><div class="card-label">Regular 400</div><div style="font-family:var(--sans);font-weight:400;font-size:28px;color:var(--text-primary)">Strand Tracer</div></div>
+      <div class="card"><div class="card-label">Medium 500</div><div style="font-family:var(--sans);font-weight:500;font-size:28px;color:var(--text-primary)">Strand Tracer</div></div>
+      <div class="card"><div class="card-label">Bold 700</div><div style="font-family:var(--sans);font-weight:700;font-size:28px;color:var(--text-primary)">Strand Tracer</div></div>
+      <div class="card"><div class="card-label">Black 900</div><div style="font-family:var(--sans);font-weight:900;font-size:28px;color:var(--text-primary)">Strand Tracer</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">JetBrains Mono &mdash; Data &amp; Values</div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-label">Regular 400 &bull; Tabular Nums</div>
+      <div style="font-family:var(--mono);font-size:22px;color:var(--text-primary);font-variant-numeric:tabular-nums">00:12:34.56 &nbsp; 0.750 &nbsp; 128px &nbsp; #FF0055</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Medium 500 &bull; Code</div>
+      <div style="font-family:var(--mono);font-size:14px;font-weight:500;color:var(--text-primary)">effectPipeline.updateEffects({ rgb_split: true, chromatic: false })</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Size Scale</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div class="card" style="display:flex;align-items:baseline;gap:20px;padding:12px 20px">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);width:80px;text-transform:uppercase;letter-spacing:0.06em">Micro</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-muted);width:40px">10px</span>
+        <span style="font-size:10px;color:var(--text-secondary);letter-spacing:0.08em;text-transform:uppercase">DATA LABELS &middot; TIMESTAMPS &middot; COUNTERS</span>
+      </div>
+      <div class="card" style="display:flex;align-items:baseline;gap:20px;padding:12px 20px">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);width:80px;text-transform:uppercase;letter-spacing:0.06em">Tiny</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-muted);width:40px">11px</span>
+        <span style="font-size:11px;color:var(--text-secondary);letter-spacing:0.08em;text-transform:uppercase">UI LABELS &middot; BUTTON TEXT &middot; CONTROL NAMES</span>
+      </div>
+      <div class="card" style="display:flex;align-items:baseline;gap:20px;padding:12px 20px">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);width:80px;text-transform:uppercase;letter-spacing:0.06em">Small</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-muted);width:40px">12px</span>
+        <span style="font-size:12px;color:var(--text-secondary)">Secondary text &middot; Descriptions</span>
+      </div>
+      <div class="card" style="display:flex;align-items:baseline;gap:20px;padding:12px 20px">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);width:80px;text-transform:uppercase;letter-spacing:0.06em">Base</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-muted);width:40px">13px</span>
+        <span style="font-size:13px;color:var(--text-secondary)">Body text &middot; Standard content</span>
+      </div>
+      <div class="card" style="display:flex;align-items:baseline;gap:20px;padding:12px 20px">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);width:80px;text-transform:uppercase;letter-spacing:0.06em">Medium</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-muted);width:40px">14px</span>
+        <span style="font-size:14px;color:var(--text-secondary)">Emphasis text &middot; Larger labels</span>
+      </div>
+      <div class="card" style="display:flex;align-items:baseline;gap:20px;padding:12px 20px">
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);width:80px;text-transform:uppercase;letter-spacing:0.06em">Large</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-muted);width:40px">16px</span>
+        <span style="font-size:16px;color:var(--text-secondary)">Headings &middot; Prominent labels</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Text Styles</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="card">
+        <div class="card-label">Uppercase &bull; Wide Tracking 0.08em</div>
+        <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted)">EFFECT NAME &nbsp; PARAMETER LABEL &nbsp; PAGE TITLE</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Tight Tracking &bull; -0.01em</div>
+        <div style="font-size:13px;letter-spacing:-0.01em;color:var(--text-primary);line-height:1.4">Standard body text with tight tracking for dense information displays.</div>
+      </div>
+      <div class="card" style="grid-column:1/-1">
+        <div class="card-label">Data Readout &bull; Mono &bull; Tabular Nums</div>
+        <div style="display:flex;gap:16px;font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);font-variant-numeric:tabular-nums">
+          <span><span style="color:var(--text-ghost)">SRC</span> <span style="color:var(--text-secondary)">WEBCAM</span></span>
+          <span style="color:var(--text-ghost)">&middot;</span>
+          <span><span style="color:var(--text-ghost)">FPS</span> <span style="color:var(--text-secondary)">60.0</span></span>
+          <span style="color:var(--text-ghost)">&middot;</span>
+          <span><span style="color:var(--text-ghost)">RES</span> <span style="color:var(--text-secondary)">1920x1080</span></span>
+          <span style="color:var(--text-ghost)">|</span>
+          <span><span style="color:var(--text-ghost)">T</span> <span style="color:var(--text-secondary)">00:12:34.56</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

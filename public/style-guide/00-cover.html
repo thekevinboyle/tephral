@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cover</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style-guide/shared.css">
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+<style>
+.frame {
+  width: 1440px; height: 900px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  background: #0D0D0D; position: relative; overflow: hidden;
+  background-image: radial-gradient(circle, #181818 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.cover-system { font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; color: var(--text-ghost); text-transform: uppercase; margin-bottom: 32px; }
+.cover-title { font-family: var(--sans); font-weight: 100; font-size: 96px; letter-spacing: -0.03em; color: var(--text-primary); line-height: 1; }
+.cover-title span { color: var(--text-ghost); }
+.cover-sub { font-family: var(--sans); font-weight: 300; font-size: 18px; color: var(--text-muted); margin-top: 20px; letter-spacing: 0.02em; }
+.cover-rule { width: 120px; height: 1px; background: var(--border); margin: 32px auto; }
+.cover-meta { font-family: var(--mono); font-size: 9px; color: var(--text-ghost); letter-spacing: 0.1em; text-transform: uppercase; line-height: 2; }
+.cover-badge {
+  position: absolute; top: 40px; right: 40px;
+  font-family: var(--mono); font-size: 9px; color: var(--text-ghost);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  border: 1px solid var(--border-subtle); border-radius: 4px;
+  padding: 6px 12px;
+}
+.cover-dots { position: absolute; bottom: 40px; display: flex; gap: 8px; }
+.cover-dot { width: 6px; height: 6px; border-radius: 50%; }
+/* Accent line */
+.accent-line { position: absolute; left: 80px; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, transparent, var(--border), transparent); }
+.accent-line-r { position: absolute; right: 80px; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, transparent, var(--border), transparent); }
+</style>
+</head><body>
+<div class="frame">
+  <div class="accent-line"></div>
+  <div class="accent-line-r"></div>
+  <div class="cover-badge">v1.0 &mdash; Feb 2026</div>
+  <div class="cover-system">Design System</div>
+  <h1 class="cover-title">SEG<span>_</span>F4ULT</h1>
+  <p class="cover-sub">Visual Effects Performance Interface</p>
+  <div class="cover-rule"></div>
+  <div class="cover-meta">
+    Strand Tracer &mdash; Living Style Guide<br>
+    Foundations &bull; Components &bull; Patterns &bull; Iconography
+  </div>
+  <div class="cover-dots">
+    <div class="cover-dot" style="background:#e5e5e5"></div>
+    <div class="cover-dot" style="background:#7dd3fc"></div>
+    <div class="cover-dot" style="background:#c084fc"></div>
+    <div class="cover-dot" style="background:#fbbf24"></div>
+    <div class="cover-dot" style="background:#0891b2"></div>
+    <div class="cover-dot" style="background:#a855f7"></div>
+    <div class="cover-dot" style="background:#84cc16"></div>
+    <div class="cover-dot" style="background:#f59e0b"></div>
+    <div class="cover-dot" style="background:#AA55FF"></div>
+    <div class="cover-dot" style="background:#AAFF00"></div>
+    <div class="cover-dot" style="background:#ff0000"></div>
+    <div class="cover-dot" style="background:#FF0055"></div>
+  </div>
+</div>
+</body></html>

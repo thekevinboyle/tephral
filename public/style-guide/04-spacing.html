@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundations / Spacing</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style-guide/shared.css">
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head><body>
+<div class="frame">
+  <div class="page-header">
+    <div><span class="page-num">04</span> <span class="page-title">Foundations / Spacing &amp; Grid</span></div>
+    <span class="page-sys">SEG_F4ULT Design System</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+    <div class="section">
+      <div class="section-label">Spacing Scale (4px base)</div>
+      <div class="space-row"><span class="space-label">space-1</span><div class="space-bar" style="width:4px"></div><span class="space-px">4px</span></div>
+      <div class="space-row"><span class="space-label">space-2</span><div class="space-bar" style="width:8px"></div><span class="space-px">8px</span></div>
+      <div class="space-row"><span class="space-label">space-3</span><div class="space-bar" style="width:12px"></div><span class="space-px">12px</span></div>
+      <div class="space-row"><span class="space-label">space-4</span><div class="space-bar" style="width:16px"></div><span class="space-px">16px</span></div>
+      <div class="space-row"><span class="space-label">space-5</span><div class="space-bar" style="width:20px"></div><span class="space-px">20px</span></div>
+      <div class="space-row"><span class="space-label">space-6</span><div class="space-bar" style="width:24px"></div><span class="space-px">24px</span></div>
+      <div class="space-row"><span class="space-label">space-8</span><div class="space-bar" style="width:32px"></div><span class="space-px">32px</span></div>
+      <div class="space-row"><span class="space-label">space-10</span><div class="space-bar" style="width:40px"></div><span class="space-px">40px</span></div>
+      <div class="space-row"><span class="space-label">space-12</span><div class="space-bar" style="width:48px"></div><span class="space-px">48px</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Component Spacing</div>
+      <div class="space-row"><span class="space-label">panel-pad</span><div class="space-bar" style="width:12px"></div><span class="space-px">12px</span></div>
+      <div class="space-row"><span class="space-label">panel-pad-sm</span><div class="space-bar" style="width:8px"></div><span class="space-px">8px</span></div>
+      <div class="space-row"><span class="space-label">card-pad</span><div class="space-bar" style="width:8px"></div><span class="space-px">8px</span></div>
+      <div class="space-row"><span class="space-label">card-pad-sm</span><div class="space-bar" style="width:4px"></div><span class="space-px">4px</span></div>
+      <div class="space-row"><span class="space-label">gap-xs</span><div class="space-bar" style="width:4px"></div><span class="space-px">4px</span></div>
+      <div class="space-row"><span class="space-label">gap-sm</span><div class="space-bar" style="width:8px"></div><span class="space-px">8px</span></div>
+      <div class="space-row"><span class="space-label">gap-md</span><div class="space-bar" style="width:12px"></div><span class="space-px">12px</span></div>
+      <div class="space-row"><span class="space-label">gap-lg</span><div class="space-bar" style="width:16px"></div><span class="space-px">16px</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Layout Grid</div>
+    <div class="card">
+      <div style="display:grid;gap:4px;grid-template-columns:320px 1fr 200px;grid-template-rows:40px 160px 100px 160px">
+        <div style="grid-column:1/-1;border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em">Header &mdash; 40px</div>
+        <div style="border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em">Left &mdash; 320px</div>
+        <div style="border:1px dashed #555;border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;background:rgba(112,112,112,0.05)">Canvas &mdash; flex</div>
+        <div style="border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em">Right &mdash; 200px</div>
+        <div style="grid-column:1/-1;border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em">Middle Row &mdash; 100px</div>
+        <div style="grid-column:1/-1;border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase;letter-spacing:0.06em">Bottom &mdash; flex</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Responsive Breakpoints</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+      <div class="card"><div class="card-label">Default</div><div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);line-height:2">col-left: 320px<br>col-grid: 480px<br>col-right: 200px</div></div>
+      <div class="card"><div class="card-label">1280px+</div><div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);line-height:2">col-left: 360px<br>col-grid: 520px<br>col-right: 240px</div></div>
+      <div class="card"><div class="card-label">1536px+</div><div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);line-height:2">col-left: 400px<br>col-grid: 560px<br>col-right: 280px</div></div>
+      <div class="card"><div class="card-label">1920px+</div><div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);line-height:2">col-left: 440px<br>col-grid: 600px<br>col-right: 320px</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Fixed Dimensions</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div class="card"><div style="display:grid;grid-template-columns:1fr auto;gap:4px;font-family:var(--mono);font-size:10px;line-height:2"><span style="color:var(--text-ghost)">sidebar-width</span><span style="color:var(--text-muted)">36px</span><span style="color:var(--text-ghost)">header-height</span><span style="color:var(--text-muted)">32px</span><span style="color:var(--text-ghost)">control-height</span><span style="color:var(--text-muted)">24px</span><span style="color:var(--text-ghost)">grid gap</span><span style="color:var(--text-muted)">4px</span></div></div>
+      <div class="card"><div style="display:grid;grid-template-columns:1fr auto;gap:4px;font-family:var(--mono);font-size:10px;line-height:2"><span style="color:var(--text-ghost)">btn radius</span><span style="color:var(--text-muted)">3px</span><span style="color:var(--text-ghost)">card radius</span><span style="color:var(--text-muted)">8px</span><span style="color:var(--text-ghost)">knob diameter</span><span style="color:var(--text-muted)">36-40px</span><span style="color:var(--text-ghost)">slider track</span><span style="color:var(--text-muted)">2px h</span></div></div>
+      <div class="card"><div style="display:grid;grid-template-columns:1fr auto;gap:4px;font-family:var(--mono);font-size:10px;line-height:2"><span style="color:var(--text-ghost)">slider thumb</span><span style="color:var(--text-muted)">3px w</span><span style="color:var(--text-ghost)">toggle</span><span style="color:var(--text-muted)">32x16px</span><span style="color:var(--text-ghost)">row-header</span><span style="color:var(--text-muted)">40px</span><span style="color:var(--text-ghost)">row-middle</span><span style="color:var(--text-muted)">100px</span></div></div>
+    </div>
+  </div>
+</div>
+</body></html>

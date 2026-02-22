@@ -16,28 +16,37 @@ export interface PointCloudParams {
   rotateX: number              // -PI to PI (camera orbit)
   rotateY: number              // -PI/2 to PI/2 (camera elevation)
   zoom: number                 // 0.5-5 (camera distance)
+  scaleX: number               // 0.3-2.0 horizontal scale
+  scaleY: number               // 0.3-2.0 vertical scale
   mix: number                  // 0-1 dry/wet blend
 }
 
 export const DEFAULT_POINT_CLOUD_PARAMS: PointCloudParams = {
   density: 128,
   pointSize: 3,
-  depthMultiplier: 0.5,
+  depthMultiplier: 0.3,
   depthChannel: 'luminance',
   depthInvert: false,
   noiseDisplace: 0,
   noiseScale: 2,
   noiseSpeed: 0.5,
   opacity: 1,
-  rotateX: 0.3,
-  rotateY: 0.3,
+  rotateX: 0.2,
+  rotateY: 0.15,
   zoom: 1.5,
+  scaleX: 1.0,
+  scaleY: 1.0,
   mix: 1,
 }
 
 const MAX_DENSITY = 512
+const FOV = 60
+const HALF_FOV_RAD = (FOV / 2) * Math.PI / 180
+const TAN_HALF_FOV = Math.tan(HALF_FOV_RAD)
 
 // Vertex shader for the internal THREE.Points scene
+// position.xy = UV coordinates (0-1), mapped to XY scaled by scaleX/scaleY
+// Z = depth from video luminance/channel * depthMultiplier
 const pointsVertexShader = `
 uniform sampler2D videoTexture;
 uniform float depthMultiplier;
@@ -49,6 +58,8 @@ uniform float noiseSpeed;
 uniform float pointSize;
 uniform float uOpacity;
 uniform float time;
+uniform float scaleX;
+uniform float scaleY;
 
 varying vec3 vColor;
 varying float vOpacity;
@@ -109,7 +120,7 @@ void main() {
   // position.xy holds UV coordinates (0-1)
   vec2 uv = position.xy;
 
-  // Sample video texture
+  // Sample video texture at this UV
   vec4 texColor = texture2D(videoTexture, uv);
   vColor = texColor.rgb;
 
@@ -129,24 +140,28 @@ void main() {
     depth = 1.0 - depth;
   }
 
+  // depth is 0-1, depthMultiplier caps the max Z extrusion
   depth *= depthMultiplier;
 
-  // Map UV to XY position: centered at origin, spanning -0.5 to 0.5
-  vec3 pos = vec3(uv.x - 0.5, (1.0 - uv.y) - 0.5, depth);
+  // Map UV to XY with user-controllable scale
+  // scaleX/scaleY let you dial in the correct proportions for any video source
+  vec3 pos = vec3((uv.x - 0.5) * scaleX, (uv.y - 0.5) * scaleY, depth);
 
-  // Add noise displacement
+  // Add noise displacement for organic movement
   if (noiseDisplace > 0.001) {
     float n = snoise(vec3(pos.xy * noiseScale, time * noiseSpeed));
-    pos.z += n * noiseDisplace;
-    pos.x += snoise(vec3(pos.xy * noiseScale + 100.0, time * noiseSpeed)) * noiseDisplace * 0.3;
-    pos.y += snoise(vec3(pos.xy * noiseScale + 200.0, time * noiseSpeed)) * noiseDisplace * 0.3;
+    pos.z += n * noiseDisplace * 0.3;
+    pos.x += snoise(vec3(pos.xy * noiseScale + 100.0, time * noiseSpeed)) * noiseDisplace * 0.1;
+    pos.y += snoise(vec3(pos.xy * noiseScale + 200.0, time * noiseSpeed)) * noiseDisplace * 0.1;
   }
 
   vOpacity = uOpacity;
 
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
   gl_Position = projectionMatrix * mvPosition;
-  gl_PointSize = pointSize * (300.0 / -mvPosition.z);
+
+  // Point size is computed on CPU each frame based on density, viewport, and camera distance
+  gl_PointSize = pointSize;
 }
 `
 
@@ -177,8 +192,10 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   }
 
   vec4 pcColor = texture2D(pointCloudTexture, uv);
-  // Alpha-blend the point cloud over the input
-  vec3 blended = mix(inputColor.rgb, pcColor.rgb, pcColor.a * effectMix);
+  // Point cloud replaces the input entirely: points on black background.
+  // Mix controls dry/wet: 0 = original video, 1 = point cloud only.
+  vec3 pointCloudFrame = pcColor.rgb; // points are colored, gaps are black (cleared to 0,0,0,0)
+  vec3 blended = mix(inputColor.rgb, pointCloudFrame, effectMix);
   outputColor = vec4(blended, inputColor.a);
 }
 `
@@ -206,6 +223,16 @@ export class PointCloudEffect extends Effect {
   private maxAllocatedDensity = 0
   private elapsedTime = 0
 
+  // Stored param values — update() uses these to position camera and compute point size
+  private _rotateX: number
+  private _rotateY: number
+  private _zoom: number
+  private _pointSize: number
+  private _scaleX: number
+  private _scaleY: number
+  private _viewportWidth = 1920
+  private _viewportHeight = 1080
+
   constructor(params: Partial<PointCloudParams> = {}) {
     const p = { ...DEFAULT_POINT_CLOUD_PARAMS, ...params }
 
@@ -218,15 +245,23 @@ export class PointCloudEffect extends Effect {
       ]),
     })
 
+    // Store orbit + sizing state
+    this._rotateX = p.rotateX
+    this._rotateY = p.rotateY
+    this._zoom = p.zoom
+    this._pointSize = p.pointSize
+    this._scaleX = p.scaleX
+    this._scaleY = p.scaleY
+
     // Set up internal scene
     this.pcScene = new THREE.Scene()
-    this.pcCamera = new THREE.PerspectiveCamera(60, 1, 0.01, 100)
+    this.pcCamera = new THREE.PerspectiveCamera(FOV, 1, 0.01, 100)
 
     // Create geometry with pre-allocated max buffer
     this.pcGeometry = new THREE.BufferGeometry()
     this.allocateBuffer(MAX_DENSITY)
 
-    // Create shader material
+    // Create shader material for points
     this.pcMaterial = new THREE.ShaderMaterial({
       uniforms: {
         videoTexture: { value: null },
@@ -239,6 +274,8 @@ export class PointCloudEffect extends Effect {
         pointSize: { value: p.pointSize },
         uOpacity: { value: p.opacity },
         time: { value: 0 },
+        scaleX: { value: p.scaleX },
+        scaleY: { value: p.scaleY },
       },
       vertexShader: pointsVertexShader,
       fragmentShader: pointsFragmentShader,
@@ -247,31 +284,32 @@ export class PointCloudEffect extends Effect {
       depthWrite: false,
     })
 
+    // THREE.Points ensures gl.drawArrays uses gl.POINTS mode
     this.pcPoints = new THREE.Points(this.pcGeometry, this.pcMaterial)
     this.pcScene.add(this.pcPoints)
 
     // Set initial density draw range
     this.setDensity(p.density)
-
-    // Set initial camera position
-    this.updateCamera(p.rotateX, p.rotateY, p.zoom)
   }
 
   private allocateBuffer(density: number) {
     const count = density * density
     const positions = new Float32Array(count * 3)
 
-    // Fill UV grid positions
+    // Fill UV grid: each point gets (u, v, 0)
+    // u and v range from 0 to 1 — the vertex shader maps these to world XY
     for (let y = 0; y < density; y++) {
       for (let x = 0; x < density; x++) {
         const i = (y * density + x) * 3
-        positions[i] = x / (density - 1)       // u
-        positions[i + 1] = y / (density - 1)   // v
-        positions[i + 2] = 0                     // z (unused, set in shader)
+        positions[i] = x / (density - 1)       // u: 0 to 1
+        positions[i + 1] = y / (density - 1)   // v: 0 to 1
+        positions[i + 2] = 0                     // z placeholder (overridden in shader)
       }
     }
 
-    this.pcGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    const attr = new THREE.BufferAttribute(positions, 3)
+    attr.setUsage(THREE.DynamicDrawUsage)
+    this.pcGeometry.setAttribute('position', attr)
     this.maxAllocatedDensity = density
   }
 
@@ -302,20 +340,6 @@ export class PointCloudEffect extends Effect {
     }
   }
 
-  private updateCamera(rotateX: number, rotateY: number, zoom: number) {
-    // Spherical coordinates: rotateX = azimuth, rotateY = elevation
-    const phi = rotateY  // elevation (-PI/2 to PI/2)
-    const theta = rotateX // azimuth
-    const r = zoom
-
-    this.pcCamera.position.set(
-      r * Math.cos(phi) * Math.sin(theta),
-      r * Math.sin(phi),
-      r * Math.cos(phi) * Math.cos(theta)
-    )
-    this.pcCamera.lookAt(0, 0, 0)
-  }
-
   initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
     super.initialize?.(renderer, alpha, frameBufferType)
 
@@ -325,6 +349,8 @@ export class PointCloudEffect extends Effect {
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
     })
+    this._viewportWidth = size.x
+    this._viewportHeight = size.y
   }
 
   update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
@@ -332,23 +358,62 @@ export class PointCloudEffect extends Effect {
 
     this.elapsedTime += deltaTime || 0
 
-    // Set video texture from input buffer
+    // Bind video texture from the effect pipeline's input buffer
     this.pcMaterial.uniforms.videoTexture.value = inputBuffer.texture
     this.pcMaterial.uniforms.time.value = this.elapsedTime
+    // Sync scale uniforms every frame
+    this.pcMaterial.uniforms.scaleX.value = this._scaleX
+    this.pcMaterial.uniforms.scaleY.value = this._scaleY
 
-    // Update camera aspect ratio
-    this.pcCamera.aspect = this.renderTarget.width / this.renderTarget.height
+    // Compute fit distance based on user-controlled scale
+    const cameraAspect = this._viewportWidth / this._viewportHeight
+    const cloudHeight = this._scaleY           // Y extent: -0.5*scaleY to 0.5*scaleY
+    const cloudWidth = this._scaleX            // X extent: -0.5*scaleX to 0.5*scaleX
+    const fitDistY = (cloudHeight / 2) / TAN_HALF_FOV
+    const fitDistX = (cloudWidth / 2) / (TAN_HALF_FOV * cameraAspect)
+    const fitDist = Math.max(fitDistY, fitDistX)
+
+    // Camera distance: normalize zoom so default (1.5) = cloud fits ~95% of viewport
+    const r = fitDist * (this._zoom / 1.5) * 1.05
+
+    // Position camera using spherical coordinates
+    const phi = this._rotateY
+    const theta = this._rotateX
+    this.pcCamera.position.set(
+      r * Math.cos(phi) * Math.sin(theta),
+      r * Math.sin(phi),
+      r * Math.cos(phi) * Math.cos(theta)
+    )
+    this.pcCamera.lookAt(0, 0, 0)
+    this.pcCamera.aspect = cameraAspect
     this.pcCamera.updateProjectionMatrix()
 
-    // Render point cloud to internal render target
-    const currentTarget = renderer.getRenderTarget()
+    // Auto-calculate point size so adjacent points just touch
+    const visibleWorldHeight = 2 * r * TAN_HALF_FOV
+    const maxWorldSpacing = Math.max(this._scaleX, this._scaleY) / Math.max(this.currentDensity - 1, 1)
+    const pixelsPerWorldUnit = this._viewportHeight / visibleWorldHeight
+    const autoSize = maxWorldSpacing * pixelsPerWorldUnit * 1.1
+    // pointSize param (default 3) acts as multiplier: at 3 = 1x, at 1 = 0.33x, at 20 = 6.67x
+    const finalSize = Math.max(1.0, autoSize * (this._pointSize / 3.0))
+    this.pcMaterial.uniforms.pointSize.value = finalSize
+
+    // Save GL state that we'll modify
+    const prevTarget = renderer.getRenderTarget()
+    const prevClearColor = new THREE.Color()
+    const prevClearAlpha = renderer.getClearAlpha()
+    renderer.getClearColor(prevClearColor)
+
+    // Render point cloud scene to our internal render target
     renderer.setRenderTarget(this.renderTarget)
     renderer.setClearColor(0x000000, 0)
-    renderer.clear()
+    renderer.clear(true, true, false)
     renderer.render(this.pcScene, this.pcCamera)
-    renderer.setRenderTarget(currentTarget)
 
-    // Bind render target texture to composite shader
+    // Restore GL state
+    renderer.setRenderTarget(prevTarget)
+    renderer.setClearColor(prevClearColor, prevClearAlpha)
+
+    // Pass the rendered point cloud texture to the composite fragment shader
     this.uniforms.get('pointCloudTexture')!.value = this.renderTarget.texture
     this.uniforms.get('hasPointCloud')!.value = true
   }
@@ -356,11 +421,13 @@ export class PointCloudEffect extends Effect {
   setSize(width: number, height: number) {
     super.setSize?.(width, height)
     this.renderTarget?.setSize(width, height)
+    this._viewportWidth = width
+    this._viewportHeight = height
   }
 
   updateParams(params: Partial<PointCloudParams>) {
     if (params.density !== undefined) this.setDensity(params.density)
-    if (params.pointSize !== undefined) this.pcMaterial.uniforms.pointSize.value = params.pointSize
+    if (params.pointSize !== undefined) this._pointSize = params.pointSize
     if (params.depthMultiplier !== undefined) this.pcMaterial.uniforms.depthMultiplier.value = params.depthMultiplier
     if (params.depthChannel !== undefined) this.pcMaterial.uniforms.depthChannel.value = depthChannelToInt(params.depthChannel)
     if (params.depthInvert !== undefined) this.pcMaterial.uniforms.depthInvert.value = params.depthInvert
@@ -370,13 +437,12 @@ export class PointCloudEffect extends Effect {
     if (params.opacity !== undefined) this.pcMaterial.uniforms.uOpacity.value = params.opacity
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
 
-    // Update camera if orbit params changed
-    if (params.rotateX !== undefined || params.rotateY !== undefined || params.zoom !== undefined) {
-      const rx = params.rotateX ?? Math.atan2(this.pcCamera.position.x, this.pcCamera.position.z)
-      const ry = params.rotateY ?? Math.asin(this.pcCamera.position.y / this.pcCamera.position.length())
-      const z = params.zoom ?? this.pcCamera.position.length()
-      this.updateCamera(rx, ry, z)
-    }
+    // Store values — camera positioning and scale happen in update()
+    if (params.rotateX !== undefined) this._rotateX = params.rotateX
+    if (params.rotateY !== undefined) this._rotateY = params.rotateY
+    if (params.zoom !== undefined) this._zoom = params.zoom
+    if (params.scaleX !== undefined) this._scaleX = params.scaleX
+    if (params.scaleY !== undefined) this._scaleY = params.scaleY
   }
 
   dispose() {

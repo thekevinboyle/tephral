@@ -394,6 +394,8 @@ export function useContinuousModulation() {
           if (paramName === 'rotateX') dest.updatePointCloudParams({ rotateX: (value * 2 - 1) * Math.PI })
           if (paramName === 'rotateY') dest.updatePointCloudParams({ rotateY: (value - 0.5) * Math.PI })
           if (paramName === 'zoom') dest.updatePointCloudParams({ zoom: 0.5 + value * 4.5 })
+          if (paramName === 'scaleX') dest.updatePointCloudParams({ scaleX: 0.3 + value * 1.7 })
+          if (paramName === 'scaleY') dest.updatePointCloudParams({ scaleY: 0.3 + value * 1.7 })
           if (paramName === 'mix') dest.updatePointCloudParams({ mix: value })
           break
         }

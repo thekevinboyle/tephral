@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEG_F4ULT Design System</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+@font-face { font-family: 'ISO'; src: url('/fonts/ISOv0.7-Thin.otf') format('opentype'); font-weight: 100; }
+@font-face { font-family: 'ISO'; src: url('/fonts/ISOv0.7-Light.otf') format('opentype'); font-weight: 300; }
+@font-face { font-family: 'ISO'; src: url('/fonts/ISOv0.7-Regular.otf') format('opentype'); font-weight: 400; }
+@font-face { font-family: 'ISO'; src: url('/fonts/ISOv0.7-Medium.otf') format('opentype'); font-weight: 500; }
+@font-face { font-family: 'ISO'; src: url('/fonts/ISOv0.7-Bold.otf') format('opentype'); font-weight: 700; }
+@font-face { font-family: 'ISO'; src: url('/fonts/ISOv0.7-Black.otf') format('opentype'); font-weight: 900; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-void: #000000; --bg-primary: #0D0D0D; --bg-surface: #1A1A1A;
+  --bg-elevated: #1A1A1A; --bg-hover: #262626;
+  --border: #4A4A4A; --border-emphasis: #5A5A5A;
+  --text-primary: #F5F0EB; --text-secondary: #D5D0CB;
+  --text-muted: #9A948E; --text-ghost: #5A5450;
+  --accent: #707070; --accent-dim: #585858; --accent-hover: #888888;
+  --accent-glow: rgba(112, 112, 112, 0.2);
+  --font-sans: 'ISO', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.4;
+}
+
+.page { max-width: 1400px; margin: 0 auto; padding: 48px 40px 80px; }
+
+/* Header */
+.hero { padding: 64px 0 48px; border-bottom: 1px solid var(--border); margin-bottom: 48px; }
+.hero-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-ghost); margin-bottom: 12px; }
+.hero-title { font-size: 48px; font-weight: 100; letter-spacing: -0.02em; color: var(--text-primary); line-height: 1.1; }
+.hero-title span { color: var(--text-ghost); }
+.hero-sub { font-size: 14px; color: var(--text-muted); margin-top: 16px; max-width: 600px; line-height: 1.5; }
+
+/* Sections */
+.section { margin-bottom: 64px; }
+.section-header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 32px; padding-bottom: 12px; border-bottom: 1px solid #252525; }
+.section-num { font-family: var(--font-mono); font-size: 10px; color: var(--text-ghost); letter-spacing: 0.08em; }
+.section-title { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+
+/* Subsection */
+.subsection { margin-bottom: 40px; }
+.sub-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-ghost); margin-bottom: 16px; }
+
+/* Color Swatches */
+.swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.swatch { border: 1px solid #252525; border-radius: 4px; overflow: hidden; }
+.swatch-color { height: 56px; position: relative; }
+.swatch-info { padding: 8px 10px; background: var(--bg-surface); }
+.swatch-name { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; }
+.swatch-hex { font-family: var(--font-mono); font-size: 10px; color: var(--text-ghost); }
+
+/* Effect Color Grid */
+.fx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.fx-page { margin-bottom: 24px; }
+.fx-page-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--text-ghost); margin-bottom: 8px; text-transform: uppercase; }
+.fx-row { display: flex; gap: 4px; margin-bottom: 4px; }
+.fx-cell { flex: 1; height: 36px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.06em; font-weight: 500; position: relative; }
+.fx-cell .fx-hex { position: absolute; bottom: 2px; right: 4px; font-size: 7px; opacity: 0.6; }
+
+/* Typography */
+.type-specimen { margin-bottom: 24px; padding: 20px 24px; background: var(--bg-surface); border: 1px solid #252525; border-radius: 4px; }
+.type-meta { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; color: var(--text-ghost); text-transform: uppercase; margin-bottom: 8px; }
+.type-sample-sans { font-family: var(--font-sans); color: var(--text-primary); }
+.type-sample-mono { font-family: var(--font-mono); color: var(--text-primary); }
+
+.weight-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.weight-card { padding: 16px 20px; background: var(--bg-surface); border: 1px solid #252525; border-radius: 4px; }
+.weight-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; color: var(--text-ghost); text-transform: uppercase; margin-bottom: 6px; }
+.weight-sample { font-family: var(--font-sans); font-size: 24px; color: var(--text-primary); }
+
+.size-scale { display: flex; flex-direction: column; gap: 8px; }
+.size-row { display: flex; align-items: baseline; gap: 16px; padding: 8px 16px; background: var(--bg-surface); border: 1px solid #252525; border-radius: 4px; }
+.size-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-ghost); width: 100px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.06em; }
+.size-value { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); width: 40px; flex-shrink: 0; }
+
+/* Spacing */
+.space-scale { display: flex; flex-direction: column; gap: 6px; }
+.space-row { display: flex; align-items: center; gap: 16px; }
+.space-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-ghost); width: 80px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.06em; }
+.space-bar { height: 16px; background: var(--accent); border-radius: 2px; opacity: 0.5; }
+.space-px { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); width: 40px; }
+
+/* Components */
+.comp-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.comp-group { padding: 24px; background: var(--bg-surface); border: 1px solid #252525; border-radius: 4px; margin-bottom: 16px; }
+.comp-group-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; color: var(--text-ghost); text-transform: uppercase; margin-bottom: 16px; }
+
+/* Button mockups */
+.btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; font-family: var(--font-sans); font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-sm { height: 24px; padding: 0 8px; font-size: 10px; }
+.btn-md { height: 28px; padding: 0 10px; font-size: 11px; }
+.btn-lg { height: 32px; padding: 0 12px; font-size: 12px; }
+.btn-default { background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted); }
+.btn-default:hover { background: var(--bg-hover); }
+.btn-active { background: var(--accent); border: 1px solid var(--accent); color: var(--text-primary); box-shadow: 0 0 4px var(--accent-glow); }
+.btn-danger { background: var(--accent); border: 1px solid var(--accent); color: var(--text-primary); box-shadow: 0 0 4px var(--accent-glow); }
+.btn-disabled { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-ghost); opacity: 0.5; cursor: not-allowed; }
+
+/* Toggle mockups */
+.toggle-wrap { display: flex; align-items: center; gap: 8px; }
+.toggle { width: 32px; height: 16px; border-radius: 8px; position: relative; cursor: pointer; transition: background 0.2s; }
+.toggle-off { background: rgba(154,148,142,0.3); }
+.toggle-on { background: #ffcc00; }
+.toggle-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--text-primary); position: absolute; top: 2px; transition: transform 0.2s; }
+.toggle-off .toggle-dot { transform: translateX(2px); }
+.toggle-on .toggle-dot { transform: translateX(18px); }
+.toggle-label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); }
+
+/* Slider mockups */
+.slider-wrap { width: 200px; }
+.slider-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.slider-label { font-size: 10px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.06em; }
+.slider-value { font-family: var(--font-mono); font-size: 10px; color: var(--text-ghost); }
+.slider-track { height: 2px; background: #333; border-radius: 1px; position: relative; }
+.slider-fill { height: 100%; background: #ffcc00; border-radius: 1px; }
+.slider-thumb { width: 3px; height: 10px; background: var(--text-primary); border-radius: 1px; position: absolute; top: -4px; }
+
+/* Knob mockups */
+.knob-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.knob { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-primary); border: 1px solid var(--border); position: relative; }
+.knob-line { position: absolute; width: 1px; height: 12px; background: var(--text-primary); top: 4px; left: 50%; transform-origin: bottom center; }
+.knob-label { font-size: 9px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.06em; }
+
+/* Icon grid */
+.icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+.icon-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; background: var(--bg-surface); border: 1px solid #252525; border-radius: 4px; }
+.icon-cell svg { fill: var(--text-secondary); }
+.icon-name { font-family: var(--font-mono); font-size: 8px; color: var(--text-ghost); text-transform: uppercase; letter-spacing: 0.04em; text-align: center; }
+
+/* Dot matrix pattern */
+.dot-grid-demo { background-color: var(--bg-primary); background-image: radial-gradient(circle, #252525 1px, transparent 1px); background-size: 16px 16px; background-position: center center; height: 120px; border: 1px solid #252525; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.dot-grid-dense { background-size: 8px 8px; }
+
+/* Panel demos */
+.panel-demo { padding: 16px; border: 1px solid #252525; border-radius: 8px; }
+.panel-demos { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.gradient-down { background: linear-gradient(to bottom, var(--bg-surface) 0%, #141414 100%); }
+.gradient-up { background: linear-gradient(to top, var(--bg-surface) 0%, #141414 100%); }
+.gradient-subtle { background: linear-gradient(to bottom, var(--bg-surface) 0%, #171717 100%); }
+.gradient-accent { background: linear-gradient(to bottom, var(--bg-surface) 0%, rgba(112,112,112,0.02) 100%); }
+
+/* Data readout */
+.data-demo { display: flex; gap: 16px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); font-variant-numeric: tabular-nums; padding: 12px 16px; background: var(--bg-surface); border: 1px solid #252525; border-radius: 4px; }
+.data-lbl { color: var(--text-ghost); }
+.data-val { color: var(--text-secondary); }
+.data-sep { color: var(--text-ghost); margin: 0 4px; }
+
+/* Modulation sources */
+.mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.mod-card { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-surface); border: 1px solid #252525; border-radius: 4px; }
+.mod-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.mod-name { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); }
+.mod-hex { font-family: var(--font-mono); font-size: 8px; color: var(--text-ghost); }
+
+/* Animation demos */
+.anim-row { display: flex; gap: 16px; align-items: center; }
+.anim-box { width: 48px; height: 48px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+@keyframes pulse-glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes recording-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,51,51,0.4); } 50% { box-shadow: 0 0 0 8px rgba(255,51,51,0); } }
+@keyframes plock-flash { 0%, 100% { border-color: #FF4060; box-shadow: 0 0 8px #FF406050; } 50% { border-color: #FF406040; box-shadow: 0 0 2px #FF406020; } }
+.anim-pulse { animation: pulse-glow 2s ease-in-out infinite; background: var(--accent); }
+.anim-record { animation: recording-pulse 1s ease infinite; background: #FF3333; border-radius: 50%; width: 24px; height: 24px; }
+.anim-plock { animation: plock-flash 0.6s ease infinite; border: 2px solid #FF4060; background: var(--bg-surface); }
+.anim-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-ghost); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Layout diagram */
+.layout-diagram { display: grid; gap: 4px; padding: 24px; background: var(--bg-surface); border: 1px solid #252525; border-radius: 4px; }
+.layout-cell { border: 1px dashed var(--border); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 9px; color: var(--text-ghost); text-transform: uppercase; letter-spacing: 0.06em; padding: 8px; min-height: 40px; }
+
+/* Light theme preview */
+.light-preview { background: #f0f0f0; border-radius: 8px; padding: 24px; margin-top: 16px; }
+.light-preview .swatch-info { background: #e0e0e0; }
+.light-preview .swatch-name { color: #3a3a3a; }
+.light-preview .swatch-hex { color: #666666; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">Design System v1.0</div>
+  <h1 class="hero-title">SEG<span>_</span>F4ULT</h1>
+  <p class="hero-sub">Living design style guide for the Strand Tracer visual effects performance interface. Monochrome industrial aesthetic with vibrant effect indicators.</p>
+</div>
+
+<!-- 01: COLOR SYSTEM -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <span class="section-title">Color System</span>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Dark Theme &mdash; Backgrounds</div>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background:#000000"></div><div class="swatch-info"><span class="swatch-name">Void</span><span class="swatch-hex">#000000</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#0D0D0D"></div><div class="swatch-info"><span class="swatch-name">Primary</span><span class="swatch-hex">#0D0D0D</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#1A1A1A"></div><div class="swatch-info"><span class="swatch-name">Surface</span><span class="swatch-hex">#1A1A1A</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#262626"></div><div class="swatch-info"><span class="swatch-name">Hover</span><span class="swatch-hex">#262626</span></div></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Dark Theme &mdash; Text</div>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background:#F5F0EB"></div><div class="swatch-info"><span class="swatch-name">Primary</span><span class="swatch-hex">#F5F0EB</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#D5D0CB"></div><div class="swatch-info"><span class="swatch-name">Secondary</span><span class="swatch-hex">#D5D0CB</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#9A948E"></div><div class="swatch-info"><span class="swatch-name">Muted</span><span class="swatch-hex">#9A948E</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#5A5450"></div><div class="swatch-info"><span class="swatch-name">Ghost</span><span class="swatch-hex">#5A5450</span></div></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Dark Theme &mdash; Borders &amp; Accent</div>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background:#4A4A4A"></div><div class="swatch-info"><span class="swatch-name">Border</span><span class="swatch-hex">#4A4A4A</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#5A5A5A"></div><div class="swatch-info"><span class="swatch-name">Border Emphasis</span><span class="swatch-hex">#5A5A5A</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#707070"></div><div class="swatch-info"><span class="swatch-name">Accent</span><span class="swatch-hex">#707070</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#888888"></div><div class="swatch-info"><span class="swatch-name">Accent Hover</span><span class="swatch-hex">#888888</span></div></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">UI Special Colors</div>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background:#FF3333"></div><div class="swatch-info"><span class="swatch-name">Record Red</span><span class="swatch-hex">#FF3333</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#ffcc00"></div><div class="swatch-info"><span class="swatch-name">Accent Yellow</span><span class="swatch-hex">#FFCC00</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#FF4060"></div><div class="swatch-info"><span class="swatch-name">P-Lock Flash</span><span class="swatch-hex">#FF4060</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#252525"></div><div class="swatch-info"><span class="swatch-name">Grid Dot</span><span class="swatch-hex">#252525</span></div></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Light Theme</div>
+    <div class="light-preview">
+      <div class="swatch-grid">
+        <div class="swatch"><div class="swatch-color" style="background:#f0f0f0; border-bottom: 1px solid #d0d0d0"></div><div class="swatch-info"><span class="swatch-name">Primary</span><span class="swatch-hex">#F0F0F0</span></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#e0e0e0; border-bottom: 1px solid #d0d0d0"></div><div class="swatch-info"><span class="swatch-name">Surface</span><span class="swatch-hex">#E0E0E0</span></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#1a1a1a"></div><div class="swatch-info"><span class="swatch-name">Text Primary</span><span class="swatch-hex">#1A1A1A</span></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#606060"></div><div class="swatch-info"><span class="swatch-name">Accent</span><span class="swatch-hex">#606060</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 02: EFFECT COLORS -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <span class="section-title">Effect Color Palette</span>
+  </div>
+
+  <div class="fx-page">
+    <div class="fx-page-label">Page 0 &mdash; ACID (Data Visualization)</div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#e5e5e5; color:#0D0D0D">DOTS</div>
+      <div class="fx-cell" style="background:#d4d4d4; color:#0D0D0D">GLYPH</div>
+      <div class="fx-cell" style="background:#c4c4c4; color:#0D0D0D">ICONS</div>
+      <div class="fx-cell" style="background:#b4b4b4; color:#0D0D0D">CONTOUR</div>
+    </div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#94a3b8; color:#0D0D0D">DECOMP</div>
+      <div class="fx-cell" style="background:#7dd3fc; color:#0D0D0D">MIRROR</div>
+      <div class="fx-cell" style="background:#67e8f9; color:#0D0D0D">SLICE</div>
+      <div class="fx-cell" style="background:#a5f3fc; color:#0D0D0D">THGRID</div>
+    </div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#f0abfc; color:#0D0D0D">CLOUD</div>
+      <div class="fx-cell" style="background:#c084fc; color:#0D0D0D">LED</div>
+      <div class="fx-cell" style="background:#a78bfa; color:#0D0D0D">SLIT</div>
+      <div class="fx-cell" style="background:#818cf8; color:#0D0D0D">VORONOI</div>
+    </div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#fbbf24; color:#0D0D0D">HALF</div>
+      <div class="fx-cell" style="background:#f59e0b; color:#0D0D0D">HEX</div>
+      <div class="fx-cell" style="background:#f97316; color:#0D0D0D">SCAN</div>
+      <div class="fx-cell" style="background:#ef4444; color:#F5F0EB">RIPPLE</div>
+    </div>
+  </div>
+
+  <div class="fx-page">
+    <div class="fx-page-label">Page 1 &mdash; VISION (Tracking)</div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#eab308; color:#0D0D0D">BRIGHT</div>
+      <div class="fx-cell" style="background:#06b6d4; color:#0D0D0D">EDGE</div>
+      <div class="fx-cell" style="background:#ec4899; color:#F5F0EB">COLOR</div>
+      <div class="fx-cell" style="background:#22c55e; color:#0D0D0D">MOTION</div>
+    </div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#00ffff; color:#0D0D0D">CONTOUR</div>
+      <div class="fx-cell" style="background:#FF0055; color:#F5F0EB">LNDMRK</div>
+      <div class="fx-cell" style="background:#374151; color:#9A948E">&mdash;</div>
+      <div class="fx-cell" style="background:#374151; color:#9A948E">&mdash;</div>
+    </div>
+  </div>
+
+  <div class="fx-page">
+    <div class="fx-page-label">Page 2 &mdash; GLITCH (Core Effects)</div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#0891b2; color:#F5F0EB">RGB</div>
+      <div class="fx-cell" style="background:#6366f1; color:#F5F0EB">CHROMA</div>
+      <div class="fx-cell" style="background:#dc2626; color:#F5F0EB">POSTER</div>
+      <div class="fx-cell" style="background:#ea580c; color:#F5F0EB">GRADE</div>
+    </div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#a855f7; color:#F5F0EB">BLOCK</div>
+      <div class="fx-cell" style="background:#8b5cf6; color:#F5F0EB">STATIC</div>
+      <div class="fx-cell" style="background:#d946ef; color:#F5F0EB">PIXEL</div>
+      <div class="fx-cell" style="background:#0284c7; color:#F5F0EB">LENS</div>
+    </div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#65a30d; color:#F5F0EB">SCAN</div>
+      <div class="fx-cell" style="background:#059669; color:#F5F0EB">VHS</div>
+      <div class="fx-cell" style="background:#84cc16; color:#0D0D0D">NOISE</div>
+      <div class="fx-cell" style="background:#22c55e; color:#0D0D0D">DITHER</div>
+    </div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#f59e0b; color:#0D0D0D">EDGES</div>
+      <div class="fx-cell" style="background:#d97706; color:#0D0D0D">FDBK</div>
+      <div class="fx-cell" style="background:#b45309; color:#F5F0EB">ASCII</div>
+      <div class="fx-cell" style="background:#92400e; color:#F5F0EB">STIPPLE</div>
+    </div>
+  </div>
+
+  <div class="fx-page">
+    <div class="fx-page-label">Page 3 &mdash; STRAND (Death Stranding)</div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#1a1a1a; color:#9A948E; border:1px solid #333">HANDS</div>
+      <div class="fx-cell" style="background:#8844CC; color:#F5F0EB">TAR</div>
+      <div class="fx-cell" style="background:#6633AA; color:#F5F0EB">TIMEFALL</div>
+      <div class="fx-cell" style="background:#AA55FF; color:#F5F0EB">VOID OUT</div>
+    </div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#AA55FF; color:#F5F0EB">WEB</div>
+      <div class="fx-cell" style="background:#BB77FF; color:#0D0D0D">BRIDGE</div>
+      <div class="fx-cell" style="background:#AA55FF; color:#F5F0EB">C-PATH</div>
+      <div class="fx-cell" style="background:#9944EE; color:#F5F0EB">UMBIL</div>
+    </div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#CC88FF; color:#0D0D0D">ODRADEK</div>
+      <div class="fx-cell" style="background:#BB77FF; color:#0D0D0D">CHIRAL</div>
+      <div class="fx-cell" style="background:#D4A5FF; color:#0D0D0D">BEACH</div>
+      <div class="fx-cell" style="background:#AA55FF; color:#F5F0EB">DOOMS</div>
+    </div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#9966DD; color:#F5F0EB">C-CLOUD</div>
+      <div class="fx-cell" style="background:#8855CC; color:#F5F0EB">BB POD</div>
+      <div class="fx-cell" style="background:#7744BB; color:#F5F0EB">SEAM</div>
+      <div class="fx-cell" style="background:#AA55FF; color:#F5F0EB">EXTINCT</div>
+    </div>
+  </div>
+
+  <div class="fx-page">
+    <div class="fx-page-label">Page 4 &mdash; MOTION (Temporal)</div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#AAFF00; color:#0D0D0D">EXTRACT</div>
+      <div class="fx-cell" style="background:#88CC00; color:#0D0D0D">ECHO</div>
+      <div class="fx-cell" style="background:#99DD00; color:#0D0D0D">SMEAR</div>
+      <div class="fx-cell" style="background:#BBFF33; color:#0D0D0D">FREEZE</div>
+    </div>
+  </div>
+
+  <div class="fx-page">
+    <div class="fx-page-label">Page 5 &mdash; DESTRUCTION</div>
+    <div class="fx-row">
+      <div class="fx-cell" style="background:#ff0000; color:#F5F0EB">MOSH</div>
+      <div class="fx-cell" style="background:#ff3366; color:#F5F0EB">SORT</div>
+      <div class="fx-cell" style="background:#374151; color:#9A948E">&mdash;</div>
+      <div class="fx-cell" style="background:#374151; color:#9A948E">&mdash;</div>
+    </div>
+  </div>
+
+  <div class="subsection" style="margin-top:32px">
+    <div class="sub-label">Modulation Source Colors</div>
+    <div class="mod-grid">
+      <div class="mod-card"><div class="mod-dot" style="background:#FF0055"></div><div><div class="mod-name">Euclidean</div><div class="mod-hex">#FF0055</div></div></div>
+      <div class="mod-card"><div class="mod-dot" style="background:#707070"></div><div><div class="mod-name">LFO</div><div class="mod-hex">#707070</div></div></div>
+      <div class="mod-card"><div class="mod-dot" style="background:#FF6B6B"></div><div><div class="mod-name">Random</div><div class="mod-hex">#FF6B6B</div></div></div>
+      <div class="mod-card"><div class="mod-dot" style="background:#4ECDC4"></div><div><div class="mod-name">Step</div><div class="mod-hex">#4ECDC4</div></div></div>
+      <div class="mod-card"><div class="mod-dot" style="background:#AA55FF"></div><div><div class="mod-name">Envelope</div><div class="mod-hex">#AA55FF</div></div></div>
+      <div class="mod-card"><div class="mod-dot" style="background:#AAFF00"></div><div><div class="mod-name">S&amp;H</div><div class="mod-hex">#AAFF00</div></div></div>
+      <div class="mod-card"><div class="mod-dot" style="background:#FF9500"></div><div><div class="mod-name">Step Seq</div><div class="mod-hex">#FF9500</div></div></div>
+      <div class="mod-card"><div class="mod-dot" style="background:#FF0055"></div><div><div class="mod-name">Ricochet</div><div class="mod-hex">#FF0055</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 03: TYPOGRAPHY -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <span class="section-title">Typography</span>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">ISO &mdash; Primary Typeface</div>
+    <div class="weight-grid">
+      <div class="weight-card"><div class="weight-label">Thin 100</div><div class="weight-sample" style="font-weight:100">Strand Tracer</div></div>
+      <div class="weight-card"><div class="weight-label">Light 300</div><div class="weight-sample" style="font-weight:300">Strand Tracer</div></div>
+      <div class="weight-card"><div class="weight-label">Regular 400</div><div class="weight-sample" style="font-weight:400">Strand Tracer</div></div>
+      <div class="weight-card"><div class="weight-label">Medium 500</div><div class="weight-sample" style="font-weight:500">Strand Tracer</div></div>
+      <div class="weight-card"><div class="weight-label">Bold 700</div><div class="weight-sample" style="font-weight:700">Strand Tracer</div></div>
+      <div class="weight-card"><div class="weight-label">Black 900</div><div class="weight-sample" style="font-weight:900">Strand Tracer</div></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">JetBrains Mono &mdash; Values &amp; Data</div>
+    <div class="type-specimen">
+      <div class="type-meta">Regular 400 &bull; Tabular Nums</div>
+      <div class="type-sample-mono" style="font-size:20px; font-variant-numeric:tabular-nums;">00:12:34.56 &nbsp; 0.750 &nbsp; 128px &nbsp; #FF0055</div>
+    </div>
+    <div class="type-specimen">
+      <div class="type-meta">Medium 500 &bull; Code</div>
+      <div class="type-sample-mono" style="font-size:14px; font-weight:500">effectPipeline.updateEffects({ rgb_split: true, chromatic: false })</div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Size Scale</div>
+    <div class="size-scale">
+      <div class="size-row"><span class="size-label">Micro</span><span class="size-value">10px</span><span style="font-size:10px; color:var(--text-secondary)">DATA LABELS &middot; TIMESTAMPS &middot; COUNTERS</span></div>
+      <div class="size-row"><span class="size-label">Tiny</span><span class="size-value">11px</span><span style="font-size:11px; color:var(--text-secondary)">UI LABELS &middot; BUTTON TEXT &middot; CONTROL NAMES</span></div>
+      <div class="size-row"><span class="size-label">Small</span><span class="size-value">12px</span><span style="font-size:12px; color:var(--text-secondary)">SECONDARY TEXT &middot; DESCRIPTIONS</span></div>
+      <div class="size-row"><span class="size-label">Base</span><span class="size-value">13px</span><span style="font-size:13px; color:var(--text-secondary)">Body text &middot; Standard content</span></div>
+      <div class="size-row"><span class="size-label">Medium</span><span class="size-value">14px</span><span style="font-size:14px; color:var(--text-secondary)">Slightly larger &middot; Emphasis text</span></div>
+      <div class="size-row"><span class="size-label">Large</span><span class="size-value">16px</span><span style="font-size:16px; color:var(--text-secondary)">Headings &middot; Prominent labels</span></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Text Styles</div>
+    <div class="type-specimen">
+      <div class="type-meta">Uppercase &bull; Wide Tracking &bull; 0.08em</div>
+      <div style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted)">EFFECT NAME &nbsp; PARAMETER LABEL &nbsp; PAGE TITLE &nbsp; SECTION HEADER</div>
+    </div>
+    <div class="type-specimen">
+      <div class="type-meta">Tight Tracking &bull; -0.01em &bull; Body Text</div>
+      <div style="font-size:13px; letter-spacing:-0.01em; color:var(--text-primary); line-height:1.4">Standard body text with tight tracking for dense information displays. Used in panels and descriptions.</div>
+    </div>
+    <div class="type-specimen">
+      <div class="type-meta">Data Readout &bull; Mono &bull; Tabular Nums</div>
+      <div class="data-demo">
+        <span><span class="data-lbl">SRC</span> <span class="data-val">WEBCAM</span></span>
+        <span class="data-sep">&middot;</span>
+        <span><span class="data-lbl">FPS</span> <span class="data-val">60.0</span></span>
+        <span class="data-sep">&middot;</span>
+        <span><span class="data-lbl">RES</span> <span class="data-val">1920x1080</span></span>
+        <span class="data-sep">|</span>
+        <span><span class="data-lbl">T</span> <span class="data-val">00:12:34.56</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 04: SPACING -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <span class="section-title">Spacing &amp; Layout</span>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Spacing Scale (4px base)</div>
+    <div class="space-scale">
+      <div class="space-row"><span class="space-label">space-1</span><div class="space-bar" style="width:4px"></div><span class="space-px">4px</span></div>
+      <div class="space-row"><span class="space-label">space-2</span><div class="space-bar" style="width:8px"></div><span class="space-px">8px</span></div>
+      <div class="space-row"><span class="space-label">space-3</span><div class="space-bar" style="width:12px"></div><span class="space-px">12px</span></div>
+      <div class="space-row"><span class="space-label">space-4</span><div class="space-bar" style="width:16px"></div><span class="space-px">16px</span></div>
+      <div class="space-row"><span class="space-label">space-5</span><div class="space-bar" style="width:20px"></div><span class="space-px">20px</span></div>
+      <div class="space-row"><span class="space-label">space-6</span><div class="space-bar" style="width:24px"></div><span class="space-px">24px</span></div>
+      <div class="space-row"><span class="space-label">space-8</span><div class="space-bar" style="width:32px"></div><span class="space-px">32px</span></div>
+      <div class="space-row"><span class="space-label">space-10</span><div class="space-bar" style="width:40px"></div><span class="space-px">40px</span></div>
+      <div class="space-row"><span class="space-label">space-12</span><div class="space-bar" style="width:48px"></div><span class="space-px">48px</span></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Component Spacing Tokens</div>
+    <div class="space-scale">
+      <div class="space-row"><span class="space-label">panel-pad</span><div class="space-bar" style="width:12px"></div><span class="space-px">12px</span></div>
+      <div class="space-row"><span class="space-label">panel-pad-sm</span><div class="space-bar" style="width:8px"></div><span class="space-px">8px</span></div>
+      <div class="space-row"><span class="space-label">card-pad</span><div class="space-bar" style="width:8px"></div><span class="space-px">8px</span></div>
+      <div class="space-row"><span class="space-label">card-pad-sm</span><div class="space-bar" style="width:4px"></div><span class="space-px">4px</span></div>
+      <div class="space-row"><span class="space-label">gap-xs</span><div class="space-bar" style="width:4px"></div><span class="space-px">4px</span></div>
+      <div class="space-row"><span class="space-label">gap-sm</span><div class="space-bar" style="width:8px"></div><span class="space-px">8px</span></div>
+      <div class="space-row"><span class="space-label">gap-md</span><div class="space-bar" style="width:12px"></div><span class="space-px">12px</span></div>
+      <div class="space-row"><span class="space-label">gap-lg</span><div class="space-bar" style="width:16px"></div><span class="space-px">16px</span></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Layout Grid (Responsive Columns)</div>
+    <div class="layout-diagram" style="grid-template-columns: 320px 1fr 200px; grid-template-rows: 40px 1fr 100px 1fr;">
+      <div class="layout-cell" style="grid-column:1/-1">Header &mdash; 40px</div>
+      <div class="layout-cell">Left Col &mdash; 320px</div>
+      <div class="layout-cell">Canvas &mdash; flex</div>
+      <div class="layout-cell">Right Col &mdash; 200px</div>
+      <div class="layout-cell" style="grid-column:1/-1">Middle Row &mdash; 100px</div>
+      <div class="layout-cell" style="grid-column:1/-1">Bottom &mdash; flex</div>
+    </div>
+    <div class="type-specimen" style="margin-top:12px">
+      <div class="type-meta">Breakpoints</div>
+      <div style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted); line-height:1.8">
+        Default: &nbsp; col-left: 320px &nbsp; col-grid: 480px &nbsp; col-right: 200px<br>
+        1280px+: &nbsp; col-left: 360px &nbsp; col-grid: 520px &nbsp; col-right: 240px<br>
+        1536px+: &nbsp; col-left: 400px &nbsp; col-grid: 560px &nbsp; col-right: 280px<br>
+        1920px+: &nbsp; col-left: 440px &nbsp; col-grid: 600px &nbsp; col-right: 320px
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 05: COMPONENTS -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <span class="section-title">Components</span>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Buttons</div>
+    <div class="comp-group">
+      <div class="comp-group-label">Variants</div>
+      <div class="comp-row">
+        <button class="btn btn-sm btn-default">Default SM</button>
+        <button class="btn btn-md btn-default">Default MD</button>
+        <button class="btn btn-lg btn-default">Default LG</button>
+      </div>
+      <div class="comp-row">
+        <button class="btn btn-sm btn-active">Active SM</button>
+        <button class="btn btn-md btn-active">Active MD</button>
+        <button class="btn btn-lg btn-active">Active LG</button>
+      </div>
+      <div class="comp-row">
+        <button class="btn btn-sm btn-danger">Danger SM</button>
+        <button class="btn btn-md btn-danger">Danger MD</button>
+        <button class="btn btn-lg btn-danger">Danger LG</button>
+      </div>
+      <div class="comp-row">
+        <button class="btn btn-sm btn-disabled">Disabled SM</button>
+        <button class="btn btn-md btn-disabled">Disabled MD</button>
+        <button class="btn btn-lg btn-disabled">Disabled LG</button>
+      </div>
+    </div>
+    <div class="comp-group">
+      <div class="comp-group-label">Size Reference</div>
+      <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted); line-height:2">
+        SM: height 24px, padding 0 8px, font 10px<br>
+        MD: height 28px, padding 0 10px, font 11px<br>
+        LG: height 32px, padding 0 12px, font 12px
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Toggles</div>
+    <div class="comp-group">
+      <div class="comp-group-label">Minimal Toggle (Pill)</div>
+      <div class="comp-row">
+        <div class="toggle-wrap">
+          <span class="toggle-label">Off State</span>
+          <div class="toggle toggle-off"><div class="toggle-dot"></div></div>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-label">On State</span>
+          <div class="toggle toggle-on"><div class="toggle-dot"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Sliders</div>
+    <div class="comp-group">
+      <div class="comp-group-label">Minimal Slider</div>
+      <div class="comp-row" style="gap:32px">
+        <div class="slider-wrap">
+          <div class="slider-header"><span class="slider-label">Amount</span><span class="slider-value">0.750</span></div>
+          <div class="slider-track"><div class="slider-fill" style="width:75%"></div><div class="slider-thumb" style="left:calc(75% - 1.5px)"></div></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-header"><span class="slider-label">Threshold</span><span class="slider-value">0.250</span></div>
+          <div class="slider-track"><div class="slider-fill" style="width:25%"></div><div class="slider-thumb" style="left:calc(25% - 1.5px)"></div></div>
+        </div>
+      </div>
+      <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:12px; line-height:1.8">
+        Track: 2px height, #333 background<br>
+        Fill: #FFCC00 (accent-yellow)<br>
+        Thumb: 3px wide, text-primary color
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Knobs</div>
+    <div class="comp-group">
+      <div class="comp-group-label">Rotary Controls &mdash; 270&deg; Arc</div>
+      <div class="comp-row" style="gap:32px">
+        <div class="knob-wrap">
+          <svg width="40" height="40" viewBox="0 0 40 40">
+            <circle cx="20" cy="20" r="18" fill="#0D0D0D" stroke="#4A4A4A" stroke-width="1"/>
+            <line x1="20" y1="20" x2="20" y2="6" stroke="#F5F0EB" stroke-width="1" transform="rotate(-90, 20, 20)"/>
+            <path d="M 7.2 32.8 A 18 18 0 1 1 32.8 32.8" fill="none" stroke="#9A948E" stroke-width="1.5" opacity="0.3"/>
+          </svg>
+          <span class="knob-label">Min</span>
+        </div>
+        <div class="knob-wrap">
+          <svg width="40" height="40" viewBox="0 0 40 40">
+            <circle cx="20" cy="20" r="18" fill="#0D0D0D" stroke="#4A4A4A" stroke-width="1"/>
+            <line x1="20" y1="20" x2="20" y2="6" stroke="#F5F0EB" stroke-width="1"/>
+            <path d="M 7.2 32.8 A 18 18 0 1 0 20 2" fill="none" stroke="#9A948E" stroke-width="1.5" opacity="0.6"/>
+          </svg>
+          <span class="knob-label">Mid</span>
+        </div>
+        <div class="knob-wrap">
+          <svg width="40" height="40" viewBox="0 0 40 40">
+            <circle cx="20" cy="20" r="18" fill="#0D0D0D" stroke="#4A4A4A" stroke-width="1"/>
+            <line x1="20" y1="20" x2="20" y2="6" stroke="#F5F0EB" stroke-width="1" transform="rotate(90, 20, 20)"/>
+            <path d="M 7.2 32.8 A 18 18 0 1 1 32.8 32.8" fill="none" stroke="#9A948E" stroke-width="1.5"/>
+          </svg>
+          <span class="knob-label">Max</span>
+        </div>
+        <div class="knob-wrap">
+          <svg width="40" height="40" viewBox="0 0 40 40">
+            <circle cx="20" cy="20" r="18" fill="#0D0D0D" stroke="#FF0055" stroke-width="1.5" opacity="0.8"/>
+            <line x1="20" y1="20" x2="20" y2="6" stroke="#F5F0EB" stroke-width="1" transform="rotate(45, 20, 20)"/>
+            <path d="M 7.2 32.8 A 18 18 0 1 1 20 2" fill="none" stroke="#FF0055" stroke-width="1.5" opacity="0.6"/>
+            <circle cx="20" cy="40" r="3" fill="#FF0055"/>
+          </svg>
+          <span class="knob-label">Modulated</span>
+        </div>
+      </div>
+      <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:16px; line-height:1.8">
+        Sizes: xs (36px), sm (38px), md (40px)<br>
+        Arc sweep: 270 degrees (-135 to +135)<br>
+        Body: bg-primary fill, border stroke<br>
+        Modulation: source color outline + routing dot
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 06: ICONS -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <span class="section-title">Dot Matrix Icons</span>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Icon Library &mdash; Grid Step: 2px, Dot Radius: 0.8px</div>
+    <div class="icon-grid">
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="0.8"/><circle cx="5" cy="5" r="0.8"/><circle cx="3" cy="7" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="11" cy="7" r="0.8"/><circle cx="5" cy="9" r="0.8"/><circle cx="5" cy="11" r="0.8"/><circle cx="1" cy="7" r="0.8"/><circle cx="13" cy="7" r="0.8"/><circle cx="5" cy="1" r="0.8"/><circle cx="5" cy="13" r="0.8"/><circle cx="3" cy="3" r="0.8"/><circle cx="11" cy="3" r="0.8"/><circle cx="3" cy="11" r="0.8"/><circle cx="11" cy="11" r="0.8"/><circle cx="13" cy="1" r="0.8"/></svg><span class="icon-name">FX</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="0.8"/><circle cx="7" cy="3" r="0.8"/><circle cx="9" cy="3" r="0.8"/><circle cx="5" cy="5" r="0.8"/><circle cx="7" cy="5" r="0.8"/><circle cx="9" cy="5" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="5" cy="9" r="0.8"/><circle cx="7" cy="9" r="0.8"/><circle cx="9" cy="9" r="0.8"/><circle cx="7" cy="1" r="0.8"/><circle cx="3" cy="7" r="0.8"/><circle cx="13" cy="7" r="0.8"/><circle cx="7" cy="13" r="0.8"/><circle cx="3" cy="3" r="0.8"/><circle cx="11" cy="3" r="0.8"/><circle cx="3" cy="11" r="0.8"/><circle cx="11" cy="11" r="0.8"/></svg><span class="icon-name">Target</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="0.8"/><circle cx="5" cy="5" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="11" cy="7" r="0.8"/><circle cx="11" cy="5" r="0.8"/><circle cx="11" cy="9" r="0.8"/></svg><span class="icon-name">Routing</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="0.8"/><circle cx="5" cy="5" r="0.8"/><circle cx="7" cy="5" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="5" cy="9" r="0.8"/><circle cx="7" cy="9" r="0.8"/><circle cx="9" cy="9" r="0.8"/><circle cx="11" cy="9" r="0.8"/></svg><span class="icon-name">Play</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="0.8"/><circle cx="7" cy="3" r="0.8"/><circle cx="11" cy="3" r="0.8"/><circle cx="13" cy="3" r="0.8"/><circle cx="5" cy="5" r="0.8"/><circle cx="7" cy="5" r="0.8"/><circle cx="11" cy="5" r="0.8"/><circle cx="13" cy="5" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="11" cy="7" r="0.8"/><circle cx="13" cy="7" r="0.8"/><circle cx="5" cy="9" r="0.8"/><circle cx="7" cy="9" r="0.8"/><circle cx="11" cy="9" r="0.8"/><circle cx="13" cy="9" r="0.8"/><circle cx="5" cy="11" r="0.8"/><circle cx="7" cy="11" r="0.8"/><circle cx="11" cy="11" r="0.8"/><circle cx="13" cy="11" r="0.8"/><circle cx="5" cy="13" r="0.8"/><circle cx="7" cy="13" r="0.8"/><circle cx="11" cy="13" r="0.8"/><circle cx="13" cy="13" r="0.8"/></svg><span class="icon-name">Pause</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="5" r="0.8"/><circle cx="7" cy="5" r="0.8"/><circle cx="9" cy="5" r="0.8"/><circle cx="11" cy="5" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="11" cy="7" r="0.8"/><circle cx="5" cy="9" r="0.8"/><circle cx="7" cy="9" r="0.8"/><circle cx="9" cy="9" r="0.8"/><circle cx="11" cy="9" r="0.8"/><circle cx="5" cy="11" r="0.8"/><circle cx="7" cy="11" r="0.8"/><circle cx="9" cy="11" r="0.8"/><circle cx="11" cy="11" r="0.8"/></svg><span class="icon-name">Stop</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="7" cy="3" r="0.8"/><circle cx="9" cy="3" r="0.8"/><circle cx="5" cy="5" r="0.8"/><circle cx="7" cy="5" r="0.8"/><circle cx="9" cy="5" r="0.8"/><circle cx="11" cy="5" r="0.8"/><circle cx="3" cy="7" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="11" cy="7" r="0.8"/><circle cx="13" cy="7" r="0.8"/><circle cx="5" cy="9" r="0.8"/><circle cx="7" cy="9" r="0.8"/><circle cx="9" cy="9" r="0.8"/><circle cx="11" cy="9" r="0.8"/><circle cx="7" cy="11" r="0.8"/><circle cx="9" cy="11" r="0.8"/></svg><span class="icon-name">Record</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="3" r="0.8"/><circle cx="7" cy="3" r="0.8"/><circle cx="11" cy="3" r="0.8"/><circle cx="3" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="11" cy="7" r="0.8"/><circle cx="3" cy="11" r="0.8"/><circle cx="7" cy="11" r="0.8"/><circle cx="11" cy="11" r="0.8"/></svg><span class="icon-name">Grid</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="1" cy="7" r="0.8"/><circle cx="3" cy="5" r="0.8"/><circle cx="3" cy="7" r="0.8"/><circle cx="3" cy="9" r="0.8"/><circle cx="5" cy="3" r="0.8"/><circle cx="5" cy="5" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="5" cy="9" r="0.8"/><circle cx="5" cy="11" r="0.8"/><circle cx="7" cy="1" r="0.8"/><circle cx="7" cy="3" r="0.8"/><circle cx="7" cy="5" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="7" cy="9" r="0.8"/><circle cx="7" cy="11" r="0.8"/><circle cx="7" cy="13" r="0.8"/><circle cx="9" cy="3" r="0.8"/><circle cx="9" cy="5" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="9" cy="9" r="0.8"/><circle cx="9" cy="11" r="0.8"/><circle cx="11" cy="5" r="0.8"/><circle cx="11" cy="7" r="0.8"/><circle cx="11" cy="9" r="0.8"/><circle cx="13" cy="7" r="0.8"/></svg><span class="icon-name">Waveform</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="7" cy="1" r="0.8"/><circle cx="5" cy="3" r="0.8"/><circle cx="7" cy="3" r="0.8"/><circle cx="9" cy="3" r="0.8"/><circle cx="3" cy="5" r="0.8"/><circle cx="5" cy="5" r="0.8"/><circle cx="7" cy="5" r="0.8"/><circle cx="9" cy="5" r="0.8"/><circle cx="11" cy="5" r="0.8"/><circle cx="1" cy="7" r="0.8"/><circle cx="3" cy="7" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="11" cy="7" r="0.8"/><circle cx="13" cy="7" r="0.8"/><circle cx="3" cy="9" r="0.8"/><circle cx="5" cy="9" r="0.8"/><circle cx="7" cy="9" r="0.8"/><circle cx="9" cy="9" r="0.8"/><circle cx="11" cy="9" r="0.8"/><circle cx="5" cy="11" r="0.8"/><circle cx="7" cy="11" r="0.8"/><circle cx="9" cy="11" r="0.8"/><circle cx="7" cy="13" r="0.8"/></svg><span class="icon-name">Layers</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="3" r="0.8"/><circle cx="7" cy="3" r="0.8"/><circle cx="11" cy="3" r="0.8"/><circle cx="3" cy="5" r="0.8"/><circle cx="7" cy="5" r="0.8"/><circle cx="11" cy="5" r="0.8"/><circle cx="1" cy="7" r="0.8"/><circle cx="3" cy="7" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="11" cy="7" r="0.8"/><circle cx="3" cy="9" r="0.8"/><circle cx="7" cy="9" r="0.8"/><circle cx="9" cy="9" r="0.8"/><circle cx="11" cy="9" r="0.8"/><circle cx="13" cy="9" r="0.8"/><circle cx="3" cy="11" r="0.8"/><circle cx="7" cy="11" r="0.8"/><circle cx="11" cy="11" r="0.8"/><circle cx="3" cy="13" r="0.8"/><circle cx="7" cy="13" r="0.8"/><circle cx="11" cy="13" r="0.8"/></svg><span class="icon-name">Sliders</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="0.8"/><circle cx="7" cy="3" r="0.8"/><circle cx="9" cy="3" r="0.8"/><circle cx="3" cy="5" r="0.8"/><circle cx="7" cy="5" r="0.8"/><circle cx="11" cy="5" r="0.8"/><circle cx="1" cy="7" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="13" cy="7" r="0.8"/><circle cx="3" cy="9" r="0.8"/><circle cx="7" cy="9" r="0.8"/><circle cx="11" cy="9" r="0.8"/><circle cx="5" cy="11" r="0.8"/><circle cx="7" cy="11" r="0.8"/><circle cx="9" cy="11" r="0.8"/></svg><span class="icon-name">Eye</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="7" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="11" cy="7" r="0.8"/><circle cx="13" cy="7" r="0.8"/><circle cx="3" cy="3" r="0.8"/><circle cx="13" cy="3" r="0.8"/><circle cx="3" cy="11" r="0.8"/><circle cx="13" cy="11" r="0.8"/><circle cx="5" cy="5" r="0.8"/><circle cx="9" cy="5" r="0.8"/><circle cx="5" cy="9" r="0.8"/><circle cx="9" cy="9" r="0.8"/><circle cx="7" cy="7" r="0.8"/></svg><span class="icon-name">Clear</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="7" cy="3" r="0.8"/><circle cx="7" cy="5" r="0.8"/><circle cx="3" cy="7" r="0.8"/><circle cx="5" cy="7" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="11" cy="7" r="0.8"/><circle cx="7" cy="9" r="0.8"/><circle cx="7" cy="11" r="0.8"/></svg><span class="icon-name">Plus</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="3" r="0.8"/><circle cx="11" cy="3" r="0.8"/><circle cx="5" cy="5" r="0.8"/><circle cx="9" cy="5" r="0.8"/><circle cx="7" cy="7" r="0.8"/><circle cx="5" cy="9" r="0.8"/><circle cx="9" cy="9" r="0.8"/><circle cx="3" cy="11" r="0.8"/><circle cx="11" cy="11" r="0.8"/></svg><span class="icon-name">Close</span></div>
+      <div class="icon-cell"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="13" cy="3" r="0.8"/><circle cx="11" cy="5" r="0.8"/><circle cx="9" cy="7" r="0.8"/><circle cx="1" cy="9" r="0.8"/><circle cx="7" cy="9" r="0.8"/><circle cx="3" cy="11" r="0.8"/><circle cx="5" cy="11" r="0.8"/></svg><span class="icon-name">Check</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 07: PATTERNS -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <span class="section-title">Patterns &amp; Surfaces</span>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Dot Matrix Grid</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+      <div>
+        <div class="dot-grid-demo"><span style="font-family:var(--font-mono); font-size:9px; color:var(--text-ghost); text-transform:uppercase; letter-spacing:0.06em">Standard &mdash; 16px</span></div>
+      </div>
+      <div>
+        <div class="dot-grid-demo dot-grid-dense"><span style="font-family:var(--font-mono); font-size:9px; color:var(--text-ghost); text-transform:uppercase; letter-spacing:0.06em">Dense &mdash; 8px</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Panel Gradients</div>
+    <div class="panel-demos">
+      <div class="panel-demo gradient-down"><span style="font-family:var(--font-mono); font-size:9px; color:var(--text-ghost); text-transform:uppercase; letter-spacing:0.06em">Gradient Down</span></div>
+      <div class="panel-demo gradient-up"><span style="font-family:var(--font-mono); font-size:9px; color:var(--text-ghost); text-transform:uppercase; letter-spacing:0.06em">Gradient Up</span></div>
+      <div class="panel-demo gradient-subtle"><span style="font-family:var(--font-mono); font-size:9px; color:var(--text-ghost); text-transform:uppercase; letter-spacing:0.06em">Gradient Subtle</span></div>
+      <div class="panel-demo gradient-accent"><span style="font-family:var(--font-mono); font-size:9px; color:var(--text-ghost); text-transform:uppercase; letter-spacing:0.06em">Gradient Accent</span></div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Animations</div>
+    <div class="comp-group">
+      <div class="anim-row">
+        <div class="anim-box anim-pulse"></div>
+        <div><div class="anim-label">Pulse Glow &mdash; 2s ease-in-out infinite</div><div style="font-family:var(--font-mono); font-size:9px; color:var(--text-ghost); margin-top:2px">Opacity 1.0 &rarr; 0.5 &rarr; 1.0</div></div>
+      </div>
+      <div class="anim-row" style="margin-top:16px">
+        <div style="width:48px; display:flex; align-items:center; justify-content:center"><div class="anim-record"></div></div>
+        <div><div class="anim-label">Recording Pulse &mdash; 1s ease infinite</div><div style="font-family:var(--font-mono); font-size:9px; color:var(--text-ghost); margin-top:2px">Red outset glow 0 &rarr; 8px &rarr; 0</div></div>
+      </div>
+      <div class="anim-row" style="margin-top:16px">
+        <div class="anim-box anim-plock"></div>
+        <div><div class="anim-label">P-Lock Flash &mdash; 0.6s ease infinite</div><div style="font-family:var(--font-mono); font-size:9px; color:var(--text-ghost); margin-top:2px">Border #FF4060 with pulsing shadow</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="sub-label">Interaction States</div>
+    <div class="comp-group">
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px">
+        <div style="text-align:center">
+          <button class="btn btn-md btn-default" style="width:100%">Default</button>
+          <div class="anim-label" style="margin-top:6px">Resting</div>
+        </div>
+        <div style="text-align:center">
+          <button class="btn btn-md btn-default" style="width:100%; background:var(--bg-hover)">Hovered</button>
+          <div class="anim-label" style="margin-top:6px">:hover</div>
+        </div>
+        <div style="text-align:center">
+          <button class="btn btn-md btn-default" style="width:100%; transform:scale(0.95)">Pressed</button>
+          <div class="anim-label" style="margin-top:6px">:active scale(0.95)</div>
+        </div>
+        <div style="text-align:center">
+          <button class="btn btn-md btn-disabled" style="width:100%">Disabled</button>
+          <div class="anim-label" style="margin-top:6px">opacity 0.5</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 08: COMPONENT SIZING -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <span class="section-title">Component Sizing Reference</span>
+  </div>
+
+  <div class="comp-group">
+    <div class="comp-group-label">Fixed Dimensions</div>
+    <div style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted); line-height:2.2">
+      <div style="display:grid; grid-template-columns:200px 1fr; gap:8px">
+        <span style="color:var(--text-ghost)">Sidebar Width</span><span>36px</span>
+        <span style="color:var(--text-ghost)">Header Height</span><span>32px</span>
+        <span style="color:var(--text-ghost)">Control Height</span><span>24px</span>
+        <span style="color:var(--text-ghost)">Row Header</span><span>40px</span>
+        <span style="color:var(--text-ghost)">Row Middle</span><span>100px</span>
+        <span style="color:var(--text-ghost)">Grid Gap</span><span>4px</span>
+        <span style="color:var(--text-ghost)">Border Radius (btn)</span><span>3px (rounded-sm)</span>
+        <span style="color:var(--text-ghost)">Border Radius (card)</span><span>8px</span>
+        <span style="color:var(--text-ghost)">Knob Diameter</span><span>36-40px</span>
+        <span style="color:var(--text-ghost)">Slider Track</span><span>2px height</span>
+        <span style="color:var(--text-ghost)">Slider Thumb</span><span>3px width</span>
+        <span style="color:var(--text-ghost)">Toggle (pill)</span><span>32px x 16px</span>
+        <span style="color:var(--text-ghost)">Toggle (rect)</span><span>32px x 16px</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="padding-top:48px; border-top:1px solid #252525; margin-top:64px">
+  <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-ghost); letter-spacing:0.08em; text-transform:uppercase">
+    SEG_F4ULT Design System &mdash; Strand Tracer v1.0 &mdash; Generated 2026-02-18
+  </div>
+</div>
+
+</div>
+</body>
+</html>

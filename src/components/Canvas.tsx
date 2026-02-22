@@ -328,7 +328,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       pipeline.sonify.updateParams({ ...sonifyParams, mix: getMix('sonify') })
     }
 
-    // Update point cloud params
+    // Update point cloud params + video aspect
     if (pipeline.pointCloud && pointCloudEnabled) {
       const getMix = (id: string) => effectMix[id] ?? 1
       pipeline.pointCloud.updateParams({ ...pointCloudParams, mix: getMix('point_cloud') })
@@ -541,6 +541,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         const texHeight = (slicerTexture as THREE.DataTexture).image?.height || 270
         pipeline.setVideoSize(texWidth, texHeight)
         pipeline.setSourceVideoSize(texWidth, texHeight)
+
         return
       }
     }

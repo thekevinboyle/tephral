@@ -668,10 +668,10 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
         <div className="flex gap-4">
           <Knob label="DEPTH" value={destruction.pointCloudParams.depthMultiplier} min={0} max={2} step={0.01}
             onChange={v => destruction.updatePointCloudParams({ depthMultiplier: v })} paramId="point_cloud.depthMultiplier" {...knobProps} />
-          <Knob label="SIZE" value={destruction.pointCloudParams.pointSize} min={1} max={20} step={0.5}
-            onChange={v => destruction.updatePointCloudParams({ pointSize: v })} paramId="point_cloud.pointSize" {...knobProps} />
-          <Knob label="DENS" value={destruction.pointCloudParams.density} min={64} max={512} step={8}
-            onChange={v => destruction.updatePointCloudParams({ density: v })} paramId="point_cloud.density" {...knobProps} />
+          <Knob label="SCL.X" value={destruction.pointCloudParams.scaleX} min={0.3} max={2} step={0.01}
+            onChange={v => destruction.updatePointCloudParams({ scaleX: v })} paramId="point_cloud.scaleX" {...knobProps} />
+          <Knob label="SCL.Y" value={destruction.pointCloudParams.scaleY} min={0.3} max={2} step={0.01}
+            onChange={v => destruction.updatePointCloudParams({ scaleY: v })} paramId="point_cloud.scaleY" {...knobProps} />
         </div>
       )
 

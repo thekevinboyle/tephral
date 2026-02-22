@@ -7,6 +7,7 @@ export interface LFOState {
   rate: number       // Hz (0.1 - 20)
   shape: LFOShape
   phase: number      // Internal phase accumulator (0-1)
+  phaseOffset: number // 0-360 degrees
   currentValue: number  // 0-1 output
   holdValue: number  // For sample-and-hold random
 }
@@ -86,6 +87,7 @@ export interface ModulationState {
   setLFOEnabled: (index: number, enabled: boolean) => void
   setLFORate: (index: number, rate: number) => void
   setLFOShape: (index: number, shape: LFOShape) => void
+  setLFOPhaseOffset: (index: number, offset: number) => void
   updateAllLFOs: (delta: number) => void
 
   // Random actions
@@ -132,6 +134,7 @@ function createDefaultLFO(): LFOState {
     rate: 1,
     shape: 'sine',
     phase: 0,
+    phaseOffset: 0,
     currentValue: 0.5,
     holdValue: Math.random(),
   }
@@ -148,18 +151,21 @@ function computeLFOValue(lfo: LFOState, delta: number): LFOState {
   let newValue: number
   let newHoldValue = lfo.holdValue
 
+  // Apply phase offset for waveform lookup (doesn't affect accumulator)
+  const lookupPhase = (newPhase + lfo.phaseOffset / 360) % 1
+
   switch (lfo.shape) {
     case 'sine':
-      newValue = Math.sin(newPhase * Math.PI * 2) * 0.5 + 0.5
+      newValue = Math.sin(lookupPhase * Math.PI * 2) * 0.5 + 0.5
       break
     case 'triangle':
-      newValue = 1 - Math.abs(newPhase * 2 - 1)
+      newValue = 1 - Math.abs(lookupPhase * 2 - 1)
       break
     case 'square':
-      newValue = newPhase < 0.5 ? 1 : 0
+      newValue = lookupPhase < 0.5 ? 1 : 0
       break
     case 'saw':
-      newValue = newPhase
+      newValue = lookupPhase
       break
     case 'random':
       if (newPhase < lfo.phase) {
@@ -252,6 +258,9 @@ export const useModulationStore = create<ModulationState>((set, get) => ({
   })),
   setLFOShape: (index, shape) => set((state) => ({
     lfos: updateLFOAt(state.lfos, index, { shape })
+  })),
+  setLFOPhaseOffset: (index, offset) => set((state) => ({
+    lfos: updateLFOAt(state.lfos, index, { phaseOffset: Math.max(0, Math.min(360, offset)) })
   })),
 
   updateAllLFOs: (delta) => {

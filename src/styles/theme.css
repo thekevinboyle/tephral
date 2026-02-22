@@ -18,6 +18,8 @@
   --col-canvas: 480px;
   --row-header: 40px;
   --row-middle: 100px;
+  --row-bottom-bar: 36px;
+  --row-bottom-expanded: 240px;
   --gap: 4px;
 
   /* Spacing scale (4px base) */

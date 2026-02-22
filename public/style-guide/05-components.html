@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Components / Controls</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style-guide/shared.css">
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head><body>
+<div class="frame">
+  <div class="page-header">
+    <div><span class="page-num">05</span> <span class="page-title">Components / Controls</span></div>
+    <span class="page-sys">SEG_F4ULT Design System</span>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Buttons</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+      <div class="card">
+        <div class="card-label">Default</div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+          <button class="btn btn-sm btn-default">Small</button>
+          <button class="btn btn-md btn-default">Medium</button>
+          <button class="btn btn-lg btn-default">Large</button>
+        </div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:12px;line-height:1.8">bg-surface + border<br>text-muted<br>hover: bg-hover</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Active</div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+          <button class="btn btn-sm btn-active">Small</button>
+          <button class="btn btn-md btn-active">Medium</button>
+          <button class="btn btn-lg btn-active">Large</button>
+        </div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:12px;line-height:1.8">accent bg + border<br>text-primary<br>4px accent-glow</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Danger</div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+          <button class="btn btn-sm btn-danger">Small</button>
+          <button class="btn btn-md btn-danger">Medium</button>
+          <button class="btn btn-lg btn-danger">Large</button>
+        </div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:12px;line-height:1.8">accent bg + border<br>text-primary<br>destructive actions</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Disabled</div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+          <button class="btn btn-sm btn-disabled">Small</button>
+          <button class="btn btn-md btn-disabled">Medium</button>
+          <button class="btn btn-lg btn-disabled">Large</button>
+        </div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:12px;line-height:1.8">bg-elevated + border<br>text-ghost<br>opacity: 0.5</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Toggles</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="card">
+        <div class="card-label">Minimal Toggle (Pill)</div>
+        <div style="display:flex;gap:32px;align-items:center;margin-top:8px">
+          <div style="display:flex;align-items:center;gap:10px"><span style="font-size:11px;text-transform:uppercase;color:var(--text-muted)">Off</span><div class="toggle toggle-off"><div class="toggle-dot"></div></div></div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="font-size:11px;text-transform:uppercase;color:var(--text-muted)">On</span><div class="toggle toggle-on"><div class="toggle-dot"></div></div></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:12px;line-height:1.8">32x16px rounded-full<br>off: muted/30 bg<br>on: #FFCC00 bg</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Radix Toggle (Rectangle)</div>
+        <div style="display:flex;gap:32px;align-items:center;margin-top:8px">
+          <div style="display:flex;align-items:center;gap:10px"><span style="font-size:11px;text-transform:uppercase;color:var(--text-muted)">Off</span><div style="width:32px;height:16px;border:1px solid var(--text-muted);background:transparent"></div></div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="font-size:11px;text-transform:uppercase;color:var(--text-muted)">On</span><div style="width:32px;height:16px;border:1px solid #ffcc00;background:#ffcc00"></div></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:12px;line-height:1.8">32x16px sharp corners<br>off: transparent + muted border<br>on: accent-yellow fill + border</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Sliders</div>
+    <div class="card">
+      <div style="display:flex;gap:48px;align-items:flex-start">
+        <div style="width:240px">
+          <div class="card-label">75% Fill</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:10px;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.06em">Amount</span><span style="font-family:var(--mono);font-size:10px;color:var(--text-ghost)">0.750</span></div>
+          <div style="height:2px;background:#333;border-radius:1px;position:relative"><div style="height:100%;width:75%;background:#ffcc00;border-radius:1px"></div><div style="width:3px;height:10px;background:var(--text-primary);border-radius:1px;position:absolute;top:-4px;left:calc(75% - 1.5px)"></div></div>
+        </div>
+        <div style="width:240px">
+          <div class="card-label">25% Fill</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:10px;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.06em">Threshold</span><span style="font-family:var(--mono);font-size:10px;color:var(--text-ghost)">0.250</span></div>
+          <div style="height:2px;background:#333;border-radius:1px;position:relative"><div style="height:100%;width:25%;background:#ffcc00;border-radius:1px"></div><div style="width:3px;height:10px;background:var(--text-primary);border-radius:1px;position:absolute;top:-4px;left:calc(25% - 1.5px)"></div></div>
+        </div>
+        <div style="width:240px">
+          <div class="card-label">0% Fill</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:10px;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.06em">Offset</span><span style="font-family:var(--mono);font-size:10px;color:var(--text-ghost)">0.000</span></div>
+          <div style="height:2px;background:#333;border-radius:1px;position:relative"><div style="height:100%;width:0%;background:#ffcc00;border-radius:1px"></div><div style="width:3px;height:10px;background:var(--text-primary);border-radius:1px;position:absolute;top:-4px;left:0"></div></div>
+        </div>
+      </div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:16px">Track: 2px h, #333 &bull; Fill: #FFCC00 &bull; Thumb: 3px w, text-primary &bull; Radix UI Slider base</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Knobs &mdash; Rotary Controls</div>
+    <div class="card">
+      <div style="display:flex;gap:48px;align-items:flex-start;justify-content:center">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#0D0D0D" stroke="#4A4A4A" stroke-width="1"/><line x1="24" y1="24" x2="24" y2="6" stroke="#F5F0EB" stroke-width="1.5" transform="rotate(-135, 24, 24)"/><path d="M 6 39 A 22 22 0 0 1 6 39" fill="none" stroke="#9A948E" stroke-width="1.5" opacity="0.3"/></svg>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase">Min</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#0D0D0D" stroke="#4A4A4A" stroke-width="1"/><line x1="24" y1="24" x2="24" y2="6" stroke="#F5F0EB" stroke-width="1.5"/><path d="M 6 39 A 22 22 0 1 0 24 2" fill="none" stroke="#9A948E" stroke-width="1.5" opacity="0.6"/></svg>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase">50%</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#0D0D0D" stroke="#4A4A4A" stroke-width="1"/><line x1="24" y1="24" x2="24" y2="6" stroke="#F5F0EB" stroke-width="1.5" transform="rotate(135, 24, 24)"/><path d="M 6 39 A 22 22 0 1 1 42 39" fill="none" stroke="#9A948E" stroke-width="1.5"/></svg>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase">Max</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#0D0D0D" stroke="#FF0055" stroke-width="1.5" opacity="0.8"/><line x1="24" y1="24" x2="24" y2="6" stroke="#F5F0EB" stroke-width="1.5" transform="rotate(45, 24, 24)"/><path d="M 6 39 A 22 22 0 1 1 24 2" fill="none" stroke="#FF0055" stroke-width="1.5" opacity="0.5"/><circle cx="24" cy="48" r="4" fill="#FF0055"/></svg>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase">Modulated</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#0D0D0D" stroke="#FF3333" stroke-width="1.5" stroke-dasharray="4 2"/><line x1="24" y1="24" x2="24" y2="6" stroke="#F5F0EB" stroke-width="1.5" transform="rotate(-45, 24, 24)"/></svg>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);text-transform:uppercase">Automation</span>
+        </div>
+      </div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:20px;text-align:center">270&deg; arc sweep &bull; Sizes: xs 36px, sm 38px, md 40px &bull; Vertical drag interaction &bull; Modulation: source color outline + routing dot</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Interaction States</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+      <div class="card" style="text-align:center"><button class="btn btn-md btn-default" style="width:100%">Default</button><div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:8px">Resting state</div></div>
+      <div class="card" style="text-align:center"><button class="btn btn-md btn-default" style="width:100%;background:var(--bg-hover)">Hovered</button><div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:8px">:hover &rarr; bg-hover</div></div>
+      <div class="card" style="text-align:center"><button class="btn btn-md btn-default" style="width:100%;transform:scale(0.95)">Pressed</button><div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:8px">:active scale(0.95)</div></div>
+      <div class="card" style="text-align:center"><button class="btn btn-md btn-disabled" style="width:100%">Disabled</button><div style="font-family:var(--mono);font-size:8px;color:var(--text-ghost);margin-top:8px">opacity 0.5</div></div>
+    </div>
+  </div>
+</div>
+</body></html>

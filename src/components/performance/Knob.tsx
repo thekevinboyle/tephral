@@ -73,6 +73,13 @@ export function Knob({
   const dragStartValue = useRef<number>(0)
   const didDrag = useRef(false)
 
+  // Depth-drag assignment refs/state
+  const depthAssignSource = useRef<string | null>(null)
+  const depthAssignStartY = useRef(0)
+  const depthAssignValue = useRef(0)
+  const [isDepthDragging, setIsDepthDragging] = useState(false)
+  const [depthDragDisplay, setDepthDragDisplay] = useState(0)
+
   // Automation target state
   const automationParam = useEffectSequencerStore((s) => s.automationParam)
   const setAutomationParam = useEffectSequencerStore((s) => s.setAutomationParam)
@@ -158,7 +165,7 @@ export function Knob({
     e.preventDefault()
     e.stopPropagation()
 
-    // In assignment mode, clicking assigns instead of dragging
+    // In assignment mode, start depth-drag instead of instant assign
     if (isInAssignmentMode && paramId) {
       let trackId: string | null = null
       if (assigningModulator) trackId = assigningModulator
@@ -166,12 +173,12 @@ export function Knob({
       else if (assigningStepTrack) trackId = assigningStepTrack
 
       if (trackId) {
-        const existing = routings.find(r => r.trackId === trackId && r.targetParam === paramId)
-        if (!existing) {
-          addRouting(trackId, paramId, 0.5)
-          if (assigningPolyEuclid) setAssigningPolyEuclid(null)
-          if (assigningStepTrack) setAssigningStepTrack(null)
-        }
+        depthAssignSource.current = trackId
+        depthAssignStartY.current = e.clientY
+        depthAssignValue.current = 0
+        setIsDepthDragging(true)
+        setDepthDragDisplay(0)
+        ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
       }
       return
     }
@@ -183,6 +190,15 @@ export function Knob({
   }, [value, isInAssignmentMode, paramId, assigningModulator, assigningPolyEuclid, assigningStepTrack, routings, addRouting, setAssigningPolyEuclid, setAssigningStepTrack])
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    // Depth-drag in assignment mode
+    if (isDepthDragging) {
+      const deltaY = depthAssignStartY.current - e.clientY
+      const depth = Math.max(-1, Math.min(1, deltaY / 100))
+      depthAssignValue.current = depth
+      setDepthDragDisplay(depth)
+      return
+    }
+
     if (dragStartY.current === null) return
     const deltaY = dragStartY.current - e.clientY
     if (Math.abs(deltaY) > 3) didDrag.current = true
@@ -193,12 +209,34 @@ export function Knob({
       newValue = Math.round(newValue / step) * step
     }
     onChange(newValue)
-  }, [min, max, step, onChange])
+  }, [isDepthDragging, min, max, step, onChange])
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     try {
       ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
     } catch {}
+
+    // Commit depth-drag assignment
+    if (isDepthDragging && depthAssignSource.current && paramId) {
+      const depth = depthAssignValue.current
+      const src = depthAssignSource.current
+      if (Math.abs(depth) > 0.02) {
+        const existing = routings.find(r => r.trackId === src && r.targetParam === paramId)
+        if (existing) {
+          updateRoutingDepth(existing.id, depth)
+        } else {
+          addRouting(src, paramId, depth)
+          // Auto-enable the LFO if it was disabled
+          if (src.startsWith('lfo-')) {
+            const lfoIdx = parseInt(src.split('-')[1])
+            useModulationStore.getState().setLFOEnabled(lfoIdx, true)
+          }
+        }
+      }
+      setIsDepthDragging(false)
+      depthAssignSource.current = null
+      return
+    }
 
     // Click (not drag) → toggle automation target
     if (!didDrag.current && !isInAssignmentMode && paramId) {
@@ -221,7 +259,7 @@ export function Knob({
     }
 
     dragStartY.current = null
-  }, [isInAssignmentMode, isAutomationTarget, paramId, label, min, max, step, setAutomationParam, clearAutomationParam])
+  }, [isDepthDragging, isInAssignmentMode, isAutomationTarget, paramId, label, min, max, step, routings, addRouting, updateRoutingDepth, setAutomationParam, clearAutomationParam])
 
   // Drop target handlers
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -356,8 +394,20 @@ export function Knob({
                 : 'none',
           outlineOffset: 2,
           borderRadius: '50%',
+          boxShadow: isInAssignmentMode && assigningColor ? `0 0 8px ${assigningColor}40` : undefined,
         }}
       >
+        {/* Depth drag indicator */}
+        {isDepthDragging && (
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-bold tabular-nums whitespace-nowrap z-20"
+            style={{
+              backgroundColor: 'var(--accent)',
+              color: 'var(--bg-primary)',
+            }}>
+            {depthDragDisplay > 0 ? '+' : ''}{(depthDragDisplay * 100).toFixed(0)}%
+          </div>
+        )}
+
         {/* Dark circle body */}
         <div
           className="absolute inset-0 rounded-full"

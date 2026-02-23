@@ -7,6 +7,8 @@ import { SourceSelector } from '../ui/SourceSelector'
 export function HeaderBar() {
   const { source } = useMediaStore()
   const setStatusText = useUIStore((s) => s.setStatusText)
+  const appMode = useUIStore((s) => s.appMode)
+  const setAppMode = useUIStore((s) => s.setAppMode)
 
   // FPS counter
   const [fps, setFps] = useState(0)
@@ -38,15 +40,16 @@ export function HeaderBar() {
         height: 'var(--row-header)',
         padding: '0 var(--panel-padding)',
         gap: 'var(--gap-lg)',
-        backgroundColor: 'var(--bg-surface)',
+        background: 'linear-gradient(to right, var(--bg-elevated), var(--bg-surface), var(--bg-elevated))',
         borderBottom: '1px solid var(--border)',
+        boxShadow: 'inset 0 1px 0 var(--surface-highlight)',
       }}
     >
       {/* Brand */}
       <span
-        className="text-[11px] font-bold uppercase tracking-widest flex-shrink-0"
+        className="text-[12px] font-bold uppercase tracking-widest flex-shrink-0"
         style={{
-          fontFamily: 'var(--font-mono)',
+          fontFamily: 'var(--font-sans)',
           color: 'var(--text-muted)',
           letterSpacing: '0.12em',
         }}
@@ -54,8 +57,11 @@ export function HeaderBar() {
         SEG_F4ULT
       </span>
 
-      {/* Divider */}
-      <div className="w-px h-4 flex-shrink-0" style={{ backgroundColor: 'var(--border)' }} />
+      {/* Divider — dual-tone */}
+      <div className="flex-shrink-0" style={{ display: 'flex', flexDirection: 'column', height: 16 }}>
+        <div style={{ width: 1, flex: 1, backgroundColor: 'var(--border)' }} />
+        <div style={{ width: 1, flex: 1, backgroundColor: 'var(--surface-highlight)' }} />
+      </div>
 
       {/* Source selector */}
       <div className="flex items-center gap-2 flex-shrink-0">
@@ -63,6 +69,45 @@ export function HeaderBar() {
           SRC
         </span>
         <SourceSelector variant="compact" />
+      </div>
+
+      {/* Divider — dual-tone */}
+      <div className="flex-shrink-0" style={{ display: 'flex', flexDirection: 'column', height: 16 }}>
+        <div style={{ width: 1, flex: 1, backgroundColor: 'var(--border)' }} />
+        <div style={{ width: 1, flex: 1, backgroundColor: 'var(--surface-highlight)' }} />
+      </div>
+
+      {/* Mode toggle */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <span className="text-[9px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
+          MODE
+        </span>
+        {(['single', 'timeline'] as const).map((mode) => {
+          const isActive = appMode === mode
+          const label = mode === 'single' ? 'FX' : 'SEQ'
+          const statusKey = mode === 'single' ? 'modeSingle' : 'modeTimeline'
+          return (
+            <button
+              key={mode}
+              onClick={() => setAppMode(mode)}
+              onMouseEnter={() => setStatusText(getUIStatusText(statusKey))}
+              onMouseLeave={() => setStatusText(null)}
+              className="text-[9px] font-bold uppercase tracking-wider"
+              style={{
+                padding: '2px 8px',
+                borderRadius: 3,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                backgroundColor: isActive ? 'var(--accent)' : 'var(--bg-surface)',
+                color: isActive ? 'var(--bg-deep)' : 'var(--text-ghost)',
+                boxShadow: isActive ? '0 0 6px var(--accent-dim)' : 'var(--shadow-inset)',
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Spacer */}
@@ -78,7 +123,14 @@ export function HeaderBar() {
         </span>
         <span
           className="text-[10px] tabular-nums"
-          style={{ color: 'var(--text-ghost)', cursor: 'default' }}
+          style={{
+            color: 'var(--text-ghost)',
+            cursor: 'default',
+            padding: '1px 6px',
+            borderRadius: 3,
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            boxShadow: 'var(--shadow-inset)',
+          }}
           onMouseEnter={() => setStatusText(getUIStatusText('fps'))}
           onMouseLeave={() => setStatusText(null)}
         >

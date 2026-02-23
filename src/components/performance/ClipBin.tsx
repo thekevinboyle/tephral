@@ -85,9 +85,14 @@ export function ClipBin() {
   }, [addClip])
 
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      handleFileImport(file)
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const videoFiles = Array.from(files).filter((f) => f.type.startsWith('video/'))
+      ;(async () => {
+        for (const file of videoFiles) {
+          await handleFileImport(file)
+        }
+      })()
     }
     // Reset input so same file can be selected again
     e.target.value = ''
@@ -111,9 +116,14 @@ export function ClipBin() {
     e.preventDefault()
     setIsFileDragOver(false)
 
-    const file = e.dataTransfer.files?.[0]
-    if (file && file.type.startsWith('video/')) {
-      handleFileImport(file)
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      const videoFiles = Array.from(files).filter((f) => f.type.startsWith('video/'))
+      ;(async () => {
+        for (const file of videoFiles) {
+          await handleFileImport(file)
+        }
+      })()
     }
   }, [handleFileImport])
 
@@ -141,6 +151,7 @@ export function ClipBin() {
         ref={fileInputRef}
         type="file"
         accept="video/*"
+        multiple
         onChange={handleFileInputChange}
         className="hidden"
       />

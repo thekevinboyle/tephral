@@ -308,6 +308,10 @@ export const PARAM_DESCRIPTIONS: Record<string, string> = {
 // ═══════════════════════════════════════════════════════════════════
 
 export const UI_DESCRIPTIONS: Record<string, string> = {
+  // App mode
+  modeSingle: 'FX \u2014 Single video effects processing',
+  modeTimeline: 'SEQ \u2014 Timeline clip sequencing',
+
   // Transport
   record: 'Record \u2014 Capture effect automation',
   playPause: 'Play/Pause \u2014 Start or stop playback (Space)',
@@ -365,6 +369,7 @@ export const UI_DESCRIPTIONS: Record<string, string> = {
   // Sequencer
   seqEffects: 'P-Lock \u2014 Effect step sequencer',
   seqSlicer: 'Slicer \u2014 Audio/video slicing sequencer',
+  seqTimeline: 'Timeline \u2014 Clip-based composition with audio-reactive transitions',
   clearAll: 'Clear All \u2014 Remove all active effects',
   bypassAll: 'Bypass All \u2014 Temporarily disable all effects',
   randomizeSteps: 'Randomize \u2014 Randomize steps on selected track',

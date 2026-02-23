@@ -3,6 +3,8 @@ import { useRoutingStore } from '../../stores/routingStore'
 import { useEffectDisable } from '../../hooks/useEffectDisable'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getEffectStatusText } from '../../config/statusDescriptions'
 import {
   EFFECTS,
   STRAND_EFFECTS,
@@ -28,6 +30,7 @@ interface EffectTabsBarProps {
 export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: EffectTabsBarProps) {
   const { effectOrder, reorderEffect } = useRoutingStore()
   const { disableEffect } = useEffectDisable()
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [dragSide, setDragSide] = useState<'left' | 'right'>('left')
   const draggedId = useRef<string | null>(null)
@@ -138,6 +141,8 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(effectId, e)}
             onDragEnd={handleDragEnd}
+            onMouseEnter={() => setStatusText(getEffectStatusText(effectId) + ' — Click to select, Shift+click to bypass, double-click to remove')}
+            onMouseLeave={() => setStatusText(null)}
             onClick={(e) => {
               if (e.shiftKey) {
                 e.stopPropagation()

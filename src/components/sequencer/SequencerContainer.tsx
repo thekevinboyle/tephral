@@ -1,4 +1,6 @@
 import { useSequencerContainerStore } from '../../stores/sequencerContainerStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { UnifiedSequencerPanel } from './UnifiedSequencerPanel'
 import { SlicerPanel } from './SlicerPanel'
 
@@ -10,6 +12,7 @@ const SEQUENCER_ICONS = {
 
 export function SequencerContainer({ hideTabsBar = false }: { hideTabsBar?: boolean } = {}) {
   const { activeSequencer, setActiveSequencer } = useSequencerContainerStore()
+  const setStatusText = useUIStore((s) => s.setStatusText)
 
   return (
     <div className="flex h-full w-full" style={{ backgroundColor: 'var(--bg-surface)' }}>
@@ -29,6 +32,8 @@ export function SequencerContainer({ hideTabsBar = false }: { hideTabsBar?: bool
             borderBottom: '1px solid var(--border)',
           }}
           title="P-LOCK - Effect Sequencer"
+          onMouseEnter={() => setStatusText(getUIStatusText('seqEffects'))}
+          onMouseLeave={() => setStatusText(null)}
         >
           <span
             className="text-[18px]"
@@ -47,6 +52,8 @@ export function SequencerContainer({ hideTabsBar = false }: { hideTabsBar?: bool
             borderBottom: '1px solid var(--border)',
           }}
           title="CHI_R0N - Slicer"
+          onMouseEnter={() => setStatusText(getUIStatusText('seqSlicer'))}
+          onMouseLeave={() => setStatusText(null)}
         >
           <span
             className="text-[18px]"

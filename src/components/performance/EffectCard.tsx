@@ -1,6 +1,8 @@
 import { useCallback, useMemo } from 'react'
 import type { ActiveEffect } from '../../hooks/useActiveEffects'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { useSequencerStore } from '../../stores/sequencerStore'
 import { useModulationStore } from '../../stores/modulationStore'
 import { usePolyEuclidStore } from '../../stores/polyEuclidStore'
@@ -94,6 +96,7 @@ function ModBypassButton({ effectId, effectColor, isBypassed, onBypass }: {
   isBypassed: boolean
   onBypass: () => void
 }) {
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const paramId = `${effectId}.bypass`
   const {
     addRouting, routings, removeRouting,
@@ -172,6 +175,8 @@ function ModBypassButton({ effectId, effectColor, isBypassed, onBypass }: {
       onPointerDown={(e) => e.stopPropagation()}
       onClick={handleClick}
       onDoubleClick={hasRouting ? handleDoubleClick : undefined}
+      onMouseEnter={() => setStatusText(getUIStatusText('bypass'))}
+      onMouseLeave={() => setStatusText(null)}
       className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full relative"
       style={{
         opacity: hasRouting ? 1 : isBypassed ? 0.8 : 0.4,
@@ -235,6 +240,7 @@ export function EffectCard({
 }: EffectCardProps) {
   const { effectBypassed } = useGlitchEngineStore()
   void effectBypassed // used for reactivity via isBypassed prop
+  const setStatusText = useUIStore((s) => s.setStatusText)
 
   if (mode === 'compact') {
     return (
@@ -269,6 +275,8 @@ export function EffectCard({
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onToggleExpand() }}
+            onMouseEnter={() => setStatusText(getUIStatusText('expand'))}
+            onMouseLeave={() => setStatusText(null)}
             className="flex-shrink-0 flex items-center justify-center"
             style={{ opacity: 0.7 }}
             title="Expand parameters"
@@ -297,6 +305,8 @@ export function EffectCard({
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onRemove() }}
+            onMouseEnter={() => setStatusText(getUIStatusText('remove'))}
+            onMouseLeave={() => setStatusText(null)}
             className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full opacity-30 hover:opacity-100 transition-opacity"
             title="Remove"
           >
@@ -337,6 +347,8 @@ export function EffectCard({
         {/* Chevron */}
         <button
           onClick={onToggleExpand}
+          onMouseEnter={() => setStatusText(getUIStatusText('collapse'))}
+          onMouseLeave={() => setStatusText(null)}
           className="flex-shrink-0 flex items-center justify-center"
           title="Collapse parameters"
         >
@@ -363,6 +375,8 @@ export function EffectCard({
         {/* Remove */}
         <button
           onClick={(e) => { e.stopPropagation(); onRemove() }}
+          onMouseEnter={() => setStatusText(getUIStatusText('remove'))}
+          onMouseLeave={() => setStatusText(null)}
           className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full opacity-30 hover:opacity-100 transition-opacity"
           title="Remove"
         >

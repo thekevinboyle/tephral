@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import type { Preset } from '../../stores/presetLibraryStore'
 import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 interface PresetRowProps {
   preset: Preset
@@ -11,6 +12,7 @@ interface PresetRowProps {
 export function PresetRow({ preset, onLoad, onContextMenu }: PresetRowProps) {
   const [isHovered, setIsHovered] = useState(false)
   const selectPreset = useUIStore((s) => s.selectPreset)
+  const setStatusText = useUIStore((s) => s.setStatusText)
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     if (e.shiftKey) {
@@ -38,8 +40,8 @@ export function PresetRow({ preset, onLoad, onContextMenu }: PresetRowProps) {
       }}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => { setIsHovered(true); setStatusText(getUIStatusText('presetRow')) }}
+      onMouseLeave={() => { setIsHovered(false); setStatusText(null) }}
     >
       {/* Thumbnail */}
       <div

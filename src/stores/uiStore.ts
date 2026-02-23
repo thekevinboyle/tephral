@@ -66,6 +66,10 @@ interface UIState {
   setBottomPanelPage: (page: number) => void
   nextBottomPanelPage: () => void
   prevBottomPanelPage: () => void
+
+  // Status bar
+  statusText: string | null
+  setStatusText: (text: string | null) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -83,6 +87,7 @@ export const useUIStore = create<UIState>((set) => ({
   cardViewMode: 'compact',
   bottomPanelTab: null,
   bottomPanelPage: 1,
+  statusText: null,
 
   setSelectedEffect: (id) => set({ selectedEffectId: id, selectedParamIndex: 0 }),
   setSelectedParamIndex: (index) => set({ selectedParamIndex: index }),
@@ -118,4 +123,6 @@ export const useUIStore = create<UIState>((set) => ({
   setBottomPanelPage: (page) => set({ bottomPanelPage: Math.max(1, Math.min(4, page)) }),
   nextBottomPanelPage: () => set((state) => ({ bottomPanelPage: Math.min(4, state.bottomPanelPage + 1) })),
   prevBottomPanelPage: () => set((state) => ({ bottomPanelPage: Math.max(1, state.bottomPanelPage - 1) })),
+
+  setStatusText: (text) => set({ statusText: text }),
 }))

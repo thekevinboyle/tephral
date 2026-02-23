@@ -17,6 +17,7 @@ interface EffectButtonProps {
   onMixChange: (value: number) => void
   isSoloed?: boolean
   isMuted?: boolean
+  statusText?: string
 }
 
 export function EffectButton({
@@ -29,6 +30,7 @@ export function EffectButton({
   onMixChange,
   isSoloed = false,
   isMuted = false,
+  statusText,
 }: EffectButtonProps) {
   void _color // Keep color prop for API compatibility
   const dragStartY = useRef<number | null>(null)
@@ -38,6 +40,7 @@ export function EffectButton({
   const isRecording = useRecordingStore((s) => s.isRecording)
   const setSelectedEffect = useUIStore((s) => s.setSelectedEffect)
   const selectEffectForInfoPanel = useUIStore((s) => s.selectEffect)
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const setSelectedModulator = useModulationStore((s) => s.setSelectedModulator)
 
   // Solo state and actions
@@ -183,7 +186,9 @@ export function EffectButton({
     dragStartY.current = null
     didDrag.current = false
     isHolding.current = false
-  }, [id, soloEffectId, soloLatched, clearSolo])
+    // Clear status text
+    if (statusText) setStatusText(null)
+  }, [id, soloEffectId, soloLatched, clearSolo, statusText, setStatusText])
 
   // Mix percentage for the progress bar (0-100%)
   const mixPercent = Math.round(mix * 100)
@@ -195,6 +200,7 @@ export function EffectButton({
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
       onPointerCancel={handlePointerLeave}
+      onMouseEnter={statusText ? () => setStatusText(statusText) : undefined}
       className="relative rounded-sm flex select-none touch-none cursor-pointer w-full h-full p-1.5 overflow-hidden"
       style={{
         backgroundColor: 'var(--bg-surface)',

@@ -1,9 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { useMediaStore } from '../../stores/mediaStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { SourceSelector } from '../ui/SourceSelector'
 
 export function HeaderBar() {
   const { source } = useMediaStore()
+  const setStatusText = useUIStore((s) => s.setStatusText)
 
   // FPS counter
   const [fps, setFps] = useState(0)
@@ -75,7 +78,9 @@ export function HeaderBar() {
         </span>
         <span
           className="text-[10px] tabular-nums"
-          style={{ color: 'var(--text-ghost)' }}
+          style={{ color: 'var(--text-ghost)', cursor: 'default' }}
+          onMouseEnter={() => setStatusText(getUIStatusText('fps'))}
+          onMouseLeave={() => setStatusText(null)}
         >
           {fps} FPS
         </span>

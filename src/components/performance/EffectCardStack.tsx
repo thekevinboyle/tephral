@@ -13,7 +13,7 @@ export function EffectCardStack() {
   const { sortedEffects } = useActiveEffects()
   const { disableEffect } = useEffectDisable()
   const { toggleEffectBypassed, effectBypassed } = useGlitchEngineStore()
-  const { selectedEffectId } = useUIStore()
+  const { selectedEffectId, setStatusText } = useUIStore()
 
   // Automation state from sequencer
   const automationParam = useEffectSequencerStore((s) => s.automationParam)
@@ -126,6 +126,8 @@ export function EffectCardStack() {
                   border: '1px solid var(--border)',
                 }}
                 title={isBypassed ? 'Enable effect' : 'Bypass effect'}
+                onMouseEnter={() => setStatusText('Bypass \u2014 Temporarily disable effect')}
+                onMouseLeave={() => setStatusText(null)}
               >
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                   <circle cx="7" cy="7" r="5" stroke={isBypassed ? effectColor : 'var(--text-muted)'} strokeWidth="1.2" />
@@ -138,6 +140,8 @@ export function EffectCardStack() {
                 className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-sm opacity-50 hover:opacity-100 hover:bg-white/10 transition-all"
                 style={{ border: '1px solid var(--border)' }}
                 title="Remove effect"
+                onMouseEnter={() => setStatusText('Remove \u2014 Disable and remove effect from chain')}
+                onMouseLeave={() => setStatusText(null)}
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M2 2l8 8M10 2l-8 8" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />

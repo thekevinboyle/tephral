@@ -1,4 +1,6 @@
 import { useSlicerStore } from '../../stores/slicerStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { SliderRow } from '../performance/controls/SliderRow'
 
 export function SlicerControls() {
@@ -34,6 +36,8 @@ export function SlicerControls() {
     setOpacity,
   } = useSlicerStore()
 
+  const setStatusText = useUIStore((s) => s.setStatusText)
+
   const sliceCounts: (4 | 8 | 16 | 32)[] = [4, 8, 16, 32]
   const outputModes: ('replace' | 'mix' | 'layer')[] = ['replace', 'mix', 'layer']
   const blendModes: ('normal' | 'multiply' | 'screen' | 'difference' | 'overlay')[] = [
@@ -59,6 +63,8 @@ export function SlicerControls() {
             <button
               key={count}
               onClick={() => setSliceCount(count)}
+              onMouseEnter={() => setStatusText(getUIStatusText('slicerSliceCount'))}
+              onMouseLeave={() => setStatusText(null)}
               className="flex-1 h-7 text-[12px] font-medium rounded"
               style={{
                 backgroundColor: sliceCount === count ? '#FF0055' : 'var(--bg-surface)',
@@ -115,6 +121,8 @@ export function SlicerControls() {
           <div className="flex items-center gap-2 py-1">
             <button
               onClick={() => setAutoScan(!autoScan)}
+              onMouseEnter={() => setStatusText(getUIStatusText('slicerAutoScan'))}
+              onMouseLeave={() => setStatusText(null)}
               className="h-6 px-2 text-[11px] font-medium rounded"
               style={{
                 backgroundColor: autoScan ? '#FF0055' : 'var(--bg-surface)',
@@ -148,6 +156,8 @@ export function SlicerControls() {
                 <button
                   key={mode}
                   onClick={() => setScanMode(mode)}
+                  onMouseEnter={() => setStatusText(getUIStatusText('slicerScanMode'))}
+                  onMouseLeave={() => setStatusText(null)}
                   className="flex-1 h-6 text-[11px] font-medium rounded capitalize"
                   style={{
                     backgroundColor: scanMode === mode ? '#FF0055' : 'var(--bg-surface)',
@@ -226,6 +236,8 @@ export function SlicerControls() {
             <button
               key={mode}
               onClick={() => setOutputMode(mode)}
+              onMouseEnter={() => setStatusText(getUIStatusText('slicerOutputMode'))}
+              onMouseLeave={() => setStatusText(null)}
               className="flex-1 h-7 text-[12px] font-medium rounded capitalize"
               style={{
                 backgroundColor: outputMode === mode ? '#FF0055' : 'var(--bg-surface)',
@@ -254,7 +266,11 @@ export function SlicerControls() {
 
         {outputMode === 'layer' && (
           <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
-            <div className="flex items-center gap-2 py-1.5">
+            <div
+              className="flex items-center gap-2 py-1.5"
+              onMouseEnter={() => setStatusText(getUIStatusText('slicerBlendMode'))}
+              onMouseLeave={() => setStatusText(null)}
+            >
               <span
                 className="text-[14px] w-20 shrink-0"
                 style={{ color: 'var(--text-muted)' }}
@@ -295,6 +311,8 @@ export function SlicerControls() {
       {/* Freeze button */}
       <button
         onClick={() => setFreeze(!freeze)}
+        onMouseEnter={() => setStatusText(getUIStatusText('slicerFreeze'))}
+        onMouseLeave={() => setStatusText(null)}
         className="w-full h-8 text-[13px] font-medium rounded"
         style={{
           backgroundColor: freeze ? '#8b5cf6' : 'var(--bg-surface)',

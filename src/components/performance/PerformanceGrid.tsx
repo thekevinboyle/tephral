@@ -16,6 +16,7 @@ import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
+import { getEffectStatusText, getPageStatusText } from '../../config/statusDescriptions'
 
 export function PerformanceGrid() {
   // Glitch engine store
@@ -54,7 +55,7 @@ export function PerformanceGrid() {
   const { effectOrder, setEffectOrder } = useRoutingStore()
 
   // UI store for grid page
-  const { gridPage, setGridPage } = useUIStore()
+  const { gridPage, setGridPage, setStatusText } = useUIStore()
 
   // Move an effect to the end of the chain when enabled
   const moveToEndOfChain = useCallback((effectId: string) => {
@@ -995,6 +996,8 @@ export function PerformanceGrid() {
               <button
                 key={index}
                 onClick={() => setGridPage(index)}
+                onMouseEnter={() => setStatusText(getPageStatusText(name))}
+                onMouseLeave={() => setStatusText(null)}
                 className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-sm transition-colors"
                 style={{
                   backgroundColor: isSelected ? 'var(--bg-elevated)' : 'transparent',
@@ -1072,6 +1075,7 @@ export function PerformanceGrid() {
               onMixChange={(v) => setEffectMix(effect.id, v)}
               isSoloed={isSoloed}
               isMuted={isMuted}
+              statusText={getEffectStatusText(effect.id)}
             />
           )
         })}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { SendIcon } from '../ui/DotMatrixIcons'
 import { useModulationStore } from '../../stores/modulationStore'
 import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 // ════════════════════════════════════════════════════════════════════════════
 // MODULATION CARD GRAPHICS
@@ -222,6 +223,7 @@ function ModulationCard({
   onClick,
   onAssignClick,
 }: ModulationCardProps) {
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const renderGraphic = () => {
     switch (type) {
       case 'lfo':
@@ -242,6 +244,8 @@ function ModulationCard({
       onClick={onClick}
       data-mod-source={type}
       className="flex flex-col rounded-sm cursor-pointer transition-all relative"
+      onMouseEnter={() => setStatusText(`${label} — Click to select/enable, double-click to disable`)}
+      onMouseLeave={() => setStatusText(null)}
       style={{
         width: '80px',
         height: '100%',
@@ -272,6 +276,8 @@ function ModulationCard({
             e.stopPropagation()
             onAssignClick?.()
           }}
+          onMouseEnter={(e) => { e.stopPropagation(); setStatusText(getUIStatusText('modAssign')) }}
+          onMouseLeave={() => setStatusText(null)}
           className="w-5 h-5 rounded-sm flex items-center justify-center transition-all hover:scale-110"
           style={{
             backgroundColor: isAssigning ? 'var(--accent)' : 'transparent',

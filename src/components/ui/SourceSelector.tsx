@@ -1,6 +1,8 @@
 import { useCallback } from 'react'
 import { useMediaSource } from '../../hooks/useMediaSource'
 import { useSlicerStore } from '../../stores/slicerStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 interface SourceSelectorProps {
   variant?: 'compact' | 'full'
@@ -17,6 +19,7 @@ export function SourceSelector({ variant = 'compact' }: SourceSelectorProps) {
   } = useMediaSource()
 
   const slicerEnabled = useSlicerStore((s) => s.enabled)
+  const setStatusText = useUIStore((s) => s.setStatusText)
 
   const handleWebcamClick = useCallback(() => {
     const check = switchCheck()
@@ -69,8 +72,8 @@ export function SourceSelector({ variant = 'compact' }: SourceSelectorProps) {
         disabled={isRecording}
         className={buttonBase}
         style={getButtonStyle(isWebcamActive, isRecording)}
-        onMouseEnter={(e) => !isWebcamActive && !isRecording && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-        onMouseLeave={(e) => !isWebcamActive && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+        onMouseEnter={(e) => { !isWebcamActive && !isRecording && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)'); setStatusText(getUIStatusText('webcam')) }}
+        onMouseLeave={(e) => { !isWebcamActive && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)'); setStatusText(null) }}
         title={isRecording ? 'Cannot switch while recording' : isWebcamActive ? 'Stop webcam' : 'Start webcam'}
       >
         {isWebcamActive ? 'Stop' : 'Cam'}
@@ -82,8 +85,8 @@ export function SourceSelector({ variant = 'compact' }: SourceSelectorProps) {
         disabled={isRecording}
         className={buttonBase}
         style={getButtonStyle(source === 'file', isRecording)}
-        onMouseEnter={(e) => source !== 'file' && !isRecording && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-        onMouseLeave={(e) => source !== 'file' && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+        onMouseEnter={(e) => { source !== 'file' && !isRecording && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)'); setStatusText(getUIStatusText('file')) }}
+        onMouseLeave={(e) => { source !== 'file' && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)'); setStatusText(null) }}
         title={isRecording ? 'Cannot switch while recording' : 'Load video or image file'}
       >
         File

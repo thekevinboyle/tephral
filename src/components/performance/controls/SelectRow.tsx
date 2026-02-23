@@ -1,3 +1,6 @@
+import { useUIStore } from '../../../stores/uiStore'
+import { getParamStatusText } from '../../../config/statusDescriptions'
+
 interface SelectRowProps {
   label: string
   value: string
@@ -7,8 +10,16 @@ interface SelectRowProps {
 }
 
 export function SelectRow({ label, value, options, onChange }: SelectRowProps) {
+  const setStatusText = useUIStore((s) => s.setStatusText)
+  const resolvedStatus = getParamStatusText(label)
+
   return (
-    <div className="flex flex-col items-center" style={{ gap: 3, minWidth: 64 }}>
+    <div
+      className="flex flex-col items-center"
+      style={{ gap: 3, minWidth: 64 }}
+      onMouseEnter={resolvedStatus ? () => setStatusText(resolvedStatus) : undefined}
+      onMouseLeave={resolvedStatus ? () => setStatusText(null) : undefined}
+    >
       <span
         className="text-[9px] uppercase tracking-wide leading-none font-medium"
         style={{ color: 'var(--text-secondary)' }}

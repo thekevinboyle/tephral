@@ -5,6 +5,7 @@ import { usePolyEuclidStore } from '../../stores/polyEuclidStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { ModulationContextMenu } from './controls/ModulationContextMenu'
+import { getParamStatusText } from '../../config/statusDescriptions'
 
 // Modulation source colors (same as SliderRow)
 const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
@@ -42,12 +43,13 @@ interface KnobProps {
   max?: number
   step?: number
   color?: string
-  size?: 'xs' | 'sm' | 'md'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
   onChange: (value: number) => void
   formatValue?: (value: number) => string
   paramId?: string
   showArc?: boolean
   showValue?: boolean
+  statusText?: string
 }
 
 // SVG arc path helper — 270 degree sweep from -135 to +135
@@ -68,7 +70,10 @@ export function Knob({
   paramId,
   showArc = false,
   showValue = false,
+  statusText,
 }: KnobProps) {
+  const resolvedStatusText = statusText ?? getParamStatusText(label)
+
   const dragStartY = useRef<number | null>(null)
   const dragStartValue = useRef<number>(0)
   const didDrag = useRef(false)
@@ -102,7 +107,7 @@ export function Knob({
     tracks: polyEuclidTracks,
     setAssigningTrack: setAssigningPolyEuclid,
   } = usePolyEuclidStore()
-  const { selectRouting } = useUIStore()
+  const { selectRouting, setStatusText } = useUIStore()
   const [isDropTarget, setIsDropTarget] = useState(false)
   const [isModulationDrag, setIsModulationDrag] = useState(false)
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
@@ -285,49 +290,80 @@ export function Knob({
     setIsDropTarget(false)
   }, [paramId, routings, addRouting])
 
-  // Routing indicator depth drag
-  const isDraggingDepth = useRef(false)
-  const didDragDepth = useRef(false)
-  const depthDragStartY = useRef(0)
-  const depthDragStartDepth = useRef(0)
+  // Dot drag state for modulation indicators on the arc
+  const draggingRoutingRef = useRef<string | null>(null)
+  const dotDragStartY = useRef(0)
+  const dotDragStartDepth = useRef(0)
+  const dotDidDrag = useRef(false)
+  const [dotDraggingInfo, setDotDraggingInfo] = useState<{ name: string; depth: number; color: string } | null>(null)
 
-  const handleIndicatorPointerDown = useCallback((e: React.PointerEvent) => {
-    if (!firstRouting) return
+  // Get source info for any routing (not just firstRouting)
+  const getRoutingInfo = useCallback((routing: { trackId: string }) => {
+    if (routing.trackId.startsWith('polyEuclid-')) {
+      const polyTrackId = routing.trackId.replace('polyEuclid-', '')
+      const polyTrack = polyEuclidTracks.find(t => t.id === polyTrackId)
+      if (polyTrack) {
+        const trackIndex = polyEuclidTracks.indexOf(polyTrack)
+        return { name: `Euclid T${trackIndex + 1}`, color: POLY_EUCLID_COLOR }
+      }
+    }
+    const stepTrack = seqTracks.find(t => t.id === routing.trackId)
+    if (stepTrack) {
+      const trackIndex = seqTracks.indexOf(stepTrack)
+      return { name: `Step T${trackIndex + 1}`, color: STEP_SEQ_COLOR }
+    }
+    return getSourceInfo(routing.trackId)
+  }, [seqTracks, polyEuclidTracks])
+
+  const handleDotPointerDown = useCallback((e: React.PointerEvent, routing: { id: string; trackId: string; depth: number }) => {
     e.preventDefault()
     e.stopPropagation()
-    isDraggingDepth.current = true
-    didDragDepth.current = false
-    depthDragStartY.current = e.clientY
-    depthDragStartDepth.current = firstRouting.depth
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-  }, [firstRouting])
-
-  const handleIndicatorPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDraggingDepth.current || !firstRouting) return
-    e.stopPropagation()
-    const deltaY = depthDragStartY.current - e.clientY
-    if (Math.abs(deltaY) > 3) {
-      didDragDepth.current = true
-      const deltaDepth = deltaY / 50
-      const newDepth = Math.max(-1, Math.min(1, depthDragStartDepth.current + deltaDepth))
-      updateRoutingDepth(firstRouting.id, newDepth)
+    // Alt+click = instant remove
+    if (e.altKey) {
+      removeRouting(routing.id)
+      return
     }
-  }, [firstRouting, updateRoutingDepth])
+    draggingRoutingRef.current = routing.id
+    dotDidDrag.current = false
+    dotDragStartY.current = e.clientY
+    dotDragStartDepth.current = routing.depth
+    const info = getRoutingInfo(routing)
+    if (info) setDotDraggingInfo({ name: info.name, depth: routing.depth, color: info.color })
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+  }, [getRoutingInfo, removeRouting])
 
-  const handleIndicatorPointerUp = useCallback((e: React.PointerEvent) => {
-    const wasDrag = didDragDepth.current
-    isDraggingDepth.current = false
-    didDragDepth.current = false
-    try {
-      ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
-    } catch {}
-    if (!wasDrag && firstRouting) selectRouting(firstRouting.id)
-  }, [firstRouting, selectRouting])
-
-  const handleIndicatorDoubleClick = useCallback((e: React.MouseEvent) => {
+  const handleDotPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!draggingRoutingRef.current) return
     e.stopPropagation()
-    if (firstRouting) removeRouting(firstRouting.id)
-  }, [firstRouting, removeRouting])
+    const deltaY = dotDragStartY.current - e.clientY
+    if (Math.abs(deltaY) > 3) dotDidDrag.current = true
+    const deltaDepth = deltaY / 50
+    const newDepth = Math.max(-1, Math.min(1, dotDragStartDepth.current + deltaDepth))
+    updateRoutingDepth(draggingRoutingRef.current, newDepth)
+    setDotDraggingInfo(prev => prev ? { ...prev, depth: newDepth } : null)
+  }, [updateRoutingDepth])
+
+  const handleDotPointerUp = useCallback((e: React.PointerEvent) => {
+    const routingId = draggingRoutingRef.current
+    const wasDrag = dotDidDrag.current
+    draggingRoutingRef.current = null
+    dotDidDrag.current = false
+    setDotDraggingInfo(null)
+    try { ;(e.target as HTMLElement).releasePointerCapture(e.pointerId) } catch {}
+    if (!routingId) return
+    // Snap-remove: if depth near zero after drag, delete the routing
+    if (wasDrag) {
+      const routing = routings.find(r => r.id === routingId)
+      if (routing && Math.abs(routing.depth) < 0.05) removeRouting(routingId)
+    } else {
+      selectRouting(routingId)
+    }
+  }, [routings, removeRouting, selectRouting])
+
+  const handleDotDoubleClick = useCallback((e: React.MouseEvent, routingId: string) => {
+    e.stopPropagation()
+    removeRouting(routingId)
+  }, [removeRouting])
 
   const normalized = (value - min) / (max - min)
   const rotation = normalized * 270 - 135
@@ -336,7 +372,23 @@ export function Knob({
     xs: { outer: 36, indicator: 10 },
     sm: { outer: 38, indicator: 12 },
     md: { outer: 40, indicator: 14 },
+    lg: { outer: 60, indicator: 20 },
   }[size]
+
+  // Compute modulation dot positions on the arc rim
+  const modDots = useMemo(() => {
+    return paramRoutings.map(routing => {
+      const info = getRoutingInfo(routing)
+      if (!info) return null
+      const targetPos = Math.max(0, Math.min(1, normalized + routing.depth))
+      const angleDeg = targetPos * 270 - 135
+      const angleRad = angleDeg * Math.PI / 180
+      const r = dimensions.outer * ARC_RADIUS / 100
+      const cx = dimensions.outer / 2 + r * Math.sin(angleRad)
+      const cy = dimensions.outer / 2 - r * Math.cos(angleRad)
+      return { routing, info, cx, cy }
+    }).filter((d): d is NonNullable<typeof d> => d !== null)
+  }, [paramRoutings, normalized, dimensions.outer, getRoutingInfo])
 
   const displayValue = formatValue
     ? formatValue(value)
@@ -361,6 +413,8 @@ export function Knob({
         e.preventDefault()
         setContextMenuPos({ x: e.clientX, y: e.clientY })
       } : undefined}
+      onMouseEnter={resolvedStatusText ? () => setStatusText(resolvedStatusText) : undefined}
+      onMouseLeave={resolvedStatusText ? () => setStatusText(null) : undefined}
     >
       {/* Label — above the knob */}
       <span
@@ -401,10 +455,23 @@ export function Knob({
         {isDepthDragging && (
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-bold tabular-nums whitespace-nowrap z-20"
             style={{
-              backgroundColor: 'var(--accent)',
-              color: 'var(--bg-primary)',
+              backgroundColor: assigningColor ?? 'var(--accent)',
+              color: '#fff',
             }}>
-            {depthDragDisplay > 0 ? '+' : ''}{(depthDragDisplay * 100).toFixed(0)}%
+            {(() => {
+              const src = depthAssignSource.current
+              const name = src ? getSourceInfo(src)?.name ?? '' : ''
+              const sign = depthDragDisplay > 0 ? '+' : ''
+              return name ? `${name}: ${sign}${(depthDragDisplay * 100).toFixed(0)}%` : `${sign}${(depthDragDisplay * 100).toFixed(0)}%`
+            })()}
+          </div>
+        )}
+
+        {/* Dot drag tooltip */}
+        {dotDraggingInfo && (
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-bold tabular-nums whitespace-nowrap z-20"
+            style={{ backgroundColor: dotDraggingInfo.color, color: '#fff' }}>
+            {dotDraggingInfo.name}: {dotDraggingInfo.depth > 0 ? '+' : ''}{(dotDraggingInfo.depth * 100).toFixed(0)}%
           </div>
         )}
 
@@ -416,30 +483,6 @@ export function Knob({
             border: isCompact ? '1px solid #2a2a40' : '1px solid var(--border)',
           }}
         />
-
-        {/* SVG arc overlay */}
-        {showArc && (
-          <svg
-            className="absolute inset-0"
-            viewBox="0 0 100 100"
-            style={{ transform: 'rotate(-135deg)' }}
-          >
-            {/* Background track */}
-            <circle
-              cx="50" cy="50" r={ARC_RADIUS}
-              fill="none" stroke={isCompact ? '#2a2a40' : 'var(--border)'} strokeWidth={arcStrokeWidth}
-              strokeDasharray={`${ARC_SWEEP} ${ARC_CIRCUMFERENCE}`}
-              strokeLinecap="round"
-            />
-            {/* Value arc */}
-            <circle
-              cx="50" cy="50" r={ARC_RADIUS}
-              fill="none" stroke={arcColor} strokeWidth={arcStrokeWidth}
-              strokeDasharray={`${normalized * ARC_SWEEP} ${ARC_CIRCUMFERENCE}`}
-              strokeLinecap="round"
-            />
-          </svg>
-        )}
 
         {/* Line indicator */}
         <div
@@ -456,46 +499,28 @@ export function Knob({
           }}
         />
 
-        {/* Assignment mode plus icon */}
-        {paramId && (isInAssignmentMode || isModulationDrag) && !hasRouting && (
+        {/* Modulation dots on the arc rim */}
+        {modDots.map(dot => (
           <div
-            className="absolute -right-1 -top-1 w-4 h-4 rounded-full flex items-center justify-center z-10 pointer-events-none"
+            key={dot.routing.id}
+            onPointerDown={(e) => handleDotPointerDown(e, dot.routing)}
+            onPointerMove={handleDotPointerMove}
+            onPointerUp={handleDotPointerUp}
+            onDoubleClick={(e) => handleDotDoubleClick(e, dot.routing.id)}
+            className="absolute cursor-ns-resize touch-none z-10 hover:scale-150 transition-transform"
             style={{
-              backgroundColor: isInAssignmentMode ? assigningColor : 'var(--accent)',
-              boxShadow: isInAssignmentMode ? `0 0 6px ${assigningColor}` : '0 0 6px var(--accent-glow)',
+              width: isCompact ? 5 : 6,
+              height: isCompact ? 5 : 6,
+              borderRadius: '50%',
+              backgroundColor: dot.info.color,
+              boxShadow: `0 0 4px ${dot.info.color}`,
+              left: dot.cx - (isCompact ? 2.5 : 3),
+              top: dot.cy - (isCompact ? 2.5 : 3),
             }}
-          >
-            <svg width="10" height="10" viewBox="0 0 10 10">
-              <path d="M5 2v6M2 5h6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </div>
-        )}
+            title={`${dot.info.name}: ${dot.routing.depth > 0 ? '+' : ''}${Math.round(dot.routing.depth * 100)}% — Drag to adjust, double-click to remove`}
+          />
+        ))}
       </div>
-
-      {/* Routing indicator dot — shows below knob when routed */}
-      {hasRouting && firstRouting && sourceInfo && (
-        <div
-          onPointerDown={handleIndicatorPointerDown}
-          onPointerMove={handleIndicatorPointerMove}
-          onPointerUp={handleIndicatorPointerUp}
-          onDoubleClick={handleIndicatorDoubleClick}
-          className="w-4 h-4 rounded-full flex items-center justify-center cursor-ns-resize hover:scale-125 transition-transform"
-          style={{
-            backgroundColor: sourceInfo.color,
-            boxShadow: `0 0 6px ${sourceInfo.color}`,
-          }}
-          title={`${sourceInfo.name}: ${Math.round(firstRouting.depth * 100)}% — Drag to adjust, double-click to remove`}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12">
-            <circle cx="6" cy="6" r="4" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
-            <circle
-              cx="6" cy="6" r="4" fill="none" stroke="white" strokeWidth="2"
-              strokeDasharray={`${Math.abs(firstRouting.depth) * 25} 100`}
-              strokeDashoffset="0" transform="rotate(-90 6 6)"
-            />
-          </svg>
-        </div>
-      )}
 
       {/* Value pill — bordered box below knob */}
       {showValue && !hasRouting && (

@@ -1,4 +1,6 @@
 import { useEffectSequencerStore } from '../../../stores/effectSequencerStore'
+import { useUIStore } from '../../../stores/uiStore'
+import { getParamStatusText } from '../../../config/statusDescriptions'
 
 interface ToggleRowProps {
   label: string
@@ -11,6 +13,8 @@ export function ToggleRow({ label, value, onChange, paramId }: ToggleRowProps) {
   const automationParam = useEffectSequencerStore((s) => s.automationParam)
   const setAutomationParam = useEffectSequencerStore((s) => s.setAutomationParam)
   const isAutomationTarget = paramId != null && automationParam?.fullParamId === paramId
+  const setStatusText = useUIStore((s) => s.setStatusText)
+  const resolvedStatus = getParamStatusText(label)
 
   const handleLabelClick = () => {
     if (!paramId) return
@@ -26,7 +30,12 @@ export function ToggleRow({ label, value, onChange, paramId }: ToggleRowProps) {
   }
 
   return (
-    <div className="flex flex-col items-center" style={{ gap: 3, minWidth: 64 }}>
+    <div
+      className="flex flex-col items-center"
+      style={{ gap: 3, minWidth: 64 }}
+      onMouseEnter={resolvedStatus ? () => setStatusText(resolvedStatus) : undefined}
+      onMouseLeave={resolvedStatus ? () => setStatusText(null) : undefined}
+    >
       <span
         className="text-[9px] uppercase tracking-wide leading-none font-medium cursor-pointer"
         style={{ color: isAutomationTarget ? '#FF4060' : 'var(--text-secondary)' }}

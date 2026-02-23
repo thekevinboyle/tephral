@@ -9,6 +9,13 @@ import {
 
 const TABS = ['Mixer', 'Modulation', 'Mod Matrix', 'Automation'] as const
 
+const TAB_STATUS: Record<string, string> = {
+  Mixer: 'Mixer \u2014 Effect dry/wet levels',
+  Modulation: 'Modulation \u2014 LFO and modulation sources',
+  'Mod Matrix': 'Mod Matrix \u2014 Modulation routing overview',
+  Automation: 'Automation \u2014 Parameter automation lanes',
+}
+
 export function BottomPanelTabBar() {
   const bottomPanelTab = useUIStore((s) => s.bottomPanelTab)
   const bottomPanelPage = useUIStore((s) => s.bottomPanelPage)
@@ -16,6 +23,7 @@ export function BottomPanelTabBar() {
   const setBottomPanelPage = useUIStore((s) => s.setBottomPanelPage)
   const prevBottomPanelPage = useUIStore((s) => s.prevBottomPanelPage)
   const nextBottomPanelPage = useUIStore((s) => s.nextBottomPanelPage)
+  const setStatusText = useUIStore((s) => s.setStatusText)
 
   const isExpanded = bottomPanelTab !== null
 
@@ -57,9 +65,11 @@ export function BottomPanelTabBar() {
               }}
               onMouseEnter={(e) => {
                 if (!isActive) e.currentTarget.style.background = 'var(--bg-hover)'
+                setStatusText(TAB_STATUS[tab] ?? tab)
               }}
               onMouseLeave={(e) => {
                 if (!isActive) e.currentTarget.style.background = 'transparent'
+                setStatusText(null)
               }}
             >
               {tab}
@@ -71,15 +81,15 @@ export function BottomPanelTabBar() {
       {/* Right: action buttons + page nav */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 2, paddingRight: 8 }}>
         {/* Randomize */}
-        <IconButton title="Randomize">
+        <IconButton title="Randomize" statusText="Randomize \u2014 Shuffle parameters">
           <ShuffleIcon size={12} />
         </IconButton>
 
         {/* Icon buttons */}
-        <IconButton title="Settings">
+        <IconButton title="Settings" statusText="Settings \u2014 Panel options">
           <SettingsIcon size={12} />
         </IconButton>
-        <IconButton title="Sliders">
+        <IconButton title="Sliders" statusText="Sliders \u2014 View as sliders">
           <SlidersIcon size={12} />
         </IconButton>
 
@@ -87,7 +97,7 @@ export function BottomPanelTabBar() {
         <div style={{ width: 1, height: 16, backgroundColor: 'var(--border)', margin: '0 4px' }} />
 
         {/* Page nav */}
-        <IconButton title="Previous page" onClick={prevBottomPanelPage}>
+        <IconButton title="Previous page" onClick={prevBottomPanelPage} statusText="Previous page">
           <ChevronLeftIcon size={12} />
         </IconButton>
 
@@ -111,7 +121,7 @@ export function BottomPanelTabBar() {
           </button>
         ))}
 
-        <IconButton title="Next page" onClick={nextBottomPanelPage}>
+        <IconButton title="Next page" onClick={nextBottomPanelPage} statusText="Next page">
           <ChevronRightIcon size={12} />
         </IconButton>
       </div>
@@ -123,11 +133,14 @@ function IconButton({
   children,
   title,
   onClick,
+  statusText,
 }: {
   children: React.ReactNode
   title: string
   onClick?: () => void
+  statusText?: string
 }) {
+  const setStatusText = useUIStore((s) => s.setStatusText)
   return (
     <button
       title={title}
@@ -144,8 +157,14 @@ function IconButton({
         justifyContent: 'center',
         transition: 'color 0.15s',
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)' }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.color = 'var(--text-primary)'
+        if (statusText) setStatusText(statusText)
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.color = 'var(--text-muted)'
+        if (statusText) setStatusText(null)
+      }}
     >
       {children}
     </button>

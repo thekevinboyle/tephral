@@ -2,6 +2,8 @@ import { useCallback, useState, useRef, useEffect } from 'react'
 import { Button } from '../ui/Button'
 import { BankButton } from './BankButton'
 import { ShuffleIcon } from '../ui/DotMatrixIcons'
+import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { useBankStore } from '../../stores/bankStore'
 import { useGlitchEngineStore, type GlitchSnapshot } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
@@ -45,6 +47,7 @@ export function BankPanel() {
       setRektFlashOn(true)
     }
   }, [isRektLocked])
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const { banks, activeBank, loadBank, saveBank, clearBank } = useBankStore()
   const glitch = useGlitchEngineStore()
   const ascii = useAsciiRenderStore()
@@ -293,19 +296,23 @@ export function BankPanel() {
       <div className="flex-1" />
 
       {/* Action buttons */}
-      <Button size="lg" className="h-full" onClick={handleRandom} title="Randomize effects">
-        <ShuffleIcon size={16} />
-      </Button>
-      <Button size="lg" className="h-full" onClick={handleUndo} disabled={!hasPreviousState}>
-        Undo
-      </Button>
+      <span onMouseEnter={() => setStatusText(getUIStatusText('randomize'))} onMouseLeave={() => setStatusText(null)}>
+        <Button size="lg" className="h-full" onClick={handleRandom} title="Randomize effects">
+          <ShuffleIcon size={16} />
+        </Button>
+      </span>
+      <span onMouseEnter={() => setStatusText(getUIStatusText('undo'))} onMouseLeave={() => setStatusText(null)}>
+        <Button size="lg" className="h-full" onClick={handleUndo} disabled={!hasPreviousState}>
+          Undo
+        </Button>
+      </span>
       <button
         onPointerDown={handleRektDown}
         onPointerUp={handleRektUp}
         onPointerLeave={isRektLocked ? undefined : handleRektUp}
         onPointerCancel={isRektLocked ? undefined : handleRektUp}
-        onMouseEnter={(e) => !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')}
-        onMouseLeave={(e) => !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
+        onMouseEnter={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'); setStatusText(getUIStatusText('rekt')) }}
+        onMouseLeave={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)'); setStatusText(null) }}
         className="h-full px-4 rounded-sm text-[11px] font-medium transition-all select-none touch-none active:scale-95"
         style={{
           backgroundColor: isRektLocked

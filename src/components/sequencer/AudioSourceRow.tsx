@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAudioSourceStore, type AudioSourceType, type AudioGateMode } from '../../stores/audioSourceStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getAudioSourceStatusText, getUIStatusText } from '../../config/statusDescriptions'
 import { Knob } from '../performance/Knob'
 
 const SOURCES: { id: AudioSourceType; label: string }[] = [
@@ -30,6 +32,7 @@ export function AudioSourceRow() {
   const setGateAttack = useAudioSourceStore((s) => s.setGateAttack)
   const setGateRelease = useAudioSourceStore((s) => s.setGateRelease)
 
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const [showGateSettings, setShowGateSettings] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -149,6 +152,8 @@ export function AudioSourceRow() {
                   ? `1px solid ${ACTIVE_COLOR}40`
                   : '1px solid transparent',
               }}
+              onMouseEnter={() => setStatusText(getAudioSourceStatusText(source.id))}
+              onMouseLeave={() => setStatusText(null)}
             >
               {source.label}
             </button>
@@ -177,6 +182,8 @@ export function AudioSourceRow() {
                 color: audioFileName ? 'var(--text-secondary)' : 'var(--text-ghost)',
                 border: '1px solid var(--border)',
               }}
+              onMouseEnter={() => setStatusText(getUIStatusText('audioImport'))}
+              onMouseLeave={() => setStatusText(null)}
             >
               {audioFileName ?? 'Import...'}
             </button>
@@ -222,6 +229,8 @@ export function AudioSourceRow() {
               : '1px solid var(--border)',
           }}
           title="Gate settings"
+          onMouseEnter={() => setStatusText(getUIStatusText('gateToggle'))}
+          onMouseLeave={() => setStatusText(null)}
         >
           GATE
         </button>
@@ -251,6 +260,8 @@ export function AudioSourceRow() {
             title={gateMode === 'gate'
               ? 'Gate mode: binary on/off at threshold'
               : 'Envelope mode: amplitude scales effect mix'}
+            onMouseEnter={() => setStatusText(getUIStatusText('gateMode'))}
+            onMouseLeave={() => setStatusText(null)}
           >
             {gateMode === 'gate' ? 'GATE' : 'ENV'}
           </button>

@@ -1,15 +1,13 @@
 import { create } from 'zustand'
 
-export type LFOShape = 'sine' | 'triangle' | 'square' | 'saw' | 'random'
-
 export interface LFOState {
   enabled: boolean
   rate: number       // Hz (0.1 - 20)
-  shape: LFOShape
+  tilt: number       // -1 to 1 (0 = triangle, +1 = saw, -1 = ramp)
+  curve: number      // -1 to 1 (0 = linear, +1 = sine-like, -1 = square-like)
   phase: number      // Internal phase accumulator (0-1)
   phaseOffset: number // 0-360 degrees
   currentValue: number  // 0-1 output
-  holdValue: number  // For sample-and-hold random
 }
 
 export interface RandomState {
@@ -86,7 +84,8 @@ export interface ModulationState {
   toggleLFO: (index: number) => void
   setLFOEnabled: (index: number, enabled: boolean) => void
   setLFORate: (index: number, rate: number) => void
-  setLFOShape: (index: number, shape: LFOShape) => void
+  setLFOTilt: (index: number, tilt: number) => void
+  setLFOCurve: (index: number, curve: number) => void
   setLFOPhaseOffset: (index: number, offset: number) => void
   updateAllLFOs: (delta: number) => void
 
@@ -132,11 +131,11 @@ function createDefaultLFO(): LFOState {
   return {
     enabled: false,
     rate: 1,
-    shape: 'sine',
+    tilt: 0,
+    curve: 0.7,
     phase: 0,
     phaseOffset: 0,
     currentValue: 0.5,
-    holdValue: Math.random(),
   }
 }
 
@@ -146,38 +145,45 @@ function updateLFOAt(lfos: LFOState[], index: number, partial: Partial<LFOState>
   return result
 }
 
+// Continuous waveform morphing: tilt controls asymmetry, curve controls curvature
+export function computeMorphedWave(t: number, tilt: number, curve: number): number {
+  // Tilt point: where the peak falls (0.5 = symmetric triangle)
+  const tiltPoint = 0.5 + tilt * 0.49 // range 0.01 to 0.99
+
+  // Generate tilted triangle wave (0-1 range)
+  let v: number
+  if (t < tiltPoint) {
+    v = t / tiltPoint // rising slope
+  } else {
+    v = 1 - (t - tiltPoint) / (1 - tiltPoint) // falling slope
+  }
+
+  // Apply curve shaping
+  if (curve > 0) {
+    // Positive: round toward sine (power < 1)
+    const power = 1 - curve * 0.8 // 1.0 → 0.2
+    v = v < 0.5
+      ? 0.5 * Math.pow(v * 2, power)
+      : 1 - 0.5 * Math.pow((1 - v) * 2, power)
+  } else if (curve < 0) {
+    // Negative: sharpen toward square (power > 1)
+    const power = 1 + Math.abs(curve) * 6 // 1.0 → 7.0
+    v = v < 0.5
+      ? 0.5 * Math.pow(v * 2, power)
+      : 1 - 0.5 * Math.pow((1 - v) * 2, power)
+  }
+
+  return v
+}
+
 function computeLFOValue(lfo: LFOState, delta: number): LFOState {
-  let newPhase = (lfo.phase + delta * lfo.rate) % 1
-  let newValue: number
-  let newHoldValue = lfo.holdValue
+  const newPhase = (lfo.phase + delta * lfo.rate) % 1
 
   // Apply phase offset for waveform lookup (doesn't affect accumulator)
   const lookupPhase = (newPhase + lfo.phaseOffset / 360) % 1
+  const newValue = computeMorphedWave(lookupPhase, lfo.tilt, lfo.curve)
 
-  switch (lfo.shape) {
-    case 'sine':
-      newValue = Math.sin(lookupPhase * Math.PI * 2) * 0.5 + 0.5
-      break
-    case 'triangle':
-      newValue = 1 - Math.abs(lookupPhase * 2 - 1)
-      break
-    case 'square':
-      newValue = lookupPhase < 0.5 ? 1 : 0
-      break
-    case 'saw':
-      newValue = lookupPhase
-      break
-    case 'random':
-      if (newPhase < lfo.phase) {
-        newHoldValue = Math.random()
-      }
-      newValue = newHoldValue
-      break
-    default:
-      newValue = 0.5
-  }
-
-  return { ...lfo, phase: newPhase, currentValue: newValue, holdValue: newHoldValue }
+  return { ...lfo, phase: newPhase, currentValue: newValue }
 }
 
 export const useModulationStore = create<ModulationState>((set, get) => ({
@@ -256,8 +262,11 @@ export const useModulationStore = create<ModulationState>((set, get) => ({
   setLFORate: (index, rate) => set((state) => ({
     lfos: updateLFOAt(state.lfos, index, { rate: Math.max(0.1, Math.min(20, rate)) })
   })),
-  setLFOShape: (index, shape) => set((state) => ({
-    lfos: updateLFOAt(state.lfos, index, { shape })
+  setLFOTilt: (index, tilt) => set((state) => ({
+    lfos: updateLFOAt(state.lfos, index, { tilt: Math.max(-1, Math.min(1, tilt)) })
+  })),
+  setLFOCurve: (index, curve) => set((state) => ({
+    lfos: updateLFOAt(state.lfos, index, { curve: Math.max(-1, Math.min(1, curve)) })
   })),
   setLFOPhaseOffset: (index, offset) => set((state) => ({
     lfos: updateLFOAt(state.lfos, index, { phaseOffset: Math.max(0, Math.min(360, offset)) })

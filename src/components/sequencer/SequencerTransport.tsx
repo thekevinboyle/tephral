@@ -3,6 +3,7 @@ import { PlayIcon, StopIcon, DiceIcon, ShuffleIcon, ClearIcon } from '../ui/DotM
 import { useEffectSequencerStore, type EffectStepResolution } from '../../stores/effectSequencerStore'
 import { useMIDIStore } from '../../stores/midiStore'
 import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 
 const MIDI_COLOR = '#00AAFF'
@@ -11,6 +12,7 @@ const RESOLUTION_OPTIONS = ['1/4', '1/8', '1/16', '1/32'] as const
 
 function RandomizeButton() {
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const randomizeTrack = useEffectSequencerStore((s) => s.randomizeTrack)
 
   const handleClick = useCallback(() => {
@@ -20,6 +22,8 @@ function RandomizeButton() {
   return (
     <button
       onClick={handleClick}
+      onMouseEnter={() => setStatusText(getUIStatusText('randomizeSteps'))}
+      onMouseLeave={() => setStatusText(null)}
       className="w-7 h-7 flex items-center justify-center rounded-sm"
       style={{
         backgroundColor: 'var(--bg-elevated)',
@@ -35,6 +39,7 @@ function RandomizeButton() {
 
 function RandomizeLocksButton() {
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const randomizeLocks = useEffectSequencerStore((s) => s.randomizeLocks)
   const setAutomationParam = useEffectSequencerStore((s) => s.setAutomationParam)
 
@@ -69,6 +74,8 @@ function RandomizeLocksButton() {
   return (
     <button
       onClick={handleClick}
+      onMouseEnter={() => setStatusText(getUIStatusText('randomizeLocks'))}
+      onMouseLeave={() => setStatusText(null)}
       className="w-7 h-7 flex items-center justify-center rounded-sm"
       style={{
         backgroundColor: 'var(--bg-elevated)',
@@ -84,6 +91,7 @@ function RandomizeLocksButton() {
 
 function ClearTrackButton() {
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const clearTrack = useEffectSequencerStore((s) => s.clearTrack)
 
   const handleClick = useCallback(() => {
@@ -93,6 +101,8 @@ function ClearTrackButton() {
   return (
     <button
       onClick={handleClick}
+      onMouseEnter={() => setStatusText(getUIStatusText('clearTrack'))}
+      onMouseLeave={() => setStatusText(null)}
       className="w-7 h-7 flex items-center justify-center rounded-sm"
       style={{
         backgroundColor: 'var(--bg-elevated)',
@@ -135,6 +145,7 @@ export function SequencerTransport({
   onSwingChange,
   onPageChange,
 }: SequencerTransportProps) {
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const clockSyncEnabled = useMIDIStore((s) => s.clockSyncEnabled)
   const clockBpm = useMIDIStore((s) => s.clockBpm)
   const isConnected = useMIDIStore((s) => s.isConnected)
@@ -198,6 +209,8 @@ export function SequencerTransport({
       {/* Play/Stop */}
       <button
         onClick={isPlaying ? onStop : onPlay}
+        onMouseEnter={() => setStatusText(getUIStatusText('seqPlayStop'))}
+        onMouseLeave={() => setStatusText(null)}
         className="w-7 h-7 flex items-center justify-center rounded-sm transition-all"
         style={{
           backgroundColor: isPlaying ? 'var(--seq-accent)' : 'var(--bg-elevated)',
@@ -220,6 +233,8 @@ export function SequencerTransport({
           cursor: clockSyncEnabled ? 'default' : 'ns-resize',
         }}
         onMouseDown={clockSyncEnabled ? undefined : handleBpmDrag}
+        onMouseEnter={() => setStatusText(getUIStatusText('seqBpm'))}
+        onMouseLeave={() => setStatusText(null)}
       >
         <span style={{ opacity: 0.5 }}>BPM</span>{' '}
         <span className="font-bold" style={{ color: clockSyncEnabled ? MIDI_COLOR : 'var(--text-primary)' }}>
@@ -231,6 +246,8 @@ export function SequencerTransport({
       {isConnected && midiInputs.length > 0 && (
         <button
           onClick={() => setClockSyncEnabled(!clockSyncEnabled)}
+          onMouseEnter={() => setStatusText(getUIStatusText('seqSync'))}
+          onMouseLeave={() => setStatusText(null)}
           className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-sm"
           style={{
             backgroundColor: clockSyncEnabled ? `${MIDI_COLOR}20` : 'transparent',
@@ -249,6 +266,8 @@ export function SequencerTransport({
       {/* Resolution */}
       <button
         onClick={handleResolutionCycle}
+        onMouseEnter={() => setStatusText(getUIStatusText('seqResolution'))}
+        onMouseLeave={() => setStatusText(null)}
         className="text-[12px] font-bold px-2 py-0.5 rounded-sm"
         style={{
           color: 'var(--text-secondary)',
@@ -264,6 +283,8 @@ export function SequencerTransport({
         className="text-[12px] cursor-ns-resize select-none"
         style={{ color: 'var(--text-muted)' }}
         onMouseDown={handleSwingDrag}
+        onMouseEnter={() => setStatusText(getUIStatusText('seqSwing'))}
+        onMouseLeave={() => setStatusText(null)}
       >
         <span style={{ opacity: 0.5 }}>SWG</span>{' '}
         <span>{swing}</span>
@@ -303,6 +324,8 @@ export function SequencerTransport({
             <button
               key={page}
               onClick={() => onPageChange(page)}
+              onMouseEnter={() => setStatusText(getUIStatusText('seqPageDot'))}
+              onMouseLeave={() => setStatusText(null)}
               className="w-2.5 h-2.5 rounded-full transition-all"
               style={{
                 backgroundColor: isActive

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useModulationStore, type LFOShape, type ModulationState, LFO_COUNT } from '../../stores/modulationStore'
+import { useModulationStore, type ModulationState, LFO_COUNT } from '../../stores/modulationStore'
 import { useSequencerStore } from '../../stores/sequencerStore'
 import { useMIDIStore } from '../../stores/midiStore'
 import { useAudioReactiveStore } from '../../stores/audioReactiveStore'
@@ -8,6 +8,8 @@ import { useAcidStore } from '../../stores/acidStore'
 import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 // ════════════════════════════════════════════════════════════════════════════
 // Shared constants & helpers (also used by EffectsLane)
@@ -64,11 +66,16 @@ export function ModSlider({
   color?: string
 }) {
   void _step
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const normalized = (value - min) / (max - min)
   const display = format ? format(value) : value.toFixed(2)
 
   return (
-    <div className="flex items-center gap-2 py-0.5">
+    <div
+      className="flex items-center gap-2 py-0.5"
+      onMouseEnter={() => setStatusText(label ? `${label} — Drag to adjust` : null)}
+      onMouseLeave={() => setStatusText(null)}
+    >
       <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
         {label}
       </span>
@@ -110,8 +117,13 @@ export function ModSelect<T extends string>({
   onChange: (v: T) => void
   color?: string
 }) {
+  const setStatusText = useUIStore((s) => s.setStatusText)
   return (
-    <div className="flex items-center gap-2 py-0.5">
+    <div
+      className="flex items-center gap-2 py-0.5"
+      onMouseEnter={() => setStatusText(label ? `${label} — Click to change mode` : null)}
+      onMouseLeave={() => setStatusText(null)}
+    >
       <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
         {label}
       </span>
@@ -195,6 +207,7 @@ export function ModulatorSection({
   color: string
   children: React.ReactNode
 }) {
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const isExpanded = selected
 
   return (
@@ -209,12 +222,16 @@ export function ModulatorSection({
         className="w-full flex items-center gap-2 px-2 py-1.5 cursor-pointer"
         style={{ borderBottom: isExpanded ? '1px solid var(--border)' : 'none' }}
         onClick={onSelect}
+        onMouseEnter={() => setStatusText(`${title} — Click to expand/collapse`)}
+        onMouseLeave={() => setStatusText(null)}
       >
         <button
           onClick={(e) => {
             e.stopPropagation()
             onToggle()
           }}
+          onMouseEnter={() => setStatusText(getUIStatusText('modToggle'))}
+          onMouseLeave={() => setStatusText(null)}
           className="w-3 h-3 rounded-full flex-shrink-0"
           style={{
             backgroundColor: enabled ? color : 'transparent',
@@ -265,13 +282,7 @@ function ValueBar({ value, color }: { value: number; color: string }) {
 // Full modulation panel (all 5 modulators stacked)
 // ════════════════════════════════════════════════════════════════════════════
 
-const LFO_SHAPES: { value: LFOShape; label: string }[] = [
-  { value: 'sine', label: 'Sin' },
-  { value: 'triangle', label: 'Tri' },
-  { value: 'square', label: 'Sqr' },
-  { value: 'saw', label: 'Saw' },
-  { value: 'random', label: 'Rnd' },
-]
+// LFO_SHAPES removed — now using continuous tilt/curve morphing
 
 export function ModulationPanel() {
   const mod = useModulationStore()
@@ -391,13 +402,8 @@ function LFOContent({ mod, bpm, wrapped, selected, onSelect, routingCount, total
   const controls = (
     <>
       <LFOSelectorRow mod={mod} />
-      <ModSelect
-        label="Shape"
-        value={lfo.shape}
-        options={LFO_SHAPES}
-        onChange={(shape) => mod.setLFOShape(idx, shape)}
-        color={color}
-      />
+      <ModSlider label="Tilt" value={lfo.tilt} min={-1} max={1} onChange={(v) => mod.setLFOTilt(idx, v)} format={(v) => v.toFixed(2)} color={color} />
+      <ModSlider label="Curve" value={lfo.curve} min={-1} max={1} onChange={(v) => mod.setLFOCurve(idx, v)} format={(v) => v.toFixed(2)} color={color} />
       <ModRateSelect label="Rate" value={lfo.rate} bpm={bpm} onChange={(rate) => mod.setLFORate(idx, rate)} color={color} />
       <ValueBar value={lfo.currentValue} color={color} />
     </>
@@ -524,7 +530,8 @@ function EnvelopeContent({ mod, wrapped, selected, onSelect, routingCount }: { m
         <button
           onMouseDown={mod.triggerEnvelope}
           onMouseUp={mod.releaseEnvelope}
-          onMouseLeave={mod.releaseEnvelope}
+          onMouseEnter={() => { const st = useUIStore.getState().setStatusText; st(getUIStatusText('modTrigger')) }}
+          onMouseLeave={() => { mod.releaseEnvelope(); useUIStore.getState().setStatusText(null) }}
           className="flex-1 text-[8px] uppercase py-1 rounded-sm"
           style={{
             backgroundColor: mod.envelope.phase !== 'idle' ? color : 'var(--bg-elevated)',
@@ -638,6 +645,7 @@ function SampleHoldContent({ mod, bpm, wrapped, selected, onSelect, routingCount
 
 function MIDIModContent() {
   const color = '#00AAFF'
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const {
     isSupported,
     isConnected,
@@ -733,6 +741,8 @@ function MIDIModContent() {
               setLearnCC(null)
             }
           }}
+          onMouseEnter={() => setStatusText(getUIStatusText('modLearnCC'))}
+          onMouseLeave={() => setStatusText(null)}
           className="text-[8px] uppercase px-2 py-1 rounded-sm"
           style={{
             backgroundColor: isLearning ? color : 'var(--bg-elevated)',
@@ -755,6 +765,8 @@ function MIDIModContent() {
               setAssigningModulator(null)
               useSequencerStore.getState().setAssigningTrack(trackId)
             }}
+            onMouseEnter={() => setStatusText(getUIStatusText('modAssignCC'))}
+            onMouseLeave={() => setStatusText(null)}
             className="text-[8px] uppercase px-2 py-1 rounded-sm"
             style={{
               backgroundColor: `${color}20`,
@@ -792,6 +804,8 @@ function MIDIModContent() {
                 />
                 <button
                   onClick={() => removeRouting(routing.id)}
+                  onMouseEnter={() => setStatusText('Remove — Delete this MIDI CC routing')}
+                  onMouseLeave={() => setStatusText(null)}
                   className="text-[8px] px-1"
                   style={{ color: 'var(--text-ghost)' }}
                 >
@@ -943,6 +957,7 @@ function getActiveEffectIds(): Set<string> {
 
 function AudioReactiveContent() {
   const color = '#FF3333'
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const ar = useAudioReactiveStore()
   const { routings, addRouting, removeRouting, updateRoutingDepth } = useSequencerStore()
   const { setAssigningModulator } = useModulationStore()
@@ -1011,6 +1026,8 @@ function AudioReactiveContent() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => ar.toggleEnabled()}
+          onMouseEnter={() => setStatusText(getUIStatusText('modToggle'))}
+          onMouseLeave={() => setStatusText(null)}
           className="w-3 h-3 rounded-full flex-shrink-0"
           style={{
             backgroundColor: ar.enabled ? color : 'transparent',
@@ -1063,6 +1080,8 @@ function AudioReactiveContent() {
               {/* Assign button */}
               <button
                 onClick={() => handleAssign(band.trackId)}
+                onMouseEnter={() => setStatusText(`${band.label} — ${isAssigning ? 'Click a knob to route' : 'Click to assign to effect parameters'}`)}
+                onMouseLeave={() => setStatusText(null)}
                 className="w-full text-[7px] uppercase py-0.5 rounded-sm"
                 style={{
                   backgroundColor: isAssigning ? band.color : `${band.color}15`,
@@ -1081,6 +1100,8 @@ function AudioReactiveContent() {
       <div className="flex gap-1">
         <button
           onClick={handleAutoRoute}
+          onMouseEnter={() => setStatusText(getUIStatusText('modAutoRoute'))}
+          onMouseLeave={() => setStatusText(null)}
           className="flex-1 text-[8px] uppercase font-semibold py-1 rounded-sm"
           style={{
             backgroundColor: `${color}20`,
@@ -1093,6 +1114,8 @@ function AudioReactiveContent() {
         {audioRoutings.length > 0 && (
           <button
             onClick={handleClearAll}
+            onMouseEnter={() => setStatusText(getUIStatusText('modClearRouting'))}
+            onMouseLeave={() => setStatusText(null)}
             className="text-[8px] uppercase py-1 px-2 rounded-sm"
             style={{
               backgroundColor: 'var(--bg-elevated)',
@@ -1135,6 +1158,8 @@ function AudioReactiveContent() {
                 </div>
                 <button
                   onClick={() => removeRouting(routing.id)}
+                  onMouseEnter={() => setStatusText('Remove — Delete this audio routing')}
+                  onMouseLeave={() => setStatusText(null)}
                   className="text-[8px] px-1 flex-shrink-0"
                   style={{ color: 'var(--text-ghost)' }}
                 >

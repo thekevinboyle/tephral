@@ -5,6 +5,7 @@ import { useStippleStore } from '../../stores/stippleStore'
 import { useAcidStore } from '../../stores/acidStore'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 interface XYPosition {
   x: number
@@ -214,6 +215,7 @@ export function XYPad() {
   const acid = useAcidStore()
   const vision = useVisionTrackingStore()
   const { selectedEffectId } = useUIStore()
+  const setStatusText = useUIStore((s) => s.setStatusText)
 
   // Auto-assign X/Y params when an effect is selected
   useEffect(() => {
@@ -380,6 +382,8 @@ export function XYPad() {
         <select
           value={xParamId}
           onChange={(e) => setXParamId(e.target.value)}
+          onMouseEnter={() => setStatusText(getUIStatusText('xyParamX'))}
+          onMouseLeave={() => setStatusText(null)}
           className="flex-1 h-6 text-[14px] rounded px-1"
           style={{
             backgroundColor: 'var(--bg-surface)',
@@ -400,6 +404,8 @@ export function XYPad() {
         <select
           value={yParamId}
           onChange={(e) => setYParamId(e.target.value)}
+          onMouseEnter={() => setStatusText(getUIStatusText('xyParamY'))}
+          onMouseLeave={() => setStatusText(null)}
           className="flex-1 h-6 text-[14px] rounded px-1"
           style={{
             backgroundColor: 'var(--bg-surface)',
@@ -442,6 +448,8 @@ export function XYPad() {
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
+            onMouseEnter={() => setStatusText(getUIStatusText('xyPad'))}
+            onMouseLeave={() => setStatusText(null)}
           >
             {/* Grid lines */}
             <div className="absolute inset-0 pointer-events-none">

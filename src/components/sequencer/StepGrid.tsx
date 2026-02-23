@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useSequencerStore, type Track } from '../../stores/sequencerStore'
 import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 interface StepGridProps {
   track: Track
@@ -9,6 +10,7 @@ interface StepGridProps {
 export function StepGrid({ track }: StepGridProps) {
   const { toggleStep, isPlaying } = useSequencerStore()
   const { selectStep, selectTrack } = useUIStore()
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const [isDragging, setIsDragging] = useState(false)
   const [dragValue, setDragValue] = useState<boolean | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
@@ -122,6 +124,8 @@ export function StepGrid({ track }: StepGridProps) {
                 e.stopPropagation()
                 if (pageExists) setCurrentPage(pageIndex)
               }}
+              onMouseEnter={() => setStatusText(getUIStatusText('seqPageDot'))}
+              onMouseLeave={() => setStatusText(null)}
               className="w-3 h-3 rounded-full transition-all"
               style={{
                 backgroundColor: isActivePage

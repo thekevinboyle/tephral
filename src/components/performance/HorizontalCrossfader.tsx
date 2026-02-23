@@ -1,9 +1,12 @@
 import { useCallback, useRef } from 'react'
 import { useRoutingStore } from '../../stores/routingStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { SourceIcon, FxIcon } from '../ui/DotMatrixIcons'
 
 export function HorizontalCrossfader() {
   const { crossfaderPosition, setCrossfaderPosition } = useRoutingStore()
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const trackRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
 
@@ -49,6 +52,8 @@ export function HorizontalCrossfader() {
         {/* Source icon (film frame) */}
         <button
           onClick={snapToSource}
+          onMouseEnter={() => setStatusText(getUIStatusText('snapSource'))}
+          onMouseLeave={() => setStatusText(null)}
           className="p-2 rounded-sm transition-colors flex-shrink-0"
           style={{
             color: crossfaderPosition < 0.5 ? 'var(--text-primary)' : 'var(--text-ghost)',
@@ -68,6 +73,8 @@ export function HorizontalCrossfader() {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
+          onMouseEnter={() => setStatusText(getUIStatusText('crossfader'))}
+          onMouseLeave={() => setStatusText(null)}
         >
           {/* Center line */}
           <div
@@ -92,6 +99,8 @@ export function HorizontalCrossfader() {
         {/* FX icon (sparkle/effects) */}
         <button
           onClick={snapToProcessed}
+          onMouseEnter={() => setStatusText(getUIStatusText('snapProcessed'))}
+          onMouseLeave={() => setStatusText(null)}
           className="p-2 rounded-sm transition-colors flex-shrink-0"
           style={{
             color: crossfaderPosition > 0.5 ? 'var(--text-primary)' : 'var(--text-ghost)',

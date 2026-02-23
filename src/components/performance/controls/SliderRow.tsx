@@ -9,6 +9,7 @@ interface SliderRowProps {
   onChange: (value: number) => void
   format?: (value: number) => string
   paramId?: string
+  statusText?: string
 }
 
 export function SliderRow({
@@ -20,6 +21,7 @@ export function SliderRow({
   onChange,
   format,
   paramId,
+  statusText,
 }: SliderRowProps) {
   return (
     <Knob
@@ -31,6 +33,7 @@ export function SliderRow({
       onChange={onChange}
       formatValue={format}
       paramId={paramId}
+      statusText={statusText}
       showArc
       showValue
     />

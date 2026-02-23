@@ -1,6 +1,8 @@
 import { useCallback } from 'react'
 import type { Folder, Preset } from '../../stores/presetLibraryStore'
 import { usePresetLibraryStore } from '../../stores/presetLibraryStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { PresetRow } from './PresetRow'
 import { ChevronDownIcon, FolderIcon } from '../ui/DotMatrixIcons'
 
@@ -32,6 +34,7 @@ function FolderNode({
   onFolderContextMenu,
 }: FolderNodeProps) {
   const { collapsedFolders, toggleFolderCollapse } = usePresetLibraryStore()
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const isCollapsed = collapsedFolders.has(folder.id)
 
   // Get child folders and presets
@@ -61,6 +64,8 @@ function FolderNode({
         className="flex items-center gap-1 px-2 py-1.5 cursor-pointer rounded transition-colors hover:bg-gray-100"
         onClick={handleToggle}
         onContextMenu={handleContextMenu}
+        onMouseEnter={() => setStatusText(getUIStatusText('presetFolder'))}
+        onMouseLeave={() => setStatusText(null)}
       >
         {/* Collapse indicator */}
         <div

@@ -1,8 +1,11 @@
 import { useCallback, useRef } from 'react'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 export function MixControls() {
   const { wetMix, setWetMix } = useGlitchEngineStore()
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const trackRef = useRef<HTMLDivElement>(null)
 
   const updateValueFromPointer = useCallback((clientX: number) => {
@@ -52,6 +55,8 @@ export function MixControls() {
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onMouseEnter={() => setStatusText(getUIStatusText('mixFader'))}
+          onMouseLeave={() => setStatusText(null)}
           className="flex-1 relative h-12 flex items-center cursor-pointer select-none touch-none"
         >
           {/* Track background */}

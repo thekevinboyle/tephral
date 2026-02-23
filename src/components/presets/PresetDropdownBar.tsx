@@ -6,6 +6,7 @@ import { PresetFolderTree } from './PresetFolderTree'
 import { PresetContextMenu, FolderContextMenu } from './PresetContextMenu'
 import { importFile, openImportDialog, exportPack, captureThumbnail } from '../../utils/presetIO'
 import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 interface ContextMenuState {
   type: 'preset' | 'folder'
@@ -42,6 +43,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
   const [renameState, setRenameState] = useState<{ id: string; type: 'preset' | 'folder'; name: string } | null>(null)
   const renameInputRef = useRef<HTMLInputElement>(null)
   const selectPreset = useUIStore((s) => s.selectPreset)
+  const setStatusText = useUIStore((s) => s.setStatusText)
 
   // Load presets on mount
   useEffect(() => {
@@ -218,6 +220,8 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
             backgroundColor: isOpen ? 'var(--bg-hover)' : 'transparent',
             color: 'var(--text-primary)',
           }}
+          onMouseEnter={() => setStatusText(getUIStatusText('presets'))}
+          onMouseLeave={() => setStatusText(null)}
         >
           <span className="text-[13px] font-medium">Presets</span>
           <svg
@@ -272,6 +276,8 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
                     onClick={handleNewPreset}
                     className="p-1.5 rounded transition-colors hover:bg-white/10"
                     title="Save current state as preset"
+                    onMouseEnter={() => setStatusText(getUIStatusText('presetSave'))}
+                    onMouseLeave={() => setStatusText(null)}
                   >
                     <svg
                       width="14"
@@ -381,6 +387,8 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
                       border: '1px solid var(--border)',
                       color: 'var(--text-muted)',
                     }}
+                    onMouseEnter={() => setStatusText(getUIStatusText('presetImport'))}
+                    onMouseLeave={() => setStatusText(null)}
                   >
                     Import
                   </button>
@@ -394,6 +402,8 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
                       color: 'var(--text-muted)',
                       opacity: presets.length === 0 ? 0.5 : 1,
                     }}
+                    onMouseEnter={() => setStatusText(getUIStatusText('presetExport'))}
+                    onMouseLeave={() => setStatusText(null)}
                   >
                     Export All
                   </button>

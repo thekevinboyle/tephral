@@ -28,6 +28,7 @@ import { useAudioReactive } from '../../hooks/useAudioReactive'
 import { DestructionOverlay } from '../DestructionOverlay'
 import { LFOEditorPanel } from './LFOEditorPanel'
 import { BottomPanel } from './BottomPanel'
+import { StatusBar } from './StatusBar'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
@@ -81,7 +82,7 @@ export function PerformanceLayout() {
       className="w-screen h-screen overflow-hidden grid-substrate"
       style={{
         display: 'grid',
-        gridTemplateRows: 'var(--row-header) 1fr auto 1fr auto',
+        gridTemplateRows: 'var(--row-header) 1fr auto 1fr auto 24px',
         gridTemplateColumns: 'var(--col-left) var(--col-grid) 1fr',
         gap: 'var(--gap)',
         padding: 'var(--gap)',
@@ -197,6 +198,11 @@ export function PerformanceLayout() {
       {/* Row 5, Cols 2-3: Bottom Panel */}
       <div style={{ gridRow: 5, gridColumn: '2 / -1' }}>
         <BottomPanel />
+      </div>
+
+      {/* Row 6: Status Bar (spans all columns) */}
+      <div style={{ gridRow: 6, gridColumn: '1 / -1' }}>
+        <StatusBar />
       </div>
 
       <ClipDetailModal />

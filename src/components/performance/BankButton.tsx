@@ -1,4 +1,6 @@
 import { useRef, useCallback, useState } from 'react'
+import { useUIStore } from '../../stores/uiStore'
+import { getBankStatusText } from '../../config/statusDescriptions'
 
 interface BankButtonProps {
   label: string        // 'A', 'B', 'C', or 'D'
@@ -18,6 +20,7 @@ export function BankButton({
   onSave,
   onClear,
 }: BankButtonProps) {
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const lastClickTime = useRef<number>(0)
   const [isFlashing, setIsFlashing] = useState(false)
 
@@ -84,6 +87,8 @@ export function BankButton({
     <button
       onClick={handleClick}
       onContextMenu={handleContextMenu}
+      onMouseEnter={() => setStatusText(getBankStatusText(label, isEmpty))}
+      onMouseLeave={() => setStatusText(null)}
       className="w-full h-full flex items-center justify-center rounded-sm text-[12px] font-medium select-none transition-all duration-100"
       style={{
         ...styles,

@@ -10,6 +10,7 @@ import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useAcidStore } from '../../stores/acidStore'
 import { useSlicerStore } from '../../stores/slicerStore'
+import { useUIStore } from '../../stores/uiStore'
 
 export function TransportBar() {
   const { source, reset, videoElement } = useMediaStore()
@@ -29,6 +30,7 @@ export function TransportBar() {
 
   const { clips, clearAllClips } = useClipStore()
   const { resetEffects } = useAutomationPlayback()
+  const setStatusText = useUIStore((s) => s.setStatusText)
 
   const handleStartRecording = useCallback(() => {
     const initialEvents: AutomationEvent[] = []
@@ -227,6 +229,8 @@ export function TransportBar() {
           cursor: hasSource ? 'pointer' : 'not-allowed',
         }}
         title={isRecording ? 'Stop Recording' : 'Start Recording'}
+        onMouseEnter={() => setStatusText('Record \u2014 Capture effect automation')}
+        onMouseLeave={() => setStatusText(null)}
       >
         {isRecording ? (
           <StopIcon size={10} color="var(--text-primary)" />
@@ -247,6 +251,8 @@ export function TransportBar() {
           cursor: hasPlayableContent ? 'pointer' : 'default',
         }}
         title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
+        onMouseEnter={() => setStatusText('Play/Pause \u2014 Start or stop playback (Space)')}
+        onMouseLeave={() => setStatusText(null)}
       >
         {isPlaying ? (
           <PauseIcon size={10} color="var(--text-secondary)" />
@@ -264,6 +270,8 @@ export function TransportBar() {
           cursor: hasPlayableContent ? 'pointer' : 'default',
           opacity: hasPlayableContent ? 1 : 0.5,
         }}
+        onMouseEnter={() => setStatusText('Timeline \u2014 Click to seek')}
+        onMouseLeave={() => setStatusText(null)}
       >
         <div
           className="absolute inset-y-0 left-0 rounded-sm"
@@ -296,14 +304,19 @@ export function TransportBar() {
       </div>
 
       {/* Clear */}
-      <Button
-        size="sm"
-        onClick={clips.length > 0 ? clearAllClips : reset}
-        disabled={!hasSource && clips.length === 0}
-        title={clips.length > 0 ? 'Clear all clips' : 'Clear source'}
+      <span
+        onMouseEnter={() => setStatusText('Clear \u2014 Reset source or clips')}
+        onMouseLeave={() => setStatusText(null)}
       >
-        Clear
-      </Button>
+        <Button
+          size="sm"
+          onClick={clips.length > 0 ? clearAllClips : reset}
+          disabled={!hasSource && clips.length === 0}
+          title={clips.length > 0 ? 'Clear all clips' : 'Clear source'}
+        >
+          Clear
+        </Button>
+      </span>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { useActiveEffects } from '../../hooks/useActiveEffects'
 import { useEffectDisable } from '../../hooks/useEffectDisable'
 import { EffectTabsBar } from './EffectTabsBar'
@@ -9,6 +10,7 @@ import { ClearIcon, BypassIcon } from '../ui/DotMatrixIcons'
 
 export function SharedEffectTabsBar() {
   const { selectedEffectId, setSelectedEffect } = useUIStore()
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const { sortedEffects } = useActiveEffects()
   const ensureTrack = useEffectSequencerStore((s) => s.ensureTrack)
   const bypassActive = useGlitchEngineStore((s) => s.bypassActive)
@@ -68,6 +70,8 @@ export function SharedEffectTabsBar() {
             border: '1px solid var(--border)',
             color: 'var(--warning)',
           }}
+          onMouseEnter={() => setStatusText(getUIStatusText('clearAll'))}
+          onMouseLeave={() => setStatusText(null)}
         >
           <ClearIcon size={14} />
         </button>
@@ -84,6 +88,8 @@ export function SharedEffectTabsBar() {
             color: bypassActive ? 'white' : 'var(--danger)',
             boxShadow: bypassActive ? '0 0 8px var(--danger)' : 'none',
           }}
+          onMouseEnter={() => setStatusText(getUIStatusText('bypassAll'))}
+          onMouseLeave={() => setStatusText(null)}
         >
           <BypassIcon size={14} />
         </button>

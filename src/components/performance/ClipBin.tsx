@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { useClipStore } from '../../stores/clipStore'
+import { useUIStore } from '../../stores/uiStore'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { ClipBinPopover } from './ClipBinPopover'
 import { extractFramesFromClip } from '../../utils/clipFrameExtractor'
 
@@ -28,6 +30,7 @@ async function getVideoDuration(url: string): Promise<number> {
 export function ClipBin() {
   const clips = useClipStore((state) => state.clips)
   const addClip = useClipStore((state) => state.addClip)
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [isFileDragOver, setIsFileDragOver] = useState(false)
@@ -201,6 +204,8 @@ export function ClipBin() {
         {clips.length === 0 && !isImporting && (
           <button
             onClick={() => fileInputRef.current?.click()}
+            onMouseEnter={() => setStatusText(getUIStatusText('clipImport'))}
+            onMouseLeave={() => setStatusText(null)}
             className="flex items-center justify-center rounded-sm cursor-pointer transition-all hover:scale-105"
             style={{
               width: cardWidth,
@@ -251,6 +256,8 @@ export function ClipBin() {
               height: stackHeight,
             }}
             onClick={handleStackClick}
+            onMouseEnter={() => setStatusText(getUIStatusText('clipStack'))}
+            onMouseLeave={() => setStatusText(null)}
           >
             {visibleClips.map((clip, index) => {
               // Reverse order so first clip is on top
@@ -328,6 +335,8 @@ export function ClipBin() {
                 e.stopPropagation()
                 fileInputRef.current?.click()
               }}
+              onMouseEnter={(e) => { e.stopPropagation(); setStatusText(getUIStatusText('clipAdd')) }}
+              onMouseLeave={() => setStatusText(null)}
               className="absolute flex items-center justify-center rounded-sm transition-all hover:scale-110"
               style={{
                 width: 16,

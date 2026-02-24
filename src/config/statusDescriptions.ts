@@ -340,6 +340,10 @@ export const UI_DESCRIPTIONS: Record<string, string> = {
   undo: 'Undo \u2014 Revert last randomize',
   rekt: 'REKT \u2014 Hold for momentary chaos, tap to lock',
 
+  // Effects scope toggle
+  scopeMaster: 'Master \u2014 Global effects applied to all clips',
+  scopeClip: 'Clip \u2014 Effects for the selected timeline clip only',
+
   // Effect card stack
   bypass: 'Bypass \u2014 Temporarily disable effect',
   remove: 'Remove \u2014 Disable and remove from chain',
@@ -370,6 +374,7 @@ export const UI_DESCRIPTIONS: Record<string, string> = {
   seqEffects: 'P-Lock \u2014 Effect step sequencer',
   seqSlicer: 'Slicer \u2014 Audio/video slicing sequencer',
   seqTimeline: 'Timeline \u2014 Clip-based composition with audio-reactive transitions',
+  seqLauncher: 'LAUNCH \u2014 Audio-reactive effect sequencer grid. Cycles through effect presets in time with music.',
   clearAll: 'Clear All \u2014 Remove all active effects',
   bypassAll: 'Bypass All \u2014 Temporarily disable all effects',
   randomizeSteps: 'Randomize \u2014 Randomize steps on selected track',

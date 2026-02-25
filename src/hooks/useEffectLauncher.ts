@@ -37,12 +37,10 @@ export function useEffectLauncher() {
         prevActiveRef.current = activeIndex
       }
 
-      const audioCtx = useAudioSourceStore.getState().audioContext
-      const hasAudio = audioCtx !== null
-
-      if (hasAudio && holdOk) {
+      // Check for audio energy that could trigger an advance
+      if (holdOk) {
         const audio = useAudioReactiveStore.getState()
-        let energy: number
+        let energy = 0
         if (triggerBand === 'all') {
           energy = useAudioSourceStore.getState().amplitude
         } else if (triggerBand === 'kick') {
@@ -51,7 +49,10 @@ export function useEffectLauncher() {
           energy = audio[triggerBand]
         }
 
-        if (energy > threshold) {
+        const audioTriggered = energy > threshold
+
+        if (audioTriggered) {
+          // Audio-driven advance
           if (cycleMode === 'speed') {
             store.advance()
           } else if (cycleMode === 'selection') {
@@ -77,14 +78,15 @@ export function useEffectLauncher() {
             }
           }
           lastAdvanceRef.current = now
-        }
-      } else if (!hasAudio && holdOk) {
-        // Fallback: BPM-based timer when no audio context is available
-        const interval = 60000 / fallbackRate
-        if (now - lastBPMTickRef.current >= interval) {
-          store.advance()
-          lastAdvanceRef.current = now
           lastBPMTickRef.current = now
+        } else {
+          // BPM fallback clock — always runs as minimum rate
+          const interval = 60000 / fallbackRate
+          if (now - lastBPMTickRef.current >= interval) {
+            store.advance()
+            lastAdvanceRef.current = now
+            lastBPMTickRef.current = now
+          }
         }
       }
 

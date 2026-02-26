@@ -9,7 +9,7 @@ export interface EffectDefinition {
 }
 
 // Page names for UI
-export const PAGE_NAMES = ['ACID', 'VISION', 'GLITCH', 'STRAND', 'MOTION', 'DESTRUCTION']
+export const PAGE_NAMES = ['ACID', 'VISION', 'GLITCH', 'STRAND', 'MOTION', 'DESTROY']
 
 export const EFFECTS: EffectDefinition[] = [
   // ═══════════════════════════════════════════════════════════════

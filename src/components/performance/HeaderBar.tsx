@@ -4,7 +4,6 @@ import { useAudioSourceStore, type AudioSourceType } from '../../stores/audioSou
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText, getAudioSourceStatusText } from '../../config/statusDescriptions'
 import { SourceSelector } from '../ui/SourceSelector'
-import { AudioFileTransport } from './AudioFileTransport'
 
 const AUDIO_SOURCES: { id: AudioSourceType; label: string }[] = [
   { id: 'video', label: 'Vid' },
@@ -194,22 +193,18 @@ export function HeaderBar() {
     return () => observer.disconnect()
   }, [])
 
-  const audioFileElement = useAudioSourceStore((s) => s.audioFileElement)
-  const showAudioTransport = activeAudioSource === 'file' && audioFileElement
-
   const hasSource = source !== 'none'
   const sourceLabel = source === 'none' ? 'NO SRC' : source === 'webcam' ? 'CAM' : 'FILE'
 
   return (
-    <div className="flex flex-col flex-shrink-0">
     <div
-      className="flex items-center"
+      className="flex items-center flex-shrink-0"
       style={{
         height: 'var(--row-header)',
         padding: '0 var(--panel-padding)',
         gap: 'var(--gap-lg)',
         background: 'linear-gradient(to right, var(--bg-elevated), var(--bg-surface), var(--bg-elevated))',
-        borderBottom: showAudioTransport ? 'none' : '1px solid var(--border)',
+        borderBottom: '1px solid var(--border)',
         boxShadow: 'inset 0 1px 0 var(--surface-highlight)',
       }}
     >
@@ -338,8 +333,6 @@ export function HeaderBar() {
           {fps} FPS
         </span>
       </div>
-    </div>
-    {showAudioTransport && <AudioFileTransport />}
     </div>
   )
 }

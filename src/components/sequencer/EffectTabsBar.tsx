@@ -101,17 +101,15 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
       <div
         className="h-full flex items-center justify-center"
         style={{
-          width: 48,
+          width: 96,
           padding: 'var(--panel-padding) 0',
           backgroundColor: 'var(--bg-surface)',
         }}
       >
         <span
-          className="text-[9px] uppercase tracking-wider"
+          className="text-[9px] uppercase tracking-wider text-center"
           style={{
             color: 'var(--text-ghost)',
-            writingMode: 'vertical-lr',
-            transform: 'rotate(180deg)',
           }}
         >
           No active effects
@@ -124,7 +122,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
     <div
       className="h-full flex flex-col overflow-y-auto"
       style={{
-        width: 48,
+        width: 96,
         scrollbarWidth: 'none',
         backgroundColor: 'var(--bg-surface)',
       }}
@@ -160,7 +158,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
               disableEffect(effectId)
               removeTrack(effectId)
             }}
-            className="flex-shrink-0 flex flex-col items-center justify-center gap-1 py-2 transition-colors relative cursor-grab active:cursor-grabbing"
+            className="flex-shrink-0 flex items-center gap-1.5 px-2 py-2 transition-colors relative cursor-grab active:cursor-grabbing"
             style={{
               minHeight: 44,
               backgroundColor: isSelected ? 'var(--bg-elevated)' : 'transparent',
@@ -183,8 +181,6 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
             <span
               className="text-[9px] font-bold uppercase tracking-wider"
               style={{
-                writingMode: 'vertical-lr',
-                transform: 'rotate(180deg)',
                 whiteSpace: 'nowrap',
               }}
             >

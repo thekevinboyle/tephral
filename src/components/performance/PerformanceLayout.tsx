@@ -28,12 +28,17 @@ import { useAudioReactive } from '../../hooks/useAudioReactive'
 import { DestructionOverlay } from '../DestructionOverlay'
 // LFO Editor Panel hidden — component kept, just not rendered
 // import { LFOEditorPanel } from './LFOEditorPanel'
+import { AudioFileTransport } from './AudioFileTransport'
+import { useAudioSourceStore } from '../../stores/audioSourceStore'
 import { BottomPanel } from './BottomPanel'
 import { StatusBar } from './StatusBar'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null)
+  const activeAudioSource = useAudioSourceStore((s) => s.activeSource)
+  const audioFileElement = useAudioSourceStore((s) => s.audioFileElement)
+  const showAudioTransport = activeAudioSource === 'file' && audioFileElement
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
   useAutomationPlayback()
@@ -170,6 +175,7 @@ export function PerformanceLayout() {
           <Canvas ref={canvasRef} />
           <ClipBin />
         </div>
+        {showAudioTransport && <AudioFileTransport />}
         <TransportBar />
       </div>
 

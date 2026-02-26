@@ -3,7 +3,7 @@
  *
  * 1. Decode audio to mono float buffer
  * 2. Compute onset-detection function (spectral flux / energy diff)
- * 3. Autocorrelate the onset envelope
+ * 3. Autocorrelate the onset envelope (normalized)
  * 4. Find peak in BPM range → detected tempo
  */
 
@@ -21,14 +21,22 @@ export function detectBpmFromBuffer(buffer: AudioBuffer): number | null {
   const mono = mixToMono(buffer)
 
   // Compute onset-detection envelope (energy flux)
-  const onsets = computeOnsetEnvelope(mono, sampleRate)
-  if (onsets.length < 32) return null
+  const onsets = computeOnsetEnvelope(mono)
+  if (onsets.length < 64) {
+    console.warn('[detectBpm] onset envelope too short:', onsets.length)
+    return null
+  }
 
   // Autocorrelate onset envelope
   const { bpm, strength } = autocorrelateBpm(onsets, sampleRate)
 
-  // Reject weak detections
-  if (strength < 0.05) return null
+  console.log('[detectBpm] best candidate:', bpm, 'BPM, strength:', strength.toFixed(4))
+
+  // Reject only truly flat signals (no periodicity at all)
+  if (strength < 0.01) {
+    console.warn('[detectBpm] no periodic beat detected, strength:', strength)
+    return null
+  }
 
   return bpm
 }
@@ -40,9 +48,11 @@ export async function detectBpmFromUrl(url: string): Promise<number | null> {
   try {
     const response = await fetch(url)
     const arrayBuffer = await response.arrayBuffer()
+    console.log('[detectBpm] fetched audio, size:', arrayBuffer.byteLength)
 
-    const offlineCtx = new OfflineAudioContext(1, 1, 44100)
+    const offlineCtx = new OfflineAudioContext(1, 44100, 44100)
     const audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer)
+    console.log('[detectBpm] decoded audio:', audioBuffer.duration.toFixed(1), 's,', audioBuffer.sampleRate, 'Hz,', audioBuffer.numberOfChannels, 'ch')
 
     return detectBpmFromBuffer(audioBuffer)
   } catch (err) {
@@ -62,7 +72,6 @@ function mixToMono(buffer: AudioBuffer): Float32Array {
     return mono
   }
 
-  // Average all channels
   const numCh = buffer.numberOfChannels
   for (let ch = 0; ch < numCh; ch++) {
     const channelData = buffer.getChannelData(ch)
@@ -78,15 +87,15 @@ function mixToMono(buffer: AudioBuffer): Float32Array {
 }
 
 /**
- * Spectral-flux onset detection.
- * For each hop: compute energy in the window, take positive difference
- * from previous window. This highlights transients (drum hits, note onsets).
+ * Spectral-flux onset detection with adaptive thresholding.
+ * Computes energy difference between consecutive windows,
+ * then subtracts a local mean to emphasize transients.
  */
-function computeOnsetEnvelope(mono: Float32Array, _sampleRate: number): Float32Array {
+function computeOnsetEnvelope(mono: Float32Array): Float32Array {
   const numFrames = Math.floor((mono.length - WINDOW_SIZE) / HOP_SIZE)
   if (numFrames < 2) return new Float32Array(0)
 
-  const envelope = new Float32Array(numFrames)
+  const raw = new Float32Array(numFrames)
   let prevEnergy = 0
 
   for (let f = 0; f < numFrames; f++) {
@@ -98,12 +107,23 @@ function computeOnsetEnvelope(mono: Float32Array, _sampleRate: number): Float32A
     }
 
     // Half-wave rectified difference (only positive increases = onsets)
-    const flux = Math.max(0, energy - prevEnergy)
-    envelope[f] = flux
+    raw[f] = Math.max(0, energy - prevEnergy)
     prevEnergy = energy
   }
 
-  // Normalize
+  // Adaptive threshold: subtract local mean (window of ~0.5s)
+  const meanWindow = Math.max(3, Math.round(0.5 * (mono.length / HOP_SIZE / (mono.length / 44100))))
+  const envelope = new Float32Array(numFrames)
+  for (let f = 0; f < numFrames; f++) {
+    const lo = Math.max(0, f - meanWindow)
+    const hi = Math.min(numFrames, f + meanWindow + 1)
+    let localMean = 0
+    for (let j = lo; j < hi; j++) localMean += raw[j]
+    localMean /= (hi - lo)
+    envelope[f] = Math.max(0, raw[f] - localMean)
+  }
+
+  // Normalize to [0, 1]
   let max = 0
   for (let i = 0; i < envelope.length; i++) {
     if (envelope[i] > max) max = envelope[i]
@@ -120,17 +140,26 @@ function computeOnsetEnvelope(mono: Float32Array, _sampleRate: number): Float32A
 /**
  * Autocorrelate the onset envelope and find the BPM with strongest
  * periodicity in [BPM_MIN, BPM_MAX].
+ *
+ * Uses normalized autocorrelation: R(lag) / R(0) so strength is in [0, 1].
  */
 function autocorrelateBpm(
   envelope: Float32Array,
   sampleRate: number,
 ): { bpm: number; strength: number } {
   const hopsPerSecond = sampleRate / HOP_SIZE
+  const N = envelope.length
+
+  // Compute R(0) — the self-energy, for normalization
+  let r0 = 0
+  for (let i = 0; i < N; i++) {
+    r0 += envelope[i] * envelope[i]
+  }
+  if (r0 === 0) return { bpm: 120, strength: 0 }
 
   // Convert BPM range to lag range (in onset-envelope frames)
   const minLag = Math.floor((hopsPerSecond * 60) / BPM_MAX)
   const maxLag = Math.ceil((hopsPerSecond * 60) / BPM_MIN)
-  const N = envelope.length
 
   let bestLag = minLag
   let bestCorr = -Infinity
@@ -138,12 +167,11 @@ function autocorrelateBpm(
   // Compute normalized autocorrelation for each candidate lag
   for (let lag = minLag; lag <= maxLag && lag < N; lag++) {
     let sum = 0
-    let count = 0
     for (let i = 0; i < N - lag; i++) {
       sum += envelope[i] * envelope[i + lag]
-      count++
     }
-    const corr = count > 0 ? sum / count : 0
+    // Normalize by R(0) for a [0,1] range
+    const corr = sum / r0
 
     if (corr > bestCorr) {
       bestCorr = corr
@@ -151,33 +179,30 @@ function autocorrelateBpm(
     }
   }
 
-  // Also check if double-time or half-time is stronger
-  // (common ambiguity: 70 BPM vs 140 BPM)
+  // Check half-time (double the lag → half the BPM)
+  // Prefer faster tempo if correlation is nearly as strong
   const halfLag = Math.round(bestLag / 2)
-  const doubleLag = bestLag * 2
-
   if (halfLag >= minLag) {
-    let sum = 0, count = 0
+    let sum = 0
     for (let i = 0; i < N - halfLag; i++) {
       sum += envelope[i] * envelope[i + halfLag]
-      count++
     }
-    const halfCorr = count > 0 ? sum / count : 0
-    // Prefer the faster tempo if correlation is within 90%
-    if (halfCorr > bestCorr * 0.9) {
+    const halfCorr = sum / r0
+    if (halfCorr > bestCorr * 0.85) {
       bestLag = halfLag
       bestCorr = halfCorr
     }
   }
 
+  // Check double-time (half the lag → double the BPM)
+  const doubleLag = bestLag * 2
   if (doubleLag < N && doubleLag <= maxLag) {
-    let sum = 0, count = 0
+    let sum = 0
     for (let i = 0; i < N - doubleLag; i++) {
       sum += envelope[i] * envelope[i + doubleLag]
-      count++
     }
-    const doubleCorr = count > 0 ? sum / count : 0
-    if (doubleCorr > bestCorr * 1.1) {
+    const doubleCorr = sum / r0
+    if (doubleCorr > bestCorr * 1.15) {
       bestLag = doubleLag
       bestCorr = doubleCorr
     }

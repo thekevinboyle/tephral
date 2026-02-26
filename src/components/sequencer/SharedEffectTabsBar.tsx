@@ -43,8 +43,8 @@ export function SharedEffectTabsBar() {
   )
 
   return (
-    <div className="flex items-stretch" style={{ backgroundColor: 'var(--bg-surface)' }}>
-      <div className="flex-1 min-w-0 overflow-hidden">
+    <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--bg-surface)' }}>
+      <div className="flex-1 min-h-0 overflow-hidden">
         <EffectTabsBar
           activeEffectIds={activeEffectIds}
           selectedEffectId={selectedEffectId}
@@ -53,8 +53,8 @@ export function SharedEffectTabsBar() {
       </div>
       {/* Clear + Bypass buttons */}
       <div
-        className="flex-shrink-0 flex items-center gap-1.5 px-2"
-        style={{ borderLeft: '1px solid var(--border)' }}
+        className="flex-shrink-0 flex items-center justify-center gap-1.5 py-2"
+        style={{ borderTop: '1px solid var(--border)' }}
       >
         {/* Clear all */}
         <button

@@ -45,9 +45,9 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const midX = rect.left + rect.width / 2
+    const midY = rect.top + rect.height / 2
     setDragOverId(effectId)
-    setDragSide(e.clientX < midX ? 'left' : 'right')
+    setDragSide(e.clientY < midY ? 'left' : 'right')
   }, [])
 
   const handleDragLeave = useCallback(() => {
@@ -99,15 +99,21 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
   if (activeEffectIds.length === 0) {
     return (
       <div
-        className="flex-shrink-0 flex items-center"
+        className="h-full flex items-center justify-center"
         style={{
-          height: 64,
-          padding: '0 var(--panel-padding)',
-          borderBottom: '1px solid var(--border)',
+          width: 48,
+          padding: 'var(--panel-padding) 0',
           backgroundColor: 'var(--bg-surface)',
         }}
       >
-        <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+        <span
+          className="text-[9px] uppercase tracking-wider"
+          style={{
+            color: 'var(--text-ghost)',
+            writingMode: 'vertical-lr',
+            transform: 'rotate(180deg)',
+          }}
+        >
           No active effects
         </span>
       </div>
@@ -116,10 +122,9 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
 
   return (
     <div
-      className="flex-shrink-0 flex items-stretch overflow-x-auto"
+      className="h-full flex flex-col overflow-y-auto"
       style={{
-        height: 64,
-        borderBottom: '1px solid var(--border)',
+        width: 48,
         scrollbarWidth: 'none',
         backgroundColor: 'var(--bg-surface)',
       }}
@@ -155,15 +160,15 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
               disableEffect(effectId)
               removeTrack(effectId)
             }}
-            className="flex-shrink-0 flex items-center gap-1.5 px-3 transition-colors relative cursor-grab active:cursor-grabbing"
+            className="flex-shrink-0 flex flex-col items-center justify-center gap-1 py-2 transition-colors relative cursor-grab active:cursor-grabbing"
             style={{
-              minWidth: 100,
+              minHeight: 44,
               backgroundColor: isSelected ? 'var(--bg-elevated)' : 'transparent',
-              borderBottom: isSelected ? '2px solid var(--seq-accent)' : '2px solid transparent',
+              borderLeft: isSelected ? '2px solid var(--seq-accent)' : '2px solid transparent',
               color: isBypassed ? 'var(--text-ghost)' : isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
               opacity: isBypassed ? 0.4 : 1,
-              borderLeft: isDragTarget && dragSide === 'left' ? '2px solid var(--seq-accent)' : undefined,
-              borderRight: isDragTarget && dragSide === 'right' ? '2px solid var(--seq-accent)' : '1px solid var(--border)',
+              borderTop: isDragTarget && dragSide === 'left' ? '2px solid var(--seq-accent)' : undefined,
+              borderBottom: isDragTarget && dragSide === 'right' ? '2px solid var(--seq-accent)' : '1px solid var(--border)',
             }}
           >
             {/* LED */}
@@ -175,7 +180,14 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
                 boxShadow: isBypassed ? 'none' : isSelected ? `0 0 4px ${color}` : 'none',
               }}
             />
-            <span className="text-[12px] font-bold uppercase tracking-wider whitespace-nowrap">
+            <span
+              className="text-[9px] font-bold uppercase tracking-wider"
+              style={{
+                writingMode: 'vertical-lr',
+                transform: 'rotate(180deg)',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {label}
             </span>
           </div>
@@ -183,7 +195,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
       })}
       {/* Trailing drop zone for dragging to end */}
       <div
-        className="flex-1 min-w-[32px]"
+        className="flex-1 min-h-[16px]"
         onDragOver={(e) => {
           e.preventDefault()
           e.dataTransfer.dropEffect = 'move'
@@ -192,7 +204,7 @@ export function EffectTabsBar({ activeEffectIds, selectedEffectId, onSelect }: E
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop('__end__', e)}
         style={{
-          borderLeft: dragOverId === '__end__' ? '2px solid var(--seq-accent)' : undefined,
+          borderTop: dragOverId === '__end__' ? '2px solid var(--seq-accent)' : undefined,
         }}
       />
     </div>

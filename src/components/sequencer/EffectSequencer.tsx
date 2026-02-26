@@ -248,7 +248,7 @@ export function EffectSequencer() {
           className="text-[12px] tabular-nums"
           style={{ color: 'var(--text-ghost)' }}
         >
-          {(currentStep % 16) + 1}/16
+          {(currentStep % 8) + 1}/8
         </span>
 
         {/* Spacer */}
@@ -260,8 +260,8 @@ export function EffectSequencer() {
             const isActive = page === stepPage
             const hasPlayhead =
               isPlaying &&
-              currentStep >= page * 16 &&
-              currentStep < (page + 1) * 16
+              currentStep >= page * 8 &&
+              currentStep < (page + 1) * 8
             return (
               <button
                 key={page}

@@ -137,7 +137,7 @@ const createDefaultTrack = (effectId: string): EffectTrack => ({
   effectId,
   mode: 'gate',
   steps: Array.from({ length: 32 }, createDefaultStep),
-  length: 8,
+  length: 32,
   muted: false,
   soloed: false,
   midiGate: false,

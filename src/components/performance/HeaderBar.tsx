@@ -60,6 +60,10 @@ export function HeaderBar() {
   const waveformRef = useRef<HTMLCanvasElement>(null)
   const waveRafRef = useRef<number | null>(null)
 
+  // CDJ-style frequency waveform: bass=blue, mid=green, high=white
+  // Uses FFT analyser for frequency data, falls back to time-domain waveform
+  const freqDataRef = useRef<Uint8Array | null>(null)
+
   useEffect(() => {
     const canvas = waveformRef.current
     if (!canvas) return
@@ -68,34 +72,102 @@ export function HeaderBar() {
 
     function draw() {
       const state = useAudioSourceStore.getState()
-      const data = state.waveformData
-      const amp = state.amplitude
+      const analyser = state.reactiveAnalyser
       const w = canvas!.width
       const h = canvas!.height
 
       ctx!.clearRect(0, 0, w, h)
 
-      // Draw as mirrored bars — compact frequency-bar style
-      const barCount = Math.min(32, data.length)
-      const step = Math.floor(data.length / barCount)
-      const barW = w / barCount
-      const centerY = h / 2
+      // CDJ-style: use FFT frequency data if available
+      if (analyser) {
+        const binCount = analyser.frequencyBinCount
+        if (!freqDataRef.current || freqDataRef.current.length !== binCount) {
+          freqDataRef.current = new Uint8Array(binCount)
+        }
+        analyser.getByteFrequencyData(freqDataRef.current)
+        const freq = freqDataRef.current
 
-      for (let i = 0; i < barCount; i++) {
-        const v = data[i * step] / 255
-        const barH = Math.max(1, (v - 0.5) * 2 * centerY * 0.9)
+        // Sample rate for bin-to-Hz mapping
+        const sampleRate = state.audioContext?.sampleRate ?? 44100
+        const binHz = sampleRate / (binCount * 2)
 
-        // Color: fade from dim to bright based on amplitude
-        const alpha = 0.3 + amp * 0.7
-        ctx!.fillStyle = `rgba(255, 51, 51, ${alpha})`
+        // Draw bars across the width, mapping frequency bins logarithmically
+        const barCount = Math.floor(w / 2) // 1 bar per 2px for density
+        const barW = w / barCount
 
-        // Mirrored from center
-        ctx!.fillRect(
-          i * barW + 0.5,
-          centerY - barH,
-          Math.max(1, barW - 1),
-          barH * 2,
-        )
+        // Log-scale frequency mapping: map bar index to frequency bin
+        const minFreq = 20
+        const maxFreq = Math.min(16000, sampleRate / 2)
+        const logMin = Math.log(minFreq)
+        const logMax = Math.log(maxFreq)
+
+        for (let i = 0; i < barCount; i++) {
+          // Map bar to frequency range (log scale)
+          const t0 = i / barCount
+          const t1 = (i + 1) / barCount
+          const f0 = Math.exp(logMin + t0 * (logMax - logMin))
+          const f1 = Math.exp(logMin + t1 * (logMax - logMin))
+          const bin0 = Math.max(0, Math.floor(f0 / binHz))
+          const bin1 = Math.min(binCount - 1, Math.floor(f1 / binHz))
+
+          // Average the bins in this range
+          let sum = 0
+          let count = 0
+          for (let b = bin0; b <= bin1; b++) {
+            sum += freq[b]
+            count++
+          }
+          const mag = count > 0 ? (sum / count) / 255 : 0
+
+          // CDJ color by frequency: bass=blue, mid=green/cyan, high=white
+          const centerFreq = (f0 + f1) / 2
+          let r: number, g: number, b2: number
+          if (centerFreq < 200) {
+            // Sub-bass: deep blue
+            r = 30; g = 60; b2 = 220
+          } else if (centerFreq < 600) {
+            // Bass: blue
+            r = 40; g = 100; b2 = 255
+          } else if (centerFreq < 2000) {
+            // Low-mid: cyan/teal
+            r = 0; g = 200; b2 = 200
+          } else if (centerFreq < 5000) {
+            // Mid: green
+            r = 50; g = 220; b2 = 100
+          } else if (centerFreq < 10000) {
+            // High-mid: warm white
+            r = 200; g = 220; b2 = 180
+          } else {
+            // High: bright white
+            r = 230; g = 240; b2 = 255
+          }
+
+          const barH = Math.max(0.5, mag * h * 0.9)
+          const alpha = 0.3 + mag * 0.7
+
+          ctx!.fillStyle = `rgba(${r}, ${g}, ${b2}, ${alpha})`
+
+          // Draw from bottom up (CDJ style)
+          ctx!.fillRect(
+            i * barW,
+            h - barH,
+            Math.max(1, barW - 0.5),
+            barH,
+          )
+        }
+      } else {
+        // Fallback: time-domain waveform bars
+        const data = state.waveformData
+        const barCount = Math.min(48, data.length)
+        const step = Math.floor(data.length / barCount)
+        const barW = w / barCount
+
+        for (let i = 0; i < barCount; i++) {
+          const v = data[i * step] / 255
+          const barH = Math.max(0.5, Math.abs(v - 0.5) * 2 * h * 0.9)
+          ctx!.fillStyle = `rgba(40, 100, 255, ${0.3 + v * 0.5})`
+          ctx!.fillRect(i * barW, h - barH, Math.max(1, barW - 0.5), barH)
+        }
       }
 
       waveRafRef.current = requestAnimationFrame(draw)
@@ -162,7 +234,7 @@ export function HeaderBar() {
       {/* Video source selector */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <span className="text-[9px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
-          SRC
+          VIDEO
         </span>
         <SourceSelector variant="compact" />
       </div>
@@ -229,15 +301,16 @@ export function HeaderBar() {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Waveform */}
+      {/* Waveform — CDJ-style frequency display */}
       <canvas
         ref={waveformRef}
         className="flex-shrink-0"
         style={{
-          width: 120,
-          height: 24,
+          width: 160,
+          height: 28,
           borderRadius: 2,
-          backgroundColor: 'rgba(0,0,0,0.3)',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          border: '1px solid rgba(255,255,255,0.06)',
         }}
       />
 
@@ -252,12 +325,12 @@ export function HeaderBar() {
         <span
           className="text-[10px] tabular-nums"
           style={{
-            color: 'var(--text-ghost)',
+            color: 'var(--text-secondary)',
             cursor: 'default',
             padding: '1px 6px',
             borderRadius: 3,
-            backgroundColor: 'rgba(0,0,0,0.3)',
-            boxShadow: 'var(--shadow-inset)',
+            backgroundColor: 'rgba(0,0,0,0.15)',
+            border: '1px solid var(--border)',
           }}
           onMouseEnter={() => setStatusText(getUIStatusText('fps'))}
           onMouseLeave={() => setStatusText(null)}

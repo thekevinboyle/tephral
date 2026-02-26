@@ -8,7 +8,7 @@ export function BottomPanelContent() {
 
   const wrapStyle: React.CSSProperties = {
     overflowY: 'auto',
-    height: 'var(--row-bottom-expanded)',
+    maxHeight: 'var(--row-bottom-expanded)',
     backgroundColor: 'var(--bg-surface)',
     padding: 'var(--panel-padding-sm) var(--panel-padding)',
   }

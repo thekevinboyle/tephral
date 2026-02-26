@@ -83,8 +83,8 @@ export function PerformanceLayout() {
       className="w-screen h-screen overflow-hidden grid-substrate"
       style={{
         display: 'grid',
-        gridTemplateRows: 'auto 1fr auto 1fr auto 24px',
-        gridTemplateColumns: 'var(--col-left) var(--col-grid) 1fr',
+        gridTemplateRows: 'auto 1fr 1fr auto 24px',
+        gridTemplateColumns: 'auto var(--col-left) var(--col-grid) 1fr',
         gap: 'var(--gap)',
         padding: 'var(--gap)',
       }}
@@ -101,12 +101,24 @@ export function PerformanceLayout() {
         <HeaderBar />
       </div>
 
-      {/* Rows 2-5, Col 1: Effect Card Stack + Grid + Crossfader */}
+      {/* Rows 2-4, Col 1: Vertical Effect Tabs Bar */}
+      <div
+        className="rounded-sm overflow-hidden"
+        style={{
+          gridRow: '2 / 5',
+          gridColumn: 1,
+          border: '1px solid var(--border)',
+        }}
+      >
+        <SharedEffectTabsBar />
+      </div>
+
+      {/* Rows 2-4, Col 2: Effect Card Stack + Grid + Crossfader */}
       <div
         className="flex flex-col rounded-sm overflow-hidden panel-raised"
         style={{
-          gridRow: '2 / 6',
-          gridColumn: 1,
+          gridRow: '2 / 5',
+          gridColumn: 2,
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-panel-lg)',
         }}
@@ -144,12 +156,12 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Row 2, Cols 2-3: Canvas + Transport */}
+      {/* Row 2, Cols 3-4: Canvas + Transport */}
       <div
         className="flex flex-col rounded-sm overflow-hidden"
         style={{
           gridRow: 2,
-          gridColumn: '2 / -1',
+          gridColumn: '3 / -1',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-panel)',
         }}
@@ -161,24 +173,12 @@ export function PerformanceLayout() {
         <TransportBar />
       </div>
 
-      {/* Row 3, Cols 2-3: Effect Tabs Bar */}
-      <div
-        className="rounded-sm overflow-hidden"
-        style={{
-          gridRow: 3,
-          gridColumn: '2 / -1',
-          border: '1px solid var(--border)',
-        }}
-      >
-        <SharedEffectTabsBar />
-      </div>
-
-      {/* Row 4, Cols 2-3: Sequencer */}
+      {/* Row 3, Cols 3-4: Sequencer */}
       <div
         className="flex-1 min-w-0 rounded-sm overflow-hidden panel-raised"
         style={{
-          gridRow: 4,
-          gridColumn: '2 / -1',
+          gridRow: 3,
+          gridColumn: '3 / -1',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-panel)',
         }}
@@ -186,13 +186,13 @@ export function PerformanceLayout() {
         <SequencerContainer hideTabsBar />
       </div>
 
-      {/* Row 5, Cols 2-3: Bottom Panel */}
-      <div style={{ gridRow: 5, gridColumn: '2 / -1' }}>
+      {/* Row 4, Cols 3-4: Bottom Panel */}
+      <div style={{ gridRow: 4, gridColumn: '3 / -1' }}>
         <BottomPanel />
       </div>
 
-      {/* Row 6: Status Bar (spans all columns) */}
-      <div style={{ gridRow: 6, gridColumn: '1 / -1' }}>
+      {/* Row 5: Status Bar (spans all columns) */}
+      <div style={{ gridRow: 5, gridColumn: '1 / -1' }}>
         <StatusBar />
       </div>
 

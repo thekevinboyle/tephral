@@ -343,15 +343,16 @@ export class PointCloudEffect extends Effect {
   initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
     super.initialize?.(renderer, alpha, frameBufferType)
 
-    const size = renderer.getSize(new THREE.Vector2())
-    this.renderTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
+    // Use drawing buffer size (accounts for pixel ratio) to match postprocessing pipeline
+    const drawingBufferSize = renderer.getDrawingBufferSize(new THREE.Vector2())
+    this.renderTarget = new THREE.WebGLRenderTarget(drawingBufferSize.x, drawingBufferSize.y, {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
       type: THREE.HalfFloatType,
     })
-    this._viewportWidth = size.x
-    this._viewportHeight = size.y
+    this._viewportWidth = drawingBufferSize.x
+    this._viewportHeight = drawingBufferSize.y
   }
 
   update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
@@ -403,15 +404,25 @@ export class PointCloudEffect extends Effect {
     const prevClearColor = new THREE.Color()
     const prevClearAlpha = renderer.getClearAlpha()
     renderer.getClearColor(prevClearColor)
+    const prevViewport = new THREE.Vector4()
+    renderer.getViewport(prevViewport)
+    const prevScissor = new THREE.Vector4()
+    renderer.getScissor(prevScissor)
+    const prevScissorTest = renderer.getScissorTest()
 
     // Render point cloud scene to our internal render target
     renderer.setRenderTarget(this.renderTarget)
+    renderer.setViewport(0, 0, this._viewportWidth, this._viewportHeight)
+    renderer.setScissorTest(false)
     renderer.setClearColor(0x000000, 0)
     renderer.clear(true, true, false)
     renderer.render(this.pcScene, this.pcCamera)
 
     // Restore GL state
     renderer.setRenderTarget(prevTarget)
+    renderer.setViewport(prevViewport)
+    renderer.setScissor(prevScissor)
+    renderer.setScissorTest(prevScissorTest)
     renderer.setClearColor(prevClearColor, prevClearAlpha)
 
     // Pass the rendered point cloud texture to the composite fragment shader

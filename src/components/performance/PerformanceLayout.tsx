@@ -89,7 +89,7 @@ export function PerformanceLayout() {
       style={{
         display: 'grid',
         gridTemplateRows: 'auto 1fr 1fr auto 24px',
-        gridTemplateColumns: 'auto var(--col-left) var(--col-grid) 1fr',
+        gridTemplateColumns: 'auto var(--col-left) 2fr 1fr',
         gap: 'var(--gap)',
         padding: 'var(--gap)',
       }}
@@ -161,12 +161,30 @@ export function PerformanceLayout() {
         </div>
       </div>
 
-      {/* Row 2, Cols 3-4: Canvas + Transport */}
+      {/* Rows 2-3, Col 3: Sequencer */}
+      <div
+        className="flex-1 min-w-0 rounded-sm overflow-hidden panel-raised"
+        style={{
+          gridRow: '2 / 4',
+          gridColumn: 3,
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-panel)',
+        }}
+      >
+        <SequencerContainer hideTabsBar />
+      </div>
+
+      {/* Row 4, Col 3: Bottom Panel */}
+      <div style={{ gridRow: 4, gridColumn: 3 }}>
+        <BottomPanel />
+      </div>
+
+      {/* Rows 2-4, Col 4: Canvas + Transport (spans full height) */}
       <div
         className="flex flex-col rounded-sm overflow-hidden"
         style={{
-          gridRow: 2,
-          gridColumn: '3 / -1',
+          gridRow: '2 / 5',
+          gridColumn: 4,
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-panel)',
         }}
@@ -175,26 +193,8 @@ export function PerformanceLayout() {
           <Canvas ref={canvasRef} />
           <ClipBin />
         </div>
-        {showAudioTransport && <AudioFileTransport />}
         <TransportBar />
-      </div>
-
-      {/* Row 3, Cols 3-4: Sequencer */}
-      <div
-        className="flex-1 min-w-0 rounded-sm overflow-hidden panel-raised"
-        style={{
-          gridRow: 3,
-          gridColumn: '3 / -1',
-          border: '1px solid var(--border)',
-          boxShadow: 'var(--shadow-panel)',
-        }}
-      >
-        <SequencerContainer hideTabsBar />
-      </div>
-
-      {/* Row 4, Cols 3-4: Bottom Panel */}
-      <div style={{ gridRow: 4, gridColumn: '3 / -1' }}>
-        <BottomPanel />
+        {showAudioTransport && <AudioFileTransport />}
       </div>
 
       {/* Row 5: Status Bar (spans all columns) */}

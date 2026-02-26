@@ -252,13 +252,21 @@ export function AudioFileTransport() {
     <div
       className="flex items-center flex-shrink-0"
       style={{
-        height: 28,
+        height: 26,
         padding: '0 8px',
         gap: 6,
-        backgroundColor: 'var(--bg-surface)',
-        borderTop: '1px solid var(--border)',
+        backgroundColor: 'rgba(255, 204, 0, 0.04)',
+        borderTop: `1px solid ${ACCENT}20`,
       }}
     >
+      {/* Audio label */}
+      <span
+        className="text-[8px] font-medium uppercase tracking-widest flex-shrink-0"
+        style={{ color: `${ACCENT}80`, letterSpacing: '0.1em' }}
+      >
+        AUD
+      </span>
+
       {/* Play/Pause */}
       <button
         onClick={handlePlayPause}

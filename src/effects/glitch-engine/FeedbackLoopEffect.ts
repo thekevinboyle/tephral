@@ -1,40 +1,24 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
+import { NOISE_GLSL, COLOR_UTILS_GLSL } from './glsl-utils'
 
-const fragmentShader = `
+const fragmentShader = NOISE_GLSL + COLOR_UTILS_GLSL + /* glsl */ `
 uniform sampler2D feedbackTexture;
 uniform float decay;
+uniform float decayCurve;
 uniform float offsetX;
 uniform float offsetY;
 uniform float zoom;
 uniform float rotation;
 uniform float hueShift;
+uniform float satBoost;
+uniform int blendMode;
+uniform float warpAmount;
+uniform float edgeGlow;
 uniform bool hasFeedback;
 uniform float effectMix;
-
-vec3 rgb2hsv(vec3 c) {
-  vec4 K = vec4(0.0, -1.0/3.0, 2.0/3.0, -1.0);
-  vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
-  vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
-  float d = q.x - min(q.w, q.y);
-  float e = 1.0e-10;
-  return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
-}
-
-vec3 hsv2rgb(vec3 c) {
-  vec4 K = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
-  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-}
-
-vec2 rotateUV(vec2 uv, float angle) {
-  vec2 center = vec2(0.5);
-  uv -= center;
-  float s = sin(angle);
-  float c = cos(angle);
-  uv = vec2(uv.x * c - uv.y * s, uv.x * s + uv.y * c);
-  return uv + center;
-}
+uniform vec2 resolution;
+uniform float time;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   vec3 current = inputColor.rgb;
@@ -44,7 +28,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     return;
   }
 
-  // Transform UV for feedback sampling
+  // ─── Transform UV for feedback sampling ────────────────────────
   vec2 feedbackUV = uv;
 
   // Offset
@@ -55,24 +39,75 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
   // Rotation
   if (rotation != 0.0) {
-    feedbackUV = rotateUV(feedbackUV, rotation * 3.14159 / 180.0);
+    feedbackUV = rotateUV(feedbackUV, rotation * 3.14159265 / 180.0);
   }
 
-  // Sample previous frame if in bounds
-  vec3 feedback = vec3(0.0);
-  if (feedbackUV.x >= 0.0 && feedbackUV.x <= 1.0 && feedbackUV.y >= 0.0 && feedbackUV.y <= 1.0) {
-    feedback = texture2D(feedbackTexture, feedbackUV).rgb;
+  // ─── Organic warp distortion on feedback UV ────────────────────
+  if (warpAmount > 0.0) {
+    vec2 warp = curlNoise(feedbackUV * 3.0 + time * 0.2) * warpAmount;
+    feedbackUV += warp;
+  }
 
-    // Hue shift the feedback
-    if (hueShift != 0.0) {
+  // ─── Sample feedback with edge-aware soft clamp ────────────────
+  // Soft fade at edges instead of hard cutoff — prevents harsh border artifacts
+  vec3 feedback = vec3(0.0);
+  float edgeFade = 1.0;
+
+  vec2 edgeDist = min(feedbackUV, 1.0 - feedbackUV);
+  edgeFade = smoothstep(0.0, 0.03, edgeDist.x) * smoothstep(0.0, 0.03, edgeDist.y);
+
+  if (edgeFade > 0.0) {
+    feedback = texture2D(feedbackTexture, clamp(feedbackUV, 0.001, 0.999)).rgb;
+    feedback *= edgeFade;
+
+    // ─── Edge glow: enhance edges in feedback signal ───────────
+    if (edgeGlow > 0.0) {
+      vec2 texel = 1.0 / resolution;
+      // Fast Sobel on feedback
+      float tl = luminance(texture2D(feedbackTexture, feedbackUV + vec2(-texel.x, texel.y)).rgb);
+      float tr = luminance(texture2D(feedbackTexture, feedbackUV + vec2(texel.x, texel.y)).rgb);
+      float bl = luminance(texture2D(feedbackTexture, feedbackUV + vec2(-texel.x, -texel.y)).rgb);
+      float br = luminance(texture2D(feedbackTexture, feedbackUV + vec2(texel.x, -texel.y)).rgb);
+      float edge = abs(tl - br) + abs(tr - bl);
+      edge = smoothstep(0.02, 0.2, edge);
+      // Boost feedback where edges are detected
+      feedback += feedback * edge * edgeGlow * 2.0;
+    }
+
+    // ─── Hue shift + saturation boost on feedback ──────────────
+    if (hueShift != 0.0 || satBoost != 0.0) {
       vec3 hsv = rgb2hsv(feedback);
       hsv.x = fract(hsv.x + hueShift / 360.0);
+      hsv.y = min(1.0, hsv.y * (1.0 + satBoost)); // boost saturation
       feedback = hsv2rgb(hsv);
     }
+
+    // ─── Exponential decay curve ───────────────────────────────
+    // decayCurve < 1: slow start, fast fade (organic)
+    // decayCurve = 1: linear (classic)
+    // decayCurve > 1: fast start, slow fade (persistent trails)
+    float decayAmount = pow(decay, decayCurve);
+    feedback *= decayAmount;
   }
 
-  // Mix current with decayed feedback
-  vec3 result = current + feedback * decay;
+  // ─── Blend modes ─────────────────────────────────────────────
+  vec3 result;
+  if (blendMode == 0) {
+    // Additive — classic feedback, accumulates brightness
+    result = current + feedback;
+  } else if (blendMode == 1) {
+    // Screen — softer than additive, prevents blowout
+    result = blendScreen(current, feedback);
+  } else if (blendMode == 2) {
+    // Max (lighten) — clean trails, no accumulation
+    result = max(current, feedback);
+  } else {
+    // Overlay — adds contrast to feedback
+    result = blendOverlay(current, feedback);
+  }
+
+  // Prevent HDR blowout — soft clamp with knee
+  result = result / (1.0 + max(vec3(0.0), result - 1.0) * 0.5);
 
   vec4 effectColor = vec4(result, inputColor.a);
   outputColor = mix(inputColor, effectColor, effectMix);
@@ -80,22 +115,32 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 `
 
 export interface FeedbackLoopParams {
-  decay: number      // 0-1
-  offsetX: number    // -0.1 to 0.1
-  offsetY: number    // -0.1 to 0.1
-  zoom: number       // 0.95-1.05
-  rotation: number   // -5 to 5 degrees
-  hueShift: number   // 0-30 degrees
+  decay: number        // 0-0.99
+  decayCurve: number   // 0.5-3.0 — exponential curve shape
+  offsetX: number      // -0.1 to 0.1
+  offsetY: number      // -0.1 to 0.1
+  zoom: number         // 0.9-1.1
+  rotation: number     // -15 to 15 degrees
+  hueShift: number     // 0-360 degrees
+  satBoost: number     // 0-0.5 — saturation boost per iteration
+  blendMode: number    // 0=additive, 1=screen, 2=max, 3=overlay
+  warpAmount: number   // 0-0.05 — organic UV distortion
+  edgeGlow: number     // 0-1 — edge enhancement on feedback
   mix: number
 }
 
 export const DEFAULT_FEEDBACK_LOOP_PARAMS: FeedbackLoopParams = {
-  decay: 0.9,
+  decay: 0.92,
+  decayCurve: 1.5,
   offsetX: 0,
   offsetY: 0,
-  zoom: 1.0,
-  rotation: 0,
-  hueShift: 0,
+  zoom: 1.02,
+  rotation: 0.5,
+  hueShift: 5,
+  satBoost: 0.1,
+  blendMode: 0,
+  warpAmount: 0.005,
+  edgeGlow: 0.0,
   mix: 1,
 }
 
@@ -105,6 +150,7 @@ export class FeedbackLoopEffect extends Effect {
   private copyMaterial: THREE.ShaderMaterial | null = null
   private copyScene: THREE.Scene | null = null
   private copyCamera: THREE.OrthographicCamera | null = null
+  private time: number = 0
 
   constructor(params: Partial<FeedbackLoopParams> = {}) {
     const p = { ...DEFAULT_FEEDBACK_LOOP_PARAMS, ...params }
@@ -114,13 +160,20 @@ export class FeedbackLoopEffect extends Effect {
       uniforms: new Map<string, THREE.Uniform>([
         ['feedbackTexture', new THREE.Uniform(null)],
         ['decay', new THREE.Uniform(p.decay)],
+        ['decayCurve', new THREE.Uniform(p.decayCurve)],
         ['offsetX', new THREE.Uniform(p.offsetX)],
         ['offsetY', new THREE.Uniform(p.offsetY)],
         ['zoom', new THREE.Uniform(p.zoom)],
         ['rotation', new THREE.Uniform(p.rotation)],
         ['hueShift', new THREE.Uniform(p.hueShift)],
+        ['satBoost', new THREE.Uniform(p.satBoost)],
+        ['blendMode', new THREE.Uniform(p.blendMode)],
+        ['warpAmount', new THREE.Uniform(p.warpAmount)],
+        ['edgeGlow', new THREE.Uniform(p.edgeGlow)],
         ['hasFeedback', new THREE.Uniform(false)],
         ['effectMix', new THREE.Uniform(p.mix)],
+        ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
+        ['time', new THREE.Uniform(0)],
       ]),
     })
   }
@@ -134,13 +187,17 @@ export class FeedbackLoopEffect extends Effect {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
     })
 
     this.tempTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
     })
+
+    this.uniforms.get('resolution')!.value.set(size.x, size.y)
 
     // Setup copy material for ping-pong
     this.copyMaterial = new THREE.ShaderMaterial({
@@ -155,10 +212,13 @@ export class FeedbackLoopEffect extends Effect {
     this.copyScene.add(quad)
   }
 
-  update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
+  update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
     if (!this.feedbackTarget || !this.tempTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) {
       return
     }
+
+    this.time += deltaTime || 0.016
+    this.uniforms.get('time')!.value = this.time
 
     // Set feedback texture for next frame
     this.uniforms.get('feedbackTexture')!.value = this.feedbackTarget.texture
@@ -182,15 +242,21 @@ export class FeedbackLoopEffect extends Effect {
     super.setSize?.(width, height)
     this.feedbackTarget?.setSize(width, height)
     this.tempTarget?.setSize(width, height)
+    this.uniforms.get('resolution')!.value.set(width, height)
   }
 
   updateParams(params: Partial<FeedbackLoopParams>) {
     if (params.decay !== undefined) this.uniforms.get('decay')!.value = params.decay
+    if (params.decayCurve !== undefined) this.uniforms.get('decayCurve')!.value = params.decayCurve
     if (params.offsetX !== undefined) this.uniforms.get('offsetX')!.value = params.offsetX
     if (params.offsetY !== undefined) this.uniforms.get('offsetY')!.value = params.offsetY
     if (params.zoom !== undefined) this.uniforms.get('zoom')!.value = params.zoom
     if (params.rotation !== undefined) this.uniforms.get('rotation')!.value = params.rotation
     if (params.hueShift !== undefined) this.uniforms.get('hueShift')!.value = params.hueShift
+    if (params.satBoost !== undefined) this.uniforms.get('satBoost')!.value = params.satBoost
+    if (params.blendMode !== undefined) this.uniforms.get('blendMode')!.value = params.blendMode
+    if (params.warpAmount !== undefined) this.uniforms.get('warpAmount')!.value = params.warpAmount
+    if (params.edgeGlow !== undefined) this.uniforms.get('edgeGlow')!.value = params.edgeGlow
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 

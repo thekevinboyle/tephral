@@ -105,6 +105,7 @@ export class FaceTraceEffect extends TraceEffect {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
     })
 
     // Setup scene for face mask rendering

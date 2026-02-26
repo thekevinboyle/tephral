@@ -348,6 +348,7 @@ export class PointCloudEffect extends Effect {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
     })
     this._viewportWidth = size.x
     this._viewportHeight = size.y

@@ -119,12 +119,14 @@ export class FreezeMaskEffect extends Effect {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
     })
 
     this.tempTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
     })
 
     this.updateMaterial = new THREE.ShaderMaterial({

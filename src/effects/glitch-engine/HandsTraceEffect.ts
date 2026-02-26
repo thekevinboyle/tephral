@@ -123,6 +123,7 @@ export class HandsTraceEffect extends TraceEffect {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
     })
 
     // Setup scene for hand mask rendering

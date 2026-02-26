@@ -85,10 +85,12 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
     case 'edges':
       return (
         <div className="flex gap-4">
-          <Knob label="THRSH" value={glitch.edgeDetection.threshold} min={0} max={1} step={0.01}
+          <Knob label="THRSH" value={glitch.edgeDetection.threshold} min={0.01} max={0.5} step={0.01}
             onChange={v => glitch.updateEdgeDetection({ threshold: v })} paramId="edges.threshold" {...knobProps} />
-          <Knob label="MIX" value={glitch.edgeDetection.mixAmount} min={0} max={1} step={0.01}
-            onChange={v => glitch.updateEdgeDetection({ mixAmount: v })} paramId="edges.mixAmount" {...knobProps} />
+          <Knob label="GLOW" value={glitch.edgeDetection.glowAmount} min={0} max={1} step={0.01}
+            onChange={v => glitch.updateEdgeDetection({ glowAmount: v })} paramId="edges.glowAmount" {...knobProps} />
+          <Knob label="THICK" value={glitch.edgeDetection.thickness} min={0.5} max={4} step={0.1}
+            onChange={v => glitch.updateEdgeDetection({ thickness: v })} paramId="edges.thickness" {...knobProps} />
         </div>
       )
     case 'chromatic':
@@ -167,11 +169,11 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
     case 'feedback':
       return (
         <div className="flex gap-4">
-          <Knob label="DECAY" value={glitch.feedbackLoop.decay} min={0} max={1} step={0.01}
+          <Knob label="DECAY" value={glitch.feedbackLoop.decay} min={0} max={0.99} step={0.01}
             onChange={v => glitch.updateFeedbackLoop({ decay: v })} paramId="feedback.decay" {...knobProps} />
-          <Knob label="ZOOM" value={glitch.feedbackLoop.zoom} min={0.95} max={1.05} step={0.001}
+          <Knob label="ZOOM" value={glitch.feedbackLoop.zoom} min={0.9} max={1.1} step={0.001}
             onChange={v => glitch.updateFeedbackLoop({ zoom: v })} paramId="feedback.zoom" {...knobProps} />
-          <Knob label="HUE" value={glitch.feedbackLoop.hueShift} min={0} max={30} step={0.5}
+          <Knob label="HUE" value={glitch.feedbackLoop.hueShift} min={0} max={360} step={1}
             onChange={v => glitch.updateFeedbackLoop({ hueShift: v })} paramId="feedback.hueShift" {...knobProps} />
         </div>
       )
@@ -607,10 +609,12 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
     case 'echo_trail':
       return (
         <div className="flex gap-4">
-          <Knob label="DECAY" value={motion.echoTrail.decay} min={0} max={1} step={0.01}
+          <Knob label="DECAY" value={motion.echoTrail.decay} min={0.8} max={0.99} step={0.01}
             onChange={v => motion.updateEchoTrail({ decay: v })} paramId="echo_trail.decay" {...knobProps} />
-          <Knob label="CNT" value={motion.echoTrail.trailCount} min={2} max={30} step={1}
-            onChange={v => motion.updateEchoTrail({ trailCount: v })} paramId="echo_trail.trailCount" {...knobProps} />
+          <Knob label="ZOOM" value={motion.echoTrail.trailZoom} min={0.98} max={1.02} step={0.001}
+            onChange={v => motion.updateEchoTrail({ trailZoom: v })} paramId="echo_trail.trailZoom" {...knobProps} />
+          <Knob label="ROT" value={motion.echoTrail.trailRotation} min={-5} max={5} step={0.1}
+            onChange={v => motion.updateEchoTrail({ trailRotation: v })} paramId="echo_trail.trailRotation" {...knobProps} />
         </div>
       )
     case 'time_smear':
@@ -642,6 +646,8 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
             onChange={v => destruction.updateDatamoshParams({ intensity: v })} paramId="datamosh.intensity" {...knobProps} />
           <Knob label="CHAOS" value={destruction.datamoshParams.chaos} min={0} max={1} step={0.01}
             onChange={v => destruction.updateDatamoshParams({ chaos: v })} paramId="datamosh.chaos" {...knobProps} />
+          <Knob label="COLR" value={destruction.datamoshParams.colorCorrupt} min={0} max={1} step={0.01}
+            onChange={v => destruction.updateDatamoshParams({ colorCorrupt: v })} paramId="datamosh.colorCorrupt" {...knobProps} />
         </div>
       )
     case 'pixelSort':

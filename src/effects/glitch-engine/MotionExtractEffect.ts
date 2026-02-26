@@ -130,6 +130,7 @@ export class MotionExtractEffect extends Effect {
         minFilter: THREE.LinearFilter,
         magFilter: THREE.LinearFilter,
         format: THREE.RGBAFormat,
+        type: THREE.HalfFloatType,
       }))
     }
 

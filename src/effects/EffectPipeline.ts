@@ -105,7 +105,9 @@ export class EffectPipeline {
     this.quad = new THREE.Mesh(geometry, material)
     this.quadScene.add(this.quad)
 
-    this.composer = new EffectComposer(renderer)
+    this.composer = new EffectComposer(renderer, {
+      frameBufferType: THREE.HalfFloatType,
+    })
     const renderPass = new RenderPass(this.quadScene, this.camera)
     this.composer.addPass(renderPass)
 

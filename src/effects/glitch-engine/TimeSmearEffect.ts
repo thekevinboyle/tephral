@@ -102,6 +102,7 @@ export class TimeSmearEffect extends Effect {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
     })
 
     this.copyMaterial = new THREE.ShaderMaterial({

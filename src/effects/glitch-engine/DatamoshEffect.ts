@@ -18,6 +18,9 @@ uniform vec2 resolution;
 uniform bool hasPrevFrame;
 uniform bool hasFreezeFrame;
 uniform float effectMix;
+uniform int mode;
+uniform float motionSmooth;
+uniform float colorCorrupt;
 uniform sampler2D traceMask;
 uniform bool useTraceMask;
 uniform bool invertTraceMask;
@@ -65,6 +68,39 @@ float luminance(vec3 c) {
   return dot(c, vec3(0.299, 0.587, 0.114));
 }
 
+// YCbCr conversion for realistic codec color corruption
+vec3 rgb2ycbcr(vec3 c) {
+  return vec3(
+    0.299 * c.r + 0.587 * c.g + 0.114 * c.b,
+    0.5 - 0.168736 * c.r - 0.331264 * c.g + 0.5 * c.b,
+    0.5 + 0.5 * c.r - 0.418688 * c.g - 0.081312 * c.b
+  );
+}
+
+vec3 ycbcr2rgb(vec3 c) {
+  float y = c.x;
+  float cb = c.y - 0.5;
+  float cr = c.z - 0.5;
+  return vec3(
+    y + 1.402 * cr,
+    y - 0.344136 * cb - 0.714136 * cr,
+    y + 1.772 * cb
+  );
+}
+
+// Mode-scaled intensity: subtle modes need less intensity to look good
+float getScaledIntensity(float raw) {
+  if (mode == 0) {
+    // Subtle: quadratic curve, very gentle at low values
+    return raw * raw * 0.6;
+  } else if (mode == 1) {
+    // Medium: smooth ramp
+    return smoothstep(0.0, 1.0, raw) * 0.85;
+  }
+  // Heavy: full range
+  return raw;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // IRREGULAR BLOCK COORDINATES - Not perfect grid
 // ═══════════════════════════════════════════════════════════════════════════
@@ -100,32 +136,64 @@ vec2 messyPixelate(vec2 uv, float size) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 vec2 getOrganicMotion(vec2 uv, vec2 blockCoord) {
-  // Sample multiple points for noisy motion estimate
   vec2 texel = 1.0 / resolution;
+  float scaledIntensity = getScaledIntensity(intensity);
 
   float lumCurrent = luminance(texture2D(inputBuffer, uv).rgb);
   float lumPrev = luminance(texture2D(prevFrameTexture, uv).rgb);
   float lumFeedback = luminance(texture2D(feedbackTexture, uv).rgb);
-
-  float diff = lumCurrent - lumPrev;
   float feedbackDiff = lumCurrent - lumFeedback;
 
-  // Base motion from luminance difference
-  vec2 motion = vec2(0.0);
+  // ─── Hierarchical motion estimation ────────────────────────
+  // Phase 1: 3x3 block neighborhood search (coarse)
+  vec2 bestOffset = vec2(0.0);
+  float bestScore = 999.0;
+  float searchRadius = blockSize * texel.x * 2.0;
 
-  // Sample neighbors with irregular offsets
+  for (float dy = -1.0; dy <= 1.0; dy += 1.0) {
+    for (float dx = -1.0; dx <= 1.0; dx += 1.0) {
+      vec2 candidateOff = vec2(dx, dy) * searchRadius;
+      float diff = abs(lumCurrent - luminance(texture2D(prevFrameTexture, uv + candidateOff).rgb));
+      if (diff < bestScore) {
+        bestScore = diff;
+        bestOffset = candidateOff;
+      }
+    }
+  }
+
+  // Phase 2: Refine with gradient descent (5 irregular samples around best match)
+  vec2 motion = bestOffset;
   for (float i = 0.0; i < 5.0; i++) {
     float angle = hash(blockCoord + i) * 6.28318;
-    float dist = (hash(blockCoord + i + 10.0) * 0.5 + 0.5) * blockSize * texel.x * 3.0;
-    vec2 offset = vec2(cos(angle), sin(angle)) * dist;
+    float dist = (hash(blockCoord + i + 10.0) * 0.3 + 0.1) * blockSize * texel.x;
+    vec2 offset = bestOffset + vec2(cos(angle), sin(angle)) * dist;
 
     float sampleDiff = luminance(texture2D(inputBuffer, uv + offset).rgb) -
                        luminance(texture2D(prevFrameTexture, uv + offset).rgb);
-
-    // Accumulate motion direction based on gradient
-    motion += offset * sampleDiff * 10.0;
+    motion += offset * sampleDiff * 8.0;
   }
-  motion /= 5.0;
+  motion /= 6.0;
+
+  // ─── Motion vector smoothing (reduces jitter) ──────────────
+  if (motionSmooth > 0.0) {
+    vec2 neighborMotion = vec2(0.0);
+    float neighborWeight = 0.0;
+    for (float dy = -1.0; dy <= 1.0; dy += 1.0) {
+      for (float dx = -1.0; dx <= 1.0; dx += 1.0) {
+        if (dx == 0.0 && dy == 0.0) continue;
+        vec2 nUV = uv + vec2(dx, dy) * blockSize * texel;
+        float nDiff = luminance(texture2D(inputBuffer, nUV).rgb) -
+                      luminance(texture2D(prevFrameTexture, nUV).rgb);
+        float w = 1.0 / (1.0 + length(vec2(dx, dy)));
+        neighborMotion += vec2(nDiff) * w;
+        neighborWeight += w;
+      }
+    }
+    if (neighborWeight > 0.0) {
+      neighborMotion /= neighborWeight;
+      motion = mix(motion, motion + neighborMotion * blockSize * texel.x, motionSmooth * 0.5);
+    }
+  }
 
   // Add organic noise to motion
   float noiseAngle = fbm(blockCoord * 20.0 + time) * 6.28318;
@@ -137,7 +205,7 @@ vec2 getOrganicMotion(vec2 uv, vec2 blockCoord) {
     motion += vec2(feedbackDiff * 0.1, feedbackDiff * 0.08);
   }
 
-  return motion * intensity * 4.0;
+  return motion * scaledIntensity * 4.0;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -384,6 +452,26 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   }
 
   // ═══════════════════════════════════════════════════════════════
+  // YCbCr COLOR CORRUPTION - Realistic codec artifacts
+  // ═══════════════════════════════════════════════════════════════
+
+  if (colorCorrupt > 0.0) {
+    float ycNoise = fbm(blockCoord * 12.0 + time * 0.4);
+    if (ycNoise < colorCorrupt * 0.6) {
+      vec3 ycbcr = rgb2ycbcr(result);
+      // Corrupt chroma channels (Cb/Cr) — more common in real codecs
+      float chromaShift = (noise(blockCoord * 20.0 + time) - 0.5) * colorCorrupt * 0.3;
+      ycbcr.y += chromaShift;
+      ycbcr.z -= chromaShift * 0.7;
+      // Quantize chroma (simulates chroma subsampling artifacts)
+      float quantLevels = mix(32.0, 4.0, colorCorrupt);
+      ycbcr.y = floor(ycbcr.y * quantLevels + 0.5) / quantLevels;
+      ycbcr.z = floor(ycbcr.z * quantLevels + 0.5) / quantLevels;
+      result = clamp(ycbcr2rgb(ycbcr), 0.0, 1.0);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   // PIXEL DESTRUCTION - Random destroyed pixels
   // ═══════════════════════════════════════════════════════════════
 
@@ -425,12 +513,15 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 `
 
 export interface DatamoshParams {
-  intensity: number      // 0-1: overall effect strength
-  blockSize: number      // 4-32: macro-block size (16 is standard for H.264)
-  keyframeChance: number // 0-0.1: chance of clean frame (I-frame)
-  chaos: number          // 0-1: additional random corruption
-  feedback: number       // 0-1: recursive feedback amount (higher = more melt)
-  mix: number           // 0-1: wet/dry mix
+  intensity: number       // 0-1: overall effect strength
+  blockSize: number       // 4-32: macro-block size (16 is standard for H.264)
+  keyframeChance: number  // 0-0.1: chance of clean frame (I-frame)
+  chaos: number           // 0-1: additional random corruption
+  feedback: number        // 0-1: recursive feedback amount (higher = more melt)
+  mode: number            // 0=subtle, 1=medium, 2=heavy
+  motionSmooth: number    // 0-1: motion vector smoothing
+  colorCorrupt: number    // 0-1: YCbCr color corruption amount
+  mix: number             // 0-1: wet/dry mix
 }
 
 export const DEFAULT_DATAMOSH_PARAMS: DatamoshParams = {
@@ -438,7 +529,10 @@ export const DEFAULT_DATAMOSH_PARAMS: DatamoshParams = {
   blockSize: 16,
   keyframeChance: 0.02,
   chaos: 0.5,
-  feedback: 0.7,        // High feedback for cascading corruption
+  feedback: 0.7,
+  mode: 1,
+  motionSmooth: 0.3,
+  colorCorrupt: 0.2,
   mix: 1,
 }
 
@@ -474,6 +568,9 @@ export class DatamoshEffect extends Effect {
         ['resolution', new THREE.Uniform(new THREE.Vector2(1, 1))],
         ['hasPrevFrame', new THREE.Uniform(false)],
         ['hasFreezeFrame', new THREE.Uniform(false)],
+        ['mode', new THREE.Uniform(p.mode)],
+        ['motionSmooth', new THREE.Uniform(p.motionSmooth)],
+        ['colorCorrupt', new THREE.Uniform(p.colorCorrupt)],
         ['effectMix', new THREE.Uniform(p.mix)],
         ['traceMask', new THREE.Uniform(null)],
         ['useTraceMask', new THREE.Uniform(false)],
@@ -490,6 +587,7 @@ export class DatamoshEffect extends Effect {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
     }
 
     // Previous clean frame (for optical flow calculation)
@@ -583,6 +681,9 @@ export class DatamoshEffect extends Effect {
     if (params.keyframeChance !== undefined) this.uniforms.get('keyframeChance')!.value = params.keyframeChance
     if (params.chaos !== undefined) this.uniforms.get('chaos')!.value = params.chaos
     if (params.feedback !== undefined) this.uniforms.get('feedback')!.value = params.feedback
+    if (params.mode !== undefined) this.uniforms.get('mode')!.value = params.mode
+    if (params.motionSmooth !== undefined) this.uniforms.get('motionSmooth')!.value = params.motionSmooth
+    if (params.colorCorrupt !== undefined) this.uniforms.get('colorCorrupt')!.value = params.colorCorrupt
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 

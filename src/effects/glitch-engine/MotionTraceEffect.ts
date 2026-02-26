@@ -91,6 +91,7 @@ export class MotionTraceEffect extends TraceEffect {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
     })
 
     // Material for copying to history

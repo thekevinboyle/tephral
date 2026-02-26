@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useModulationStore } from '../stores/modulationStore'
+import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 
 /**
  * Runs the modulation value generators (LFO, Random, Step, Envelope) at 60fps.
@@ -16,9 +17,10 @@ export function useModulationEngine() {
       lastTime.current = now
 
       const store = useModulationStore.getState()
+      const bpm = useEffectSequencerStore.getState().bpm
 
       // Update each enabled modulator
-      store.updateAllLFOs(delta)
+      store.updateAllLFOs(delta, bpm)
       if (store.random.enabled) {
         store.updateRandom(delta)
       }

@@ -308,15 +308,10 @@ export const PARAM_DESCRIPTIONS: Record<string, string> = {
 // ═══════════════════════════════════════════════════════════════════
 
 export const UI_DESCRIPTIONS: Record<string, string> = {
-  // App mode
-  modeSingle: 'FX \u2014 Single video effects processing',
-  modeTimeline: 'SEQ \u2014 Timeline clip sequencing',
-
   // Transport
   record: 'Record \u2014 Capture effect automation',
   playPause: 'Play/Pause \u2014 Start or stop playback (Space)',
-  timeline: 'Timeline \u2014 Click to seek',
-  clear: 'Clear \u2014 Reset source or clips',
+  clear: 'Clear \u2014 Reset source',
 
   // Source
   webcam: 'Webcam \u2014 Toggle live camera input',
@@ -339,10 +334,6 @@ export const UI_DESCRIPTIONS: Record<string, string> = {
   randomize: 'Randomize \u2014 Shuffle effect parameters',
   undo: 'Undo \u2014 Revert last randomize',
   rekt: 'REKT \u2014 Hold for momentary chaos, tap to lock',
-
-  // Effects scope toggle
-  scopeMaster: 'Master \u2014 Global effects applied to all clips',
-  scopeClip: 'Clip \u2014 Effects for the selected timeline clip only',
 
   // Effect card stack
   bypass: 'Bypass \u2014 Temporarily disable effect',
@@ -373,8 +364,6 @@ export const UI_DESCRIPTIONS: Record<string, string> = {
   // Sequencer
   seqEffects: 'P-Lock \u2014 Effect step sequencer',
   seqSlicer: 'Slicer \u2014 Audio/video slicing sequencer',
-  seqTimeline: 'Timeline \u2014 Clip-based composition with audio-reactive transitions',
-  seqLauncher: 'LAUNCH \u2014 Audio-reactive effect sequencer grid. Cycles through effect presets in time with music.',
   clearAll: 'Clear All \u2014 Remove all active effects',
   bypassAll: 'Bypass All \u2014 Temporarily disable all effects',
   randomizeSteps: 'Randomize \u2014 Randomize steps on selected track',

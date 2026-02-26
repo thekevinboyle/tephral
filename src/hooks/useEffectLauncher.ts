@@ -9,6 +9,7 @@ export function useEffectLauncher() {
   const lastAdvanceRef = useRef(0)
   const lastBPMTickRef = useRef(0)
   const prevActiveRef = useRef<number | null>(null)
+  const autoEnabledAudioRef = useRef(false)
 
   useEffect(() => {
     const tick = (now: number) => {
@@ -97,9 +98,25 @@ export function useEffectLauncher() {
     return () => cancelAnimationFrame(rafRef.current)
   }, [])
 
-  // Cleanup: disable active cell's effect when playback stops
+  // Auto-enable audioReactive when launcher needs band data
   const isPlaying = useEffectLauncherStore((s) => s.isPlaying)
+  const triggerBand = useEffectLauncherStore((s) => s.triggerBand)
   const prevPlayingRef = useRef(isPlaying)
+
+  useEffect(() => {
+    const needsBands = isPlaying && triggerBand !== 'all'
+    const audioReactive = useAudioReactiveStore.getState()
+
+    if (needsBands && !audioReactive.enabled) {
+      audioReactive.setEnabled(true)
+      autoEnabledAudioRef.current = true
+    } else if (!needsBands && autoEnabledAudioRef.current) {
+      audioReactive.setEnabled(false)
+      autoEnabledAudioRef.current = false
+    }
+  }, [isPlaying, triggerBand])
+
+  // Cleanup: disable active cell's effect when playback stops
   useEffect(() => {
     if (prevPlayingRef.current && !isPlaying) {
       const idx = prevActiveRef.current

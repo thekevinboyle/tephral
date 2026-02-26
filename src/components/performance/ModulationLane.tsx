@@ -243,20 +243,31 @@ function ModulationCard({
     <div
       onClick={onClick}
       data-mod-source={type}
-      className="flex flex-col rounded-sm cursor-pointer transition-all relative"
+      className="flex flex-col cursor-pointer relative"
       onMouseEnter={() => setStatusText(`${label} — Click to select/enable, double-click to disable`)}
       onMouseLeave={() => setStatusText(null)}
       style={{
         width: '80px',
         height: '100%',
-        backgroundColor: 'var(--bg-elevated)',
-        border: selected ? '2px solid var(--accent)' : '1px solid var(--border)',
+        background: selected
+          ? 'linear-gradient(to bottom, #1E1E1E, #161616)'
+          : 'linear-gradient(to bottom, #1A1A1A, #131313)',
+        border: selected ? '1px solid var(--accent)' : '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 4,
+        boxShadow: selected
+          ? '0 0 10px var(--accent-glow), var(--shadow-panel)'
+          : 'var(--shadow-panel)',
+        transition: 'all var(--transition-normal)',
+        overflow: 'hidden',
       }}
     >
       {/* Graphic area */}
       <div
         className="flex-1 flex items-center justify-center px-2"
-        style={{ borderBottom: '1px solid var(--border)' }}
+        style={{
+          borderBottom: '1px solid rgba(255,255,255,0.04)',
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.15), transparent)',
+        }}
       >
         {renderGraphic()}
       </div>
@@ -265,7 +276,10 @@ function ModulationCard({
       <div className="px-2 py-1 flex items-center justify-between">
         <span
           className="text-[9px] uppercase tracking-widest"
-          style={{ color: active ? 'var(--accent)' : 'var(--text-muted)' }}
+          style={{
+            color: active ? 'var(--accent)' : 'var(--text-muted)',
+            fontFamily: 'var(--font-sans)',
+          }}
         >
           {label}
         </span>
@@ -278,10 +292,11 @@ function ModulationCard({
           }}
           onMouseEnter={(e) => { e.stopPropagation(); setStatusText(getUIStatusText('modAssign')) }}
           onMouseLeave={() => setStatusText(null)}
-          className="w-5 h-5 rounded-sm flex items-center justify-center transition-all hover:scale-110"
+          className="w-5 h-5 rounded-sm flex items-center justify-center hover:scale-110"
           style={{
             backgroundColor: isAssigning ? 'var(--accent)' : 'transparent',
             boxShadow: isAssigning ? '0 0 8px var(--accent-glow)' : 'none',
+            transition: 'all var(--transition-fast)',
           }}
           title={isAssigning ? 'Stop assigning' : 'Click to assign to parameters'}
         >
@@ -362,7 +377,7 @@ export function ModulationLane() {
     <div
       className="h-full flex items-center gap-2 overflow-x-auto"
       style={{
-        backgroundColor: 'var(--bg-surface)',
+        background: 'linear-gradient(to bottom, #181818, #131313)',
         borderTop: '1px solid var(--border)',
         paddingLeft: 'var(--sidebar-width)',
         paddingRight: 'var(--panel-padding)',

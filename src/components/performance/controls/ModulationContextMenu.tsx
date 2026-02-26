@@ -1,8 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useSequencerStore } from '../../../stores/sequencerStore'
 import { useModulationStore, LFO_COUNT } from '../../../stores/modulationStore'
-import { useAudioReactiveStore } from '../../../stores/audioReactiveStore'
-
 const LFO_SOURCES = Array.from({ length: LFO_COUNT }, (_, i) => ({
   id: `lfo-${i}`,
   label: `LFO ${i + 1}`,
@@ -15,15 +13,6 @@ const OTHER_SOURCES = [
   { id: 'envelope', label: 'Envelope', color: '#AA55FF' },
   { id: 'sampleHold', label: 'S&H', color: '#AAFF00' },
 ]
-
-const AUDIO_SOURCES = [
-  { id: 'audio-sub', label: 'Sub', color: '#FF3333' },
-  { id: 'audio-mid', label: 'Mid', color: '#FF8800' },
-  { id: 'audio-high', label: 'High', color: '#33CCFF' },
-  { id: 'audio-hit', label: 'Hit', color: '#FF00FF' },
-]
-
-const SOURCES = [...LFO_SOURCES, ...OTHER_SOURCES]
 
 interface ModulationContextMenuProps {
   paramId: string
@@ -69,9 +58,6 @@ export function ModulationContextMenu({ paramId, position, onClose }: Modulation
         if (sourceId.startsWith('lfo-')) {
           const lfoIndex = parseInt(sourceId.split('-')[1])
           if (!state.lfos[lfoIndex].enabled) state.setLFOEnabled(lfoIndex, true)
-        } else if (sourceId.startsWith('audio-')) {
-          const arState = useAudioReactiveStore.getState()
-          if (!arState.enabled) arState.setEnabled(true)
         } else {
           const enablers: Record<string, () => void> = {
             random: () => { if (!state.random.enabled) state.setRandomEnabled(true) },
@@ -159,20 +145,6 @@ export function ModulationContextMenu({ paramId, position, onClose }: Modulation
 
       {/* Other sources */}
       {OTHER_SOURCES.map(renderSourceRow)}
-
-      {/* Separator */}
-      <div className="border-t my-1" style={{ borderColor: 'var(--border)' }} />
-
-      {/* Audio reactive label */}
-      <div
-        className="px-3 py-0.5 text-[8px] uppercase tracking-wider"
-        style={{ color: 'var(--text-ghost)' }}
-      >
-        Audio React
-      </div>
-
-      {/* Audio sources */}
-      {AUDIO_SOURCES.map(renderSourceRow)}
 
       {/* Clear All — only when 2+ routings */}
       {paramRoutings.length >= 2 && (

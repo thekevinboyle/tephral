@@ -1,6 +1,4 @@
 import { create } from 'zustand'
-import { useTimelineStore } from './timelineStore'
-import { useSequencerContainerStore } from './sequencerContainerStore'
 
 // Drag state for sequencer track routing
 interface SequencerDragState {
@@ -32,9 +30,6 @@ interface UIState {
   // Info panel selection (unified)
   infoPanelSelection: InfoPanelSelection
 
-  // App mode: single video effects vs timeline sequencing
-  appMode: 'single' | 'timeline'
-
   // Card view mode for EffectCardStack
   cardViewMode: 'compact' | 'full'
 
@@ -61,9 +56,6 @@ interface UIState {
   selectRouting: (routingId: string) => void
   selectPreset: (presetId: string) => void
   clearInfoPanelSelection: () => void
-
-  // App mode actions
-  setAppMode: (mode: 'single' | 'timeline') => void
 
   // Card view mode actions
   setCardViewMode: (mode: 'compact' | 'full') => void
@@ -92,7 +84,6 @@ export const useUIStore = create<UIState>((set) => ({
   },
 
   infoPanelSelection: null,
-  appMode: 'single',
   cardViewMode: 'compact',
   bottomPanelTab: null,
   bottomPanelPage: 1,
@@ -119,17 +110,6 @@ export const useUIStore = create<UIState>((set) => ({
   selectRouting: (routingId) => set({ infoPanelSelection: { type: 'routing', routingId } }),
   selectPreset: (presetId) => set({ infoPanelSelection: { type: 'preset', presetId } }),
   clearInfoPanelSelection: () => set({ infoPanelSelection: null }),
-
-  setAppMode: (mode) => {
-    set({ appMode: mode })
-    if (mode === 'timeline') {
-      useTimelineStore.getState().activate()
-      useSequencerContainerStore.getState().setActiveSequencer('timeline')
-    } else {
-      useTimelineStore.getState().deactivate()
-      useSequencerContainerStore.getState().setActiveSequencer('effects')
-    }
-  },
 
   setCardViewMode: (mode) => set({ cardViewMode: mode }),
   toggleCardViewMode: () => set((state) => ({

@@ -37,6 +37,30 @@ function RandomizeButton() {
   )
 }
 
+function RandomizeAllButton() {
+  const setStatusText = useUIStore((s) => s.setStatusText)
+  const randomizeAllTracks = useEffectSequencerStore((s) => s.randomizeAllTracks)
+  const tracks = useEffectSequencerStore((s) => s.tracks)
+  const hasTracks = Object.keys(tracks).length > 0
+
+  return (
+    <button
+      onClick={() => randomizeAllTracks()}
+      onMouseEnter={() => setStatusText('Randomize steps on all tracks')}
+      onMouseLeave={() => setStatusText(null)}
+      className="w-7 h-7 flex items-center justify-center rounded-sm"
+      style={{
+        backgroundColor: 'var(--bg-elevated)',
+        border: '1px solid var(--border)',
+        opacity: hasTracks ? 1 : 0.5,
+      }}
+      title="Randomize steps on all tracks"
+    >
+      <ShuffleIcon size={14} color={hasTracks ? 'var(--text-secondary)' : 'var(--text-ghost)'} />
+    </button>
+  )
+}
+
 function RandomizeLocksButton() {
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)
   const setStatusText = useUIStore((s) => s.setStatusText)
@@ -306,6 +330,7 @@ export function SequencerTransport({
 
       {/* Track tools */}
       <RandomizeButton />
+      <RandomizeAllButton />
       <RandomizeLocksButton />
       <ClearTrackButton />
 

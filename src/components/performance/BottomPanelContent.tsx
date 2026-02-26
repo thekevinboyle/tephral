@@ -1,5 +1,7 @@
 import { useUIStore } from '../../stores/uiStore'
 import { ModulationAssignPanel } from './ModulationAssignPanel'
+import { ModulationContent } from '../sequencer/ModulationContent'
+import { TrackAudioReactivePanel } from '../sequencer/TrackAudioReactivePanel'
 
 export function BottomPanelContent() {
   const bottomPanelTab = useUIStore((s) => s.bottomPanelTab)
@@ -14,12 +16,24 @@ export function BottomPanelContent() {
   switch (bottomPanelTab) {
     case 'Mixer':
       return <div style={wrapStyle}><PlaceholderContent label="Mixer — coming soon" /></div>
-    case 'Modulation':
+    case 'LFO':
       return <div style={wrapStyle}><ModulationAssignPanel /></div>
     case 'Mod Matrix':
       return <div style={wrapStyle}><PlaceholderContent label="Mod Matrix — coming soon" /></div>
     case 'Automation':
       return <div style={wrapStyle}><PlaceholderContent label="Automation — coming soon" /></div>
+    case 'Random':
+      return <div style={wrapStyle}><ModulationContent activeModulator="random" /></div>
+    case 'Step':
+      return <div style={wrapStyle}><ModulationContent activeModulator="step" /></div>
+    case 'Env':
+      return <div style={wrapStyle}><ModulationContent activeModulator="envelope" /></div>
+    case 'S&H':
+      return <div style={wrapStyle}><ModulationContent activeModulator="sh" /></div>
+    case 'MIDI':
+      return <div style={wrapStyle}><ModulationContent activeModulator="midi" /></div>
+    case 'Audio':
+      return <div style={wrapStyle}><TrackAudioReactivePanel /></div>
     default:
       return null
   }

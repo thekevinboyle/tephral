@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect, useMemo } from 'react'
 import { useEffectSequencerStore, type EffectTrack } from '../../stores/effectSequencerStore'
-import { useAudioSourceStore } from '../../stores/audioSourceStore'
+import { useUIStore } from '../../stores/uiStore'
 import { useMIDIStore } from '../../stores/midiStore'
 import { EffectStepCell } from './EffectStepCell'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
@@ -25,6 +25,7 @@ interface EffectTrackRowProps {
   label: string
   isSelectedTrack?: boolean
   onSelectTrack?: (effectId: string) => void
+  orderIndex?: number
 }
 
 export function EffectTrackRow({
@@ -37,22 +38,24 @@ export function EffectTrackRow({
   label,
   isSelectedTrack,
   onSelectTrack,
+  orderIndex,
 }: EffectTrackRowProps) {
   void _color
   const {
     setTrackMode,
     setTrackMuted,
     setTrackSoloed,
-    setTrackAudioGate,
     setTrackMidiGate,
+    setTrackAudioReactiveEnabled,
     setStepActive,
     setStepLock,
     addToSelection,
     automationParam,
   } = useEffectSequencerStore()
 
-  const audioGateLevel = useEffectSequencerStore((s) => s.audioGateLevel)
-  const gateThreshold = useAudioSourceStore((s) => s.gateThreshold)
+  const trackAudioLevel = useEffectSequencerStore((s) => s.trackAudioLevels[effectId] ?? 0)
+  const toggleBottomPanelTab = useUIStore((s) => s.toggleBottomPanelTab)
+  const bottomPanelTab = useUIStore((s) => s.bottomPanelTab)
   const trackNoteMap = useMIDIStore((s) => s.trackNoteMap)
   const noteStates = useMIDIStore((s) => s.noteStates)
   const setNoteForTrack = useMIDIStore((s) => s.setNoteForTrack)
@@ -167,8 +170,12 @@ export function EffectTrackRow({
     return () => window.removeEventListener('mouseup', handleUp)
   }, [])
 
+  // Per-track playhead: audio-reactive tracks use their own trackStep
+  const effectiveStep = track.audioReactive?.enabled
+    ? (track.trackStep ?? 0) % track.length
+    : currentStep
   const isPlayheadOnPage =
-    currentStep >= pageStart && currentStep < pageStart + 8
+    effectiveStep >= pageStart && effectiveStep < pageStart + 8
 
   // Dim tracks where no steps are active
   const hasAnyActiveSteps = track.steps.some((s) => s.active)
@@ -181,7 +188,7 @@ export function EffectTrackRow({
         borderTop: isSelectedTrack ? '2px solid var(--border)' : '1px solid transparent',
         borderLeft: isSelectedTrack ? '3px solid var(--border)' : '3px solid transparent',
         borderRight: isSelectedTrack ? '2px solid var(--border)' : '1px solid transparent',
-        opacity: track.muted ? 0.4 : (hasAnyActiveSteps || track.audioGate || track.midiGate) ? 1 : 0.55,
+        opacity: track.muted ? 0.4 : (hasAnyActiveSteps || track.midiGate || track.audioReactive?.enabled) ? 1 : 0.55,
         transition: 'opacity 0.15s, border-color 0.1s',
       }}
     >
@@ -196,13 +203,51 @@ export function EffectTrackRow({
         }}
         onClick={() => onSelectTrack?.(effectId)}
       >
-        {/* Effect label */}
-        <span
-          className="text-[11px] font-bold uppercase tracking-wider truncate"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          {label}
-        </span>
+        {/* Effect label with chain position */}
+        <div className="flex items-center gap-1.5">
+          {orderIndex != null && (
+            <span
+              className="text-[9px] tabular-nums font-bold flex-shrink-0"
+              style={{ color: 'var(--text-ghost)' }}
+            >
+              {orderIndex}
+            </span>
+          )}
+          <span
+            className="text-[11px] font-bold uppercase tracking-wider truncate"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            {label}
+          </span>
+        </div>
+
+        {/* Inline level meter for audio-reactive tracks */}
+        {track.audioReactive?.enabled && (
+          <div className="relative" style={{ height: 3, borderRadius: 1, backgroundColor: 'var(--bg-primary)', overflow: 'hidden' }}>
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: `${Math.min(100, trackAudioLevel * 100)}%`,
+                backgroundColor: trackAudioLevel >= (track.audioReactive.threshold) ? '#FFCC00' : '#FFCC0060',
+                borderRadius: 1,
+                transition: 'width 0.05s',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: `${(track.audioReactive.threshold) * 100}%`,
+                width: 1,
+                backgroundColor: 'var(--text-secondary)',
+              }}
+            />
+          </div>
+        )}
 
         {/* Controls row: Mode, Mute, Solo */}
         <div className="flex items-center gap-1.5">
@@ -265,28 +310,37 @@ export function EffectTrackRow({
             S
           </button>
 
-          {/* Audio Gate */}
+          {/* Audio Reactive toggle */}
           <button
             onClick={(e) => {
               e.stopPropagation()
-              setTrackAudioGate(effectId, !track.audioGate)
+              const enabling = !track.audioReactive?.enabled
+              setTrackAudioReactiveEnabled(effectId, enabling)
+              onSelectTrack?.(effectId)
+              if (enabling && bottomPanelTab !== 'Audio') {
+                toggleBottomPanelTab('Audio')
+              }
             }}
             className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm relative overflow-hidden"
             style={{
-              backgroundColor: track.audioGate
-                ? 'rgba(255, 204, 0, 0.2)'
+              backgroundColor: track.audioReactive?.enabled
+                ? 'rgba(255, 204, 0, 0.35)'
                 : 'transparent',
-              color: track.audioGate ? '#FFCC00' : 'var(--border)',
-              border: `1px solid ${track.audioGate ? '#FFCC0060' : 'var(--border)'}`,
+              color: track.audioReactive?.enabled ? '#FFCC00' : 'var(--border)',
+              border: `1px solid ${track.audioReactive?.enabled ? '#FFCC0060' : 'var(--border)'}`,
             }}
-            title="Audio gate: video audio amplitude triggers effect"
+            title={
+              track.audioReactive?.enabled
+                ? 'Audio reactive: audio drives step advancement (click to disable)'
+                : 'Audio reactive: audio drives step advancement'
+            }
           >
-            {track.audioGate && (
+            {track.audioReactive?.enabled && (
               <span
                 className="absolute inset-0 rounded-sm"
                 style={{
                   backgroundColor: '#FFCC00',
-                  opacity: audioGateLevel > gateThreshold ? 0.5 : 0,
+                  opacity: trackAudioLevel * 0.6,
                   transition: 'opacity 0.05s',
                 }}
               />
@@ -362,7 +416,7 @@ export function EffectTrackRow({
       >
         {visibleSteps.map((step, index) => {
           const actualIndex = pageStart + index
-          const isCurrent = isPlayheadOnPage && currentStep === actualIndex
+          const isCurrent = isPlayheadOnPage && effectiveStep === actualIndex
           const isSelected =
             selectedStep?.effectId === effectId &&
             selectedStep?.stepIndex === actualIndex

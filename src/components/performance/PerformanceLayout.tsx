@@ -10,9 +10,7 @@ import { TransportBar } from './TransportBar'
 import { MiddleSection } from './MiddleSection'
 import { ModulationLines } from './ModulationLines'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
-import { AudioSourceRow } from '../sequencer/AudioSourceRow'
 import { SharedEffectTabsBar } from '../sequencer/SharedEffectTabsBar'
-import { TimelinePanel } from '../sequencer/TimelinePanel'
 import { useUIStore } from '../../stores/uiStore'
 // DataTerminal stashed — component file kept, just not rendered
 // import { DataTerminal } from '../terminal/DataTerminal'
@@ -27,7 +25,6 @@ import { useDestructionMode } from '../../hooks/useDestructionMode'
 import { useDestructionChaos } from '../../hooks/useDestructionChaos'
 import { useUnifiedAudioAnalysis } from '../../hooks/useUnifiedAudioAnalysis'
 import { useAudioReactive } from '../../hooks/useAudioReactive'
-import { useTimelinePlayback } from '../../hooks/useTimelinePlayback'
 import { DestructionOverlay } from '../DestructionOverlay'
 // LFO Editor Panel hidden — component kept, just not rendered
 // import { LFOEditorPanel } from './LFOEditorPanel'
@@ -62,9 +59,6 @@ export function PerformanceLayout() {
   // Audio reactive DSP (FFT band splitting + envelope following)
   useAudioReactive()
 
-  // Timeline playback engine (clip-based composition with audio-reactive transitions)
-  useTimelinePlayback()
-
   const captureRef = useRef<HTMLCanvasElement | null>(null)
 
   useEffect(() => {
@@ -84,101 +78,12 @@ export function PerformanceLayout() {
 
   useRecordingCapture(captureRef, canvasElement)
 
-  const appMode = useUIStore((s) => s.appMode)
-
-  if (appMode === 'timeline') {
-    return (
-      <div
-        className="w-screen h-screen overflow-hidden grid-substrate"
-        style={{
-          display: 'grid',
-          gridTemplateRows: 'var(--row-header) 1fr 1fr auto 24px',
-          gridTemplateColumns: 'var(--col-left) 1fr',
-          gap: 'var(--gap)',
-          padding: 'var(--gap)',
-        }}
-      >
-        {/* Row 1: Header Bar (spans all columns) */}
-        <div
-          className="rounded-sm overflow-hidden panel-header"
-          style={{
-            gridRow: 1,
-            gridColumn: '1 / -1',
-            border: '1px solid var(--border)',
-          }}
-        >
-          <HeaderBar />
-        </div>
-
-        {/* Rows 2-4, Col 1: Effect Card Stack only */}
-        <div
-          className="flex flex-col rounded-sm overflow-hidden panel-raised"
-          style={{
-            gridRow: '2 / 5',
-            gridColumn: 1,
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-panel-lg)',
-          }}
-        >
-          <div className="flex-1 min-h-0">
-            <EffectCardStack />
-          </div>
-        </div>
-
-        {/* Row 2, Col 2: Canvas + ClipBin + AudioSource + Transport */}
-        <div
-          className="flex flex-col rounded-sm overflow-hidden"
-          style={{
-            gridRow: 2,
-            gridColumn: 2,
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-panel)',
-          }}
-        >
-          <div className="relative flex-1 min-h-0" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-            <Canvas ref={canvasRef} />
-            <ClipBin />
-          </div>
-          <AudioSourceRow />
-          <TransportBar />
-        </div>
-
-        {/* Row 3, Col 2: TimelinePanel (expanded) */}
-        <div
-          className="flex-1 min-w-0 rounded-sm overflow-hidden panel-raised"
-          style={{
-            gridRow: 3,
-            gridColumn: 2,
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-panel)',
-          }}
-        >
-          <TimelinePanel />
-        </div>
-
-        {/* Row 4, Col 2: Bottom Panel */}
-        <div style={{ gridRow: 4, gridColumn: 2 }}>
-          <BottomPanel />
-        </div>
-
-        {/* Row 5: Status Bar (spans all columns) */}
-        <div style={{ gridRow: 5, gridColumn: '1 / -1' }}>
-          <StatusBar />
-        </div>
-
-        <ClipDetailModal />
-        <ModulationLines />
-        <DestructionOverlay />
-      </div>
-    )
-  }
-
   return (
     <div
       className="w-screen h-screen overflow-hidden grid-substrate"
       style={{
         display: 'grid',
-        gridTemplateRows: 'var(--row-header) 1fr auto 1fr auto 24px',
+        gridTemplateRows: 'auto 1fr auto 1fr auto 24px',
         gridTemplateColumns: 'var(--col-left) var(--col-grid) 1fr',
         gap: 'var(--gap)',
         padding: 'var(--gap)',
@@ -186,7 +91,7 @@ export function PerformanceLayout() {
     >
       {/* Row 1: Header Bar (spans all columns) */}
       <div
-        className="rounded-sm overflow-hidden panel-header"
+        className="rounded-sm panel-header"
         style={{
           gridRow: 1,
           gridColumn: '1 / -1',
@@ -253,7 +158,6 @@ export function PerformanceLayout() {
           <Canvas ref={canvasRef} />
           <ClipBin />
         </div>
-        <AudioSourceRow />
         <TransportBar />
       </div>
 

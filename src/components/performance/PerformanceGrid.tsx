@@ -1038,11 +1038,6 @@ export function PerformanceGrid() {
           }
 
           const state = getEffectState(effect.id)
-          const originalToggle = state.onToggle
-          const wrappedToggle = () => {
-            originalToggle()
-            ensureTrack(effect.id)
-          }
 
           // Reserved slot styling
           if ('isReserved' in state && state.isReserved) {
@@ -1058,6 +1053,12 @@ export function PerformanceGrid() {
                 <span style={{ color: 'var(--text-ghost)', fontSize: '14px' }}>—</span>
               </div>
             )
+          }
+
+          const originalToggle = state.onToggle
+          const wrappedToggle = () => {
+            originalToggle()
+            ensureTrack(effect.id)
           }
 
           const isSoloed = soloEffectId === effect.id

@@ -10,8 +10,9 @@ export function StatusBar() {
         display: 'flex',
         alignItems: 'center',
         padding: '0 8px',
-        backgroundColor: 'var(--bg-surface)',
+        background: 'linear-gradient(to right, var(--bg-elevated), var(--bg-surface), var(--bg-elevated))',
         borderTop: '1px solid var(--border)',
+        boxShadow: 'inset 0 1px 0 var(--surface-highlight)',
       }}
     >
       <span

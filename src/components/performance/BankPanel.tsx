@@ -11,7 +11,7 @@ import { useStippleStore } from '../../stores/stippleStore'
 import { useContourStore } from '../../stores/contourStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
 
-const BANK_LABELS = ['A', 'B', 'C', 'D']
+const BANK_LABELS = ['A', 'B', 'C', 'D'] as const
 
 const RANDOMIZABLE_EFFECTS = [
   'rgb_split', 'block_displace', 'scan_lines', 'noise',

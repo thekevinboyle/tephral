@@ -1,12 +1,53 @@
 import { create } from 'zustand'
 
+export type LFOShape = 'Sine' | 'Triangle' | 'Square' | 'Saw Up' | 'Saw Down' | 'S&H' | 'Ramp Up' | 'Ramp Down' | 'Exp'
+export type LFOSyncMode = 'free' | 'sync'
+
+export const LFO_SHAPE_PRESETS: Record<LFOShape, { tilt: number; curve: number }> = {
+  'Sine':      { tilt: 0,     curve: 0.7 },
+  'Triangle':  { tilt: 0,     curve: 0 },
+  'Square':    { tilt: 0,     curve: -1 },
+  'Saw Up':    { tilt: 0.99,  curve: 0 },
+  'Saw Down':  { tilt: -0.99, curve: 0 },
+  'S&H':       { tilt: 0,     curve: -0.95 },
+  'Ramp Up':   { tilt: 0.8,   curve: 0.5 },
+  'Ramp Down': { tilt: -0.8,  curve: 0.5 },
+  'Exp':       { tilt: 0.5,   curve: 0.9 },
+}
+
+export const LFO_SHAPES: LFOShape[] = ['Sine', 'Triangle', 'Square', 'Saw Up', 'Saw Down', 'S&H', 'Ramp Up', 'Ramp Down', 'Exp']
+
+export interface SyncDivision {
+  label: string
+  beats: number // quarter-note beats per cycle
+}
+
+export const SYNC_DIVISIONS: SyncDivision[] = [
+  { label: '4 bars', beats: 16 },
+  { label: '2 bars', beats: 8 },
+  { label: '1 bar', beats: 4 },
+  { label: '1/2', beats: 2 },
+  { label: '1/2T', beats: 4 / 3 },
+  { label: '1/4', beats: 1 },
+  { label: '1/4T', beats: 2 / 3 },
+  { label: '1/4D', beats: 1.5 },
+  { label: '1/8', beats: 0.5 },
+  { label: '1/8T', beats: 1 / 3 },
+  { label: '1/8D', beats: 0.75 },
+  { label: '1/16', beats: 0.25 },
+  { label: '1/32', beats: 0.125 },
+]
+
 export interface LFOState {
   enabled: boolean
-  rate: number       // Hz (0.1 - 20)
+  shape: LFOShape    // Preset shape name
+  rate: number       // Hz (0.1 - 20) — used in free mode
   tilt: number       // -1 to 1 (0 = triangle, +1 = saw, -1 = ramp)
   curve: number      // -1 to 1 (0 = linear, +1 = sine-like, -1 = square-like)
   phase: number      // Internal phase accumulator (0-1)
   phaseOffset: number // 0-360 degrees
+  syncMode: LFOSyncMode  // free = Hz rate, sync = tempo-synced
+  syncDivision: string    // label from SYNC_DIVISIONS (e.g. '1/4')
   currentValue: number  // 0-1 output
 }
 
@@ -87,7 +128,10 @@ export interface ModulationState {
   setLFOTilt: (index: number, tilt: number) => void
   setLFOCurve: (index: number, curve: number) => void
   setLFOPhaseOffset: (index: number, offset: number) => void
-  updateAllLFOs: (delta: number) => void
+  setLFOShape: (index: number, shape: LFOShape) => void
+  setLFOSyncMode: (index: number, mode: LFOSyncMode) => void
+  setLFOSyncDivision: (index: number, division: string) => void
+  updateAllLFOs: (delta: number, bpm: number) => void
 
   // Random actions
   toggleRandom: () => void
@@ -130,11 +174,14 @@ const DEFAULT_STEPS = [0, 0.25, 0.5, 0.75, 1, 0.75, 0.5, 0.25]
 function createDefaultLFO(): LFOState {
   return {
     enabled: false,
+    shape: 'Sine',
     rate: 1,
     tilt: 0,
     curve: 0.7,
     phase: 0,
     phaseOffset: 0,
+    syncMode: 'free',
+    syncDivision: '1/4',
     currentValue: 0.5,
   }
 }
@@ -176,8 +223,16 @@ export function computeMorphedWave(t: number, tilt: number, curve: number): numb
   return v
 }
 
-function computeLFOValue(lfo: LFOState, delta: number): LFOState {
-  const newPhase = (lfo.phase + delta * lfo.rate) % 1
+function computeLFOValue(lfo: LFOState, delta: number, bpm: number): LFOState {
+  // Compute effective rate: free mode uses Hz, sync mode uses BPM + division
+  let effectiveRate = lfo.rate
+  if (lfo.syncMode === 'sync') {
+    const div = SYNC_DIVISIONS.find(d => d.label === lfo.syncDivision)
+    const beats = div ? div.beats : 1
+    effectiveRate = (bpm / 60) / beats  // Hz: one cycle per N beats
+  }
+
+  const newPhase = (lfo.phase + delta * effectiveRate) % 1
 
   // Apply phase offset for waveform lookup (doesn't affect accumulator)
   const lookupPhase = (newPhase + lfo.phaseOffset / 360) % 1
@@ -271,14 +326,24 @@ export const useModulationStore = create<ModulationState>((set, get) => ({
   setLFOPhaseOffset: (index, offset) => set((state) => ({
     lfos: updateLFOAt(state.lfos, index, { phaseOffset: Math.max(0, Math.min(360, offset)) })
   })),
+  setLFOShape: (index, shape) => set((state) => {
+    const preset = LFO_SHAPE_PRESETS[shape]
+    return { lfos: updateLFOAt(state.lfos, index, { shape, tilt: preset.tilt, curve: preset.curve }) }
+  }),
+  setLFOSyncMode: (index, mode) => set((state) => ({
+    lfos: updateLFOAt(state.lfos, index, { syncMode: mode })
+  })),
+  setLFOSyncDivision: (index, division) => set((state) => ({
+    lfos: updateLFOAt(state.lfos, index, { syncDivision: division })
+  })),
 
-  updateAllLFOs: (delta) => {
+  updateAllLFOs: (delta, bpm) => {
     const { lfos } = get()
     let anyEnabled = false
     const newLfos = lfos.map(lfo => {
       if (!lfo.enabled) return lfo
       anyEnabled = true
-      return computeLFOValue(lfo, delta)
+      return computeLFOValue(lfo, delta, bpm)
     })
     if (anyEnabled) set({ lfos: newLfos })
   },

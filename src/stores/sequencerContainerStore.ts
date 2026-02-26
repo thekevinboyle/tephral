@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
-// SequencerContainer holds Effect Sequencer, Slicer, Timeline, and other sequencers as tabs
-export type SequencerType = 'effects' | 'slicer' | 'timeline' | 'launcher' | 'euclid' | 'steps'
+// SequencerContainer holds Effect Sequencer, Slicer, and other sequencers as tabs
+export type SequencerType = 'effects' | 'slicer' | 'euclid' | 'steps'
 
 interface SequencerContainerState {
   activeSequencer: SequencerType

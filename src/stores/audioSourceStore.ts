@@ -18,6 +18,11 @@ interface AudioSourceState {
   gateAttack: number        // 0-1: how fast gate opens (0=instant, 1=slow)
   gateRelease: number       // 0-1: how fast gate closes (0=instant, 1=slow)
 
+  // Loop section
+  audioLoopEnabled: boolean
+  audioLoopStart: number    // seconds
+  audioLoopEnd: number      // seconds, 0 = end of file
+
   // Audio reactive FFT analyser
   reactiveAnalyser: AnalyserNode | null
   audioContext: AudioContext | null
@@ -33,6 +38,10 @@ interface AudioSourceState {
   setGateMode: (mode: AudioGateMode) => void
   setGateAttack: (v: number) => void
   setGateRelease: (v: number) => void
+  setAudioLoopEnabled: (v: boolean) => void
+  setAudioLoopStart: (v: number) => void
+  setAudioLoopEnd: (v: number) => void
+  clearAudioLoop: () => void
   setReactiveAnalyser: (node: AnalyserNode | null) => void
   setAudioContext: (ctx: AudioContext | null) => void
 }
@@ -50,6 +59,10 @@ export const useAudioSourceStore = create<AudioSourceState>((set, get) => ({
   gateMode: 'gate',
   gateAttack: 0.1,
   gateRelease: 0.2,
+
+  audioLoopEnabled: false,
+  audioLoopStart: 0,
+  audioLoopEnd: 0,
 
   reactiveAnalyser: null,
   audioContext: null,
@@ -93,6 +106,10 @@ export const useAudioSourceStore = create<AudioSourceState>((set, get) => ({
   setGateMode: (mode) => set({ gateMode: mode }),
   setGateAttack: (v) => set({ gateAttack: Math.max(0, Math.min(1, v)) }),
   setGateRelease: (v) => set({ gateRelease: Math.max(0, Math.min(1, v)) }),
+  setAudioLoopEnabled: (v) => set({ audioLoopEnabled: v }),
+  setAudioLoopStart: (v) => set({ audioLoopStart: Math.max(0, v) }),
+  setAudioLoopEnd: (v) => set({ audioLoopEnd: Math.max(0, v) }),
+  clearAudioLoop: () => set({ audioLoopEnabled: false, audioLoopStart: 0, audioLoopEnd: 0 }),
   setReactiveAnalyser: (node) => set({ reactiveAnalyser: node }),
   setAudioContext: (ctx) => set({ audioContext: ctx }),
 }))

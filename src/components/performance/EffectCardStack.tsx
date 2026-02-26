@@ -13,7 +13,7 @@ export function EffectCardStack() {
   const { sortedEffects } = useActiveEffects()
   const { disableEffect } = useEffectDisable()
   const { toggleEffectBypassed, effectBypassed } = useGlitchEngineStore()
-  const { selectedEffectId, setStatusText } = useUIStore()
+  const { selectedEffectId, setSelectedEffect, setStatusText } = useUIStore()
 
   // Automation state from sequencer
   const automationParam = useEffectSequencerStore((s) => s.automationParam)
@@ -29,12 +29,21 @@ export function EffectCardStack() {
       ? selectedEffectId
       : null
 
+  const handleRemove = (effectId: string) => {
+    disableEffect(effectId)
+  }
+
+  // Select handler (for clip effect list rows)
+  const handleSelect = (effectId: string) => {
+    setSelectedEffect(effectId === selectedEffectId ? null : effectId)
+  }
+
   return (
     <div className="h-full flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Header: Preset bar */}
       <PresetDropdownBar />
 
-      {/* FX count header */}
+      {/* FX header */}
       <div
         className="flex-shrink-0 flex items-center px-2"
         style={{
@@ -44,13 +53,13 @@ export function EffectCardStack() {
       >
         <span
           className="text-[9px] uppercase tracking-widest"
-          style={{ color: 'var(--text-muted)' }}
+          style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}
         >
           FX ({sortedEffects.length})
         </span>
       </div>
 
-      {/* Full parameters panel */}
+      {/* Main content area */}
       {validSelectedId ? (() => {
         const selectedEffect = sortedEffects.find(e => e.id === validSelectedId)
         const effectColor = selectedEffect?.color ?? 'var(--text-muted)'
@@ -67,7 +76,6 @@ export function EffectCardStack() {
                 borderBottom: `1px solid ${effectColor}20`,
               }}
             >
-              {/* LED */}
               <span
                 className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                 style={{
@@ -76,14 +84,12 @@ export function EffectCardStack() {
                   boxShadow: isBypassed ? 'none' : `0 0 4px ${effectColor}`,
                 }}
               />
-              {/* Effect name */}
               <span
                 className="text-[11px] uppercase tracking-wide font-semibold flex-shrink-0"
                 style={{ color: isBypassed ? 'var(--text-ghost)' : 'var(--text-secondary)' }}
               >
                 {effectLabel}
               </span>
-              {/* Horizontal rule */}
               <div
                 className="flex-1 h-px"
                 style={{ backgroundColor: `${effectColor}30` }}
@@ -136,7 +142,7 @@ export function EffectCardStack() {
               </button>
               {/* Remove */}
               <button
-                onClick={() => disableEffect(validSelectedId)}
+                onClick={() => handleRemove(validSelectedId)}
                 className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-sm opacity-50 hover:opacity-100 hover:bg-white/10 transition-all"
                 style={{ border: '1px solid var(--border)' }}
                 title="Remove effect"
@@ -169,6 +175,119 @@ export function EffectCardStack() {
           </span>
         </div>
       )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Scope Toggle Button
+// ═══════════════════════════════════════════════════════════════════
+
+function ScopeButton({
+  label,
+  active,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+  onMouseEnter: () => void
+  onMouseLeave: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className="h-5 px-1.5 text-[8px] font-semibold uppercase tracking-wider rounded-sm transition-all"
+      style={{
+        backgroundColor: active ? 'var(--accent)' : 'transparent',
+        border: active ? '1px solid var(--accent)' : '1px solid var(--border)',
+        color: active ? 'var(--text-primary)' : 'var(--text-ghost)',
+        boxShadow: active ? '0 0 4px var(--accent-glow)' : 'none',
+      }}
+    >
+      {label}
+    </button>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Clip Effect List (shows clip's assigned effects as selectable rows)
+// ═══════════════════════════════════════════════════════════════════
+
+function ClipEffectList({
+  effects,
+  selectedId,
+  onSelect,
+  onRemove,
+  effectBypassed,
+}: {
+  effects: ActiveEffect[]
+  selectedId: string | null
+  onSelect: (id: string) => void
+  onRemove: (id: string) => void
+  effectBypassed: Record<string, boolean>
+}) {
+  if (effects.length === 0) {
+    return (
+      <div className="px-2 py-3 flex items-center justify-center">
+        <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+          Add effects from the browser below
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex-shrink-0 max-h-[120px] overflow-y-auto">
+      {effects.map((effect) => {
+        const isSelected = effect.id === selectedId
+        const isBypassed = effectBypassed[effect.id] || false
+
+        return (
+          <div
+            key={effect.id}
+            onClick={() => onSelect(effect.id)}
+            className="flex items-center gap-1.5 px-2 cursor-pointer transition-colors"
+            style={{
+              height: 26,
+              backgroundColor: isSelected ? `${effect.color}15` : 'transparent',
+              borderLeft: isSelected ? `2px solid ${effect.color}` : '2px solid transparent',
+            }}
+          >
+            {/* LED */}
+            <span
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+              style={{
+                backgroundColor: isBypassed ? 'var(--text-ghost)' : effect.color,
+                opacity: isBypassed ? 0.3 : 1,
+              }}
+            />
+            {/* Label */}
+            <span
+              className="text-[10px] uppercase tracking-wide flex-1"
+              style={{ color: isBypassed ? 'var(--text-ghost)' : 'var(--text-secondary)' }}
+            >
+              {effect.label}
+            </span>
+            {/* Remove */}
+            <button
+              onClick={(e) => { e.stopPropagation(); onRemove(effect.id) }}
+              className="flex-shrink-0 w-4 h-4 flex items-center justify-center rounded-sm transition-opacity"
+              style={{ opacity: 0.3 }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.3' }}
+            >
+              <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
+                <path d="M2 2l8 8M10 2l-8 8" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+        )
+      })}
     </div>
   )
 }

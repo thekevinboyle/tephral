@@ -88,7 +88,32 @@
   --seq-accent-dim: var(--accent-dim);
   --seq-accent-glow: var(--accent-glow);
 
+  /* Shadows */
+  --shadow-panel: 0 1px 3px rgba(0,0,0,0.4), 0 0 1px rgba(0,0,0,0.3);
+  --shadow-panel-lg: 0 4px 12px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-button: 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+  --shadow-button-hover: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+  --shadow-knob: 0 2px 6px rgba(0,0,0,0.5), 0 0 1px rgba(0,0,0,0.3);
+  --shadow-knob-hover: 0 3px 8px rgba(0,0,0,0.6), 0 0 2px rgba(0,0,0,0.4);
+  --shadow-inset: inset 0 1px 3px rgba(0,0,0,0.4);
+
+  /* Knob surface */
+  --knob-body: #1E1E1E;
+  --knob-body-highlight: #2A2A2A;
+  --knob-rim: #151515;
+  --knob-rim-highlight: #303030;
+
+  /* Surface/border highlights */
+  --border-top-highlight: 1px solid rgba(255,255,255,0.04);
+  --surface-highlight: rgba(255,255,255,0.03);
+
+  /* Transitions */
+  --transition-fast: 100ms ease;
+  --transition-normal: 150ms ease;
+  --transition-slow: 250ms ease;
+
   /* Typography - slightly larger for readability */
+  --font-sans: 'ISO', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
   --text-micro: 10px;
   --text-tiny: 11px;
@@ -400,4 +425,69 @@ body {
 /* Sidebar alignment - left padding to align with sidebar */
 .sidebar-align {
   padding-left: var(--sidebar-width);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PREMIUM PANEL TREATMENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.panel-raised {
+  background: linear-gradient(
+    to bottom,
+    #1E1E1E 0%,
+    #141414 100%
+  );
+  box-shadow: var(--shadow-panel);
+  border-top: var(--border-top-highlight);
+}
+
+.panel-inset {
+  background: linear-gradient(
+    to bottom,
+    #111111 0%,
+    #141414 100%
+  );
+  box-shadow: var(--shadow-inset);
+}
+
+.panel-header {
+  background: linear-gradient(
+    to right,
+    var(--bg-elevated),
+    var(--bg-surface),
+    var(--bg-elevated)
+  );
+  box-shadow: inset 0 1px 0 var(--surface-highlight);
+}
+
+.panel-footer {
+  background: linear-gradient(
+    to right,
+    var(--bg-elevated),
+    var(--bg-surface),
+    var(--bg-elevated)
+  );
+  box-shadow: inset 0 1px 0 var(--surface-highlight);
+}
+
+/* Global button press feedback */
+button:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
+/* Light theme premium overrides */
+[data-theme="light"] .panel-raised {
+  background: linear-gradient(
+    to bottom,
+    #e8e8e8 0%,
+    #d4d4d4 100%
+  );
+}
+
+[data-theme="light"] .panel-inset {
+  background: linear-gradient(
+    to bottom,
+    #d0d0d0 0%,
+    #d8d8d8 100%
+  );
 }

@@ -7,13 +7,19 @@ import {
   ChevronRightIcon,
 } from '../ui/DotMatrixIcons'
 
-const TABS = ['Mixer', 'Modulation', 'Mod Matrix', 'Automation'] as const
+const TABS = ['LFO', 'Random', 'Step', 'Env', 'S&H', 'MIDI', 'Audio'] as const
 
 const TAB_STATUS: Record<string, string> = {
   Mixer: 'Mixer \u2014 Effect dry/wet levels',
-  Modulation: 'Modulation \u2014 LFO and modulation sources',
+  LFO: 'LFO \u2014 Low-frequency oscillator modulation',
   'Mod Matrix': 'Mod Matrix \u2014 Modulation routing overview',
   Automation: 'Automation \u2014 Parameter automation lanes',
+  Random: 'Random \u2014 Random value modulation',
+  Step: 'Step \u2014 Step sequencer modulation',
+  Env: 'Envelope \u2014 ADSR envelope modulation',
+  'S&H': 'S&H \u2014 Sample and hold modulation',
+  MIDI: 'MIDI \u2014 MIDI CC controller mapping',
+  Audio: 'Audio \u2014 Per-track audio reactive settings',
 }
 
 export function BottomPanelTabBar() {
@@ -54,7 +60,7 @@ export function BottomPanelTabBar() {
                 fontSize: 'var(--text-micro)',
                 letterSpacing: 'var(--tracking-wide)',
                 textTransform: 'uppercase',
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
                 fontWeight: 600,
                 padding: '0 12px',
                 cursor: 'pointer',

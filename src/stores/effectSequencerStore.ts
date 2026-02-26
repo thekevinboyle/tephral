@@ -7,6 +7,28 @@ import { persist } from 'zustand/middleware'
 
 export type EffectStepResolution = '1/4' | '1/8' | '1/16' | '1/32'
 
+export type AudioReactiveSource = 'kick' | 'silence' | 'high' | 'mid' | 'low' | 'rms' | 'peak'
+
+export interface TrackAudioReactiveConfig {
+  enabled: boolean
+  source: AudioReactiveSource
+  gain: number             // 0.1-4, input gain before envelope/threshold
+  threshold: number        // 0-1
+  speedMultiplier: number  // 0.25-4
+  attackMs: number         // 1-100
+  releaseMs: number        // 50-1000
+}
+
+const DEFAULT_AUDIO_REACTIVE: TrackAudioReactiveConfig = {
+  enabled: false,
+  source: 'rms',
+  gain: 1,
+  threshold: 0.3,
+  speedMultiplier: 1,
+  attackMs: 10,
+  releaseMs: 200,
+}
+
 export interface EffectStep {
   active: boolean
   locks: Record<string, number | string>  // paramId -> raw value
@@ -21,8 +43,9 @@ export interface EffectTrack {
   length: number                 // active step count (default 16)
   muted: boolean
   soloed: boolean
-  audioGate: boolean             // live mic amplitude gates effect on/off
   midiGate: boolean              // MIDI note gates effect on/off
+  audioReactive: TrackAudioReactiveConfig  // per-track audio-driven stepping
+  trackStep: number              // independent step position for audio-reactive mode
 }
 
 export interface AutomationParam {
@@ -48,7 +71,7 @@ interface EffectSequencerState {
   swing: number
   fillModeActive: boolean
   automationParam: AutomationParam | null
-  audioGateLevel: number             // 0-1 amplitude from video audio (for UI display)
+  trackAudioLevels: Record<string, number>  // per-track smoothed audio level for UI meters
 
   // Automation
   setAutomationParam: (param: AutomationParam) => void
@@ -69,10 +92,13 @@ interface EffectSequencerState {
   setTrackMode: (effectId: string, mode: 'gate' | 'param') => void
   setTrackMuted: (effectId: string, muted: boolean) => void
   setTrackSoloed: (effectId: string, soloed: boolean) => void
-  setTrackAudioGate: (effectId: string, enabled: boolean) => void
   setTrackMidiGate: (effectId: string, enabled: boolean) => void
-  setAudioGateLevel: (level: number) => void
   setTrackLength: (effectId: string, length: number) => void
+  setTrackAudioReactive: (effectId: string, config: Partial<TrackAudioReactiveConfig>) => void
+  setTrackAudioReactiveEnabled: (effectId: string, enabled: boolean) => void
+  advanceTrackStep: (effectId: string) => void
+  resetTrackSteps: () => void
+  setTrackAudioLevel: (effectId: string, level: number) => void
 
   // Step editing
   toggleStep: (effectId: string, stepIndex: number) => void
@@ -87,6 +113,7 @@ interface EffectSequencerState {
 
   // Utilities
   randomizeTrack: (effectId: string, density?: number) => void
+  randomizeAllTracks: (density?: number) => void
   randomizeLocks: (effectId: string, params: { id: string; min: number; max: number; step: number }[]) => void
   clearTrack: (effectId: string) => void
 
@@ -113,8 +140,9 @@ const createDefaultTrack = (effectId: string): EffectTrack => ({
   length: 8,
   muted: false,
   soloed: false,
-  audioGate: false,
   midiGate: false,
+  audioReactive: { ...DEFAULT_AUDIO_REACTIVE },
+  trackStep: 0,
 })
 
 // Immutable step update helper
@@ -148,13 +176,20 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
   swing: 0,
   fillModeActive: false,
   automationParam: null,
-  audioGateLevel: 0,
+  trackAudioLevels: {},
 
   // ─── Transport ─────────────────────────────────────────────────────────
 
   play: () => set({ isPlaying: true }),
 
-  stop: () => set({ isPlaying: false, currentStep: 0 }),
+  stop: () => {
+    const state = get()
+    const newTracks: Record<string, EffectTrack> = {}
+    for (const [id, track] of Object.entries(state.tracks)) {
+      newTracks[id] = { ...track, trackStep: 0 }
+    }
+    set({ isPlaying: false, currentStep: 0, tracks: newTracks, trackAudioLevels: {} })
+  },
 
   setBpm: (bpm) => set({ bpm: Math.max(20, Math.min(300, bpm)) }),
 
@@ -212,14 +247,6 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
     })
   },
 
-  setTrackAudioGate: (effectId, enabled) => {
-    set((state) => {
-      const track = state.tracks[effectId]
-      if (!track) return state
-      return { tracks: { ...state.tracks, [effectId]: { ...track, audioGate: enabled } } }
-    })
-  },
-
   setTrackMidiGate: (effectId, enabled) => {
     set((state) => {
       const track = state.tracks[effectId]
@@ -227,8 +254,6 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
       return { tracks: { ...state.tracks, [effectId]: { ...track, midiGate: enabled } } }
     })
   },
-
-  setAudioGateLevel: (level) => set({ audioGateLevel: level }),
 
   setTrackLength: (effectId, length) => {
     set((state) => {
@@ -241,6 +266,71 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
         },
       }
     })
+  },
+
+  setTrackAudioReactive: (effectId, config) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      return {
+        tracks: {
+          ...state.tracks,
+          [effectId]: {
+            ...track,
+            audioReactive: { ...track.audioReactive, ...config },
+          },
+        },
+      }
+    })
+  },
+
+  setTrackAudioReactiveEnabled: (effectId, enabled) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      return {
+        tracks: {
+          ...state.tracks,
+          [effectId]: {
+            ...track,
+            audioReactive: { ...track.audioReactive, enabled },
+            trackStep: 0,
+          },
+        },
+      }
+    })
+  },
+
+  advanceTrackStep: (effectId) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      return {
+        tracks: {
+          ...state.tracks,
+          [effectId]: {
+            ...track,
+            trackStep: (track.trackStep + 1) % track.length,
+          },
+        },
+      }
+    })
+  },
+
+  resetTrackSteps: () => {
+    set((state) => {
+      const newTracks: Record<string, EffectTrack> = {}
+      for (const [id, track] of Object.entries(state.tracks)) {
+        newTracks[id] = { ...track, trackStep: 0 }
+      }
+      return { tracks: newTracks, trackAudioLevels: {} }
+    })
+  },
+
+  setTrackAudioLevel: (effectId, level) => {
+    set((state) => ({
+      trackAudioLevels: { ...state.trackAudioLevels, [effectId]: level },
+    }))
   },
 
   // ─── Step Editing ──────────────────────────────────────────────────────
@@ -348,11 +438,28 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
     set((state) => {
       const track = state.tracks[effectId]
       if (!track) return state
-      const newSteps = track.steps.map((step, i) => ({
+      const newSteps = track.steps.map((step) => ({
         ...step,
-        active: i < track.length ? Math.random() < density : step.active,
+        active: Math.random() < density,
       }))
       return { tracks: { ...state.tracks, [effectId]: { ...track, steps: newSteps } } }
+    })
+  },
+
+  randomizeAllTracks: (density = 0.4) => {
+    set((state) => {
+      const newTracks = { ...state.tracks }
+      for (const effectId of Object.keys(newTracks)) {
+        const track = newTracks[effectId]
+        newTracks[effectId] = {
+          ...track,
+          steps: track.steps.map((step) => ({
+            ...step,
+            active: Math.random() < density,
+          })),
+        }
+      }
+      return { tracks: newTracks }
     })
   },
 

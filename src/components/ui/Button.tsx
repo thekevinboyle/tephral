@@ -57,7 +57,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           return {
             backgroundColor: 'var(--bg-surface)',
             border: '1px solid var(--border)',
+            borderTop: 'var(--border-top-highlight)',
             color: 'var(--text-muted)',
+            boxShadow: 'var(--shadow-button)',
           }
       }
     }
@@ -66,6 +68,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       if (disabled) return
       if (variant === 'default') {
         e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+        e.currentTarget.style.boxShadow = 'var(--shadow-button-hover)'
       } else if (variant === 'danger' || variant === 'active') {
         e.currentTarget.style.backgroundColor = 'var(--accent-dim)'
       }
@@ -75,13 +78,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       if (disabled) return
       const styles = getStyles()
       e.currentTarget.style.backgroundColor = styles.backgroundColor as string
+      if (variant === 'default') {
+        e.currentTarget.style.boxShadow = 'var(--shadow-button)'
+      }
     }
 
     return (
       <button
         ref={ref}
         disabled={disabled}
-        className={`${sizeClasses[size]} rounded-sm font-medium transition-colors active:scale-95 ${className}`}
+        className={`${sizeClasses[size]} rounded-sm font-medium transition-colors ${className}`}
         style={{
           ...getStyles(),
           ...style,

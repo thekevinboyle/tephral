@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useModulationStore, computeMorphedWave, LFO_COUNT } from '../../stores/modulationStore'
+import { useModulationStore, computeMorphedWave, LFO_COUNT, LFO_SHAPES, SYNC_DIVISIONS, type LFOShape } from '../../stores/modulationStore'
 import { useUIStore } from '../../stores/uiStore'
-import { WaveformDisplay } from './LFOEditorPanel'
+import { WaveformDisplay, LFODropdown } from './LFOEditorPanel'
 import { Knob } from './Knob'
 
 // Editable value pill — drag to adjust, double-click to type
@@ -115,10 +115,11 @@ function EditableValuePill({
       className="text-[9px] font-medium tabular-nums text-center select-none"
       style={{
         color: 'var(--text-secondary)',
-        border: '1px solid var(--border)',
-        borderRadius: 2,
-        padding: '1px 5px',
-        backgroundColor: 'var(--bg-primary)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 3,
+        padding: '2px 6px',
+        background: 'linear-gradient(to bottom, #0E0E0E, #121212)',
+        boxShadow: 'var(--shadow-inset)',
         minWidth: 42,
         cursor: 'ns-resize',
       }}
@@ -170,6 +171,9 @@ export function ModulationAssignPanel() {
   const setLFOTilt = useModulationStore((s) => s.setLFOTilt)
   const setLFOCurve = useModulationStore((s) => s.setLFOCurve)
   const setLFOPhaseOffset = useModulationStore((s) => s.setLFOPhaseOffset)
+  const setLFOShape = useModulationStore((s) => s.setLFOShape)
+  const setLFOSyncMode = useModulationStore((s) => s.setLFOSyncMode)
+  const setLFOSyncDivision = useModulationStore((s) => s.setLFOSyncDivision)
   const toggleAssignmentMode = useModulationStore((s) => s.toggleAssignmentMode)
   const assigningModulator = useModulationStore((s) => s.assigningModulator)
   const setAssigningModulator = useModulationStore((s) => s.setAssigningModulator)
@@ -214,43 +218,73 @@ export function ModulationAssignPanel() {
             >
               <span
                 className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: lfo.enabled ? 'var(--text-secondary)' : 'var(--text-ghost)' }}
+                style={{
+                  backgroundColor: lfo.enabled ? 'var(--accent)' : 'var(--text-ghost)',
+                  boxShadow: lfo.enabled ? '0 0 4px var(--accent-glow)' : 'none',
+                  transition: 'all var(--transition-normal)',
+                }}
               />
               <span
                 className="text-[9px] font-medium uppercase tracking-wider"
-                style={{ color: lfo.enabled ? 'var(--text-secondary)' : 'var(--text-ghost)' }}
+                style={{
+                  color: lfo.enabled ? 'var(--text-secondary)' : 'var(--text-ghost)',
+                  fontFamily: 'var(--font-sans)',
+                }}
               >
                 LFO {idx + 1}
               </span>
             </button>
+            <div className="flex-1" />
+            <LFODropdown
+              value={lfo.shape}
+              options={LFO_SHAPES as unknown as LFOShape[]}
+              onChange={(v) => setLFOShape(idx, v)}
+              width={76}
+            />
           </div>
           <div style={{ width: 160, height: 68 }}>
             <WaveformDisplay tilt={lfo.tilt} curve={lfo.curve} phase={lfo.enabled ? displayPhase : 0} />
           </div>
         </div>
 
-        {/* Rate column — larger, first */}
+        {/* Rate / Sync division column */}
         <div className="flex flex-col items-center" style={{ gap: 3 }}>
-          <Knob
-            label="Rate"
-            value={lfo.rate}
-            min={0.1}
-            max={20}
-            step={0.1}
-            size="md"
-            color="var(--text-muted)"
-            onChange={(v) => setLFORate(idx, v)}
-            statusText="LFO Rate \u2014 Modulation speed in Hz"
-          />
-          <EditableValuePill
-            value={lfo.rate}
-            min={0.1}
-            max={20}
-            step={0.1}
-            onChange={(v) => setLFORate(idx, v)}
-            format={(v) => `${v.toFixed(2)} Hz`}
-            parse={(s) => parseFloat(s.replace(/\s*hz\s*/i, ''))}
-          />
+          {lfo.syncMode === 'sync' ? (
+            <>
+              <span className="text-[9px] uppercase tracking-wide leading-none font-medium" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>
+                Div
+              </span>
+              <LFODropdown
+                value={lfo.syncDivision}
+                options={SYNC_DIVISIONS.map(d => d.label)}
+                onChange={(v) => setLFOSyncDivision(idx, v)}
+                width={64}
+              />
+            </>
+          ) : (
+            <>
+              <Knob
+                label="Rate"
+                value={lfo.rate}
+                min={0.1}
+                max={20}
+                step={0.1}
+                size="md"
+                color="var(--text-muted)"
+                onChange={(v) => setLFORate(idx, v)}
+                statusText="LFO Rate \u2014 Modulation speed in Hz"
+              />
+              <EditableValuePill
+                value={lfo.rate}
+                min={0.1}
+                max={20}
+                step={0.1}
+                onChange={(v) => setLFORate(idx, v)}
+                format={(v) => `${v.toFixed(2)} Hz`}
+                parse={(s) => parseFloat(s.replace(/\s*hz\s*/i, ''))}
+              />
+            </>
+          )}
         </div>
 
         {/* Tilt column */}
@@ -329,14 +363,18 @@ export function ModulationAssignPanel() {
         <div className="flex items-center" style={{ height: 68 }}>
           <button
             onClick={() => toggleAssignmentMode(`lfo-${idx}`)}
-            className="text-[8px] font-medium uppercase tracking-wider px-2.5 rounded-sm"
+            className="text-[8px] font-medium uppercase tracking-wider px-2.5"
             style={{
-              height: 18,
-              backgroundColor: isAssigning ? 'var(--text-secondary)' : 'transparent',
+              height: 20,
+              backgroundColor: isAssigning ? 'var(--accent)' : 'transparent',
               color: isAssigning ? 'var(--bg-primary)' : 'var(--text-ghost)',
-              border: `1px solid ${isAssigning || isAnyAssigning ? 'var(--text-muted)' : 'var(--border)'}`,
+              border: `1px solid ${isAssigning ? 'var(--accent)' : 'rgba(255,255,255,0.06)'}`,
+              borderRadius: 4,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
+              fontFamily: 'var(--font-sans)',
+              boxShadow: isAssigning ? '0 0 8px var(--accent-glow)' : 'var(--shadow-button)',
+              transition: 'all var(--transition-normal)',
             }}
             onMouseEnter={() => setStatusText('Assign \u2014 Map LFO to effect parameters')}
             onMouseLeave={() => setStatusText(null)}
@@ -349,7 +387,18 @@ export function ModulationAssignPanel() {
       {/* Row 2: 4x2 LFO selector grid + Sync */}
       <div className="flex items-center" style={{ gap: 6 }}>
         {/* 4x2 mini waveform grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, auto)', gridTemplateRows: 'repeat(2, auto)', gap: 2 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, auto)',
+            gridTemplateRows: 'repeat(2, auto)',
+            gap: 2,
+            padding: 3,
+            borderRadius: 4,
+            background: 'linear-gradient(to bottom, #0E0E0E, #121212)',
+            boxShadow: 'var(--shadow-inset)',
+          }}
+        >
           {Array.from({ length: LFO_COUNT }, (_, i) => {
             const isSelected = i === idx
             const l = lfos[i]
@@ -357,24 +406,27 @@ export function ModulationAssignPanel() {
               <button
                 key={i}
                 onClick={() => handleLFOSelect(i)}
-                className="flex flex-col items-center justify-center rounded-sm"
+                className="flex flex-col items-center justify-center"
                 style={{
                   width: 36,
                   height: 26,
-                  backgroundColor: isSelected ? 'var(--bg-hover)' : 'transparent',
-                  border: `1px solid ${isSelected ? 'var(--text-muted)' : 'var(--border)'}`,
+                  backgroundColor: isSelected ? 'var(--accent-subtle)' : 'transparent',
+                  border: `1px solid ${isSelected ? 'var(--accent)' : 'rgba(255,255,255,0.06)'}`,
+                  borderRadius: 3,
                   cursor: 'pointer',
                   padding: '2px 2px 0',
                   position: 'relative',
+                  boxShadow: isSelected ? '0 0 6px var(--accent-glow)' : 'none',
+                  transition: 'all var(--transition-fast)',
                 }}
                 onMouseEnter={() => setStatusText(`LFO ${i + 1} \u2014 Select modulator`)}
                 onMouseLeave={() => setStatusText(null)}
               >
                 <MiniWaveform tilt={l.tilt} curve={l.curve} active={isSelected} enabled={l.enabled} />
                 <span
-                  className="text-[6px] font-medium leading-none"
+                  className="text-[6px] font-medium leading-none tabular-nums"
                   style={{
-                    color: isSelected ? 'var(--text-secondary)' : 'var(--text-ghost)',
+                    color: isSelected ? 'var(--accent)' : 'var(--text-ghost)',
                     position: 'absolute',
                     bottom: 1,
                     right: 2,
@@ -388,7 +440,8 @@ export function ModulationAssignPanel() {
                     style={{
                       width: 3,
                       height: 3,
-                      backgroundColor: 'var(--text-secondary)',
+                      backgroundColor: 'var(--accent)',
+                      boxShadow: '0 0 4px var(--accent-glow)',
                       position: 'absolute',
                       top: 2,
                       left: 2,
@@ -401,30 +454,38 @@ export function ModulationAssignPanel() {
         </div>
 
         {/* Sync toggle */}
-        <div className="flex rounded-sm overflow-hidden" style={{ border: '1px solid var(--border)', marginLeft: 2 }}>
-          <button
-            className="text-[8px] font-medium uppercase tracking-wider px-2"
-            style={{
-              height: 18,
-              backgroundColor: 'var(--bg-hover)',
-              color: 'var(--text-secondary)',
-              borderRight: '1px solid var(--border)',
-              cursor: 'pointer',
-            }}
-          >
-            Free
-          </button>
-          <button
-            className="text-[8px] font-medium uppercase tracking-wider px-2"
-            style={{
-              height: 18,
-              backgroundColor: 'transparent',
-              color: 'var(--text-ghost)',
-              cursor: 'pointer',
-            }}
-          >
-            Sync
-          </button>
+        <div
+          className="flex overflow-hidden"
+          style={{
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: 3,
+            marginLeft: 2,
+            boxShadow: 'var(--shadow-button)',
+            background: '#111111',
+          }}
+        >
+          {(['free', 'sync'] as const).map((mode) => {
+            const active = lfo.syncMode === mode
+            return (
+              <button
+                key={mode}
+                onClick={() => setLFOSyncMode(idx, mode)}
+                className="text-[9px] font-medium uppercase tracking-wider"
+                style={{
+                  height: 20,
+                  padding: '0 8px',
+                  backgroundColor: active ? 'rgba(255,255,255,0.10)' : 'transparent',
+                  color: active ? '#F5F0EB' : '#5A5450',
+                  borderRight: mode === 'free' ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  transition: 'all 80ms ease',
+                }}
+              >
+                {mode === 'free' ? 'Free' : 'Sync'}
+              </button>
+            )
+          })}
         </div>
       </div>
     </div>

@@ -92,6 +92,7 @@ export function BankButton({
       className="w-full h-full flex items-center justify-center rounded-sm text-[12px] font-medium select-none transition-all duration-100"
       style={{
         ...styles,
+        fontFamily: 'var(--font-sans)',
         boxShadow: isFlashing ? '0 0 12px var(--accent-glow)' : styles.boxShadow,
         transform: isFlashing ? 'scale(1.05)' : 'scale(1)',
       }}

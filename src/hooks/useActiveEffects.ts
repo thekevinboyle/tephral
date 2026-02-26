@@ -12,7 +12,7 @@ import { useStrandStore } from '../stores/strandStore'
 import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
 import { useRoutingStore } from '../stores/routingStore'
-import { EFFECTS } from '../config/effects'
+import { EFFECTS, PAGE_NAMES, getEffectsForPage } from '../config/effects'
 
 export interface ActiveEffect {
   id: string
@@ -192,4 +192,16 @@ export function useActiveEffects() {
   ])
 
   return { sortedEffects }
+}
+
+/** Look up effect label and color from config arrays by effectId */
+export function getEffectInfo(effectId: string): { label: string; color: string } | null {
+  for (let i = 0; i < PAGE_NAMES.length; i++) {
+    const effects = getEffectsForPage(i)
+    const match = effects.find(e => e.id === effectId)
+    if (match && match.row !== 'reserved') {
+      return { label: match.label, color: match.color }
+    }
+  }
+  return null
 }

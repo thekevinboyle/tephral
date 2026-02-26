@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useSequencerContainerStore } from '../../stores/sequencerContainerStore'
+import { useRoutingStore } from '../../stores/routingStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useEffectSequencerPlayback } from '../../hooks/useEffectSequencerPlayback'
 import { useWebMIDI } from '../../hooks/useWebMIDI'
@@ -14,8 +15,6 @@ import {
   type EffectDefinition,
 } from '../../config/effects'
 import { EffectTabsBar } from './EffectTabsBar'
-import { ModTabsBar, type ParamView } from './ModTabsBar'
-import { ModulationContent } from './ModulationContent'
 import { SequencerTransport } from './SequencerTransport'
 import { EffectTrackRow } from './EffectTrackRow'
 
@@ -28,8 +27,6 @@ const ALL_EFFECTS: EffectDefinition[] = [
 const EFFECT_MAP = new Map(ALL_EFFECTS.map((e) => [e.id, e]))
 
 export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: boolean } = {}) {
-  // Local state for param view switching
-  const [paramView, setParamView] = useState<ParamView>('effect')
 
   // Store hooks
   const { selectedEffectId, setSelectedEffect } = useUIStore()
@@ -91,7 +88,6 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
   useEffect(() => {
     if (selectedStep && selectedStep.effectId !== selectedEffectId) {
       setSelectedEffect(selectedStep.effectId)
-      setParamView('effect')
     }
   }, [selectedStep, selectedEffectId, setSelectedEffect])
 
@@ -99,18 +95,64 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
   const handleEffectTabSelect = useCallback(
     (effectId: string) => {
       setSelectedEffect(effectId)
-      setParamView('effect')
     },
     [setSelectedEffect],
   )
 
-  // ─── Mod tab click → toggle modulator view ─────────────────────────────
-  const handleModSelect = useCallback(
-    (view: ParamView) => {
-      setParamView(view)
+  // ─── Drag-to-reorder track rows (signal chain order) ─────────────────
+  const { effectOrder, reorderEffect } = useRoutingStore()
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
+  const [dragSide, setDragSide] = useState<'top' | 'bottom'>('top')
+  const draggedId = useRef<string | null>(null)
+
+  const handleRowDragStart = useCallback((effectId: string, e: React.DragEvent) => {
+    draggedId.current = effectId
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', effectId)
+  }, [])
+
+  const handleRowDragOver = useCallback((effectId: string, e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const midY = rect.top + rect.height / 2
+    setDragOverId(effectId)
+    setDragSide(e.clientY < midY ? 'top' : 'bottom')
+  }, [])
+
+  const handleRowDragLeave = useCallback(() => {
+    setDragOverId(null)
+  }, [])
+
+  const handleRowDrop = useCallback(
+    (targetId: string, e: React.DragEvent) => {
+      e.preventDefault()
+      const sourceId = draggedId.current
+      if (!sourceId || sourceId === targetId) {
+        setDragOverId(null)
+        draggedId.current = null
+        return
+      }
+
+      const fromIndex = effectOrder.indexOf(sourceId)
+      let toIndex = effectOrder.indexOf(targetId)
+      if (dragSide === 'bottom') toIndex++
+      if (fromIndex < toIndex) toIndex--
+
+      if (fromIndex !== -1 && toIndex >= 0 && fromIndex !== toIndex) {
+        reorderEffect(fromIndex, toIndex)
+      }
+
+      setDragOverId(null)
+      draggedId.current = null
     },
-    [],
+    [effectOrder, dragSide, reorderEffect],
   )
+
+  const handleRowDragEnd = useCallback(() => {
+    setDragOverId(null)
+    draggedId.current = null
+  }, [])
 
   // ─── Keyboard shortcuts ────────────────────────────────────────────────
   useEffect(() => {
@@ -180,24 +222,7 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
         />
       )}
 
-      {/* ─── Zone 2: Modulation content ────────────────────────────── */}
-      {paramView !== 'effect' && (
-        <div
-          className="flex-shrink-0 overflow-y-auto"
-          style={{
-            maxHeight: 200,
-            borderBottom: '1px solid var(--border)',
-            padding: 'var(--panel-padding-sm) var(--panel-padding)',
-          }}
-        >
-          <ModulationContent activeModulator={paramView} />
-        </div>
-      )}
-
-      {/* ─── Zone 3: Mod tabs ────────────────────────────────────────── */}
-      <ModTabsBar activeView={paramView} onSelectMod={handleModSelect} />
-
-      {/* ─── Zone 4: Transport ───────────────────────────────────────── */}
+      {/* ─── Zone 2: Transport ───────────────────────────────────────── */}
       <SequencerTransport
         isPlaying={isPlaying}
         bpm={bpm}
@@ -213,7 +238,7 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
         onPageChange={setStepPage}
       />
 
-      {/* ─── Zone 5: Track list ──────────────────────────────────────── */}
+      {/* ─── Zone 3: Track list (signal chain order) ──────────────────── */}
       <div className="flex-1 min-h-0 overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
         {activeTrackIds.length === 0 ? (
           <div
@@ -223,22 +248,47 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
             Enable effects on the grid to add tracks
           </div>
         ) : (
-          activeTrackIds.map((effectId) => {
+          activeTrackIds.map((effectId, index) => {
             const def = EFFECT_MAP.get(effectId)
             const isSelectedTrack = effectId === selectedEffectId
+            const isDragTarget = dragOverId === effectId
             return (
-              <EffectTrackRow
+              <div
                 key={effectId}
-                effectId={effectId}
-                track={tracks[effectId]}
-                stepPage={stepPage}
-                currentStep={currentStep}
-                selectedStep={selectedStep}
-                color={def?.color ?? 'var(--text-muted)'}
-                label={def?.label ?? effectId}
-                isSelectedTrack={isSelectedTrack}
-                onSelectTrack={handleEffectTabSelect}
-              />
+                draggable
+                onDragStart={(e) => handleRowDragStart(effectId, e)}
+                onDragOver={(e) => handleRowDragOver(effectId, e)}
+                onDragLeave={handleRowDragLeave}
+                onDrop={(e) => handleRowDrop(effectId, e)}
+                onDragEnd={handleRowDragEnd}
+                className="relative"
+                style={{ cursor: 'grab' }}
+              >
+                {/* Drop indicator */}
+                {isDragTarget && (
+                  <div
+                    className="absolute left-0 right-0 z-10"
+                    style={{
+                      [dragSide === 'top' ? 'top' : 'bottom']: -2,
+                      height: 2,
+                      backgroundColor: 'var(--seq-accent)',
+                      boxShadow: '0 0 4px var(--seq-accent)',
+                    }}
+                  />
+                )}
+                <EffectTrackRow
+                  effectId={effectId}
+                  track={tracks[effectId]}
+                  stepPage={stepPage}
+                  currentStep={currentStep}
+                  selectedStep={selectedStep}
+                  color={def?.color ?? 'var(--text-muted)'}
+                  label={def?.label ?? effectId}
+                  isSelectedTrack={isSelectedTrack}
+                  onSelectTrack={handleEffectTabSelect}
+                  orderIndex={index + 1}
+                />
+              </div>
             )
           })
         )}

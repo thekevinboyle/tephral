@@ -425,7 +425,10 @@ export function Knob({
               ? 'text-[9px] uppercase tracking-wide leading-none font-medium'
               : 'text-[14px] font-medium'
         }
-        style={{ color: isCompact ? 'var(--text-muted)' : showArc ? 'var(--text-secondary)' : 'var(--text-muted)' }}
+        style={{
+          color: isCompact ? 'var(--text-muted)' : showArc ? 'var(--text-secondary)' : 'var(--text-muted)',
+          fontFamily: 'var(--font-sans)',
+        }}
       >
         {label}
       </span>
@@ -475,20 +478,36 @@ export function Knob({
           </div>
         )}
 
+        {/* Outer rim ring */}
+        {!isCompact && (
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: 'linear-gradient(135deg, var(--knob-rim-highlight), var(--knob-rim))',
+            }}
+          />
+        )}
         {/* Dark circle body */}
         <div
-          className="absolute inset-0 rounded-full"
+          className="absolute rounded-full"
           style={{
-            backgroundColor: isCompact ? '#12121f' : 'var(--bg-surface)',
-            border: isCompact ? '1px solid #2a2a40' : '1px solid var(--border)',
+            inset: isCompact ? 0 : 2,
+            background: isCompact
+              ? '#12121f'
+              : 'radial-gradient(ellipse at 35% 30%, var(--knob-body-highlight), var(--knob-body))',
+            border: isCompact ? '1px solid #2a2a40' : 'none',
+            boxShadow: 'var(--shadow-knob)',
+            transition: 'box-shadow var(--transition-fast)',
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-knob-hover)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-knob)' }}
         />
 
         {/* Line indicator */}
         <div
           className="absolute"
           style={{
-            width: isCompact ? 1.5 : 2,
+            width: isCompact ? 1 : size === 'sm' ? 1 : 2,
             height: dimensions.indicator,
             top: isCompact ? 3 : 4,
             left: '50%',
@@ -496,6 +515,7 @@ export function Knob({
             transform: `translateX(-50%) rotate(${rotation}deg)`,
             transformOrigin: `center ${dimensions.outer / 2 - (isCompact ? 3 : 4)}px`,
             borderRadius: 1,
+            boxShadow: normalized !== 0 ? `0 0 4px ${arcColor}60` : 'none',
           }}
         />
 
@@ -534,6 +554,7 @@ export function Knob({
             padding: isCompact ? '1px 4px' : '2px 6px',
             backgroundColor: `${arcColor}08`,
             minWidth: isCompact ? 32 : undefined,
+            boxShadow: 'var(--shadow-inset)',
           }}
         >
           {displayValue}

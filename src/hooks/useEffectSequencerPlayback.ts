@@ -1,8 +1,10 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { useEffectSequencerStore } from '../stores/effectSequencerStore'
+import { useEffectSequencerStore, type EffectTrack, type AudioReactiveSource } from '../stores/effectSequencerStore'
 import { useSequencerStore } from '../stores/sequencerStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
+import { useAudioReactiveStore } from '../stores/audioReactiveStore'
+import { useAudioSourceStore } from '../stores/audioSourceStore'
 import { EFFECT_PARAM_REGISTRY } from '../config/effectParams'
 
 // Resolution to beat fraction
@@ -19,6 +21,7 @@ export function useEffectSequencerPlayback() {
   const resolution = useEffectSequencerStore((s) => s.resolution)
 
   const lastStepTime = useRef(0)
+  const lastFrameTime = useRef(0)
   const animationFrameId = useRef<number | null>(null)
   // Track which effects were enabled before playback (for gate mode restore)
   const prePlayEnabled = useRef<Record<string, boolean>>({})
@@ -32,12 +35,42 @@ export function useEffectSequencerPlayback() {
   // Track which effects were bypassed by mute/solo (to restore on stop/unmute)
   const muteBypassed = useRef<Set<string>>(new Set())
 
+  // Per-track audio-reactive state
+  const trackEnvelopes = useRef<Record<string, number>>({})
+  const trackWasAbove = useRef<Record<string, boolean>>({})
+  const trackStepAccum = useRef<Record<string, number>>({})
+
   // ─── Timing ────────────────────────────────────────────────────────────
 
   const getMsPerStep = useCallback(() => {
     const beatsPerStep = RESOLUTION_BEATS[resolution] || 0.25
     return (60000 / bpm) * beatsPerStep
   }, [bpm, resolution])
+
+  // ─── Audio value reader ──────────────────────────────────────────────
+
+  const getAudioValue = useCallback((source: AudioReactiveSource): number => {
+    const ar = useAudioReactiveStore.getState()
+    const as = useAudioSourceStore.getState()
+
+    // Band values from audioReactiveStore are processed with gain (default 2×)
+    // and power curve (default ^2), which makes them run very hot.
+    // Undo the power curve to get a more linear 0-1 range for threshold use.
+    const { curve } = ar
+    const invCurve = curve > 0 ? 1 / curve : 1
+    const linearize = (v: number) => Math.pow(Math.min(1, Math.max(0, v)), invCurve)
+
+    switch (source) {
+      case 'kick':    return linearize(ar.sub)
+      case 'low':     return linearize(ar.sub)
+      case 'mid':     return linearize(ar.mid)
+      case 'high':    return linearize(ar.high)
+      case 'peak':    return Math.min(1, ar.hit)
+      case 'rms':     return as.amplitude
+      case 'silence': return 1 - as.amplitude
+      default:        return 0
+    }
+  }, [])
 
   // ─── Base value capture ────────────────────────────────────────────────
 
@@ -59,6 +92,9 @@ export function useEffectSequencerPlayback() {
     preLockValues.current = {}
     prevLockedParams.current = {}
     muteBypassed.current = new Set()
+    trackEnvelopes.current = {}
+    trackWasAbove.current = {}
+    trackStepAccum.current = {}
   }, [])
 
   const restoreBaseValues = useCallback(() => {
@@ -68,6 +104,11 @@ export function useEffectSequencerPlayback() {
     for (const effectId of Object.keys(currentTracks)) {
       const entry = EFFECT_PARAM_REGISTRY[effectId]
       if (!entry) continue
+
+      // Restore enabled state for audio-reactive tracks that were off before playback
+      if (prePlayEnabled.current[effectId] === false) {
+        entry.setEnabled(false)
+      }
 
       // Restore mix for gate mode tracks
       if (effectId in baseMix.current) {
@@ -101,124 +142,112 @@ export function useEffectSequencerPlayback() {
     prevLockedParams.current = {}
   }, [])
 
-  // ─── Step execution ────────────────────────────────────────────────────
+  // ─── Single-track step execution ─────────────────────────────────────
+  // Extracted from executeStep so both BPM and audio-reactive paths can use it
 
-  const executeStep = useCallback(() => {
-    const state = useEffectSequencerStore.getState()
-    const { tracks: currentTracks, currentStep, fillModeActive: fill } = state
-    const effectOrder = useRoutingStore.getState().effectOrder
+  const executeTrackAtStep = useCallback((
+    effectId: string,
+    track: EffectTrack,
+    stepIndex: number,
+    fill: boolean,
+    hasSolo: boolean,
+  ) => {
+    const entry = EFFECT_PARAM_REGISTRY[effectId]
+    if (!entry) return
 
-    // Check for any soloed tracks
-    const trackList = Object.values(currentTracks)
-    const hasSolo = trackList.some((t) => t.soloed)
-
-    for (const effectId of effectOrder) {
-      const track = currentTracks[effectId]
-      if (!track) continue
-
-      const entry = EFFECT_PARAM_REGISTRY[effectId]
-      if (!entry) continue
-
-      // Dynamically capture enabled/mix for newly added effects during playback
-      if (!(effectId in prePlayEnabled.current)) {
-        const ge = useGlitchEngineStore.getState()
-        prePlayEnabled.current[effectId] = entry.getEnabled()
-        baseMix.current[effectId] = ge.getEffectMix(effectId)
-      }
-
-      if (!prePlayEnabled.current[effectId]) continue
-
-      // Mute/solo: bypass the effect
-      const isMuted = track.muted || (hasSolo && !track.soloed)
-      if (isMuted) {
-        if (!muteBypassed.current.has(effectId)) {
-          useGlitchEngineStore.getState().setEffectBypassed(effectId, true)
-          muteBypassed.current.add(effectId)
-        }
-        continue
-      } else if (muteBypassed.current.has(effectId)) {
-        // Was muted, now unmuted — remove bypass
-        useGlitchEngineStore.getState().setEffectBypassed(effectId, false)
-        muteBypassed.current.delete(effectId)
-      }
-
-      const stepIndex = currentStep % track.length
-      const step = track.steps[stepIndex]
-
+    // Dynamically capture enabled/mix for newly added effects during playback
+    if (!(effectId in prePlayEnabled.current)) {
       const ge = useGlitchEngineStore.getState()
+      prePlayEnabled.current[effectId] = entry.getEnabled()
+      baseMix.current[effectId] = ge.getEffectMix(effectId)
+    }
 
-      // Condition check
-      if (step.condition === 'fill' && !fill) {
-        if (track.mode === 'gate') {
-          ge.setEffectMix(effectId, 0)
-        }
-        continue
+    // For audio-reactive tracks, always allow execution (effect may be "off"
+    // before playback — the audio trigger IS what turns it on)
+    if (!prePlayEnabled.current[effectId] && !track.audioReactive.enabled) return
+
+    // Mute/solo: bypass the effect
+    const isMuted = track.muted || (hasSolo && !track.soloed)
+    if (isMuted) {
+      if (!muteBypassed.current.has(effectId)) {
+        useGlitchEngineStore.getState().setEffectBypassed(effectId, true)
+        muteBypassed.current.add(effectId)
       }
+      return
+    } else if (muteBypassed.current.has(effectId)) {
+      useGlitchEngineStore.getState().setEffectBypassed(effectId, false)
+      muteBypassed.current.delete(effectId)
+    }
 
-      // Probability check
-      const shouldFire = step.active && Math.random() < step.probability
+    const step = track.steps[stepIndex]
+    const ge = useGlitchEngineStore.getState()
 
-      const origMix = baseMix.current[effectId] ?? 1
-
-      // Collect current step's locked param ids
-      const currentLockedIds = new Set(Object.keys(step.locks))
-      const prevLocked = prevLockedParams.current[effectId] ?? new Set<string>()
-
-      // Ensure preLockValues entry exists for this effect
-      if (!preLockValues.current[effectId]) {
-        preLockValues.current[effectId] = {}
+    // Condition check
+    if (step.condition === 'fill' && !fill) {
+      if (track.mode === 'gate') {
+        ge.setEffectMix(effectId, 0)
       }
-      const saved = preLockValues.current[effectId]
+      return
+    }
 
-      // Build a map of all params by id for quick lookup
-      const allParams = new Map<string, { apply: (v: any) => void; read: () => any }>()
-      for (const p of entry.getParams()) allParams.set(p.id, p)
-      if (entry.getSelectParams) {
-        for (const p of entry.getSelectParams()) allParams.set(p.id, p)
-      }
+    // Probability check
+    const shouldFire = step.active && Math.random() < step.probability
+    const origMix = baseMix.current[effectId] ?? 1
 
-      if (shouldFire) {
-        // 1. Restore params that were locked last step but aren't locked now
-        for (const pid of prevLocked) {
-          if (!currentLockedIds.has(pid) && pid in saved) {
-            const param = allParams.get(pid)
-            if (param) param.apply(saved[pid])
-            delete saved[pid]
-          }
-        }
+    // Collect current step's locked param ids
+    const currentLockedIds = new Set(Object.keys(step.locks))
+    const prevLocked = prevLockedParams.current[effectId] ?? new Set<string>()
 
-        // 2. For current locks: capture live value before applying if not already saved
-        for (const [pid, lockValue] of Object.entries(step.locks)) {
+    // Ensure preLockValues entry exists for this effect
+    if (!preLockValues.current[effectId]) {
+      preLockValues.current[effectId] = {}
+    }
+    const saved = preLockValues.current[effectId]
+
+    // Build a map of all params by id for quick lookup
+    const allParams = new Map<string, { apply: (v: any) => void; read: () => any }>()
+    for (const p of entry.getParams()) allParams.set(p.id, p)
+    if (entry.getSelectParams) {
+      for (const p of entry.getSelectParams()) allParams.set(p.id, p)
+    }
+
+    if (shouldFire) {
+      // 1. Restore params that were locked last step but aren't locked now
+      for (const pid of prevLocked) {
+        if (!currentLockedIds.has(pid) && pid in saved) {
           const param = allParams.get(pid)
-          if (!param) continue
-          if (!(pid in saved)) {
-            saved[pid] = param.read()
-          }
-          param.apply(lockValue)
-        }
-      } else {
-        // Step not firing — restore all previously locked params
-        for (const pid of prevLocked) {
-          if (pid in saved) {
-            const param = allParams.get(pid)
-            if (param) param.apply(saved[pid])
-            delete saved[pid]
-          }
+          if (param) param.apply(saved[pid])
+          delete saved[pid]
         }
       }
 
-      // Update prev locked set for next step
-      prevLockedParams.current[effectId] = shouldFire ? currentLockedIds : new Set()
-
-      // Gate mode mix handling (independent of param locks)
-      // Skip if audio gate is active — it controls mix independently
-      if (track.mode === 'gate' && !track.audioGate && !track.midiGate) {
-        ge.setEffectMix(effectId, shouldFire ? origMix : 0)
+      // 2. For current locks: capture live value before applying if not already saved
+      for (const [pid, lockValue] of Object.entries(step.locks)) {
+        const param = allParams.get(pid)
+        if (!param) continue
+        if (!(pid in saved)) {
+          saved[pid] = param.read()
+        }
+        param.apply(lockValue)
+      }
+    } else {
+      // Step not firing — restore all previously locked params
+      for (const pid of prevLocked) {
+        if (pid in saved) {
+          const param = allParams.get(pid)
+          if (param) param.apply(saved[pid])
+          delete saved[pid]
+        }
       }
     }
 
-    // Advance playhead
-    useEffectSequencerStore.getState().advanceStep()
+    // Update prev locked set for next step
+    prevLockedParams.current[effectId] = shouldFire ? currentLockedIds : new Set()
+
+    // Gate mode mix handling (independent of param locks)
+    if (track.mode === 'gate' && !track.midiGate) {
+      ge.setEffectMix(effectId, shouldFire ? origMix : 0)
+    }
   }, [])
 
   // ─── RAF loop ──────────────────────────────────────────────────────────
@@ -227,16 +256,102 @@ export function useEffectSequencerPlayback() {
     (timestamp: number) => {
       if (!isPlaying) return
 
+      const state = useEffectSequencerStore.getState()
+      const { tracks: currentTracks, currentStep, fillModeActive: fill } = state
+      const effectOrder = useRoutingStore.getState().effectOrder
+      const trackList = Object.values(currentTracks)
+      const hasSolo = trackList.some((t) => t.soloed)
+
+      const dt = (timestamp - lastFrameTime.current) / 1000 // seconds
+      lastFrameTime.current = timestamp
+
+      // Auto-enable audio reactive analysis when any track uses it
+      const anyAudioReactive = trackList.some((t) => t.audioReactive.enabled)
+      if (anyAudioReactive) {
+        const arState = useAudioReactiveStore.getState()
+        if (!arState.enabled) arState.setEnabled(true)
+      }
+
+      // === Audio-reactive tracks: check every frame ===
+      if (dt > 0 && dt < 1) { // guard against first frame / tab switch
+        for (const effectId of effectOrder) {
+          const track = currentTracks[effectId]
+          if (!track || !track.audioReactive.enabled) continue
+
+          const config = track.audioReactive
+          const rawValue = Math.min(1, getAudioValue(config.source) * config.gain)
+
+          // Per-track envelope following (for UI meter + release tail on trigger detection)
+          // Band sources (kick/low/mid/high) are already envelope-followed in useAudioReactive,
+          // so use a fast attack to avoid double-smoothing the rising edge.
+          const prev = trackEnvelopes.current[effectId] ?? 0
+          const isBandSource = config.source !== 'rms' && config.source !== 'silence' && config.source !== 'peak'
+          const effectiveAttackMs = isBandSource ? 1 : config.attackMs
+          const attackAlpha = 1 - Math.exp(-(dt) / (effectiveAttackMs / 1000))
+          const releaseAlpha = 1 - Math.exp(-(dt) / (config.releaseMs / 1000))
+          const alpha = rawValue > prev ? attackAlpha : releaseAlpha
+          const smoothed = prev + alpha * (rawValue - prev)
+          trackEnvelopes.current[effectId] = smoothed
+
+          // Update per-track audio level for UI meters
+          state.setTrackAudioLevel(effectId, smoothed)
+
+          // Rising-edge trigger detection — use raw value for bands (already smoothed upstream)
+          const triggerValue = isBandSource ? rawValue : smoothed
+          const wasAbove = trackWasAbove.current[effectId] ?? false
+          const isAbove = triggerValue >= config.threshold
+
+          if (isAbove && !wasAbove) {
+            // Ensure effect is enabled so gate mix actually has a visible result
+            const entry = EFFECT_PARAM_REGISTRY[effectId]
+            if (entry && !entry.getEnabled()) {
+              entry.setEnabled(true)
+            }
+
+            // Trigger! Accumulate step advancement
+            const accum = (trackStepAccum.current[effectId] ?? 0) + config.speedMultiplier
+            const stepsToAdvance = Math.floor(accum)
+            trackStepAccum.current[effectId] = accum - stepsToAdvance
+
+            // Re-read track for latest trackStep
+            const latestTrack = useEffectSequencerStore.getState().tracks[effectId]
+            if (latestTrack) {
+              for (let i = 0; i < stepsToAdvance; i++) {
+                const currentTrack = useEffectSequencerStore.getState().tracks[effectId]
+                if (!currentTrack) break
+                const stepIdx = currentTrack.trackStep % currentTrack.length
+                executeTrackAtStep(effectId, currentTrack, stepIdx, fill, hasSolo)
+                useEffectSequencerStore.getState().advanceTrackStep(effectId)
+              }
+            }
+          }
+
+          trackWasAbove.current[effectId] = isAbove
+        }
+      }
+
+      // === BPM-driven tracks: original timing logic ===
       const msPerStep = getMsPerStep()
 
       if (timestamp - lastStepTime.current >= msPerStep) {
         lastStepTime.current = timestamp
-        executeStep()
+
+        for (const effectId of effectOrder) {
+          const track = currentTracks[effectId]
+          if (!track) continue
+          if (track.audioReactive.enabled) continue // handled above
+
+          const stepIndex = currentStep % track.length
+          executeTrackAtStep(effectId, track, stepIndex, fill, hasSolo)
+        }
+
+        // Advance global step counter (for non-audio-reactive tracks)
+        useEffectSequencerStore.getState().advanceStep()
       }
 
       animationFrameId.current = requestAnimationFrame(playbackLoop)
     },
-    [isPlaying, getMsPerStep, executeStep],
+    [isPlaying, getMsPerStep, executeTrackAtStep, getAudioValue],
   )
 
   // ─── Start / stop ─────────────────────────────────────────────────────
@@ -249,6 +364,7 @@ export function useEffectSequencerPlayback() {
 
       captureBaseValues()
       lastStepTime.current = performance.now()
+      lastFrameTime.current = performance.now()
       animationFrameId.current = requestAnimationFrame(playbackLoop)
     } else {
       if (animationFrameId.current !== null) {

@@ -1,27 +1,9 @@
-import { useMemo } from 'react'
 import { useEffectLauncherStore, type CycleMode, type TriggerBand } from '../../stores/effectLauncherStore'
 import { useEffectLauncher } from '../../hooks/useEffectLauncher'
 import { getEffectInfo } from '../../hooks/useActiveEffects'
-import { PAGE_NAMES, getEffectsForPage } from '../../config/effects'
 import { Knob } from './Knob'
 import { CompactEffectParams } from './CompactEffectParams'
 import { getEffectParams } from '../../utils/effectControl'
-
-// Build a flat list of non-reserved effects grouped by page, for the picker dropdown
-function useEffectOptions() {
-  return useMemo(() => {
-    const groups: { pageName: string; effects: { id: string; label: string }[] }[] = []
-    for (let i = 0; i < PAGE_NAMES.length; i++) {
-      const pageEffects = getEffectsForPage(i)
-        .filter(e => e.row !== 'reserved')
-        .map(e => ({ id: e.id, label: e.label }))
-      if (pageEffects.length > 0) {
-        groups.push({ pageName: PAGE_NAMES[i], effects: pageEffects })
-      }
-    }
-    return groups
-  }, [])
-}
 
 const CYCLE_MODES: { key: CycleMode; label: string }[] = [
   { key: 'speed', label: 'SPD' },
@@ -75,8 +57,6 @@ export function EffectLauncherGrid() {
   const setThreshold = useEffectLauncherStore(s => s.setThreshold)
   const setHoldTime = useEffectLauncherStore(s => s.setHoldTime)
   const setFallbackRate = useEffectLauncherStore(s => s.setFallbackRate)
-
-  const effectOptions = useEffectOptions()
 
   const selectedCell = selectedIndex !== null ? cells[selectedIndex] : null
   const selectedInfo = selectedCell ? getEffectInfo(selectedCell.effectId) : null
@@ -255,45 +235,35 @@ export function EffectLauncherGrid() {
         <div
           className="flex-shrink-0 flex items-center px-2"
           style={{
-            height: 48,
+            height: 36,
             borderTop: '1px solid var(--border)',
             gap: 8,
           }}
         >
-          {/* Effect picker */}
-          <select
-            value={selectedCell?.effectId ?? ''}
-            onChange={e => {
-              const effectId = e.target.value
-              if (effectId && selectedIndex !== null) {
-                setCell(selectedIndex, effectId, {})
-              }
-            }}
-            style={{
+          {/* Cell label or assignment hint */}
+          {selectedCell ? (
+            <span style={{
               fontSize: 9,
               fontFamily: 'var(--font-sans)',
               textTransform: 'uppercase',
-              backgroundColor: 'var(--bg-primary)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border)',
-              borderRadius: 3,
-              padding: '3px 4px',
-              outline: 'none',
-              maxWidth: 100,
-              cursor: 'pointer',
-            }}
-          >
-            <option value="">-- FX --</option>
-            {effectOptions.map(group => (
-              <optgroup key={group.pageName} label={group.pageName}>
-                {group.effects.map(fx => (
-                  <option key={fx.id} value={fx.id}>
-                    {fx.label}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+              letterSpacing: '0.06em',
+              color: selectedInfo?.color ?? 'var(--text-secondary)',
+              flexShrink: 0,
+            }}>
+              {selectedInfo?.label ?? selectedCell.effectId}
+            </span>
+          ) : (
+            <span style={{
+              fontSize: 8,
+              fontFamily: 'var(--font-sans)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              color: 'var(--text-ghost)',
+              flexShrink: 0,
+            }}>
+              click effect to assign
+            </span>
+          )}
 
           {/* Compact effect params (when cell is populated) */}
           {selectedCell && selectedInfo && (
@@ -301,6 +271,9 @@ export function EffectLauncherGrid() {
               <CompactEffectParams effectId={selectedCell.effectId} color={selectedInfo.color} />
             </div>
           )}
+
+          {/* Spacer when no params */}
+          {!selectedCell && <div className="flex-1" />}
 
           {/* Snap button */}
           {selectedCell && (

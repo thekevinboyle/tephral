@@ -1,25 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useAudioSourceStore, type AudioSourceType, type AudioGateMode } from '../../stores/audioSourceStore'
+import { useState } from 'react'
+import { useAudioSourceStore, type AudioGateMode } from '../../stores/audioSourceStore'
 import { useUIStore } from '../../stores/uiStore'
-import { getAudioSourceStatusText, getUIStatusText } from '../../config/statusDescriptions'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { Knob } from '../performance/Knob'
-
-const SOURCES: { id: AudioSourceType; label: string }[] = [
-  { id: 'video', label: 'VID' },
-  { id: 'file', label: 'FILE' },
-  { id: 'mic', label: 'MIC' },
-]
 
 const ACTIVE_COLOR = '#FF3333'
 
 export function AudioSourceRow() {
-  const activeSource = useAudioSourceStore((s) => s.activeSource)
-  const audioFileName = useAudioSourceStore((s) => s.audioFileName)
-  const amplitude = useAudioSourceStore((s) => s.amplitude)
-  const waveformData = useAudioSourceStore((s) => s.waveformData)
-  const setActiveSource = useAudioSourceStore((s) => s.setActiveSource)
-  const setAudioFile = useAudioSourceStore((s) => s.setAudioFile)
-
   // Gate parameters
   const gateThreshold = useAudioSourceStore((s) => s.gateThreshold)
   const gateSensitivity = useAudioSourceStore((s) => s.gateSensitivity)
@@ -35,192 +22,20 @@ export function AudioSourceRow() {
   const setStatusText = useUIStore((s) => s.setStatusText)
   const [showGateSettings, setShowGateSettings] = useState(false)
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const rafRef = useRef<number | null>(null)
-
-  const handleFileImport = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]
-      if (file) {
-        const url = URL.createObjectURL(file)
-        setAudioFile(url, file.name)
-        setActiveSource('file')
-      }
-      e.target.value = ''
-    },
-    [setAudioFile, setActiveSource],
-  )
-
-  // Waveform drawing loop
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    function draw() {
-      const state = useAudioSourceStore.getState()
-      const data = state.waveformData
-      const threshold = state.gateThreshold
-      const sensitivity = state.gateSensitivity
-      const w = canvas!.width
-      const h = canvas!.height
-
-      ctx!.clearRect(0, 0, w, h)
-
-      // Draw threshold line (mapped to waveform space)
-      // RMS threshold maps roughly to waveform deviation from center
-      const thresholdDeviation = (threshold / sensitivity) * h * 0.5
-      const centerY = h / 2
-      ctx!.strokeStyle = '#FFCC0040'
-      ctx!.lineWidth = 1
-      ctx!.setLineDash([4, 4])
-      ctx!.beginPath()
-      ctx!.moveTo(0, centerY - thresholdDeviation)
-      ctx!.lineTo(w, centerY - thresholdDeviation)
-      ctx!.stroke()
-      ctx!.beginPath()
-      ctx!.moveTo(0, centerY + thresholdDeviation)
-      ctx!.lineTo(w, centerY + thresholdDeviation)
-      ctx!.stroke()
-      ctx!.setLineDash([])
-
-      // Draw waveform
-      ctx!.beginPath()
-      ctx!.strokeStyle = ACTIVE_COLOR
-      ctx!.lineWidth = 1.5
-
-      const sliceWidth = w / data.length
-      let x = 0
-      for (let i = 0; i < data.length; i++) {
-        const v = data[i] / 255
-        const y = v * h
-        if (i === 0) ctx!.moveTo(x, y)
-        else ctx!.lineTo(x, y)
-        x += sliceWidth
-      }
-      ctx!.stroke()
-
-      rafRef.current = requestAnimationFrame(draw)
-    }
-
-    rafRef.current = requestAnimationFrame(draw)
-    return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
-    }
-  }, [])
-
-  // Resize canvas to match element dimensions
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect
-        canvas.width = Math.floor(width * window.devicePixelRatio)
-        canvas.height = Math.floor(height * window.devicePixelRatio)
-      }
-    })
-    observer.observe(canvas)
-    return () => observer.disconnect()
-  }, [])
-
   return (
     <div className="flex-shrink-0" style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-elevated)' }}>
-      {/* Main row: source buttons + waveform + amplitude */}
+      {/* Gate toggle row */}
       <div
-        className="flex items-center"
+        className="flex items-center justify-end"
         style={{
-          height: 48,
+          height: 28,
           padding: '0 var(--panel-padding)',
           gap: 6,
         }}
       >
-        {/* Source toggle buttons */}
-        {SOURCES.map((source) => {
-          const isActive = activeSource === source.id
-          return (
-            <button
-              key={source.id}
-              onClick={() => setActiveSource(source.id)}
-              className="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm transition-colors"
-              style={{
-                backgroundColor: isActive ? `${ACTIVE_COLOR}20` : 'transparent',
-                color: isActive ? ACTIVE_COLOR : 'var(--text-ghost)',
-                border: isActive
-                  ? `1px solid ${ACTIVE_COLOR}40`
-                  : '1px solid transparent',
-              }}
-              onMouseEnter={() => setStatusText(getAudioSourceStatusText(source.id))}
-              onMouseLeave={() => setStatusText(null)}
-            >
-              {source.label}
-            </button>
-          )
-        })}
-
-        {/* Divider */}
-        <div className="w-px h-5" style={{ backgroundColor: 'var(--border)' }} />
-
-        {/* File import (visible when file source is active) */}
-        {activeSource === 'file' && (
-          <>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="audio/*"
-              onChange={handleFileImport}
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="text-[9px] px-2 py-1 rounded-sm truncate"
-              style={{
-                maxWidth: 120,
-                backgroundColor: 'var(--bg-elevated)',
-                color: audioFileName ? 'var(--text-secondary)' : 'var(--text-ghost)',
-                border: '1px solid var(--border)',
-              }}
-              onMouseEnter={() => setStatusText(getUIStatusText('audioImport'))}
-              onMouseLeave={() => setStatusText(null)}
-            >
-              {audioFileName ?? 'Import...'}
-            </button>
-          </>
-        )}
-
-        {/* Mini waveform canvas */}
-        <canvas
-          ref={canvasRef}
-          className="flex-1 min-w-0"
-          style={{ height: 32 }}
-        />
-
-        {/* Amplitude bar */}
-        <div
-          className="flex-shrink-0 rounded-sm overflow-hidden"
-          style={{
-            width: 4,
-            height: 32,
-            backgroundColor: 'var(--bg-elevated)',
-          }}
-        >
-          <div
-            style={{
-              width: '100%',
-              height: `${amplitude * 100}%`,
-              backgroundColor: ACTIVE_COLOR,
-              marginTop: `${(1 - amplitude) * 100}%`,
-              transition: 'height 0.05s, margin-top 0.05s',
-            }}
-          />
-        </div>
-
-        {/* Gate settings toggle */}
         <button
           onClick={() => setShowGateSettings(!showGateSettings)}
-          className="text-[9px] font-bold px-1.5 py-1 rounded-sm flex-shrink-0"
+          className="text-[9px] font-bold px-1.5 py-0.5 rounded-sm flex-shrink-0"
           style={{
             backgroundColor: showGateSettings ? `${ACTIVE_COLOR}20` : 'transparent',
             color: showGateSettings ? ACTIVE_COLOR : 'var(--text-ghost)',

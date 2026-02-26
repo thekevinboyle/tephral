@@ -1,6 +1,6 @@
 import { useUIStore } from '../../stores/uiStore'
 
-export type ParamView = 'effect' | 'lfo' | 'random' | 'step' | 'envelope' | 'sh' | 'midi' | 'audio'
+export type ParamView = 'effect' | 'lfo' | 'random' | 'step' | 'envelope' | 'sh' | 'midi'
 
 const MOD_SOURCES: { id: ParamView; label: string; color: string }[] = [
   { id: 'lfo', label: 'LFO', color: '#707070' },
@@ -9,7 +9,6 @@ const MOD_SOURCES: { id: ParamView; label: string; color: string }[] = [
   { id: 'envelope', label: 'Env', color: '#AA55FF' },
   { id: 'sh', label: 'S&H', color: '#AAFF00' },
   { id: 'midi', label: 'MIDI', color: '#00AAFF' },
-  { id: 'audio', label: 'Audio', color: '#FF3333' },
 ]
 
 interface ModTabsBarProps {
@@ -24,7 +23,6 @@ const MOD_STATUS: Record<string, string> = {
   envelope: 'Envelope — ADSR envelope modulation',
   sh: 'S&H — Sample and hold modulation',
   midi: 'MIDI — MIDI CC controller mapping',
-  audio: 'Audio — Audio-reactive frequency band mapping',
 }
 
 export function ModTabsBar({ activeView, onSelectMod }: ModTabsBarProps) {

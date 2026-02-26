@@ -18,6 +18,7 @@ interface EffectButtonProps {
   isSoloed?: boolean
   isMuted?: boolean
   statusText?: string
+  disabled?: boolean
 }
 
 export function EffectButton({
@@ -31,6 +32,7 @@ export function EffectButton({
   isSoloed = false,
   isMuted = false,
   statusText,
+  disabled = false,
 }: EffectButtonProps) {
   void _color // Keep color prop for API compatibility
   const dragStartY = useRef<number | null>(null)
@@ -53,6 +55,7 @@ export function EffectButton({
   const pointerDownTime = useRef<number>(0)
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (disabled) return
     e.preventDefault()
     dragStartY.current = e.clientY
     dragStartValue.current = mix
@@ -72,7 +75,7 @@ export function EffectButton({
         }
       }
     }, HOLD_THRESHOLD)
-  }, [mix, active, id, setSolo])
+  }, [mix, active, id, setSolo, disabled])
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (dragStartY.current === null) return
@@ -201,12 +204,19 @@ export function EffectButton({
       onPointerLeave={handlePointerLeave}
       onPointerCancel={handlePointerLeave}
       onMouseEnter={statusText ? () => setStatusText(statusText) : undefined}
-      className="relative rounded-sm flex select-none touch-none cursor-pointer w-full h-full p-1.5 overflow-hidden"
+      className="relative rounded-sm flex select-none touch-none w-full h-full p-1.5 overflow-hidden"
       style={{
         backgroundColor: 'var(--bg-surface)',
         border: isSoloed ? '1px solid var(--text-primary)' : active ? '1px solid var(--accent)' : '1px solid var(--border)',
-        opacity: isMuted ? 0.4 : 1,
-        boxShadow: isSoloed ? '0 0 8px var(--accent-glow)' : active ? 'inset 3px 0 0 var(--accent)' : 'none',
+        opacity: disabled ? 0.25 : isMuted ? 0.4 : 1,
+        cursor: disabled ? 'default' : 'pointer',
+        pointerEvents: disabled ? 'none' : 'auto',
+        boxShadow: isSoloed
+          ? '0 0 8px var(--accent-glow)'
+          : active
+            ? 'inset 3px 0 0 var(--accent), var(--shadow-button)'
+            : 'var(--shadow-button)',
+        borderTop: !isSoloed && !active ? 'var(--border-top-highlight)' : undefined,
         transition: 'box-shadow 0.15s ease-out, border 0.15s ease-out',
       }}
     >
@@ -227,6 +237,7 @@ export function EffectButton({
         style={{
           width: 4,
           backgroundColor: 'var(--border)',
+          boxShadow: 'var(--shadow-inset)',
         }}
       >
         {/* Fill from bottom */}

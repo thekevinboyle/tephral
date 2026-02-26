@@ -288,6 +288,8 @@ export class EffectPipeline {
       track_hands: config.handsTraceEnabled,
     }
 
+    // Add transition pass first (dissolve between clips)
+
     // Add individual effect passes in order (like guitar pedals in a chain)
     // Each effect processes the output of the previous one
     for (const effectId of config.effectOrder) {
@@ -358,6 +360,7 @@ export class EffectPipeline {
       this.crossfaderEffect.setCrossfaderPosition(position)
     }
   }
+
 
   setVideoSize(width: number, height: number) {
     this.videoWidth = width || 1

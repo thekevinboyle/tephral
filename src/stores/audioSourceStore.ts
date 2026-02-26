@@ -23,6 +23,10 @@ interface AudioSourceState {
   audioLoopStart: number    // seconds
   audioLoopEnd: number      // seconds, 0 = end of file
 
+  // Audio BPM detection
+  audioBpm: number | null
+  audioBpmSyncEnabled: boolean
+
   // Audio reactive FFT analyser
   reactiveAnalyser: AnalyserNode | null
   audioContext: AudioContext | null
@@ -42,6 +46,8 @@ interface AudioSourceState {
   setAudioLoopStart: (v: number) => void
   setAudioLoopEnd: (v: number) => void
   clearAudioLoop: () => void
+  setAudioBpm: (bpm: number | null) => void
+  setAudioBpmSyncEnabled: (enabled: boolean) => void
   setReactiveAnalyser: (node: AnalyserNode | null) => void
   setAudioContext: (ctx: AudioContext | null) => void
 }
@@ -63,6 +69,9 @@ export const useAudioSourceStore = create<AudioSourceState>((set, get) => ({
   audioLoopEnabled: false,
   audioLoopStart: 0,
   audioLoopEnd: 0,
+
+  audioBpm: null,
+  audioBpmSyncEnabled: true,
 
   reactiveAnalyser: null,
   audioContext: null,
@@ -110,6 +119,8 @@ export const useAudioSourceStore = create<AudioSourceState>((set, get) => ({
   setAudioLoopStart: (v) => set({ audioLoopStart: Math.max(0, v) }),
   setAudioLoopEnd: (v) => set({ audioLoopEnd: Math.max(0, v) }),
   clearAudioLoop: () => set({ audioLoopEnabled: false, audioLoopStart: 0, audioLoopEnd: 0 }),
+  setAudioBpm: (bpm) => set({ audioBpm: bpm }),
+  setAudioBpmSyncEnabled: (enabled) => set({ audioBpmSyncEnabled: enabled }),
   setReactiveAnalyser: (node) => set({ reactiveAnalyser: node }),
   setAudioContext: (ctx) => set({ audioContext: ctx }),
 }))

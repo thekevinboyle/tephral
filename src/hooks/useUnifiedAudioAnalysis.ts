@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { useMediaStore } from '../stores/mediaStore'
 import { useAudioSourceStore, type AudioSourceType } from '../stores/audioSourceStore'
+import { useEffectSequencerStore } from '../stores/effectSequencerStore'
+import { detectBpmFromUrl } from '../utils/detectBpm'
 
 const WAVEFORM_SIZE = 128
 
@@ -110,6 +112,19 @@ export function useUnifiedAudioAnalysis() {
           useAudioSourceStore.getState().setAudioContext(ctx)
 
           console.log('[UnifiedAudio] file pipeline connected: source → analyser + destination')
+
+          // Detect BPM from audio file (async, non-blocking)
+          if (audioFileUrl) {
+            detectBpmFromUrl(audioFileUrl).then((bpm) => {
+              if (cancelled) return
+              const store = useAudioSourceStore.getState()
+              store.setAudioBpm(bpm)
+              console.log('[UnifiedAudio] detected BPM:', bpm)
+              if (bpm !== null && store.audioBpmSyncEnabled) {
+                useEffectSequencerStore.getState().setBpm(bpm)
+              }
+            })
+          }
 
           audioCtxRef.current = ctx
           analyserRef.current = analyser
@@ -234,6 +249,7 @@ export function useUnifiedAudioAnalysis() {
     }
     useAudioSourceStore.getState().setReactiveAnalyser(null)
     useAudioSourceStore.getState().setAudioContext(null)
+    useAudioSourceStore.getState().setAudioBpm(null)
     if (fileElementRef.current) {
       fileElementRef.current.pause()
       fileElementRef.current.src = ''

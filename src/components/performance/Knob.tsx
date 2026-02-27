@@ -54,8 +54,6 @@ interface KnobProps {
 
 // SVG arc path helper — 270 degree sweep from -135 to +135
 const ARC_RADIUS = 46
-const ARC_CIRCUMFERENCE = 2 * Math.PI * ARC_RADIUS
-const ARC_SWEEP = (270 / 360) * ARC_CIRCUMFERENCE // ~216.77
 
 export function Knob({
   label,
@@ -109,7 +107,7 @@ export function Knob({
   } = usePolyEuclidStore()
   const { selectRouting, setStatusText } = useUIStore()
   const [isDropTarget, setIsDropTarget] = useState(false)
-  const [isModulationDrag, setIsModulationDrag] = useState(false)
+  const [, setIsModulationDrag] = useState(false)
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
 
   // Check assignment mode
@@ -400,7 +398,6 @@ export function Knob({
   const arcColor = sourceInfo ? sourceInfo.color : color
 
   const isCompact = size === 'xs'
-  const arcStrokeWidth = isCompact ? 6 : 5
 
   return (
     <div

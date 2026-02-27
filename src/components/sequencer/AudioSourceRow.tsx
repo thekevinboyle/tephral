@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAudioSourceStore, type AudioGateMode } from '../../stores/audioSourceStore'
+import { useAudioSourceStore } from '../../stores/audioSourceStore'
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { Knob } from '../performance/Knob'

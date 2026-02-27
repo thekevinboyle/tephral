@@ -233,7 +233,7 @@ export const PARAM_DESCRIPTIONS: Record<string, string> = {
 
   // Vision tracking
   BLOBS: 'Blobs \u2014 Maximum blobs to track',
-  FINT: 'Filter Int \u2014 Smoothing filter intensity',
+  FILTI: 'Filter Int \u2014 Smoothing filter intensity',
   TDCY: 'Trail Decay \u2014 Trail fade per frame',
   HUER: 'Hue Range \u2014 Hue tolerance range',
   SMIN: 'Sat Min \u2014 Minimum saturation filter',

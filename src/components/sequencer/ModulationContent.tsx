@@ -395,7 +395,8 @@ function LFOSelectorRow({ mod }: { mod: ModStore }) {
   )
 }
 
-function LFOContent({ mod, bpm, wrapped, selected, onSelect, routingCount, totalLfoRoutings }: { mod: ModStore; bpm: number; totalLfoRoutings?: number } & WrappedModProps) {
+function LFOContent({ mod, bpm, wrapped, selected, onSelect, routingCount: _routingCount, totalLfoRoutings }: { mod: ModStore; bpm: number; totalLfoRoutings?: number } & WrappedModProps) {
+  void _routingCount
   const color = '#707070'
   const idx = mod.selectedLFOIndex
   const lfo = mod.lfos[idx]
@@ -656,7 +657,7 @@ function MIDIModContent() {
   } = useMIDIStore()
 
   const { setAssigningModulator } = useModulationStore()
-  const { routings, addRouting, removeRouting, updateRoutingDepth } = useSequencerStore()
+  const { routings, removeRouting, updateRoutingDepth } = useSequencerStore()
 
   const [learnCC, setLearnCC] = useState<number | null>(null)
   const [isLearning, setIsLearning] = useState(false)

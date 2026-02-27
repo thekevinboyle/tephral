@@ -115,7 +115,7 @@ export function setEffectEnabled(effectId: string, enabled: boolean): void {
 // applyEffectParams — apply a params snapshot to an effect
 // ============================================================================
 
-export function applyEffectParams(effectId: string, params: Record<string, number>): void {
+export function applyEffectParams(effectId: string, params: Record<string, number | string | boolean>): void {
   const glitch = useGlitchEngineStore.getState()
   const ascii = useAsciiRenderStore.getState()
   const stipple = useStippleStore.getState()
@@ -151,10 +151,10 @@ export function applyEffectParams(effectId: string, params: Record<string, numbe
     case 'contour': contour.updateParams(params); break
     case 'landmarks':
       // Landmarks store uses individual setters, apply each key
-      if ('minDetectionConfidence' in params) landmarks.setMinDetectionConfidence(params.minDetectionConfidence)
-      if ('minTrackingConfidence' in params) landmarks.setMinTrackingConfidence(params.minTrackingConfidence)
-      if ('maxFaces' in params) landmarks.setMaxFaces(params.maxFaces)
-      if ('maxHands' in params) landmarks.setMaxHands(params.maxHands)
+      if ('minDetectionConfidence' in params) landmarks.setMinDetectionConfidence(params.minDetectionConfidence as number)
+      if ('minTrackingConfidence' in params) landmarks.setMinTrackingConfidence(params.minTrackingConfidence as number)
+      if ('maxFaces' in params) landmarks.setMaxFaces(params.maxFaces as number)
+      if ('maxHands' in params) landmarks.setMaxHands(params.maxHands as number)
       break
     // Vision tracking
     case 'track_bright': vision.updateBrightParams(params); break
@@ -183,9 +183,9 @@ export function applyEffectParams(effectId: string, params: Record<string, numbe
     // Overlays
     case 'texture_overlay':
       // Texture overlay uses individual setters
-      if ('opacity' in params) textureOverlay.setOpacity(params.opacity)
-      if ('scale' in params) textureOverlay.setScale(params.scale)
-      if ('animationSpeed' in params) textureOverlay.setAnimationSpeed(params.animationSpeed)
+      if ('opacity' in params) textureOverlay.setOpacity(params.opacity as number)
+      if ('scale' in params) textureOverlay.setScale(params.scale as number)
+      if ('animationSpeed' in params) textureOverlay.setAnimationSpeed(params.animationSpeed as number)
       break
     case 'data_overlay':
       dataOverlay.setStyle(params)
@@ -224,7 +224,7 @@ export function applyEffectParams(effectId: string, params: Record<string, numbe
 // getEffectParams — read current params snapshot from any effect's store
 // ============================================================================
 
-export function getEffectParams(effectId: string): Record<string, number> {
+export function getEffectParams(effectId: string): Record<string, number | string | boolean> {
   const glitch = useGlitchEngineStore.getState()
   const ascii = useAsciiRenderStore.getState()
   const stipple = useStippleStore.getState()

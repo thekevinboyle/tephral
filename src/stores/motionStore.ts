@@ -25,17 +25,29 @@ export const DEFAULT_MOTION_EXTRACT_PARAMS: MotionExtractParams = {
 export interface EchoTrailParams {
   trailCount: number     // 2-16, number of echo frames
   decay: number          // 0-1, how fast trails fade
+  decayCurve: number     // 0.5-3.0, exponential decay shape
   offset: number         // 0-0.1, position offset per frame
+  blendMode: number      // 0=max, 1=additive, 2=screen
+  trailZoom: number      // 0.98-1.02, zoom per trail frame
+  trailRotation: number  // -5 to 5 degrees per trail frame
   colorShift: boolean    // Shift hue over trail
-  hueAmount: number      // 0-60, degrees of hue shift
+  hueAmount: number      // 0-360, degrees of hue shift
+  saturationDecay: number // 0.9-1.1, saturation change per frame
+  mix: number            // 0-1, dry/wet
 }
 
 export const DEFAULT_ECHO_TRAIL_PARAMS: EchoTrailParams = {
   trailCount: 6,
   decay: 0.85,
+  decayCurve: 1.2,
   offset: 0,
+  blendMode: 0,
+  trailZoom: 1.0,
+  trailRotation: 0,
   colorShift: false,
   hueAmount: 15,
+  saturationDecay: 1.0,
+  mix: 1,
 }
 
 // ============================================================================

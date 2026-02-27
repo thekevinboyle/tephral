@@ -83,7 +83,7 @@ export function HeaderBar() {
         if (!freqDataRef.current || freqDataRef.current.length !== binCount) {
           freqDataRef.current = new Uint8Array(binCount)
         }
-        analyser.getByteFrequencyData(freqDataRef.current)
+        analyser.getByteFrequencyData(freqDataRef.current as Uint8Array<ArrayBuffer>)
         const freq = freqDataRef.current
 
         // Sample rate for bin-to-Hz mapping

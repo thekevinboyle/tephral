@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 export interface LauncherCell {
   effectId: string
-  params: Record<string, number>
+  params: Record<string, number | string | boolean>
 }
 
 export type CycleMode = 'speed' | 'selection' | 'combined'
@@ -19,7 +19,7 @@ interface EffectLauncherState {
   holdTime: number
   fallbackRate: number
 
-  setCell: (index: number, effectId: string, params: Record<string, number>) => void
+  setCell: (index: number, effectId: string, params: Record<string, number | string | boolean>) => void
   clearCell: (index: number) => void
   selectCell: (index: number | null) => void
   play: () => void

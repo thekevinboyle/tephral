@@ -11,7 +11,6 @@ import { MiddleSection } from './MiddleSection'
 import { ModulationLines } from './ModulationLines'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
 import { SharedEffectTabsBar } from '../sequencer/SharedEffectTabsBar'
-import { useUIStore } from '../../stores/uiStore'
 // DataTerminal stashed — component file kept, just not rendered
 // import { DataTerminal } from '../terminal/DataTerminal'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'

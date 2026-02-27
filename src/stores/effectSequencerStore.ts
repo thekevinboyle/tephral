@@ -44,6 +44,7 @@ export interface EffectTrack {
   muted: boolean
   soloed: boolean
   midiGate: boolean              // MIDI note gates effect on/off
+  audioGate: boolean             // audio-level gates effect on/off
   audioReactive: TrackAudioReactiveConfig  // per-track audio-driven stepping
   trackStep: number              // independent step position for audio-reactive mode
 }
@@ -72,6 +73,7 @@ interface EffectSequencerState {
   fillModeActive: boolean
   automationParam: AutomationParam | null
   trackAudioLevels: Record<string, number>  // per-track smoothed audio level for UI meters
+  audioGateLevel: number                     // current audio gate amplitude (0-1)
 
   // Automation
   setAutomationParam: (param: AutomationParam) => void
@@ -93,12 +95,14 @@ interface EffectSequencerState {
   setTrackMuted: (effectId: string, muted: boolean) => void
   setTrackSoloed: (effectId: string, soloed: boolean) => void
   setTrackMidiGate: (effectId: string, enabled: boolean) => void
+  setTrackAudioGate: (effectId: string, enabled: boolean) => void
   setTrackLength: (effectId: string, length: number) => void
   setTrackAudioReactive: (effectId: string, config: Partial<TrackAudioReactiveConfig>) => void
   setTrackAudioReactiveEnabled: (effectId: string, enabled: boolean) => void
   advanceTrackStep: (effectId: string) => void
   resetTrackSteps: () => void
   setTrackAudioLevel: (effectId: string, level: number) => void
+  setAudioGateLevel: (level: number) => void
 
   // Step editing
   toggleStep: (effectId: string, stepIndex: number) => void
@@ -141,6 +145,7 @@ const createDefaultTrack = (effectId: string): EffectTrack => ({
   muted: false,
   soloed: false,
   midiGate: false,
+  audioGate: false,
   audioReactive: { ...DEFAULT_AUDIO_REACTIVE },
   trackStep: 0,
 })
@@ -177,6 +182,7 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
   fillModeActive: false,
   automationParam: null,
   trackAudioLevels: {},
+  audioGateLevel: 0,
 
   // ─── Transport ─────────────────────────────────────────────────────────
 
@@ -252,6 +258,14 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
       const track = state.tracks[effectId]
       if (!track) return state
       return { tracks: { ...state.tracks, [effectId]: { ...track, midiGate: enabled } } }
+    })
+  },
+
+  setTrackAudioGate: (effectId, enabled) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      return { tracks: { ...state.tracks, [effectId]: { ...track, audioGate: enabled } } }
     })
   },
 
@@ -331,6 +345,10 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
     set((state) => ({
       trackAudioLevels: { ...state.trackAudioLevels, [effectId]: level },
     }))
+  },
+
+  setAudioGateLevel: (level) => {
+    set({ audioGateLevel: level })
   },
 
   // ─── Step Editing ──────────────────────────────────────────────────────

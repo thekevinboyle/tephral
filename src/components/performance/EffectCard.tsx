@@ -7,7 +7,7 @@ import { useSequencerStore } from '../../stores/sequencerStore'
 import { useModulationStore } from '../../stores/modulationStore'
 import { usePolyEuclidStore } from '../../stores/polyEuclidStore'
 import { CompactEffectParams } from './CompactEffectParams'
-import { EffectParameters } from './ExpandedParameterPanel'
+import { EffectParameters_v2 } from './ExpandedParameterPanel_v2'
 
 // Modulation source colors (shared with Knob)
 const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
@@ -386,7 +386,7 @@ export function EffectCard({
 
       {/* Full parameters — scrollable, fills remaining space */}
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
-        <EffectParameters effectId={effect.id} />
+        <EffectParameters_v2 effectId={effect.id} />
       </div>
     </div>
   )

@@ -9,6 +9,7 @@ const AUDIO_SOURCES: { id: AudioSourceType; label: string }[] = [
   { id: 'video', label: 'Vid' },
   { id: 'file', label: 'File' },
   { id: 'mic', label: 'Mic' },
+  { id: 'system', label: 'Sys' },
 ]
 
 export function HeaderBar() {

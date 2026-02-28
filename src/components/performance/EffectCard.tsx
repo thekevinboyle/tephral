@@ -30,6 +30,7 @@ function getSourceInfo(trackId: string): { name: string; color: string } | null 
       'audio-mid': { name: 'Mid', color: '#FF8800' },
       'audio-high': { name: 'High', color: '#33CCFF' },
       'audio-hit': { name: 'Hit', color: '#FF00FF' },
+      'audio-rms': { name: 'RMS', color: '#FFFFFF' },
     }
     return AUDIO_SOURCES[trackId] || null
   }

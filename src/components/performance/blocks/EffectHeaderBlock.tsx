@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useSpring, useTransition, animated } from '@react-spring/web'
 import { useEffectDisable } from '../../../hooks/useEffectDisable'
 import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS, DESTRUCTION_EFFECTS } from '../../../config/effects'
+import { BLOCK, SPRING } from './blockTheme'
 
 const ALL_EFFECTS = [...EFFECTS, ...STRAND_EFFECTS, ...MOTION_EFFECTS, ...DESTRUCTION_EFFECTS]
 
@@ -24,11 +26,25 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
   const color = effect?.color ?? 'var(--text-muted)'
   const category = getCategory(effectId)
   const { disableEffect } = useEffectDisable()
+  const [closeHovered, setCloseHovered] = useState(false)
 
-  // Color gradient spring
-  const colorSpring = useSpring({
-    opacity: bypassed ? 0.2 : 1,
-    config: { tension: 200, friction: 26 },
+  // Bypass state spring — opacity + letter spacing
+  const bypassSpring = useSpring({
+    opacity: bypassed ? 0.3 : 1,
+    barHeight: bypassed ? 0 : 4,
+    config: SPRING.smooth,
+  })
+
+  // Press-down spring
+  const [pressSpring, pressApi] = useSpring(() => ({
+    scale: 1,
+    config: SPRING.snappy,
+  }))
+
+  // Close button rotation spring
+  const closeSpring = useSpring({
+    rotate: closeHovered ? 90 : 0,
+    config: SPRING.snappy,
   })
 
   // Name transition
@@ -36,22 +52,33 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
     from: { opacity: 0, y: 12 },
     enter: { opacity: 1, y: 0 },
     leave: { opacity: 0, y: -12 },
-    config: { tension: 280, friction: 24 },
+    config: SPRING.smooth,
     keys: label,
   })
 
+  const handleClick = () => {
+    if (!onBypassToggle) return
+    pressApi.start({
+      scale: 0.98,
+      onRest: () => pressApi.start({ scale: 1 }),
+    })
+    onBypassToggle()
+  }
+
   return (
     <animated.div
-      onClick={onBypassToggle}
+      onClick={handleClick}
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: 6,
+        borderRadius: BLOCK.radius,
         overflow: 'hidden',
         cursor: onBypassToggle ? 'pointer' : 'default',
-        background: `linear-gradient(135deg, ${color}15 0%, transparent 60%)`,
-        border: `1px solid ${color}20`,
-        opacity: colorSpring.opacity,
+        background: `linear-gradient(135deg, ${color}15 0%, rgba(255,255,255,0.03) 60%)`,
+        border: '1px solid rgba(255,255,255,0.06)',
+        boxShadow: BLOCK.shadow,
+        opacity: bypassSpring.opacity,
+        scale: pressSpring.scale,
       }}
     >
       {/* Category */}
@@ -79,11 +106,12 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
               fontSize: 48,
               fontWeight: 800,
               textTransform: 'uppercase',
-              letterSpacing: '0.04em',
+              letterSpacing: bypassed ? '0.12em' : '0.04em',
               color: bypassed ? 'var(--text-ghost)' : 'var(--text-primary)',
               textDecoration: bypassed ? 'line-through' : 'none',
               textDecorationColor: 'var(--text-ghost)',
               whiteSpace: 'nowrap',
+              transition: 'letter-spacing 0.3s ease-out',
               ...style,
             }}
           >
@@ -93,11 +121,13 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
       </div>
 
       {/* Close button — top right, visible on hover */}
-      <button
+      <animated.button
         onClick={(e) => {
           e.stopPropagation()
           disableEffect(effectId)
         }}
+        onMouseEnter={() => setCloseHovered(true)}
+        onMouseLeave={() => setCloseHovered(false)}
         className="opacity-0 hover:opacity-100 transition-opacity"
         style={{
           position: 'absolute',
@@ -113,23 +143,24 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          rotate: closeSpring.rotate.to(r => `${r}deg`),
         }}
       >
         <svg width="14" height="14" viewBox="0 0 12 12">
           <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
-      </button>
+      </animated.button>
 
-      {/* Color accent bar at bottom */}
-      <div
+      {/* Color accent bar at bottom — spring-animated height */}
+      <animated.div
         style={{
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
-          height: 3,
+          height: bypassSpring.barHeight,
           backgroundColor: color,
-          opacity: bypassed ? 0.15 : 0.5,
+          opacity: 0.6,
         }}
       />
     </animated.div>

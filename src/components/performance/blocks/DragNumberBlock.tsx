@@ -1,10 +1,9 @@
 import { useRef, useState, useCallback } from 'react'
-import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
-import { BLOCK, SPRING } from './blockTheme'
+import { BLOCK } from './blockTheme'
 
-interface ParamBlockProps {
+interface DragNumberBlockProps {
   label: string
   value: number
   min: number
@@ -15,17 +14,13 @@ interface ParamBlockProps {
   color?: string
 }
 
-const TRACK_PADDING = 16
-const THUMB_W = 16
-const THUMB_H = 20
-
-export function ParamBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)' }: ParamBlockProps) {
+export function DragNumberBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)' }: DragNumberBlockProps) {
   const normalized = (value - min) / (max - min)
   const displayValue = step >= 1 ? value.toFixed(0) : step >= 0.1 ? value.toFixed(1) : value.toFixed(2)
   const containerRef = useRef<HTMLDivElement>(null)
-  const trackRef = useRef<HTMLDivElement>(null)
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
   const draggingRef = useRef(false)
+  const containerHeightRef = useRef(120)
   const lastAppliedRef = useRef(value)
 
   // Stable refs to avoid stale closures in gesture handler
@@ -34,12 +29,6 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
   const normalizedRef = useRef(normalized)
   normalizedRef.current = normalized
   lastAppliedRef.current = value
-
-  // Spring for thumb grab scale (cosmetic only)
-  const [thumbSpring, thumbApi] = useSpring(() => ({
-    scaleY: 1,
-    config: SPRING.snappy,
-  }))
 
   const applyValue = useCallback((norm: number) => {
     const clamped = Math.max(0, Math.min(1, norm))
@@ -52,25 +41,20 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
     }
   }, [min, max, step])
 
-  // Horizontal drag — absolute pointer position mapped to track
-  const trackRectRef = useRef<DOMRect | null>(null)
-  const bind = useDrag(({ down, first, last, event }) => {
+  // Vertical drag — relative movement (drag up = increase, drag down = decrease)
+  const startNormRef = useRef(0)
+  const bind = useDrag(({ down, movement: [, my], first, last, event }) => {
     event?.preventDefault()
     if (first) {
+      startNormRef.current = normalizedRef.current
       draggingRef.current = true
-      trackRectRef.current = trackRef.current?.getBoundingClientRect() ?? null
-      thumbApi.start({ scaleY: 1.15 })
+      containerHeightRef.current = containerRef.current?.getBoundingClientRect().height || 120
     }
-    const rect = trackRectRef.current
-    if (down && rect && event) {
-      const clientX = 'touches' in event ? (event as TouchEvent).touches[0].clientX : (event as PointerEvent).clientX
-      const norm = (clientX - rect.left) / rect.width
-      applyValue(norm)
+    if (down) {
+      applyValue(startNormRef.current + (-my / containerHeightRef.current))
     }
     if (last) {
       draggingRef.current = false
-      trackRectRef.current = null
-      thumbApi.start({ scaleY: 1 })
     }
   }, {
     pointer: { touch: true },
@@ -84,13 +68,10 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
     onChange(Math.max(min, Math.min(max, snapped)))
   }, [min, max, step, onChange])
 
-  // Direct CSS values — no spring, no bounce
-  const fillWidth = `${normalized * 100}%`
-  const thumbLeft = `calc(${normalized * 100}% - ${normalized * THUMB_W}px)`
-
   return (
     <div
       ref={containerRef}
+      {...bind()}
       onDoubleClick={handleDoubleClick}
       onContextMenu={paramId ? (e) => {
         e.preventDefault()
@@ -101,18 +82,31 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
         height: 120,
         borderRadius: BLOCK.radius,
         overflow: 'hidden',
+        cursor: 'ns-resize',
+        touchAction: 'none',
         userSelect: 'none',
         backgroundColor: BLOCK.bg,
         border: '1px solid rgba(255,255,255,0.06)',
         boxShadow: BLOCK.shadow,
       }}
     >
+      {/* Background glow — brighter at higher values */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(ellipse at center 60%, ${color}, transparent 70%)`,
+          opacity: normalized * 0.1,
+          pointerEvents: 'none',
+        }}
+      />
+
       {/* Label — top left */}
       <div
         style={{
           position: 'absolute',
-          top: 12,
-          left: TRACK_PADDING,
+          top: 10,
+          left: 12,
           fontSize: 9,
           fontWeight: 600,
           textTransform: 'uppercase',
@@ -124,14 +118,16 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
         {label}
       </div>
 
-      {/* Value — top right */}
+      {/* Giant value — centered */}
       <div
         style={{
           position: 'absolute',
-          top: 8,
-          right: TRACK_PADDING,
-          fontSize: 18,
-          fontWeight: 800,
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 48,
+          fontWeight: 900,
           fontVariantNumeric: 'tabular-nums',
           color: BLOCK.text,
           pointerEvents: 'none',
@@ -140,64 +136,19 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
         {displayValue}
       </div>
 
-      {/* Slider track area */}
+      {/* Fill bar at bottom */}
       <div
-        ref={trackRef}
-        {...bind()}
         style={{
           position: 'absolute',
-          left: TRACK_PADDING,
-          right: TRACK_PADDING,
-          top: 52,
-          height: 40,
-          cursor: 'grab',
-          touchAction: 'none',
-          display: 'flex',
-          alignItems: 'center',
+          bottom: 0,
+          left: 0,
+          height: 3,
+          width: `${normalized * 100}%`,
+          backgroundColor: color,
+          borderRadius: 3,
+          opacity: 0.8,
         }}
-      >
-        {/* Track groove */}
-        <div
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            height: 4,
-            borderRadius: 2,
-            backgroundColor: 'rgba(255,255,255,0.06)',
-            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.5)',
-          }}
-        >
-          {/* Fill */}
-          <div
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: fillWidth,
-              backgroundColor: color,
-              opacity: 0.6,
-              borderRadius: 2,
-            }}
-          />
-        </div>
-
-        {/* Thumb */}
-        <animated.div
-          style={{
-            position: 'absolute',
-            width: THUMB_W,
-            height: THUMB_H,
-            borderRadius: 4,
-            background: 'radial-gradient(ellipse at 35% 30%, var(--knob-body-highlight), var(--knob-body))',
-            boxShadow: 'var(--shadow-knob)',
-            left: thumbLeft,
-            scaleY: thumbSpring.scaleY,
-            cursor: 'grab',
-          }}
-        />
-      </div>
+      />
 
       {/* Modulation context menu */}
       {contextMenuPos && paramId && (

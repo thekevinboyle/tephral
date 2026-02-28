@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { useSpring, animated } from '@react-spring/web'
+import { BLOCK, SPRING } from './blockTheme'
 
 interface ColorBlockProps {
   label: string
@@ -12,28 +13,42 @@ export function ColorBlock({ label, value, onChange }: ColorBlockProps) {
 
   const spring = useSpring({
     backgroundColor: value,
-    config: { tension: 200, friction: 26 },
+    config: SPRING.smooth,
   })
 
-  // Determine contrasting text color
+  // Press-down spring on click
+  const [pressSpring, pressApi] = useSpring(() => ({
+    scale: 1,
+    config: SPRING.pop,
+  }))
+
   const isLight = isLightColor(value)
+
+  const handleClick = () => {
+    pressApi.start({
+      scale: 0.96,
+      onRest: () => pressApi.start({ scale: 1 }),
+    })
+    inputRef.current?.click()
+  }
 
   return (
     <animated.div
-      onClick={() => inputRef.current?.click()}
+      onClick={handleClick}
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: 6,
+        borderRadius: BLOCK.radius,
         overflow: 'hidden',
         cursor: 'pointer',
-        border: '1px solid rgba(255,255,255,0.06)',
+        boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.04)',
         backgroundColor: spring.backgroundColor,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 4,
+        scale: pressSpring.scale,
       }}
     >
       {/* Label */}
@@ -91,6 +106,5 @@ function isLightColor(hex: string): boolean {
   const r = parseInt(c.substring(0, 2), 16)
   const g = parseInt(c.substring(2, 4), 16)
   const b = parseInt(c.substring(4, 6), 16)
-  // Perceived luminance
   return (r * 299 + g * 587 + b * 114) / 1000 > 128
 }

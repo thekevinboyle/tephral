@@ -21,7 +21,7 @@ export interface LockableParam {
   min: number
   max: number
   step: number
-  controlType?: 'slider' | 'knob' | 'stepper' | 'toggle'
+  controlType?: 'slider' | 'knob' | 'stepper' | 'toggle' | 'arc' | 'vfader' | 'ruler' | 'bipolar'
   apply: (value: number) => void
   read: () => number
 }

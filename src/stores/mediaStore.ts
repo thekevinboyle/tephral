@@ -11,6 +11,9 @@ interface MediaState {
   isLoading: boolean
   error: string | null
 
+  // Video dimensions for layout
+  videoAspect: number | null  // width/height ratio, null when no media
+
   // Stashed state for webcam overlay behavior
   stashedSource: MediaSource
   stashedVideoElement: HTMLVideoElement | null
@@ -20,6 +23,7 @@ interface MediaState {
   setSource: (source: MediaSource) => void
   setVideoElement: (el: HTMLVideoElement | null) => void
   setImageElement: (el: HTMLImageElement | null) => void
+  setVideoAspect: (aspect: number | null) => void
   setIsPlaying: (playing: boolean) => void
   setIsLoading: (loading: boolean) => void
   setError: (error: string | null) => void
@@ -41,6 +45,8 @@ export const useMediaStore = create<MediaState>((set, get) => ({
   isLoading: false,
   error: null,
 
+  videoAspect: null,
+
   // Stashed state
   stashedSource: 'none',
   stashedVideoElement: null,
@@ -49,6 +55,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
   setSource: (source) => set({ source }),
   setVideoElement: (el) => set({ videoElement: el }),
   setImageElement: (el) => set({ imageElement: el }),
+  setVideoAspect: (aspect) => set({ videoAspect: aspect }),
   setIsPlaying: (playing) => set({ isPlaying: playing }),
   setIsLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
@@ -60,6 +67,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
     isPlaying: false,
     isLoading: false,
     error: null,
+    videoAspect: null,
     stashedSource: 'none',
     stashedVideoElement: null,
     stashedImageElement: null,

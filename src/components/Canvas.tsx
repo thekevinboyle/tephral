@@ -574,6 +574,30 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     }
   }, [pipeline, mediaTexture, videoElement, imageElement, slicerEnabled, slicerOutputMode, slicerOutputFrame])
 
+  // Update video aspect ratio for layout
+  useEffect(() => {
+    const setAspect = useMediaStore.getState().setVideoAspect
+
+    if (videoElement) {
+      const updateAspect = () => {
+        if (videoElement.videoWidth && videoElement.videoHeight) {
+          setAspect(videoElement.videoWidth / videoElement.videoHeight)
+        }
+      }
+      // Try immediately (dimensions may already be available)
+      updateAspect()
+      // Also listen for metadata load in case dimensions aren't ready yet
+      videoElement.addEventListener('loadedmetadata', updateAspect)
+      return () => {
+        videoElement.removeEventListener('loadedmetadata', updateAspect)
+      }
+    } else if (imageElement && imageElement.naturalWidth && imageElement.naturalHeight) {
+      setAspect(imageElement.naturalWidth / imageElement.naturalHeight)
+    } else {
+      setAspect(null)
+    }
+  }, [videoElement, imageElement])
+
   // Handle preview time - seek video when hovering thumbnails
   useEffect(() => {
     if (!videoElement || previewTime === null) return
@@ -636,7 +660,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
           style={{ backgroundColor: 'var(--bg-surface)' }}
         >
           <h1
-            className="text-4xl font-light tracking-[0.3em] select-none"
+            className="text-4xl font-light tracking-[0.3em] select-none px-8"
             style={{
               color: 'var(--text-muted)',
               fontFamily: "'JetBrains Mono', monospace",

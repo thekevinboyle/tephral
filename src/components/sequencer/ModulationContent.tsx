@@ -1172,56 +1172,104 @@ function AudioReactiveContent() {
         </div>
       )}
 
-      {/* Config sliders */}
+      {/* Auto/Manual toggle + config sliders */}
       <div className="border-t pt-2 mt-1" style={{ borderColor: 'var(--border)' }}>
-        <ModSlider
-          label="Gain"
-          value={ar.gain}
-          min={0.1} max={10} step={0.1}
-          onChange={ar.setGain}
-          format={(v) => `${v.toFixed(1)}x`}
-          color={color}
-        />
-        <ModSlider
-          label="Attack"
-          value={ar.attackMs}
-          min={1} max={50} step={1}
-          onChange={ar.setAttackMs}
-          format={(v) => `${v.toFixed(0)}ms`}
-          color={color}
-        />
-        <ModSlider
-          label="Release"
-          value={ar.releaseMs}
-          min={50} max={2000} step={10}
-          onChange={ar.setReleaseMs}
-          format={(v) => `${v.toFixed(0)}ms`}
-          color={color}
-        />
-        <ModSlider
-          label="Curve"
-          value={ar.curve}
-          min={0.5} max={4} step={0.1}
-          onChange={ar.setCurve}
-          format={(v) => `${v.toFixed(1)}`}
-          color={color}
-        />
-        <ModSlider
-          label="Thresh"
-          value={ar.transientThreshold}
-          min={0} max={1} step={0.01}
-          onChange={ar.setTransientThreshold}
-          format={(v) => `${(v * 100).toFixed(0)}%`}
-          color="#FF00FF"
-        />
-        <ModSlider
-          label="Decay"
-          value={ar.transientDecay}
-          min={0.01} max={0.5} step={0.01}
-          onChange={ar.setTransientDecay}
-          format={(v) => `${v.toFixed(2)}`}
-          color="#FF00FF"
-        />
+        <div className="flex items-center gap-2 mb-1 px-1">
+          <button
+            onClick={() => ar.setAutoMode(!ar.autoMode)}
+            className="text-[8px] uppercase font-semibold py-0.5 px-2 rounded-sm"
+            style={{
+              backgroundColor: ar.autoMode ? `${color}30` : 'transparent',
+              color: ar.autoMode ? color : 'var(--text-ghost)',
+              border: `1px solid ${ar.autoMode ? `${color}50` : 'var(--border)'}`,
+            }}
+          >
+            {ar.autoMode ? 'Auto' : 'Manual'}
+          </button>
+          <span className="text-[7px] uppercase" style={{ color: 'var(--text-ghost)' }}>
+            {ar.autoMode ? 'Adaptive gain' : 'Fixed gain'}
+          </span>
+        </div>
+
+        {ar.autoMode ? (
+          <>
+            <ModSlider
+              label="Sens"
+              value={ar.sensitivity}
+              min={0} max={1} step={0.01}
+              onChange={ar.setSensitivity}
+              format={(v) => `${(v * 100).toFixed(0)}%`}
+              color={color}
+            />
+            <ModSlider
+              label="Attack"
+              value={ar.attackMs}
+              min={1} max={50} step={1}
+              onChange={ar.setAttackMs}
+              format={(v) => `${v.toFixed(0)}ms`}
+              color={color}
+            />
+            <ModSlider
+              label="Release"
+              value={ar.releaseMs}
+              min={50} max={2000} step={10}
+              onChange={ar.setReleaseMs}
+              format={(v) => `${v.toFixed(0)}ms`}
+              color={color}
+            />
+          </>
+        ) : (
+          <>
+            <ModSlider
+              label="Gain"
+              value={ar.gain}
+              min={0.1} max={10} step={0.1}
+              onChange={ar.setGain}
+              format={(v) => `${v.toFixed(1)}x`}
+              color={color}
+            />
+            <ModSlider
+              label="Attack"
+              value={ar.attackMs}
+              min={1} max={50} step={1}
+              onChange={ar.setAttackMs}
+              format={(v) => `${v.toFixed(0)}ms`}
+              color={color}
+            />
+            <ModSlider
+              label="Release"
+              value={ar.releaseMs}
+              min={50} max={2000} step={10}
+              onChange={ar.setReleaseMs}
+              format={(v) => `${v.toFixed(0)}ms`}
+              color={color}
+            />
+            <ModSlider
+              label="Curve"
+              value={ar.curve}
+              min={0.5} max={4} step={0.1}
+              onChange={ar.setCurve}
+              format={(v) => `${v.toFixed(1)}`}
+              color={color}
+            />
+            <ModSlider
+              label="Thresh"
+              value={ar.transientThreshold}
+              min={0} max={1} step={0.01}
+              onChange={ar.setTransientThreshold}
+              format={(v) => `${(v * 100).toFixed(0)}%`}
+              color="#FF00FF"
+            />
+            <ModSlider
+              label="Decay"
+              value={ar.transientDecay}
+              min={0.01} max={0.5} step={0.01}
+              onChange={ar.setTransientDecay}
+              format={(v) => `${v.toFixed(2)}`}
+              color="#FF00FF"
+            />
+          </>
+        )}
       </div>
     </div>
   )

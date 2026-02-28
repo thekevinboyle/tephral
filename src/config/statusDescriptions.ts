@@ -506,6 +506,7 @@ export function getAudioSourceStatusText(sourceId: string): string {
     video: 'VID \u2014 Use video audio as source',
     file: 'FILE \u2014 Use imported audio file',
     mic: 'MIC \u2014 Use microphone input',
+    system: 'SYS \u2014 Capture system/tab audio',
   }
   return map[sourceId] ?? sourceId
 }

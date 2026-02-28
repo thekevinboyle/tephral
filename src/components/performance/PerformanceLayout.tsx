@@ -29,6 +29,7 @@ import { DestructionOverlay } from '../DestructionOverlay'
 // import { LFOEditorPanel } from './LFOEditorPanel'
 import { AudioFileTransport } from './AudioFileTransport'
 import { useAudioSourceStore } from '../../stores/audioSourceStore'
+import { useMediaStore } from '../../stores/mediaStore'
 import { BottomPanel } from './BottomPanel'
 import { StatusBar } from './StatusBar'
 
@@ -38,6 +39,7 @@ export function PerformanceLayout() {
   const activeAudioSource = useAudioSourceStore((s) => s.activeSource)
   const audioFileElement = useAudioSourceStore((s) => s.audioFileElement)
   const showAudioTransport = activeAudioSource === 'file' && audioFileElement
+  const videoAspect = useMediaStore((s) => s.videoAspect)
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
   useAutomationPlayback()
@@ -178,7 +180,7 @@ export function PerformanceLayout() {
         <BottomPanel />
       </div>
 
-      {/* Rows 2-4, Col 4: Canvas + Transport (spans full height) */}
+      {/* Rows 2-4, Col 4: Canvas + Transport — aligned to top, sized to content */}
       <div
         className="flex flex-col rounded-sm overflow-hidden"
         style={{
@@ -186,9 +188,16 @@ export function PerformanceLayout() {
           gridColumn: 4,
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-panel)',
+          alignSelf: 'start',
         }}
       >
-        <div className="relative flex-1 min-h-0" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+        <div
+          className="relative w-full"
+          style={{
+            aspectRatio: videoAspect ?? 16 / 9,
+            overflow: 'hidden',
+          }}
+        >
           <Canvas ref={canvasRef} />
           <ClipBin />
         </div>

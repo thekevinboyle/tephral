@@ -1,10 +1,9 @@
 import { useRef, useState, useCallback } from 'react'
-import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
-import { BLOCK, SPRING } from './blockTheme'
+import { BLOCK } from './blockTheme'
 
-interface ParamBlockProps {
+interface RulerBlockProps {
   label: string
   value: number
   min: number
@@ -15,11 +14,11 @@ interface ParamBlockProps {
   color?: string
 }
 
-const TRACK_PADDING = 16
-const THUMB_W = 16
-const THUMB_H = 20
+const TRACK_PADDING = 12
+const RULER_Y = 62
+const RULER_H = 24
 
-export function ParamBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)' }: ParamBlockProps) {
+export function RulerBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)' }: RulerBlockProps) {
   const normalized = (value - min) / (max - min)
   const displayValue = step >= 1 ? value.toFixed(0) : step >= 0.1 ? value.toFixed(1) : value.toFixed(2)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -28,18 +27,11 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
   const draggingRef = useRef(false)
   const lastAppliedRef = useRef(value)
 
-  // Stable refs to avoid stale closures in gesture handler
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
   const normalizedRef = useRef(normalized)
   normalizedRef.current = normalized
   lastAppliedRef.current = value
-
-  // Spring for thumb grab scale (cosmetic only)
-  const [thumbSpring, thumbApi] = useSpring(() => ({
-    scaleY: 1,
-    config: SPRING.snappy,
-  }))
 
   const applyValue = useCallback((norm: number) => {
     const clamped = Math.max(0, Math.min(1, norm))
@@ -59,7 +51,6 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
     if (first) {
       draggingRef.current = true
       trackRectRef.current = trackRef.current?.getBoundingClientRect() ?? null
-      thumbApi.start({ scaleY: 1.15 })
     }
     const rect = trackRectRef.current
     if (down && rect && event) {
@@ -70,7 +61,6 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
     if (last) {
       draggingRef.current = false
       trackRectRef.current = null
-      thumbApi.start({ scaleY: 1 })
     }
   }, {
     pointer: { touch: true },
@@ -84,9 +74,29 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
     onChange(Math.max(min, Math.min(max, snapped)))
   }, [min, max, step, onChange])
 
-  // Direct CSS values — no spring, no bounce
-  const fillWidth = `${normalized * 100}%`
-  const thumbLeft = `calc(${normalized * 100}% - ${normalized * THUMB_W}px)`
+  // Compute tick marks
+  const range = max - min
+  const majorInterval = computeMajorInterval(range, step)
+  const minorCount = 4 // minor ticks between majors
+
+  const ticks: { norm: number; major: boolean }[] = []
+  // Major ticks
+  for (let v = min; v <= max + step * 0.01; v += majorInterval) {
+    const n = (v - min) / range
+    if (n >= -0.001 && n <= 1.001) {
+      ticks.push({ norm: Math.max(0, Math.min(1, n)), major: true })
+    }
+  }
+  // Minor ticks
+  for (let v = min; v <= max + step * 0.01; v += majorInterval / minorCount) {
+    const n = (v - min) / range
+    if (n >= -0.001 && n <= 1.001) {
+      const isMajor = ticks.some(t => Math.abs(t.norm - n) < 0.001)
+      if (!isMajor) {
+        ticks.push({ norm: Math.max(0, Math.min(1, n)), major: false })
+      }
+    }
+  }
 
   return (
     <div
@@ -140,7 +150,7 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
         {displayValue}
       </div>
 
-      {/* Slider track area */}
+      {/* Ruler track area */}
       <div
         ref={trackRef}
         {...bind()}
@@ -148,58 +158,87 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
           position: 'absolute',
           left: TRACK_PADDING,
           right: TRACK_PADDING,
-          top: 52,
-          height: 40,
+          top: RULER_Y - 10,
+          height: RULER_H + 20,
           cursor: 'grab',
           touchAction: 'none',
-          display: 'flex',
-          alignItems: 'center',
         }}
       >
-        {/* Track groove */}
+        {/* Tick marks */}
+        {ticks.map((tick, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: `${tick.norm * 100}%`,
+              top: 10,
+              width: 1,
+              height: tick.major ? RULER_H : RULER_H * 0.5,
+              backgroundColor: tick.major ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
+              transform: 'translateX(-0.5px)',
+              pointerEvents: 'none',
+            }}
+          />
+        ))}
+
+        {/* Indicator line */}
         <div
           style={{
             position: 'absolute',
-            left: 0,
-            right: 0,
-            height: 4,
-            borderRadius: 2,
-            backgroundColor: 'rgba(255,255,255,0.06)',
-            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.5)',
+            left: `${normalized * 100}%`,
+            top: 4,
+            width: 1.5,
+            height: RULER_H + 12,
+            backgroundColor: color,
+            transform: 'translateX(-0.75px)',
+            pointerEvents: 'none',
           }}
-        >
-          {/* Fill */}
-          <div
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: fillWidth,
-              backgroundColor: color,
-              opacity: 0.6,
-              borderRadius: 2,
-            }}
-          />
-        </div>
+        />
 
-        {/* Thumb */}
-        <animated.div
+        {/* Indicator dot */}
+        <div
           style={{
             position: 'absolute',
-            width: THUMB_W,
-            height: THUMB_H,
-            borderRadius: 4,
-            background: 'radial-gradient(ellipse at 35% 30%, var(--knob-body-highlight), var(--knob-body))',
-            boxShadow: 'var(--shadow-knob)',
-            left: thumbLeft,
-            scaleY: thumbSpring.scaleY,
-            cursor: 'grab',
+            left: `${normalized * 100}%`,
+            top: 2,
+            width: 5,
+            height: 5,
+            borderRadius: '50%',
+            backgroundColor: color,
+            transform: 'translate(-2.5px, 0)',
+            pointerEvents: 'none',
           }}
         />
       </div>
 
-      {/* Modulation context menu */}
+      {/* Min/max labels */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 8,
+          left: TRACK_PADDING,
+          fontSize: 8,
+          color: 'rgba(255,255,255,0.15)',
+          fontVariantNumeric: 'tabular-nums',
+          pointerEvents: 'none',
+        }}
+      >
+        {step >= 1 ? min.toFixed(0) : min.toFixed(1)}
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 8,
+          right: TRACK_PADDING,
+          fontSize: 8,
+          color: 'rgba(255,255,255,0.15)',
+          fontVariantNumeric: 'tabular-nums',
+          pointerEvents: 'none',
+        }}
+      >
+        {step >= 1 ? max.toFixed(0) : max.toFixed(1)}
+      </div>
+
       {contextMenuPos && paramId && (
         <ModulationContextMenu
           paramId={paramId}
@@ -209,4 +248,14 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
       )}
     </div>
   )
+}
+
+function computeMajorInterval(range: number, _step: number): number {
+  // Aim for 4-8 major ticks
+  const candidates = [1, 2, 5, 10, 20, 25, 50, 100, 0.1, 0.2, 0.5, 0.05, 0.01]
+  for (const c of candidates) {
+    const count = range / c
+    if (count >= 3 && count <= 10) return c
+  }
+  return range / 5
 }

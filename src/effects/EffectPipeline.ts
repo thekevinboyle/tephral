@@ -88,11 +88,9 @@ export class EffectPipeline {
   private effectPasses: EffectPass[] = []
   private crossfaderPass: EffectPass | null = null
 
-  // Dimensions for aspect ratio
+  // Canvas dimensions
   private canvasWidth = 1
   private canvasHeight = 1
-  private videoWidth = 1
-  private videoHeight = 1
 
 
   constructor(renderer: THREE.WebGLRenderer) {
@@ -309,16 +307,7 @@ export class EffectPipeline {
     // Always add the pass - source texture is set separately via setSourceTexture()
     // and may be called after updateEffects() due to React effect ordering
     if (this.crossfaderEffect) {
-      // Calculate quad scale from config dimensions
-      const canvasAspect = this.canvasWidth / this.canvasHeight
-      const videoAspect = config.videoWidth / config.videoHeight
-      let scaleX = 1, scaleY = 1
-      if (videoAspect > canvasAspect) {
-        scaleY = canvasAspect / videoAspect
-      } else {
-        scaleX = videoAspect / canvasAspect
-      }
-      this.crossfaderEffect.setQuadScale(scaleX, scaleY)
+      this.crossfaderEffect.setQuadScale(1, 1)
       this.crossfaderPass = new EffectPass(this.camera, this.crossfaderEffect)
       this.composer.addPass(this.crossfaderPass)
     }
@@ -364,10 +353,8 @@ export class EffectPipeline {
   }
 
 
-  setVideoSize(width: number, height: number) {
-    this.videoWidth = width || 1
-    this.videoHeight = height || 1
-    this.updateQuadScale()
+  setVideoSize(_width: number, _height: number) {
+    // No-op: container matches video aspect ratio via CSS, quad always fills
   }
 
   setSize(width: number, height: number) {
@@ -378,25 +365,12 @@ export class EffectPipeline {
   }
 
   private updateQuadScale() {
-    const canvasAspect = this.canvasWidth / this.canvasHeight
-    const videoAspect = this.videoWidth / this.videoHeight
+    // Container matches video aspect ratio via CSS aspect-ratio,
+    // so the quad always fills 100% — no letterboxing needed
+    this.quad.scale.set(1, 1, 1)
 
-    let scaleX = 1
-    let scaleY = 1
-
-    if (videoAspect > canvasAspect) {
-      // Video is wider than canvas - fit to width, letterbox top/bottom
-      scaleY = canvasAspect / videoAspect
-    } else {
-      // Video is taller than canvas - fit to height, pillarbox left/right
-      scaleX = videoAspect / canvasAspect
-    }
-
-    this.quad.scale.set(scaleX, scaleY, 1)
-
-    // Update CrossfaderEffect with the quad scale
     if (this.crossfaderEffect) {
-      this.crossfaderEffect.setQuadScale(scaleX, scaleY)
+      this.crossfaderEffect.setQuadScale(1, 1)
     }
   }
 

@@ -53,9 +53,21 @@ export function useEffectSequencerPlayback() {
     const ar = useAudioReactiveStore.getState()
     const as = useAudioSourceStore.getState()
 
-    // Band values from audioReactiveStore are processed with gain (default 2×)
-    // and power curve (default ^2), which makes them run very hot.
-    // Undo the power curve to get a more linear 0-1 range for threshold use.
+    if (ar.autoMode) {
+      // Auto mode: values are already well-normalized, no linearization needed
+      switch (source) {
+        case 'kick':    return ar.sub
+        case 'low':     return ar.sub
+        case 'mid':     return ar.mid
+        case 'high':    return ar.high
+        case 'peak':    return Math.min(1, ar.hit)
+        case 'rms':     return as.amplitude
+        case 'silence': return 1 - as.amplitude
+        default:        return 0
+      }
+    }
+
+    // Manual mode: undo the power curve to get a more linear 0-1 range
     const { curve } = ar
     const invCurve = curve > 0 ? 1 / curve : 1
     const linearize = (v: number) => Math.pow(Math.min(1, Math.max(0, v)), invCurve)

@@ -24,13 +24,16 @@ export function useUnifiedAudioAnalysis() {
     ? `video-${videoElement ? 'ok' : 'none'}`
     : activeSource === 'file'
       ? `file-${audioFileUrl ?? 'none'}`
-      : 'mic'
+      : activeSource === 'system'
+        ? 'system'
+        : 'mic'
 
   // Check if source is valid (can we connect?)
   const hasValidSource =
     (activeSource === 'video' && !!videoElement) ||
     (activeSource === 'file' && !!audioFileUrl) ||
-    activeSource === 'mic'
+    activeSource === 'mic' ||
+    activeSource === 'system'
 
   useEffect(() => {
     if (!hasValidSource) {
@@ -137,6 +140,39 @@ export function useUnifiedAudioAnalysis() {
             stream = await navigator.mediaDevices.getUserMedia({ audio: true })
           } catch (err) {
             console.warn('[UnifiedAudio] Mic access denied:', err)
+            return
+          }
+        } else if (activeSource === 'system') {
+          try {
+            const displayStream = await navigator.mediaDevices.getDisplayMedia({
+              audio: true,
+              video: true, // required by spec, discarded immediately
+            })
+            if (cancelled) {
+              displayStream.getTracks().forEach((t) => t.stop())
+              return
+            }
+            // Discard video tracks — we only need audio
+            displayStream.getVideoTracks().forEach((t) => t.stop())
+            const audioTracks = displayStream.getAudioTracks()
+            if (audioTracks.length === 0) {
+              console.warn('[UnifiedAudio] System capture has no audio tracks')
+              displayStream.getTracks().forEach((t) => t.stop())
+              return
+            }
+            // Store stream for cleanup
+            useAudioSourceStore.getState().setSystemStream(displayStream)
+            // Auto-revert when user clicks "Stop sharing" in browser UI
+            audioTracks[0].addEventListener('ended', () => {
+              console.log('[UnifiedAudio] System audio track ended (user stopped sharing)')
+              useAudioSourceStore.getState().setActiveSource('video')
+            })
+            stream = displayStream
+            console.log('[UnifiedAudio] System audio capture started')
+          } catch (err) {
+            console.warn('[UnifiedAudio] System audio capture denied:', err)
+            // Revert to video on cancel
+            useAudioSourceStore.getState().setActiveSource('video')
             return
           }
         }
@@ -250,6 +286,12 @@ export function useUnifiedAudioAnalysis() {
     useAudioSourceStore.getState().setReactiveAnalyser(null)
     useAudioSourceStore.getState().setAudioContext(null)
     useAudioSourceStore.getState().setAudioBpm(null)
+    // Clean up system audio capture stream
+    const systemStream = useAudioSourceStore.getState().systemStream
+    if (systemStream) {
+      systemStream.getTracks().forEach((t) => t.stop())
+      useAudioSourceStore.getState().setSystemStream(null)
+    }
     if (fileElementRef.current) {
       fileElementRef.current.pause()
       fileElementRef.current.src = ''

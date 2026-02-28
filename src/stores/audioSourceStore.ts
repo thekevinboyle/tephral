@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type AudioSourceType = 'video' | 'file' | 'mic'
+export type AudioSourceType = 'video' | 'file' | 'mic' | 'system'
 export type AudioGateMode = 'gate' | 'envelope'
 
 interface AudioSourceState {
@@ -27,6 +27,9 @@ interface AudioSourceState {
   audioBpm: number | null
   audioBpmSyncEnabled: boolean
 
+  // System audio capture stream
+  systemStream: MediaStream | null
+
   // Audio reactive FFT analyser
   reactiveAnalyser: AnalyserNode | null
   audioContext: AudioContext | null
@@ -48,6 +51,7 @@ interface AudioSourceState {
   clearAudioLoop: () => void
   setAudioBpm: (bpm: number | null) => void
   setAudioBpmSyncEnabled: (enabled: boolean) => void
+  setSystemStream: (stream: MediaStream | null) => void
   setReactiveAnalyser: (node: AnalyserNode | null) => void
   setAudioContext: (ctx: AudioContext | null) => void
 }
@@ -73,6 +77,8 @@ export const useAudioSourceStore = create<AudioSourceState>((set, get) => ({
   audioBpm: null,
   audioBpmSyncEnabled: true,
 
+  systemStream: null,
+
   reactiveAnalyser: null,
   audioContext: null,
 
@@ -81,6 +87,11 @@ export const useAudioSourceStore = create<AudioSourceState>((set, get) => ({
     // If switching away from file, stop the file element
     if (state.activeSource === 'file' && state.audioFileElement) {
       state.audioFileElement.pause()
+    }
+    // If switching away from system, stop the capture stream
+    if (state.activeSource === 'system' && state.systemStream) {
+      state.systemStream.getTracks().forEach((t) => t.stop())
+      set({ systemStream: null })
     }
     set({ activeSource: source, amplitude: 0, waveformData: Array(128).fill(128) })
   },
@@ -121,6 +132,7 @@ export const useAudioSourceStore = create<AudioSourceState>((set, get) => ({
   clearAudioLoop: () => set({ audioLoopEnabled: false, audioLoopStart: 0, audioLoopEnd: 0 }),
   setAudioBpm: (bpm) => set({ audioBpm: bpm }),
   setAudioBpmSyncEnabled: (enabled) => set({ audioBpmSyncEnabled: enabled }),
+  setSystemStream: (stream) => set({ systemStream: stream }),
   setReactiveAnalyser: (node) => set({ reactiveAnalyser: node }),
   setAudioContext: (ctx) => set({ audioContext: ctx }),
 }))

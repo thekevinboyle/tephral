@@ -505,6 +505,7 @@ export function useContinuousModulation() {
           'audio-mid': audioReactive.mid,
           'audio-high': audioReactive.high,
           'audio-hit': audioReactive.hit,
+          'audio-rms': audioReactive.rms,
         }
         for (const [trackId, value] of Object.entries(audioBands)) {
           const bandRoutings = currentRoutings.filter(r => r.trackId === trackId)

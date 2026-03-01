@@ -30,7 +30,7 @@ export function MinimalSlider({
       <div className="flex-1 relative h-6 flex items-center">
         <div className="absolute inset-x-0 h-[2px] bg-muted/30 rounded-full" />
         <div
-          className="absolute left-0 h-[2px] bg-accent-yellow rounded-full"
+          className="absolute left-0 h-[2px] bg-accent-red rounded-full"
           style={{ width: `${percentage}%` }}
         />
         <input
@@ -44,7 +44,7 @@ export function MinimalSlider({
           className="absolute inset-0 w-full opacity-0 cursor-pointer"
         />
         <div
-          className="absolute w-3 h-3 bg-accent-yellow rounded-full -translate-x-1/2 pointer-events-none"
+          className="absolute w-3 h-3 bg-accent-red rounded-full -translate-x-1/2 pointer-events-none"
           style={{ left: `${percentage}%` }}
         />
       </div>

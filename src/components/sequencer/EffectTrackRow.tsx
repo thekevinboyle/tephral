@@ -231,7 +231,7 @@ export function EffectTrackRow({
                 bottom: 0,
                 left: 0,
                 width: `${Math.min(100, trackAudioLevel * 100)}%`,
-                backgroundColor: trackAudioLevel >= (track.audioReactive.threshold) ? '#FFCC00' : '#FFCC0060',
+                backgroundColor: trackAudioLevel >= (track.audioReactive.threshold) ? '#FF3355' : '#FF335560',
                 borderRadius: 1,
                 transition: 'width 0.05s',
               }}
@@ -324,10 +324,10 @@ export function EffectTrackRow({
             className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm relative overflow-hidden"
             style={{
               backgroundColor: track.audioReactive?.enabled
-                ? 'rgba(255, 204, 0, 0.35)'
+                ? 'rgba(255, 51, 85, 0.35)'
                 : 'transparent',
-              color: track.audioReactive?.enabled ? '#FFCC00' : 'var(--border)',
-              border: `1px solid ${track.audioReactive?.enabled ? '#FFCC0060' : 'var(--border)'}`,
+              color: track.audioReactive?.enabled ? '#FF3355' : 'var(--border)',
+              border: `1px solid ${track.audioReactive?.enabled ? '#FF335560' : 'var(--border)'}`,
             }}
             title={
               track.audioReactive?.enabled
@@ -339,7 +339,7 @@ export function EffectTrackRow({
               <span
                 className="absolute inset-0 rounded-sm"
                 style={{
-                  backgroundColor: '#FFCC00',
+                  backgroundColor: '#FF3355',
                   opacity: trackAudioLevel * 0.6,
                   transition: 'opacity 0.05s',
                 }}

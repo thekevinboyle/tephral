@@ -15,7 +15,7 @@ const SOURCES: { value: AudioReactiveSource; label: string }[] = [
   { value: 'silence', label: 'SIL' },
 ]
 
-const ACCENT = '#FFCC00'
+const ACCENT = '#FF3355'
 
 export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?: string } = {}) {
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)

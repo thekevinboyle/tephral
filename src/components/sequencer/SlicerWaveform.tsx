@@ -118,7 +118,7 @@ export function SlicerWaveform() {
     if (isLooping && loopSlice !== null) {
       // Pulsing highlight for looping slice
       const pulseAlpha = 0.2 + Math.sin(Date.now() / 100) * 0.15
-      ctx.fillStyle = `rgba(255, 204, 0, ${pulseAlpha})`
+      ctx.fillStyle = `rgba(255, 51, 85, ${pulseAlpha})`
       ctx.fillRect(loopSlice * sliceWidth, 0, sliceWidth, height)
     } else {
       ctx.fillStyle = '#FF6B6B20'
@@ -131,7 +131,7 @@ export function SlicerWaveform() {
       const playheadX = playheadPosition * width
 
       // Playhead line
-      ctx.strokeStyle = isDragging ? '#FF6B6B' : isLooping ? '#ffcc00' : '#ffffff'
+      ctx.strokeStyle = isDragging ? '#FF6B6B' : isLooping ? '#FF3355' : '#ffffff'
       ctx.lineWidth = 2
       ctx.beginPath()
       ctx.moveTo(playheadX, 0)
@@ -139,7 +139,7 @@ export function SlicerWaveform() {
       ctx.stroke()
 
       // Playhead glow
-      ctx.strokeStyle = isDragging ? 'rgba(255, 107, 107, 0.4)' : isLooping ? 'rgba(255, 204, 0, 0.4)' : 'rgba(255, 255, 255, 0.3)'
+      ctx.strokeStyle = isDragging ? 'rgba(255, 107, 107, 0.4)' : isLooping ? 'rgba(255, 51, 85, 0.4)' : 'rgba(255, 255, 255, 0.3)'
       ctx.lineWidth = 6
       ctx.beginPath()
       ctx.moveTo(playheadX, 0)

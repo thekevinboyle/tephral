@@ -95,7 +95,7 @@ export function TransportControls() {
 
           <button
             onClick={handleExport}
-            className="px-3 py-1 text-xs uppercase border border-accent-yellow text-accent-yellow hover:bg-accent-yellow hover:text-base-dark transition-colors"
+            className="px-3 py-1 text-xs uppercase border border-accent-red text-accent-red hover:bg-accent-red hover:text-base-dark transition-colors"
           >
             EXPORT
           </button>

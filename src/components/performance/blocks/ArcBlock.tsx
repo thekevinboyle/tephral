@@ -12,6 +12,8 @@ interface ArcBlockProps {
   onChange: (v: number) => void
   paramId?: string
   color?: string
+  onTap?: () => void
+  isAutomationTarget?: boolean
 }
 
 const ARC_SIZE = 70
@@ -38,7 +40,7 @@ function describeArc(cx: number, cy: number, r: number, startDeg: number, endDeg
   return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y}`
 }
 
-export function ArcBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)' }: ArcBlockProps) {
+export function ArcBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)', onTap, isAutomationTarget }: ArcBlockProps) {
   const normalized = (value - min) / (max - min)
   const containerRef = useRef<HTMLDivElement>(null)
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
@@ -104,6 +106,7 @@ export function ArcBlock({ label, value, min, max, step, onChange, paramId, colo
     <div
       ref={containerRef}
       {...bind()}
+      onClick={() => onTap?.()}
       onDoubleClick={handleDoubleClick}
       onContextMenu={paramId ? (e) => {
         e.preventDefault()
@@ -118,8 +121,14 @@ export function ArcBlock({ label, value, min, max, step, onChange, paramId, colo
         touchAction: 'none',
         userSelect: 'none',
         backgroundColor: BLOCK.bg,
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: BLOCK.shadow,
+        borderLeft: isAutomationTarget ? '3px solid #FF3355' : undefined,
+        border: isAutomationTarget ? undefined : '1px solid rgba(255,255,255,0.06)',
+        borderRight: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        borderTop: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        borderBottom: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        boxShadow: isAutomationTarget
+          ? `0 0 8px rgba(255, 51, 85, 0.15), ${BLOCK.shadow}`
+          : BLOCK.shadow,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

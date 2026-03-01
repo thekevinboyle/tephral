@@ -27,7 +27,7 @@ export function SourcePanel() {
       {/* Upload button */}
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="w-full py-3 border border-muted text-muted hover:border-accent-yellow hover:text-accent-yellow transition-colors text-xs uppercase tracking-wider"
+        className="w-full py-3 border border-muted text-muted hover:border-accent-red hover:text-accent-red transition-colors text-xs uppercase tracking-wider"
       >
         {isLoading ? 'Loading...' : 'Upload File'}
       </button>

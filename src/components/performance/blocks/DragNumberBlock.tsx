@@ -12,9 +12,11 @@ interface DragNumberBlockProps {
   onChange: (v: number) => void
   paramId?: string
   color?: string
+  onTap?: () => void
+  isAutomationTarget?: boolean
 }
 
-export function DragNumberBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)' }: DragNumberBlockProps) {
+export function DragNumberBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)', onTap, isAutomationTarget }: DragNumberBlockProps) {
   const normalized = (value - min) / (max - min)
   const displayValue = step >= 1 ? value.toFixed(0) : step >= 0.1 ? value.toFixed(1) : value.toFixed(2)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -72,6 +74,7 @@ export function DragNumberBlock({ label, value, min, max, step, onChange, paramI
     <div
       ref={containerRef}
       {...bind()}
+      onClick={() => onTap?.()}
       onDoubleClick={handleDoubleClick}
       onContextMenu={paramId ? (e) => {
         e.preventDefault()
@@ -86,8 +89,14 @@ export function DragNumberBlock({ label, value, min, max, step, onChange, paramI
         touchAction: 'none',
         userSelect: 'none',
         backgroundColor: BLOCK.bg,
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: BLOCK.shadow,
+        borderLeft: isAutomationTarget ? '3px solid #FF3355' : undefined,
+        border: isAutomationTarget ? undefined : '1px solid rgba(255,255,255,0.06)',
+        borderRight: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        borderTop: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        borderBottom: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        boxShadow: isAutomationTarget
+          ? `0 0 8px rgba(255, 51, 85, 0.15), ${BLOCK.shadow}`
+          : BLOCK.shadow,
       }}
     >
       {/* Background glow — brighter at higher values */}

@@ -180,7 +180,7 @@ export function PerformanceLayout() {
         <BottomPanel />
       </div>
 
-      {/* Rows 2-4, Col 4: Canvas + Transport — aligned to top, sized to content */}
+      {/* Rows 2-4, Col 4: Canvas + Transport */}
       <div
         className="flex flex-col rounded-sm overflow-hidden"
         style={{
@@ -188,7 +188,7 @@ export function PerformanceLayout() {
           gridColumn: 4,
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-panel)',
-          alignSelf: 'start',
+          backgroundColor: 'var(--bg-surface)',
         }}
       >
         <div
@@ -203,6 +203,8 @@ export function PerformanceLayout() {
         </div>
         <TransportBar />
         {showAudioTransport && <AudioFileTransport />}
+        {/* Fill remaining space */}
+        <div className="flex-1" />
       </div>
 
       {/* Row 5: Status Bar (spans all columns) */}

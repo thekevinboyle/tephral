@@ -13,7 +13,7 @@ export function Toggle({ label, pressed, onPressedChange }: ToggleProps) {
       <RadixToggle.Root
         className={`w-8 h-4 border ${
           pressed
-            ? 'bg-accent-yellow border-accent-yellow'
+            ? 'bg-accent-red border-accent-red'
             : 'bg-transparent border-muted'
         }`}
         pressed={pressed}

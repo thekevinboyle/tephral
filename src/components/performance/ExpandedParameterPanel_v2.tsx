@@ -13,6 +13,7 @@ import { useDestructionStore } from '../../stores/destructionStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { useRoutingStore } from '../../stores/routingStore'
+import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 import {
   EFFECTS,
@@ -135,6 +136,10 @@ function BlockParameters({ effectId, color }: { effectId: string; color: string 
   useTextureOverlayStore()
   useDataOverlayStore()
 
+  const automationParam = useEffectSequencerStore((s) => s.automationParam)
+  const setAutomationParam = useEffectSequencerStore((s) => s.setAutomationParam)
+  const clearAutomationParam = useEffectSequencerStore((s) => s.clearAutomationParam)
+
   const entry = EFFECT_PARAM_REGISTRY[effectId]
   if (!entry) {
     return (
@@ -169,6 +174,8 @@ function BlockParameters({ effectId, color }: { effectId: string; color: string 
           }}
         >
           {typedParams.map(({ param, type }) => {
+            const fullParamId = `${effectId}.${param.id}`
+            const isTarget = automationParam?.fullParamId === fullParamId
             const commonProps = {
               key: param.id,
               label: param.label,
@@ -177,8 +184,24 @@ function BlockParameters({ effectId, color }: { effectId: string; color: string 
               max: param.max,
               step: param.step,
               onChange: (v: number) => param.apply(v),
-              paramId: `${effectId}.${param.id}`,
+              paramId: fullParamId,
               color,
+              isAutomationTarget: isTarget,
+              onTap: () => {
+                if (isTarget) {
+                  clearAutomationParam()
+                } else {
+                  setAutomationParam({
+                    effectId,
+                    paramId: param.id,
+                    fullParamId,
+                    label: param.label,
+                    min: param.min,
+                    max: param.max,
+                    step: param.step,
+                  })
+                }
+              },
             }
             switch (type) {
               case 'slider':

@@ -12,9 +12,11 @@ interface BipolarBlockProps {
   onChange: (v: number) => void
   paramId?: string
   color?: string
+  onTap?: () => void
+  isAutomationTarget?: boolean
 }
 
-export function BipolarBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)' }: BipolarBlockProps) {
+export function BipolarBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)', onTap, isAutomationTarget }: BipolarBlockProps) {
   const range = max - min
   const normalized = (value - min) / range // 0-1
   const centerNorm = (0 - min) / range // where zero falls in 0-1
@@ -75,6 +77,7 @@ export function BipolarBlock({ label, value, min, max, step, onChange, paramId, 
     <div
       ref={containerRef}
       {...bind()}
+      onClick={() => onTap?.()}
       onDoubleClick={handleDoubleClick}
       onContextMenu={paramId ? (e) => {
         e.preventDefault()
@@ -89,8 +92,14 @@ export function BipolarBlock({ label, value, min, max, step, onChange, paramId, 
         touchAction: 'none',
         userSelect: 'none',
         backgroundColor: BLOCK.bg,
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: BLOCK.shadow,
+        borderLeft: isAutomationTarget ? '3px solid #FF3355' : undefined,
+        border: isAutomationTarget ? undefined : '1px solid rgba(255,255,255,0.06)',
+        borderRight: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        borderTop: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        borderBottom: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        boxShadow: isAutomationTarget
+          ? `0 0 8px rgba(255, 51, 85, 0.15), ${BLOCK.shadow}`
+          : BLOCK.shadow,
       }}
     >
       {/* Label — top left */}

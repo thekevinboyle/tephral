@@ -13,13 +13,15 @@ interface ParamBlockProps {
   onChange: (v: number) => void
   paramId?: string
   color?: string
+  onTap?: () => void
+  isAutomationTarget?: boolean
 }
 
 const TRACK_PADDING = 16
 const THUMB_W = 16
 const THUMB_H = 20
 
-export function ParamBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)' }: ParamBlockProps) {
+export function ParamBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)', onTap, isAutomationTarget }: ParamBlockProps) {
   const normalized = (value - min) / (max - min)
   const displayValue = step >= 1 ? value.toFixed(0) : step >= 0.1 ? value.toFixed(1) : value.toFixed(2)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -91,6 +93,7 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
   return (
     <div
       ref={containerRef}
+      onClick={() => onTap?.()}
       onDoubleClick={handleDoubleClick}
       onContextMenu={paramId ? (e) => {
         e.preventDefault()
@@ -103,8 +106,14 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
         overflow: 'hidden',
         userSelect: 'none',
         backgroundColor: BLOCK.bg,
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: BLOCK.shadow,
+        borderLeft: isAutomationTarget ? '3px solid #FF3355' : undefined,
+        border: isAutomationTarget ? undefined : '1px solid rgba(255,255,255,0.06)',
+        borderRight: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        borderTop: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        borderBottom: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
+        boxShadow: isAutomationTarget
+          ? `0 0 8px rgba(255, 51, 85, 0.15), ${BLOCK.shadow}`
+          : BLOCK.shadow,
       }}
     >
       {/* Label — top left */}

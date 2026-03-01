@@ -15,7 +15,7 @@ export function MinimalToggle({ label, pressed, onPressedChange }: MinimalToggle
       </span>
       <div
         className={`w-8 h-4 rounded-full transition-colors relative ${
-          pressed ? 'bg-accent-yellow' : 'bg-muted/30'
+          pressed ? 'bg-accent-red' : 'bg-muted/30'
         }`}
       >
         <div

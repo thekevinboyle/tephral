@@ -33,12 +33,12 @@ export function Slider({ label, value, min, max, step = 0.01, onChange }: Slider
             onChange={(e) => setInputValue(e.target.value)}
             onBlur={handleInputSubmit}
             onKeyDown={(e) => e.key === 'Enter' && handleInputSubmit()}
-            className="w-16 bg-transparent border border-muted px-1 text-sm text-right focus:outline-none focus:border-accent-yellow"
+            className="w-16 bg-transparent border border-muted px-1 text-sm text-right focus:outline-none focus:border-accent-red"
             autoFocus
           />
         ) : (
           <span
-            className="value cursor-pointer hover:text-accent-yellow"
+            className="value cursor-pointer hover:text-accent-red"
             onClick={() => {
               setInputValue(String(value.toFixed(3)))
               setIsEditing(true)
@@ -57,9 +57,9 @@ export function Slider({ label, value, min, max, step = 0.01, onChange }: Slider
         onValueChange={([v]) => onChange(v)}
       >
         <RadixSlider.Track className="relative grow h-[2px] bg-muted">
-          <RadixSlider.Range className="absolute h-full bg-accent-yellow" />
+          <RadixSlider.Range className="absolute h-full bg-accent-red" />
         </RadixSlider.Track>
-        <RadixSlider.Thumb className="block w-3 h-3 bg-base-light border border-muted hover:bg-accent-yellow focus:outline-none" />
+        <RadixSlider.Thumb className="block w-3 h-3 bg-base-light border border-muted hover:bg-accent-red focus:outline-none" />
       </RadixSlider.Root>
     </div>
   )

@@ -35,7 +35,7 @@ export function VisionPanel() {
             onClick={() => setActiveMode(id)}
             className={`px-3 py-1.5 text-xs uppercase transition-colors ${
               activeMode === id
-                ? 'bg-accent-yellow text-base-dark'
+                ? 'bg-accent-red text-base-dark'
                 : 'text-muted hover:text-base-light'
             }`}
           >
@@ -61,7 +61,7 @@ export function VisionPanel() {
                     onClick={() => contour.updateParams({ mode })}
                     className={`px-2 py-1 text-xs uppercase transition-colors ${
                       contour.params.mode === mode
-                        ? 'bg-accent-yellow text-base-dark'
+                        ? 'bg-accent-red text-base-dark'
                         : 'text-muted hover:text-base-light'
                     }`}
                   >
@@ -118,7 +118,7 @@ export function VisionPanel() {
                     onClick={() => landmarks.setCurrentMode(mode)}
                     className={`px-2 py-1 text-xs uppercase transition-colors ${
                       landmarks.currentMode === mode
-                        ? 'bg-accent-yellow text-base-dark'
+                        ? 'bg-accent-red text-base-dark'
                         : 'text-muted hover:text-base-light'
                     }`}
                   >
@@ -155,7 +155,7 @@ export function VisionPanel() {
                     onClick={() => ascii.updateParams({ mode })}
                     className={`px-2 py-1 text-xs uppercase transition-colors ${
                       ascii.params.mode === mode
-                        ? 'bg-accent-yellow text-base-dark'
+                        ? 'bg-accent-red text-base-dark'
                         : 'text-muted hover:text-base-light'
                     }`}
                   >

@@ -64,14 +64,14 @@
   --text-muted: #9A948E;
   --text-ghost: #5A5450;
 
-  /* Accent — dark gray (monochrome) */
-  --accent: #707070;
-  --accent-dim: #585858;
-  --accent-hover: #888888;
-  --accent-glow: rgba(112, 112, 112, 0.2);
-  --accent-subtle: rgba(112, 112, 112, 0.06);
+  /* Accent — purple */
+  --accent: #7B68AE;
+  --accent-dim: #5F4F8B;
+  --accent-hover: #9580C4;
+  --accent-glow: rgba(123, 104, 174, 0.25);
+  --accent-subtle: rgba(123, 104, 174, 0.08);
 
-  /* Accent aliases — collapsed to cyan */
+  /* Accent aliases */
   --accent-lime: var(--accent);
   --accent-lime-dim: var(--accent-dim);
   --accent-lime-hover: var(--accent-hover);
@@ -324,14 +324,14 @@ body {
   --text-muted: #666666;
   --text-ghost: #999999;
 
-  /* Accent — dark gray (monochrome) */
-  --accent: #606060;
-  --accent-dim: #484848;
-  --accent-hover: #787878;
-  --accent-glow: rgba(96, 96, 96, 0.2);
-  --accent-subtle: rgba(96, 96, 96, 0.08);
+  /* Accent — purple */
+  --accent: #6B5B95;
+  --accent-dim: #524780;
+  --accent-hover: #8674B0;
+  --accent-glow: rgba(107, 91, 149, 0.2);
+  --accent-subtle: rgba(107, 91, 149, 0.08);
 
-  /* Aliases — all collapsed to cyan */
+  /* Aliases */
   --accent-lime: var(--accent);
   --accent-lime-dim: var(--accent-dim);
   --accent-lime-hover: var(--accent-hover);

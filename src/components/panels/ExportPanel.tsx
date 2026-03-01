@@ -18,7 +18,7 @@ export function ExportPanel() {
         disabled={!hasSource}
         className={`w-full py-3 border text-xs uppercase tracking-wider transition-colors ${
           hasSource
-            ? 'border-accent-yellow text-accent-yellow hover:bg-accent-yellow hover:text-base-dark'
+            ? 'border-accent-red text-accent-red hover:bg-accent-red hover:text-base-dark'
             : 'border-muted/50 text-muted/50 cursor-not-allowed'
         }`}
       >

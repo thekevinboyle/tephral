@@ -10,7 +10,6 @@ import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 const MIDI_COLOR = '#00AAFF'
 const AUDIO_COLOR = '#FF8800'
 
-const RESOLUTION_OPTIONS = ['1/4', '1/8', '1/16', '1/32'] as const
 
 function RandomizeButton() {
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)
@@ -223,11 +222,6 @@ export function SequencerTransport({
     [swing, onSwingChange],
   )
 
-  const handleResolutionCycle = useCallback(() => {
-    const idx = RESOLUTION_OPTIONS.indexOf(resolution as (typeof RESOLUTION_OPTIONS)[number])
-    const next = (idx + 1) % RESOLUTION_OPTIONS.length
-    onResolutionChange(RESOLUTION_OPTIONS[next])
-  }, [resolution, onResolutionChange])
 
   return (
     <div

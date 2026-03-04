@@ -276,7 +276,8 @@ export function useEffectSequencerPlayback() {
       if (!isPlaying) return
 
       const state = useEffectSequencerStore.getState()
-      const { tracks: currentTracks, currentStep, fillModeActive: fill } = state
+      const { tracks: currentTracks, currentStep: _currentStep, fillModeActive: fill } = state
+      void _currentStep
       const effectOrder = useRoutingStore.getState().effectOrder
       const trackList = Object.values(currentTracks)
       const hasSolo = trackList.some((t) => t.soloed)

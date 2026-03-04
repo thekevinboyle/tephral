@@ -38,8 +38,9 @@ export function EffectTrackRow({
   label,
   isSelectedTrack,
   onSelectTrack,
-  orderIndex,
+  orderIndex: _orderIndex,
 }: EffectTrackRowProps) {
+  void _orderIndex
   void _color
   const {
     setTrackMuted,

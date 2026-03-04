@@ -3,10 +3,6 @@ import { useEffectSequencerStore, type TimeScale } from '../../stores/effectSequ
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 import { Knob } from '../performance/Knob'
 
-const LED = '#88FFaa'
-const LED_DIM = '#88FFaa30'
-const LED_BG = '#0a0f0a'
-
 const TOOL_FG = '#BBBBBB'
 const TOOL_DIM = '#BBBBBB30'
 const TOOL_BG = '#0a0a0a'

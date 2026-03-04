@@ -285,8 +285,8 @@ export function BankPanel() {
             onMouseEnter={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)'); setStatusText(getUIStatusText('rekt')) }}
             onMouseLeave={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'transparent'); setStatusText(null) }}
             className="h-full text-[11px] font-bold transition-all select-none touch-none active:scale-95"
-            style={{ width: 48 }}
             style={{
+              width: 48,
               fontFamily: 'var(--font-mono)',
               letterSpacing: '0.1em',
               backgroundColor: isRekt ? '#FFFFFF' : 'transparent',

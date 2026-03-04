@@ -45,9 +45,9 @@ export function StepperRow({ label, value, min, max, step, onChange, paramId }: 
         style={{
           gap: 2,
           border: `1px solid ${isAutomationTarget ? '#FF4060' : 'var(--border)'}`,
-          borderRadius: 3,
           padding: '1px 2px',
-          backgroundColor: 'var(--bg-surface)',
+          backgroundColor: '#000000',
+          animation: isAutomationTarget ? 'hud-blink 0.5s step-end infinite' : undefined,
         }}
       >
         {/* Decrement */}
@@ -56,10 +56,11 @@ export function StepperRow({ label, value, min, max, step, onChange, paramId }: 
           disabled={atMin}
           className="flex items-center justify-center transition-colors"
           style={{
-            width: 16, height: 16, borderRadius: 2,
+            width: 16, height: 16,
             color: atMin ? 'var(--text-ghost)' : 'var(--text-secondary)',
             cursor: atMin ? 'default' : 'pointer',
-            fontSize: 11, fontWeight: 600, lineHeight: 1,
+            fontSize: 11, fontWeight: 700, lineHeight: 1,
+            fontFamily: 'var(--font-mono)',
           }}
         >
           -
@@ -70,7 +71,8 @@ export function StepperRow({ label, value, min, max, step, onChange, paramId }: 
           className="text-[9px] tabular-nums text-center cursor-pointer select-none"
           style={{
             color: isAutomationTarget ? '#FF4060' : 'var(--text-secondary)',
-            minWidth: 20,
+            minWidth: 28,
+            fontFamily: 'var(--font-mono)',
           }}
           onClick={handleClick}
         >
@@ -83,10 +85,11 @@ export function StepperRow({ label, value, min, max, step, onChange, paramId }: 
           disabled={atMax}
           className="flex items-center justify-center transition-colors"
           style={{
-            width: 16, height: 16, borderRadius: 2,
+            width: 16, height: 16,
             color: atMax ? 'var(--text-ghost)' : 'var(--text-secondary)',
             cursor: atMax ? 'default' : 'pointer',
-            fontSize: 11, fontWeight: 600, lineHeight: 1,
+            fontSize: 11, fontWeight: 700, lineHeight: 1,
+            fontFamily: 'var(--font-mono)',
           }}
         >
           +

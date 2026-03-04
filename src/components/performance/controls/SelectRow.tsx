@@ -32,11 +32,12 @@ export function SelectRow({ label, value, options, onChange }: SelectRowProps) {
         className="text-[9px] tabular-nums text-center cursor-pointer"
         style={{
           border: '1px solid var(--border)',
-          borderRadius: 3,
           padding: '2px 6px',
-          backgroundColor: 'var(--bg-surface)',
+          backgroundColor: '#000000',
           color: 'var(--text-secondary)',
           minWidth: 48,
+          fontFamily: 'var(--font-mono)',
+          letterSpacing: '0.06em',
         }}
       >
         {options.map((opt) => (

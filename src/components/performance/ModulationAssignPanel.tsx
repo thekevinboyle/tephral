@@ -3,6 +3,8 @@ import { useModulationStore, computeMorphedWave, LFO_COUNT, LFO_SHAPES, SYNC_DIV
 import { useUIStore } from '../../stores/uiStore'
 import { WaveformDisplay, LFODropdown } from './LFOEditorPanel'
 import { Knob } from './Knob'
+import { ParamSection } from './blocks/ParamSection'
+import { OrbitalRings, DataGrid } from '../ui/MicroVisuals'
 
 // Editable value pill — drag to adjust, double-click to type
 function EditableValuePill({
@@ -207,6 +209,7 @@ export function ModulationAssignPanel() {
   return (
     <div className="h-full flex flex-col" style={{ gap: 6 }}>
       {/* Row 1: Waveform + knobs + assign */}
+      <ParamSection label="Waveform" color="var(--accent)" visual={OrbitalRings}>
       <div className="flex items-start" style={{ gap: 10 }}>
         {/* Waveform block */}
         <div className="flex flex-col" style={{ gap: 2, flexShrink: 0 }}>
@@ -384,7 +387,10 @@ export function ModulationAssignPanel() {
         </div>
       </div>
 
+      </ParamSection>
+
       {/* Row 2: 4x2 LFO selector grid + Sync */}
+      <ParamSection label="LFO Select" color="var(--accent)" visual={DataGrid}>
       <div className="flex items-center" style={{ gap: 6 }}>
         {/* 4x2 mini waveform grid */}
         <div
@@ -488,6 +494,7 @@ export function ModulationAssignPanel() {
           })}
         </div>
       </div>
+      </ParamSection>
     </div>
   )
 }

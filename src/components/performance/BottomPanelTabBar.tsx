@@ -6,6 +6,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from '../ui/DotMatrixIcons'
+import { Crosshair } from '../ui/MicroVisuals'
 
 const TABS = ['LFO', 'Random', 'Step', 'Env', 'S&H', 'MIDI', 'Audio'] as const
 
@@ -99,7 +100,8 @@ export function BottomPanelTabBar() {
           <SlidersIcon size={12} />
         </IconButton>
 
-        {/* Separator */}
+        {/* Separator with visual */}
+        <Crosshair value={0.5} size={14} color="var(--text-ghost)" className="opacity-15 mx-1" />
         <div style={{ width: 1, height: 16, backgroundColor: 'var(--border)', margin: '0 4px' }} />
 
         {/* Page nav */}

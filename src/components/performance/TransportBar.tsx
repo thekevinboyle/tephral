@@ -11,6 +11,7 @@ import { useStippleStore } from '../../stores/stippleStore'
 import { useAcidStore } from '../../stores/acidStore'
 import { useSlicerStore } from '../../stores/slicerStore'
 import { useUIStore } from '../../stores/uiStore'
+import { RadarSweep } from '../ui/MicroVisuals'
 
 export function TransportBar() {
   const { source, reset, videoElement } = useMediaStore()
@@ -260,6 +261,9 @@ export function TransportBar() {
           <PlayIcon size={10} color="var(--text-secondary)" />
         )}
       </button>
+
+      {/* Transport indicator */}
+      <RadarSweep value={isPlaying ? 0.8 : 0.1} size={18} color={isRecording ? 'var(--accent)' : 'var(--text-ghost)'} className="opacity-25 flex-shrink-0" />
 
       {/* Timeline */}
       <div

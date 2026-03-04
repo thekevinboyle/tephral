@@ -1,5 +1,6 @@
 import { useModulationStore } from '../../stores/modulationStore'
 import { ModulationPanel } from '../sequencer/ModulationContent'
+import { OrbitalRings } from '../ui/MicroVisuals'
 
 export function EffectsLane() {
   const modulation = useModulationStore()
@@ -34,6 +35,7 @@ export function EffectsLane() {
             />
           )}
         </span>
+        <OrbitalRings value={hasActiveModulation ? 0.7 : 0.15} size={22} color="var(--accent)" className="opacity-30" />
       </div>
 
       {/* Modulation panel */}

@@ -17,6 +17,8 @@ import {
 import { EffectTabsBar } from './EffectTabsBar'
 import { SequencerTransport } from './SequencerTransport'
 import { EffectTrackRow } from './EffectTrackRow'
+import { TrackParamPanel } from './TrackParamPanel'
+import { Crosshair } from '../ui/MicroVisuals'
 
 const ALL_EFFECTS: EffectDefinition[] = [
   ...EFFECTS,
@@ -48,6 +50,7 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
     setStepPage,
     setSwing,
     ensureTrack,
+    trackParamPanelOpen,
   } = useEffectSequencerStore()
 
   // Initialize playback engine
@@ -238,14 +241,24 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
         onPageChange={setStepPage}
       />
 
-      {/* ─── Zone 3: Track list (signal chain order) ──────────────────── */}
-      <div className="flex-1 min-h-0 overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
+      {/* ─── Zone 3: Track list + param panel ───────────────────────── */}
+      <div className="flex-1 min-h-0 flex">
+        {/* Param panel column (full height, left side) */}
+        {trackParamPanelOpen && tracks[trackParamPanelOpen] && (
+          <TrackParamPanel effectId={trackParamPanelOpen} />
+        )}
+
+        {/* Track rows (scrollable) */}
+        <div className="flex-1 min-w-0 overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
         {activeTrackIds.length === 0 ? (
           <div
-            className="flex items-center justify-center h-full text-[10px] uppercase tracking-wider"
+            className="flex flex-col items-center justify-center h-full gap-2"
             style={{ color: 'var(--text-ghost)' }}
           >
-            Enable effects on the grid to add tracks
+            <Crosshair value={0.3} size={40} color="var(--text-ghost)" className="opacity-25" />
+            <span className="text-[10px] uppercase tracking-wider">
+              Enable effects on the grid to add tracks
+            </span>
           </div>
         ) : (
           activeTrackIds.map((effectId, index) => {
@@ -292,6 +305,7 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
             )
           })
         )}
+        </div>
       </div>
     </div>
   )

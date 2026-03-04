@@ -2,6 +2,8 @@ import { useSlicerStore } from '../../stores/slicerStore'
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { SliderRow } from '../performance/controls/SliderRow'
+import { ParamSection } from '../performance/blocks/ParamSection'
+import { DataGrid, RadarSweep, SignalAnalysis } from '../ui/MicroVisuals'
 
 export function SlicerControls() {
   const {
@@ -51,13 +53,7 @@ export function SlicerControls() {
   return (
     <div className="px-3 py-2 space-y-3">
       {/* Slices section */}
-      <div>
-        <h4
-          className="text-[11px] uppercase tracking-wider mb-2"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          Slices
-        </h4>
+      <ParamSection label="Slices" color="#FF0055" visual={DataGrid}>
         <div className="flex gap-1">
           {sliceCounts.map((count) => (
             <button
@@ -76,16 +72,10 @@ export function SlicerControls() {
             </button>
           ))}
         </div>
-      </div>
+      </ParamSection>
 
       {/* Grain section */}
-      <div>
-        <h4
-          className="text-[11px] uppercase tracking-wider mb-2"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          Grain
-        </h4>
+      <ParamSection label="Grain" color="#FF0055" visual={RadarSweep}>
         <div className="flex flex-wrap gap-x-6 gap-y-3 items-start">
           <SliderRow
             label="Size"
@@ -221,16 +211,10 @@ export function SlicerControls() {
             paramId="slicer.sliceProb"
           />
         </div>
-      </div>
+      </ParamSection>
 
       {/* Output section */}
-      <div>
-        <h4
-          className="text-[11px] uppercase tracking-wider mb-2"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          Output
-        </h4>
+      <ParamSection label="Output" color="#FF0055" visual={SignalAnalysis}>
         <div className="flex gap-1 mb-2">
           {outputModes.map((mode) => (
             <button
@@ -306,7 +290,7 @@ export function SlicerControls() {
             />
           </div>
         )}
-      </div>
+      </ParamSection>
 
       {/* Freeze button */}
       <button

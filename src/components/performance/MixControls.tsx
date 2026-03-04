@@ -2,6 +2,8 @@ import { useCallback, useRef } from 'react'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
+import { ParamSection } from './blocks/ParamSection'
+import { ShapeMorpher } from '../ui/MicroVisuals'
 
 export function MixControls() {
   const { wetMix, setWetMix } = useGlitchEngineStore()
@@ -39,9 +41,10 @@ export function MixControls() {
 
   return (
     <div
-      className="h-full flex flex-col justify-center px-4 py-2"
+      className="h-full flex flex-col justify-center px-2 py-2"
       style={{ backgroundColor: 'var(--bg-surface)' }}
     >
+      <ParamSection label="Crossfade" color="var(--text-muted)" visual={ShapeMorpher}>
       {/* Crossfader row */}
       <div className="flex items-center gap-4 select-none">
         {/* DRY label */}
@@ -92,6 +95,7 @@ export function MixControls() {
           Wet
         </span>
       </div>
+      </ParamSection>
     </div>
   )
 }

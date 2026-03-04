@@ -47,12 +47,13 @@ export function ToggleRow({ label, value, onChange, paramId }: ToggleRowProps) {
         onClick={() => onChange(!value)}
         className="text-[9px] tabular-nums font-bold"
         style={{
-          border: `1px solid ${isAutomationTarget ? '#FF4060' : value ? 'var(--accent-dim)' : 'var(--border)'}`,
-          borderRadius: 3,
+          border: `1px solid ${isAutomationTarget ? '#FF4060' : value ? '#FFFFFF' : 'var(--border)'}`,
           padding: '2px 6px',
-          backgroundColor: value ? 'var(--accent-subtle)' : 'var(--bg-surface)',
-          color: value ? 'var(--accent)' : 'var(--text-ghost)',
+          backgroundColor: value ? '#FFFFFF' : 'transparent',
+          color: value ? '#000000' : 'var(--text-ghost)',
           minWidth: 48,
+          fontFamily: 'var(--font-mono)',
+          letterSpacing: '0.08em',
         }}
       >
         {value ? 'ON' : 'OFF'}

@@ -13,13 +13,21 @@ export function ColorRow({ label, value, onChange }: ColorRowProps) {
       >
         {label}
       </span>
-      <input
-        type="color"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-8 h-8 rounded cursor-pointer"
-        style={{ border: '1px solid var(--border)', backgroundColor: 'transparent' }}
-      />
+      <div className="flex flex-col items-center" style={{ gap: 2 }}>
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-8 h-6 cursor-pointer"
+          style={{ border: '1px solid var(--border)', backgroundColor: 'transparent' }}
+        />
+        <span
+          className="text-[8px] tabular-nums font-bold uppercase"
+          style={{ color: 'var(--text-ghost)', fontFamily: 'var(--font-mono)' }}
+        >
+          {value.toUpperCase()}
+        </span>
+      </div>
     </div>
   )
 }

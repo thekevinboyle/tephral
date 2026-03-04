@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { bjorklundPattern } from '../utils/bjorklund'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -9,24 +10,23 @@ export type EffectStepResolution = '1/4' | '1/8' | '1/16' | '1/32'
 
 export type AudioReactiveSource = 'kick' | 'silence' | 'high' | 'mid' | 'low' | 'rms' | 'peak'
 
+export type TimeScale = 0.25 | 0.5 | 0.75 | 1 | 1.5 | 2 | 3 | 4
+
+export interface EuclideanConfig {
+  hits: number
+  rotation: number
+}
+
 export interface TrackAudioReactiveConfig {
   enabled: boolean
   source: AudioReactiveSource
-  gain: number             // 0.1-4, input gain before envelope/threshold
-  threshold: number        // 0-1
-  speedMultiplier: number  // 0.25-4
-  attackMs: number         // 1-100
-  releaseMs: number        // 50-1000
+  sensitivity: number      // 0.1-2.0, kick multiplier / auto-threshold sensitivity
 }
 
 const DEFAULT_AUDIO_REACTIVE: TrackAudioReactiveConfig = {
   enabled: false,
-  source: 'rms',
-  gain: 1,
-  threshold: 0.3,
-  speedMultiplier: 1,
-  attackMs: 10,
-  releaseMs: 200,
+  source: 'kick',
+  sensitivity: 1.0,
 }
 
 export interface EffectStep {
@@ -34,6 +34,7 @@ export interface EffectStep {
   locks: Record<string, number | string>  // paramId -> raw value
   probability: number                      // 0-1
   condition: 'always' | 'fill'
+  retrig: number                           // 0 = off, 2-8 = sub-step repeats
 }
 
 export interface EffectTrack {
@@ -46,7 +47,9 @@ export interface EffectTrack {
   midiGate: boolean              // MIDI note gates effect on/off
   audioGate: boolean             // audio-level gates effect on/off
   audioReactive: TrackAudioReactiveConfig  // per-track audio-driven stepping
-  trackStep: number              // independent step position for audio-reactive mode
+  trackStep: number              // independent step position
+  timeScale: TimeScale           // clock multiplier (default 1)
+  euclidean: EuclideanConfig | null  // last euclidean config applied (null = manual)
 }
 
 export interface AutomationParam {
@@ -73,7 +76,9 @@ interface EffectSequencerState {
   fillModeActive: boolean
   automationParam: AutomationParam | null
   trackAudioLevels: Record<string, number>  // per-track smoothed audio level for UI meters
+  trackAutoThresholds: Record<string, number>  // per-track auto-computed threshold for UI display
   audioGateLevel: number                     // current audio gate amplitude (0-1)
+  trackParamPanelOpen: string | null         // effectId of track with open param panel
 
   // Automation
   setAutomationParam: (param: AutomationParam) => void
@@ -97,11 +102,16 @@ interface EffectSequencerState {
   setTrackMidiGate: (effectId: string, enabled: boolean) => void
   setTrackAudioGate: (effectId: string, enabled: boolean) => void
   setTrackLength: (effectId: string, length: number) => void
+  setTrackTimeScale: (effectId: string, scale: TimeScale) => void
+  setStepRetrig: (effectId: string, stepIndex: number, retrig: number) => void
+  applyEuclidean: (effectId: string, hits: number, rotation: number) => void
+  setTrackParamPanelOpen: (effectId: string | null) => void
   setTrackAudioReactive: (effectId: string, config: Partial<TrackAudioReactiveConfig>) => void
   setTrackAudioReactiveEnabled: (effectId: string, enabled: boolean) => void
   advanceTrackStep: (effectId: string) => void
   resetTrackSteps: () => void
   setTrackAudioLevel: (effectId: string, level: number) => void
+  setTrackAutoThreshold: (effectId: string, value: number) => void
   setAudioGateLevel: (level: number) => void
 
   // Step editing
@@ -135,6 +145,7 @@ const createDefaultStep = (): EffectStep => ({
   locks: {},
   probability: 1,
   condition: 'always',
+  retrig: 0,
 })
 
 const createDefaultTrack = (effectId: string): EffectTrack => ({
@@ -148,6 +159,8 @@ const createDefaultTrack = (effectId: string): EffectTrack => ({
   audioGate: false,
   audioReactive: { ...DEFAULT_AUDIO_REACTIVE },
   trackStep: 0,
+  timeScale: 1,
+  euclidean: null,
 })
 
 // Immutable step update helper
@@ -182,7 +195,9 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
   fillModeActive: false,
   automationParam: null,
   trackAudioLevels: {},
+  trackAutoThresholds: {},
   audioGateLevel: 0,
+  trackParamPanelOpen: null,
 
   // ─── Transport ─────────────────────────────────────────────────────────
 
@@ -194,7 +209,7 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
     for (const [id, track] of Object.entries(state.tracks)) {
       newTracks[id] = { ...track, trackStep: 0 }
     }
-    set({ isPlaying: false, currentStep: 0, tracks: newTracks, trackAudioLevels: {} })
+    set({ isPlaying: false, currentStep: 0, tracks: newTracks, trackAudioLevels: {}, trackAutoThresholds: {} })
   },
 
   setBpm: (bpm) => set({ bpm: Math.max(20, Math.min(300, bpm)) }),
@@ -282,6 +297,42 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
     })
   },
 
+  setTrackTimeScale: (effectId, scale) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      return { tracks: { ...state.tracks, [effectId]: { ...track, timeScale: scale } } }
+    })
+  },
+
+  setStepRetrig: (effectId, stepIndex, retrig) => {
+    set((state) => ({
+      tracks: updateStep(state.tracks, effectId, stepIndex, (step) => ({
+        ...step,
+        retrig,
+      })),
+    }))
+  },
+
+  applyEuclidean: (effectId, hits, rotation) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      const pattern = bjorklundPattern(hits, track.length, rotation)
+      const newSteps = track.steps.map((step, i) =>
+        i < track.length ? { ...step, active: pattern[i] ?? false } : step
+      )
+      return {
+        tracks: {
+          ...state.tracks,
+          [effectId]: { ...track, steps: newSteps, euclidean: { hits, rotation } },
+        },
+      }
+    })
+  },
+
+  setTrackParamPanelOpen: (effectId) => set({ trackParamPanelOpen: effectId }),
+
   setTrackAudioReactive: (effectId, config) => {
     set((state) => {
       const track = state.tracks[effectId]
@@ -302,11 +353,21 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
     set((state) => {
       const track = state.tracks[effectId]
       if (!track) return state
+
+      // When enabling audio reactive, auto-activate all steps within track length
+      // so audio triggers have immediate visible effect
+      const newSteps = enabled
+        ? track.steps.map((step, i) =>
+            i < track.length && !step.active ? { ...step, active: true } : step,
+          )
+        : track.steps
+
       return {
         tracks: {
           ...state.tracks,
           [effectId]: {
             ...track,
+            steps: newSteps,
             audioReactive: { ...track.audioReactive, enabled },
             trackStep: 0,
           },
@@ -337,13 +398,19 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
       for (const [id, track] of Object.entries(state.tracks)) {
         newTracks[id] = { ...track, trackStep: 0 }
       }
-      return { tracks: newTracks, trackAudioLevels: {} }
+      return { tracks: newTracks, trackAudioLevels: {}, trackAutoThresholds: {} }
     })
   },
 
   setTrackAudioLevel: (effectId, level) => {
     set((state) => ({
       trackAudioLevels: { ...state.trackAudioLevels, [effectId]: level },
+    }))
+  },
+
+  setTrackAutoThreshold: (effectId, value) => {
+    set((state) => ({
+      trackAutoThresholds: { ...state.trackAutoThresholds, [effectId]: value },
     }))
   },
 
@@ -354,21 +421,32 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
   // ─── Step Editing ──────────────────────────────────────────────────────
 
   toggleStep: (effectId, stepIndex) => {
-    set((state) => ({
-      tracks: updateStep(state.tracks, effectId, stepIndex, (step) => ({
+    set((state) => {
+      const newTracks = updateStep(state.tracks, effectId, stepIndex, (step) => ({
         ...step,
         active: !step.active,
-      })),
-    }))
+      }))
+      // Clear euclidean config on manual edit
+      const track = newTracks[effectId]
+      if (track?.euclidean) {
+        newTracks[effectId] = { ...track, euclidean: null }
+      }
+      return { tracks: newTracks }
+    })
   },
 
   setStepActive: (effectId, stepIndex, active) => {
-    set((state) => ({
-      tracks: updateStep(state.tracks, effectId, stepIndex, (step) => ({
+    set((state) => {
+      const newTracks = updateStep(state.tracks, effectId, stepIndex, (step) => ({
         ...step,
         active,
-      })),
-    }))
+      }))
+      const track = newTracks[effectId]
+      if (track?.euclidean) {
+        newTracks[effectId] = { ...track, euclidean: null }
+      }
+      return { tracks: newTracks }
+    })
   },
 
   selectStep: (effectId, stepIndex) => {

@@ -1,7 +1,8 @@
 import { useRef, useState, useCallback } from 'react'
 import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
-import { BLOCK } from './blockTheme'
+import { BracketDisplay } from '../../ui/BracketDisplay'
+import { ScanMeter } from '../../ui/ScanMeter'
 
 interface ArcBlockProps {
   label: string
@@ -14,30 +15,6 @@ interface ArcBlockProps {
   color?: string
   onTap?: () => void
   isAutomationTarget?: boolean
-}
-
-const ARC_SIZE = 70
-const ARC_STROKE = 3
-const ARC_RADIUS = (ARC_SIZE - ARC_STROKE) / 2
-const CENTER = ARC_SIZE / 2
-// 270° sweep: from -225° to +45° (gap at bottom)
-const START_ANGLE = -225
-const SWEEP_DEG = 270
-
-function polarToCart(cx: number, cy: number, r: number, angleDeg: number) {
-  const rad = (angleDeg - 90) * Math.PI / 180
-  return {
-    x: cx + r * Math.cos(rad),
-    y: cy + r * Math.sin(rad),
-  }
-}
-
-function describeArc(cx: number, cy: number, r: number, startDeg: number, endDeg: number): string {
-  const start = polarToCart(cx, cy, r, endDeg)
-  const end = polarToCart(cx, cy, r, startDeg)
-  const sweep = endDeg - startDeg
-  const largeArc = sweep > 180 ? 1 : 0
-  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y}`
 }
 
 export function ArcBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)', onTap, isAutomationTarget }: ArcBlockProps) {
@@ -94,14 +71,6 @@ export function ArcBlock({ label, value, min, max, step, onChange, paramId, colo
     onChange(Math.max(min, Math.min(max, snapped)))
   }, [min, max, step, onChange])
 
-  // Direct SVG values — no spring
-  const bgArc = describeArc(CENTER, CENTER, ARC_RADIUS, START_ANGLE, START_ANGLE + SWEEP_DEG)
-  const fillSweep = Math.max(0.01, normalized * SWEEP_DEG)
-  const fillArc = describeArc(CENTER, CENTER, ARC_RADIUS, START_ANGLE, START_ANGLE + fillSweep)
-  const indicatorAngle = START_ANGLE + normalized * SWEEP_DEG
-  const indicatorTip = polarToCart(CENTER, CENTER, ARC_RADIUS - 2, indicatorAngle)
-  const dotPos = polarToCart(CENTER, CENTER, ARC_RADIUS, indicatorAngle)
-
   return (
     <div
       ref={containerRef}
@@ -115,103 +84,30 @@ export function ArcBlock({ label, value, min, max, step, onChange, paramId, colo
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: BLOCK.radius,
+        borderRadius: 0,
         overflow: 'hidden',
         cursor: 'ns-resize',
         touchAction: 'none',
         userSelect: 'none',
-        backgroundColor: BLOCK.bg,
-        borderLeft: isAutomationTarget ? '3px solid #FF3355' : undefined,
-        border: isAutomationTarget ? undefined : '1px solid rgba(255,255,255,0.06)',
-        borderRight: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderTop: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderBottom: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        boxShadow: isAutomationTarget
-          ? `0 0 8px rgba(255, 51, 85, 0.15), ${BLOCK.shadow}`
-          : BLOCK.shadow,
+        backgroundColor: '#000000',
+        border: isAutomationTarget ? '1px solid #FF3355' : '1px solid var(--border)',
+        animation: isAutomationTarget ? 'hud-blink 1s step-end infinite' : undefined,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
       }}
     >
-      {/* Label — top left */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 10,
-          left: 12,
-          fontSize: 9,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: BLOCK.textGhost,
-          pointerEvents: 'none',
-        }}
-      >
-        {label}
+      {/* BracketDisplay — top section */}
+      <div style={{
+        padding: '10px 12px 0',
+        pointerEvents: 'none',
+      }}>
+        <BracketDisplay value={displayValue} label={label} color={color} size="md" />
       </div>
 
-      {/* SVG arc */}
-      <svg
-        width={ARC_SIZE}
-        height={ARC_SIZE}
-        viewBox={`0 0 ${ARC_SIZE} ${ARC_SIZE}`}
-        style={{ pointerEvents: 'none', marginTop: 8 }}
-      >
-        {/* Background track */}
-        <path
-          d={bgArc}
-          fill="none"
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth={ARC_STROKE}
-          strokeLinecap="round"
-        />
-
-        {/* Fill arc */}
-        <path
-          d={fillArc}
-          fill="none"
-          stroke={color}
-          strokeWidth={ARC_STROKE}
-          strokeLinecap="round"
-        />
-
-        {/* Indicator line from center outward */}
-        <line
-          x1={CENTER}
-          y1={CENTER}
-          x2={indicatorTip.x}
-          y2={indicatorTip.y}
-          stroke={color}
-          strokeWidth={2}
-          strokeLinecap="round"
-        />
-
-        {/* Small dot at tip of indicator */}
-        <circle
-          cx={dotPos.x}
-          cy={dotPos.y}
-          r={4}
-          fill={color}
-        />
-      </svg>
-
-      {/* Center value text (overlaid on arc) */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -40%)',
-          fontSize: 16,
-          fontWeight: 700,
-          fontVariantNumeric: 'tabular-nums',
-          color: BLOCK.text,
-          pointerEvents: 'none',
-        }}
-      >
-        {displayValue}
+      {/* ScanMeter — bottom */}
+      <div style={{ pointerEvents: 'none' }}>
+        <ScanMeter value={normalized} color={color} height={6} />
       </div>
 
       {/* Modulation context menu */}

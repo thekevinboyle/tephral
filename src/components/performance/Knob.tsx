@@ -53,9 +53,6 @@ interface KnobProps {
   statusText?: string
 }
 
-// SVG arc path helper — 270 degree sweep from -135 to +135
-const ARC_RADIUS = 46
-
 export function Knob({
   label,
   value,
@@ -67,8 +64,7 @@ export function Knob({
   onChange,
   formatValue,
   paramId,
-  showArc = false,
-  showValue = false,
+  showArc,
   statusText,
 }: KnobProps) {
   const resolvedStatusText = statusText ?? getParamStatusText(label)
@@ -365,29 +361,22 @@ export function Knob({
   }, [removeRouting])
 
   const normalized = (value - min) / (max - min)
-  const rotation = normalized * 270 - 135
 
   const dimensions = {
-    xs: { outer: 36, indicator: 10 },
-    sm: { outer: 38, indicator: 12 },
-    md: { outer: 40, indicator: 14 },
-    lg: { outer: 60, indicator: 20 },
+    xs: { width: 48, height: 22 },
+    sm: { width: 52, height: 24 },
+    md: { width: 56, height: 26 },
+    lg: { width: 72, height: 32 },
   }[size]
 
-  // Compute modulation dot positions on the arc rim
+  // Modulation routing indicators
   const modDots = useMemo(() => {
     return paramRoutings.map(routing => {
       const info = getRoutingInfo(routing)
       if (!info) return null
-      const targetPos = Math.max(0, Math.min(1, normalized + routing.depth))
-      const angleDeg = targetPos * 270 - 135
-      const angleRad = angleDeg * Math.PI / 180
-      const r = dimensions.outer * ARC_RADIUS / 100
-      const cx = dimensions.outer / 2 + r * Math.sin(angleRad)
-      const cy = dimensions.outer / 2 - r * Math.cos(angleRad)
-      return { routing, info, cx, cy }
+      return { routing, info }
     }).filter((d): d is NonNullable<typeof d> => d !== null)
-  }, [paramRoutings, normalized, dimensions.outer, getRoutingInfo])
+  }, [paramRoutings, getRoutingInfo])
 
   const displayValue = formatValue
     ? formatValue(value)
@@ -399,6 +388,33 @@ export function Knob({
   const arcColor = sourceInfo ? sourceInfo.color : color
 
   const isCompact = size === 'xs'
+
+  // Arc knob geometry
+  const arcSize = { xs: 28, sm: 32, md: 36, lg: 44 }[size]
+  const arcStroke = 2.5
+  const arcRadius = (arcSize - arcStroke) / 2
+  const arcCenter = arcSize / 2
+  // Arc spans 270° (from 135° to 405°)
+  const startAngle = 135
+  const endAngle = 405
+  const angleRange = endAngle - startAngle
+  const valueAngle = startAngle + normalized * angleRange
+
+  const polarToCartesian = (cx: number, cy: number, r: number, angleDeg: number) => {
+    const rad = (angleDeg - 90) * Math.PI / 180
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
+  }
+
+  const describeArc = (cx: number, cy: number, r: number, start: number, end: number) => {
+    const s = polarToCartesian(cx, cy, r, start)
+    const e = polarToCartesian(cx, cy, r, end)
+    const largeArc = end - start > 180 ? 1 : 0
+    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`
+  }
+
+  // Indicator line from center toward edge
+  const indicatorEnd = polarToCartesian(arcCenter, arcCenter, arcRadius - 3, valueAngle)
+  const indicatorStart = polarToCartesian(arcCenter, arcCenter, arcRadius * 0.35, valueAngle)
 
   return (
     <div
@@ -414,50 +430,99 @@ export function Knob({
       onMouseEnter={resolvedStatusText ? () => setStatusText(resolvedStatusText) : undefined}
       onMouseLeave={resolvedStatusText ? () => setStatusText(null) : undefined}
     >
-      {/* Label — above the knob */}
+      {/* Label */}
       <span
-        className={
-          isCompact
-            ? 'text-[8px] uppercase tracking-wider leading-none'
-            : showArc
-              ? 'text-[9px] uppercase tracking-wide leading-none font-medium'
-              : 'text-[14px] font-medium'
-        }
+        className="uppercase leading-none font-bold"
         style={{
-          color: isCompact ? 'var(--text-muted)' : showArc ? 'var(--text-secondary)' : 'var(--text-muted)',
-          fontFamily: 'var(--font-sans)',
+          color: 'var(--text-muted)',
+          fontFamily: 'var(--font-mono)',
+          letterSpacing: '0.1em',
+          fontSize: isCompact ? 8 : 9,
         }}
       >
         {label}
       </span>
 
-      {/* Knob container */}
+      {showArc ? (
+        /* Circular arc knob */
+        <div
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          className="relative cursor-pointer select-none touch-none flex flex-col items-center"
+        >
+          <svg width={arcSize} height={arcSize}>
+            {/* Background track */}
+            <path
+              d={describeArc(arcCenter, arcCenter, arcRadius, startAngle, endAngle)}
+              fill="none"
+              stroke="var(--border)"
+              strokeWidth={arcStroke}
+              strokeLinecap="round"
+            />
+            {/* Active arc */}
+            {normalized > 0.005 && (
+              <path
+                d={describeArc(arcCenter, arcCenter, arcRadius, startAngle, valueAngle)}
+                fill="none"
+                stroke={arcColor}
+                strokeWidth={arcStroke}
+                strokeLinecap="round"
+              />
+            )}
+            {/* Indicator line */}
+            <line
+              x1={indicatorStart.x} y1={indicatorStart.y}
+              x2={indicatorEnd.x} y2={indicatorEnd.y}
+              stroke={arcColor}
+              strokeWidth={1.5}
+              strokeLinecap="round"
+            />
+          </svg>
+          {/* Value below arc */}
+          <span
+            className="tabular-nums font-bold"
+            style={{
+              fontSize: isCompact ? 9 : 10,
+              color: arcColor,
+              fontFamily: 'var(--font-mono)',
+              letterSpacing: '0.06em',
+              marginTop: -2,
+            }}
+          >
+            {displayValue}
+          </span>
+        </div>
+      ) : (
+      /* Rectangular value container — all pointer events */
       <div
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         className="relative cursor-pointer select-none touch-none"
         style={{
-          width: dimensions.outer,
-          height: dimensions.outer,
-          outline: isAutomationTarget
-            ? '2px solid #FF4060'
+          width: dimensions.width,
+          height: dimensions.height,
+          border: isAutomationTarget
+            ? '1px solid #FF4060'
             : isInAssignmentMode && !hasRouting
-              ? `2px solid ${assigningColor}`
+              ? `1px solid ${assigningColor}`
               : isDropTarget
-                ? '2px solid var(--accent)'
-                : 'none',
-          outlineOffset: 2,
-          borderRadius: '50%',
-          boxShadow: isInAssignmentMode && assigningColor ? `0 0 8px ${assigningColor}40` : undefined,
+                ? '1px solid var(--accent)'
+                : `1px solid ${hasRouting ? (sourceInfo?.color ?? 'var(--border)') : 'var(--border)'}`,
+          backgroundColor: '#000000',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: isAutomationTarget ? 'hud-blink 0.5s step-end infinite' : undefined,
         }}
       >
         {/* Depth drag indicator */}
         {isDepthDragging && (
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-bold tabular-nums whitespace-nowrap z-20"
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 text-[9px] font-bold tabular-nums whitespace-nowrap z-20"
             style={{
               backgroundColor: assigningColor ?? 'var(--accent)',
-              color: '#fff',
+              color: '#000',
             }}>
             {(() => {
               const src = depthAssignSource.current
@@ -470,92 +535,60 @@ export function Knob({
 
         {/* Dot drag tooltip */}
         {dotDraggingInfo && (
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-bold tabular-nums whitespace-nowrap z-20"
-            style={{ backgroundColor: dotDraggingInfo.color, color: '#fff' }}>
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 text-[9px] font-bold tabular-nums whitespace-nowrap z-20"
+            style={{ backgroundColor: dotDraggingInfo.color, color: '#000' }}>
             {dotDraggingInfo.name}: {dotDraggingInfo.depth > 0 ? '+' : ''}{(dotDraggingInfo.depth * 100).toFixed(0)}%
           </div>
         )}
 
-        {/* Outer rim ring */}
-        {!isCompact && (
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: 'linear-gradient(135deg, var(--knob-rim-highlight), var(--knob-rim))',
-            }}
-          />
-        )}
-        {/* Dark circle body */}
-        <div
-          className="absolute rounded-full"
+        {/* Value */}
+        <span
+          className="tabular-nums font-bold"
           style={{
-            inset: isCompact ? 0 : 2,
-            background: isCompact
-              ? '#12121f'
-              : 'radial-gradient(ellipse at 35% 30%, var(--knob-body-highlight), var(--knob-body))',
-            border: isCompact ? '1px solid #2a2a40' : 'none',
-            boxShadow: 'var(--shadow-knob)',
-            transition: 'box-shadow var(--transition-fast)',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-knob-hover)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-knob)' }}
-        />
-
-        {/* Line indicator */}
-        <div
-          className="absolute"
-          style={{
-            width: isCompact ? 1 : size === 'sm' ? 1 : 2,
-            height: dimensions.indicator,
-            top: isCompact ? 3 : 4,
-            left: '50%',
-            backgroundColor: arcColor,
-            transform: `translateX(-50%) rotate(${rotation}deg)`,
-            transformOrigin: `center ${dimensions.outer / 2 - (isCompact ? 3 : 4)}px`,
-            borderRadius: 1,
-            boxShadow: normalized !== 0 ? `0 0 4px ${arcColor}60` : 'none',
-          }}
-        />
-
-        {/* Modulation dots on the arc rim */}
-        {modDots.map(dot => (
-          <div
-            key={dot.routing.id}
-            onPointerDown={(e) => handleDotPointerDown(e, dot.routing)}
-            onPointerMove={handleDotPointerMove}
-            onPointerUp={handleDotPointerUp}
-            onDoubleClick={(e) => handleDotDoubleClick(e, dot.routing.id)}
-            className="absolute cursor-ns-resize touch-none z-10 hover:scale-150 transition-transform"
-            style={{
-              width: isCompact ? 5 : 6,
-              height: isCompact ? 5 : 6,
-              borderRadius: '50%',
-              backgroundColor: dot.info.color,
-              boxShadow: `0 0 4px ${dot.info.color}`,
-              left: dot.cx - (isCompact ? 2.5 : 3),
-              top: dot.cy - (isCompact ? 2.5 : 3),
-            }}
-            title={`${dot.info.name}: ${dot.routing.depth > 0 ? '+' : ''}${Math.round(dot.routing.depth * 100)}% — Drag to adjust, double-click to remove`}
-          />
-        ))}
-      </div>
-
-      {/* Value pill — bordered box below knob */}
-      {showValue && !hasRouting && (
-        <div
-          className="tabular-nums leading-none text-center"
-          style={{
-            fontSize: isCompact ? 8 : 9,
+            fontSize: isCompact ? 10 : 12,
             color: arcColor,
-            border: `1px solid ${arcColor}40`,
-            borderRadius: 3,
-            padding: isCompact ? '1px 4px' : '2px 6px',
-            backgroundColor: `${arcColor}08`,
-            minWidth: isCompact ? 32 : undefined,
-            boxShadow: 'var(--shadow-inset)',
+            fontFamily: 'var(--font-mono)',
+            letterSpacing: '0.06em',
           }}
         >
           {displayValue}
+        </span>
+
+        {/* Fill bar at bottom */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            width: `${normalized * 100}%`,
+            height: 1,
+            backgroundColor: arcColor,
+            opacity: 0.4,
+          }}
+        />
+      </div>
+      )}
+
+      {/* Modulation indicators */}
+      {modDots.length > 0 && (
+        <div className="flex" style={{ gap: 2 }}>
+          {modDots.map(dot => (
+            <div
+              key={dot.routing.id}
+              onPointerDown={(e) => handleDotPointerDown(e, dot.routing)}
+              onPointerMove={handleDotPointerMove}
+              onPointerUp={handleDotPointerUp}
+              onDoubleClick={(e) => handleDotDoubleClick(e, dot.routing.id)}
+              className="cursor-ns-resize touch-none hover:opacity-100 transition-opacity"
+              style={{
+                width: isCompact ? 14 : 18,
+                height: 3,
+                backgroundColor: dot.info.color,
+                opacity: 0.7,
+              }}
+              title={`${dot.info.name}: ${dot.routing.depth > 0 ? '+' : ''}${Math.round(dot.routing.depth * 100)}% — Drag to adjust, double-click to remove`}
+            />
+          ))}
         </div>
       )}
 

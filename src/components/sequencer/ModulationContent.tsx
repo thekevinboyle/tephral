@@ -9,6 +9,7 @@ import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
 import { useUIStore } from '../../stores/uiStore'
+import { Knob } from '../performance/Knob'
 import { getUIStatusText } from '../../config/statusDescriptions'
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -212,12 +213,15 @@ export function ModulatorSection({
 
   return (
     <div
-      className="rounded-sm overflow-hidden"
+      className="overflow-hidden"
       style={{
         border: selected ? `1px solid ${color}` : enabled ? `1px solid ${color}40` : '1px solid var(--border)',
         backgroundColor: selected ? `${color}15` : enabled ? `${color}08` : 'transparent',
+        borderRadius: 12,
       }}
     >
+      {/* Accent line */}
+      <div style={{ height: 2, backgroundColor: color, opacity: enabled ? 0.5 : 0.15 }} />
       <div
         className="w-full flex items-center gap-2 px-2 py-1.5 cursor-pointer"
         style={{ borderBottom: isExpanded ? '1px solid var(--border)' : 'none' }}
@@ -1193,13 +1197,16 @@ function AudioReactiveContent() {
 
         {ar.autoMode ? (
           <>
-            <ModSlider
-              label="Sens"
+            <Knob
+              label="SENS"
               value={ar.sensitivity}
               min={0} max={1} step={0.01}
-              onChange={ar.setSensitivity}
-              format={(v) => `${(v * 100).toFixed(0)}%`}
+              size="xs"
+              showArc
+              showValue
               color={color}
+              onChange={ar.setSensitivity}
+              formatValue={(v) => `${(v * 100).toFixed(0)}%`}
             />
             <ModSlider
               label="Attack"

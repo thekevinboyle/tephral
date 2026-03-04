@@ -1,7 +1,8 @@
 import { useRef, useState, useCallback } from 'react'
 import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
-import { BLOCK } from './blockTheme'
+import { BracketDisplay } from '../../ui/BracketDisplay'
+import { ScanMeter } from '../../ui/ScanMeter'
 
 interface RulerBlockProps {
   label: string
@@ -17,8 +18,6 @@ interface RulerBlockProps {
 }
 
 const TRACK_PADDING = 12
-const RULER_Y = 62
-const RULER_H = 24
 
 export function RulerBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)', onTap, isAutomationTarget }: RulerBlockProps) {
   const normalized = (value - min) / (max - min)
@@ -112,54 +111,26 @@ export function RulerBlock({ label, value, min, max, step, onChange, paramId, co
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: BLOCK.radius,
+        borderRadius: 0,
         overflow: 'hidden',
         userSelect: 'none',
-        backgroundColor: BLOCK.bg,
-        borderLeft: isAutomationTarget ? '3px solid #FF3355' : undefined,
-        border: isAutomationTarget ? undefined : '1px solid rgba(255,255,255,0.06)',
-        borderRight: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderTop: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderBottom: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        boxShadow: isAutomationTarget
-          ? `0 0 8px rgba(255, 51, 85, 0.15), ${BLOCK.shadow}`
-          : BLOCK.shadow,
+        backgroundColor: '#000000',
+        border: isAutomationTarget ? '1px solid #FF3355' : '1px solid var(--border)',
+        animation: isAutomationTarget ? 'hud-blink 1s step-end infinite' : undefined,
       }}
     >
-      {/* Label — top left */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 12,
-          left: TRACK_PADDING,
-          fontSize: 9,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: BLOCK.textGhost,
-          pointerEvents: 'none',
-        }}
-      >
-        {label}
+      {/* BracketDisplay — top section */}
+      <div style={{
+        position: 'absolute',
+        top: 10,
+        left: TRACK_PADDING,
+        right: TRACK_PADDING,
+        pointerEvents: 'none',
+      }}>
+        <BracketDisplay value={displayValue} label={label} color={color} size="md" />
       </div>
 
-      {/* Value — top right */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 8,
-          right: TRACK_PADDING,
-          fontSize: 18,
-          fontWeight: 800,
-          fontVariantNumeric: 'tabular-nums',
-          color: BLOCK.text,
-          pointerEvents: 'none',
-        }}
-      >
-        {displayValue}
-      </div>
-
-      {/* Ruler track area */}
+      {/* Ruler track area — draggable hit target */}
       <div
         ref={trackRef}
         {...bind()}
@@ -167,8 +138,8 @@ export function RulerBlock({ label, value, min, max, step, onChange, paramId, co
           position: 'absolute',
           left: TRACK_PADDING,
           right: TRACK_PADDING,
-          top: RULER_Y - 10,
-          height: RULER_H + 20,
+          top: 52,
+          height: 36,
           cursor: 'grab',
           touchAction: 'none',
         }}
@@ -180,10 +151,10 @@ export function RulerBlock({ label, value, min, max, step, onChange, paramId, co
             style={{
               position: 'absolute',
               left: `${tick.norm * 100}%`,
-              top: 10,
+              top: 6,
               width: 1,
-              height: tick.major ? RULER_H : RULER_H * 0.5,
-              backgroundColor: tick.major ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
+              height: tick.major ? 16 : 8,
+              backgroundColor: tick.major ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)',
               transform: 'translateX(-0.5px)',
               pointerEvents: 'none',
             }}
@@ -195,9 +166,9 @@ export function RulerBlock({ label, value, min, max, step, onChange, paramId, co
           style={{
             position: 'absolute',
             left: `${normalized * 100}%`,
-            top: 4,
+            top: 2,
             width: 1.5,
-            height: RULER_H + 12,
+            height: 28,
             backgroundColor: color,
             transform: 'translateX(-0.75px)',
             pointerEvents: 'none',
@@ -209,10 +180,9 @@ export function RulerBlock({ label, value, min, max, step, onChange, paramId, co
           style={{
             position: 'absolute',
             left: `${normalized * 100}%`,
-            top: 2,
+            top: 0,
             width: 5,
             height: 5,
-            borderRadius: '50%',
             backgroundColor: color,
             transform: 'translate(-2.5px, 0)',
             pointerEvents: 'none',
@@ -220,32 +190,39 @@ export function RulerBlock({ label, value, min, max, step, onChange, paramId, co
         />
       </div>
 
-      {/* Min/max labels */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 8,
-          left: TRACK_PADDING,
-          fontSize: 8,
-          color: 'rgba(255,255,255,0.15)',
-          fontVariantNumeric: 'tabular-nums',
-          pointerEvents: 'none',
-        }}
-      >
+      {/* Min/max range labels */}
+      <div style={{
+        position: 'absolute',
+        bottom: 10,
+        left: TRACK_PADDING,
+        fontSize: 8,
+        color: 'rgba(255,255,255,0.2)',
+        fontVariantNumeric: 'tabular-nums',
+        pointerEvents: 'none',
+      }}>
         {step >= 1 ? min.toFixed(0) : min.toFixed(1)}
       </div>
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 8,
-          right: TRACK_PADDING,
-          fontSize: 8,
-          color: 'rgba(255,255,255,0.15)',
-          fontVariantNumeric: 'tabular-nums',
-          pointerEvents: 'none',
-        }}
-      >
+      <div style={{
+        position: 'absolute',
+        bottom: 10,
+        right: TRACK_PADDING,
+        fontSize: 8,
+        color: 'rgba(255,255,255,0.2)',
+        fontVariantNumeric: 'tabular-nums',
+        pointerEvents: 'none',
+      }}>
         {step >= 1 ? max.toFixed(0) : max.toFixed(1)}
+      </div>
+
+      {/* ScanMeter — bottom */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        pointerEvents: 'none',
+      }}>
+        <ScanMeter value={normalized} color={color} height={4} />
       </div>
 
       {contextMenuPos && paramId && (

@@ -5,6 +5,7 @@ import { ShuffleIcon } from '../ui/DotMatrixIcons'
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { useBankStore } from '../../stores/bankStore'
+import { CornerFrame } from '../ui/CornerFrame'
 import { useGlitchEngineStore, type GlitchSnapshot } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
@@ -86,7 +87,6 @@ export function BankPanel() {
   const handleRandom = useCallback(() => {
     setPreviousState(captureState())
 
-    // Disable all effects first
     glitch.setRGBSplitEnabled(false)
     glitch.setBlockDisplaceEnabled(false)
     glitch.setScanLinesEnabled(false)
@@ -99,7 +99,6 @@ export function BankPanel() {
     landmarks.setEnabled(false)
     landmarks.setCurrentMode('off')
 
-    // Randomly enable 2-4 effects
     const numEffects = 2 + Math.floor(Math.random() * 3)
     const shuffled = [...RANDOMIZABLE_EFFECTS].sort(() => Math.random() - 0.5)
     const selected = shuffled.slice(0, numEffects)
@@ -161,85 +160,54 @@ export function BankPanel() {
     }
   }, [previousState, restoreState])
 
-  // REKT - CHAOS MODE - max out only ACTIVE effects
-  // Quick tap = toggle lock, hold = momentary
   const handleRektDown = useCallback(() => {
     rektPressTimeRef.current = Date.now()
 
-    // If already locked, pressing will unlock
     if (isRektLocked) {
-      return // Handle in handleRektUp
+      return
     }
 
-    // Capture current state and apply REKT
     rektStateRef.current = captureState()
     setIsRekt(true)
-
-    // Only boost effects that are already enabled - but make them EXTREME
 
     if (glitch.rgbSplitEnabled) {
       glitch.updateRGBSplit({
         amount: 4,
-        redOffsetX: 0.04,
-        redOffsetY: -0.03,
-        greenOffsetX: -0.03,
-        greenOffsetY: 0.04,
-        blueOffsetX: 0.02,
-        blueOffsetY: -0.04,
+        redOffsetX: 0.04, redOffsetY: -0.03,
+        greenOffsetX: -0.03, greenOffsetY: 0.04,
+        blueOffsetX: 0.02, blueOffsetY: -0.04,
       })
     }
 
     if (glitch.blockDisplaceEnabled) {
       glitch.updateBlockDisplace({
-        blockSize: 0.12,
-        displaceDistance: 0.2,
-        displaceChance: 1,
-        seed: Math.random() * 1000,
+        blockSize: 0.12, displaceDistance: 0.2,
+        displaceChance: 1, seed: Math.random() * 1000,
       })
     }
 
     if (glitch.scanLinesEnabled) {
-      glitch.updateScanLines({
-        lineCount: 500,
-        lineOpacity: 1,
-        lineFlicker: 1,
-      })
+      glitch.updateScanLines({ lineCount: 500, lineOpacity: 1, lineFlicker: 1 })
     }
 
     if (glitch.noiseEnabled) {
-      glitch.updateNoise({
-        amount: 0.8,
-        speed: 50,
-      })
+      glitch.updateNoise({ amount: 0.8, speed: 50 })
     }
 
     if (glitch.pixelateEnabled) {
-      glitch.updatePixelate({
-        pixelSize: 32,
-      })
+      glitch.updatePixelate({ pixelSize: 32 })
     }
 
     if (glitch.edgeDetectionEnabled) {
-      glitch.updateEdgeDetection({
-        threshold: 0.05,
-        mixAmount: 1,
-      })
+      glitch.updateEdgeDetection({ threshold: 0.05, mixAmount: 1 })
     }
 
     if (ascii.enabled) {
-      ascii.updateParams({
-        fontSize: 20,
-        contrast: 3,
-        resolution: 4,
-      })
+      ascii.updateParams({ fontSize: 20, contrast: 3, resolution: 4 })
     }
 
     if (stipple.enabled) {
-      stipple.updateParams({
-        particleSize: 8,
-        density: 4,
-        jitter: 1,
-      })
+      stipple.updateParams({ particleSize: 8, density: 4, jitter: 1 })
     }
   }, [captureState, glitch, ascii, stipple, isRektLocked])
 
@@ -248,7 +216,6 @@ export function BankPanel() {
     const isQuickTap = pressDuration < 200
 
     if (isRektLocked) {
-      // Currently locked - unlock and restore
       if (rektStateRef.current) {
         restoreState(rektStateRef.current)
         rektStateRef.current = null
@@ -256,11 +223,8 @@ export function BankPanel() {
       setIsRekt(false)
       setIsRektLocked(false)
     } else if (isQuickTap) {
-      // Quick tap - lock REKT on
       setIsRektLocked(true)
-      // Keep isRekt true, don't restore
     } else {
-      // Long press release - restore original state
       if (rektStateRef.current) {
         restoreState(rektStateRef.current)
         rektStateRef.current = null
@@ -275,62 +239,67 @@ export function BankPanel() {
       style={{
         padding: 'var(--space-1) var(--panel-padding-sm)',
         gap: 'var(--gap-sm)',
+        overflow: 'visible',
       }}
     >
       {/* Bank buttons */}
-      {BANK_LABELS.map((label, index) => (
-        <div key={label} className="h-full w-16">
-          <BankButton
-            label={label}
-            index={index}
-            isEmpty={banks[index] === null}
-            isActive={activeBank === index}
-            onLoad={() => loadBank(index)}
-            onSave={() => saveBank(index)}
-            onClear={() => clearBank(index)}
-          />
+      <CornerFrame color="var(--text-ghost)" style={{ padding: '2px 6px', flexShrink: 1, minWidth: 0 }}>
+        <div className="h-full flex items-center" style={{ gap: 'var(--gap-sm)' }}>
+          {BANK_LABELS.map((label, index) => (
+            <div key={label} className="h-full" style={{ width: 48, flexShrink: 0 }}>
+              <BankButton
+                label={label}
+                index={index}
+                isEmpty={banks[index] === null}
+                isActive={activeBank === index}
+                onLoad={() => loadBank(index)}
+                onSave={() => saveBank(index)}
+                onClear={() => clearBank(index)}
+              />
+            </div>
+          ))}
         </div>
-      ))}
+      </CornerFrame>
 
       {/* Spacer */}
       <div className="flex-1" />
 
       {/* Action buttons */}
-      <span onMouseEnter={() => setStatusText(getUIStatusText('randomize'))} onMouseLeave={() => setStatusText(null)}>
-        <Button size="lg" className="h-full" onClick={handleRandom} title="Randomize effects">
-          <ShuffleIcon size={16} />
-        </Button>
-      </span>
-      <span onMouseEnter={() => setStatusText(getUIStatusText('undo'))} onMouseLeave={() => setStatusText(null)}>
-        <Button size="lg" className="h-full" onClick={handleUndo} disabled={!hasPreviousState}>
-          Undo
-        </Button>
-      </span>
-      <button
-        onPointerDown={handleRektDown}
-        onPointerUp={handleRektUp}
-        onPointerLeave={isRektLocked ? undefined : handleRektUp}
-        onPointerCancel={isRektLocked ? undefined : handleRektUp}
-        onMouseEnter={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'); setStatusText(getUIStatusText('rekt')) }}
-        onMouseLeave={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)'); setStatusText(null) }}
-        className="h-full px-4 rounded-sm text-[11px] font-medium transition-all select-none touch-none active:scale-95"
-        style={{
-          backgroundColor: isRektLocked
-            ? (rektFlashOn ? 'var(--accent)' : 'var(--accent-dim)')
-            : isRekt ? 'var(--accent)' : 'var(--bg-surface)',
-          border: isRektLocked
-            ? `2px solid ${rektFlashOn ? 'var(--accent)' : 'var(--accent-dim)'}`
-            : isRekt ? '1px solid var(--accent)' : '1px solid var(--border)',
-          color: isRekt ? 'var(--bg-surface)' : 'var(--text-muted)',
-          boxShadow: isRektLocked
-            ? `0 0 ${rektFlashOn ? '20px' : '8px'} var(--accent-glow)`
-            : isRekt ? '0 0 12px var(--accent-glow)' : 'none',
-          transform: isRekt ? 'scale(1.05)' : 'scale(1)',
-        }}
-        title={isRektLocked ? 'Click to unlock' : 'Hold or tap to lock'}
-      >
-        REKT
-      </button>
+      <CornerFrame color="var(--text-ghost)" style={{ padding: '2px 6px', flexShrink: 0 }}>
+        <div className="h-full flex items-center" style={{ gap: 'var(--gap-sm)' }}>
+          <span onMouseEnter={() => setStatusText(getUIStatusText('randomize'))} onMouseLeave={() => setStatusText(null)} className="h-full" style={{ width: 48 }}>
+            <Button size="lg" className="h-full w-full" onClick={handleRandom} title="Randomize effects">
+              <ShuffleIcon size={16} />
+            </Button>
+          </span>
+          <span onMouseEnter={() => setStatusText(getUIStatusText('undo'))} onMouseLeave={() => setStatusText(null)} className="h-full" style={{ width: 48 }}>
+            <Button size="lg" className="h-full w-full" onClick={handleUndo} disabled={!hasPreviousState}>
+              UNDO
+            </Button>
+          </span>
+          <button
+            onPointerDown={handleRektDown}
+            onPointerUp={handleRektUp}
+            onPointerLeave={isRektLocked ? undefined : handleRektUp}
+            onPointerCancel={isRektLocked ? undefined : handleRektUp}
+            onMouseEnter={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)'); setStatusText(getUIStatusText('rekt')) }}
+            onMouseLeave={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'transparent'); setStatusText(null) }}
+            className="h-full text-[11px] font-bold transition-all select-none touch-none active:scale-95"
+            style={{ width: 48 }}
+            style={{
+              fontFamily: 'var(--font-mono)',
+              letterSpacing: '0.1em',
+              backgroundColor: isRekt ? '#FFFFFF' : 'transparent',
+              border: isRekt ? '1px solid #FFFFFF' : '1px solid var(--border)',
+              color: isRekt ? '#000000' : 'var(--text-muted)',
+              animation: isRektLocked ? (rektFlashOn ? undefined : 'hud-blink 0.5s step-end infinite') : undefined,
+            }}
+            title={isRektLocked ? 'Click to unlock' : 'Hold or tap to lock'}
+          >
+            REKT
+          </button>
+        </div>
+      </CornerFrame>
     </div>
   )
 }

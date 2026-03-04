@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { PlayIcon, StopIcon, DiceIcon, ShuffleIcon, ClearIcon } from '../ui/DotMatrixIcons'
+import { PlayIcon, StopIcon, DiceIcon, ShuffleIcon, SlidersIcon, ClearIcon } from '../ui/DotMatrixIcons'
 import { useEffectSequencerStore, type EffectStepResolution } from '../../stores/effectSequencerStore'
 import { useMIDIStore } from '../../stores/midiStore'
 import { useAudioSourceStore } from '../../stores/audioSourceStore'
@@ -110,7 +110,7 @@ function RandomizeLocksButton() {
       }}
       title="Randomize p-locks on selected track"
     >
-      <ShuffleIcon size={14} color={selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)'} />
+      <SlidersIcon size={14} color={selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)'} />
     </button>
   )
 }
@@ -234,154 +234,151 @@ export function SequencerTransport({
       className="flex-shrink-0 flex items-center"
       style={{
         padding: '0 var(--panel-padding)',
-        gap: 'var(--gap-sm)',
+        gap: 0,
         height: 64,
         borderBottom: '1px solid var(--border)',
       }}
     >
-      {/* Play/Stop */}
-      <button
-        onClick={isPlaying ? onStop : onPlay}
-        onMouseEnter={() => setStatusText(getUIStatusText('seqPlayStop'))}
-        onMouseLeave={() => setStatusText(null)}
-        className="w-7 h-7 flex items-center justify-center rounded-sm transition-all"
-        style={{
-          backgroundColor: isPlaying ? 'var(--seq-accent)' : 'var(--bg-elevated)',
-          border: `1px solid ${isPlaying ? 'var(--seq-accent)' : 'var(--border)'}`,
-          boxShadow: isPlaying ? '0 0 8px var(--seq-accent-glow)' : 'none',
-        }}
-      >
-        {isPlaying ? (
-          <StopIcon size={10} color="var(--bg-primary)" />
-        ) : (
-          <PlayIcon size={10} color="var(--text-muted)" />
-        )}
-      </button>
+      {/* Group 1: Play + BPM + Sync */}
+      <div className="flex items-center gap-3" style={{ marginRight: 16 }}>
+        <button
+          onClick={isPlaying ? onStop : onPlay}
+          onMouseEnter={(e) => {
+            setStatusText(getUIStatusText('seqPlayStop'))
+            if (!isPlaying) {
+              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+              e.currentTarget.style.borderColor = 'var(--border-emphasis)'
+            } else {
+              e.currentTarget.style.filter = 'brightness(1.2)'
+            }
+          }}
+          onMouseLeave={(e) => {
+            setStatusText(null)
+            e.currentTarget.style.backgroundColor = isPlaying ? 'var(--seq-accent)' : 'var(--bg-elevated)'
+            e.currentTarget.style.borderColor = isPlaying ? 'var(--seq-accent)' : 'var(--border)'
+            e.currentTarget.style.filter = 'none'
+          }}
+          className="w-11 h-11 flex items-center justify-center rounded-sm transition-all"
+          style={{
+            backgroundColor: isPlaying ? 'var(--seq-accent)' : 'var(--bg-elevated)',
+            border: `1px solid ${isPlaying ? 'var(--seq-accent)' : 'var(--border)'}`,
+            boxShadow: isPlaying ? '0 0 8px var(--seq-accent-glow)' : 'none',
+          }}
+        >
+          {isPlaying ? (
+            <StopIcon size={18} color="var(--bg-primary)" />
+          ) : (
+            <PlayIcon size={18} color="var(--text-muted)" />
+          )}
+        </button>
 
-      {/* BPM */}
-      <div
-        className="text-[13px] select-none"
-        style={{
-          color: isMidiSynced ? MIDI_COLOR : isAudioSynced ? AUDIO_COLOR : 'var(--text-secondary)',
-          cursor: isMidiSynced || isAudioSynced ? 'default' : 'ns-resize',
-        }}
-        onMouseDown={isMidiSynced || isAudioSynced ? undefined : handleBpmDrag}
-        onMouseEnter={() => setStatusText(getUIStatusText('seqBpm'))}
-        onMouseLeave={() => setStatusText(null)}
-      >
-        <span style={{ opacity: 0.5 }}>BPM</span>{' '}
-        <span className="font-bold" style={{ color: isMidiSynced ? MIDI_COLOR : isAudioSynced ? AUDIO_COLOR : 'var(--text-primary)' }}>
-          {String(isMidiSynced ? clockBpm : bpm).padStart(3, '0')}
+        <div
+          className="select-none flex flex-col items-center"
+          style={{
+            cursor: isMidiSynced || isAudioSynced ? 'default' : 'ns-resize',
+            lineHeight: 1.1,
+          }}
+          onMouseDown={isMidiSynced || isAudioSynced ? undefined : handleBpmDrag}
+          onMouseEnter={() => setStatusText(getUIStatusText('seqBpm'))}
+          onMouseLeave={() => setStatusText(null)}
+        >
+          <span className="text-[16px] font-bold tabular-nums" style={{ color: isMidiSynced ? MIDI_COLOR : isAudioSynced ? AUDIO_COLOR : 'var(--text-primary)' }}>
+            {String(isMidiSynced ? clockBpm : bpm).padStart(3, '0')}
+          </span>
+          <span className="text-[9px] tracking-[0.15em] uppercase" style={{ color: isMidiSynced ? MIDI_COLOR : isAudioSynced ? AUDIO_COLOR : 'var(--text-muted)' }}>BPM</span>
+        </div>
+
+        {isConnected && midiInputs.length > 0 && (
+          <button
+            onClick={() => setClockSyncEnabled(!clockSyncEnabled)}
+            onMouseEnter={() => setStatusText(getUIStatusText('seqSync'))}
+            onMouseLeave={() => setStatusText(null)}
+            className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-sm"
+            style={{
+              backgroundColor: clockSyncEnabled ? `${MIDI_COLOR}20` : 'transparent',
+              color: clockSyncEnabled ? MIDI_COLOR : 'var(--text-ghost)',
+              border: `1px solid ${clockSyncEnabled ? `${MIDI_COLOR}40` : 'var(--border)'}`,
+            }}
+            title={clockSyncEnabled ? 'MIDI clock sync active' : 'Enable MIDI clock sync'}
+          >
+            SYNC
+          </button>
+        )}
+
+        {audioBpm !== null && (
+          <button
+            onClick={() => {
+              const next = !audioBpmSyncEnabled
+              setAudioBpmSyncEnabled(next)
+              if (next && audioBpm !== null) {
+                useEffectSequencerStore.getState().setBpm(audioBpm)
+              }
+            }}
+            onMouseEnter={() => setStatusText(`Audio BPM: ${audioBpm} — click to ${audioBpmSyncEnabled ? 'unsync' : 'sync'}`)}
+            onMouseLeave={() => setStatusText(null)}
+            className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-sm"
+            style={{
+              backgroundColor: audioBpmSyncEnabled ? `${AUDIO_COLOR}20` : 'transparent',
+              color: audioBpmSyncEnabled ? AUDIO_COLOR : 'var(--text-ghost)',
+              border: `1px solid ${audioBpmSyncEnabled ? `${AUDIO_COLOR}40` : 'var(--border)'}`,
+            }}
+            title={audioBpmSyncEnabled ? `Synced to audio: ${audioBpm} BPM` : `Audio detected ${audioBpm} BPM — click to sync`}
+          >
+            {audioBpmSyncEnabled ? `♪ ${audioBpm}` : `♪ ${audioBpm}`}
+          </button>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="w-px h-6" style={{ backgroundColor: 'var(--border)', marginRight: 16 }} />
+
+      {/* Group 2: Swing + Position */}
+      <div className="flex items-center gap-3" style={{ marginRight: 16 }}>
+        <div
+          className="text-[12px] cursor-ns-resize select-none"
+          style={{ color: 'var(--text-muted)' }}
+          onMouseDown={handleSwingDrag}
+          onMouseEnter={() => setStatusText(getUIStatusText('seqSwing'))}
+          onMouseLeave={() => setStatusText(null)}
+        >
+          <span style={{ opacity: 0.5 }}>SWG</span>{' '}
+          <span>{swing}</span>
+        </div>
+
+        <span
+          className="text-[12px] tabular-nums"
+          style={{ color: 'var(--text-ghost)' }}
+        >
+          {(currentStep % 8) + 1}/8
         </span>
       </div>
 
-      {/* MIDI SYNC toggle */}
-      {isConnected && midiInputs.length > 0 && (
-        <button
-          onClick={() => setClockSyncEnabled(!clockSyncEnabled)}
-          onMouseEnter={() => setStatusText(getUIStatusText('seqSync'))}
-          onMouseLeave={() => setStatusText(null)}
-          className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-sm"
-          style={{
-            backgroundColor: clockSyncEnabled ? `${MIDI_COLOR}20` : 'transparent',
-            color: clockSyncEnabled ? MIDI_COLOR : 'var(--text-ghost)',
-            border: `1px solid ${clockSyncEnabled ? `${MIDI_COLOR}40` : 'var(--border)'}`,
-          }}
-          title={clockSyncEnabled ? 'MIDI clock sync active' : 'Enable MIDI clock sync'}
-        >
-          SYNC
-        </button>
-      )}
-
-      {/* Audio BPM sync indicator */}
-      {audioBpm !== null && (
-        <button
-          onClick={() => {
-            const next = !audioBpmSyncEnabled
-            setAudioBpmSyncEnabled(next)
-            if (next && audioBpm !== null) {
-              useEffectSequencerStore.getState().setBpm(audioBpm)
-            }
-          }}
-          onMouseEnter={() => setStatusText(`Audio BPM: ${audioBpm} — click to ${audioBpmSyncEnabled ? 'unsync' : 'sync'}`)}
-          onMouseLeave={() => setStatusText(null)}
-          className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-sm"
-          style={{
-            backgroundColor: audioBpmSyncEnabled ? `${AUDIO_COLOR}20` : 'transparent',
-            color: audioBpmSyncEnabled ? AUDIO_COLOR : 'var(--text-ghost)',
-            border: `1px solid ${audioBpmSyncEnabled ? `${AUDIO_COLOR}40` : 'var(--border)'}`,
-          }}
-          title={audioBpmSyncEnabled ? `Synced to audio: ${audioBpm} BPM` : `Audio detected ${audioBpm} BPM — click to sync`}
-        >
-          {audioBpmSyncEnabled ? `♪ ${audioBpm}` : `♪ ${audioBpm}`}
-        </button>
-      )}
-
       {/* Divider */}
-      <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
+      <div className="w-px h-6" style={{ backgroundColor: 'var(--border)', marginRight: 16 }} />
 
-      {/* Resolution */}
-      <button
-        onClick={handleResolutionCycle}
-        onMouseEnter={() => setStatusText(getUIStatusText('seqResolution'))}
-        onMouseLeave={() => setStatusText(null)}
-        className="text-[12px] font-bold px-2 py-0.5 rounded-sm"
-        style={{
-          color: 'var(--text-secondary)',
-          backgroundColor: 'var(--bg-elevated)',
-          border: '1px solid var(--border)',
-        }}
-      >
-        {resolution}
-      </button>
-
-      {/* Swing */}
-      <div
-        className="text-[12px] cursor-ns-resize select-none"
-        style={{ color: 'var(--text-muted)' }}
-        onMouseDown={handleSwingDrag}
-        onMouseEnter={() => setStatusText(getUIStatusText('seqSwing'))}
-        onMouseLeave={() => setStatusText(null)}
-      >
-        <span style={{ opacity: 0.5 }}>SWG</span>{' '}
-        <span>{swing}</span>
+      {/* Group 3: Track tools */}
+      <div className="flex items-center gap-1.5">
+        <RandomizeButton />
+        <RandomizeAllButton />
+        <RandomizeLocksButton />
+        <ClearTrackButton />
       </div>
-
-      {/* Divider */}
-      <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
-
-      {/* Step position */}
-      <span
-        className="text-[12px] tabular-nums"
-        style={{ color: 'var(--text-ghost)' }}
-      >
-        {(currentStep % 8) + 1}/8
-      </span>
-
-      {/* Divider */}
-      <div className="w-px h-4" style={{ backgroundColor: 'var(--border)' }} />
-
-      {/* Track tools */}
-      <RandomizeButton />
-      <RandomizeAllButton />
-      <RandomizeLocksButton />
-      <ClearTrackButton />
 
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Page dots */}
-      <div className="flex items-center gap-1">
-        {[0, 1, 2, 3].map((page) => {
-          const isActive = page === stepPage
+      {/* Group 4: Page dots */}
+      <div className="flex items-center gap-1.5">
+        {[0, 1, 2, 3].map((pg) => {
+          const isActive = pg === stepPage
           const hasPlayhead =
             isPlaying &&
-            currentStep >= page * 8 &&
-            currentStep < (page + 1) * 8
+            currentStep >= pg * 8 &&
+            currentStep < (pg + 1) * 8
           return (
             <button
-              key={page}
-              onClick={() => onPageChange(page)}
+              key={pg}
+              onClick={() => onPageChange(pg)}
               onMouseEnter={() => setStatusText(getUIStatusText('seqPageDot'))}
               onMouseLeave={() => setStatusText(null)}
               className="w-2.5 h-2.5 rounded-full transition-all"
@@ -396,7 +393,7 @@ export function SequencerTransport({
                 }`,
                 opacity: isActive ? 1 : 0.4,
               }}
-              title={`Page ${page + 1}`}
+              title={`Page ${pg + 1}`}
             />
           )
         })}

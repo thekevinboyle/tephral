@@ -7,6 +7,7 @@ import { PresetContextMenu, FolderContextMenu } from './PresetContextMenu'
 import { importFile, openImportDialog, exportPack, captureThumbnail } from '../../utils/presetIO'
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
+import { TechReadout } from '../ui/MicroVisuals'
 
 interface ContextMenuState {
   type: 'preset' | 'folder'
@@ -212,6 +213,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
           borderBottom: '1px solid var(--border)',
         }}
       >
+        <TechReadout value={presets.length / 50} size={18} color="var(--text-ghost)" className="opacity-20 mr-1.5" />
         <button
           ref={triggerRef}
           onClick={() => setIsOpen(!isOpen)}

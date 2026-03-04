@@ -4,12 +4,14 @@ import { useAudioSourceStore, type AudioSourceType } from '../../stores/audioSou
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText, getAudioSourceStatusText } from '../../config/statusDescriptions'
 import { SourceSelector } from '../ui/SourceSelector'
+import { HudGlyph } from '../ui/HudGlyph'
+import { CornerFrame } from '../ui/CornerFrame'
 
 const AUDIO_SOURCES: { id: AudioSourceType; label: string }[] = [
-  { id: 'video', label: 'Vid' },
-  { id: 'file', label: 'File' },
-  { id: 'mic', label: 'Mic' },
-  { id: 'system', label: 'Sys' },
+  { id: 'video', label: 'VID' },
+  { id: 'file', label: 'FILE' },
+  { id: 'mic', label: 'MIC' },
+  { id: 'system', label: 'SYS' },
 ]
 
 export function HeaderBar() {
@@ -56,7 +58,7 @@ export function HeaderBar() {
   }, [])
 
   const hasSource = source !== 'none'
-  const sourceLabel = source === 'none' ? 'NO SRC' : source === 'webcam' ? 'CAM' : 'FILE'
+  const sourceLabel = source === 'none' ? 'NONE' : source === 'webcam' ? 'CAMERA' : 'FILE'
 
   return (
     <div
@@ -65,108 +67,109 @@ export function HeaderBar() {
         height: 'var(--row-header)',
         padding: '0 var(--panel-padding)',
         gap: 'var(--gap-lg)',
-        background: 'linear-gradient(to right, var(--bg-elevated), var(--bg-surface), var(--bg-elevated))',
+        background: '#000000',
         borderBottom: '1px solid var(--border)',
-        boxShadow: 'inset 0 1px 0 var(--surface-highlight)',
       }}
     >
       {/* Brand */}
-      <span
-        className="text-[12px] font-bold uppercase tracking-widest flex-shrink-0"
-        style={{
-          fontFamily: 'var(--font-sans)',
-          color: 'var(--text-muted)',
-          letterSpacing: '0.12em',
-        }}
-      >
-        SEG_F4ULT
-      </span>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <HudGlyph glyph="crosshair" size={14} color="var(--text-ghost)" animate="spin" />
+        <span
+          className="text-[11px] font-bold uppercase"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--text-secondary)',
+            letterSpacing: '0.16em',
+          }}
+        >
+          SEG_F4ULT
+        </span>
+      </div>
 
       {/* Divider */}
-      <div className="flex-shrink-0" style={{ display: 'flex', flexDirection: 'column', height: 16 }}>
-        <div style={{ width: 1, flex: 1, backgroundColor: 'var(--border)' }} />
-        <div style={{ width: 1, flex: 1, backgroundColor: 'var(--surface-highlight)' }} />
-      </div>
+      <div style={{ width: 1, height: 16, backgroundColor: 'var(--border)' }} />
 
       {/* Video source selector */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="text-[9px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
-          VIDEO
-        </span>
+      <CornerFrame label="VIDEO" color="var(--text-ghost)" style={{ padding: '2px 8px', marginLeft: 40 }}>
         <SourceSelector variant="compact" />
-      </div>
+      </CornerFrame>
 
       {/* Divider */}
-      <div className="flex-shrink-0" style={{ display: 'flex', flexDirection: 'column', height: 16 }}>
-        <div style={{ width: 1, flex: 1, backgroundColor: 'var(--border)' }} />
-        <div style={{ width: 1, flex: 1, backgroundColor: 'var(--surface-highlight)' }} />
-      </div>
+      <div style={{ width: 1, height: 16, backgroundColor: 'var(--border)' }} />
 
       {/* Audio source selector */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="text-[9px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-ghost)' }}>
-          AUDIO
-        </span>
-        {AUDIO_SOURCES.map((src) => {
-          const isActive = activeAudioSource === src.id
-          return (
-            <button
-              key={src.id}
-              onClick={() => {
-                if (src.id === 'file' && !isActive) {
-                  fileInputRef.current?.click()
-                }
-                setActiveAudioSource(src.id)
-              }}
-              className="h-6 rounded-sm text-[10px] font-medium transition-colors active:scale-95"
-              style={{
-                width: 48,
-                backgroundColor: isActive ? 'var(--text-primary)' : 'var(--bg-surface)',
-                border: '1px solid var(--border)',
-                color: isActive ? 'var(--bg-surface)' : 'var(--text-muted)',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                setStatusText(getAudioSourceStatusText(src.id))
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) e.currentTarget.style.backgroundColor = 'var(--bg-surface)'
-                setStatusText(null)
-              }}
-            >
-              {src.label}
-            </button>
-          )
-        })}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="audio/*"
-          onChange={handleFileImport}
-          className="hidden"
-        />
-      </div>
+      <CornerFrame label="AUDIO" color="var(--text-ghost)" style={{ padding: '2px 8px', marginLeft: 36 }}>
+        <div className="flex items-center gap-1">
+          {AUDIO_SOURCES.map((src) => {
+            const isActive = activeAudioSource === src.id
+            return (
+              <button
+                key={src.id}
+                onClick={() => {
+                  if (src.id === 'file' && !isActive) {
+                    fileInputRef.current?.click()
+                  }
+                  setActiveAudioSource(src.id)
+                }}
+                className="h-6 text-[10px] font-bold transition-colors active:scale-95"
+                style={{
+                  width: 42,
+                  backgroundColor: isActive ? '#FFFFFF' : 'transparent',
+                  border: `1px solid ${isActive ? '#FFFFFF' : 'var(--border)'}`,
+                  color: isActive ? '#000000' : 'var(--text-muted)',
+                  fontFamily: 'var(--font-mono)',
+                  letterSpacing: '0.06em',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.borderColor = 'var(--text-muted)'
+                  setStatusText(getAudioSourceStatusText(src.id))
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.borderColor = 'var(--border)'
+                  setStatusText(null)
+                }}
+              >
+                {src.label}
+              </button>
+            )
+          })}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            onChange={handleFileImport}
+            className="hidden"
+          />
+        </div>
+      </CornerFrame>
 
       {/* Spacer */}
       <div className="flex-1" />
 
       {/* Status badges */}
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-4 flex-shrink-0">
         <span
-          className="text-[9px] font-medium uppercase tracking-widest"
-          style={{ color: hasSource ? 'var(--accent-dim)' : 'var(--text-ghost)' }}
+          className="text-[9px] font-medium uppercase"
+          style={{
+            color: hasSource ? 'var(--text-secondary)' : 'var(--text-ghost)',
+            fontFamily: 'var(--font-mono)',
+            letterSpacing: '0.12em',
+          }}
         >
-          {sourceLabel}
+          SRC: {sourceLabel}
         </span>
+
+        <HudGlyph glyph="diamond" size={10} color="var(--text-ghost)" animate="pulse" />
+
         <span
-          className="text-[10px] tabular-nums"
+          className="text-[10px] tabular-nums font-medium"
           style={{
             color: 'var(--text-secondary)',
+            fontFamily: 'var(--font-mono)',
             cursor: 'default',
             padding: '1px 6px',
-            borderRadius: 3,
-            backgroundColor: 'rgba(0,0,0,0.15)',
             border: '1px solid var(--border)',
+            backgroundColor: 'var(--bg-primary)',
           }}
           onMouseEnter={() => setStatusText(getUIStatusText('fps'))}
           onMouseLeave={() => setStatusText(null)}

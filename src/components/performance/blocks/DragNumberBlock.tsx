@@ -1,7 +1,8 @@
 import { useRef, useState, useCallback } from 'react'
 import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
-import { BLOCK } from './blockTheme'
+import { BracketDisplay } from '../../ui/BracketDisplay'
+import { ScanMeter } from '../../ui/ScanMeter'
 
 interface DragNumberBlockProps {
   label: string
@@ -83,81 +84,31 @@ export function DragNumberBlock({ label, value, min, max, step, onChange, paramI
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: BLOCK.radius,
+        borderRadius: 0,
         overflow: 'hidden',
         cursor: 'ns-resize',
         touchAction: 'none',
         userSelect: 'none',
-        backgroundColor: BLOCK.bg,
-        borderLeft: isAutomationTarget ? '3px solid #FF3355' : undefined,
-        border: isAutomationTarget ? undefined : '1px solid rgba(255,255,255,0.06)',
-        borderRight: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderTop: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderBottom: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        boxShadow: isAutomationTarget
-          ? `0 0 8px rgba(255, 51, 85, 0.15), ${BLOCK.shadow}`
-          : BLOCK.shadow,
+        backgroundColor: '#000000',
+        border: isAutomationTarget ? '1px solid #FF3355' : '1px solid var(--border)',
+        animation: isAutomationTarget ? 'hud-blink 1s step-end infinite' : undefined,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
       }}
     >
-      {/* Background glow — brighter at higher values */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: `radial-gradient(ellipse at center 60%, ${color}, transparent 70%)`,
-          opacity: normalized * 0.1,
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Label — top left */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 10,
-          left: 12,
-          fontSize: 9,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: BLOCK.textGhost,
-          pointerEvents: 'none',
-        }}
-      >
-        {label}
+      {/* BracketDisplay — top section */}
+      <div style={{
+        padding: '10px 12px 0',
+        pointerEvents: 'none',
+      }}>
+        <BracketDisplay value={displayValue} label={label} color={color} size="lg" />
       </div>
 
-      {/* Giant value — centered */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 48,
-          fontWeight: 900,
-          fontVariantNumeric: 'tabular-nums',
-          color: BLOCK.text,
-          pointerEvents: 'none',
-        }}
-      >
-        {displayValue}
+      {/* ScanMeter — bottom */}
+      <div style={{ pointerEvents: 'none' }}>
+        <ScanMeter value={normalized} color={color} height={6} />
       </div>
-
-      {/* Fill bar at bottom */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          height: 3,
-          width: `${normalized * 100}%`,
-          backgroundColor: color,
-          borderRadius: 3,
-          opacity: 0.8,
-        }}
-      />
 
       {/* Modulation context menu */}
       {contextMenuPos && paramId && (

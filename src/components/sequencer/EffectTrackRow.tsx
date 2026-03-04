@@ -42,18 +42,24 @@ export function EffectTrackRow({
 }: EffectTrackRowProps) {
   void _color
   const {
-    setTrackMode,
     setTrackMuted,
     setTrackSoloed,
     setTrackMidiGate,
     setTrackAudioReactiveEnabled,
     setStepActive,
     setStepLock,
+    setStepProbability,
     addToSelection,
+    selectStep,
     automationParam,
+    setTrackParamPanelOpen,
   } = useEffectSequencerStore()
 
+  const trackParamPanelOpen = useEffectSequencerStore((s) => s.trackParamPanelOpen)
+  const isPanelOpen = trackParamPanelOpen === effectId
+
   const trackAudioLevel = useEffectSequencerStore((s) => s.trackAudioLevels[effectId] ?? 0)
+  const trackAutoThreshold = useEffectSequencerStore((s) => s.trackAutoThresholds[effectId] ?? 0.5)
   const toggleBottomPanelTab = useUIStore((s) => s.toggleBottomPanelTab)
   const bottomPanelTab = useUIStore((s) => s.bottomPanelTab)
   const trackNoteMap = useMIDIStore((s) => s.trackNoteMap)
@@ -122,12 +128,13 @@ export function EffectTrackRow({
       const step = track.steps[stepIndex]
       const newValue = !step.active
       setStepActive(effectId, stepIndex, newValue)
+      selectStep(effectId, stepIndex)
 
       // Start drag-to-paint
       setIsDragging(true)
       setDragValue(newValue)
     },
-    [effectId, track.steps, addToSelection, setStepActive],
+    [effectId, track.steps, addToSelection, setStepActive, selectStep],
   )
 
   const handleCellMouseEnter = useCallback(
@@ -156,6 +163,13 @@ export function EffectTrackRow({
     [effectId, setStepActive],
   )
 
+  const handleSetProbability = useCallback(
+    (stepIndex: number, value: number) => {
+      setStepProbability(effectId, stepIndex, value)
+    },
+    [effectId, setStepProbability],
+  )
+
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
   }, [])
@@ -170,10 +184,10 @@ export function EffectTrackRow({
     return () => window.removeEventListener('mouseup', handleUp)
   }, [])
 
-  // Per-track playhead: audio-reactive tracks use their own trackStep
-  const effectiveStep = track.audioReactive?.enabled
+  // Per-track playhead: audio-reactive and time-scaled tracks use their own trackStep
+  const effectiveStep = (track.audioReactive?.enabled || (track.timeScale ?? 1) !== 1)
     ? (track.trackStep ?? 0) % track.length
-    : currentStep
+    : currentStep % track.length
   const isPlayheadOnPage =
     effectiveStep >= pageStart && effectiveStep < pageStart + 8
 
@@ -184,17 +198,18 @@ export function EffectTrackRow({
     <div
       className="flex"
       style={{
-        borderBottom: isSelectedTrack ? '2px solid var(--border)' : '1px solid transparent',
-        borderTop: isSelectedTrack ? '2px solid var(--border)' : '1px solid transparent',
-        borderLeft: isSelectedTrack ? '3px solid var(--border)' : '3px solid transparent',
-        borderRight: isSelectedTrack ? '2px solid var(--border)' : '1px solid transparent',
+        borderBottom: isSelectedTrack ? `1px solid ${SEQ}50` : '1px solid transparent',
+        borderTop: isSelectedTrack ? `1px solid ${SEQ}50` : '1px solid transparent',
+        borderLeft: isSelectedTrack ? `3px solid ${SEQ}` : '3px solid transparent',
+        borderRight: isSelectedTrack ? `1px solid ${SEQ}50` : '1px solid transparent',
+        backgroundColor: isSelectedTrack ? `${SEQ}08` : 'transparent',
         opacity: track.muted ? 0.4 : (hasAnyActiveSteps || track.midiGate || track.audioReactive?.enabled) ? 1 : 0.55,
         transition: 'opacity 0.15s, border-color 0.1s',
       }}
     >
       {/* Track header */}
       <div
-        className="flex-shrink-0 flex flex-col justify-center gap-1 cursor-pointer"
+        className="flex-shrink-0 flex flex-col justify-center gap-1 cursor-pointer relative"
         style={{
           width: 130,
           padding: '4px 10px',
@@ -203,22 +218,49 @@ export function EffectTrackRow({
         }}
         onClick={() => onSelectTrack?.(effectId)}
       >
-        {/* Effect label with chain position */}
-        <div className="flex items-center gap-1.5">
-          {orderIndex != null && (
-            <span
-              className="text-[9px] tabular-nums font-bold flex-shrink-0"
-              style={{ color: 'var(--text-ghost)' }}
-            >
-              {orderIndex}
-            </span>
-          )}
+        {/* Effect label with panel toggle */}
+        <div className="flex items-center gap-1.5" style={{ marginBottom: 4 }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setTrackParamPanelOpen(isPanelOpen ? null : effectId)
+            }}
+            className="flex-shrink-0 flex items-center justify-center font-black"
+            style={{
+              width: 18,
+              height: 18,
+              fontSize: 13,
+              borderRadius: 3,
+              color: isPanelOpen ? '#FFF' : '#666',
+              backgroundColor: isPanelOpen ? `${SEQ}35` : 'transparent',
+              transition: 'color 0.1s, background-color 0.1s',
+            }}
+            title="Track parameters"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10">
+              <rect x="0" y="1" width="6" height="1.5" rx="0.5" fill="currentColor" />
+              <rect x="2" y="4.25" width="6" height="1.5" rx="0.5" fill="currentColor" />
+              <rect x="0" y="7.5" width="6" height="1.5" rx="0.5" fill="currentColor" />
+            </svg>
+          </button>
           <span
             className="text-[11px] font-bold uppercase tracking-wider truncate"
             style={{ color: 'var(--text-secondary)' }}
           >
             {label}
           </span>
+          {(track.timeScale ?? 1) !== 1 && (
+            <span
+              className="text-[8px] font-bold px-1 rounded-sm flex-shrink-0"
+              style={{
+                backgroundColor: `${SEQ}25`,
+                color: SEQ,
+                border: `1px solid ${SEQ}30`,
+              }}
+            >
+              ×{track.timeScale}
+            </span>
+          )}
         </div>
 
         {/* Inline level meter for audio-reactive tracks */}
@@ -231,7 +273,7 @@ export function EffectTrackRow({
                 bottom: 0,
                 left: 0,
                 width: `${Math.min(100, trackAudioLevel * 100)}%`,
-                backgroundColor: trackAudioLevel >= (track.audioReactive.threshold) ? '#FF3355' : '#FF335560',
+                backgroundColor: trackAudioLevel >= trackAutoThreshold ? '#FF3355' : '#FF335560',
                 borderRadius: 1,
                 transition: 'width 0.05s',
               }}
@@ -241,9 +283,10 @@ export function EffectTrackRow({
                 position: 'absolute',
                 top: 0,
                 bottom: 0,
-                left: `${(track.audioReactive.threshold) * 100}%`,
+                left: `${Math.min(100, trackAutoThreshold * 100)}%`,
                 width: 1,
                 backgroundColor: 'var(--text-secondary)',
+                transition: 'left 0.1s',
               }}
             />
           </div>
@@ -251,27 +294,6 @@ export function EffectTrackRow({
 
         {/* Controls row: Mode, Mute, Solo */}
         <div className="flex items-center gap-1.5">
-          {/* Mode toggle */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setTrackMode(effectId, track.mode === 'gate' ? 'param' : 'gate')
-            }}
-            className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm"
-            style={{
-              backgroundColor: `${SEQ}20`,
-              color: SEQ,
-              border: `1px solid ${SEQ}40`,
-            }}
-            title={
-              track.mode === 'gate'
-                ? 'Gate mode: steps toggle effect on/off'
-                : 'Param mode: steps change parameters only'
-            }
-          >
-            {track.mode === 'gate' ? 'G' : 'P'}
-          </button>
-
           {/* Mute */}
           <button
             onClick={(e) => {
@@ -353,16 +375,13 @@ export function EffectTrackRow({
             onClick={(e) => {
               e.stopPropagation()
               if (track.midiGate && mappedNote !== undefined) {
-                // Already mapped — click to clear and re-learn
                 removeNoteMapping(effectId)
                 setTrackMidiGate(effectId, false)
                 setMidiLearnMode(false)
               } else if (midiLearnMode) {
-                // Cancel learn mode
                 setMidiLearnMode(false)
                 if (mappedNote === undefined) setTrackMidiGate(effectId, false)
               } else {
-                // Enter learn mode
                 setTrackMidiGate(effectId, true)
                 setMidiLearnMode(true)
               }
@@ -401,6 +420,7 @@ export function EffectTrackRow({
               {midiLearnMode ? '...' : mappedNote !== undefined ? midiNoteName(mappedNote) : 'N'}
             </span>
           </button>
+
         </div>
       </div>
 
@@ -425,7 +445,6 @@ export function EffectTrackRow({
             ? step.locks[automationParamId] as number | undefined
             : undefined
 
-          // Compute generic lock fill when no automation param is targeted
           let genericLockFill: number | undefined
           if (automationParamId == null && paramRanges && Object.keys(step.locks).length > 0) {
             let sum = 0
@@ -447,6 +466,7 @@ export function EffectTrackRow({
               step={step}
               isCurrentStep={isCurrent}
               isSelected={isSelected}
+              retrig={step.retrig ?? 0}
               onMouseDown={handleCellMouseDown}
               onMouseEnter={handleCellMouseEnter}
               onContextMenu={handleContextMenu}
@@ -458,6 +478,7 @@ export function EffectTrackRow({
               genericLockFill={genericLockFill}
               onSetLock={handleSetLock}
               onActivateStep={handleActivateStep}
+              onSetProbability={handleSetProbability}
             />
           )
         })}

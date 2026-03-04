@@ -21,6 +21,23 @@ import { ModulationContextMenu } from './controls/ModulationContextMenu'
 import { useEffectDisable } from '../../hooks/useEffectDisable'
 import { classifyParam } from '../../utils/classifyParam'
 import type { LockableParam } from '../../config/effectParams'
+import type { CurveMode } from '../ui/MiniCurve'
+
+// Map param IDs to MiniCurve visualization modes
+function getCurveForParam(paramId: string): CurveMode | undefined {
+  const id = paramId.split('.').pop() ?? ''
+  // Noise/random → noise scatter
+  if (/noise|jitter|random|scatter|flicker|chance/i.test(id)) return 'noise'
+  // Attack/decay/envelope → envelope curve
+  if (/attack|decay|release|sustain|envelope|fade|taper/i.test(id)) return 'envelope'
+  // Frequency/speed/rate → sine wave
+  if (/freq|speed|rate|vibrato|wobble|oscillat/i.test(id)) return 'sine'
+  // Threshold/contour/smooth → contour shape
+  if (/threshold|contour|smooth|simplif/i.test(id)) return 'contour'
+  // Amount/intensity/mix/opacity → bar
+  if (/amount|intensity|mix|opacity|depth|level|gain|volume/i.test(id)) return 'bar'
+  return undefined
+}
 import { TEXTURE_LIBRARY, type TextureId } from '../overlays/TextureOverlay'
 import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import type { BlendMode } from '../../stores/textureOverlayStore'
@@ -372,6 +389,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
               step={param.step}
               onChange={(v) => param.apply(v)}
               paramId={`${effectId}.${param.id}`}
+              curve={getCurveForParam(`${effectId}.${param.id}`)}
             />
           ))}
           {steppers.map((param) => (
@@ -856,6 +874,7 @@ function TextureOverlaySection() {
         onChange={(v) => textureOverlay.setOpacity(v)}
         format={(v) => `${(v * 100).toFixed(0)}%`}
         paramId="texture_overlay.opacity"
+        curve="bar"
       />
 
       {/* Scale */}
@@ -888,6 +907,7 @@ function TextureOverlaySection() {
           onChange={(v) => textureOverlay.setAnimationSpeed(v)}
           format={(v) => `${v.toFixed(1)}x`}
           paramId="texture_overlay.animationSpeed"
+          curve="sine"
         />
       )}
     </div>

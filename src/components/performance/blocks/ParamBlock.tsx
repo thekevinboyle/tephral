@@ -2,7 +2,9 @@ import { useRef, useState, useCallback } from 'react'
 import { useSpring, animated } from '@react-spring/web'
 import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
-import { BLOCK, SPRING } from './blockTheme'
+import { BracketDisplay } from '../../ui/BracketDisplay'
+import { ScanMeter } from '../../ui/ScanMeter'
+import { SPRING } from './blockTheme'
 
 interface ParamBlockProps {
   label: string
@@ -87,7 +89,6 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
   }, [min, max, step, onChange])
 
   // Direct CSS values — no spring, no bounce
-  const fillWidth = `${normalized * 100}%`
   const thumbLeft = `calc(${normalized * 100}% - ${normalized * THUMB_W}px)`
 
   return (
@@ -102,51 +103,23 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: BLOCK.radius,
+        borderRadius: 0,
         overflow: 'hidden',
         userSelect: 'none',
-        backgroundColor: BLOCK.bg,
-        borderLeft: isAutomationTarget ? '3px solid #FF3355' : undefined,
-        border: isAutomationTarget ? undefined : '1px solid rgba(255,255,255,0.06)',
-        borderRight: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderTop: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderBottom: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        boxShadow: isAutomationTarget
-          ? `0 0 8px rgba(255, 51, 85, 0.15), ${BLOCK.shadow}`
-          : BLOCK.shadow,
+        backgroundColor: '#000000',
+        border: isAutomationTarget ? '1px solid #FF3355' : '1px solid var(--border)',
+        animation: isAutomationTarget ? 'hud-blink 1s step-end infinite' : undefined,
       }}
     >
-      {/* Label — top left */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 12,
-          left: TRACK_PADDING,
-          fontSize: 9,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: BLOCK.textGhost,
-          pointerEvents: 'none',
-        }}
-      >
-        {label}
-      </div>
-
-      {/* Value — top right */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 8,
-          right: TRACK_PADDING,
-          fontSize: 18,
-          fontWeight: 800,
-          fontVariantNumeric: 'tabular-nums',
-          color: BLOCK.text,
-          pointerEvents: 'none',
-        }}
-      >
-        {displayValue}
+      {/* BracketDisplay — top section */}
+      <div style={{
+        position: 'absolute',
+        top: 10,
+        left: TRACK_PADDING,
+        right: TRACK_PADDING,
+        pointerEvents: 'none',
+      }}>
+        <BracketDisplay value={displayValue} label={label} color={color} size="md" />
       </div>
 
       {/* Slider track area */}
@@ -157,8 +130,8 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
           position: 'absolute',
           left: TRACK_PADDING,
           right: TRACK_PADDING,
-          top: 52,
-          height: 40,
+          top: 64,
+          height: 32,
           cursor: 'grab',
           touchAction: 'none',
           display: 'flex',
@@ -172,9 +145,9 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
             left: 0,
             right: 0,
             height: 4,
-            borderRadius: 2,
-            backgroundColor: 'rgba(255,255,255,0.06)',
-            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.5)',
+            borderRadius: 0,
+            backgroundColor: 'var(--bg-primary)',
+            border: '1px solid var(--border)',
           }}
         >
           {/* Fill */}
@@ -184,10 +157,9 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
               left: 0,
               top: 0,
               bottom: 0,
-              width: fillWidth,
+              width: `${normalized * 100}%`,
               backgroundColor: color,
-              opacity: 0.6,
-              borderRadius: 2,
+              opacity: 0.5,
             }}
           />
         </div>
@@ -198,14 +170,24 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
             position: 'absolute',
             width: THUMB_W,
             height: THUMB_H,
-            borderRadius: 4,
-            background: 'radial-gradient(ellipse at 35% 30%, var(--knob-body-highlight), var(--knob-body))',
-            boxShadow: 'var(--shadow-knob)',
+            borderRadius: 0,
+            backgroundColor: '#FFFFFF',
             left: thumbLeft,
             scaleY: thumbSpring.scaleY,
             cursor: 'grab',
           }}
         />
+      </div>
+
+      {/* ScanMeter — bottom */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        pointerEvents: 'none',
+      }}>
+        <ScanMeter value={normalized} color={color} height={6} />
       </div>
 
       {/* Modulation context menu */}

@@ -3,6 +3,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { UnifiedSequencerPanel } from './UnifiedSequencerPanel'
 import { SlicerPanel } from './SlicerPanel'
+import { ShapeMorpher } from '../ui/MicroVisuals'
 
 // Icon symbols for each sequencer
 const SEQUENCER_ICONS = {
@@ -64,8 +65,10 @@ export function SequencerContainer({ hideTabsBar = false }: { hideTabsBar?: bool
             {SEQUENCER_ICONS.slicer}
           </span>
         </button>
-        {/* Spacer to fill remaining height */}
-        <div className="flex-1" />
+        {/* Spacer with decorative visual */}
+        <div className="flex-1 flex items-end justify-center pb-3">
+          <ShapeMorpher value={0.5} size={24} color="var(--text-ghost)" className="opacity-15" />
+        </div>
       </div>
 
       {/* Content */}

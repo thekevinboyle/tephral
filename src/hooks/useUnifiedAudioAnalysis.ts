@@ -50,6 +50,11 @@ export function useUnifiedAudioAnalysis() {
       return
     }
 
+    // Mute video when another source is active so only one plays at a time
+    if (videoElement) {
+      (videoElement as HTMLVideoElement).muted = activeSource !== 'video'
+    }
+
     let cancelled = false
 
     async function setup() {
@@ -264,6 +269,10 @@ export function useUnifiedAudioAnalysis() {
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current)
         rafRef.current = null
+      }
+      // Unmute video on cleanup so it's ready when switching back
+      if (videoElement) {
+        (videoElement as HTMLVideoElement).muted = false
       }
       teardown()
     }

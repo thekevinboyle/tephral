@@ -32,6 +32,7 @@ import { useAudioSourceStore } from '../../stores/audioSourceStore'
 import { useMediaStore } from '../../stores/mediaStore'
 import { BottomPanel } from './BottomPanel'
 import { StatusBar } from './StatusBar'
+import { IrisScanner } from '../ui/MicroVisuals'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
@@ -204,7 +205,9 @@ export function PerformanceLayout() {
         <TransportBar />
         {showAudioTransport && <AudioFileTransport />}
         {/* Fill remaining space */}
-        <div className="flex-1" />
+        <div className="flex-1 flex items-center justify-center">
+          <IrisScanner value={0.5} size={48} color="var(--text-ghost)" className="opacity-10" />
+        </div>
       </div>
 
       {/* Row 5: Status Bar (spans all columns) */}

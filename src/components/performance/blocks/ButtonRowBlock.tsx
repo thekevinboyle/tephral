@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
-import { BLOCK } from './blockTheme'
+import { BracketDisplay } from '../../ui/BracketDisplay'
+import { ScanMeter } from '../../ui/ScanMeter'
 
 interface ButtonRowBlockProps {
   label: string
@@ -23,6 +24,8 @@ export function ButtonRowBlock({ label, value, min, max, step: stepSize, onChang
   }
 
   const currentIndex = values.findIndex(v => Math.abs(v - value) < stepSize * 0.1)
+  const normalized = values.length > 1 ? currentIndex / (values.length - 1) : 0
+  const displayValue = stepSize >= 1 ? value.toFixed(0) : value.toFixed(1)
 
   return (
     <div
@@ -33,57 +36,33 @@ export function ButtonRowBlock({ label, value, min, max, step: stepSize, onChang
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: BLOCK.radius,
+        borderRadius: 0,
         overflow: 'hidden',
         userSelect: 'none',
-        backgroundColor: BLOCK.bg,
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: BLOCK.shadow,
+        backgroundColor: '#000000',
+        border: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
+        justifyContent: 'space-between',
       }}
     >
-      {/* Label — top left */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 10,
-          left: 12,
-          fontSize: 9,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: BLOCK.textGhost,
-          pointerEvents: 'none',
-        }}
-      >
-        {label}
+      {/* BracketDisplay — top section */}
+      <div style={{
+        padding: '10px 12px 0',
+        pointerEvents: 'none',
+      }}>
+        <BracketDisplay value={displayValue} label={label} color={color} size="sm" />
       </div>
 
-      {/* Value display */}
+      {/* Button row — center section */}
       <div
         style={{
-          position: 'absolute',
-          top: 8,
-          right: 12,
-          fontSize: 18,
-          fontWeight: 800,
-          fontVariantNumeric: 'tabular-nums',
-          color: BLOCK.text,
-          pointerEvents: 'none',
-        }}
-      >
-        {stepSize >= 1 ? value.toFixed(0) : value.toFixed(1)}
-      </div>
-
-      {/* Button row — centered vertically */}
-      <div
-        style={{
-          flex: 1,
           display: 'flex',
           alignItems: 'center',
-          padding: '28px 8px 8px',
+          padding: '0 8px',
           gap: 3,
+          flex: 1,
+          marginTop: 4,
         }}
       >
         {values.map((v, i) => {
@@ -94,16 +73,15 @@ export function ButtonRowBlock({ label, value, min, max, step: stepSize, onChang
               onClick={() => onChange(v)}
               style={{
                 flex: 1,
-                height: 32,
-                borderRadius: 4,
-                border: isActive ? `1px solid ${color}` : '1px solid rgba(255,255,255,0.06)',
+                height: 28,
+                borderRadius: 0,
+                border: isActive ? `1px solid ${color}` : '1px solid var(--border)',
                 backgroundColor: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: isActive ? BLOCK.text : BLOCK.textGhost,
-                fontSize: 13,
+                color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
+                fontSize: 11,
                 fontWeight: isActive ? 700 : 500,
                 fontVariantNumeric: 'tabular-nums',
                 cursor: 'pointer',
-                transition: 'background-color 0.1s, color 0.1s, border-color 0.1s',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -125,6 +103,11 @@ export function ButtonRowBlock({ label, value, min, max, step: stepSize, onChang
             </button>
           )
         })}
+      </div>
+
+      {/* ScanMeter — bottom, shows position in discrete range */}
+      <div style={{ pointerEvents: 'none' }}>
+        <ScanMeter value={normalized} color={color} height={4} showScanLine={false} />
       </div>
 
       {contextMenuPos && paramId && (

@@ -11,7 +11,8 @@ interface ColorBlockProps {
 export function ColorBlock({ label, value, onChange }: ColorBlockProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const spring = useSpring({
+  // Spring animates the swatch bar background color
+  const colorSpring = useSpring({
     backgroundColor: value,
     config: SPRING.smooth,
   })
@@ -21,8 +22,6 @@ export function ColorBlock({ label, value, onChange }: ColorBlockProps) {
     scale: 1,
     config: SPRING.pop,
   }))
-
-  const isLight = isLightColor(value)
 
   const handleClick = () => {
     pressApi.start({
@@ -38,49 +37,58 @@ export function ColorBlock({ label, value, onChange }: ColorBlockProps) {
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: BLOCK.radius,
+        borderRadius: 0,
         overflow: 'hidden',
         cursor: 'pointer',
-        boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.04)',
-        backgroundColor: spring.backgroundColor,
+        border: '1px solid var(--border)',
+        backgroundColor: '#000000',
+        boxShadow: 'none',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 4,
+        alignItems: 'stretch',
+        justifyContent: 'space-between',
+        padding: '10px 0 0',
         scale: pressSpring.scale,
       }}
     >
       {/* Label */}
       <div
         style={{
-          position: 'absolute',
-          top: 10,
-          left: 0,
-          right: 0,
           textAlign: 'center',
           fontSize: 9,
-          fontWeight: 600,
+          fontFamily: 'var(--font-mono)',
           textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: isLight ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
+          letterSpacing: '0.12em',
+          color: BLOCK.textGhost,
         }}
       >
         {label}
       </div>
 
-      {/* Hex value */}
+      {/* Bracket hex display */}
       <div
         style={{
-          fontSize: 14,
-          fontWeight: 700,
+          textAlign: 'center',
+          fontSize: 13,
           fontFamily: 'var(--font-mono)',
-          color: isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)',
-          letterSpacing: '0.02em',
+          fontWeight: 700,
+          letterSpacing: '0.12em',
+          color: BLOCK.text,
         }}
       >
-        {value.toUpperCase()}
+        [ {value.toUpperCase()} ]
       </div>
+
+      {/* Thin animated color swatch bar at 30% opacity */}
+      <animated.div
+        style={{
+          height: 24,
+          width: '100%',
+          flexShrink: 0,
+          opacity: 0.3,
+          backgroundColor: colorSpring.backgroundColor,
+        }}
+      />
 
       {/* Hidden color input */}
       <input
@@ -98,13 +106,4 @@ export function ColorBlock({ label, value, onChange }: ColorBlockProps) {
       />
     </animated.div>
   )
-}
-
-function isLightColor(hex: string): boolean {
-  const c = hex.replace('#', '')
-  if (c.length < 6) return false
-  const r = parseInt(c.substring(0, 2), 16)
-  const g = parseInt(c.substring(2, 4), 16)
-  const b = parseInt(c.substring(4, 6), 16)
-  return (r * 299 + g * 587 + b * 114) / 1000 > 128
 }

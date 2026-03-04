@@ -18,6 +18,7 @@ import { useSlicerStore } from '../stores/slicerStore'
 import { useSlicerBufferStore } from '../stores/slicerBufferStore'
 import { SlicerCompositor } from '../effects/SlicerCompositor'
 import { OverlayContainer } from './overlays/OverlayContainer'
+import { Crosshair } from './ui/MicroVisuals'
 
 export interface CanvasHandle {
   getCanvas: () => HTMLCanvasElement | null
@@ -660,7 +661,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
           style={{ backgroundColor: 'var(--bg-surface)' }}
         >
           <h1
-            className="text-4xl font-light tracking-[0.3em] select-none px-8"
+            className="text-xs font-light tracking-[0.25em] select-none"
             style={{
               color: 'var(--text-muted)',
               fontFamily: "'JetBrains Mono', monospace",
@@ -669,11 +670,14 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
             SEG_F4ULT.SYS
           </h1>
           <p
-            className="mt-4 text-sm tracking-wider"
+            className="mt-2 text-[10px] tracking-wider"
             style={{ color: '#bbb' }}
           >
             Load media to begin
           </p>
+          <div className="mt-4 opacity-30">
+            <Crosshair value={0.5} size={96} />
+          </div>
         </div>
       )}
       {/* Vision effect overlays */}

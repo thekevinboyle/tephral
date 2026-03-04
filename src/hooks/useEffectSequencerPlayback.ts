@@ -36,9 +36,15 @@ export function useEffectSequencerPlayback() {
   const muteBypassed = useRef<Set<string>>(new Set())
 
   // Per-track audio-reactive state
-  const trackEnvelopes = useRef<Record<string, number>>({})
   const trackWasAbove = useRef<Record<string, boolean>>({})
-  const trackStepAccum = useRef<Record<string, number>>({})
+  const trackRollingPeak = useRef<Record<string, number>>({})
+  const trackRollingAvg = useRef<Record<string, number>>({})
+  const trackNoiseFloor = useRef<Record<string, number>>({})
+
+  // Per-track timing for time-scaled BPM tracks
+  const trackLastStepTime = useRef<Record<string, number>>({})
+  // Retrig timer IDs for cleanup
+  const retrigTimers = useRef<number[]>([])
 
   // ─── Timing ────────────────────────────────────────────────────────────
 
@@ -104,9 +110,10 @@ export function useEffectSequencerPlayback() {
     preLockValues.current = {}
     prevLockedParams.current = {}
     muteBypassed.current = new Set()
-    trackEnvelopes.current = {}
     trackWasAbove.current = {}
-    trackStepAccum.current = {}
+    trackRollingPeak.current = {}
+    trackRollingAvg.current = {}
+    trackNoiseFloor.current = {}
   }, [])
 
   const restoreBaseValues = useCallback(() => {
@@ -284,81 +291,137 @@ export function useEffectSequencerPlayback() {
         if (!arState.enabled) arState.setEnabled(true)
       }
 
-      // === Audio-reactive tracks: check every frame ===
+      // === Audio-reactive tracks: gate effect on/off by kick ===
       if (dt > 0 && dt < 1) { // guard against first frame / tab switch
         for (const effectId of effectOrder) {
           const track = currentTracks[effectId]
           if (!track || !track.audioReactive.enabled) continue
 
           const config = track.audioReactive
-          const rawValue = Math.min(1, getAudioValue(config.source) * config.gain)
+          const raw = getAudioValue(config.source)
 
-          // Per-track envelope following (for UI meter + release tail on trigger detection)
-          // Band sources (kick/low/mid/high) are already envelope-followed in useAudioReactive,
-          // so use a fast attack to avoid double-smoothing the rising edge.
-          const prev = trackEnvelopes.current[effectId] ?? 0
-          const isBandSource = config.source !== 'rms' && config.source !== 'silence' && config.source !== 'peak'
-          const effectiveAttackMs = isBandSource ? 1 : config.attackMs
-          const attackAlpha = 1 - Math.exp(-(dt) / (effectiveAttackMs / 1000))
-          const releaseAlpha = 1 - Math.exp(-(dt) / (config.releaseMs / 1000))
-          const alpha = rawValue > prev ? attackAlpha : releaseAlpha
-          const smoothed = prev + alpha * (rawValue - prev)
-          trackEnvelopes.current[effectId] = smoothed
+          // Rolling peak: instant attack, ~1.5s decay half-life (faster decay = more dynamic range)
+          const prevPeak = trackRollingPeak.current[effectId] ?? raw
+          const peak = Math.max(raw, prevPeak * Math.pow(0.5, dt / 1.5))
+          trackRollingPeak.current[effectId] = Math.max(peak, 0.001)
 
-          // Update per-track audio level for UI meters
-          state.setTrackAudioLevel(effectId, smoothed)
+          // Noise floor: fast drop (~0.5s), very slow rise (~10s)
+          const prevFloor = trackNoiseFloor.current[effectId] ?? raw
+          let floor: number
+          if (raw < prevFloor) {
+            floor = prevFloor + (raw - prevFloor) * (1 - Math.pow(0.5, dt / 0.5))
+          } else {
+            floor = prevFloor + (raw - prevFloor) * (1 - Math.pow(0.5, dt / 10.0))
+          }
+          floor = Math.min(floor, peak * 0.5)
+          trackNoiseFloor.current[effectId] = Math.max(0, floor)
 
-          // Rising-edge trigger detection — use raw value for bands (already smoothed upstream)
-          const triggerValue = isBandSource ? rawValue : smoothed
+          // Normalize to dynamic range
+          const range = peak - floor
+          const normalized = range > 0.001 ? Math.min(1, Math.max(0, raw - floor) / range) : 0
+
+          // Rolling average (~3s time constant — slow-moving baseline)
+          const prevAvg = trackRollingAvg.current[effectId] ?? normalized
+          const avg = prevAvg + (normalized - prevAvg) * (1 - Math.pow(0.5, dt / 3))
+          trackRollingAvg.current[effectId] = avg
+
+          // Auto threshold: always above average, sensitivity controls how far above
+          // sensitivity 0.1 → threshold near 1.0 (only loudest transients)
+          // sensitivity 1.0 → threshold ~60% between avg and peak (clear kicks)
+          // sensitivity 2.0 → threshold ~30% above avg (triggers easily)
+          const sensNorm = Math.min(1, (config.sensitivity - 0.1) / 1.9)
+          const headroom = 1 - avg
+          const autoThreshold = avg + headroom * (0.2 + 0.7 * (1 - sensNorm))
+
+          // UI feedback
+          state.setTrackAudioLevel(effectId, normalized)
+          state.setTrackAutoThreshold(effectId, autoThreshold)
+
+          // Gate: toggle effect on/off based on threshold
           const wasAbove = trackWasAbove.current[effectId] ?? false
-          const isAbove = triggerValue >= config.threshold
+          const isAbove = normalized >= autoThreshold
 
           if (isAbove && !wasAbove) {
-            // Ensure effect is enabled so gate mix actually has a visible result
+            // Kick detected — enable effect and advance step
             const entry = EFFECT_PARAM_REGISTRY[effectId]
-            if (entry && !entry.getEnabled()) {
-              entry.setEnabled(true)
-            }
+            if (entry) entry.setEnabled(true)
+            useGlitchEngineStore.getState().setEffectMix(effectId, baseMix.current[effectId] ?? 1)
 
-            // Trigger! Accumulate step advancement
-            const accum = (trackStepAccum.current[effectId] ?? 0) + config.speedMultiplier
-            const stepsToAdvance = Math.floor(accum)
-            trackStepAccum.current[effectId] = accum - stepsToAdvance
-
-            // Re-read track for latest trackStep
             const latestTrack = useEffectSequencerStore.getState().tracks[effectId]
             if (latestTrack) {
-              for (let i = 0; i < stepsToAdvance; i++) {
-                const currentTrack = useEffectSequencerStore.getState().tracks[effectId]
-                if (!currentTrack) break
-                const stepIdx = currentTrack.trackStep % currentTrack.length
-                executeTrackAtStep(effectId, currentTrack, stepIdx, fill, hasSolo)
-                useEffectSequencerStore.getState().advanceTrackStep(effectId)
-              }
+              const stepIdx = latestTrack.trackStep % latestTrack.length
+              executeTrackAtStep(effectId, latestTrack, stepIdx, fill, hasSolo)
+              useEffectSequencerStore.getState().advanceTrackStep(effectId)
             }
+          } else if (!isAbove && wasAbove) {
+            // Kick ended — disable effect
+            useGlitchEngineStore.getState().setEffectMix(effectId, 0)
           }
 
           trackWasAbove.current[effectId] = isAbove
         }
       }
 
-      // === BPM-driven tracks: original timing logic ===
-      const msPerStep = getMsPerStep()
+      // === BPM-driven tracks: per-track time-scaled timing ===
+      const baseMsPerStep = getMsPerStep()
 
-      if (timestamp - lastStepTime.current >= msPerStep) {
+      // Advance global currentStep at base rate (for UI display)
+      if (timestamp - lastStepTime.current >= baseMsPerStep) {
         lastStepTime.current = timestamp
+        useEffectSequencerStore.getState().advanceStep()
+      }
 
-        for (const effectId of effectOrder) {
-          const track = currentTracks[effectId]
-          if (!track) continue
-          if (track.audioReactive.enabled) continue // handled above
+      // Per-track stepping with individual timeScale
+      for (const effectId of effectOrder) {
+        const track = currentTracks[effectId]
+        if (!track) continue
+        if (track.audioReactive.enabled) continue // handled above
 
-          const stepIndex = currentStep % track.length
-          executeTrackAtStep(effectId, track, stepIndex, fill, hasSolo)
+        // Initialize per-track timer if missing
+        if (!(effectId in trackLastStepTime.current)) {
+          trackLastStepTime.current[effectId] = timestamp
         }
 
-        // Advance global step counter (for non-audio-reactive tracks)
-        useEffectSequencerStore.getState().advanceStep()
+        const trackMsPerStep = baseMsPerStep / (track.timeScale ?? 1)
+        const elapsed = timestamp - trackLastStepTime.current[effectId]
+
+        if (elapsed >= trackMsPerStep) {
+          trackLastStepTime.current[effectId] = timestamp
+
+          const stepIndex = track.trackStep % track.length
+          executeTrackAtStep(effectId, track, stepIndex, fill, hasSolo)
+
+          // Schedule retrigs within this step
+          const step = track.steps[stepIndex]
+          if (step && step.retrig > 0) {
+            const subInterval = trackMsPerStep / step.retrig
+            for (let r = 1; r < step.retrig; r++) {
+              const timerId = window.setTimeout(() => {
+                const latestTrack = useEffectSequencerStore.getState().tracks[effectId]
+                if (!latestTrack) return
+                const ge = useGlitchEngineStore.getState()
+                if (latestTrack.mode === 'gate' && !latestTrack.midiGate) {
+                  ge.setEffectMix(effectId, baseMix.current[effectId] ?? 1)
+                }
+                // Re-apply p-locks
+                const entry = EFFECT_PARAM_REGISTRY[effectId]
+                if (entry) {
+                  const allParams = new Map<string, { apply: (v: any) => void }>()
+                  for (const p of entry.getParams()) allParams.set(p.id, p)
+                  if (entry.getSelectParams) {
+                    for (const p of entry.getSelectParams()) allParams.set(p.id, p)
+                  }
+                  for (const [pid, lockValue] of Object.entries(step.locks)) {
+                    allParams.get(pid)?.apply(lockValue)
+                  }
+                }
+              }, subInterval * r)
+              retrigTimers.current.push(timerId)
+            }
+          }
+
+          useEffectSequencerStore.getState().advanceTrackStep(effectId)
+        }
       }
 
       animationFrameId.current = requestAnimationFrame(playbackLoop)
@@ -377,6 +440,9 @@ export function useEffectSequencerPlayback() {
       captureBaseValues()
       lastStepTime.current = performance.now()
       lastFrameTime.current = performance.now()
+      trackLastStepTime.current = {}
+      retrigTimers.current.forEach(clearTimeout)
+      retrigTimers.current = []
       animationFrameId.current = requestAnimationFrame(playbackLoop)
     } else {
       if (animationFrameId.current !== null) {
@@ -384,6 +450,9 @@ export function useEffectSequencerPlayback() {
         animationFrameId.current = null
       }
       // Restore base values on stop
+      retrigTimers.current.forEach(clearTimeout)
+      retrigTimers.current = []
+      trackLastStepTime.current = {}
       restoreBaseValues()
     }
 

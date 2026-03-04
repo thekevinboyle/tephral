@@ -13,7 +13,7 @@ interface StepperBlockProps {
   color?: string
 }
 
-export function StepperBlock({ label, value, min, max, step: stepSize, onChange, color = 'var(--accent)' }: StepperBlockProps) {
+export function StepperBlock({ label, value, min, max, step: stepSize, onChange }: StepperBlockProps) {
   const directionRef = useRef(1)
   const discreteCount = Math.round((max - min) / stepSize) + 1
   const currentIndex = Math.round((value - min) / stepSize)
@@ -58,17 +58,17 @@ export function StepperBlock({ label, value, min, max, step: stepSize, onChange,
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: BLOCK.radius,
+        borderRadius: 0,
         overflow: 'hidden',
         userSelect: 'none',
-        backgroundColor: BLOCK.bg,
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: BLOCK.shadow,
+        backgroundColor: '#000000',
+        border: '1px solid var(--border)',
+        boxShadow: 'none',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
+        gap: 10,
         scale: clickSpring.scale,
       }}
     >
@@ -79,9 +79,9 @@ export function StepperBlock({ label, value, min, max, step: stepSize, onChange,
           top: 10,
           left: 12,
           fontSize: 9,
-          fontWeight: 600,
+          fontFamily: 'var(--font-mono)',
           textTransform: 'uppercase',
-          letterSpacing: '0.08em',
+          letterSpacing: '0.12em',
           color: BLOCK.textGhost,
           pointerEvents: 'none',
         }}
@@ -94,36 +94,42 @@ export function StepperBlock({ label, value, min, max, step: stepSize, onChange,
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 16,
+          gap: 12,
           marginTop: 8,
         }}
       >
-        {/* Left arrow */}
+        {/* Left bracket arrow button */}
         <button
           onClick={decrement}
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: 6,
-            border: 'none',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            color: value <= min ? 'var(--text-ghost)' : 'var(--text-primary)',
+            background: 'none',
+            border: '1px solid var(--border)',
+            color: value <= min ? BLOCK.textGhost : BLOCK.text,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 12,
+            letterSpacing: '0.12em',
             cursor: value <= min ? 'default' : 'pointer',
+            padding: '4px 8px',
+            lineHeight: 1,
+            borderRadius: 0,
+            outline: 'none',
+          }}
+        >
+          {'[ < ]'}
+        </button>
+
+        {/* Bracket-framed animated value */}
+        <div
+          style={{
+            position: 'relative',
+            width: 88,
+            height: 40,
+            overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 18,
-            fontWeight: 700,
-            transition: 'color 0.15s, background-color 0.15s',
           }}
-          onMouseEnter={(e) => { if (value > min) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)' }}
         >
-          ‹
-        </button>
-
-        {/* Value — animated transition */}
-        <div style={{ position: 'relative', width: 48, height: 40, overflow: 'hidden' }}>
           {transitions((style, item) => (
             <animated.div
               style={{
@@ -132,60 +138,52 @@ export function StepperBlock({ label, value, min, max, step: stepSize, onChange,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 36,
-                fontWeight: 900,
+                fontSize: 28,
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
                 fontVariantNumeric: 'tabular-nums',
+                letterSpacing: '0.12em',
                 color: BLOCK.text,
                 ...style,
               }}
             >
-              {item}
+              [ {item} ]
             </animated.div>
           ))}
         </div>
 
-        {/* Right arrow */}
+        {/* Right bracket arrow button */}
         <button
           onClick={increment}
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: 6,
-            border: 'none',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            color: value >= max ? 'var(--text-ghost)' : 'var(--text-primary)',
+            background: 'none',
+            border: '1px solid var(--border)',
+            color: value >= max ? BLOCK.textGhost : BLOCK.text,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 12,
+            letterSpacing: '0.12em',
             cursor: value >= max ? 'default' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 18,
-            fontWeight: 700,
-            transition: 'color 0.15s, background-color 0.15s',
+            padding: '4px 8px',
+            lineHeight: 1,
+            borderRadius: 0,
+            outline: 'none',
           }}
-          onMouseEnter={(e) => { if (value < max) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)' }}
         >
-          ›
+          {'[ > ]'}
         </button>
       </div>
 
-      {/* Dot indicators */}
-      {discreteCount <= 12 && (
-        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          {Array.from({ length: discreteCount }, (_, i) => (
-            <div
-              key={i}
-              style={{
-                width: i === currentIndex ? 6 : 4,
-                height: i === currentIndex ? 6 : 4,
-                borderRadius: '50%',
-                backgroundColor: i === currentIndex ? color : 'var(--text-ghost)',
-                transition: 'all 0.2s',
-              }}
-            />
-          ))}
-        </div>
-      )}
+      {/* Fraction counter replaces dot indicators */}
+      <div
+        style={{
+          fontSize: 9,
+          fontFamily: 'var(--font-mono)',
+          letterSpacing: '0.12em',
+          color: BLOCK.textGhost,
+        }}
+      >
+        {currentIndex + 1}/{discreteCount}
+      </div>
     </animated.div>
   )
 }

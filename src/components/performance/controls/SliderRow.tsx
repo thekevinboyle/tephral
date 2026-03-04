@@ -1,4 +1,5 @@
 import { Knob } from '../Knob'
+import { MiniCurve, type CurveMode } from '../../ui/MiniCurve'
 
 interface SliderRowProps {
   label: string
@@ -10,6 +11,7 @@ interface SliderRowProps {
   format?: (value: number) => string
   paramId?: string
   statusText?: string
+  curve?: CurveMode
 }
 
 export function SliderRow({
@@ -22,20 +24,28 @@ export function SliderRow({
   format,
   paramId,
   statusText,
+  curve,
 }: SliderRowProps) {
+  const normalized = (value - min) / (max - min || 1)
+
   return (
-    <Knob
-      label={label}
-      value={value}
-      min={min}
-      max={max}
-      step={step}
-      onChange={onChange}
-      formatValue={format}
-      paramId={paramId}
-      statusText={statusText}
-      showArc
-      showValue
-    />
+    <div className="flex flex-col items-center gap-0.5">
+      <Knob
+        label={label}
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        onChange={onChange}
+        formatValue={format}
+        paramId={paramId}
+        statusText={statusText}
+        showArc
+        showValue
+      />
+      {curve && (
+        <MiniCurve value={normalized} mode={curve} width={36} height={18} />
+      )}
+    </div>
   )
 }

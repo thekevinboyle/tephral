@@ -17,6 +17,7 @@ import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { getEffectStatusText, getPageStatusText } from '../../config/statusDescriptions'
+import { DataGrid } from '../ui/MicroVisuals'
 
 export function PerformanceGrid() {
   // Glitch engine store
@@ -1028,12 +1029,14 @@ export function PerformanceGrid() {
             return (
               <div
                 key={`empty-${index}`}
-                className="rounded-sm"
+                className="rounded-sm flex items-center justify-center"
                 style={{
                   backgroundColor: 'var(--bg-surface)',
                   border: '1px solid var(--border)',
                 }}
-              />
+              >
+                <DataGrid value={0.05} size={20} color="var(--text-ghost)" className="opacity-10" />
+              </div>
             )
           }
 

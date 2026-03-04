@@ -1,7 +1,8 @@
 import { useRef, useState, useCallback } from 'react'
 import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
-import { BLOCK } from './blockTheme'
+import { BracketDisplay } from '../../ui/BracketDisplay'
+import { ScanMeter } from '../../ui/ScanMeter'
 
 interface VerticalFaderBlockProps {
   label: string
@@ -18,7 +19,6 @@ interface VerticalFaderBlockProps {
 
 const TRACK_TOP = 28
 const TRACK_BOTTOM = 20
-const CIRCLE_R = 7
 
 export function VerticalFaderBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)', onTap, isAutomationTarget }: VerticalFaderBlockProps) {
   const normalized = (value - min) / (max - min)
@@ -77,10 +77,6 @@ export function VerticalFaderBlock({ label, value, min, max, step, onChange, par
     onChange(Math.max(min, Math.min(max, snapped)))
   }, [min, max, step, onChange])
 
-  // Circle Y position: top = max (norm=1), bottom = min (norm=0)
-  const trackHeight = 120 - TRACK_TOP - TRACK_BOTTOM
-  const circleY = TRACK_TOP + trackHeight * (1 - normalized)
-
   return (
     <div
       ref={containerRef}
@@ -94,102 +90,30 @@ export function VerticalFaderBlock({ label, value, min, max, step, onChange, par
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: BLOCK.radius,
+        borderRadius: 0,
         overflow: 'hidden',
         cursor: 'ns-resize',
         touchAction: 'none',
         userSelect: 'none',
-        backgroundColor: BLOCK.bg,
-        borderLeft: isAutomationTarget ? '3px solid #FF3355' : undefined,
-        border: isAutomationTarget ? undefined : '1px solid rgba(255,255,255,0.06)',
-        borderRight: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderTop: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderBottom: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        boxShadow: isAutomationTarget
-          ? `0 0 8px rgba(255, 51, 85, 0.15), ${BLOCK.shadow}`
-          : BLOCK.shadow,
+        backgroundColor: '#000000',
+        border: isAutomationTarget ? '1px solid #FF3355' : '1px solid var(--border)',
+        animation: isAutomationTarget ? 'hud-blink 1s step-end infinite' : undefined,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
       }}
     >
-      {/* Value — top center */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 6,
-          left: 0,
-          right: 0,
-          textAlign: 'center',
-          fontSize: 16,
-          fontWeight: 800,
-          fontVariantNumeric: 'tabular-nums',
-          color: BLOCK.text,
-          pointerEvents: 'none',
-        }}
-      >
-        {displayValue}
+      {/* BracketDisplay — top section */}
+      <div style={{
+        padding: '10px 12px 0',
+        pointerEvents: 'none',
+      }}>
+        <BracketDisplay value={displayValue} label={label} color={color} size="md" />
       </div>
 
-      {/* Vertical line */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: TRACK_TOP,
-          bottom: TRACK_BOTTOM,
-          width: 1,
-          backgroundColor: 'rgba(255,255,255,0.12)',
-          transform: 'translateX(-0.5px)',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Active fill below circle */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: circleY,
-          bottom: TRACK_BOTTOM,
-          width: 1,
-          backgroundColor: color,
-          opacity: 0.4,
-          transform: 'translateX(-0.5px)',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Hollow circle handle */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: circleY,
-          width: CIRCLE_R * 2,
-          height: CIRCLE_R * 2,
-          borderRadius: '50%',
-          border: `1.5px solid ${color}`,
-          backgroundColor: 'transparent',
-          transform: `translate(-${CIRCLE_R}px, -${CIRCLE_R}px)`,
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Label — bottom center */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 3,
-          left: 0,
-          right: 0,
-          textAlign: 'center',
-          fontSize: 8,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: BLOCK.textGhost,
-          pointerEvents: 'none',
-        }}
-      >
-        {label}
+      {/* ScanMeter — bottom, vertical mode showing fader fill */}
+      <div style={{ pointerEvents: 'none' }}>
+        <ScanMeter value={normalized} color={color} height={6} />
       </div>
 
       {contextMenuPos && paramId && (

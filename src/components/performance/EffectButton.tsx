@@ -3,6 +3,7 @@ import { useRecordingStore } from '../../stores/recordingStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useModulationStore } from '../../stores/modulationStore'
+import { Crosshair } from '../ui/MicroVisuals'
 
 const HOLD_THRESHOLD = 200    // ms before hold triggers solo
 const DOUBLE_CLICK_GAP = 300  // ms max between clicks for double-click
@@ -221,7 +222,7 @@ export function EffectButton({
       }}
     >
       {/* Main content area */}
-      <div className="flex-1 flex flex-col justify-center">
+      <div className="flex-1 flex flex-col justify-center relative">
         {/* Label */}
         <span
           className="text-[11px] font-semibold truncate uppercase tracking-wide"
@@ -229,6 +230,12 @@ export function EffectButton({
         >
           {label}
         </span>
+        {/* Active indicator */}
+        {active && (
+          <div className="absolute right-0 bottom-0 opacity-15 pointer-events-none">
+            <Crosshair value={mix} size={22} color="var(--accent)" />
+          </div>
+        )}
       </div>
 
       {/* Vertical progress bar on the right - shows mix level */}

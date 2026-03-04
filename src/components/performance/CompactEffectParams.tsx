@@ -11,6 +11,7 @@ import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
 import { Knob } from './Knob'
+import { BLOCK } from './blocks/blockTheme'
 
 interface CompactEffectParamsProps {
   effectId: string
@@ -33,7 +34,7 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
 
   const knobProps = { size: 'xs' as const, showArc: true, showValue: true, color }
 
-  switch (effectId) {
+  const content = (() => { switch (effectId) {
     // ═══════════════════════════════════════════════════════════════
     // GLITCH EFFECTS
     // ═══════════════════════════════════════════════════════════════
@@ -683,5 +684,23 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
 
     default:
       return null
-  }
+  } })()
+
+  if (!content) return null
+
+  return (
+    <div
+      style={{
+        borderRadius: BLOCK.sectionRadius,
+        border: `1px solid ${BLOCK.sectionBorder}`,
+        backgroundColor: BLOCK.sectionBg,
+        overflow: 'hidden',
+      }}
+    >
+      <div style={{ height: BLOCK.accentLine, backgroundColor: color, opacity: 0.4 }} />
+      <div style={{ padding: '6px 8px' }}>
+        {content}
+      </div>
+    </div>
+  )
 }

@@ -7,6 +7,7 @@ import { useAudioAnalysis } from '../../hooks/useAudioAnalysis'
 import { Track } from './Track'
 import { EuclideanPanel } from './EuclideanPanel'
 import { RicochetPanel } from './RicochetPanel'
+import { DataGrid } from '../ui/MicroVisuals'
 
 const RESOLUTION_OPTIONS: StepResolution[] = ['1/4', '1/8', '1/16', '1/32']
 const MODE_OPTIONS: { value: StepMode; label: string }[] = [
@@ -197,12 +198,13 @@ export function SequencerPanel() {
             <div className="flex-1 overflow-y-auto">
               {tracks.length === 0 ? (
                 <div
-                  className="flex items-center justify-center h-full text-[11px] cursor-pointer uppercase tracking-wider"
+                  className="flex flex-col items-center justify-center h-full gap-2 cursor-pointer"
                   style={{ color: 'var(--text-ghost)' }}
                   onDoubleClick={addTrack}
                   title="Double-click to add a track"
                 >
-                  No tracks
+                  <span className="text-[11px] uppercase tracking-wider">No tracks</span>
+                  <DataGrid value={0.15} size={48} color="var(--text-ghost)" className="opacity-30" />
                 </div>
               ) : (
                 <div className="p-2 space-y-1">

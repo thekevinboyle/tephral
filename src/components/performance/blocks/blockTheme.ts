@@ -1,17 +1,23 @@
-// Dark grayscale palette — matches app theme tokens
+// KOJIMA HUD — flat monochrome tokens, zero radius, zero shadow
 export const BLOCK = {
-  bg: 'rgba(255,255,255,0.03)',
-  bgElevated: 'rgba(255,255,255,0.06)',
-  text: 'var(--text-primary)',
-  textSecondary: 'var(--text-muted)',
-  textGhost: 'var(--text-ghost)',
-  accent: 'var(--accent)',
-  radius: 8,
-  shadow: 'var(--shadow-button)',
-  inset: 'inset 0 1px 3px rgba(0,0,0,0.4)',
+  bg: '#000000',
+  bgElevated: '#0A0A0A',
+  text: '#FFFFFF',
+  textSecondary: '#888888',
+  textGhost: '#444444',
+  accent: '#FFFFFF',
+  radius: 0,
+  shadow: 'none',
+  inset: 'none',
+  // Section wrapper constants
+  sectionRadius: 0,
+  sectionBg: '#050505',
+  sectionBorder: '#333333',
+  accentLine: 1,
+  microVisualOpacity: 0.20,
 } as const
 
-// Shared spring configs for tactile interactions
+// Shared spring configs for tactile interactions (unchanged)
 export const SPRING = {
   snappy: { tension: 500, friction: 22 },
   bouncy: { tension: 400, friction: 18 },

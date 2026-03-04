@@ -1,7 +1,8 @@
 import { useRef, useState, useCallback } from 'react'
 import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
-import { BLOCK } from './blockTheme'
+import { BracketDisplay } from '../../ui/BracketDisplay'
+import { ScanMeter } from '../../ui/ScanMeter'
 
 interface BipolarBlockProps {
   label: string
@@ -19,9 +20,7 @@ interface BipolarBlockProps {
 export function BipolarBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)', onTap, isAutomationTarget }: BipolarBlockProps) {
   const range = max - min
   const normalized = (value - min) / range // 0-1
-  const centerNorm = (0 - min) / range // where zero falls in 0-1
   const displayValue = step >= 0.1 ? value.toFixed(2) : value.toFixed(3)
-  const isNegative = value < 0
   const containerRef = useRef<HTMLDivElement>(null)
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
   const draggingRef = useRef(false)
@@ -67,11 +66,9 @@ export function BipolarBlock({ label, value, min, max, step, onChange, paramId, 
     onChange(0)
   }, [onChange])
 
-  // Direct CSS values — no spring
-  const centerPct = centerNorm * 100
-  const valuePct = normalized * 100
-  const barLeft = `${Math.min(valuePct, centerPct)}%`
-  const barWidth = `${Math.abs(valuePct - centerPct)}%`
+  // Prefix display: show sign for non-zero values
+  const isNegative = value < 0
+  const prefixedDisplay = isNegative ? displayValue : `+${displayValue}`
 
   return (
     <div
@@ -86,65 +83,30 @@ export function BipolarBlock({ label, value, min, max, step, onChange, paramId, 
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: BLOCK.radius,
+        borderRadius: 0,
         overflow: 'hidden',
         cursor: 'ns-resize',
         touchAction: 'none',
         userSelect: 'none',
-        backgroundColor: BLOCK.bg,
-        borderLeft: isAutomationTarget ? '3px solid #FF3355' : undefined,
-        border: isAutomationTarget ? undefined : '1px solid rgba(255,255,255,0.06)',
-        borderRight: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderTop: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        borderBottom: isAutomationTarget ? '1px solid rgba(255,255,255,0.06)' : undefined,
-        boxShadow: isAutomationTarget
-          ? `0 0 8px rgba(255, 51, 85, 0.15), ${BLOCK.shadow}`
-          : BLOCK.shadow,
+        backgroundColor: '#000000',
+        border: isAutomationTarget ? '1px solid #FF3355' : '1px solid var(--border)',
+        animation: isAutomationTarget ? 'hud-blink 1s step-end infinite' : undefined,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
       }}
     >
-      {/* Label — top left */}
+      {/* BracketDisplay — top section with bipolar value */}
       <div style={{
-        position: 'absolute', top: 10, left: 12,
-        fontSize: 9, fontWeight: 600, textTransform: 'uppercase',
-        letterSpacing: '0.08em', color: BLOCK.textGhost, pointerEvents: 'none',
-      }}>
-        {label}
-      </div>
-
-      {/* Value — centered */}
-      <div style={{
-        position: 'absolute', top: 24, left: 0, right: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 28, fontWeight: 900, fontVariantNumeric: 'tabular-nums',
-        color: isNegative ? 'var(--text-muted)' : BLOCK.text,
+        padding: '10px 12px 0',
         pointerEvents: 'none',
       }}>
-        {isNegative ? '' : '+'}{displayValue}
+        <BracketDisplay value={prefixedDisplay} label={label} color={color} size="md" bipolar={true} />
       </div>
 
-      {/* Bipolar bar — horizontal, extends from center */}
-      <div style={{
-        position: 'absolute', bottom: 16, left: 12, right: 12, height: 12,
-        borderRadius: 6,
-        backgroundColor: 'rgba(255,255,255,0.04)',
-        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.4)',
-      }}>
-        {/* Center line */}
-        <div style={{
-          position: 'absolute', left: `${centerPct}%`, top: -2, bottom: -2, width: 1,
-          backgroundColor: 'rgba(255,255,255,0.2)',
-        }} />
-
-        {/* Fill from center to value */}
-        <div style={{
-          position: 'absolute',
-          top: 1, bottom: 1,
-          borderRadius: 4,
-          backgroundColor: color,
-          opacity: 0.7,
-          left: barLeft,
-          width: barWidth,
-        }} />
+      {/* ScanMeter — bottom, bipolar mode */}
+      <div style={{ pointerEvents: 'none' }}>
+        <ScanMeter value={normalized} color={color} height={6} bipolar={true} />
       </div>
 
       {contextMenuPos && paramId && (

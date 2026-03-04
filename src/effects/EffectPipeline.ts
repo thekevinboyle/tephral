@@ -92,6 +92,10 @@ export class EffectPipeline {
   private canvasWidth = 1
   private canvasHeight = 1
 
+  // Source video dimensions (for crossfader aspect ratio recalculation on resize)
+  private sourceVideoWidth = 0
+  private sourceVideoHeight = 0
+
 
   constructor(renderer: THREE.WebGLRenderer) {
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
@@ -328,10 +332,16 @@ export class EffectPipeline {
 
   // Set source video dimensions (for crossfader aspect ratio when different from main input)
   setSourceVideoSize(width: number, height: number) {
-    if (!this.crossfaderEffect) return
+    this.sourceVideoWidth = width
+    this.sourceVideoHeight = height
+    this.updateSourceQuadScale()
+  }
+
+  private updateSourceQuadScale() {
+    if (!this.crossfaderEffect || !this.sourceVideoWidth || !this.sourceVideoHeight) return
 
     const canvasAspect = this.canvasWidth / this.canvasHeight
-    const sourceAspect = (width || 1) / (height || 1)
+    const sourceAspect = this.sourceVideoWidth / this.sourceVideoHeight
 
     let scaleX = 1
     let scaleY = 1
@@ -362,6 +372,7 @@ export class EffectPipeline {
     this.canvasHeight = height || 1
     this.composer.setSize(width, height)
     this.updateQuadScale()
+    this.updateSourceQuadScale()
   }
 
   private updateQuadScale() {

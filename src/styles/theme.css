@@ -1,15 +1,15 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   SEG_F4ULT DESIGN TOKENS
-   Monochrome + Cyan
+   SEG_F4ULT — KOJIMA HUD DESIGN TOKENS
+   Monochrome military-aerospace aesthetic
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Backgrounds — 2 tones: dark base (#0D) + panel surface (#1A) */
+  /* Backgrounds — pure black, zero warmth */
   --bg-void: #000000;
-  --bg-primary: #0D0D0D;
-  --bg-surface: #1A1A1A;
-  --bg-elevated: #1A1A1A;
-  --bg-hover: #262626;
+  --bg-primary: #000000;
+  --bg-surface: #0A0A0A;
+  --bg-elevated: #0A0A0A;
+  --bg-hover: #151515;
 
   /* Layout grid */
   --col-left: 320px;
@@ -34,86 +34,86 @@
   --space-12: 48px;
 
   /* Component spacing */
-  --panel-padding: var(--space-3);       /* 12px - standard panel padding */
-  --panel-padding-sm: var(--space-2);    /* 8px - compact panel padding */
-  --card-padding: var(--space-2);        /* 8px - card internal padding */
-  --card-padding-sm: var(--space-1);     /* 4px - compact card padding */
+  --panel-padding: var(--space-3);
+  --panel-padding-sm: var(--space-2);
+  --card-padding: var(--space-2);
+  --card-padding-sm: var(--space-1);
   --sidebar-width: 36px;
   --header-height: 32px;
   --control-height: 24px;
 
   /* Element gaps */
-  --gap-xs: var(--space-1);              /* 4px - tight elements */
-  --gap-sm: var(--space-2);              /* 8px - related elements */
-  --gap-md: var(--space-3);              /* 12px - grouped sections */
-  --gap-lg: var(--space-4);              /* 16px - separate sections */
+  --gap-xs: var(--space-1);
+  --gap-sm: var(--space-2);
+  --gap-md: var(--space-3);
+  --gap-lg: var(--space-4);
 
-  /* Dot matrix grid - visible dots */
-  --grid-dot: #252525;
-  --grid-size: 16px;
+  /* Line grid — replaces dot matrix */
+  --grid-dot: #1A1A1A;
+  --grid-size: 20px;
   --dot-size: 1px;
 
-  /* Borders — bright, high contrast */
-  --border: #4A4A4A;
-  --border-emphasis: #5A5A5A;
-  --border-light: #5A5A5A;
+  /* Borders — hard, visible */
+  --border: #4a4a4a;
+  --border-emphasis: #666666;
+  --border-light: #3a3a3a;
 
-  /* Text — high contrast */
-  --text-primary: #F5F0EB;
-  --text-secondary: #D5D0CB;
-  --text-muted: #9A948E;
-  --text-ghost: #5A5450;
+  /* Text — pure white, no warmth */
+  --text-primary: #FFFFFF;
+  --text-secondary: #BBBBBB;
+  --text-muted: #777777;
+  --text-ghost: #444444;
 
-  /* Accent — purple */
-  --accent: #7B68AE;
-  --accent-dim: #5F4F8B;
-  --accent-hover: #9580C4;
-  --accent-glow: rgba(123, 104, 174, 0.25);
-  --accent-subtle: rgba(123, 104, 174, 0.08);
+  /* Accent — white base (effect colors provide the only color) */
+  --accent: #FFFFFF;
+  --accent-dim: #888888;
+  --accent-hover: #FFFFFF;
+  --accent-glow: rgba(255, 255, 255, 0.15);
+  --accent-subtle: rgba(255, 255, 255, 0.04);
 
-  /* Accent aliases */
-  --accent-lime: var(--accent);
-  --accent-lime-dim: var(--accent-dim);
-  --accent-lime-hover: var(--accent-hover);
-  --accent-lime-glow: var(--accent-glow);
-  --accent-lime-subtle: var(--accent-subtle);
+  /* Accent aliases — all collapse to white */
+  --accent-lime: #FFFFFF;
+  --accent-lime-dim: #888888;
+  --accent-lime-hover: #FFFFFF;
+  --accent-lime-glow: rgba(255, 255, 255, 0.15);
+  --accent-lime-subtle: rgba(255, 255, 255, 0.04);
 
-  --accent-purple: var(--accent);
-  --accent-purple-dim: var(--accent-dim);
-  --accent-purple-hover: var(--accent-hover);
-  --accent-purple-glow: var(--accent-glow);
-  --accent-purple-subtle: var(--accent-subtle);
+  --accent-purple: #FFFFFF;
+  --accent-purple-dim: #888888;
+  --accent-purple-hover: #FFFFFF;
+  --accent-purple-glow: rgba(255, 255, 255, 0.15);
+  --accent-purple-subtle: rgba(255, 255, 255, 0.04);
 
-  --seq-accent: var(--accent);
-  --seq-accent-dim: var(--accent-dim);
-  --seq-accent-glow: var(--accent-glow);
+  --seq-accent: #FFFFFF;
+  --seq-accent-dim: #888888;
+  --seq-accent-glow: rgba(255, 255, 255, 0.15);
 
-  /* Shadows */
-  --shadow-panel: 0 1px 3px rgba(0,0,0,0.4), 0 0 1px rgba(0,0,0,0.3);
-  --shadow-panel-lg: 0 4px 12px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4);
-  --shadow-button: 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
-  --shadow-button-hover: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
-  --shadow-knob: 0 2px 6px rgba(0,0,0,0.5), 0 0 1px rgba(0,0,0,0.3);
-  --shadow-knob-hover: 0 3px 8px rgba(0,0,0,0.6), 0 0 2px rgba(0,0,0,0.4);
-  --shadow-inset: inset 0 1px 3px rgba(0,0,0,0.4);
+  /* Shadows — REMOVED */
+  --shadow-panel: none;
+  --shadow-panel-lg: none;
+  --shadow-button: none;
+  --shadow-button-hover: none;
+  --shadow-knob: none;
+  --shadow-knob-hover: none;
+  --shadow-inset: none;
 
-  /* Knob surface */
-  --knob-body: #1E1E1E;
-  --knob-body-highlight: #2A2A2A;
-  --knob-rim: #151515;
-  --knob-rim-highlight: #303030;
+  /* Knob surface — flat black */
+  --knob-body: #0A0A0A;
+  --knob-body-highlight: #0A0A0A;
+  --knob-rim: #1A1A1A;
+  --knob-rim-highlight: #1A1A1A;
 
-  /* Surface/border highlights */
-  --border-top-highlight: 1px solid rgba(255,255,255,0.04);
-  --surface-highlight: rgba(255,255,255,0.03);
+  /* Surface highlights — removed */
+  --border-top-highlight: none;
+  --surface-highlight: transparent;
 
   /* Transitions */
   --transition-fast: 100ms ease;
   --transition-normal: 150ms ease;
   --transition-slow: 250ms ease;
 
-  /* Typography - slightly larger for readability */
-  --font-sans: 'ISO', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Typography — monospace everywhere */
+  --font-sans: 'JetBrains Mono', 'SF Mono', monospace;
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
   --text-micro: 10px;
   --text-tiny: 11px;
@@ -124,7 +124,7 @@
   --leading-tight: 1.2;
   --leading-normal: 1.4;
   --tracking-tight: -0.01em;
-  --tracking-wide: 0.08em;
+  --tracking-wide: 0.12em;
 }
 
 /* Base styles */
@@ -137,30 +137,30 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DOT MATRIX GRID
+   LINE GRID — replaces dot matrix
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .grid-substrate {
   background-color: var(--bg-primary);
-  background-image: radial-gradient(
-    circle,
-    var(--grid-dot) var(--dot-size),
-    transparent var(--dot-size)
-  );
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
   background-size: var(--grid-size) var(--grid-size);
   background-position: center center;
+  animation: none;
 }
 
 .grid-dense {
-  --grid-size: 8px;
+  --grid-size: 10px;
 }
 
 .grid-none {
   background-image: none;
+  animation: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DATA READOUT - Machine Language Aesthetic
+   DATA READOUT — Machine Language Aesthetic
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .data-row {
@@ -188,7 +188,7 @@ body {
 }
 
 .data-sep-bar::after {
-  content: '|';
+  content: '│';
   margin: 0 8px;
   color: var(--text-ghost);
 }
@@ -210,15 +210,15 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .accent-glow {
-  box-shadow: 0 0 8px var(--accent-glow);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
 }
 
 .accent-active {
-  border-color: var(--accent);
-  background: var(--accent-subtle);
+  border-color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
 }
 
-/* Recording pulse animation */
+/* Recording pulse */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -230,44 +230,53 @@ body {
 
 /* P-lock waiting flash */
 @keyframes plock-flash {
-  0%, 100% { border-color: #FF4060; box-shadow: 0 0 8px #FF406050; }
-  50% { border-color: #FF406040; box-shadow: 0 0 2px #FF406020; }
+  0%, 100% { border-color: #FF4060; box-shadow: 0 0 4px #FF406030; }
+  50% { border-color: #FF406040; box-shadow: none; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PANEL GRADIENTS - Subtle vertical fades for depth
+   PANEL TREATMENTS — flat, no gradients
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .panel-gradient {
-  background: linear-gradient(
-    to bottom,
-    var(--bg-surface) 0%,
-    #141414 100%
-  );
+  background: var(--bg-surface);
 }
 
 .panel-gradient-up {
-  background: linear-gradient(
-    to top,
-    var(--bg-surface) 0%,
-    #141414 100%
-  );
+  background: var(--bg-surface);
 }
 
 .panel-gradient-subtle {
-  background: linear-gradient(
-    to bottom,
-    var(--bg-surface) 0%,
-    #171717 100%
-  );
+  background: var(--bg-surface);
 }
 
 .panel-gradient-accent {
-  background: linear-gradient(
-    to bottom,
-    var(--bg-surface) 0%,
-    rgba(112, 112, 112, 0.02) 100%
-  );
+  background: var(--bg-surface);
+}
+
+.panel-raised {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+
+.panel-inset {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+}
+
+.panel-header {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-footer {
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border);
+}
+
+/* Global button press feedback */
+button:active:not(:disabled) {
+  transform: translateY(0.5px);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -299,95 +308,9 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LIGHT THEME
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-[data-theme="light"] {
-  /* Backgrounds — 2 tones */
-  --bg-void: #ffffff;
-  --bg-primary: #f0f0f0;
-  --bg-surface: #e0e0e0;
-  --bg-elevated: #e0e0e0;
-  --bg-hover: #d0d0d0;
-
-  /* Dot matrix grid */
-  --grid-dot: #d0d0d0;
-
-  /* Borders — high contrast */
-  --border: #aaaaaa;
-  --border-emphasis: #999999;
-  --border-light: #999999;
-
-  /* Text — dark for contrast */
-  --text-primary: #1a1a1a;
-  --text-secondary: #3a3a3a;
-  --text-muted: #666666;
-  --text-ghost: #999999;
-
-  /* Accent — purple */
-  --accent: #6B5B95;
-  --accent-dim: #524780;
-  --accent-hover: #8674B0;
-  --accent-glow: rgba(107, 91, 149, 0.2);
-  --accent-subtle: rgba(107, 91, 149, 0.08);
-
-  /* Aliases */
-  --accent-lime: var(--accent);
-  --accent-lime-dim: var(--accent-dim);
-  --accent-lime-hover: var(--accent-hover);
-  --accent-lime-glow: var(--accent-glow);
-  --accent-lime-subtle: var(--accent-subtle);
-
-  --accent-purple: var(--accent);
-  --accent-purple-dim: var(--accent-dim);
-  --accent-purple-hover: var(--accent-hover);
-  --accent-purple-glow: var(--accent-glow);
-  --accent-purple-subtle: var(--accent-subtle);
-
-  --seq-accent: var(--accent);
-  --seq-accent-dim: var(--accent-dim);
-  --seq-accent-glow: var(--accent-glow);
-}
-
-/* Light theme panel gradients */
-[data-theme="light"] .panel-gradient {
-  background: linear-gradient(
-    to bottom,
-    var(--bg-surface) 0%,
-    #d8d8d8 100%
-  );
-}
-
-[data-theme="light"] .panel-gradient-up {
-  background: linear-gradient(
-    to top,
-    var(--bg-surface) 0%,
-    #d8d8d8 100%
-  );
-}
-
-[data-theme="light"] .panel-gradient-subtle {
-  background: linear-gradient(
-    to bottom,
-    var(--bg-surface) 0%,
-    #dcdcdc 100%
-  );
-}
-
-[data-theme="light"] .panel-gradient-accent {
-  background: linear-gradient(
-    to bottom,
-    var(--bg-surface) 0%,
-    rgba(96, 96, 96, 0.05) 100%
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
    SPACING UTILITIES
-   Standard spacing classes using design tokens
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Panel padding - use for main content areas */
 .panel-pad {
   padding: var(--panel-padding);
 }
@@ -402,12 +325,10 @@ body {
   padding-bottom: var(--panel-padding);
 }
 
-/* Compact panel padding */
 .panel-pad-sm {
   padding: var(--panel-padding-sm);
 }
 
-/* Header/control row - consistent height and padding */
 .control-row {
   height: var(--header-height);
   padding-left: var(--panel-padding);
@@ -417,77 +338,63 @@ body {
   gap: var(--gap-sm);
 }
 
-/* Card padding */
 .card-pad {
   padding: var(--card-padding);
 }
 
-/* Sidebar alignment - left padding to align with sidebar */
 .sidebar-align {
   padding-left: var(--sidebar-width);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PREMIUM PANEL TREATMENTS
+   HUD ANIMATIONS — Kojima military-aerospace aesthetic
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.panel-raised {
-  background: linear-gradient(
-    to bottom,
-    #1E1E1E 0%,
-    #141414 100%
-  );
-  box-shadow: var(--shadow-panel);
-  border-top: var(--border-top-highlight);
+@keyframes hud-scan {
+  0% { transform: translateX(-100%); opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { transform: translateX(200%); opacity: 0.6; }
 }
 
-.panel-inset {
-  background: linear-gradient(
-    to bottom,
-    #111111 0%,
-    #141414 100%
-  );
-  box-shadow: var(--shadow-inset);
+@keyframes hud-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
-.panel-header {
-  background: linear-gradient(
-    to right,
-    var(--bg-elevated),
-    var(--bg-surface),
-    var(--bg-elevated)
-  );
-  box-shadow: inset 0 1px 0 var(--surface-highlight);
+@keyframes hud-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
 }
 
-.panel-footer {
-  background: linear-gradient(
-    to right,
-    var(--bg-elevated),
-    var(--bg-surface),
-    var(--bg-elevated)
-  );
-  box-shadow: inset 0 1px 0 var(--surface-highlight);
+@keyframes hud-reticle-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Global button press feedback */
-button:active:not(:disabled) {
-  transform: translateY(0.5px);
+@keyframes hud-grid-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
-/* Light theme premium overrides */
-[data-theme="light"] .panel-raised {
-  background: linear-gradient(
-    to bottom,
-    #e8e8e8 0%,
-    #d4d4d4 100%
-  );
+@keyframes hud-corner-tick {
+  0% { opacity: 1; }
+  20% { opacity: 0.2; }
+  100% { opacity: 1; }
 }
 
-[data-theme="light"] .panel-inset {
-  background: linear-gradient(
-    to bottom,
-    #d0d0d0 0%,
-    #d8d8d8 100%
-  );
+@keyframes hud-glyph-morph {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(0.85); }
+  50% { transform: rotate(180deg) scale(1); }
+  75% { transform: rotate(270deg) scale(0.85); }
+}
+
+@keyframes hud-scan-line {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+
+@keyframes hud-typewriter-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }

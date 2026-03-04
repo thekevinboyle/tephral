@@ -1,17 +1,25 @@
 import { useState } from 'react'
 import { useSpring, useTransition, animated } from '@react-spring/web'
 import { useEffectDisable } from '../../../hooks/useEffectDisable'
-import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS, DESTRUCTION_EFFECTS } from '../../../config/effects'
-import { BLOCK, SPRING } from './blockTheme'
+import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS, DESTRUCTION_EFFECTS, PAGE_NAMES } from '../../../config/effects'
+import { SPRING } from './blockTheme'
+import { HudGlyph, type HudGlyphType } from '../../ui/HudGlyph'
 
 const ALL_EFFECTS = [...EFFECTS, ...STRAND_EFFECTS, ...MOTION_EFFECTS, ...DESTRUCTION_EFFECTS]
 
 function getCategory(effectId: string): string {
-  if (EFFECTS.find(e => e.id === effectId)) return 'GLITCH'
-  if (STRAND_EFFECTS.find(e => e.id === effectId)) return 'STRAND'
-  if (MOTION_EFFECTS.find(e => e.id === effectId)) return 'MOTION'
-  if (DESTRUCTION_EFFECTS.find(e => e.id === effectId)) return 'DESTROY'
+  const e = ALL_EFFECTS.find(ef => ef.id === effectId)
+  if (e) return PAGE_NAMES[e.page] ?? ''
   return ''
+}
+
+const CATEGORY_GLYPH: Record<string, HudGlyphType> = {
+  ACID: 'brackets',
+  VISION: 'eye',
+  GLITCH: 'crosshair',
+  STRAND: 'diamond',
+  MOTION: 'asterisk',
+  DESTROY: 'hexagon',
 }
 
 interface EffectHeaderBlockProps {
@@ -28,10 +36,12 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
   const { disableEffect } = useEffectDisable()
   const [closeHovered, setCloseHovered] = useState(false)
 
-  // Bypass state spring — opacity + letter spacing
+  const glyphType = CATEGORY_GLYPH[category] ?? 'crosshair'
+
+  // Bypass state spring
   const bypassSpring = useSpring({
     opacity: bypassed ? 0.3 : 1,
-    barHeight: bypassed ? 0 : 4,
+    barHeight: bypassed ? 0 : 1,
     config: SPRING.smooth,
   })
 
@@ -40,12 +50,6 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
     scale: 1,
     config: SPRING.snappy,
   }))
-
-  // Close button rotation spring
-  const closeSpring = useSpring({
-    rotate: closeHovered ? 90 : 0,
-    config: SPRING.snappy,
-  })
 
   // Name transition
   const nameTransitions = useTransition(label, {
@@ -71,57 +75,72 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
       style={{
         position: 'relative',
         height: 120,
-        borderRadius: BLOCK.radius,
         overflow: 'hidden',
         cursor: onBypassToggle ? 'pointer' : 'default',
-        background: `linear-gradient(135deg, ${color}15 0%, rgba(255,255,255,0.03) 60%)`,
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: BLOCK.shadow,
+        background: '#000000',
+        border: '1px solid var(--border)',
         opacity: bypassSpring.opacity,
         scale: pressSpring.scale,
       }}
     >
-      {/* Category */}
+      {/* Category bracket label */}
       <div
         style={{
           position: 'absolute',
-          top: 14,
-          left: 16,
-          fontSize: 10,
-          fontWeight: 600,
+          top: 10,
+          left: 12,
+          fontSize: 9,
+          fontWeight: 700,
           textTransform: 'uppercase',
-          letterSpacing: '0.12em',
-          color: `${color}80`,
+          letterSpacing: '0.14em',
+          color: 'var(--text-ghost)',
+          fontFamily: 'var(--font-mono)',
         }}
       >
-        {category}
+        [ {category} ]
       </div>
 
       {/* Effect name */}
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {nameTransitions((style, item) => (
-          <animated.div
-            style={{
-              position: 'absolute',
-              fontSize: 48,
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: bypassed ? '0.12em' : '0.04em',
-              color: bypassed ? 'var(--text-ghost)' : 'var(--text-primary)',
-              textDecoration: bypassed ? 'line-through' : 'none',
-              textDecorationColor: 'var(--text-ghost)',
-              whiteSpace: 'nowrap',
-              transition: 'letter-spacing 0.3s ease-out',
-              ...style,
-            }}
-          >
-            {item}
-          </animated.div>
-        ))}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 40px', overflow: 'hidden' }}>
+        {nameTransitions((style, item) => {
+          const nameLen = item.length
+          const fontSize = nameLen > 10 ? 22 : nameLen > 7 ? 28 : 36
+          return (
+            <animated.div
+              style={{
+                position: 'absolute',
+                fontSize,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: bypassed ? 'var(--text-ghost)' : '#FFFFFF',
+                textDecoration: bypassed ? 'line-through' : 'none',
+                textDecorationColor: 'var(--text-ghost)',
+                whiteSpace: 'nowrap',
+                fontFamily: 'var(--font-mono)',
+                animation: bypassed ? 'hud-pulse 2s ease-in-out infinite' : undefined,
+                ...style,
+              }}
+            >
+              {item}
+            </animated.div>
+          )
+        })}
       </div>
 
-      {/* Close button — top right, visible on hover */}
-      <animated.button
+      {/* Category glyph — top right */}
+      <div style={{
+        position: 'absolute',
+        top: 8,
+        right: 44,
+        opacity: 0.15,
+        pointerEvents: 'none',
+      }}>
+        <HudGlyph glyph={glyphType} size={40} color={color} animate="spin" />
+      </div>
+
+      {/* Close button */}
+      <button
         onClick={(e) => {
           e.stopPropagation()
           disableEffect(effectId)
@@ -131,27 +150,26 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
         className="opacity-0 hover:opacity-100 transition-opacity"
         style={{
           position: 'absolute',
-          top: 10,
-          right: 10,
+          top: 8,
+          right: 8,
           width: 28,
           height: 28,
-          borderRadius: 4,
-          border: 'none',
-          backgroundColor: 'rgba(255,255,255,0.06)',
-          color: 'var(--text-muted)',
+          border: closeHovered ? '1px solid #FFFFFF' : '1px solid var(--border)',
+          backgroundColor: closeHovered ? '#FFFFFF' : 'transparent',
+          color: closeHovered ? '#000000' : 'var(--text-muted)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          rotate: closeSpring.rotate.to(r => `${r}deg`),
+          fontFamily: 'var(--font-mono)',
+          fontSize: 12,
+          fontWeight: 700,
         }}
       >
-        <svg width="14" height="14" viewBox="0 0 12 12">
-          <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </animated.button>
+        X
+      </button>
 
-      {/* Color accent bar at bottom — spring-animated height */}
+      {/* Color accent bar at bottom — 1px line */}
       <animated.div
         style={{
           position: 'absolute',
@@ -160,7 +178,7 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
           right: 0,
           height: bypassSpring.barHeight,
           backgroundColor: color,
-          opacity: 0.6,
+          opacity: 0.3,
         }}
       />
     </animated.div>

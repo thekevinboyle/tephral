@@ -1,10 +1,15 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useEffectSequencerStore, type TimeScale } from '../../stores/effectSequencerStore'
+import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 import { Knob } from '../performance/Knob'
 
 const LED = '#88FFaa'
 const LED_DIM = '#88FFaa30'
 const LED_BG = '#0a0f0a'
+
+const TOOL_FG = '#BBBBBB'
+const TOOL_DIM = '#BBBBBB30'
+const TOOL_BG = '#0a0a0a'
 
 const TIME_SCALE_VALUES: TimeScale[] = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4]
 const TIME_SCALE_LABELS: Record<number, string> = {
@@ -23,6 +28,15 @@ const PAGES: { id: ParamPage; label: string }[] = [
   { id: 'retrig', label: 'RETRIG' },
 ]
 
+type ToolPage = 'random' | 'rnd-all' | 'rnd-locks' | 'clear'
+
+const TOOL_PAGES: { id: ToolPage; label: string }[] = [
+  { id: 'random', label: 'RANDOM' },
+  { id: 'rnd-all', label: 'RND ALL' },
+  { id: 'rnd-locks', label: 'RND LOCKS' },
+  { id: 'clear', label: 'CLEAR' },
+]
+
 interface TrackParamPanelProps {
   effectId: string
 }
@@ -34,8 +48,16 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
   const applyEuclidean = useEffectSequencerStore((s) => s.applyEuclidean)
   const setStepRetrig = useEffectSequencerStore((s) => s.setStepRetrig)
   const selectedStep = useEffectSequencerStore((s) => s.selectedStep)
+  const randomizeTrack = useEffectSequencerStore((s) => s.randomizeTrack)
+  const randomizeAllTracks = useEffectSequencerStore((s) => s.randomizeAllTracks)
+  const randomizeLocks = useEffectSequencerStore((s) => s.randomizeLocks)
+  const setAutomationParam = useEffectSequencerStore((s) => s.setAutomationParam)
+  const clearTrack = useEffectSequencerStore((s) => s.clearTrack)
 
   const [page, setPage] = useState<ParamPage>('length')
+  const [toolPage, setToolPage] = useState<ToolPage>('random')
+  const [density, setDensity] = useState(40)
+  const [lastAction, setLastAction] = useState<string | null>(null)
 
   if (!track) return null
 
@@ -113,6 +135,68 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
   const stepsToShow = track.steps.slice(0, track.length)
   const isDisabled = 'disabled' in knob && knob.disabled
 
+  // Tool pages
+  const toolPageIdx = TOOL_PAGES.findIndex((p) => p.id === toolPage)
+  const prevToolPage = () => setToolPage(TOOL_PAGES[(toolPageIdx - 1 + TOOL_PAGES.length) % TOOL_PAGES.length].id)
+  const nextToolPage = () => setToolPage(TOOL_PAGES[(toolPageIdx + 1) % TOOL_PAGES.length].id)
+
+  const executeTool = useCallback(() => {
+    const d = density / 100
+    switch (toolPage) {
+      case 'random':
+        randomizeTrack(effectId, d)
+        setLastAction('DONE')
+        break
+      case 'rnd-all':
+        randomizeAllTracks(d)
+        setLastAction('DONE')
+        break
+      case 'rnd-locks': {
+        const entry = EFFECT_PARAM_REGISTRY[effectId]
+        if (!entry) return
+        const allParams = entry.getParams()
+        const params = allParams.map((p) => ({
+          id: p.id, min: p.min, max: p.max, step: p.step,
+        }))
+        randomizeLocks(effectId, params)
+        if (allParams.length > 0) {
+          const p = allParams[0]
+          setAutomationParam({
+            effectId,
+            paramId: p.id,
+            fullParamId: `${effectId}.${p.id}`,
+            label: p.label,
+            min: p.min,
+            max: p.max,
+            step: p.step,
+          })
+        }
+        setLastAction('DONE')
+        break
+      }
+      case 'clear':
+        clearTrack(effectId)
+        setLastAction('CLR')
+        break
+    }
+    setTimeout(() => setLastAction(null), 600)
+  }, [toolPage, density, effectId, randomizeTrack, randomizeAllTracks, randomizeLocks, clearTrack, setAutomationParam])
+
+  const getToolDisplayValue = () => {
+    if (lastAction) return lastAction
+    switch (toolPage) {
+      case 'random':
+      case 'rnd-all':
+        return `${density}%`
+      case 'rnd-locks':
+        return 'RND'
+      case 'clear':
+        return 'CLR'
+    }
+  }
+
+  const toolHasKnob = toolPage === 'random' || toolPage === 'rnd-all'
+
   return (
     <div
       onClick={(e) => e.stopPropagation()}
@@ -130,10 +214,10 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
       {/* LED Screen */}
       <div
         style={{
-          backgroundColor: LED_BG,
+          backgroundColor: TOOL_BG,
           borderRadius: 4,
-          border: '1px solid #1a2a1a',
-          boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.6), 0 0 8px rgba(136,255,170,0.03)',
+          border: '1px solid #1a1a1a',
+          boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.6)',
           padding: '8px 10px',
           display: 'flex',
           flexDirection: 'column',
@@ -146,20 +230,20 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
           <button
             onClick={prevPage}
             className="flex-shrink-0"
-            style={{ color: LED, fontSize: 11, width: 14, opacity: 0.7 }}
+            style={{ color: TOOL_FG, fontSize: 16, width: 20, opacity: 0.7 }}
           >
             ◂
           </button>
           <span
             className="flex-1 text-center text-[10px] tracking-[0.2em] font-bold"
-            style={{ color: LED, textShadow: `0 0 6px ${LED}60` }}
+            style={{ color: TOOL_FG }}
           >
             {PAGES[pageIdx].label}
           </span>
           <button
             onClick={nextPage}
             className="flex-shrink-0 text-right"
-            style={{ color: LED, fontSize: 11, width: 14, opacity: 0.7 }}
+            style={{ color: TOOL_FG, fontSize: 16, width: 20, opacity: 0.7 }}
           >
             ▸
           </button>
@@ -175,15 +259,14 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
                 width: 4,
                 height: 4,
                 borderRadius: '50%',
-                backgroundColor: i === pageIdx ? LED : LED_DIM,
-                boxShadow: i === pageIdx ? `0 0 4px ${LED}80` : 'none',
+                backgroundColor: i === pageIdx ? TOOL_FG : TOOL_DIM,
               }}
             />
           ))}
         </div>
 
         {/* Divider */}
-        <div style={{ height: 1, backgroundColor: LED_DIM }} />
+        <div style={{ height: 1, backgroundColor: TOOL_DIM }} />
 
         {/* Big value */}
         <div
@@ -191,8 +274,7 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
           style={{
             fontSize: 32,
             lineHeight: 1,
-            color: isDisabled ? LED_DIM : LED,
-            textShadow: isDisabled ? 'none' : `0 0 12px ${LED}50, 0 0 24px ${LED}20`,
+            color: isDisabled ? TOOL_DIM : TOOL_FG,
             padding: '4px 0',
           }}
         >
@@ -203,7 +285,7 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
         <div
           style={{
             height: 3,
-            backgroundColor: LED_DIM,
+            backgroundColor: TOOL_DIM,
             borderRadius: 1,
             overflow: 'hidden',
           }}
@@ -212,9 +294,8 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
             style={{
               height: '100%',
               width: `${((knob.value - knob.min) / (knob.max - knob.min || 1)) * 100}%`,
-              backgroundColor: LED,
+              backgroundColor: TOOL_FG,
               opacity: isDisabled ? 0.2 : 0.8,
-              boxShadow: `0 0 4px ${LED}40`,
               transition: 'width 0.04s',
             }}
           />
@@ -233,8 +314,7 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
               key={i}
               style={{
                 aspectRatio: '1',
-                backgroundColor: s.active ? LED : LED_DIM,
-                boxShadow: s.active ? `0 0 2px ${LED}40` : 'none',
+                backgroundColor: s.active ? TOOL_FG : TOOL_DIM,
               }}
             />
           ))}
@@ -253,8 +333,7 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
                 key={i + 16}
                 style={{
                   aspectRatio: '1',
-                  backgroundColor: s.active ? LED : LED_DIM,
-                  boxShadow: s.active ? `0 0 2px ${LED}40` : 'none',
+                  backgroundColor: s.active ? TOOL_FG : TOOL_DIM,
                 }}
               />
             ))}
@@ -265,7 +344,7 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
         {page === 'retrig' && stepIdx === null && (
           <div
             className="text-[8px] text-center tracking-wider"
-            style={{ color: LED_DIM }}
+            style={{ color: TOOL_DIM }}
           >
             SELECT STEP
           </div>
@@ -282,11 +361,141 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
           step={knob.step}
           size="md"
           showArc
-          color={LED}
+          color={TOOL_FG}
           onChange={knob.onChange}
           formatValue={() => ''}
         />
       </div>
+
+      {/* Spacer between sections */}
+      <div style={{ height: 32 }} />
+
+      {/* Tool LED Screen */}
+      <div
+        style={{
+          backgroundColor: TOOL_BG,
+          borderRadius: 4,
+          border: '1px solid #1a1a1a',
+          boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.6)',
+          padding: '8px 10px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          fontFamily: 'var(--font-mono, monospace)',
+        }}
+      >
+        {/* Tool page nav */}
+        <div className="flex items-center">
+          <button
+            onClick={prevToolPage}
+            className="flex-shrink-0"
+            style={{ color: TOOL_FG, fontSize: 16, width: 20, opacity: 0.7 }}
+          >
+            ◂
+          </button>
+          <span
+            className="flex-1 text-center text-[10px] tracking-[0.2em] font-bold"
+            style={{ color: TOOL_FG }}
+          >
+            {TOOL_PAGES[toolPageIdx].label}
+          </span>
+          <button
+            onClick={nextToolPage}
+            className="flex-shrink-0 text-right"
+            style={{ color: TOOL_FG, fontSize: 16, width: 20, opacity: 0.7 }}
+          >
+            ▸
+          </button>
+        </div>
+
+        {/* Tool page dots */}
+        <div className="flex justify-center gap-1">
+          {TOOL_PAGES.map((p, i) => (
+            <button
+              key={p.id}
+              onClick={() => setToolPage(p.id)}
+              style={{
+                width: 4,
+                height: 4,
+                borderRadius: '50%',
+                backgroundColor: i === toolPageIdx ? TOOL_FG : TOOL_DIM,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, backgroundColor: TOOL_DIM }} />
+
+        {/* Big value */}
+        <div
+          className="text-center font-black tabular-nums"
+          style={{
+            fontSize: 32,
+            lineHeight: 1,
+            color: TOOL_FG,
+            padding: '4px 0',
+          }}
+        >
+          {getToolDisplayValue()}
+        </div>
+
+        {/* Density bar (for random/rnd-all) */}
+        {toolHasKnob && (
+          <div
+            style={{
+              height: 3,
+              backgroundColor: TOOL_DIM,
+              borderRadius: 1,
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${density}%`,
+                backgroundColor: TOOL_FG,
+                opacity: 0.8,
+                transition: 'width 0.04s',
+              }}
+            />
+          </div>
+        )}
+
+        {/* Execute button */}
+        <button
+          onClick={executeTool}
+          className="text-[9px] font-bold tracking-[0.15em] uppercase"
+          style={{
+            color: TOOL_BG,
+            backgroundColor: TOOL_FG,
+            border: 'none',
+            borderRadius: 2,
+            padding: '4px 0',
+            cursor: 'pointer',
+          }}
+        >
+          {toolPage === 'clear' ? '⊘ CLEAR' : '▶ EXECUTE'}
+        </button>
+      </div>
+
+      {/* Tool knob (density) */}
+      {toolHasKnob && (
+        <div className="flex justify-center">
+          <Knob
+            label=""
+            value={density}
+            min={0}
+            max={100}
+            step={5}
+            size="md"
+            showArc
+            color={TOOL_FG}
+            onChange={(v) => setDensity(Math.round(v))}
+            formatValue={() => ''}
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import type { EffectStep } from '../../stores/effectSequencerStore'
 
 const PLOCK = '#FF4060'
-const PROB = '#22DD66'
+const PROB = '#CCDD00'
 
 interface EffectStepCellProps {
   stepIndex: number
@@ -68,7 +68,6 @@ export const EffectStepCell = memo(function EffectStepCell({
     if (e.button === 0 && (e.metaKey || e.ctrlKey)) {
       e.preventDefault()
       e.stopPropagation()
-      ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
       isProbDragging.current = true
       probDragStartY.current = e.clientY
 
@@ -84,6 +83,27 @@ export const EffectStepCell = memo(function EffectStepCell({
       if (!step.active) {
         onActivateStep(stepIndex)
       }
+
+      const onMove = (ev: PointerEvent) => {
+        const deltaY = probDragStartY.current - ev.clientY
+        const raw = probDragStartValue.current + deltaY * (1 / 80)
+        let newProb = Math.max(0, Math.min(1, raw))
+        if (newProb <= 0.1 || newProb >= 0.9) {
+          newProb = Math.round(newProb * 100) / 100
+        } else {
+          newProb = Math.round(newProb * 20) / 20
+        }
+        setProbTooltip({ percent: Math.round(newProb * 100), x: ev.clientX, y: ev.clientY })
+        onSetProbability(stepIndex, newProb)
+      }
+      const onUp = () => {
+        isProbDragging.current = false
+        setProbTooltip(null)
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+      }
+      window.addEventListener('pointermove', onMove)
+      window.addEventListener('pointerup', onUp)
       return
     }
 
@@ -91,7 +111,6 @@ export const EffectStepCell = memo(function EffectStepCell({
     if (e.button === 2 && automationParamId != null) {
       e.preventDefault()
       e.stopPropagation()
-      ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
       isRightDragging.current = true
       rightDragStartY.current = e.clientY
       const startVal = lockValue ?? (automationMin + automationMax) / 2
@@ -103,55 +122,29 @@ export const EffectStepCell = memo(function EffectStepCell({
       if (!step.active) {
         onActivateStep(stepIndex)
       }
-    }
-  }, [automationParamId, lockValue, automationMin, automationMax, step.active, step.probability, stepIndex, onActivateStep])
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    // Probability drag
-    if (isProbDragging.current) {
-      e.stopPropagation()
-      const deltaY = probDragStartY.current - e.clientY // up = increase
-      const sensitivity = 1 / 120 // 120px for full range
-      let newProb = probDragStartValue.current + deltaY * sensitivity
-      newProb = Math.max(0, Math.min(1, newProb))
-      // Snap to 5% increments
-      newProb = Math.round(newProb * 20) / 20
-      setProbTooltip({ percent: Math.round(newProb * 100), x: e.clientX, y: e.clientY })
-      onSetProbability(stepIndex, newProb)
-      return
+      const onMove = (ev: PointerEvent) => {
+        const deltaY = rightDragStartY.current - ev.clientY
+        const sensitivity = (automationMax - automationMin) / 150
+        let newValue = rightDragStartValue.current + deltaY * sensitivity
+        newValue = Math.max(automationMin, Math.min(automationMax, newValue))
+        if (automationStep) {
+          newValue = Math.round(newValue / automationStep) * automationStep
+        }
+        const p = Math.round(((newValue - automationMin) / (automationMax - automationMin || 1)) * 100)
+        setDragTooltip({ percent: p, x: ev.clientX, y: ev.clientY })
+        onSetLock(stepIndex, newValue)
+      }
+      const onUp = () => {
+        isRightDragging.current = false
+        setDragTooltip(null)
+        window.removeEventListener('pointermove', onMove)
+        window.removeEventListener('pointerup', onUp)
+      }
+      window.addEventListener('pointermove', onMove)
+      window.addEventListener('pointerup', onUp)
     }
-
-    // P-lock drag
-    if (!isRightDragging.current) return
-    e.stopPropagation()
-    const deltaY = rightDragStartY.current - e.clientY // up = increase
-    const sensitivity = (automationMax - automationMin) / 150
-    let newValue = rightDragStartValue.current + deltaY * sensitivity
-    newValue = Math.max(automationMin, Math.min(automationMax, newValue))
-    if (automationStep) {
-      newValue = Math.round(newValue / automationStep) * automationStep
-    }
-    const pct = Math.round(((newValue - automationMin) / (automationMax - automationMin || 1)) * 100)
-    setDragTooltip({ percent: pct, x: e.clientX, y: e.clientY })
-    onSetLock(stepIndex, newValue)
-  }, [stepIndex, automationMin, automationMax, automationStep, onSetLock, onSetProbability])
-
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    if (isProbDragging.current) {
-      isProbDragging.current = false
-      setProbTooltip(null)
-      try {
-        ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
-      } catch {}
-    }
-    if (isRightDragging.current) {
-      isRightDragging.current = false
-      setDragTooltip(null)
-      try {
-        ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
-      } catch {}
-    }
-  }, [])
+  }, [automationParamId, lockValue, automationMin, automationMax, automationStep, step.active, step.probability, stepIndex, onActivateStep, onSetProbability, onSetLock])
 
   // Lock value bar height (0-1 normalized)
   const lockNormalized = lockValue != null
@@ -175,21 +168,19 @@ export const EffectStepCell = memo(function EffectStepCell({
         onContextMenu(e)
       }}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
       onClick={(e) => e.stopPropagation()}
       className="relative cursor-pointer select-none touch-none flex flex-col justify-end"
       style={{
         height: '100%',
         minHeight: 56,
-        backgroundColor: isPlayheadHit
-          ? '#FFFFFF'
-          : '#000000',
-        border: step.active && hasProbability
-          ? `1px solid ${PROB}80`
-          : step.active && hasLocks
-            ? `1px solid ${PLOCK}`
-            : '1px solid var(--border)',
+        backgroundColor: '#000000',
+        border: isPlayheadHit
+          ? '1px solid #FFFFFF'
+          : step.active && hasProbability
+            ? `1px solid ${PROB}80`
+            : step.active && hasLocks
+              ? `1px solid ${PLOCK}`
+              : '1px solid var(--border)',
         animation: step.active && hasLocks && !hasProbability
           ? 'hud-blink 0.5s step-end infinite'
           : undefined,
@@ -203,7 +194,7 @@ export const EffectStepCell = memo(function EffectStepCell({
           className="absolute left-0 right-0 bottom-0"
           style={{
             height: `${lockBarHeight * 100}%`,
-            backgroundColor: isPlayheadHit ? `${PLOCK}30` : `${PLOCK}35`,
+            backgroundColor: `${PLOCK}35`,
             transition: 'height 0.04s',
           }}
         />
@@ -215,7 +206,7 @@ export const EffectStepCell = memo(function EffectStepCell({
           className="absolute left-0 right-0 bottom-0"
           style={{
             height: `${step.probability * 100}%`,
-            backgroundColor: isPlayheadHit ? `${PROB}30` : `${PROB}45`,
+            backgroundColor: `${PROB}45`,
             transition: 'height 0.04s',
           }}
         />
@@ -228,7 +219,7 @@ export const EffectStepCell = memo(function EffectStepCell({
           style={{
             top: 2,
             left: 3,
-            color: isPlayheadHit ? '#000' : PROB,
+            color: PROB,
           }}
         >
           {Math.round(step.probability * 100)}%
@@ -242,7 +233,7 @@ export const EffectStepCell = memo(function EffectStepCell({
           style={{
             top: hasProbability ? 12 : 2,
             left: 3,
-            color: isPlayheadHit ? '#000' : PLOCK,
+            color: PLOCK,
           }}
         >
           {Math.round(lockBarHeight * 100)}%
@@ -256,7 +247,7 @@ export const EffectStepCell = memo(function EffectStepCell({
           style={{
             top: 2,
             right: 2,
-            color: isPlayheadHit ? '#000' : '#9580FF',
+            color: '#9580FF',
             opacity: 0.8,
           }}
         >
@@ -270,12 +261,10 @@ export const EffectStepCell = memo(function EffectStepCell({
           style={{
             height: 3,
             margin: '0 2px 2px',
-            backgroundColor: isPlayheadHit
-              ? '#000'
-              : hasProbability
-                ? PROB
-                : hasLocks ? PLOCK : '#FFFFFF',
-            opacity: isPlayheadHit ? 1 : 0.7,
+            backgroundColor: hasProbability
+              ? PROB
+              : hasLocks ? PLOCK : '#FFFFFF',
+            opacity: 0.7,
           }}
         />
       )}

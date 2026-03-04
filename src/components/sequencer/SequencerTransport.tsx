@@ -159,17 +159,19 @@ interface SequencerTransportProps {
 export function SequencerTransport({
   isPlaying,
   bpm,
-  resolution,
+  resolution: _resolution,
   swing,
   currentStep,
   stepPage,
   onPlay,
   onStop,
   onBpmChange,
-  onResolutionChange,
+  onResolutionChange: _onResolutionChange,
   onSwingChange,
   onPageChange,
 }: SequencerTransportProps) {
+  void _resolution
+  void _onResolutionChange
   const setStatusText = useUIStore((s) => s.setStatusText)
   const clockSyncEnabled = useMIDIStore((s) => s.clockSyncEnabled)
   const clockBpm = useMIDIStore((s) => s.clockBpm)

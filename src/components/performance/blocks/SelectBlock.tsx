@@ -57,18 +57,18 @@ export function SelectBlock({ label, value, options, onChange }: SelectBlockProp
     <animated.div
       style={{
         position: 'relative',
-        height: 80,
+        height: 48,
         width: '100%',
         borderRadius: 0,
         overflow: 'hidden',
         border: '1px solid var(--border)',
-        backgroundColor: '#000000',
+        backgroundColor: BLOCK.bg,
         boxShadow: 'none',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
         justifyContent: 'space-between',
-        padding: '10px 0 10px',
+        padding: '4px 0',
         scale: clickSpring.scale,
       }}
     >
@@ -121,7 +121,7 @@ export function SelectBlock({ label, value, options, onChange }: SelectBlockProp
           style={{
             position: 'relative',
             flex: 1,
-            height: 28,
+            height: 20,
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
@@ -136,7 +136,7 @@ export function SelectBlock({ label, value, options, onChange }: SelectBlockProp
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 13,
+                fontSize: 10,
                 fontFamily: 'var(--font-mono)',
                 fontWeight: 700,
                 textTransform: 'uppercase',

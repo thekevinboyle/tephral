@@ -3,6 +3,7 @@ import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
 import { BracketDisplay } from '../../ui/BracketDisplay'
 import { ScanMeter } from '../../ui/ScanMeter'
+import { BLOCK } from './blockTheme'
 
 interface BipolarBlockProps {
   label: string
@@ -24,7 +25,7 @@ export function BipolarBlock({ label, value, min, max, step, onChange, paramId, 
   const containerRef = useRef<HTMLDivElement>(null)
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
   const draggingRef = useRef(false)
-  const containerHeightRef = useRef(120)
+  const containerHeightRef = useRef(72)
   const lastAppliedRef = useRef(value)
 
   // Stable refs to avoid stale closures in gesture handler
@@ -82,13 +83,13 @@ export function BipolarBlock({ label, value, min, max, step, onChange, paramId, 
       } : undefined}
       style={{
         position: 'relative',
-        height: 120,
+        height: 72,
         borderRadius: 0,
         overflow: 'hidden',
         cursor: 'ns-resize',
         touchAction: 'none',
         userSelect: 'none',
-        backgroundColor: '#000000',
+        backgroundColor: BLOCK.bg,
         border: isAutomationTarget ? '1px solid #FF3355' : '1px solid var(--border)',
         animation: isAutomationTarget ? 'hud-blink 1s step-end infinite' : undefined,
         display: 'flex',
@@ -98,10 +99,10 @@ export function BipolarBlock({ label, value, min, max, step, onChange, paramId, 
     >
       {/* BracketDisplay — top section with bipolar value */}
       <div style={{
-        padding: '10px 12px 0',
+        padding: '6px 8px 0',
         pointerEvents: 'none',
       }}>
-        <BracketDisplay value={prefixedDisplay} label={label} color={color} size="md" bipolar={true} />
+        <BracketDisplay value={prefixedDisplay} label={label} color={color} size="sm" bipolar={true} />
       </div>
 
       {/* ScanMeter — bottom, bipolar mode */}

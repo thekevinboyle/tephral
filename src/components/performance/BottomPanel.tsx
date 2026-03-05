@@ -11,7 +11,8 @@ export function BottomPanel() {
       display: 'flex',
       flexDirection: 'column',
       border: '1px solid var(--border)',
-      borderRadius: '2px',
+      borderRadius: 'var(--panel-radius)',
+      boxShadow: 'var(--shadow-panel)',
       overflow: 'hidden',
     }}>
       <BottomPanelTabBar />

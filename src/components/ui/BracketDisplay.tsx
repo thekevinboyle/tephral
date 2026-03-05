@@ -11,9 +11,9 @@ interface BracketDisplayProps {
 }
 
 const SIZES = {
-  sm: { valueFontSize: 13, labelFontSize: 8, padding: '3px 6px', meterHeight: 3 },
-  md: { valueFontSize: 18, labelFontSize: 9, padding: '4px 8px', meterHeight: 4 },
-  lg: { valueFontSize: 32, labelFontSize: 10, padding: '6px 10px', meterHeight: 5 },
+  sm: { valueFontSize: 11, labelFontSize: 7, padding: '2px 4px', meterHeight: 2 },
+  md: { valueFontSize: 12, labelFontSize: 8, padding: '2px 5px', meterHeight: 3 },
+  lg: { valueFontSize: 16, labelFontSize: 9, padding: '3px 6px', meterHeight: 4 },
 }
 
 export function BracketDisplay({
@@ -38,7 +38,7 @@ export function BracketDisplay({
           justifyContent: 'center',
           padding: s.padding,
           border: '1px solid var(--border)',
-          minWidth: size === 'sm' ? 36 : size === 'md' ? 52 : 80,
+          minWidth: size === 'sm' ? 28 : size === 'md' ? 36 : 52,
           backgroundColor: 'var(--bg-primary)',
         }}>
           <span style={{

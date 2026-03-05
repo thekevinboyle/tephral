@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useSpring, useTransition, animated } from '@react-spring/web'
 import { useEffectDisable } from '../../../hooks/useEffectDisable'
 import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS, DESTRUCTION_EFFECTS, PAGE_NAMES } from '../../../config/effects'
-import { SPRING } from './blockTheme'
+import { BLOCK, SPRING } from './blockTheme'
 import { HudGlyph, type HudGlyphType } from '../../ui/HudGlyph'
 
 const ALL_EFFECTS = [...EFFECTS, ...STRAND_EFFECTS, ...MOTION_EFFECTS, ...DESTRUCTION_EFFECTS]
@@ -74,69 +74,57 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
       onClick={handleClick}
       style={{
         position: 'relative',
-        height: 120,
+        height: 48,
         overflow: 'hidden',
         cursor: onBypassToggle ? 'pointer' : 'default',
-        background: '#000000',
+        background: BLOCK.bg,
         border: '1px solid var(--border)',
         opacity: bypassSpring.opacity,
         scale: pressSpring.scale,
       }}
     >
-      {/* Category bracket label */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 10,
-          left: 12,
-          fontSize: 9,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.14em',
-          color: 'var(--text-ghost)',
-          fontFamily: 'var(--font-mono)',
-        }}
-      >
-        [ {category} ]
-      </div>
+      {/* Left: category + name */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 36px 0 10px', gap: 8, overflow: 'hidden' }}>
+        <span
+          style={{
+            fontSize: 8,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.12em',
+            color: 'var(--text-ghost)',
+            fontFamily: 'var(--font-mono)',
+            flexShrink: 0,
+          }}
+        >
+          [{category}]
+        </span>
 
-      {/* Effect name */}
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 40px', overflow: 'hidden' }}>
-        {nameTransitions((style, item) => {
-          const nameLen = item.length
-          const fontSize = nameLen > 10 ? 22 : nameLen > 7 ? 28 : 36
-          return (
+        <div style={{ position: 'relative', flex: 1, height: 20, overflow: 'hidden' }}>
+          {nameTransitions((style, item) => (
             <animated.div
               style={{
                 position: 'absolute',
-                fontSize,
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: 14,
                 fontWeight: 800,
                 textTransform: 'uppercase',
-                letterSpacing: '0.12em',
-                color: bypassed ? 'var(--text-ghost)' : '#FFFFFF',
+                letterSpacing: '0.1em',
+                color: bypassed ? 'var(--text-ghost)' : BLOCK.text,
                 textDecoration: bypassed ? 'line-through' : 'none',
                 textDecorationColor: 'var(--text-ghost)',
                 whiteSpace: 'nowrap',
                 fontFamily: 'var(--font-mono)',
-                animation: bypassed ? 'hud-pulse 2s ease-in-out infinite' : undefined,
                 ...style,
               }}
             >
               {item}
             </animated.div>
-          )
-        })}
-      </div>
+          ))}
+        </div>
 
-      {/* Category glyph — top right */}
-      <div style={{
-        position: 'absolute',
-        top: 8,
-        right: 44,
-        opacity: 0.15,
-        pointerEvents: 'none',
-      }}>
-        <HudGlyph glyph={glyphType} size={40} color={color} animate="spin" />
+        <HudGlyph glyph={glyphType} size={16} color={color} animate="spin" className="opacity-20 flex-shrink-0" />
       </div>
 
       {/* Close button */}
@@ -150,19 +138,19 @@ export function EffectHeaderBlock({ effectId, bypassed = false, onBypassToggle }
         className="opacity-0 hover:opacity-100 transition-opacity"
         style={{
           position: 'absolute',
-          top: 8,
-          right: 8,
-          width: 28,
-          height: 28,
-          border: closeHovered ? '1px solid #FFFFFF' : '1px solid var(--border)',
-          backgroundColor: closeHovered ? '#FFFFFF' : 'transparent',
-          color: closeHovered ? '#000000' : 'var(--text-muted)',
+          top: 6,
+          right: 6,
+          width: 22,
+          height: 22,
+          border: closeHovered ? `1px solid ${BLOCK.text}` : '1px solid var(--border)',
+          backgroundColor: closeHovered ? BLOCK.text : 'transparent',
+          color: closeHovered ? BLOCK.bg : 'var(--text-muted)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontFamily: 'var(--font-mono)',
-          fontSize: 12,
+          fontSize: 10,
           fontWeight: 700,
         }}
       >

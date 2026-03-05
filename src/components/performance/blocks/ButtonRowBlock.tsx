@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
 import { BracketDisplay } from '../../ui/BracketDisplay'
 import { ScanMeter } from '../../ui/ScanMeter'
+import { BLOCK } from './blockTheme'
 
 interface ButtonRowBlockProps {
   label: string
@@ -35,11 +36,11 @@ export function ButtonRowBlock({ label, value, min, max, step: stepSize, onChang
       } : undefined}
       style={{
         position: 'relative',
-        height: 120,
+        height: 72,
         borderRadius: 0,
         overflow: 'hidden',
         userSelect: 'none',
-        backgroundColor: '#000000',
+        backgroundColor: BLOCK.bg,
         border: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
@@ -48,7 +49,7 @@ export function ButtonRowBlock({ label, value, min, max, step: stepSize, onChang
     >
       {/* BracketDisplay — top section */}
       <div style={{
-        padding: '10px 12px 0',
+        padding: '6px 8px 0',
         pointerEvents: 'none',
       }}>
         <BracketDisplay value={displayValue} label={label} color={color} size="sm" />
@@ -73,7 +74,7 @@ export function ButtonRowBlock({ label, value, min, max, step: stepSize, onChang
               onClick={() => onChange(v)}
               style={{
                 flex: 1,
-                height: 28,
+                height: 20,
                 borderRadius: 0,
                 border: isActive ? `1px solid ${color}` : '1px solid var(--border)',
                 backgroundColor: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',

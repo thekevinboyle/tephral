@@ -41,8 +41,8 @@ export function BottomPanelTabBar() {
         alignItems: 'stretch',
         justifyContent: 'space-between',
         height: 'var(--row-bottom-bar)',
-        backgroundColor: 'var(--bg-surface)',
-        borderBottom: isExpanded ? '1px solid var(--border)' : 'none',
+        backgroundColor: '#111111',
+        borderBottom: isExpanded ? '1px solid var(--border-light)' : 'none',
       }}
     >
       {/* Left: tabs */}
@@ -58,7 +58,7 @@ export function BottomPanelTabBar() {
                 border: 'none',
                 borderBottom: isActive ? '2px solid var(--accent)' : '2px solid transparent',
                 color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                fontSize: 'var(--text-micro)',
+                fontSize: 'var(--text-base)',
                 letterSpacing: 'var(--tracking-wide)',
                 textTransform: 'uppercase',
                 fontFamily: 'var(--font-sans)',

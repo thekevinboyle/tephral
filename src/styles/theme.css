@@ -4,23 +4,24 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Backgrounds — pure black, zero warmth */
-  --bg-void: #000000;
-  --bg-primary: #000000;
-  --bg-surface: #0A0A0A;
-  --bg-elevated: #0A0A0A;
-  --bg-hover: #151515;
+  /* Backgrounds — charcoal, readable contrast */
+  --bg-void: #18181b;
+  --bg-primary: #1e1e22;
+  --bg-surface: #26262b;
+  --bg-elevated: #2e2e34;
+  --bg-hover: #38383f;
 
   /* Layout grid */
   --col-left: 320px;
   --col-grid: 380px;
   --col-right: 200px;
   --col-canvas: 480px;
-  --row-header: 40px;
+  --row-header: 48px;
   --row-middle: 100px;
   --row-bottom-bar: 36px;
   --row-bottom-expanded: 240px;
-  --gap: 4px;
+  --gap: 8px;
+  --panel-radius: 8px;
 
   /* Spacing scale (4px base) */
   --space-1: 4px;
@@ -49,20 +50,20 @@
   --gap-lg: var(--space-4);
 
   /* Line grid — replaces dot matrix */
-  --grid-dot: #1A1A1A;
+  --grid-dot: #2a2a30;
   --grid-size: 20px;
   --dot-size: 1px;
 
-  /* Borders — hard, visible */
-  --border: #4a4a4a;
-  --border-emphasis: #666666;
-  --border-light: #3a3a3a;
+  /* Borders — visible edges for panel separation */
+  --border: #3a3a42;
+  --border-emphasis: #5a5a64;
+  --border-light: #30303a;
 
-  /* Text — pure white, no warmth */
-  --text-primary: #FFFFFF;
-  --text-secondary: #BBBBBB;
-  --text-muted: #777777;
-  --text-ghost: #444444;
+  /* Text — high contrast on charcoal */
+  --text-primary: #F0F0F2;
+  --text-secondary: #B0B0B8;
+  --text-muted: #808088;
+  --text-ghost: #55555e;
 
   /* Accent — white base (effect colors provide the only color) */
   --accent: #FFFFFF;
@@ -88,20 +89,20 @@
   --seq-accent-dim: #888888;
   --seq-accent-glow: rgba(255, 255, 255, 0.15);
 
-  /* Shadows — REMOVED */
-  --shadow-panel: none;
-  --shadow-panel-lg: none;
+  /* Shadows — floating card depth */
+  --shadow-panel: 0 1px 4px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
+  --shadow-panel-lg: 0 2px 8px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
   --shadow-button: none;
   --shadow-button-hover: none;
   --shadow-knob: none;
   --shadow-knob-hover: none;
   --shadow-inset: none;
 
-  /* Knob surface — flat black */
-  --knob-body: #0A0A0A;
-  --knob-body-highlight: #0A0A0A;
-  --knob-rim: #1A1A1A;
-  --knob-rim-highlight: #1A1A1A;
+  /* Knob surface */
+  --knob-body: #22222a;
+  --knob-body-highlight: #2a2a32;
+  --knob-rim: #3a3a42;
+  --knob-rim-highlight: #44444c;
 
   /* Surface highlights — removed */
   --border-top-highlight: none;
@@ -136,6 +137,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-ghost); border-radius: 2px; }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    LINE GRID — replaces dot matrix
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -143,8 +149,8 @@ body {
 .grid-substrate {
   background-color: var(--bg-primary);
   background-image:
-    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
   background-size: var(--grid-size) var(--grid-size);
   background-position: center center;
   animation: none;
@@ -257,6 +263,8 @@ body {
 .panel-raised {
   background: var(--bg-surface);
   border: 1px solid var(--border);
+  border-radius: var(--panel-radius);
+  box-shadow: var(--shadow-panel);
 }
 
 .panel-inset {

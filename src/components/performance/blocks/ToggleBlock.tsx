@@ -29,55 +29,50 @@ export function ToggleBlock({ label, value, onChange }: ToggleBlockProps) {
       onClick={handleClick}
       style={{
         position: 'relative',
-        height: 60,
+        height: 36,
         width: '100%',
         borderRadius: 0,
         overflow: 'hidden',
         cursor: 'pointer',
         border: '1px solid var(--border)',
         outline: 'none',
-        backgroundColor: value ? '#FFFFFF' : '#000000',
+        backgroundColor: value ? BLOCK.text : BLOCK.bg,
         boxShadow: 'none',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 6,
-        padding: '0 8px',
+        gap: 4,
+        padding: '0 6px',
         scale: pressSpring.scale,
       }}
     >
       {/* Label */}
-      <div
+      <span
         style={{
           fontSize: 8,
           fontFamily: 'var(--font-mono)',
           textTransform: 'uppercase',
-          letterSpacing: '0.14em',
-          color: value ? '#000000' : BLOCK.textGhost,
+          letterSpacing: '0.1em',
+          color: value ? BLOCK.bg : BLOCK.textGhost,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          maxWidth: '100%',
         }}
       >
         {label}
-      </div>
-
-      {/* Bracket state display */}
-      <div
+      </span>
+      {/* State indicator */}
+      <span
         style={{
-          fontSize: 11,
+          fontSize: 9,
           fontWeight: 700,
           fontFamily: 'var(--font-mono)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: value ? '#000000' : '#FFFFFF',
+          color: value ? BLOCK.bg : BLOCK.text,
           whiteSpace: 'nowrap',
         }}
       >
-        {value ? 'ENABLED' : 'DISABLED'}
-      </div>
+        {value ? 'ON' : 'OFF'}
+      </span>
     </animated.button>
   )
 }

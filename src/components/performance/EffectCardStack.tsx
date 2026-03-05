@@ -29,7 +29,7 @@ export function EffectCardStack() {
         className="flex-shrink-0 flex items-center px-2"
         style={{
           height: 24,
-          borderBottom: '1px solid var(--border)',
+          borderBottom: '1px solid var(--border-light)',
         }}
       >
         <span
@@ -44,7 +44,7 @@ export function EffectCardStack() {
       {validSelectedId ? (
         <div
           className="flex-1 min-h-0 overflow-y-auto"
-          style={{ padding: 12 }}
+          style={{ padding: 8 }}
         >
           <EffectParameters_v2 effectId={validSelectedId} />
         </div>

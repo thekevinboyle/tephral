@@ -13,8 +13,6 @@ export function BottomPanelContent() {
     maxHeight: 'var(--row-bottom-expanded)',
     backgroundColor: 'var(--bg-surface)',
     padding: 'var(--panel-padding-sm) var(--panel-padding)',
-    margin: 4,
-    border: '1px solid var(--border)',
   }
 
   switch (bottomPanelTab) {

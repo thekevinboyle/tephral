@@ -79,10 +79,10 @@ export function ExpandedParameterPanel_v2() {
             gap: 8,
           }}
         >
-          <span style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-ghost)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-ghost)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             No Effect
           </span>
-          <OrbitalRings value={0.25} size={80} color="var(--text-ghost)" className="opacity-30" />
+          <OrbitalRings value={0.25} size={48} color="var(--text-ghost)" className="opacity-30" />
           <span style={{ fontSize: 11, color: 'var(--text-ghost)' }}>
             Select an effect to edit parameters
           </span>
@@ -106,10 +106,10 @@ export function ExpandedParameterPanel_v2() {
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: 12,
+          padding: 8,
           display: 'flex',
           flexDirection: 'column',
-          gap: 8,
+          gap: 6,
         }}
       >
         {/* Header */}
@@ -227,7 +227,7 @@ function BlockParameters({ effectId, color }: { effectId: string; color: string 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {sections.map((section) => (
             <ParamSection key={section.label} label={section.label} color={color} visual={section.visual}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
                 {section.params.map(renderBlock)}
               </div>
             </ParamSection>
@@ -236,7 +236,7 @@ function BlockParameters({ effectId, color }: { effectId: string; color: string 
       ) : (
         /* Flat grid — single or no section */
         typedParams.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
             {typedParams.map(({ param }) => renderBlock(param))}
           </div>
         )
@@ -266,7 +266,7 @@ function BlockParameters({ effectId, color }: { effectId: string; color: string 
 
       {/* Select params — full width blocks */}
       {selectParams.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {selectParams.map((param) => (
             <SelectBlock
               key={param.id}
@@ -289,7 +289,7 @@ export function EffectParameters_v2({ effectId }: { effectId: string }) {
   const color = effect?.color ?? 'var(--accent)'
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <EffectHeaderBlock effectId={effectId} />
       <BlockParameters effectId={effectId} color={color} />
       <BlockExtras effectId={effectId} />
@@ -338,8 +338,8 @@ function VisionTrackingBlockExtras({
   return (
     <>
       <ParamSection label="Display">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
             <ToggleBlock label="Boxes" value={params.showBoxes} onChange={(v) => updateParams({ showBoxes: v })} />
             <ToggleBlock label="Lines" value={params.showLines} onChange={(v) => updateParams({ showLines: v })} />
             <ToggleBlock label="Labels" value={params.showLabels} onChange={(v) => updateParams({ showLabels: v })} />
@@ -356,7 +356,7 @@ function VisionTrackingBlockExtras({
             options={LINE_STYLE_OPTIONS}
             onChange={(v) => updateParams({ lineStyle: v })}
           />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
             <ColorBlock label="Box Color" value={params.boxColor} onChange={(v) => updateParams({ boxColor: v })} />
           </div>
         </div>
@@ -370,13 +370,13 @@ function VisionTrackingBlockExtras({
         />
       </ParamSection>
       <ParamSection label="Global">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
           <ToggleBlock label="Lines Only" value={linesOnly} onChange={setLinesOnly} />
         </div>
       </ParamSection>
       <ParamSection label="GPU Trace">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
             <ToggleBlock label="Trail" value={traceParams.trailEnabled} onChange={(v) => updateTraceParams({ trailEnabled: v })} />
           </div>
           {fillMode && traceParams.fillMode !== undefined && (
@@ -407,7 +407,7 @@ function TextureOverlayBlockExtras() {
 
   return (
     <ParamSection label="Texture Overlay">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <SelectBlock
           label="Texture"
           value={tex.textureId}
@@ -420,13 +420,13 @@ function TextureOverlayBlockExtras() {
           options={BLEND_MODE_OPTIONS}
           onChange={(v) => tex.setBlendMode(v as BlendMode)}
         />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
           <ParamBlock label="Opacity" value={tex.opacity} min={0} max={1} step={0.01} onChange={tex.setOpacity} paramId="texture_overlay.opacity" />
           <ParamBlock label="Scale" value={tex.scale} min={0.5} max={3} step={0.1} onChange={tex.setScale} paramId="texture_overlay.scale" />
           <ToggleBlock label="Animate" value={tex.animated} onChange={tex.setAnimated} />
         </div>
         {tex.animated && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
             <ParamBlock label="Speed" value={tex.animationSpeed} min={0.1} max={2} step={0.1} onChange={tex.setAnimationSpeed} paramId="texture_overlay.animationSpeed" />
           </div>
         )}
@@ -460,7 +460,7 @@ function DataOverlayBlockExtras() {
 
   return (
     <ParamSection label="Data Overlay">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <SelectBlock
           label="Template"
           value={data.template}
@@ -481,7 +481,7 @@ function DataOverlayBlockExtras() {
             onChange={(v) => data.setWatermarkPosition(v as WatermarkPosition)}
           />
         )}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
           <ParamBlock label="Size" value={data.style.fontSize} min={12} max={48} step={1} onChange={(v) => data.setStyle({ fontSize: v })} paramId="data_overlay.fontSize" />
           <ParamBlock label="Opacity" value={data.style.opacity} min={0} max={1} step={0.01} onChange={(v) => data.setStyle({ opacity: v })} paramId="data_overlay.opacity" />
           <ColorBlock label="Color" value={data.style.color} onChange={(v) => data.setStyle({ color: v })} />
@@ -505,7 +505,7 @@ function BlockExtras({ effectId }: { effectId: string }) {
       case 'edges':
         return (
           <ParamSection label="Extras">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
               <ColorBlock label="Edge Color" value={glitch.edgeDetection.edgeColor} onChange={(v) => glitch.updateEdgeDetection({ edgeColor: v })} />
             </div>
           </ParamSection>
@@ -514,7 +514,7 @@ function BlockExtras({ effectId }: { effectId: string }) {
       case 'color_grade':
         return (
           <ParamSection label="Extras">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
               <ColorBlock label="Tint Color" value={glitch.colorGrade.tintColor} onChange={(v) => glitch.updateColorGrade({ tintColor: v })} />
             </div>
           </ParamSection>
@@ -523,7 +523,7 @@ function BlockExtras({ effectId }: { effectId: string }) {
       case 'contour':
         return (
           <ParamSection label="Colors">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
               <ColorBlock label="Color" value={contour.params.color} onChange={(v) => contour.updateParams({ color: v })} />
               <ColorBlock label="Glow" value={contour.params.glowColor} onChange={(v) => contour.updateParams({ glowColor: v })} />
             </div>
@@ -541,7 +541,7 @@ function BlockExtras({ effectId }: { effectId: string }) {
         return (
           <>
             <ParamSection label="Options">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
                 <ToggleBlock label="Animated" value={glitch.blockDisplace.animated} onChange={(v) => glitch.updateBlockDisplace({ animated: v })} />
               </div>
             </ParamSection>
@@ -561,7 +561,7 @@ function BlockExtras({ effectId }: { effectId: string }) {
       case 'stipple':
         return (
           <ParamSection label="Options">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
               <ToggleBlock label="Animated" value={stipple.params.animated} onChange={(v) => stipple.updateParams({ animated: v })} />
               <ToggleBlock label="Breathe" value={stipple.params.breathe} onChange={(v) => stipple.updateParams({ breathe: v })} />
             </div>
@@ -571,7 +571,7 @@ function BlockExtras({ effectId }: { effectId: string }) {
       case 'landmarks':
         return (
           <ParamSection label="Options">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
               <ToggleBlock label="Attach" value={landmarks.attachToDetections} onChange={(v) => landmarks.setAttachToDetections(v)} />
             </div>
           </ParamSection>
@@ -604,7 +604,7 @@ function BlockExtras({ effectId }: { effectId: string }) {
       case 'track_color':
         return (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
               <ColorBlock label="Target" value={visionTracking.colorParams.targetColor} onChange={(v) => visionTracking.updateColorParams({ targetColor: v })} />
             </div>
             <VisionTrackingBlockExtras

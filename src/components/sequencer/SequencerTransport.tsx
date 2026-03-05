@@ -232,7 +232,8 @@ export function SequencerTransport({
         padding: '0 var(--panel-padding)',
         gap: 0,
         height: 64,
-        borderBottom: '1px solid var(--border)',
+        backgroundColor: '#111111',
+        borderBottom: '1px solid var(--border-light)',
       }}
     >
       {/* Group 1: Play + BPM + Sync */}

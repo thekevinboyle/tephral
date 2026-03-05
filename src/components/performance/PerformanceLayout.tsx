@@ -7,6 +7,7 @@ import { ClipBin } from './ClipBin'
 import { ClipDetailModal } from './ClipDetailModal'
 import { EffectCardStack } from './EffectCardStack'
 import { TransportBar } from './TransportBar'
+import { CanvasTransportBar } from './CanvasTransportBar'
 import { MiddleSection } from './MiddleSection'
 import { ModulationLines } from './ModulationLines'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
@@ -27,8 +28,6 @@ import { useAudioReactive } from '../../hooks/useAudioReactive'
 import { DestructionOverlay } from '../DestructionOverlay'
 // LFO Editor Panel hidden — component kept, just not rendered
 // import { LFOEditorPanel } from './LFOEditorPanel'
-import { AudioFileTransport } from './AudioFileTransport'
-import { useAudioSourceStore } from '../../stores/audioSourceStore'
 import { useMediaStore } from '../../stores/mediaStore'
 import { BottomPanel } from './BottomPanel'
 import { StatusBar } from './StatusBar'
@@ -37,9 +36,6 @@ import { IrisScanner } from '../ui/MicroVisuals'
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null)
-  const activeAudioSource = useAudioSourceStore((s) => s.activeSource)
-  const audioFileElement = useAudioSourceStore((s) => s.audioFileElement)
-  const showAudioTransport = activeAudioSource === 'file' && audioFileElement
   const videoAspect = useMediaStore((s) => s.videoAspect)
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
@@ -98,11 +94,12 @@ export function PerformanceLayout() {
     >
       {/* Row 1: Header Bar (spans all columns) */}
       <div
-        className="rounded-sm panel-header"
+        className="panel-header"
         style={{
           gridRow: 1,
           gridColumn: '1 / -1',
           border: '1px solid var(--border)',
+          borderRadius: 0,
         }}
       >
         <HeaderBar />
@@ -110,11 +107,13 @@ export function PerformanceLayout() {
 
       {/* Rows 2-4, Col 1: Vertical Effect Tabs Bar */}
       <div
-        className="rounded-sm overflow-hidden"
+        className="overflow-hidden"
         style={{
           gridRow: '2 / 5',
           gridColumn: 1,
           border: '1px solid var(--border)',
+          borderRadius: 'var(--panel-radius)',
+          boxShadow: 'var(--shadow-panel)',
         }}
       >
         <SharedEffectTabsBar />
@@ -122,11 +121,10 @@ export function PerformanceLayout() {
 
       {/* Rows 2-4, Col 2: Effect Card Stack + Grid + Crossfader */}
       <div
-        className="flex flex-col rounded-sm overflow-hidden panel-raised"
+        className="flex flex-col overflow-hidden panel-raised"
         style={{
           gridRow: '2 / 5',
           gridColumn: 2,
-          border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-panel-lg)',
         }}
       >
@@ -136,14 +134,14 @@ export function PerformanceLayout() {
         <div
           className="flex-shrink-0"
           style={{
-            borderTop: '1px solid var(--border)',
+            borderTop: '1px solid var(--border-light)',
           }}
         >
           <div
             className="flex-shrink-0"
             style={{
               height: '52px',
-              borderBottom: '1px solid var(--border)',
+              borderBottom: '1px solid var(--border-light)',
             }}
           >
             <BankPanel />
@@ -155,7 +153,7 @@ export function PerformanceLayout() {
         <div
           className="flex-shrink-0"
           style={{
-            borderTop: '1px solid var(--border)',
+            borderTop: '1px solid var(--border-light)',
             minHeight: 'var(--row-middle)',
           }}
         >
@@ -165,12 +163,10 @@ export function PerformanceLayout() {
 
       {/* Rows 2-3, Col 3: Sequencer */}
       <div
-        className="flex-1 min-w-0 rounded-sm overflow-hidden panel-raised"
+        className="flex-1 min-w-0 overflow-hidden panel-raised"
         style={{
           gridRow: '2 / 4',
           gridColumn: 3,
-          border: '1px solid var(--border)',
-          boxShadow: 'var(--shadow-panel)',
         }}
       >
         <SequencerContainer hideTabsBar />
@@ -183,27 +179,30 @@ export function PerformanceLayout() {
 
       {/* Rows 2-4, Col 4: Canvas + Transport */}
       <div
-        className="flex flex-col rounded-sm overflow-hidden"
+        className="flex flex-col overflow-hidden"
         style={{
           gridRow: '2 / 5',
           gridColumn: 4,
           border: '1px solid var(--border)',
+          borderRadius: 'var(--panel-radius)',
           boxShadow: 'var(--shadow-panel)',
           backgroundColor: 'var(--bg-surface)',
         }}
       >
+        <CanvasTransportBar />
         <div
           className="relative w-full"
           style={{
             aspectRatio: videoAspect ?? 16 / 9,
             overflow: 'hidden',
+            borderRadius: 6,
+            border: '1px solid var(--border-light)',
           }}
         >
           <Canvas ref={canvasRef} />
           <ClipBin />
         </div>
         <TransportBar />
-        {showAudioTransport && <AudioFileTransport />}
         {/* Fill remaining space */}
         <div className="flex-1 flex items-center justify-center">
           <IrisScanner value={0.5} size={48} color="var(--text-ghost)" className="opacity-10" />

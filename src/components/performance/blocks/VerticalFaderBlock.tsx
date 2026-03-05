@@ -3,6 +3,7 @@ import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
 import { BracketDisplay } from '../../ui/BracketDisplay'
 import { ScanMeter } from '../../ui/ScanMeter'
+import { BLOCK } from './blockTheme'
 
 interface VerticalFaderBlockProps {
   label: string
@@ -89,13 +90,13 @@ export function VerticalFaderBlock({ label, value, min, max, step, onChange, par
       } : undefined}
       style={{
         position: 'relative',
-        height: 120,
+        height: 72,
         borderRadius: 0,
         overflow: 'hidden',
         cursor: 'ns-resize',
         touchAction: 'none',
         userSelect: 'none',
-        backgroundColor: '#000000',
+        backgroundColor: BLOCK.bg,
         border: isAutomationTarget ? '1px solid #FF3355' : '1px solid var(--border)',
         animation: isAutomationTarget ? 'hud-blink 1s step-end infinite' : undefined,
         display: 'flex',
@@ -105,10 +106,10 @@ export function VerticalFaderBlock({ label, value, min, max, step, onChange, par
     >
       {/* BracketDisplay — top section */}
       <div style={{
-        padding: '10px 12px 0',
+        padding: '6px 8px 0',
         pointerEvents: 'none',
       }}>
-        <BracketDisplay value={displayValue} label={label} color={color} size="md" />
+        <BracketDisplay value={displayValue} label={label} color={color} size="sm" />
       </div>
 
       {/* ScanMeter — bottom, vertical mode showing fader fill */}

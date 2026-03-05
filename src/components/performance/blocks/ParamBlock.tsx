@@ -4,7 +4,7 @@ import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
 import { BracketDisplay } from '../../ui/BracketDisplay'
 import { ScanMeter } from '../../ui/ScanMeter'
-import { SPRING } from './blockTheme'
+import { BLOCK, SPRING } from './blockTheme'
 
 interface ParamBlockProps {
   label: string
@@ -19,9 +19,9 @@ interface ParamBlockProps {
   isAutomationTarget?: boolean
 }
 
-const TRACK_PADDING = 16
-const THUMB_W = 16
-const THUMB_H = 20
+const TRACK_PADDING = 10
+const THUMB_W = 10
+const THUMB_H = 14
 
 export function ParamBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)', onTap, isAutomationTarget }: ParamBlockProps) {
   const normalized = (value - min) / (max - min)
@@ -102,11 +102,11 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
       } : undefined}
       style={{
         position: 'relative',
-        height: 120,
+        height: 72,
         borderRadius: 0,
         overflow: 'hidden',
         userSelect: 'none',
-        backgroundColor: '#000000',
+        backgroundColor: BLOCK.bg,
         border: isAutomationTarget ? '1px solid #FF3355' : '1px solid var(--border)',
         animation: isAutomationTarget ? 'hud-blink 1s step-end infinite' : undefined,
       }}
@@ -114,12 +114,12 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
       {/* BracketDisplay — top section */}
       <div style={{
         position: 'absolute',
-        top: 10,
+        top: 6,
         left: TRACK_PADDING,
         right: TRACK_PADDING,
         pointerEvents: 'none',
       }}>
-        <BracketDisplay value={displayValue} label={label} color={color} size="md" />
+        <BracketDisplay value={displayValue} label={label} color={color} size="sm" />
       </div>
 
       {/* Slider track area */}
@@ -130,8 +130,8 @@ export function ParamBlock({ label, value, min, max, step, onChange, paramId, co
           position: 'absolute',
           left: TRACK_PADDING,
           right: TRACK_PADDING,
-          top: 64,
-          height: 32,
+          top: 38,
+          height: 20,
           cursor: 'grab',
           touchAction: 'none',
           display: 'flex',

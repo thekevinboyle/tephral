@@ -3,6 +3,7 @@ import { useDrag } from '@use-gesture/react'
 import { ModulationContextMenu } from '../controls/ModulationContextMenu'
 import { BracketDisplay } from '../../ui/BracketDisplay'
 import { ScanMeter } from '../../ui/ScanMeter'
+import { BLOCK } from './blockTheme'
 
 interface RulerBlockProps {
   label: string
@@ -17,7 +18,7 @@ interface RulerBlockProps {
   isAutomationTarget?: boolean
 }
 
-const TRACK_PADDING = 12
+const TRACK_PADDING = 8
 
 export function RulerBlock({ label, value, min, max, step, onChange, paramId, color = 'var(--accent)', onTap, isAutomationTarget }: RulerBlockProps) {
   const normalized = (value - min) / (max - min)
@@ -110,11 +111,11 @@ export function RulerBlock({ label, value, min, max, step, onChange, paramId, co
       } : undefined}
       style={{
         position: 'relative',
-        height: 120,
+        height: 72,
         borderRadius: 0,
         overflow: 'hidden',
         userSelect: 'none',
-        backgroundColor: '#000000',
+        backgroundColor: BLOCK.bg,
         border: isAutomationTarget ? '1px solid #FF3355' : '1px solid var(--border)',
         animation: isAutomationTarget ? 'hud-blink 1s step-end infinite' : undefined,
       }}
@@ -122,12 +123,12 @@ export function RulerBlock({ label, value, min, max, step, onChange, paramId, co
       {/* BracketDisplay — top section */}
       <div style={{
         position: 'absolute',
-        top: 10,
+        top: 6,
         left: TRACK_PADDING,
         right: TRACK_PADDING,
         pointerEvents: 'none',
       }}>
-        <BracketDisplay value={displayValue} label={label} color={color} size="md" />
+        <BracketDisplay value={displayValue} label={label} color={color} size="sm" />
       </div>
 
       {/* Ruler track area — draggable hit target */}
@@ -138,8 +139,8 @@ export function RulerBlock({ label, value, min, max, step, onChange, paramId, co
           position: 'absolute',
           left: TRACK_PADDING,
           right: TRACK_PADDING,
-          top: 52,
-          height: 36,
+          top: 30,
+          height: 24,
           cursor: 'grab',
           touchAction: 'none',
         }}
@@ -193,7 +194,7 @@ export function RulerBlock({ label, value, min, max, step, onChange, paramId, co
       {/* Min/max range labels */}
       <div style={{
         position: 'absolute',
-        bottom: 10,
+        bottom: 6,
         left: TRACK_PADDING,
         fontSize: 8,
         color: 'rgba(255,255,255,0.2)',
@@ -204,7 +205,7 @@ export function RulerBlock({ label, value, min, max, step, onChange, paramId, co
       </div>
       <div style={{
         position: 'absolute',
-        bottom: 10,
+        bottom: 6,
         right: TRACK_PADDING,
         fontSize: 8,
         color: 'rgba(255,255,255,0.2)',

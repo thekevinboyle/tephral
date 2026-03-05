@@ -36,18 +36,18 @@ export function ColorBlock({ label, value, onChange }: ColorBlockProps) {
       onClick={handleClick}
       style={{
         position: 'relative',
-        height: 120,
+        height: 72,
         borderRadius: 0,
         overflow: 'hidden',
         cursor: 'pointer',
         border: '1px solid var(--border)',
-        backgroundColor: '#000000',
+        backgroundColor: BLOCK.bg,
         boxShadow: 'none',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
         justifyContent: 'space-between',
-        padding: '10px 0 0',
+        padding: '6px 0 0',
         scale: pressSpring.scale,
       }}
     >
@@ -69,7 +69,7 @@ export function ColorBlock({ label, value, onChange }: ColorBlockProps) {
       <div
         style={{
           textAlign: 'center',
-          fontSize: 13,
+          fontSize: 10,
           fontFamily: 'var(--font-mono)',
           fontWeight: 700,
           letterSpacing: '0.12em',
@@ -82,7 +82,7 @@ export function ColorBlock({ label, value, onChange }: ColorBlockProps) {
       {/* Thin animated color swatch bar at 30% opacity */}
       <animated.div
         style={{
-          height: 24,
+          height: 16,
           width: '100%',
           flexShrink: 0,
           opacity: 0.3,

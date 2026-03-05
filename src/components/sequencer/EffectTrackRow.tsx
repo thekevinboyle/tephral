@@ -214,7 +214,7 @@ export function EffectTrackRow({
         style={{
           width: 130,
           padding: '4px 10px',
-          borderRight: '2px solid var(--border)',
+          borderRight: '2px solid var(--border-light)',
           backgroundColor: 'var(--bg-primary)',
         }}
         onClick={() => onSelectTrack?.(effectId)}

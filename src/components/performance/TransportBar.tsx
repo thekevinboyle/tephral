@@ -727,7 +727,6 @@ export function TransportBar() {
             }}
             onMouseDown={hasAudioFile ? handleWaveformMouseDown : undefined}
             onMouseMove={hasAudioFile ? handleWaveformMouseMove : undefined}
-            onMouseLeave={hasAudioFile ? handleWaveformMouseLeave : undefined}
             onDoubleClick={hasAudioFile ? handleWaveformDoubleClick : undefined}
             onMouseEnter={() => setStatusText(
               !hasAudioFile
@@ -736,7 +735,10 @@ export function TransportBar() {
                   ? 'Click to seek — Drag edges to resize loop — Double-click to clear'
                   : 'Click to seek — Drag to create loop'
             )}
-            onMouseLeaveCapture={() => setStatusText(null)}
+            onMouseLeave={() => {
+              if (hasAudioFile) handleWaveformMouseLeave()
+              setStatusText(null)
+            }}
           >
             <canvas
               ref={waveformRef}

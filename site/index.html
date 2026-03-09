@@ -46,14 +46,11 @@
         <a href="#effects" class="btn btn-secondary">SCROLL TO EXPLORE <span class="arrow">↓</span></a>
       </div>
     </div>
-    <!-- Hero screenshot: drop hero.png into assets/screenshots/ -->
-    <!--
     <div class="hero__screenshot parallax">
       <div class="screenshot">
-        <img src="assets/screenshots/hero.png" alt="seg_f4ult interface — real-time video destruction with audio-reactive modulation">
+        <img src="assets/screenshots/hero-strand.png" alt="seg_f4ult interface — real-time video destruction with audio-reactive modulation">
       </div>
     </div>
-    -->
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -133,12 +130,8 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
-  <!-- PRODUCT SHOTS -->
-  <!-- To restore: capture screenshots from the running app and place in
-       assets/screenshots/ as hero.png, effect-grid.png, sequencer.png,
-       params.png, modulation.png — then uncomment this section.
-  ═══════════════════════════════════════════════════════════════════════ -->
-  <!--
+  <!-- INTERFACE -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <section class="section" id="interface">
     <div class="section__header">
       <span class="section__number glitch-text" data-text="02">02</span>
@@ -148,38 +141,33 @@
 
     <div class="screenshots-hero">
       <div class="screenshot screenshot--large parallax">
-        <img src="assets/screenshots/hero.png" alt="Full interface with effects active on video">
-        <span class="screenshot__caption">Full interface — effect grid, canvas, parameter controls, sequencer</span>
+        <img src="assets/screenshots/hero.png" alt="Full interface with ACID effects active across the 4-column layout">
+        <span class="screenshot__caption">Full interface — effect card stack, performance grid, step sequencer, canvas viewport</span>
       </div>
     </div>
 
     <div class="screenshots-grid">
       <div class="screenshot">
-        <img src="assets/screenshots/effect-grid.png" alt="Effect grid with 6 pages">
-        <span class="screenshot__caption">Performance grid — 16 effects per page across 6 categories</span>
+        <img src="assets/screenshots/effect-grid.png" alt="Effect card stack with parameter controls and performance grid">
+        <span class="screenshot__caption">Effect cards with inline knobs, bank presets (A-D), and 4x4 performance grid</span>
       </div>
       <div class="screenshot">
-        <img src="assets/screenshots/sequencer.png" alt="Step sequencer with audio reactivity">
-        <span class="screenshot__caption">Step sequencer with p-locks and audio-reactive triggers</span>
+        <img src="assets/screenshots/sequencer.png" alt="Multi-track step sequencer with per-effect tracks">
+        <span class="screenshot__caption">Step sequencer — per-effect tracks with mute, solo, arm, and nudge controls</span>
       </div>
       <div class="screenshot">
-        <img src="assets/screenshots/params.png" alt="Block-based parameter controls">
-        <span class="screenshot__caption">Block-based parameter panel with spring animations</span>
-      </div>
-      <div class="screenshot">
-        <img src="assets/screenshots/modulation.png" alt="Audio reactive modulation routing">
-        <span class="screenshot__caption">Audio-reactive band routing with live FFT meters</span>
+        <img src="assets/screenshots/hero-glitch.png" alt="Glitch effects page with RGB, VHS, ASCII, and feedback active">
+        <span class="screenshot__caption">GLITCH page — digital corruption effects with full parameter controls</span>
       </div>
     </div>
   </section>
-  -->
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- CAPABILITIES -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <section class="section" id="capabilities">
     <div class="section__header">
-      <span class="section__number glitch-text" data-text="02">02</span>
+      <span class="section__number glitch-text" data-text="03">03</span>
       <span class="section__divider">———</span>
       <span class="section__title">CAPABILITIES</span>
     </div>
@@ -194,31 +182,35 @@
           <li>Sub / Mid / High band splitting</li>
           <li>Auto-BPM detection and sync</li>
           <li>Per-band routing to any parameter</li>
-          <li>Mic, file, system audio, or video</li>
+          <li>Audio gate with envelope following</li>
+          <li>Mic, file, system audio, or video track</li>
         </ul>
       </div>
 
       <div class="capability-row">
         <div class="capability-row__main">
           <h3 class="capability-row__title">STEP SEQUENCER</h3>
-          <p class="capability-row__desc">Multi-track sequencer with parameter locks</p>
+          <p class="capability-row__desc">Multi-track sequencer with parameter locks and euclidean patterns</p>
         </div>
         <ul class="capability-row__features">
           <li>Per-effect tracks with gate/trigger modes</li>
           <li>P-lock automation per step</li>
-          <li>Audio-reactive beat triggers</li>
-          <li>Mute / solo / probability</li>
+          <li>Euclidean pattern generation</li>
+          <li>Polyrhythm with per-track length and time scale</li>
+          <li>Ratchet, swing, probability per step</li>
+          <li>Forward / reverse / pendulum / random modes</li>
+          <li>Audio-reactive and MIDI clock sync</li>
         </ul>
       </div>
 
       <div class="capability-row">
         <div class="capability-row__main">
           <h3 class="capability-row__title">EFFECT LAUNCHER</h3>
-          <p class="capability-row__desc">Ableton-style clip launcher for effect sequencing</p>
+          <p class="capability-row__desc">Clip launcher for audio-driven effect sequencing</p>
         </div>
         <ul class="capability-row__features">
-          <li>4x4 launch grid with cycling</li>
-          <li>Audio-driven automatic sequencing</li>
+          <li>16-cell launch grid with cycling</li>
+          <li>Per-band audio triggers (sub / kick / mid / high)</li>
           <li>Snapshot capture and recall</li>
         </ul>
       </div>
@@ -226,49 +218,54 @@
       <div class="capability-row">
         <div class="capability-row__main">
           <h3 class="capability-row__title">MODULATION</h3>
-          <p class="capability-row__desc">Multi-LFO system with MIDI and audio routing</p>
+          <p class="capability-row__desc">Multi-source modulation with MIDI and audio routing</p>
         </div>
         <ul class="capability-row__features">
-          <li>Multiple LFO instances with phase offset</li>
+          <li>8 LFO instances with 9 shapes and tempo sync</li>
+          <li>Random, step sequencer, envelope (ADSR), sample &amp; hold</li>
           <li>MIDI CC input mapping</li>
           <li>Audio band routing to any parameter</li>
-          <li>Drag-to-assign depth controls</li>
         </ul>
       </div>
 
       <div class="capability-row">
         <div class="capability-row__main">
           <h3 class="capability-row__title">AI TRACKING</h3>
-          <p class="capability-row__desc">Effects respond to faces, hands, and motion</p>
+          <p class="capability-row__desc">MediaPipe-powered detection with GPU trace effects</p>
         </div>
         <ul class="capability-row__features">
-          <li>Face detection</li>
-          <li>Hand landmarks</li>
-          <li>Motion vectors</li>
+          <li>Face mesh / hand / pose / holistic detection</li>
+          <li>Blob tracking: bright, edge, color, motion</li>
+          <li>GPU trail persistence and box filter effects</li>
+          <li>Lines-only mode with strand-style rendering</li>
         </ul>
       </div>
 
       <div class="capability-row">
         <div class="capability-row__main">
           <h3 class="capability-row__title">SAMPLE SLICER</h3>
-          <p class="capability-row__desc">Chop video into slices for live performance</p>
+          <p class="capability-row__desc">Granular video engine with live ring buffer</p>
         </div>
         <ul class="capability-row__features">
-          <li>Click to jump, hold to loop</li>
-          <li>Crossfader blend modes</li>
+          <li>Ring buffer capture (1-10s) with 4-32 slices</li>
+          <li>Grain engine: size, density, spray, jitter</li>
+          <li>Auto-scan with loop and pendulum modes</li>
+          <li>5 blend modes: normal, multiply, screen, difference, overlay</li>
           <li>Clip bin with auto-capture</li>
         </ul>
       </div>
 
       <div class="capability-row">
         <div class="capability-row__main">
-          <h3 class="capability-row__title">RECORDING</h3>
-          <p class="capability-row__desc">Capture sessions directly to file</p>
+          <h3 class="capability-row__title">RECORDING &amp; PRESETS</h3>
+          <p class="capability-row__desc">Capture sessions and recall states instantly</p>
         </div>
         <ul class="capability-row__features">
-          <li>Live canvas capture</li>
-          <li>WebM/MP4 export</li>
-          <li>Preset banks (A-D)</li>
+          <li>Live canvas capture with 3 quality levels</li>
+          <li>WebM / MP4 export</li>
+          <li>Automation event capture and export</li>
+          <li>4 quick-recall banks (A-D) with full state snapshots</li>
+          <li>Preset library with folders, search, and thumbnails</li>
         </ul>
       </div>
     </div>
@@ -279,7 +276,7 @@
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <section class="section" id="technical">
     <div class="section__header">
-      <span class="section__number glitch-text" data-text="03">03</span>
+      <span class="section__number glitch-text" data-text="04">04</span>
       <span class="section__divider">———</span>
       <span class="section__title">TECHNICAL</span>
     </div>
@@ -314,7 +311,7 @@
       </p>
       <p class="tech-stack__row">
         <span class="tech-stack__label">VIDEO:</span>
-        <span class="tech-stack__items">Webcam — File — Screen capture — URL</span>
+        <span class="tech-stack__items">Webcam — Video file — Image — Screen capture</span>
       </p>
       <p class="tech-stack__row">
         <span class="tech-stack__label">AUDIO:</span>
@@ -322,7 +319,7 @@
       </p>
       <p class="tech-stack__row">
         <span class="tech-stack__label">OUTPUTS:</span>
-        <span class="tech-stack__items">WebM — MP4 — PNG — GIF</span>
+        <span class="tech-stack__items">WebM — MP4</span>
       </p>
     </div>
   </section>
@@ -332,7 +329,7 @@
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <section class="section" id="docs">
     <div class="section__header">
-      <span class="section__number glitch-text" data-text="04">04</span>
+      <span class="section__number glitch-text" data-text="05">05</span>
       <span class="section__divider">———</span>
       <span class="section__title">DOCUMENTATION</span>
     </div>

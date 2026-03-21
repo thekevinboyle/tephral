@@ -11,6 +11,7 @@ import { useDataOverlayStore } from '../stores/dataOverlayStore'
 import { useStrandStore } from '../stores/strandStore'
 import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
+import { useMorphStore } from '../stores/morphStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { EFFECTS, PAGE_NAMES, getEffectsForPage } from '../config/effects'
 
@@ -35,6 +36,7 @@ export function useActiveEffects() {
   const strand = useStrandStore()
   const motion = useMotionStore()
   const destruction = useDestructionStore()
+  const morph = useMorphStore()
   const effectOrder = useRoutingStore(s => s.effectOrder)
 
   const sortedEffects = useMemo(() => {
@@ -177,6 +179,11 @@ export function useActiveEffects() {
     if (destruction.pixelSortEnabled) activeEffects.push({ id: 'pixelSort', label: 'Pixel Sort', color: '#ff3366', primaryValue: Math.round(destruction.pixelSortParams.intensity * 100), primaryLabel: 'int' })
     if (destruction.sonifyEnabled) activeEffects.push({ id: 'sonify', label: 'Sonify', color: '#ff6600', primaryValue: Math.round(destruction.sonifyParams.sampleRate * 100), primaryLabel: 'rate' })
     if (destruction.pointCloudEnabled) activeEffects.push({ id: 'point_cloud', label: 'Point Cloud', color: '#ff9900', primaryValue: Math.round(destruction.pointCloudParams.depthMultiplier * 100), primaryLabel: 'depth' })
+
+    // Face HUD
+    if (morph.faceHudEnabled) {
+      activeEffects.push({ id: 'face_hud', label: 'Face HUD', color: '#00ffcc', primaryValue: Math.round(morph.faceHudParams.wireframeOpacity * 100), primaryLabel: 'wire' })
+    }
 
     // Sort by effectOrder
     return [...activeEffects].sort((a, b) => {

@@ -54,8 +54,8 @@ export const EFFECTS: EffectDefinition[] = [
   { id: 'contour', label: 'CONTOUR', color: '#00ffff', row: 'vision', page: 1, min: 0, max: 100 },
   { id: 'landmarks', label: 'LNDMRK', color: '#FF0055', row: 'vision', page: 1, min: 10, max: 90 },
 
-  // Row 3-4: Reserved
-  { id: 'reserved_v3', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },
+  // Row 3: Detection/HUD
+  { id: 'face_hud', label: 'FACE HUD', color: '#00ffcc', row: 'vision', page: 1, min: 0, max: 1 },
   { id: 'reserved_v4', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },
   { id: 'reserved_v5', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },
   { id: 'reserved_v6', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },

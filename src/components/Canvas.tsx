@@ -12,6 +12,7 @@ import { useRoutingStore } from '../stores/routingStore'
 import { useRecordingStore } from '../stores/recordingStore'
 import { useDestructionModeStore } from '../stores/destructionModeStore'
 import { useDestructionStore } from '../stores/destructionStore'
+import { useMorphStore } from '../stores/morphStore'
 import { useVisionTrackingStore } from '../stores/visionTrackingStore'
 import { useLandmarksStore } from '../stores/landmarksStore'
 import { useSlicerStore } from '../stores/slicerStore'
@@ -44,6 +45,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     pointCloudEnabled,
     pointCloudParams,
   } = useDestructionStore()
+
+  // Face HUD state
+  const {
+    faceHudEnabled,
+    faceHudParams,
+  } = useMorphStore()
 
   // Slicer state
   const {
@@ -234,6 +241,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     pipeline.timeSmear?.updateParams({ ...timeSmear, mix: getMix('time_smear') })
     pipeline.freezeMask?.updateParams({ ...freezeMask, mix: getMix('freeze_mask') })
 
+    // Face HUD
+    pipeline.faceHud?.updateParams({ ...faceHudParams, mix: getMix('face_hud') })
+
     // Vision effects (GPU overlay versions)
     pipeline.dotsEffect?.updateParams({ ...dotsParams, mix: getMix('acid_dots') })
     pipeline.asciiEffect?.updateParams({
@@ -284,6 +294,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       sonifyEnabled: getEffectiveEnabled('sonify', sonifyEnabled && !effectBypassed['sonify']),
       // Point cloud - performance grid only
       pointCloudEnabled: getEffectiveEnabled('point_cloud', pointCloudEnabled && !effectBypassed['point_cloud']),
+      faceHudEnabled: getEffectiveEnabled('face_hud', faceHudEnabled && !effectBypassed['face_hud']),
       // Trace effects
       brightTraceEnabled: getEffectiveEnabled('track_bright', brightEnabled),
       motionTraceEnabled: getEffectiveEnabled('track_motion', motionEnabled),
@@ -327,6 +338,14 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     if (pipeline.sonify && sonifyEnabled) {
       const getMix = (id: string) => effectMix[id] ?? 1
       pipeline.sonify.updateParams({ ...sonifyParams, mix: getMix('sonify') })
+    }
+
+    // Face HUD - init face mesh and pass video element (detection runs in update())
+    if (pipeline.faceHud) {
+      if (faceHudEnabled) {
+        pipeline.faceHud.initFaceMesh()
+      }
+      pipeline.faceHud.setVideoElement(faceHudEnabled ? videoElement : null)
     }
 
     // Update point cloud params + video aspect
@@ -492,6 +511,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     sonifyParams,
     pointCloudEnabled,
     pointCloudParams,
+    faceHudEnabled,
+    faceHudParams,
     // Trace effects
     brightEnabled,
     edgeEnabled,
@@ -633,7 +654,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate)
-      pipeline.render()
+      try {
+        pipeline.render()
+      } catch (e) {
+        // Prevent render errors (e.g. tainted texture) from crashing the loop
+        console.warn('Render error:', e)
+      }
     }
     animate()
 

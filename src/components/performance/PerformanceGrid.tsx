@@ -15,6 +15,7 @@ import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
+import { useMorphStore } from '../../stores/morphStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { getEffectStatusText, getPageStatusText } from '../../config/statusDescriptions'
 import { DataGrid } from '../ui/MicroVisuals'
@@ -48,6 +49,7 @@ export function PerformanceGrid() {
 
   // Destruction store
   const destruction = useDestructionStore()
+  const morph = useMorphStore()
 
   // Effect sequencer store — ensure tracks exist when toggling effects
   const ensureTrack = useEffectSequencerStore((s) => s.ensureTrack)
@@ -910,6 +912,17 @@ export function PerformanceGrid() {
           onValueChange: (v: number) => destruction.updatePointCloudParams({ depthMultiplier: v / 100 }),
         }
 
+      case 'face_hud':
+        return {
+          active: morph.faceHudEnabled,
+          value: morph.faceHudParams.wireframeOpacity * 100,
+          onToggle: () => {
+            if (!morph.faceHudEnabled) moveToEndOfChain(effectId)
+            morph.setFaceHudEnabled(!morph.faceHudEnabled)
+          },
+          onValueChange: (v: number) => morph.updateFaceHudParams({ wireframeOpacity: v / 100 }),
+        }
+
       // Reserved / empty slots
       default:
         if (effectId.startsWith('reserved')) {
@@ -942,7 +955,7 @@ export function PerformanceGrid() {
         return visionTracking.brightEnabled || visionTracking.edgeEnabled ||
                visionTracking.colorEnabled || visionTracking.motionEnabled ||
                visionTracking.faceEnabled || visionTracking.handsEnabled ||
-               contour.enabled || landmarks.enabled
+               contour.enabled || landmarks.enabled || morph.faceHudEnabled
       case 2: // GLITCH
         return glitch.rgbSplitEnabled || glitch.chromaticAberrationEnabled ||
                glitch.posterizeEnabled || glitch.colorGradeEnabled ||

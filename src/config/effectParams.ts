@@ -10,6 +10,7 @@ import { useDataOverlayStore } from '../stores/dataOverlayStore'
 import { useStrandStore } from '../stores/strandStore'
 import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
+import { useMorphStore } from '../stores/morphStore'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -63,6 +64,7 @@ const dat = () => useDataOverlayStore.getState()
 const str = () => useStrandStore.getState()
 const mot = () => useMotionStore.getState()
 const des = () => useDestructionStore.getState()
+const mor = () => useMorphStore.getState()
 
 export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
   // ═══════════════════════════════════════════════════════════════════════
@@ -1183,5 +1185,39 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
     ],
     setEnabled: (v) => des().setPointCloudEnabled(v),
     getEnabled: () => des().pointCloudEnabled,
+  },
+
+  // Face HUD
+  face_hud: {
+    getParams: () => [
+      { id: 'wireframeOpacity', label: 'WIRE', min: 0, max: 1, step: 0.01,
+        apply: (v) => mor().updateFaceHudParams({ wireframeOpacity: v }), read: () => mor().faceHudParams.wireframeOpacity },
+      { id: 'smoothing', label: 'SMTH', min: 0, max: 0.95, step: 0.01,
+        apply: (v) => mor().updateFaceHudParams({ smoothing: v }), read: () => mor().faceHudParams.smoothing },
+      { id: 'scanLines', label: 'SCAN', min: 0, max: 1, step: 0.01,
+        apply: (v) => mor().updateFaceHudParams({ scanLines: v }), read: () => mor().faceHudParams.scanLines },
+      { id: 'detectionInterval', label: 'DET', min: 1, max: 10, step: 1, controlType: 'stepper' as const,
+        apply: (v) => mor().updateFaceHudParams({ detectionInterval: v }), read: () => mor().faceHudParams.detectionInterval },
+      { id: 'emotionDisplay', label: 'EMO', min: 0, max: 1, step: 1,
+        apply: (v) => mor().updateFaceHudParams({ emotionDisplay: v >= 0.5 }), read: () => mor().faceHudParams.emotionDisplay ? 1 : 0 },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => mor().updateFaceHudParams({ mix: v }), read: () => mor().faceHudParams.mix },
+    ],
+    getSelectParams: () => [
+      { id: 'hudColor', label: 'COLOR', type: 'select' as const,
+        options: [
+          { value: '#00ffcc', label: 'Cyber' },
+          { value: '#ff0055', label: 'Red' },
+          { value: '#00aaff', label: 'Blue' },
+          { value: '#ffff00', label: 'Yellow' },
+          { value: '#ff6b9d', label: 'Pink' },
+          { value: '#ffffff', label: 'White' },
+          { value: '#00ff00', label: 'Green' },
+        ],
+        apply: (v) => mor().updateFaceHudParams({ hudColor: v }),
+        read: () => mor().faceHudParams.hudColor },
+    ],
+    setEnabled: (v) => mor().setFaceHudEnabled(v),
+    getEnabled: () => mor().faceHudEnabled,
   },
 }

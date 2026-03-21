@@ -34,6 +34,7 @@ import {
   FaceTraceEffect,
   HandsTraceEffect,
 } from './glitch-engine'
+import { FaceHudEffect } from './morph'
 
 export class EffectPipeline {
   private composer: EffectComposer
@@ -73,6 +74,9 @@ export class EffectPipeline {
   pixelSort: PixelSortEffect | null = null
   sonify: SonifyEffect | null = null
   pointCloud: PointCloudEffect | null = null
+
+  // Face HUD effect
+  faceHud: FaceHudEffect | null = null
 
   // Trace effects (mask generation)
   brightTrace: BrightTraceEffect | null = null
@@ -148,6 +152,9 @@ export class EffectPipeline {
     this.sonify = new SonifyEffect()
     this.pointCloud = new PointCloudEffect()
 
+    // Face HUD effect
+    this.faceHud = new FaceHudEffect()
+
     // Trace effects (for mask generation)
     this.brightTrace = new BrightTraceEffect()
     this.motionTrace = new MotionTraceEffect()
@@ -184,6 +191,7 @@ export class EffectPipeline {
       case 'pixelSort': return this.pixelSort
       case 'sonify': return this.sonify
       case 'point_cloud': return this.pointCloud
+      case 'face_hud': return this.faceHud
       // Trace effects
       case 'track_bright': return this.brightTrace
       case 'track_motion': return this.motionTrace
@@ -224,6 +232,7 @@ export class EffectPipeline {
     pixelSortEnabled: boolean
     sonifyEnabled: boolean
     pointCloudEnabled: boolean
+    faceHudEnabled: boolean
     // Trace effects
     brightTraceEnabled: boolean
     motionTraceEnabled: boolean
@@ -283,6 +292,7 @@ export class EffectPipeline {
       pixelSort: config.pixelSortEnabled,
       sonify: config.sonifyEnabled,
       point_cloud: config.pointCloudEnabled,
+      face_hud: config.faceHudEnabled,
       // Trace effects
       track_bright: config.brightTraceEnabled,
       track_motion: config.motionTraceEnabled,
@@ -451,6 +461,7 @@ export class EffectPipeline {
     this.pixelSort?.dispose()
     this.sonify?.dispose()
     this.pointCloud?.dispose()
+    this.faceHud?.dispose()
     // Trace effects
     this.brightTrace?.dispose()
     this.motionTrace?.dispose()

@@ -11,6 +11,7 @@ import { useDataOverlayStore } from '../stores/dataOverlayStore'
 import { useStrandStore } from '../stores/strandStore'
 import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
+import { useMorphStore } from '../stores/morphStore'
 
 export function useEffectDisable() {
   const glitch = useGlitchEngineStore()
@@ -25,6 +26,7 @@ export function useEffectDisable() {
   const strand = useStrandStore()
   const motion = useMotionStore()
   const destruction = useDestructionStore()
+  const morph = useMorphStore()
 
   const disableEffect = useCallback((effectId: string) => {
     // Clear bypass state so re-enabling starts fresh
@@ -105,8 +107,9 @@ export function useEffectDisable() {
       case 'pixelSort': destruction.setPixelSortEnabled(false); break
       case 'sonify': destruction.setSonifyEnabled(false); break
       case 'point_cloud': destruction.setPointCloudEnabled(false); break
+      case 'face_hud': morph.setFaceHudEnabled(false); break
     }
-  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion, destruction])
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion, destruction, morph])
 
   return { disableEffect }
 }

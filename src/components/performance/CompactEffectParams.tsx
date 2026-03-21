@@ -10,6 +10,7 @@ import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
+import { useMorphStore } from '../../stores/morphStore'
 import { Knob } from './Knob'
 import { BLOCK } from './blocks/blockTheme'
 
@@ -31,6 +32,7 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
   const strand = useStrandStore()
   const motion = useMotionStore()
   const destruction = useDestructionStore()
+  const morph = useMorphStore()
 
   const knobProps = { size: 'xs' as const, showArc: true, showValue: true, color }
 
@@ -679,6 +681,18 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
             onChange={v => destruction.updatePointCloudParams({ scaleX: v })} paramId="point_cloud.scaleX" {...knobProps} />
           <Knob label="SCL.Y" value={destruction.pointCloudParams.scaleY} min={0.3} max={2} step={0.01}
             onChange={v => destruction.updatePointCloudParams({ scaleY: v })} paramId="point_cloud.scaleY" {...knobProps} />
+        </div>
+      )
+
+    case 'face_hud':
+      return (
+        <div className="flex gap-4">
+          <Knob label="WIRE" value={morph.faceHudParams.wireframeOpacity} min={0} max={1} step={0.01}
+            onChange={v => morph.updateFaceHudParams({ wireframeOpacity: v })} paramId="face_hud.wireframeOpacity" {...knobProps} />
+          <Knob label="SMTH" value={morph.faceHudParams.smoothing} min={0} max={0.95} step={0.01}
+            onChange={v => morph.updateFaceHudParams({ smoothing: v })} paramId="face_hud.smoothing" {...knobProps} />
+          <Knob label="SCAN" value={morph.faceHudParams.scanLines} min={0} max={1} step={0.01}
+            onChange={v => morph.updateFaceHudParams({ scanLines: v })} paramId="face_hud.scanLines" {...knobProps} />
         </div>
       )
 

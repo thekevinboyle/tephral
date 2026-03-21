@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { useRecordingStore } from './recordingStore'
 
-export type MediaSource = 'none' | 'webcam' | 'file' | 'slicer'
+export type MediaSource = 'none' | 'webcam' | 'file' | 'slicer' | 'screen'
 
 interface MediaState {
   source: MediaSource
@@ -102,6 +102,14 @@ export const useMediaStore = create<MediaState>((set, get) => ({
     if (source === 'file' && videoElement) {
       videoElement.pause()
       videoElement.src = ''
+    }
+
+    if (source === 'screen' && videoElement) {
+      const stream = videoElement.srcObject as MediaStream | null
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop())
+      }
+      videoElement.srcObject = null
     }
 
     set({

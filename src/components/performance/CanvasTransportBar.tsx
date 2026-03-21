@@ -8,6 +8,7 @@ import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useAcidStore } from '../../stores/acidStore'
 import { useSlicerStore } from '../../stores/slicerStore'
+import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useUIStore } from '../../stores/uiStore'
 
 export function CanvasTransportBar() {
@@ -95,18 +96,23 @@ export function CanvasTransportBar() {
       useSlicerStore.getState().setEnabled(false)
       return
     }
+    const seq = useEffectSequencerStore.getState()
     if (isRecordingMode) {
       if (isRecordingPlaying) {
         pauseRecording()
+        seq.stop()
       } else {
         if (recordingTime === 0) resetEffects()
         playRecording()
+        seq.play()
       }
     } else if (videoElement) {
       if (videoElement.paused) {
         videoElement.play().catch(console.error)
+        seq.play()
       } else {
         videoElement.pause()
+        seq.stop()
       }
     }
   }, [isRecordingMode, isRecordingPlaying, pauseRecording, recordingTime, resetEffects, playRecording, videoElement])
@@ -115,7 +121,7 @@ export function CanvasTransportBar() {
     <div
       className="flex items-center flex-shrink-0"
       style={{
-        height: 48,
+        height: 64,
         gap: 12,
         padding: '0 12px',
         backgroundColor: 'var(--bg-void)',

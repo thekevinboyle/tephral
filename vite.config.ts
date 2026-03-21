@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 import { cpSync, existsSync } from 'fs'
-
 // Plugin to copy marketing site to dist
 const copyMarketingSite = () => ({
   name: 'copy-marketing-site',
@@ -23,14 +22,14 @@ export default defineConfig({
   server: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
     },
   },
   // Also needed for preview builds
   preview: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
     },
   },
   // Optimize FFmpeg deps

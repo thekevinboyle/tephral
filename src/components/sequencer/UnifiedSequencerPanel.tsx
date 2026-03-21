@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useSequencerContainerStore } from '../../stores/sequencerContainerStore'
 import { useRoutingStore } from '../../stores/routingStore'
+import { useMediaStore } from '../../stores/mediaStore'
+import { useRecordingStore } from '../../stores/recordingStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useEffectSequencerPlayback } from '../../hooks/useEffectSequencerPlayback'
 import { useWebMIDI } from '../../hooks/useWebMIDI'
@@ -93,6 +95,29 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
       setSelectedEffect(selectedStep.effectId)
     }
   }, [selectedStep, selectedEffectId, setSelectedEffect])
+
+  // ─── Linked play/stop (also toggles video/recording playback) ─────────
+  const linkedPlay = useCallback(() => {
+    play()
+    const { source, videoElement } = useMediaStore.getState()
+    const rec = useRecordingStore.getState()
+    if (rec.duration > 0 && !rec.isRecording) {
+      rec.play()
+    } else if (source === 'file' && videoElement && videoElement.paused) {
+      videoElement.play().catch(console.error)
+    }
+  }, [play])
+
+  const linkedStop = useCallback(() => {
+    stop()
+    const { source, videoElement } = useMediaStore.getState()
+    const rec = useRecordingStore.getState()
+    if (rec.isPlaying) {
+      rec.pause()
+    } else if (source === 'file' && videoElement && !videoElement.paused) {
+      videoElement.pause()
+    }
+  }, [stop])
 
   // ─── Effect tab click → switch to effect params ────────────────────────
   const handleEffectTabSelect = useCallback(
@@ -233,8 +258,8 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
         swing={swing}
         currentStep={currentStep}
         stepPage={stepPage}
-        onPlay={play}
-        onStop={stop}
+        onPlay={linkedPlay}
+        onStop={linkedStop}
         onBpmChange={setBpm}
         onResolutionChange={setResolution}
         onSwingChange={setSwing}

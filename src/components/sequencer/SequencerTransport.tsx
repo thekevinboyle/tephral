@@ -232,7 +232,7 @@ export function SequencerTransport({
         padding: '0 var(--panel-padding)',
         gap: 0,
         height: 64,
-        backgroundColor: '#111111',
+        backgroundColor: 'var(--bg-void)',
         borderBottom: '1px solid var(--border-light)',
       }}
     >

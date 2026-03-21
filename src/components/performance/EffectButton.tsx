@@ -202,9 +202,21 @@ export function EffectButton({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerLeave}
+      onPointerLeave={(e) => {
+        handlePointerLeave()
+        if (!disabled) {
+          e.currentTarget.style.backgroundColor = 'var(--bg-surface)'
+          e.currentTarget.style.borderColor = isSoloed ? 'var(--text-primary)' : active ? 'var(--accent)' : 'var(--border)'
+        }
+      }}
       onPointerCancel={handlePointerLeave}
-      onMouseEnter={statusText ? () => setStatusText(statusText) : undefined}
+      onMouseEnter={(e) => {
+        if (statusText) setStatusText(statusText)
+        if (!disabled) {
+          e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'
+          e.currentTarget.style.borderColor = isSoloed ? 'var(--text-primary)' : active ? 'var(--accent)' : 'var(--border-emphasis)'
+        }
+      }}
       className="relative rounded-sm flex select-none touch-none w-full h-full p-1.5 overflow-hidden"
       style={{
         backgroundColor: 'var(--bg-surface)',
@@ -217,8 +229,7 @@ export function EffectButton({
           : active
             ? 'inset 3px 0 0 var(--accent), var(--shadow-button)'
             : 'var(--shadow-button)',
-        borderTop: !isSoloed && !active ? 'var(--border-top-highlight)' : undefined,
-        transition: 'box-shadow 0.15s ease-out, border 0.15s ease-out',
+        transition: 'background-color 0.12s, box-shadow 0.15s ease-out, border-color 0.12s',
       }}
     >
       {/* Main content area */}

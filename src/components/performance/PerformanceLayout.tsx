@@ -146,7 +146,7 @@ export function PerformanceLayout() {
           >
             <BankPanel />
           </div>
-          <div style={{ height: 200 }}>
+          <div style={{ height: 224 }}>
             <PerformanceGrid />
           </div>
         </div>

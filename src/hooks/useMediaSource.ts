@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react'
 import { useMediaStore } from '../stores/mediaStore'
 import { useRecordingStore } from '../stores/recordingStore'
 import { useSlicerStore } from '../stores/slicerStore'
+import { createCroppedCapture, type CroppedCapture, type CropRegion } from '../utils/screenCrop'
 
 /**
  * Unified hook for media source management
@@ -9,6 +10,7 @@ import { useSlicerStore } from '../stores/slicerStore'
  */
 export function useMediaSource() {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const croppedCaptureRef = useRef<CroppedCapture | null>(null)
 
   const {
     source,
@@ -209,6 +211,140 @@ export function useMediaSource() {
     return true
   }, [canSwitchSource, switchSource, setSlicerEnabled])
 
+  // Store the raw screen capture source video for cropping
+  const screenSourceRef = useRef<HTMLVideoElement | null>(null)
+
+  // Start screen/tab/window capture (shows full capture, user crops via UI)
+  const startScreenCapture = useCallback(async () => {
+    const check = canSwitchSource()
+    if (!check.allowed) {
+      setError(check.reason || 'Cannot switch source')
+      return false
+    }
+
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      // Stop slicer if active
+      setSlicerEnabled(false)
+
+      // Clean up any previous cropped capture
+      if (croppedCaptureRef.current) {
+        croppedCaptureRef.current.dispose()
+        croppedCaptureRef.current = null
+      }
+
+      const stream = await (navigator.mediaDevices.getDisplayMedia as (opts: Record<string, unknown>) => Promise<MediaStream>)({
+        video: true,
+        audio: false,
+        preferCurrentTab: false,
+        surfaceSwitching: 'exclude',
+        selfBrowserSurface: 'exclude',
+        systemAudio: 'exclude',
+      })
+
+      // Stop current source after user picks (so cancelling doesn't clear existing source)
+      switchSource('screen')
+
+      const sourceVideo = document.createElement('video')
+      sourceVideo.srcObject = stream
+      sourceVideo.playsInline = true
+      sourceVideo.muted = true
+
+      await sourceVideo.play()
+
+      // Wait for video dimensions to be available
+      if (!sourceVideo.videoWidth) {
+        await new Promise<void>((resolve) => {
+          const check = () => {
+            if (sourceVideo.videoWidth > 0) { resolve(); return }
+            requestAnimationFrame(check)
+          }
+          check()
+        })
+      }
+
+      screenSourceRef.current = sourceVideo
+
+      // Listen for browser "Stop sharing" button
+      stream.getVideoTracks()[0]?.addEventListener('ended', () => {
+        if (croppedCaptureRef.current) {
+          croppedCaptureRef.current.dispose()
+          croppedCaptureRef.current = null
+        }
+        screenSourceRef.current = null
+        useMediaStore.getState().stopCurrentMedia()
+        useMediaStore.getState().setSource('none')
+      })
+
+      // Always pipe through canvas to avoid cross-origin tainted texture issues.
+      // getDisplayMedia from a cross-origin tab produces a tainted video that
+      // crashes WebGL texImage2D. Drawing through canvas "cleans" the origin.
+      const fullCrop: CropRegion = {
+        x: 0,
+        y: 0,
+        w: sourceVideo.videoWidth,
+        h: sourceVideo.videoHeight,
+      }
+      const cropped = await createCroppedCapture(sourceVideo, fullCrop)
+      croppedCaptureRef.current = cropped
+
+      setVideoElement(cropped.video)
+      setIsPlaying(true)
+      setIsLoading(false)
+
+      return true
+    } catch (err) {
+      // User cancelled the picker — don't clear existing source
+      if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        setIsLoading(false)
+        return false
+      }
+      setError(err instanceof Error ? err.message : 'Failed to capture screen')
+      setIsLoading(false)
+      return false
+    }
+  }, [canSwitchSource, switchSource, setVideoElement, setIsLoading, setError, setIsPlaying, setSlicerEnabled])
+
+  // Apply a crop region to the current screen capture
+  const cropScreenCapture = useCallback(async (crop: CropRegion) => {
+    const sourceVideo = screenSourceRef.current
+    if (!sourceVideo) return
+
+    // Clean up previous crop
+    if (croppedCaptureRef.current) {
+      croppedCaptureRef.current.dispose()
+      croppedCaptureRef.current = null
+    }
+
+    const cropped = await createCroppedCapture(sourceVideo, crop)
+    croppedCaptureRef.current = cropped
+    setVideoElement(cropped.video)
+    useMediaStore.getState().setVideoAspect(crop.w / crop.h)
+  }, [setVideoElement])
+
+  // Clear crop and go back to full capture (still piped through canvas)
+  const clearScreenCrop = useCallback(async () => {
+    if (croppedCaptureRef.current) {
+      croppedCaptureRef.current.dispose()
+      croppedCaptureRef.current = null
+    }
+    const sourceVideo = screenSourceRef.current
+    if (sourceVideo) {
+      const fullCrop: CropRegion = {
+        x: 0,
+        y: 0,
+        w: sourceVideo.videoWidth,
+        h: sourceVideo.videoHeight,
+      }
+      const cropped = await createCroppedCapture(sourceVideo, fullCrop)
+      croppedCaptureRef.current = cropped
+      setVideoElement(cropped.video)
+      useMediaStore.getState().setVideoAspect(null)
+    }
+  }, [setVideoElement])
+
   // Open file picker
   const openFilePicker = useCallback(() => {
     if (!fileInputRef.current) {
@@ -231,6 +367,7 @@ export function useMediaSource() {
   // Computed state
   const isWebcamActive = source === 'webcam'
   const isFileActive = source === 'file'
+  const isScreenActive = source === 'screen'
   const isSlicerActive = source === 'slicer'
   const hasActiveSource = source !== 'none'
 
@@ -246,6 +383,7 @@ export function useMediaSource() {
     // Computed state
     isWebcamActive,
     isFileActive,
+    isScreenActive,
     isSlicerActive,
     hasActiveSource,
 
@@ -254,6 +392,10 @@ export function useMediaSource() {
     deactivateWebcam,
     toggleWebcam,
     activateFile,
+    startScreenCapture,
+    cropScreenCapture,
+    clearScreenCrop,
+    screenSourceVideo: screenSourceRef.current,
     activateSlicer,
     deactivateSlicer,
     deactivateSource,

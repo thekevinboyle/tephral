@@ -3,13 +3,11 @@ import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { UnifiedSequencerPanel } from './UnifiedSequencerPanel'
 import { SlicerPanel } from './SlicerPanel'
-import { ShapeMorpher } from '../ui/MicroVisuals'
 
-// Icon symbols for each sequencer
-const SEQUENCER_ICONS = {
-  effects: '⬡',  // Hexagon - effect grid / p-locks
-  slicer: '⊗',   // Slice/cut - crosshair circle
-} as const
+const SEQUENCER_MODES = [
+  { id: 'effects', icon: '\u2B21', label: 'P-LOCK', tip: 'seqEffects' },
+  { id: 'slicer', icon: '\u2297', label: 'CHI_R0N', tip: 'seqSlicer' },
+] as const
 
 export function SequencerContainer({ hideTabsBar = false }: { hideTabsBar?: boolean } = {}) {
   const { activeSequencer, setActiveSequencer } = useSequencerContainerStore()
@@ -25,50 +23,35 @@ export function SequencerContainer({ hideTabsBar = false }: { hideTabsBar?: bool
           width: 'var(--sidebar-width)',
         }}
       >
-        <button
-          onClick={() => setActiveSequencer('effects')}
-          className="px-2 py-3 flex items-center justify-center transition-colors"
-          style={{
-            backgroundColor: activeSequencer === 'effects' ? 'var(--bg-elevated)' : 'transparent',
-            borderBottom: '1px solid var(--border)',
-          }}
-          title="P-LOCK - Effect Sequencer"
-          onMouseEnter={() => setStatusText(getUIStatusText('seqEffects'))}
-          onMouseLeave={() => setStatusText(null)}
-        >
-          <span
-            className="text-[18px]"
-            style={{
-              color: activeSequencer === 'effects' ? 'var(--seq-accent)' : 'var(--text-ghost)',
-            }}
-          >
-            {SEQUENCER_ICONS.effects}
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveSequencer('slicer')}
-          className="px-2 py-3 flex items-center justify-center transition-colors"
-          style={{
-            backgroundColor: activeSequencer === 'slicer' ? 'var(--bg-elevated)' : 'transparent',
-            borderBottom: '1px solid var(--border)',
-          }}
-          title="CHI_R0N - Slicer"
-          onMouseEnter={() => setStatusText(getUIStatusText('seqSlicer'))}
-          onMouseLeave={() => setStatusText(null)}
-        >
-          <span
-            className="text-[18px]"
-            style={{
-              color: activeSequencer === 'slicer' ? 'var(--seq-accent)' : 'var(--text-ghost)',
-            }}
-          >
-            {SEQUENCER_ICONS.slicer}
-          </span>
-        </button>
-        {/* Spacer with decorative visual */}
-        <div className="flex-1 flex items-end justify-center pb-3">
-          <ShapeMorpher value={0.5} size={24} color="var(--text-ghost)" className="opacity-15" />
-        </div>
+        {SEQUENCER_MODES.map((mode) => {
+          const isActive = activeSequencer === mode.id
+          return (
+            <button
+              key={mode.id}
+              onClick={() => setActiveSequencer(mode.id)}
+              className="w-full flex items-center justify-center transition-colors"
+              style={{
+                height: 64,
+                borderBottom: '1px solid var(--border)',
+                borderLeft: isActive ? '2px solid var(--seq-accent)' : '2px solid transparent',
+                backgroundColor: 'transparent',
+              }}
+              title={mode.label}
+              onMouseEnter={() => setStatusText(getUIStatusText(mode.tip))}
+              onMouseLeave={() => setStatusText(null)}
+            >
+              <span
+                className="text-[18px]"
+                style={{
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-ghost)',
+                }}
+              >
+                {mode.icon}
+              </span>
+            </button>
+          )
+        })}
+        <div className="flex-1" />
       </div>
 
       {/* Content */}

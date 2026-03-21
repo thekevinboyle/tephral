@@ -24,7 +24,6 @@ export function SourceSelector({ variant = 'compact' }: SourceSelectorProps) {
   const handleWebcamClick = useCallback(() => {
     const check = switchCheck()
     if (!check.allowed) {
-      // Could show toast here
       console.warn(check.reason)
       return
     }
@@ -55,6 +54,8 @@ export function SourceSelector({ variant = 'compact' }: SourceSelectorProps) {
     cursor: isDisabled ? 'not-allowed' : 'pointer',
   })
 
+  const isFileActive = source === 'file'
+
   return (
     <div className="flex items-center gap-2">
       {variant === 'full' && (
@@ -84,9 +85,9 @@ export function SourceSelector({ variant = 'compact' }: SourceSelectorProps) {
         onClick={handleFileClick}
         disabled={isRecording}
         className={buttonBase}
-        style={getButtonStyle(source === 'file', isRecording)}
-        onMouseEnter={(e) => { source !== 'file' && !isRecording && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)'); setStatusText(getUIStatusText('file')) }}
-        onMouseLeave={(e) => { source !== 'file' && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)'); setStatusText(null) }}
+        style={getButtonStyle(isFileActive, isRecording)}
+        onMouseEnter={(e) => { !isFileActive && !isRecording && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)'); setStatusText(getUIStatusText('file')) }}
+        onMouseLeave={(e) => { !isFileActive && (e.currentTarget.style.backgroundColor = 'var(--bg-surface)'); setStatusText(null) }}
         title={isRecording ? 'Cannot switch while recording' : 'Load video or image file'}
       >
         File

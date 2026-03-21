@@ -41,12 +41,12 @@ export function BottomPanelTabBar() {
         alignItems: 'stretch',
         justifyContent: 'space-between',
         height: 'var(--row-bottom-bar)',
-        backgroundColor: '#111111',
+        backgroundColor: 'var(--bg-void)',
         borderBottom: isExpanded ? '1px solid var(--border-light)' : 'none',
       }}
     >
-      {/* Left: tabs */}
-      <div style={{ display: 'flex', alignItems: 'stretch' }}>
+      {/* Left: tabs (offset to align with sequencer content past sidebar) */}
+      <div style={{ display: 'flex', alignItems: 'stretch', paddingLeft: 'var(--sidebar-width)' }}>
         {TABS.map((tab) => {
           const isActive = bottomPanelTab === tab
           return (

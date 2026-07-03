@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useModulationStore, type ModulationState, LFO_COUNT } from '../../stores/modulationStore'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useModulationStore, computeMorphedWave, type ModulationState, type LFOState, type EnvelopeState, LFO_COUNT } from '../../stores/modulationStore'
 import { useSequencerStore } from '../../stores/sequencerStore'
 import { useMIDIStore } from '../../stores/midiStore'
 import { useAudioReactiveStore } from '../../stores/audioReactiveStore'
@@ -198,6 +198,7 @@ export function ModulatorSection({
   onToggle,
   onSelect,
   color,
+  live = false,
   children,
 }: {
   title: string
@@ -206,6 +207,7 @@ export function ModulatorSection({
   onToggle: () => void
   onSelect: () => void
   color: string
+  live?: boolean
   children: React.ReactNode
 }) {
   const setStatusText = useUIStore((s) => s.setStatusText)
@@ -213,7 +215,7 @@ export function ModulatorSection({
 
   return (
     <div
-      className="overflow-hidden"
+      className={live ? 'overflow-hidden alive-active' : 'overflow-hidden'}
       style={{
         border: selected ? `1px solid ${color}` : enabled ? `1px solid ${color}40` : '1px solid var(--border)',
         backgroundColor: selected ? `${color}15` : enabled ? `${color}08` : 'transparent',
@@ -279,6 +281,283 @@ function ValueBar({ value, color }: { value: number; color: string }) {
         />
       </div>
     </div>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Live signal scopes (oscilloscope-style readouts driven by rAF + refs —
+// no React state updates at frame rate)
+// ════════════════════════════════════════════════════════════════════════════
+
+// Shared rAF driver: calls draw() every frame, cancelled on unmount
+function useScopeFrame(draw: (now: number) => void) {
+  const drawRef = useRef(draw)
+  drawRef.current = draw
+  useEffect(() => {
+    let frame = 0
+    const loop = (now: number) => {
+      drawRef.current(now)
+      frame = requestAnimationFrame(loop)
+    }
+    frame = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+}
+
+// Scope chrome: bordered strip with a scrolling telemetry grid when active
+function ScopeShell({ active, height, children }: { active: boolean; height: number; children: React.ReactNode }) {
+  return (
+    <div
+      className="mt-1 rounded-sm overflow-hidden"
+      style={{
+        border: '1px solid var(--border)',
+        backgroundColor: 'var(--bg-elevated)',
+        backgroundImage:
+          'repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 8px)',
+        animation: active ? 'signal-flow 1.6s linear infinite' : 'none',
+        ['--signal-span' as string]: '8px',
+      }}
+    >
+      <svg
+        viewBox={`0 0 100 ${height}`}
+        preserveAspectRatio="none"
+        style={{ display: 'block', width: '100%', height }}
+      >
+        <line
+          x1={0}
+          y1={height / 2}
+          x2={100}
+          y2={height / 2}
+          stroke="rgba(255,255,255,0.07)"
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+        />
+        {children}
+      </svg>
+    </div>
+  )
+}
+
+// Scrolling history trace of a live value — ring buffer sampled once per frame
+function LiveScope({
+  source,
+  color,
+  active,
+  height = 24,
+}: {
+  source: () => { value: number; enabled: boolean }
+  color: string
+  active: boolean
+  height?: number
+}) {
+  const SAMPLES = 96
+  const polyRef = useRef<SVGPolylineElement>(null)
+  const dotRef = useRef<SVGLineElement>(null)
+  const buffer = useRef<Float32Array | null>(null)
+  const head = useRef(0)
+
+  useScopeFrame(() => {
+    const poly = polyRef.current
+    const dot = dotRef.current
+    if (!poly || !dot) return
+    const { value, enabled } = source()
+    if (!buffer.current) buffer.current = new Float32Array(SAMPLES).fill(Math.max(0, Math.min(1, value)))
+    const buf = buffer.current
+    buf[head.current] = Math.max(0, Math.min(1, value))
+    head.current = (head.current + 1) % SAMPLES
+
+    let pts = ''
+    let lastY = height / 2
+    for (let i = 0; i < SAMPLES; i++) {
+      const v = buf[(head.current + i) % SAMPLES]
+      lastY = height - 2 - v * (height - 4)
+      pts += `${((i / (SAMPLES - 1)) * 100).toFixed(1)},${lastY.toFixed(1)} `
+    }
+    poly.setAttribute('points', pts)
+    const y = lastY.toFixed(1)
+    dot.setAttribute('x1', '99')
+    dot.setAttribute('x2', '99')
+    dot.setAttribute('y1', y)
+    dot.setAttribute('y2', y)
+    poly.setAttribute('opacity', enabled ? '0.9' : '0.35')
+    dot.setAttribute('opacity', enabled ? '1' : '0.4')
+  })
+
+  return (
+    <ScopeShell active={active} height={height}>
+      <polyline
+        ref={polyRef}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.2}
+        vectorEffect="non-scaling-stroke"
+        opacity={0.35}
+      />
+      {/* Zero-length round-cap line renders as a perfect non-scaled phosphor dot */}
+      <line
+        ref={dotRef}
+        x1={99}
+        x2={99}
+        y1={height / 2}
+        y2={height / 2}
+        stroke={color}
+        strokeWidth={3.5}
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+        opacity={0.4}
+      />
+    </ScopeShell>
+  )
+}
+
+// Fixed height for the waveform/envelope scopes in the parameter panels
+const PANEL_SCOPE_H = 24
+// Map a 0-1 signal value to panel scope Y (2px padding top/bottom)
+function panelScopeY(v: number): number {
+  return PANEL_SCOPE_H - 2 - Math.max(0, Math.min(1, v)) * (PANEL_SCOPE_H - 4)
+}
+
+// LFO: exact morphed waveform (tilt/curve) with a dot at the live phase.
+// Enabled: tracks the engine phase. Idle: self-oscillates at the set rate.
+function LFOWaveScope({ lfo, index, color, active }: { lfo: LFOState; index: number; color: string; active: boolean }) {
+  const height = PANEL_SCOPE_H
+  const d = useMemo(() => {
+    let s = ''
+    for (let x = 0; x <= 100; x += 2) {
+      const v = computeMorphedWave(x / 100, lfo.tilt, lfo.curve)
+      s += `${x === 0 ? 'M' : 'L'} ${x} ${panelScopeY(v).toFixed(1)} `
+    }
+    return s
+  }, [lfo.tilt, lfo.curve])
+  const dotRef = useRef<SVGLineElement>(null)
+
+  useScopeFrame((now) => {
+    const dot = dotRef.current
+    const l = useModulationStore.getState().lfos[index]
+    if (!dot || !l) return
+    const phase = l.enabled
+      ? (l.phase + l.phaseOffset / 360) % 1
+      : ((now / 1000) * l.rate) % 1
+    const v = l.enabled ? l.currentValue : computeMorphedWave(phase, l.tilt, l.curve)
+    const x = (phase * 100).toFixed(1)
+    const y = panelScopeY(v).toFixed(1)
+    dot.setAttribute('x1', x)
+    dot.setAttribute('x2', x)
+    dot.setAttribute('y1', y)
+    dot.setAttribute('y2', y)
+    dot.setAttribute('opacity', l.enabled ? '1' : '0.55')
+  })
+
+  return (
+    <ScopeShell active={active} height={height}>
+      <path d={d} fill="none" stroke={color} strokeWidth={1.2} vectorEffect="non-scaling-stroke" opacity={active ? 0.9 : 0.45} />
+      <line
+        ref={dotRef}
+        x1={0}
+        x2={0}
+        y1={height / 2}
+        y2={height / 2}
+        stroke={color}
+        strokeWidth={3.5}
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+        opacity={0.55}
+      />
+    </ScopeShell>
+  )
+}
+
+// Envelope: the real ADSR curve (segment widths proportional to actual times)
+// with a dot tracking the live phase position and output value.
+const ENV_SUSTAIN_DWELL = 0.4 // fixed visual dwell for the sustain plateau
+function EnvScope({ envelope, color, active }: { envelope: EnvelopeState; color: string; active: boolean }) {
+  const height = PANEL_SCOPE_H
+  const layout = useMemo(() => {
+    const a = Math.max(envelope.attack, 0.02)
+    const dec = Math.max(envelope.decay, 0.02)
+    const r = Math.max(envelope.release, 0.02)
+    const total = a + dec + ENV_SUSTAIN_DWELL + r
+    const xA = (a / total) * 100
+    const xD = xA + (dec / total) * 100
+    const xS = xD + (ENV_SUSTAIN_DWELL / total) * 100
+    return { a, dec, r, xA, xD, xS }
+  }, [envelope.attack, envelope.decay, envelope.release])
+  const d = useMemo(
+    () =>
+      `M 0 ${panelScopeY(0).toFixed(1)} L ${layout.xA.toFixed(1)} ${panelScopeY(1).toFixed(1)} ` +
+      `L ${layout.xD.toFixed(1)} ${panelScopeY(envelope.sustain).toFixed(1)} L ${layout.xS.toFixed(1)} ${panelScopeY(envelope.sustain).toFixed(1)} ` +
+      `L 100 ${panelScopeY(0).toFixed(1)}`,
+    [layout, envelope.sustain]
+  )
+  const dotRef = useRef<SVGLineElement>(null)
+
+  useScopeFrame(() => {
+    const dot = dotRef.current
+    if (!dot) return
+    const env = useModulationStore.getState().envelope
+    let x = 0
+    switch (env.phase) {
+      case 'attack': x = Math.min(1, env.phaseStartTime / layout.a) * layout.xA; break
+      case 'decay': x = layout.xA + Math.min(1, env.phaseStartTime / layout.dec) * (layout.xD - layout.xA); break
+      case 'sustain': x = (layout.xD + layout.xS) / 2; break
+      case 'release': x = layout.xS + Math.min(1, env.phaseStartTime / layout.r) * (100 - layout.xS); break
+      default: x = 0
+    }
+    const xs = x.toFixed(1)
+    const ys = panelScopeY(env.currentValue).toFixed(1)
+    dot.setAttribute('x1', xs)
+    dot.setAttribute('x2', xs)
+    dot.setAttribute('y1', ys)
+    dot.setAttribute('y2', ys)
+    dot.setAttribute('opacity', env.phase !== 'idle' ? '1' : env.enabled ? '0.5' : '0.3')
+  })
+
+  return (
+    <ScopeShell active={active} height={height}>
+      <path d={d} fill="none" stroke={color} strokeWidth={1.2} vectorEffect="non-scaling-stroke" opacity={active ? 0.9 : 0.45} />
+      <line
+        ref={dotRef}
+        x1={0}
+        x2={0}
+        y1={height - 2}
+        y2={height - 2}
+        stroke={color}
+        strokeWidth={3.5}
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+        opacity={0.3}
+      />
+    </ScopeShell>
+  )
+}
+
+// Thin playhead sweeping across the step grid at the live step position
+function StepPlayhead({ color }: { color: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useScopeFrame(() => {
+    const el = ref.current
+    if (!el || !el.parentElement) return
+    const { step } = useModulationStore.getState()
+    const frac = Math.min(1, step.timeSinceStep * step.rate)
+    const pos = (step.currentStep + frac) / step.steps.length
+    el.style.transform = `translateX(${(pos * el.parentElement.clientWidth).toFixed(1)}px)`
+    el.style.opacity = step.enabled ? '0.7' : '0'
+  })
+
+  return (
+    <div
+      ref={ref}
+      className="absolute left-0 pointer-events-none"
+      style={{
+        top: 0,
+        bottom: 11,
+        width: 1,
+        backgroundColor: color,
+        boxShadow: `0 0 4px ${color}`,
+        opacity: 0,
+      }}
+    />
   )
 }
 
@@ -410,6 +689,7 @@ function LFOContent({ mod, bpm, wrapped, selected, onSelect, routingCount: _rout
       <ModSlider label="Tilt" value={lfo.tilt} min={-1} max={1} onChange={(v) => mod.setLFOTilt(idx, v)} format={(v) => v.toFixed(2)} color={color} />
       <ModSlider label="Curve" value={lfo.curve} min={-1} max={1} onChange={(v) => mod.setLFOCurve(idx, v)} format={(v) => v.toFixed(2)} color={color} />
       <ModRateSelect label="Rate" value={lfo.rate} bpm={bpm} onChange={(rate) => mod.setLFORate(idx, rate)} color={color} />
+      <LFOWaveScope lfo={lfo} index={idx} color={color} active={lfo.enabled} />
       <ValueBar value={lfo.currentValue} color={color} />
     </>
   )
@@ -424,6 +704,7 @@ function LFOContent({ mod, bpm, wrapped, selected, onSelect, routingCount: _rout
         onToggle={() => mod.toggleLFO(idx)}
         onSelect={onSelect ?? (() => {})}
         color={color}
+        live={lfo.enabled && (totalLfoRoutings ?? 0) > 0}
       >
         {controls}
       </ModulatorSection>
@@ -445,6 +726,14 @@ function RandomContent({ mod, bpm, wrapped, selected, onSelect, routingCount }: 
         format={(v) => `${Math.round(v * 100)}%`}
         color={color}
       />
+      <LiveScope
+        active={mod.random.enabled}
+        color={color}
+        source={() => {
+          const s = useModulationStore.getState()
+          return { value: s.random.currentValue, enabled: s.random.enabled }
+        }}
+      />
       <ValueBar value={mod.random.currentValue} color={color} />
     </>
   )
@@ -458,6 +747,7 @@ function RandomContent({ mod, bpm, wrapped, selected, onSelect, routingCount }: 
         onToggle={mod.toggleRandom}
         onSelect={onSelect ?? (() => {})}
         color={color}
+        live={mod.random.enabled && (routingCount ?? 0) > 0}
       >
         {controls}
       </ModulatorSection>
@@ -471,7 +761,8 @@ function StepContent({ mod, bpm, wrapped, selected, onSelect, routingCount }: { 
   const controls = (
     <>
       <ModRateSelect label="Rate" value={mod.step.rate} bpm={bpm} onChange={mod.setStepRate} color={color} />
-      <div className="flex gap-[2px] mt-1 mb-1">
+      <div className="flex gap-[2px] mt-1 mb-1 relative">
+        <StepPlayhead color={color} />
         {mod.step.steps.map((val, i) => (
           <div
             key={i}
@@ -515,6 +806,7 @@ function StepContent({ mod, bpm, wrapped, selected, onSelect, routingCount }: { 
         onToggle={mod.toggleStep}
         onSelect={onSelect ?? (() => {})}
         color={color}
+        live={mod.step.enabled && (routingCount ?? 0) > 0}
       >
         {controls}
       </ModulatorSection>
@@ -547,6 +839,7 @@ function EnvelopeContent({ mod, wrapped, selected, onSelect, routingCount }: { m
           {mod.envelope.phase === 'idle' ? 'Trigger' : mod.envelope.phase.toUpperCase()}
         </button>
       </div>
+      <EnvScope envelope={mod.envelope} color={color} active={mod.envelope.enabled} />
       <ValueBar value={mod.envelope.currentValue} color={color} />
     </>
   )
@@ -560,6 +853,7 @@ function EnvelopeContent({ mod, wrapped, selected, onSelect, routingCount }: { m
         onToggle={mod.toggleEnvelope}
         onSelect={onSelect ?? (() => {})}
         color={color}
+        live={mod.envelope.enabled && (routingCount ?? 0) > 0}
       >
         {controls}
       </ModulatorSection>
@@ -623,6 +917,14 @@ function SampleHoldContent({ mod, bpm, wrapped, selected, onSelect, routingCount
           ))}
         </div>
       </div>
+      <LiveScope
+        active={mod.sampleHold.enabled}
+        color={color}
+        source={() => {
+          const s = useModulationStore.getState()
+          return { value: s.sampleHold.currentValue, enabled: s.sampleHold.enabled }
+        }}
+      />
       <ValueBar value={mod.sampleHold.currentValue} color={color} />
     </>
   )
@@ -636,6 +938,7 @@ function SampleHoldContent({ mod, bpm, wrapped, selected, onSelect, routingCount
         onToggle={mod.toggleSampleHold}
         onSelect={onSelect ?? (() => {})}
         color={color}
+        live={mod.sampleHold.enabled && (routingCount ?? 0) > 0}
       >
         {controls}
       </ModulatorSection>
@@ -665,6 +968,9 @@ function MIDIModContent() {
 
   const [learnCC, setLearnCC] = useState<number | null>(null)
   const [isLearning, setIsLearning] = useState(false)
+
+  // Tracks the most recently moved CC so the scope traces live knob motion
+  const ccTraceRef = useRef<{ prev: Record<number, number>; activeCC: number | null }>({ prev: {}, activeCC: null })
 
   // CC learn: watch for incoming CC
   useEffect(() => {
@@ -713,6 +1019,24 @@ function MIDIModContent() {
           {isConnected && inputs.length > 0 ? activeName ?? 'Connected' : 'No device'}
         </span>
       </div>
+
+      {/* Live CC activity scope — traces the most recently moved controller */}
+      <LiveScope
+        active={isConnected && inputs.length > 0}
+        color={color}
+        height={20}
+        source={() => {
+          const vals = useMIDIStore.getState().ccValues
+          const trace = ccTraceRef.current
+          for (const key in vals) {
+            const cc = Number(key)
+            if (trace.prev[cc] !== vals[cc]) trace.activeCC = cc
+            trace.prev[cc] = vals[cc]
+          }
+          const v = trace.activeCC !== null ? vals[trace.activeCC] ?? 0 : 0
+          return { value: v / 127, enabled: isConnected && inputs.length > 0 }
+        }}
+      />
 
       {/* Input selector */}
       {inputs.length > 1 && (
@@ -1053,6 +1377,17 @@ function AudioReactiveContent() {
           {ar.enabled ? 'ON' : 'OFF'}
         </span>
       </div>
+
+      {/* Live composite level scope — peak of all bands */}
+      <LiveScope
+        active={ar.enabled}
+        color={color}
+        height={20}
+        source={() => {
+          const s = useAudioReactiveStore.getState()
+          return { value: Math.max(s.sub, s.mid, s.high, s.hit), enabled: s.enabled }
+        }}
+      />
 
       {/* Band meters with assign buttons */}
       <div className="flex gap-2">

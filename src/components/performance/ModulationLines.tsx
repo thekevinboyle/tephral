@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { useModulationStore } from '../../stores/modulationStore'
 
 const SOURCE_COLORS: Record<string, string> = {
   lfo: '#707070',
@@ -10,6 +11,19 @@ const SOURCE_COLORS: Record<string, string> = {
   ricochet: '#FF0055',
 }
 
+// Live output of the dragged source (0-1) — drives the pulsing source node
+function getSourceValue(sourceId: string): number {
+  const s = useModulationStore.getState()
+  switch (sourceId) {
+    case 'lfo': return s.lfos[s.selectedLFOIndex].currentValue
+    case 'random': return s.random.currentValue
+    case 'step': return s.step.currentValue
+    case 'envelope': return s.envelope.currentValue
+    case 'sampleHold': return s.sampleHold.currentValue
+    default: return 0.5
+  }
+}
+
 interface DragLine {
   sourceId: string
   startX: number
@@ -17,6 +31,8 @@ interface DragLine {
   endX: number
   endY: number
   color: string
+  dashOffset: number
+  value: number
 }
 
 export function ModulationLines() {
@@ -52,6 +68,9 @@ export function ModulationLines() {
                 endX: mousePos.current.x,
                 endY: mousePos.current.y,
                 color: SOURCE_COLORS[dragSourceRef.current] || '#888',
+                // Dashes march from source toward target — signal flow direction
+                dashOffset: -((performance.now() / 30) % 10),
+                value: getSourceValue(dragSourceRef.current),
               })
             }
             frameRef.current = requestAnimationFrame(updateLine)
@@ -115,7 +134,17 @@ export function ModulationLines() {
         stroke={dragLine.color}
         strokeWidth="2"
         strokeDasharray="6 4"
-        opacity={0.8}
+        strokeDashoffset={dragLine.dashOffset}
+        opacity={0.55 + dragLine.value * 0.35}
+        filter="url(#modulation-glow)"
+      />
+      {/* Source node — pulses with the live modulation value */}
+      <circle
+        cx={dragLine.startX}
+        cy={dragLine.startY}
+        r={2 + dragLine.value * 2.5}
+        fill={dragLine.color}
+        opacity={0.9}
         filter="url(#modulation-glow)"
       />
     </svg>

@@ -21,6 +21,7 @@ import { SlicerCompositor } from '../effects/SlicerCompositor'
 import { OverlayContainer } from './overlays/OverlayContainer'
 import { Crosshair } from './ui/MicroVisuals'
 import { perfMonitor } from '../utils/perfMonitor'
+import { initParamSync } from '../effects/paramSync'
 
 export interface CanvasHandle {
   getCanvas: () => HTMLCanvasElement | null
@@ -38,19 +39,14 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   // Destruction store (performance grid controlled datamosh and pixel sort)
   const {
     datamoshEnabled,
-    datamoshParams,
     pixelSortEnabled,
-    pixelSortParams,
     sonifyEnabled,
-    sonifyParams,
     pointCloudEnabled,
-    pointCloudParams,
   } = useDestructionStore()
 
   // Face HUD state
   const {
     faceHudEnabled,
-    faceHudParams,
   } = useMorphStore()
 
   // Slicer state
@@ -90,24 +86,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     ditherEnabled,
     edgeDetectionEnabled,
     feedbackLoopEnabled,
-    rgbSplit,
-    chromaticAberration,
-    posterize,
-    colorGrade,
-    blockDisplace,
-    staticDisplacement,
-    pixelate,
-    lensDistortion,
-    scanLines,
-    vhsTracking,
-    noise,
-    dither,
-    edgeDetection,
-    feedbackLoop,
     bypassActive,
     effectBypassed,
     soloEffectId,
-    effectMix,
   } = useGlitchEngineStore()
 
   // Motion effects state
@@ -116,16 +97,11 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     echoTrailEnabled,
     timeSmearEnabled,
     freezeMaskEnabled,
-    motionExtract,
-    echoTrail,
-    timeSmear,
-    freezeMask,
   } = useMotionStore()
 
   // Vision effects (GPU overlay versions)
   const {
     dotsEnabled,
-    dotsParams,
   } = useAcidStore()
 
   const {
@@ -141,12 +117,6 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     motionEnabled,
     faceEnabled,
     handsEnabled,
-    brightTraceParams,
-    edgeTraceParams,
-    colorTraceParams,
-    motionTraceParams,
-    faceTraceParams,
-    handsTraceParams,
   } = useVisionTrackingStore()
 
   // Landmarks for face/hands trace effects
@@ -178,6 +148,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       newPipeline.dispose()
     }
   }, [renderer])
+
+  // Param sync: direct store→uniform writes, outside the React render cycle
+  useEffect(() => {
+    if (!pipeline) return
+    return initParamSync(pipeline)
+  }, [pipeline])
 
   // Initialize slicer compositor
   useEffect(() => {
@@ -213,50 +189,11 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     }
   }, [slicerOutputFrame, slicerOutputMode, videoElement])
 
-  // Sync effect parameters with per-effect dry/wet mix
+  // Structural effect: enable/disable/reorder only. Per-frame param pushes
+  // live in paramSync.ts (direct zustand subscriptions), which keeps this
+  // effect's dependency array free of param objects.
   useEffect(() => {
     if (!pipeline) return
-
-    // Helper to get mix value (defaults to 1 if not set)
-    const getMix = (id: string) => effectMix[id] ?? 1
-
-    // Each effect now has a mix uniform for true dry/wet blending
-    pipeline.rgbSplit?.updateParams({ ...rgbSplit, mix: getMix('rgb_split') })
-    pipeline.chromaticAberration?.updateParams({ ...chromaticAberration, mix: getMix('chromatic') })
-    pipeline.posterize?.updateParams({ ...posterize, mix: getMix('posterize') })
-    pipeline.colorGrade?.updateParams({ ...colorGrade, mix: getMix('color_grade') })
-    pipeline.blockDisplace?.updateParams({ ...blockDisplace, mix: getMix('block_displace') })
-    pipeline.staticDisplacement?.updateParams({ ...staticDisplacement, mix: getMix('static_displace') })
-    pipeline.pixelate?.updateParams({ ...pixelate, mix: getMix('pixelate') })
-    pipeline.lensDistortion?.updateParams({ ...lensDistortion, mix: getMix('lens') })
-    pipeline.scanLines?.updateParams({ ...scanLines, mix: getMix('scan_lines') })
-    pipeline.vhsTracking?.updateParams({ ...vhsTracking, mix: getMix('vhs') })
-    pipeline.noise?.updateParams({ ...noise, mix: getMix('noise') })
-    pipeline.dither?.updateParams({ ...dither, mix: getMix('dither') })
-    pipeline.edgeDetection?.updateParams({ ...edgeDetection, mix: getMix('edges') })
-    pipeline.feedbackLoop?.updateParams({ ...feedbackLoop, mix: getMix('feedback') })
-
-    // Motion effects
-    pipeline.motionExtract?.updateParams({ ...motionExtract, mix: getMix('motion_extract') })
-    pipeline.echoTrail?.updateParams({ ...echoTrail, mix: getMix('echo_trail') })
-    pipeline.timeSmear?.updateParams({ ...timeSmear, mix: getMix('time_smear') })
-    pipeline.freezeMask?.updateParams({ ...freezeMask, mix: getMix('freeze_mask') })
-
-    // Face HUD
-    pipeline.faceHud?.updateParams({ ...faceHudParams, mix: getMix('face_hud') })
-
-    // Vision effects (GPU overlay versions)
-    pipeline.dotsEffect?.updateParams({ ...dotsParams, mix: getMix('acid_dots') })
-    pipeline.asciiEffect?.updateParams({
-      mode: asciiParams.mode === 'matrix' ? 'standard' : asciiParams.mode as 'standard' | 'blocks' | 'braille',
-      cellSize: asciiParams.resolution,
-      contrast: asciiParams.contrast,
-      invert: asciiParams.invert,
-      colorMode: asciiParams.colorMode as 'mono' | 'original' | 'gradient',
-      monoColor: asciiParams.monoColor,
-      gradientEndColor: asciiParams.gradientEnd,
-      mix: getMix('ascii'),
-    })
 
     // Add datamosh to effect order when destruction mode is active
     const activeEffectOrder = destructionActive
@@ -310,35 +247,18 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       videoHeight: videoElement?.videoHeight || imageElement?.naturalHeight || 1,
     })
 
-    // Update datamosh params - destruction mode overrides with max settings
-    if (pipeline.datamosh) {
-      if (destructionActive) {
-        // Crank to max when destruction mode is active
-        pipeline.datamosh.updateParams({
-          intensity: 0.95,
-          blockSize: 12,
-          keyframeChance: 0.01,
-          chaos: 1.0,
-          feedback: 0.9, // High recursive feedback for maximum melt
-          mix: 1.0,
-        })
-      } else if (datamoshEnabled) {
-        // Use store params when enabled via performance grid
-        const getMix = (id: string) => effectMix[id] ?? 1
-        pipeline.datamosh.updateParams({ ...datamoshParams, mix: getMix('datamosh') })
-      }
-    }
-
-    // Update pixel sort params
-    if (pipeline.pixelSort && pixelSortEnabled) {
-      const getMix = (id: string) => effectMix[id] ?? 1
-      pipeline.pixelSort.updateParams({ ...pixelSortParams, mix: getMix('pixelSort') })
-    }
-
-    // Update sonify params
-    if (pipeline.sonify && sonifyEnabled) {
-      const getMix = (id: string) => effectMix[id] ?? 1
-      pipeline.sonify.updateParams({ ...sonifyParams, mix: getMix('sonify') })
+    // Update datamosh params - destruction mode overrides with max settings.
+    // (Non-destruction-mode param push happens in paramSync.ts.)
+    if (pipeline.datamosh && destructionActive) {
+      // Crank to max when destruction mode is active
+      pipeline.datamosh.updateParams({
+        intensity: 0.95,
+        blockSize: 12,
+        keyframeChance: 0.01,
+        chaos: 1.0,
+        feedback: 0.9, // High recursive feedback for maximum melt
+        mix: 1.0,
+      })
     }
 
     // Face HUD - init face mesh and pass video element (detection runs in update())
@@ -347,82 +267,6 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         pipeline.faceHud.initFaceMesh()
       }
       pipeline.faceHud.setVideoElement(faceHudEnabled ? videoElement : null)
-    }
-
-    // Update point cloud params + video aspect
-    if (pipeline.pointCloud && pointCloudEnabled) {
-      const getMix = (id: string) => effectMix[id] ?? 1
-      pipeline.pointCloud.updateParams({ ...pointCloudParams, mix: getMix('point_cloud') })
-    }
-
-    // Update trace effect params - mix: 0 because trace effects generate masks internally,
-    // they don't display the mask directly (other effects sample the mask via getTraceMask())
-    if (pipeline.brightTrace && brightEnabled) {
-      pipeline.brightTrace.updateParams({
-        threshold: brightTraceParams.trailEnabled ? 0.5 : 0.5, // use default for now
-        trailEnabled: brightTraceParams.trailEnabled,
-        trailDecay: brightTraceParams.trailDecay,
-        mix: 0,
-      })
-    }
-    if (pipeline.motionTrace && motionEnabled) {
-      pipeline.motionTrace.updateParams({
-        threshold: 0.1,
-        trailEnabled: motionTraceParams.trailEnabled,
-        trailDecay: motionTraceParams.trailDecay,
-        sensitivity: motionTraceParams.sensitivity,
-        mix: 0,
-      })
-    }
-    if (pipeline.edgeTrace && edgeEnabled) {
-      pipeline.edgeTrace.updateParams({
-        threshold: 0.15,
-        trailEnabled: edgeTraceParams.trailEnabled,
-        trailDecay: edgeTraceParams.trailDecay,
-        mix: 0,
-      })
-    }
-    if (pipeline.colorTrace && colorEnabled) {
-      pipeline.colorTrace.updateParams({
-        threshold: 0.5,
-        trailEnabled: colorTraceParams.trailEnabled,
-        trailDecay: colorTraceParams.trailDecay,
-        targetHue: colorTraceParams.targetHue,
-        hueRange: colorTraceParams.hueRange,
-        satMin: colorTraceParams.satMin,
-        valMin: colorTraceParams.valMin,
-        mix: 0,
-      })
-    }
-    if (pipeline.faceTrace && faceEnabled) {
-      // Pass face landmarks to effect
-      const faceData = faces.map(f => ({
-        points: f.points.map(p => ({ x: p.point.x, y: p.point.y })),
-        boundingBox: f.boundingBox,
-      }))
-      pipeline.faceTrace.setFaceLandmarks(faceData)
-      pipeline.faceTrace.updateParams({
-        trailEnabled: faceTraceParams.trailEnabled,
-        trailDecay: faceTraceParams.trailDecay,
-        feather: faceTraceParams.feather,
-        fillMode: faceTraceParams.fillMode as 'mesh' | 'oval' | 'bbox',
-        mix: 0,
-      })
-    }
-    if (pipeline.handsTrace && handsEnabled) {
-      // Pass hand landmarks to effect
-      const handData = hands.map(h => ({
-        points: h.points.map(p => ({ x: p.point.x, y: p.point.y })),
-        handedness: h.handedness,
-      }))
-      pipeline.handsTrace.setHandLandmarks(handData)
-      pipeline.handsTrace.updateParams({
-        trailEnabled: handsTraceParams.trailEnabled,
-        trailDecay: handsTraceParams.trailDecay,
-        feather: handsTraceParams.feather,
-        fillMode: handsTraceParams.fillMode as 'skeleton' | 'hull' | 'bbox',
-        mix: 0,
-      })
     }
 
     // Apply trace masks to glitch effects
@@ -450,87 +294,37 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   }, [
     pipeline,
     glitchEnabled,
-    rgbSplitEnabled,
-    chromaticAberrationEnabled,
-    posterizeEnabled,
-    colorGradeEnabled,
-    blockDisplaceEnabled,
-    staticDisplacementEnabled,
-    pixelateEnabled,
-    lensDistortionEnabled,
-    scanLinesEnabled,
-    vhsTrackingEnabled,
-    noiseEnabled,
-    ditherEnabled,
-    edgeDetectionEnabled,
-    feedbackLoopEnabled,
-    rgbSplit,
-    chromaticAberration,
-    posterize,
-    colorGrade,
-    blockDisplace,
-    staticDisplacement,
-    pixelate,
-    lensDistortion,
-    scanLines,
-    vhsTracking,
-    noise,
-    dither,
-    edgeDetection,
-    feedbackLoop,
-    effectOrder,
-    bypassActive,
-    crossfaderPosition,
-    effectBypassed,
-    soloEffectId,
-    // Motion effects
-    motionExtractEnabled,
-    echoTrailEnabled,
-    timeSmearEnabled,
-    freezeMaskEnabled,
-    motionExtract,
-    echoTrail,
-    timeSmear,
-    freezeMask,
-    mediaTexture,
-    slicerEnabled,
-    slicerProcessEffects,
-    effectMix,
-    // Vision effects
-    dotsEnabled,
-    dotsParams,
-    asciiEnabled,
-    asciiParams,
-    // Destruction mode
+    rgbSplitEnabled, chromaticAberrationEnabled, posterizeEnabled, colorGradeEnabled,
+    blockDisplaceEnabled, staticDisplacementEnabled, pixelateEnabled, lensDistortionEnabled,
+    scanLinesEnabled, vhsTrackingEnabled, noiseEnabled, ditherEnabled,
+    edgeDetectionEnabled, feedbackLoopEnabled,
+    effectOrder, bypassActive, crossfaderPosition, effectBypassed, soloEffectId,
+    motionExtractEnabled, echoTrailEnabled, timeSmearEnabled, freezeMaskEnabled,
+    mediaTexture, slicerEnabled, slicerProcessEffects,
+    dotsEnabled, asciiEnabled, asciiParams,
     destructionActive,
-    // Destruction store (performance grid)
-    datamoshEnabled,
-    datamoshParams,
-    pixelSortEnabled,
-    pixelSortParams,
-    sonifyEnabled,
-    sonifyParams,
-    pointCloudEnabled,
-    pointCloudParams,
-    faceHudEnabled,
-    faceHudParams,
-    // Trace effects
-    brightEnabled,
-    edgeEnabled,
-    colorEnabled,
-    motionEnabled,
-    faceEnabled,
-    handsEnabled,
-    brightTraceParams,
-    edgeTraceParams,
-    colorTraceParams,
-    motionTraceParams,
-    faceTraceParams,
-    handsTraceParams,
-    faces,
-    hands,
+    datamoshEnabled, pixelSortEnabled, sonifyEnabled, pointCloudEnabled, faceHudEnabled,
+    brightEnabled, edgeEnabled, colorEnabled, motionEnabled, faceEnabled, handsEnabled,
     effectTraceMask,
+    videoElement,
   ])
+
+  // Landmark data flows at detection cadence — keep it out of the structural effect
+  useEffect(() => {
+    if (!pipeline) return
+    if (pipeline.faceTrace && faceEnabled) {
+      pipeline.faceTrace.setFaceLandmarks(faces.map(f => ({
+        points: f.points.map(p => ({ x: p.point.x, y: p.point.y })),
+        boundingBox: f.boundingBox,
+      })))
+    }
+    if (pipeline.handsTrace && handsEnabled) {
+      pipeline.handsTrace.setHandLandmarks(hands.map(h => ({
+        points: h.points.map(p => ({ x: p.point.x, y: p.point.y })),
+        handedness: h.handedness,
+      })))
+    }
+  }, [pipeline, faces, hands, faceEnabled, handsEnabled])
 
   // Update input texture and video dimensions
   useEffect(() => {

@@ -37,3 +37,32 @@ effects were confirmed visibly rendering.)
   drag loop targeting ~60 moves/s only achieved ~4 moves/s (43 moves in 10 s),
   i.e. each pointer move triggers a long main-thread task (React re-render
   chain), and pipeline max spiked to 0.85 ms during the drag.
+
+## After Task 4 (param sync moved to zustand subscriptions)
+
+Same scenario as above (RGB+TAR+ECHO+SORT stack, `anima-morph/IMG_9153.PNG`
+via File source, 2560x1440 viewport). Measured via Playwright driving
+synthetic pointer events at the RGB card's AMT knob (`DragNumberBlock`), same
+`perfMonitor.getStats()` method.
+
+- pipeline stack idle (RGB+TAR+ECHO+SORT, no drag): avg 0.108 ms, max 0.150 ms, fps ~9280
+- knob drag (RGB AMT, 10s continuous pointer drag, ~60 moves/s target): avg 0.108 ms,
+  max 0.155 ms, fps ~9234 — **indistinguishable from idle**, confirming the
+  structural `useEffect` (now slimmed to enable/disable/reorder only, gated by
+  Task 2's short-circuit) no longer re-runs per param change. Before Task 4:
+  avg 0.115 ms with a 0.85 ms max spike during the same drag.
+- Main-thread responsiveness during the drag loop also improved: the scripted
+  ~60 moves/s driver achieved 155 moves in 10 s (~15.5 moves/s) vs. ~4 moves/s
+  (43 moves in 10 s) before Task 4 — consistent with removing the ~300-line
+  React re-render chain from the pointermove hot path. (Driver method changed
+  from a real-mouse Playwright drag to direct `PointerEvent` dispatch to
+  isolate the measurement from browser input-coalescing differences; the
+  before/after relative delta is still the meaningful signal.)
+- Functional parity spot-checked in-browser: RGB split knob drag, effect
+  wet/dry mix drag (grid cell), crossfader Source/Processed snap, Datamosh
+  params via the performance grid, and the destruction-mode max-datamosh
+  override all still update the canvas live. Face HUD was enabled against the
+  static-image source (no webcam in this environment) — MediaPipe face mesh
+  initialized and ran per-frame with zero detections, no console errors, no
+  crash; `faceHudParams` flow through `paramSync.ts`'s `pushMorph()` was
+  confirmed by code review.

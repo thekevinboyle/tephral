@@ -33,12 +33,17 @@ When adding a new effect page or new effects, you MUST update ALL of the followi
 - Add a switch case with 2-3 Knob components for the most important parameters
 - Uses the same store hooks as the full parameters
 
-### 7. Canvas (`src/components/Canvas.tsx`)
-- Import the new store
-- Subscribe to enabled states and params
-- Pass to `pipeline.updateEffects()`
-- Sync effect params with `pipeline.effect?.updateParams()`
-- Add to useEffect dependency array
+### 7. Canvas (`src/components/Canvas.tsx`) + Param Sync (`src/effects/paramSync.ts`)
+Enabled flags/order and per-frame params are split across two files:
+- **Canvas.tsx's structural effect**: import the new store, subscribe to
+  its *enabled* state only, pass to `pipeline.updateEffects()`. This effect
+  should only re-run on enable/disable/reorder — not on every param change.
+- **paramSync.ts**: add the effect's params to (or add a new) `push*()`
+  function that calls `pipeline.<effect>?.updateParams(...)`, call it once
+  in the initial push list, and add a reference-equality slice check for
+  its store slot to the matching `subscribe()` callback (or add a new
+  `store.subscribe()` entry) so the uniform updates on every param change
+  without going through React.
 
 ### 8. Effect Pipeline (`src/effects/EffectPipeline.ts`)
 - Import new effect classes
@@ -70,6 +75,8 @@ The left column shows a vertically scrolling stack of effect cards. Each card ha
 
 ### Effects Lane (`src/components/performance/EffectsLane.tsx`)
 The right column shows only the Modulation panel (LFO, Random, Step, Envelope, S&H).
+
+Effect params flow through `src/effects/paramSync.ts` (zustand subscribe → uniform writes); Canvas.tsx's structural effect only rebuilds the pass chain on enable/disable/reorder.
 
 ## Common Issues
 

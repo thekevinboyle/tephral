@@ -168,3 +168,96 @@ stores via `browser_evaluate` dynamic imports SILENTLY FAILS after any HMR
 invalidation — Vite serves the app a `?t=`-versioned module while the
 un-versioned import creates a phantom second store instance. Restart the
 dev server before store-driven measurement, or drive the real UI.
+
+## After Phase 1 (final)
+
+Full regression pass (Task 9) plus a final repeat of the Task 1 baseline
+scenario on a freshly restarted dev server (clean module graph, no HMR
+invalidation since restart — confirmed via console: zero `[vite] hmr`/reload
+messages for the whole session). Same scenario as the original baseline:
+`anima-morph/IMG_9153.PNG` via File source, 2560x1440 viewport, canvas
+render target 657x1161.
+
+**Regression pass:** enable/disable/reorder GLITCH RGB+CHROMA+POSTER
+(including a sidebar drag-reorder of POSTER above RGB); knob drags on three
+different pages (GLITCH RGB AMT, STRAND TAR THRSH, ACID HALF DOT — all via
+real trusted Playwright mouse drags, see methodology note below); Echo
+Trail off/on/off cycles (MOTION) and Datamosh off/on cycles (DESTROY); the
+STRAND TAR + ACID HALF + GLITCH STIPPLE 3-overlay stack; crossfader sweep
+(Source 0 -> Processed 100); bypass-all toggle on/off; solo on the TAR
+sequencer track; and Face HUD with no webcam available (MediaPipe
+initialized and ran — "Graph successfully started running" — zero
+detections against the static image, no crash, no console errors beyond
+the pre-existing key-spread warning below). **Zero new console errors**
+across the entire pass. Every behavior matched expectations vs. master.
+
+**Console audit:** all errors/warnings observed during the pass trace to
+three pre-existing, phase-1-unrelated sources, verified by `git log` against
+the `fbe2968^..1d69f56` commit range (this phase's 8 prior tasks):
+1. A single shared "key prop spread" bug at
+   `ExpandedParameterPanel_v2.tsx:179` (a `commonProps` object built with
+   `key: param.id` then spread via `{...commonProps}` into whichever Block
+   component the param-type switch renders) — present since the file's
+   origin commit (`c80a031`, March 2026), untouched by any Phase 1 commit.
+   Surfaces under different names (DragNumberBlock, ParamBlock,
+   VerticalFaderBlock, BipolarBlock, RulerBlock, ButtonRowBlock) depending
+   on which param types are visible, but it is one bug, not six.
+2. Three browser `willReadFrequently` Canvas2D advisories
+   (`tarSpreadEffect.ts`, `halftoneEffect.ts`, `StippleOverlay.tsx`) — the
+   first two are in files never touched this phase; the third's
+   `getImageData` call predates Task 6's change (Task 6 only changed what
+   gets drawn *into* the offscreen canvas via the shared readback, not the
+   subsequent local `getImageData` readback pattern — confirmed via
+   `git show 7f7df9f`).
+3. Expected MediaPipe WASM/GL initialization log lines when Face HUD is
+   enabled (`Sets FaceBlendshapesGraph acceleration...`, `GL version...`,
+   `OpenGL error checking is disabled`, `Graph successfully started
+   running`) — informational, not errors.
+
+**Perf numbers** (`perfMonitor.getStats()`, read in-page via Vite's module
+graph immediately after confirming no HMR invalidation had occurred):
+
+- pipeline idle (image loaded, 0 effects): avg 0.065 ms, max 0.125 ms, fps ~15400
+- pipeline stack (RGB+TAR+ECHO+SORT): avg 0.102 ms, max 0.135-0.155 ms
+  (two samples), fps ~9800
+- knob drag (RGB AMT, real trusted mouse drags via Playwright — six
+  alternating up/down drags sweeping the full 0-5 range over ~45s wall
+  time, ~10s+ of active dragging — stats read immediately after the final
+  drag): avg 0.105 ms, max 0.150 ms, fps ~9569 — **still indistinguishable
+  from the idle-stack number**, confirming Task 4's fix holds after all
+  subsequent phase-1 changes: the structural `useEffect` in `Canvas.tsx`
+  does not re-run on param-only changes, so a live knob drag adds no
+  measurable CPU-side submission cost beyond the stack's baseline.
+
+These numbers land within noise of the "After Task 4" entry above (0.108 ms
+idle-stack / 0.108 ms drag) — expected, since Tasks 5-8 targeted temporal
+capture, overlay readback, and pixel-sort shader bounds, none of which touch
+this scenario's per-frame `pipeline.render()` submission cost. The
+cumulative phase-1 win visible in *this* metric is entirely the Task 2
+(pass caching/short-circuit) and Task 4 (param-sync-off-the-hot-path)
+work; Tasks 5-8's wins are on main-thread readback cost and worst-case
+shader bounds, which this CPU-submission-only metric was never able to see
+(documented at each task's entry above).
+
+**Methodology note — synthetic `PointerEvent` dispatch does not work for
+this app's knobs:** `DragNumberBlock`/`ParamBlock`-family controls use
+`@use-gesture/react`, whose `pointerDown` handler calls
+`element.setPointerCapture(event.pointerId)`. Browsers only register a
+pointer as "active" (capturable) for events that originate from real
+hardware/OS-level input — a `dispatchEvent(new PointerEvent(...))` from
+page-context JS throws `NotFoundError: Failed to execute
+'setPointerCapture' ... No active pointer with the given id is found`,
+which aborts the gesture-start handler before it captures the drag's start
+value or attaches move listeners, so every subsequent synthetic
+`pointermove` is silently a no-op (no console error, no value change,
+easy to miss). Verified by first confirming `dblclick` *does* work
+(midpoint-snap value changed correctly), isolating the failure to the
+drag path specifically. **Real interaction must go through Playwright's
+`browser_drag` (CDP-level trusted input)**, not `browser_evaluate` +
+synthetic events. Because `browser_drag` only accepts element references
+(drags start-center to end-center, no arbitrary coordinate deltas), a
+temporary absolutely-positioned 1x1-or-larger marker `div` (`z-index:
+99999`, `pointer-events: auto`) placed at the desired pixel offset and
+targeted by CSS id selector is a reliable way to get a real trusted drag
+of a specific pixel delta on a specific control — used throughout this
+task's regression pass and final knob-drag measurement.

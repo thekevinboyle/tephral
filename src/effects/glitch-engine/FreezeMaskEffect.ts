@@ -198,6 +198,18 @@ export class FreezeMaskEffect extends Effect {
     this.hasInitialized = false
   }
 
+  // Release GPU render targets when the effect is disabled. freezeTarget and
+  // tempTarget get swapped in captureFrame(), so both must be released
+  // regardless of which one currently holds the "live" reference. Materials/
+  // scenes created in initialize() are resolution-independent and get
+  // recreated (not disposed) the next time initialize()'s guard sees a null
+  // target, so they're intentionally left alone here.
+  releaseTargets() {
+    this.freezeTarget?.dispose(); this.freezeTarget = null
+    this.tempTarget?.dispose(); this.tempTarget = null
+    this.hasInitialized = false
+  }
+
   dispose() {
     super.dispose()
     this.freezeTarget?.dispose()

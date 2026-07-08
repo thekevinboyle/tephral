@@ -146,6 +146,20 @@ export class MotionTraceEffect extends TraceEffect {
     }
   }
 
+  // Release GPU render targets when the effect is disabled. Also releases
+  // the base TraceEffect's targets (traceMaskTarget/trailTarget1/2) since
+  // this instance owns them too. Materials/scenes created in initialize()
+  // are resolution-independent and get recreated (not disposed) the next
+  // time initialize()'s guards see null targets, so they're intentionally
+  // left alone here.
+  releaseTargets() {
+    this.historyTarget?.dispose(); this.historyTarget = null
+    this.traceMaskTarget?.dispose(); this.traceMaskTarget = null
+    this.trailTarget1?.dispose(); this.trailTarget1 = null
+    this.trailTarget2?.dispose(); this.trailTarget2 = null
+    this.hasHistory = false
+  }
+
   dispose() {
     super.dispose()
     this.historyTarget?.dispose()

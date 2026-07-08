@@ -156,6 +156,15 @@ export class TimeSmearEffect extends Effect {
     this.hasInitialized = false
   }
 
+  // Release GPU render targets when the effect is disabled. Materials/scenes
+  // created in initialize() are resolution-independent and get recreated
+  // (not disposed) the next time initialize()'s guard sees a null target, so
+  // they're intentionally left alone here.
+  releaseTargets() {
+    this.accumulationTarget?.dispose(); this.accumulationTarget = null
+    this.hasInitialized = false
+  }
+
   dispose() {
     super.dispose()
     this.accumulationTarget?.dispose()

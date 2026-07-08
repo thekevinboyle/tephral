@@ -261,6 +261,19 @@ export class FeedbackLoopEffect extends Effect {
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 
+  // Release GPU render targets when the effect is disabled. Materials/scenes
+  // created in initialize() are resolution-independent and get recreated
+  // (not disposed) the next time initialize()'s guard sees a null target, so
+  // they're intentionally left alone here. There's no dedicated "has data"
+  // flag on this class (update() sets the hasFeedback uniform unconditionally
+  // once feedbackTarget exists) — reset the uniform directly so it starts
+  // false again until update() runs post re-initialize.
+  releaseTargets() {
+    this.feedbackTarget?.dispose(); this.feedbackTarget = null
+    this.tempTarget?.dispose(); this.tempTarget = null
+    this.uniforms.get('hasFeedback')!.value = false
+  }
+
   dispose() {
     super.dispose()
     this.feedbackTarget?.dispose()

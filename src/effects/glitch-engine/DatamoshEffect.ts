@@ -549,6 +549,12 @@ export class DatamoshEffect extends Effect {
   private frameCount: number = 0
   private feedbackSwap: boolean = false
   private hasCapturedFreezeFrame: boolean = false
+  // True once captureFrame() has actually populated prevFrameTarget /
+  // feedbackTarget1 / feedbackTarget2 with real content. Gates hasPrevFrame
+  // so the shader never samples a freshly (re-)initialized target before it
+  // has data — matters most after releaseTargets() + re-enable, since a new
+  // WebGLRenderTarget's content is otherwise sampled one frame early.
+  private hasCapturedFrame: boolean = false
 
   constructor(params: Partial<DatamoshParams> = {}) {
     const p = { ...DEFAULT_DATAMOSH_PARAMS, ...params }
@@ -630,7 +636,7 @@ export class DatamoshEffect extends Effect {
     this.uniforms.get('feedbackTexture')!.value = readFeedback?.texture
 
     this.uniforms.get('freezeFrameTexture')!.value = this.freezeFrameTarget?.texture
-    this.uniforms.get('hasPrevFrame')!.value = true
+    this.uniforms.get('hasPrevFrame')!.value = this.hasCapturedFrame
     this.uniforms.get('hasFreezeFrame')!.value = this.hasCapturedFreezeFrame
   }
 
@@ -665,6 +671,8 @@ export class DatamoshEffect extends Effect {
     renderer.render(this.copyScene, this.copyCamera)
 
     renderer.setRenderTarget(null)
+
+    this.hasCapturedFrame = true
   }
 
   setSize(width: number, height: number) {
@@ -700,6 +708,21 @@ export class DatamoshEffect extends Effect {
     this.uniforms.get('traceMask')!.value = texture
     this.uniforms.get('useTraceMask')!.value = texture !== null
     this.uniforms.get('invertTraceMask')!.value = invert
+  }
+
+  // Release GPU render targets when the effect is disabled. Materials/scenes
+  // created in initialize() are resolution-independent and get recreated
+  // (not disposed) the next time initialize()'s guard sees a null target, so
+  // they're intentionally left alone here.
+  releaseTargets() {
+    this.prevFrameTarget?.dispose(); this.prevFrameTarget = null
+    this.feedbackTarget1?.dispose(); this.feedbackTarget1 = null
+    this.feedbackTarget2?.dispose(); this.feedbackTarget2 = null
+    this.freezeFrameTarget?.dispose(); this.freezeFrameTarget = null
+    this.hasCapturedFreezeFrame = false
+    this.hasCapturedFrame = false
+    this.frameCount = 0
+    this.feedbackSwap = false
   }
 
   dispose() {

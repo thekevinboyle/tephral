@@ -102,6 +102,13 @@ export class EffectPipeline {
   // in dispose().
   private passCache = new Map<Effect, EffectPass>()
   private lastChainKey = '#UNINITIALIZED#'
+  // Tracks which temporal (frame-capturing) effects were enabled as of the
+  // last updateEffects() call. Read by render() to gate captureFrame() calls
+  // and updated/reconciled every call — including calls where the active
+  // chain (chainKey) is unchanged — so a disable+re-enable of a temporal
+  // effect between two unrelated chain changes still releases/reacquires
+  // its GPU render targets.
+  private temporalEnabled: Record<string, boolean> = {}
 
   // Canvas dimensions
   private canvasWidth = 1
@@ -298,6 +305,28 @@ export class EffectPipeline {
       track_hands: config.handsTraceEnabled,
     }
 
+    // Gate temporal frame-captures + release GPU targets on disable. This
+    // runs before the structural short-circuit below (and therefore before
+    // any `return`) so capture gating stays correct even on calls where the
+    // active effect chain itself doesn't change.
+    const temporalIds = [
+      'feedback', 'datamosh', 'motion_extract', 'echo_trail',
+      'time_smear', 'freeze_mask', 'track_motion',
+    ] as const
+    const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
+      feedback: this.feedbackLoop, datamosh: this.datamosh,
+      motion_extract: this.motionExtract, echo_trail: this.echoTrail,
+      time_smear: this.timeSmear, freeze_mask: this.freezeMask,
+      track_motion: this.motionTrace,
+    }
+    for (const id of temporalIds) {
+      const nowEnabled = !config.bypassActive && enabledMap[id]
+      if (this.temporalEnabled[id] && !nowEnabled) {
+        temporalEffects[id]?.releaseTargets()
+      }
+      this.temporalEnabled[id] = nowEnabled
+    }
+
     // Compute the active chain (empty when bypassed). Deduped via Set so a
     // duplicate id in effectOrder can't add the same cached EffectPass twice.
     const activeIds = config.bypassActive
@@ -430,15 +459,15 @@ export class EffectPipeline {
     const outputBuffer = this.composer.outputBuffer
 
     if (renderer && outputBuffer) {
-      this.feedbackLoop?.captureFrame(renderer, outputBuffer)
-      this.datamosh?.captureFrame(renderer, outputBuffer)
-      this.motionExtract?.captureFrame(renderer, outputBuffer)
-      this.echoTrail?.captureFrame(renderer, outputBuffer)
-      this.timeSmear?.captureFrame(renderer, outputBuffer)
-      this.freezeMask?.captureFrame(renderer, outputBuffer)
+      if (this.temporalEnabled['feedback']) this.feedbackLoop?.captureFrame(renderer, outputBuffer)
+      if (this.temporalEnabled['datamosh']) this.datamosh?.captureFrame(renderer, outputBuffer)
+      if (this.temporalEnabled['motion_extract']) this.motionExtract?.captureFrame(renderer, outputBuffer)
+      if (this.temporalEnabled['echo_trail']) this.echoTrail?.captureFrame(renderer, outputBuffer)
+      if (this.temporalEnabled['time_smear']) this.timeSmear?.captureFrame(renderer, outputBuffer)
+      if (this.temporalEnabled['freeze_mask']) this.freezeMask?.captureFrame(renderer, outputBuffer)
 
       // Capture frames for trace effects (motion trace needs history)
-      this.motionTrace?.captureFrame(renderer, outputBuffer)
+      if (this.temporalEnabled['track_motion']) this.motionTrace?.captureFrame(renderer, outputBuffer)
     }
   }
 

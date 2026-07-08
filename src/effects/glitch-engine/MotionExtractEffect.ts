@@ -187,6 +187,17 @@ export class MotionExtractEffect extends Effect {
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 
+  // Release GPU render targets when the effect is disabled. Materials/scenes
+  // created in initialize() are resolution-independent and get recreated
+  // (not disposed) the next time initialize()'s guard sees an empty
+  // historyTargets array, so they're intentionally left alone here.
+  releaseTargets() {
+    for (const t of this.historyTargets) t.dispose()
+    this.historyTargets = []
+    this.historyIndex = 0
+    this.framesSinceInit = 0
+  }
+
   dispose() {
     super.dispose()
     for (const target of this.historyTargets) {

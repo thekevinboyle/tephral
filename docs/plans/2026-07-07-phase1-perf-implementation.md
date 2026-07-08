@@ -259,15 +259,12 @@ Replace the body of `updateEffects` from the `// Remove existing passes` comment
       this.crossfaderPass = null
     }
 
-    // Dispose cached passes whose effect is no longer in the chain.
-    // Disposing only here is safe: the effect itself is leaving the chain too.
-    const activeEffects = new Set(activeIds.map((id) => this.getEffectById(id)!))
-    for (const [effect, pass] of this.passCache) {
-      if (!activeEffects.has(effect)) {
-        pass.dispose()
-        this.passCache.delete(effect)
-      }
-    }
+    // Cached passes are NEVER disposed on eviction: postprocessing's
+    // EffectPass.dispose() cascades into effect.dispose(), which shallow-
+    // disposes borrowed textures (live video texture, trace masks) and
+    // temporal render targets. The cache is bounded at one pass per effect
+    // instance (~30), so lifetime caching still fixes the unbounded leak;
+    // all passes are disposed once, in dispose().
 
     // If bypass is active, don't add any effect passes - just render the input
     if (config.bypassActive) return

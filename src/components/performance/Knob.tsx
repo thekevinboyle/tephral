@@ -75,6 +75,12 @@ export function Knob({
   const [isDragging, setIsDragging] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
 
+  // rAF-throttled onChange dispatch — coalesce drag updates to ≤1 per frame
+  const pendingValueRef = useRef<number | null>(null)
+  const changeRafRef = useRef(0)
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+
   // Depth-drag assignment refs/state
   const depthAssignSource = useRef<string | null>(null)
   const depthAssignStartY = useRef(0)
@@ -129,6 +135,9 @@ export function Knob({
       document.removeEventListener('dragend', handleDragEnd)
     }
   }, [paramId])
+
+  // Cancel any pending rAF-throttled change on unmount
+  useEffect(() => () => cancelAnimationFrame(changeRafRef.current), [])
 
   // Routing info
   const paramRoutings = paramId ? routings.filter(r => r.targetParam === paramId) : []
@@ -211,8 +220,17 @@ export function Knob({
     if (step) {
       newValue = Math.round(newValue / step) * step
     }
-    onChange(newValue)
-  }, [isDepthDragging, min, max, step, onChange])
+    pendingValueRef.current = newValue
+    if (!changeRafRef.current) {
+      changeRafRef.current = requestAnimationFrame(() => {
+        changeRafRef.current = 0
+        if (pendingValueRef.current !== null) {
+          onChangeRef.current(pendingValueRef.current)
+          pendingValueRef.current = null
+        }
+      })
+    }
+  }, [isDepthDragging, min, max, step])
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     try {
@@ -220,6 +238,17 @@ export function Knob({
     } catch {}
 
     setIsDragging(false)
+
+    // Flush any pending rAF-throttled change synchronously so the final
+    // value always lands, even if the frame hasn't fired yet.
+    if (changeRafRef.current) {
+      cancelAnimationFrame(changeRafRef.current)
+      changeRafRef.current = 0
+    }
+    if (pendingValueRef.current !== null) {
+      onChangeRef.current(pendingValueRef.current)
+      pendingValueRef.current = null
+    }
 
     // Commit depth-drag assignment
     if (isDepthDragging && depthAssignSource.current && paramId) {

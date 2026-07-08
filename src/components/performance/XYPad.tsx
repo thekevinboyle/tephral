@@ -227,6 +227,9 @@ export function XYPad() {
     }
   }, [selectedEffectId])
 
+  // Cancel any pending rAF-throttled change on unmount
+  useEffect(() => () => cancelAnimationFrame(xyRafRef.current), [])
+
   const xParam = AVAILABLE_PARAMS.find(p => p.id === xParamId)
   const yParam = AVAILABLE_PARAMS.find(p => p.id === yParamId)
 
@@ -330,6 +333,12 @@ export function XYPad() {
     if (yParamId) applyParam(yParamId, 1 - y) // Invert Y so up = higher value
   }, [xParamId, yParamId, applyParam])
 
+  // rAF-throttled updateParams dispatch — coalesce drag updates to ≤1 per frame
+  const pendingXYRef = useRef<{ x: number; y: number } | null>(null)
+  const xyRafRef = useRef(0)
+  const updateParamsRef = useRef(updateParams)
+  updateParamsRef.current = updateParams
+
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (!padRef.current) return
 
@@ -352,11 +361,31 @@ export function XYPad() {
     const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height))
 
     setPosition({ x, y })
-    updateParams(x, y)
-  }, [isPressed, updateParams])
+    pendingXYRef.current = { x, y }
+    if (!xyRafRef.current) {
+      xyRafRef.current = requestAnimationFrame(() => {
+        xyRafRef.current = 0
+        if (pendingXYRef.current !== null) {
+          updateParamsRef.current(pendingXYRef.current.x, pendingXYRef.current.y)
+          pendingXYRef.current = null
+        }
+      })
+    }
+  }, [isPressed])
 
   const handlePointerUp = useCallback(() => {
     setIsPressed(false)
+
+    // Flush any pending rAF-throttled change synchronously so the final
+    // position always lands, even if the frame hasn't fired yet.
+    if (xyRafRef.current) {
+      cancelAnimationFrame(xyRafRef.current)
+      xyRafRef.current = 0
+    }
+    if (pendingXYRef.current !== null) {
+      updateParamsRef.current(pendingXYRef.current.x, pendingXYRef.current.y)
+      pendingXYRef.current = null
+    }
   }, [])
 
   // Format value for display

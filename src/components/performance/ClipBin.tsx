@@ -226,6 +226,7 @@ export function ClipBin() {
             }}
             title="Import video clip"
           >
+            {/* Idle pulse — invites the first media import */}
             <svg
               width="16"
               height="16"
@@ -235,6 +236,7 @@ export function ClipBin() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ animation: 'hud-pulse 3.2s var(--ease-in-out-quart) infinite' }}
             >
               <path d="M12 5v14M5 12h14" />
             </svg>

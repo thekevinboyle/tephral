@@ -680,14 +680,19 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       className="w-full h-full bg-black relative"
       data-video-canvas-container
     >
-      {/* Empty state when no media loaded */}
+      {/* Empty state when no media loaded — powered-on instrument at rest */}
       {!hasMedia && (
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none"
+          className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none overflow-hidden"
           style={{ backgroundColor: 'var(--bg-surface)' }}
         >
+          {/* Ambient scanline sweep so the panel reads as live telemetry */}
+          <div className="surface-scanline" style={{ opacity: 0.5 }} />
+          <div className="mb-5 opacity-40" style={{ animation: 'hud-reticle-spin 24s linear infinite' }}>
+            <Crosshair value={0.5} size={96} />
+          </div>
           <h1
-            className="text-xs font-light tracking-[0.25em] select-none"
+            className="text-xs font-light tracking-[0.25em] select-none alive-idle"
             style={{
               color: 'var(--text-muted)',
               fontFamily: "'JetBrains Mono', monospace",
@@ -696,14 +701,23 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
             SEG_F4ULT.SYS
           </h1>
           <p
-            className="mt-2 text-[10px] tracking-wider"
-            style={{ color: '#bbb' }}
+            className="mt-2 text-[10px] tracking-wider flex items-center gap-1.5"
+            style={{ color: '#bbb', fontFamily: "'JetBrains Mono', monospace" }}
           >
+            <span style={{ color: 'var(--text-ghost)' }}>&gt;</span>
             Load media to begin
+            <span
+              aria-hidden
+              style={{
+                display: 'inline-block',
+                width: '0.5em',
+                height: '1em',
+                background: '#bbb',
+                verticalAlign: '-0.12em',
+                animation: 'hud-typewriter-cursor 1.1s step-end infinite',
+              }}
+            />
           </p>
-          <div className="mt-4 opacity-30">
-            <Crosshair value={0.5} size={96} />
-          </div>
         </div>
       )}
       {/* Vision effect overlays */}

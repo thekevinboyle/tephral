@@ -54,6 +54,12 @@ export function PerformanceGrid() {
   // Effect sequencer store — ensure tracks exist when toggling effects
   const ensureTrack = useEffectSequencerStore((s) => s.ensureTrack)
 
+  // Transport clock — page LEDs pulse on the beat while playing,
+  // fall back to the slow ambient breathe (class default) when paused
+  const bpm = useEffectSequencerStore((s) => s.bpm)
+  const seqPlaying = useEffectSequencerStore((s) => s.isPlaying)
+  const beatDuration = seqPlaying ? `${60 / bpm}s` : undefined
+
   // Routing store for effect order
   const { effectOrder, setEffectOrder } = useRoutingStore()
 
@@ -1012,19 +1018,20 @@ export function PerformanceGrid() {
                 onClick={() => setGridPage(index)}
                 onMouseEnter={() => setStatusText(getPageStatusText(name))}
                 onMouseLeave={() => setStatusText(null)}
-                className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-sm transition-colors"
+                className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider rounded-sm transition-colors press-physical"
                 style={{
                   backgroundColor: isSelected ? 'var(--bg-elevated)' : 'transparent',
                   color: isSelected ? 'var(--text-secondary)' : 'var(--text-ghost)',
                 }}
               >
-                {/* LED indicator - always reserve space */}
+                {/* LED indicator - always reserve space; pulses with the transport when its page runs effects */}
                 <span
-                  className="w-1 h-1 rounded-full flex-shrink-0 transition-opacity"
+                  className={`w-1 h-1 rounded-full flex-shrink-0 transition-opacity ${hasActive ? 'alive-idle' : ''}`}
                   style={{
                     backgroundColor: 'var(--accent)',
                     boxShadow: hasActive ? '0 0 4px var(--accent-glow)' : 'none',
                     opacity: hasActive ? 1 : 0,
+                    animationDuration: hasActive ? beatDuration : undefined,
                   }}
                 />
                 {name}

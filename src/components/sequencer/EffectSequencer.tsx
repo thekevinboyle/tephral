@@ -288,11 +288,15 @@ export function EffectSequencer() {
       {/* ─── Track list ─────────────────────────────────────────────── */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         {activeTrackIds.length === 0 ? (
-          <div
-            className="flex items-center justify-center h-full text-[11px] uppercase tracking-wider"
-            style={{ color: 'var(--text-ghost)' }}
-          >
-            Enable effects on the grid to add tracks
+          <div className="relative h-full overflow-hidden">
+            {/* Idle scan sweep — powered-on instrument awaiting tracks */}
+            <div className="surface-scanline" style={{ animationDuration: '7s' }} />
+            <div
+              className="alive-idle flex items-center justify-center h-full text-[11px] uppercase tracking-wider"
+              style={{ color: 'var(--text-ghost)' }}
+            >
+              Enable effects on the grid to add tracks
+            </div>
           </div>
         ) : (
           activeTrackIds.map((effectId) => {

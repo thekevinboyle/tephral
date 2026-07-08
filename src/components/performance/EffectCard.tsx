@@ -1,7 +1,8 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ActiveEffect } from '../../hooks/useActiveEffects'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useUIStore } from '../../stores/uiStore'
+import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { useSequencerStore } from '../../stores/sequencerStore'
 import { useModulationStore } from '../../stores/modulationStore'
@@ -243,6 +244,46 @@ export function EffectCard({
   void effectBypassed // used for reactivity via isBypassed prop
   const setStatusText = useUIStore((s) => s.setStatusText)
 
+  // Transport clock — running LED / glow breathe on the beat while playing,
+  // fall back to the slow ambient breathe (class default) when paused
+  const bpm = useEffectSequencerStore((s) => s.bpm)
+  const seqPlaying = useEffectSequencerStore((s) => s.isPlaying)
+  const beatDuration = seqPlaying ? `${60 / bpm}s` : undefined
+
+  // Mount rise-in — class is dropped once the animation ends so its fill
+  // transform can never fight the pointer-drag transform on this node
+  const [entered, setEntered] = useState(false)
+  const handleAnimationEnd = useCallback((e: React.AnimationEvent) => {
+    if (e.animationName === 'rise-in') setEntered(true)
+  }, [])
+
+  // Graceful removal — fade + shrink, then commit the actual remove
+  const [removing, setRemoving] = useState(false)
+  const removeTimer = useRef<number | null>(null)
+  const handleRemove = useCallback(() => {
+    if (removing) return
+    setRemoving(true)
+    removeTimer.current = window.setTimeout(() => onRemove(), 180)
+  }, [removing, onRemove])
+  useEffect(() => () => {
+    if (removeTimer.current) window.clearTimeout(removeTimer.current)
+  }, [])
+
+  // Running LED shown in both header variants
+  const runningLed = (
+    <span
+      aria-hidden
+      className={`flex-shrink-0 w-1 h-1 rounded-full ${isBypassed ? '' : 'alive-idle'}`}
+      style={{
+        backgroundColor: effect.color,
+        boxShadow: isBypassed ? 'none' : `0 0 4px ${effect.color}`,
+        opacity: isBypassed ? 0.2 : 1,
+        transition: 'opacity var(--dur-settle) var(--ease-out-expo), box-shadow var(--dur-settle) var(--ease-out-expo)',
+        animationDuration: beatDuration,
+      }}
+    />
+  )
+
   if (mode === 'compact') {
     return (
       <div
@@ -250,23 +291,45 @@ export function EffectCard({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onClick={onSelect}
-        onDoubleClick={onRemove}
-        className="select-none touch-none cursor-grab active:cursor-grabbing"
+        onDoubleClick={handleRemove}
+        onAnimationEnd={handleAnimationEnd}
+        className={`relative select-none touch-none cursor-grab active:cursor-grabbing ${entered ? '' : 'rise-in'}`}
         style={{
           backgroundColor: 'var(--bg-surface)',
           borderRadius: 6,
-          opacity: isBypassed ? 0.35 : isDragging ? 0.8 : 1,
-          transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+          opacity: removing ? 0 : isBypassed ? 0.35 : isDragging ? 0.8 : 1,
+          transform: removing ? 'scale(0.96)' : isDragging ? 'scale(1.02)' : 'scale(1)',
+          pointerEvents: removing ? 'none' : 'auto',
           boxShadow: isDragging
             ? '0 4px 16px rgba(0,0,0,0.5)'
             : isSelected
               ? `0 0 0 1px ${effect.color}40`
               : '0 1px 3px rgba(0,0,0,0.3)',
           marginTop: isDropTarget ? 24 : 0,
-          transition: 'margin-top 150ms, opacity 150ms, transform 100ms, box-shadow 150ms',
+          transition: 'margin-top 150ms, opacity 180ms var(--ease-out-expo), transform 180ms var(--ease-snap), box-shadow 150ms',
           overflow: 'hidden',
         }}
       >
+        {/* Selected-card glow — breathes in the effect's own hue */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            borderRadius: 6,
+            opacity: isSelected && !isBypassed ? 1 : 0,
+            transition: 'opacity var(--dur-settle) var(--ease-out-expo)',
+          }}
+        >
+          <div
+            className="absolute inset-0 alive-idle"
+            style={{
+              borderRadius: 6,
+              boxShadow: `inset 0 0 16px ${effect.color}1f`,
+              animationDuration: beatDuration,
+            }}
+          />
+        </div>
+
         {/* Header row — colored name + rule + actions */}
         <div
           className="flex items-center gap-1.5 px-2"
@@ -293,6 +356,9 @@ export function EffectCard({
             {effect.label}
           </span>
 
+          {/* Running LED — pulses with the transport, dims when bypassed */}
+          {runningLed}
+
           {/* Horizontal rule */}
           <div
             className="flex-1 h-px"
@@ -305,7 +371,7 @@ export function EffectCard({
           {/* Remove */}
           <button
             onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => { e.stopPropagation(); onRemove() }}
+            onClick={(e) => { e.stopPropagation(); handleRemove() }}
             onMouseEnter={() => setStatusText(getUIStatusText('remove'))}
             onMouseLeave={() => setStatusText(null)}
             className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full opacity-30 hover:opacity-100 transition-opacity"
@@ -330,13 +396,17 @@ export function EffectCard({
   // Full mode — fills entire panel
   return (
     <div
-      className="flex flex-col select-none"
+      onAnimationEnd={handleAnimationEnd}
+      className={`flex flex-col select-none ${entered ? '' : 'rise-in'}`}
       style={{
         flex: 1,
         minHeight: 0,
         backgroundColor: 'var(--bg-surface)',
         borderRadius: 6,
-        opacity: isBypassed ? 0.4 : 1,
+        opacity: removing ? 0 : isBypassed ? 0.4 : 1,
+        transform: removing ? 'scale(0.98)' : 'scale(1)',
+        pointerEvents: removing ? 'none' : 'auto',
+        transition: 'opacity 180ms var(--ease-out-expo), transform 180ms var(--ease-snap)',
         overflow: 'hidden',
       }}
     >
@@ -364,6 +434,9 @@ export function EffectCard({
           {effect.label}
         </span>
 
+        {/* Running LED — pulses with the transport, dims when bypassed */}
+        {runningLed}
+
         {/* Horizontal rule */}
         <div
           className="flex-1 h-px"
@@ -375,7 +448,7 @@ export function EffectCard({
 
         {/* Remove */}
         <button
-          onClick={(e) => { e.stopPropagation(); onRemove() }}
+          onClick={(e) => { e.stopPropagation(); handleRemove() }}
           onMouseEnter={() => setStatusText(getUIStatusText('remove'))}
           onMouseLeave={() => setStatusText(null)}
           className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full opacity-30 hover:opacity-100 transition-opacity"

@@ -371,7 +371,7 @@ export const TechReadout = memo(function TechReadout({
       </text>
       {/* Percentage bar */}
       <rect x={(size - barW) / 2} y={size / 2 + fs * 1.6} width={barW} height={3} rx={1} fill={color} opacity={0.15} />
-      <rect x={(size - barW) / 2} y={size / 2 + fs * 1.6} width={barW * value} height={3} rx={1} fill={color} opacity={0.6} />
+      <rect x={(size - barW) / 2} y={size / 2 + fs * 1.6} width={barW * Math.max(0, Math.min(1, value))} height={3} rx={1} fill={color} opacity={0.6} />
       {/* Percentage text */}
       <text x={size / 2} y={size - pad - fs * 0.8} textAnchor="middle" fill={color} fontSize={fs * 0.8} fontFamily="monospace" opacity={0.4}>
         {pct}%
@@ -487,7 +487,9 @@ export const SignalAnalysis = memo(function SignalAnalysis({
   // Frequency bars
   const bars = useMemo(() => {
     const barCount = 8
-    const barW = w / barCount - 2
+    const slot = w / barCount
+    // Gap scales with slot width so bars never go negative at small sizes
+    const barW = Math.max(0.5, slot - Math.min(2, slot * 0.35))
     const barAreaH = size - midY - pad * 2
     return Array.from({ length: barCount }, (_, i) => {
       const h = hash(i, Math.floor(value * 10)) * barAreaH * lerp(0.2, 1, value)

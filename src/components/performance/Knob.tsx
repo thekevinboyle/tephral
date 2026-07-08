@@ -72,6 +72,8 @@ export function Knob({
   const dragStartY = useRef<number | null>(null)
   const dragStartValue = useRef<number>(0)
   const didDrag = useRef(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
   // Depth-drag assignment refs/state
   const depthAssignSource = useRef<string | null>(null)
@@ -186,6 +188,7 @@ export function Knob({
     didDrag.current = false
     dragStartY.current = e.clientY
     dragStartValue.current = value
+    setIsDragging(true)
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   }, [value, isInAssignmentMode, paramId, assigningModulator, assigningPolyEuclid, assigningStepTrack, routings, addRouting, setAssigningPolyEuclid, setAssigningStepTrack])
 
@@ -215,6 +218,8 @@ export function Knob({
     try {
       ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
     } catch {}
+
+    setIsDragging(false)
 
     // Commit depth-drag assignment
     if (isDepthDragging && depthAssignSource.current && paramId) {
@@ -260,6 +265,17 @@ export function Knob({
 
     dragStartY.current = null
   }, [isDepthDragging, isInAssignmentMode, isAutomationTarget, paramId, label, min, max, step, routings, addRouting, updateRoutingDepth, setAutomationParam, clearAutomationParam])
+
+  // Pointer cancel (e.g. touch interruption) — reset visual/drag state without click side-effects
+  const handlePointerCancel = useCallback((e: React.PointerEvent) => {
+    try {
+      ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+    } catch {}
+    setIsDragging(false)
+    setIsDepthDragging(false)
+    depthAssignSource.current = null
+    dragStartY.current = null
+  }, [])
 
   // Drop target handlers
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -412,9 +428,15 @@ export function Knob({
     return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`
   }
 
-  // Indicator line from center toward edge
-  const indicatorEnd = polarToCartesian(arcCenter, arcCenter, arcRadius - 3, valueAngle)
-  const indicatorStart = polarToCartesian(arcCenter, arcCenter, arcRadius * 0.35, valueAngle)
+  // Indicator line drawn at 12 o'clock (angle 360) and rotated into place via CSS
+  // transform — lets the settle spring animate on transform only (no path recompute)
+  const indicatorEnd = polarToCartesian(arcCenter, arcCenter, arcRadius - 3, 360)
+  const indicatorStart = polarToCartesian(arcCenter, arcCenter, arcRadius * 0.35, 360)
+  const indicatorRotation = valueAngle - 360 // continuous over [-225°, +45°], no wrap
+
+  // 12 o'clock reference tick
+  const tickOuter = polarToCartesian(arcCenter, arcCenter, arcRadius, 360)
+  const tickInner = polarToCartesian(arcCenter, arcCenter, arcRadius - 3, 360)
 
   return (
     <div
@@ -449,16 +471,37 @@ export function Knob({
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
-          className="relative cursor-pointer select-none touch-none flex flex-col items-center"
+          onPointerCancel={handlePointerCancel}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className="relative select-none touch-none flex flex-col items-center"
+          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         >
-          <svg width={arcSize} height={arcSize}>
+          <svg
+            width={arcSize}
+            height={arcSize}
+            className={hasRouting && !isDragging ? 'alive-active' : undefined}
+            style={{
+              borderRadius: '50%',
+              transform: isDragging ? 'scale(1.05)' : 'scale(1)',
+              transition: `transform ${isDragging ? 'var(--dur-instant) var(--ease-snap)' : 'var(--dur-settle) var(--ease-out-back)'}`,
+            }}
+          >
             {/* Background track */}
             <path
               d={describeArc(arcCenter, arcCenter, arcRadius, startAngle, endAngle)}
               fill="none"
-              stroke="var(--border)"
+              stroke={isHovered || isDragging ? 'var(--border-emphasis)' : 'var(--border)'}
               strokeWidth={arcStroke}
               strokeLinecap="round"
+              style={{ transition: 'stroke var(--dur-quick) var(--ease-out-expo)' }}
+            />
+            {/* 12 o'clock reference tick */}
+            <line
+              x1={tickInner.x} y1={tickInner.y}
+              x2={tickOuter.x} y2={tickOuter.y}
+              stroke="var(--text-ghost)"
+              strokeWidth={1}
             />
             {/* Active arc */}
             {normalized > 0.005 && (
@@ -468,26 +511,45 @@ export function Knob({
                 stroke={arcColor}
                 strokeWidth={arcStroke}
                 strokeLinecap="round"
+                style={{
+                  opacity: isDragging ? 1 : 0.9,
+                  filter: isDragging ? 'drop-shadow(0 0 3px var(--accent-glow))' : 'none',
+                  transition: 'opacity var(--dur-quick) var(--ease-out-expo), filter var(--dur-quick) var(--ease-out-expo)',
+                }}
               />
             )}
-            {/* Indicator line */}
-            <line
-              x1={indicatorStart.x} y1={indicatorStart.y}
-              x2={indicatorEnd.x} y2={indicatorEnd.y}
-              stroke={arcColor}
-              strokeWidth={1.5}
-              strokeLinecap="round"
-            />
+            {/* Indicator line — rotated group so release settles with spring */}
+            <g
+              style={{
+                transform: `rotate(${indicatorRotation}deg)`,
+                transformOrigin: `${arcCenter}px ${arcCenter}px`,
+                transition: isDragging ? 'none' : 'transform var(--dur-settle) var(--ease-out-back)',
+              }}
+            >
+              <line
+                x1={indicatorStart.x} y1={indicatorStart.y}
+                x2={indicatorEnd.x} y2={indicatorEnd.y}
+                stroke={isDragging ? 'var(--accent)' : arcColor}
+                strokeWidth={1.5}
+                strokeLinecap="round"
+                style={{
+                  filter: isDragging ? 'drop-shadow(0 0 2px var(--accent-glow))' : 'none',
+                  transition: 'stroke var(--dur-quick) var(--ease-out-expo), filter var(--dur-quick) var(--ease-out-expo)',
+                }}
+              />
+            </g>
           </svg>
           {/* Value below arc */}
           <span
             className="tabular-nums font-bold"
             style={{
               fontSize: isCompact ? 9 : 10,
-              color: arcColor,
+              color: isDragging ? 'var(--accent)' : arcColor,
+              textShadow: isDragging ? '0 0 6px var(--accent-glow)' : 'none',
               fontFamily: 'var(--font-mono)',
               letterSpacing: '0.06em',
               marginTop: -2,
+              transition: 'color var(--dur-quick) var(--ease-out-expo), text-shadow var(--dur-quick) var(--ease-out-expo)',
             }}
           >
             {displayValue}
@@ -499,21 +561,30 @@ export function Knob({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        className="relative cursor-pointer select-none touch-none"
+        onPointerCancel={handlePointerCancel}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`relative select-none touch-none ${hasRouting && !isDragging && !isAutomationTarget ? 'alive-active' : ''}`}
         style={{
           width: dimensions.width,
           height: dimensions.height,
+          cursor: isDragging ? 'grabbing' : 'grab',
           border: isAutomationTarget
             ? '1px solid #FF4060'
             : isInAssignmentMode && !hasRouting
               ? `1px solid ${assigningColor}`
               : isDropTarget
                 ? '1px solid var(--accent)'
-                : `1px solid ${hasRouting ? (sourceInfo?.color ?? 'var(--border)') : 'var(--border)'}`,
+                : isDragging && !hasRouting
+                  ? '1px solid var(--accent)'
+                  : `1px solid ${hasRouting ? (sourceInfo?.color ?? 'var(--border)') : isHovered ? 'var(--border-emphasis)' : 'var(--border)'}`,
           backgroundColor: '#000000',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          boxShadow: isDragging ? '0 0 10px var(--accent-glow)' : 'none',
+          transform: isDragging ? 'scale(1.03)' : 'scale(1)',
+          transition: `border-color var(--dur-quick) var(--ease-out-expo), box-shadow var(--dur-quick) var(--ease-out-expo), transform ${isDragging ? 'var(--dur-instant) var(--ease-snap)' : 'var(--dur-settle) var(--ease-out-back)'}`,
           animation: isAutomationTarget ? 'hud-blink 0.5s step-end infinite' : undefined,
         }}
       >
@@ -546,24 +617,31 @@ export function Knob({
           className="tabular-nums font-bold"
           style={{
             fontSize: isCompact ? 10 : 12,
-            color: arcColor,
+            color: isDragging ? 'var(--accent)' : arcColor,
+            textShadow: isDragging ? '0 0 6px var(--accent-glow)' : 'none',
             fontFamily: 'var(--font-mono)',
             letterSpacing: '0.06em',
+            transition: 'color var(--dur-quick) var(--ease-out-expo), text-shadow var(--dur-quick) var(--ease-out-expo)',
           }}
         >
           {displayValue}
         </span>
 
-        {/* Fill bar at bottom */}
+        {/* Fill bar at bottom — scaleX so external value changes settle with spring */}
         <div
           style={{
             position: 'absolute',
             bottom: 0,
             left: 0,
-            width: `${normalized * 100}%`,
+            right: 0,
             height: 1,
             backgroundColor: arcColor,
-            opacity: 0.4,
+            opacity: isDragging ? 0.9 : 0.4,
+            transform: `scaleX(${normalized})`,
+            transformOrigin: 'left',
+            transition: isDragging
+              ? 'opacity var(--dur-quick) var(--ease-out-expo)'
+              : 'transform var(--dur-settle) var(--ease-out-back), opacity var(--dur-quick) var(--ease-out-expo)',
           }}
         />
       </div>

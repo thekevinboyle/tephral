@@ -1,8 +1,9 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect, useState } from 'react'
 import { useRecordingStore } from '../../stores/recordingStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useModulationStore } from '../../stores/modulationStore'
+import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { Crosshair } from '../ui/MicroVisuals'
 
 const HOLD_THRESHOLD = 200    // ms before hold triggers solo
@@ -25,7 +26,7 @@ interface EffectButtonProps {
 export function EffectButton({
   id,
   label,
-  color: _color,
+  color,
   active,
   mix,
   onToggle,
@@ -35,7 +36,6 @@ export function EffectButton({
   statusText,
   disabled = false,
 }: EffectButtonProps) {
-  void _color // Keep color prop for API compatibility
   const dragStartY = useRef<number | null>(null)
   const dragStartValue = useRef<number>(0)
   const didDrag = useRef(false)
@@ -48,6 +48,20 @@ export function EffectButton({
 
   // Solo state and actions
   const { soloEffectId, soloLatched, setSolo, clearSolo } = useGlitchEngineStore()
+
+  // Shared transport clock — active cells breathe on the beat while playing,
+  // fall back to the slow ambient breathe (class default) when paused
+  const bpm = useEffectSequencerStore((s) => s.bpm)
+  const seqPlaying = useEffectSequencerStore((s) => s.isPlaying)
+  const beatDuration = seqPlaying ? `${60 / bpm}s` : undefined
+
+  // Activation pop — fires only on off→on transitions, not initial mount
+  const [popping, setPopping] = useState(false)
+  const prevActive = useRef(active)
+  useEffect(() => {
+    if (active && !prevActive.current) setPopping(true)
+    prevActive.current = active
+  }, [active])
 
   // Gesture detection refs
   const lastClickTime = useRef<number>(0)
@@ -206,7 +220,7 @@ export function EffectButton({
         handlePointerLeave()
         if (!disabled) {
           e.currentTarget.style.backgroundColor = 'var(--bg-surface)'
-          e.currentTarget.style.borderColor = isSoloed ? 'var(--text-primary)' : active ? 'var(--accent)' : 'var(--border)'
+          e.currentTarget.style.borderColor = isSoloed ? 'var(--text-primary)' : active ? color : 'var(--border)'
         }
       }}
       onPointerCancel={handlePointerLeave}
@@ -214,37 +228,80 @@ export function EffectButton({
         if (statusText) setStatusText(statusText)
         if (!disabled) {
           e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'
-          e.currentTarget.style.borderColor = isSoloed ? 'var(--text-primary)' : active ? 'var(--accent)' : 'var(--border-emphasis)'
+          e.currentTarget.style.borderColor = isSoloed ? 'var(--text-primary)' : active ? color : 'var(--border-emphasis)'
         }
       }}
-      className="relative rounded-sm flex select-none touch-none w-full h-full p-1.5 overflow-hidden"
+      onAnimationEnd={(e) => {
+        if (e.animationName === 'cell-pop') setPopping(false)
+      }}
+      className={`relative rounded-sm flex select-none touch-none w-full h-full p-1.5 overflow-hidden press-physical ${popping ? 'cell-pop' : ''}`}
       style={{
         backgroundColor: 'var(--bg-surface)',
-        border: isSoloed ? '1px solid var(--text-primary)' : active ? '1px solid var(--accent)' : '1px solid var(--border)',
+        border: isSoloed ? '1px solid var(--text-primary)' : active ? `1px solid ${color}` : '1px solid var(--border)',
         opacity: disabled ? 0.25 : isMuted ? 0.4 : 1,
         cursor: disabled ? 'default' : 'pointer',
         pointerEvents: disabled ? 'none' : 'auto',
         boxShadow: isSoloed
           ? '0 0 8px var(--accent-glow)'
           : active
-            ? 'inset 3px 0 0 var(--accent), var(--shadow-button)'
+            ? `inset 3px 0 0 ${color}, var(--shadow-button)`
             : 'var(--shadow-button)',
-        transition: 'background-color 0.12s, box-shadow 0.15s ease-out, border-color 0.12s',
+        transition:
+          'background-color 0.12s, box-shadow var(--dur-settle) var(--ease-out-expo), border-color var(--dur-settle) var(--ease-out-expo), opacity var(--dur-settle) var(--ease-out-expo), transform var(--dur-instant) var(--ease-snap)',
       }}
     >
+      {/* Live glow overlay — breathes on the beat while running, fades (not cuts) on toggle off */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none rounded-sm"
+        style={{
+          opacity: active && !isMuted && !disabled ? 1 : 0,
+          transition: 'opacity var(--dur-settle) var(--ease-out-expo)',
+        }}
+      >
+        <div
+          className="absolute inset-0 alive-idle"
+          style={{
+            boxShadow: `inset 0 0 14px ${color}26`,
+            animationDuration: beatDuration,
+          }}
+        />
+      </div>
+
       {/* Main content area */}
       <div className="flex-1 flex flex-col justify-center relative">
         {/* Label */}
         <span
           className="text-[11px] font-semibold truncate uppercase tracking-wide"
-          style={{ color: active ? 'var(--accent)' : 'var(--text-secondary)' }}
+          style={{
+            color: active ? color : 'var(--text-secondary)',
+            transition: 'color var(--dur-settle) var(--ease-out-expo)',
+          }}
         >
           {label}
+        </span>
+        {/* Running LED — pulses with the transport */}
+        <span
+          aria-hidden
+          className="absolute top-0 right-0 w-1 h-1 pointer-events-none"
+          style={{
+            opacity: active && !isMuted ? 1 : 0,
+            transition: 'opacity var(--dur-settle) var(--ease-out-expo)',
+          }}
+        >
+          <span
+            className="absolute inset-0 rounded-full alive-idle"
+            style={{
+              backgroundColor: color,
+              boxShadow: `0 0 4px ${color}`,
+              animationDuration: beatDuration,
+            }}
+          />
         </span>
         {/* Active indicator */}
         {active && (
           <div className="absolute right-0 bottom-0 opacity-15 pointer-events-none">
-            <Crosshair value={mix} size={22} color="var(--accent)" />
+            <Crosshair value={mix} size={22} color={color} />
           </div>
         )}
       </div>
@@ -263,7 +320,7 @@ export function EffectButton({
           className="absolute bottom-0 left-0 right-0 rounded-sm transition-all duration-150"
           style={{
             height: `${mixPercent}%`,
-            backgroundColor: active ? 'var(--accent)' : 'var(--text-ghost)',
+            backgroundColor: active ? color : 'var(--text-ghost)',
           }}
         />
       </div>

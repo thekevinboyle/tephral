@@ -280,9 +280,27 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
             className="flex flex-col items-center justify-center h-full gap-2"
             style={{ color: 'var(--text-ghost)' }}
           >
-            <Crosshair value={0.3} size={40} color="var(--text-ghost)" className="opacity-25" />
-            <span className="text-[10px] uppercase tracking-wider">
+            {/* Idle reticle — slow telemetry rotation while awaiting tracks */}
+            <span
+              className="inline-flex"
+              style={{ animation: 'hud-reticle-spin 24s linear infinite' }}
+            >
+              <Crosshair value={0.3} size={40} color="var(--text-ghost)" className="opacity-25" />
+            </span>
+            <span className="alive-idle text-[10px] uppercase tracking-wider">
               Enable effects on the grid to add tracks
+              <span
+                aria-hidden
+                style={{
+                  display: 'inline-block',
+                  width: 5,
+                  height: 9,
+                  marginLeft: 6,
+                  verticalAlign: -1,
+                  backgroundColor: 'currentColor',
+                  animation: 'hud-typewriter-cursor 1.1s steps(1) infinite',
+                }}
+              />
             </span>
           </div>
         ) : (

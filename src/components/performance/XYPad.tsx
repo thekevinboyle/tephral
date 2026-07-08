@@ -206,6 +206,7 @@ export function XYPad() {
   const padRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<XYPosition>({ x: 0.5, y: 0.5 })
   const [isPressed, setIsPressed] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
   const [xParamId, setXParamId] = useState<string>('rgb_split.amount')
   const [yParamId, setYParamId] = useState<string>('block_displace.displaceChance')
 
@@ -430,7 +431,15 @@ export function XYPad() {
           <span className="text-[14px] font-medium rotate-180 truncate" style={{ writingMode: 'vertical-rl', color: 'var(--text-muted)' }}>
             {yParam?.label || 'Y'}
           </span>
-          <span className="text-[14px] tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
+          <span
+            className="text-[14px] tabular-nums"
+            style={{
+              color: isPressed ? 'var(--accent)' : 'var(--text-primary)',
+              textShadow: isPressed ? '0 0 6px var(--accent-glow)' : 'none',
+              fontFamily: "'JetBrains Mono', monospace",
+              transition: 'color var(--dur-quick) var(--ease-out-expo), text-shadow var(--dur-quick) var(--ease-out-expo)',
+            }}
+          >
             {formatValue(1 - position.y, yParam)}
           </span>
         </div>
@@ -442,14 +451,16 @@ export function XYPad() {
             className="flex-1 relative rounded-lg cursor-crosshair touch-none"
             style={{
               backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--border)',
+              border: `1px solid ${isPressed ? 'var(--border-emphasis)' : 'var(--border)'}`,
+              boxShadow: isPressed ? 'inset 0 0 14px rgba(255,255,255,0.03)' : 'none',
+              transition: 'border-color var(--dur-quick) var(--ease-out-expo), box-shadow var(--dur-quick) var(--ease-out-expo)',
             }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
-            onMouseEnter={() => setStatusText(getUIStatusText('xyPad'))}
-            onMouseLeave={() => setStatusText(null)}
+            onMouseEnter={() => { setStatusText(getUIStatusText('xyPad')); setIsHovered(true) }}
+            onMouseLeave={() => { setStatusText(null); setIsHovered(false) }}
           >
             {/* Grid lines */}
             <div className="absolute inset-0 pointer-events-none">
@@ -469,23 +480,103 @@ export function XYPad() {
               ))}
             </div>
 
-            {/* Position cursor */}
+            {/* Crosshair hairlines — clipped to pad, transform-only rails */}
+            <div className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
+              <div
+                className="absolute inset-0"
+                style={{
+                  transform: `translateX(${position.x * 100}%)`,
+                  transition: isPressed ? 'none' : 'transform var(--dur-settle) var(--ease-out-back)',
+                }}
+              >
+                <div
+                  className="absolute top-0 bottom-0 w-px"
+                  style={{
+                    left: -0.5,
+                    backgroundColor: 'var(--accent)',
+                    opacity: isPressed ? 0.35 : isHovered ? 0.12 : 0,
+                    transition: 'opacity var(--dur-quick) var(--ease-out-expo)',
+                  }}
+                />
+              </div>
+              <div
+                className="absolute inset-0"
+                style={{
+                  transform: `translateY(${position.y * 100}%)`,
+                  transition: isPressed ? 'none' : 'transform var(--dur-settle) var(--ease-out-back)',
+                }}
+              >
+                <div
+                  className="absolute left-0 right-0 h-px"
+                  style={{
+                    top: -0.5,
+                    backgroundColor: 'var(--accent)',
+                    opacity: isPressed ? 0.35 : isHovered ? 0.12 : 0,
+                    transition: 'opacity var(--dur-quick) var(--ease-out-expo)',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Corner brackets — HUD frame, brighten while engaged */}
             <div
-              className="absolute w-4 h-4 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+              className="absolute inset-0 pointer-events-none"
               style={{
-                left: `${position.x * 100}%`,
-                top: `${position.y * 100}%`,
-                transform: `translate(-50%, -50%) scale(${isPressed ? 1.2 : 1})`,
-                transition: 'transform 0.1s',
+                color: isPressed ? 'var(--text-secondary)' : 'var(--text-ghost)',
+                transition: 'color var(--dur-quick) var(--ease-out-expo)',
+              }}
+            >
+              <div className="absolute w-2 h-2" style={{ top: 3, left: 3, borderTop: '1px solid currentColor', borderLeft: '1px solid currentColor' }} />
+              <div className="absolute w-2 h-2" style={{ top: 3, right: 3, borderTop: '1px solid currentColor', borderRight: '1px solid currentColor' }} />
+              <div className="absolute w-2 h-2" style={{ bottom: 3, left: 3, borderBottom: '1px solid currentColor', borderLeft: '1px solid currentColor' }} />
+              <div className="absolute w-2 h-2" style={{ bottom: 3, right: 3, borderBottom: '1px solid currentColor', borderRight: '1px solid currentColor' }} />
+            </div>
+
+            {/* Trail dot — lags the cursor while dragging, fades on release */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                transform: `translate(${position.x * 100}%, ${position.y * 100}%)`,
+                transition: 'transform 260ms var(--ease-out-expo)',
               }}
             >
               <div
-                className="absolute inset-0 rounded-full"
+                className="absolute w-1.5 h-1.5 rounded-full"
                 style={{
+                  transform: 'translate(-50%, -50%)',
                   backgroundColor: 'var(--text-muted)',
-                  boxShadow: '0 0 8px rgba(0,0,0,0.3)',
+                  opacity: isPressed ? 0.45 : 0,
+                  transition: 'opacity var(--dur-settle) var(--ease-out-expo)',
                 }}
               />
+            </div>
+
+            {/* Position cursor — transform-only rail, springs on release */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                transform: `translate(${position.x * 100}%, ${position.y * 100}%)`,
+                transition: isPressed ? 'none' : 'transform var(--dur-settle) var(--ease-out-back)',
+              }}
+            >
+              <div
+                className="absolute w-4 h-4"
+                style={{
+                  transform: `translate(-50%, -50%) scale(${isPressed ? 1.2 : 1})`,
+                  transition: 'transform var(--dur-quick) var(--ease-out-back)',
+                }}
+              >
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    backgroundColor: isPressed ? 'var(--accent)' : 'var(--text-muted)',
+                    boxShadow: isPressed
+                      ? '0 0 12px var(--accent-glow), 0 0 4px var(--accent-glow)'
+                      : '0 0 8px rgba(0,0,0,0.3)',
+                    transition: 'background-color var(--dur-quick) var(--ease-out-expo), box-shadow var(--dur-quick) var(--ease-out-expo)',
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -494,7 +585,15 @@ export function XYPad() {
             <span className="text-[14px] font-medium truncate" style={{ color: 'var(--text-muted)' }}>
               {xParam?.label || 'X'}
             </span>
-            <span className="text-[14px] tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
+            <span
+              className="text-[14px] tabular-nums"
+              style={{
+                color: isPressed ? 'var(--accent)' : 'var(--text-primary)',
+                textShadow: isPressed ? '0 0 6px var(--accent-glow)' : 'none',
+                fontFamily: "'JetBrains Mono', monospace",
+                transition: 'color var(--dur-quick) var(--ease-out-expo), text-shadow var(--dur-quick) var(--ease-out-expo)',
+              }}
+            >
               {formatValue(position.x, xParam)}
             </span>
           </div>

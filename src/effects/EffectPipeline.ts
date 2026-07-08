@@ -91,10 +91,17 @@ export class EffectPipeline {
 
   private effectPasses: EffectPass[] = []
   private crossfaderPass: EffectPass | null = null
-  // Cache one EffectPass per Effect so param changes never recompile shaders.
-  // A pass is disposed only when its effect leaves the chain (or on dispose()).
+  // Cache one EffectPass per Effect for the pipeline's lifetime, so param
+  // changes never recompile shaders. Passes are NEVER disposed on eviction —
+  // pass.dispose() (postprocessing) cascades into effect.dispose(), which
+  // shallow-disposes ANY texture-valued own property on the effect,
+  // including borrowed/live textures (e.g. the crossfader's source texture,
+  // trace-mask textures) and temporal render targets. The cache is bounded
+  // (one entry per effect id, ~30 max), so lifetime retention is cheap.
+  // Every cached pass, including crossfaderPass, is disposed exactly once,
+  // in dispose().
   private passCache = new Map<Effect, EffectPass>()
-  private lastChainKey = ''
+  private lastChainKey = '#UNINITIALIZED#'
 
   // Canvas dimensions
   private canvasWidth = 1
@@ -291,35 +298,31 @@ export class EffectPipeline {
       track_hands: config.handsTraceEnabled,
     }
 
-    // Compute the active chain (empty when bypassed)
+    // Compute the active chain (empty when bypassed). Deduped via Set so a
+    // duplicate id in effectOrder can't add the same cached EffectPass twice.
     const activeIds = config.bypassActive
       ? []
-      : config.effectOrder.filter((id) => enabledMap[id] && this.getEffectById(id))
+      : Array.from(
+          new Set(config.effectOrder.filter((id) => enabledMap[id] && this.getEffectById(id)))
+        )
 
-    // Structural short-circuit: same chain -> nothing to rebuild
-    const chainKey = activeIds.join('|')
+    // Structural short-circuit: same chain -> nothing to rebuild.
+    // Bypass gets its own sentinel key, distinct from the empty/no-effects
+    // chain (''). Without this, "bypass on" and "zero effects enabled" would
+    // collide on chainKey === '', so toggling bypass while no effects are
+    // enabled would short-circuit and never add/remove the crossfader pass.
+    const chainKey = config.bypassActive ? '#BYPASS#' : activeIds.join('|')
     if (chainKey === this.lastChainKey) return
     this.lastChainKey = chainKey
 
-    // Remove all current effect passes from the composer (they stay cached)
+    // Remove all current effect passes from the composer (they stay cached
+    // for the pipeline's lifetime — see the passCache field comment).
     for (const pass of this.effectPasses) {
       this.composer.removePass(pass)
     }
     this.effectPasses = []
     if (this.crossfaderPass) {
       this.composer.removePass(this.crossfaderPass)
-      this.crossfaderPass.dispose()
-      this.crossfaderPass = null
-    }
-
-    // Dispose cached passes whose effect is no longer in the chain.
-    // Disposing only here is safe: the effect itself is leaving the chain too.
-    const activeEffects = new Set(activeIds.map((id) => this.getEffectById(id)!))
-    for (const [effect, pass] of this.passCache) {
-      if (!activeEffects.has(effect)) {
-        pass.dispose()
-        this.passCache.delete(effect)
-      }
     }
 
     // If bypass is active, don't add any effect passes - just render the input
@@ -337,11 +340,14 @@ export class EffectPipeline {
       this.effectPasses.push(pass)
     }
 
-    // Add crossfader pass for A/B blending (source vs processed)
-    // Always add the pass - source texture is set separately via setSourceTexture()
+    // Add crossfader pass for A/B blending (source vs processed).
+    // Cached for the pipeline's lifetime — created once, then just
+    // re-added to the composer on each rebuild (never disposed here).
     if (this.crossfaderEffect) {
       this.crossfaderEffect.setQuadScale(1, 1)
-      this.crossfaderPass = new EffectPass(this.camera, this.crossfaderEffect)
+      if (!this.crossfaderPass) {
+        this.crossfaderPass = new EffectPass(this.camera, this.crossfaderEffect)
+      }
       this.composer.addPass(this.crossfaderPass)
     }
   }
@@ -453,8 +459,17 @@ export class EffectPipeline {
   }
 
   dispose() {
+    // Detach the borrowed source texture BEFORE disposing any passes.
+    // pass.dispose() cascades into effect.dispose(), which shallow-disposes
+    // any texture-valued own property — we don't own the live source
+    // texture, so it must be cleared first or the cascade would destroy it.
+    this.crossfaderEffect?.setSourceTexture(null)
     for (const [, pass] of this.passCache) pass.dispose()
     this.passCache.clear()
+    if (this.crossfaderPass) {
+      this.crossfaderPass.dispose()
+      this.crossfaderPass = null
+    }
     this.composer.dispose()
     this.quad.geometry.dispose()
     ;(this.quad.material as THREE.Material).dispose()

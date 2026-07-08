@@ -70,7 +70,7 @@ export function StatusBar() {
       </span>
       {import.meta.env.DEV && (
         <span
-          title="render pipeline avg/max ms"
+          title="render pipeline avg ms / fps"
           style={{
             fontSize: 10,
             color: 'var(--text-muted)',

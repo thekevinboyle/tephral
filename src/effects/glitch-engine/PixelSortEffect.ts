@@ -114,10 +114,12 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     vec3 result = current;
     float displacement = 0.0;
 
-    for (float i = 1.0; i <= 64.0; i++) {
-      if (i > streakLength * 0.5) break;
+    float stride1 = max(1.0, streakLength * 0.5 / 48.0);
+    for (float i = 1.0; i <= 48.0; i++) {
+      float d = i * stride1;
+      if (d > streakLength * 0.5) break;
 
-      vec2 sampleUV = uv - sortDir * i * texel.x;
+      vec2 sampleUV = uv - sortDir * d * texel.x;
       if (sampleUV.x < 0.0 || sampleUV.x > 1.0 || sampleUV.y < 0.0 || sampleUV.y > 1.0) break;
 
       vec3 sampleColor = texture2D(inputBuffer, sampleUV).rgb;
@@ -129,7 +131,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
         // This pixel might displace into our position
         float pushDist = sortStrength * streakLength * texel.x * intensity;
 
-        if (pushDist >= i * texel.x) {
+        if (pushDist >= d * texel.x) {
           result = sampleColor;
           break;
         }
@@ -158,12 +160,17 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   vec3 result = current;
   float bestMatch = -1.0;
 
-  // Sample along the streak to find sorted position
-  for (float i = 0.0; i <= 128.0; i++) {
-    if (i > streakLength) break;
+  // Sample along the streak to find sorted position.
+  // Adaptive stride: 1-texel (exact) sampling for streaks up to 96px,
+  // wider steps only beyond, bounding worst-case samples without visible
+  // banding. Per-pixel jitter dithers the ladder when stride exceeds 1.
+  float stride2 = max(1.0, streakLength / 96.0);
+  float ladderJitter = (hash(uv * 731.3) - 0.5) * (stride2 - 1.0);
+  for (float i = 0.0; i <= 96.0; i++) {
+    float d = max(i * stride2 + ladderJitter, 0.0);
+    if (d > streakLength) break;
 
-    float t = i / streakLength;
-    vec2 sampleUV = uv - sortDir * i * texel.x;
+    vec2 sampleUV = uv - sortDir * d * texel.x;
 
     if (sampleUV.x < 0.0 || sampleUV.x > 1.0 || sampleUV.y < 0.0 || sampleUV.y > 1.0) break;
 
@@ -178,7 +185,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     float sampleDisplacement = sampleStrength * streakLength * texel.x * intensity;
     sampleDisplacement *= 1.0 + (noise(sampleUV * 100.0 + time) - 0.5) * randomness;
 
-    if (sampleDisplacement >= i * texel.x * 0.9 && sampleDisplacement <= i * texel.x * 1.1 + texel.x) {
+    if (abs(sampleDisplacement - d * texel.x) <= stride2 * texel.x * 0.75 + texel.x) {
       if (sampleStrength > bestMatch) {
         result = sampleColor;
         bestMatch = sampleStrength;

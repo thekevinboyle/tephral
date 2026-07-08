@@ -137,3 +137,31 @@ VISION BRIGHT tracking (`VisionTrackingOverlay`, both readback call sites at
 ~887 and ~891) verified working after the change — bounding boxes, labels,
 and trail lines render correctly over bright regions with no console
 errors.
+
+## After Task 8 (PixelSort adaptive stride)
+
+Final shader design (differs from the plan's first draft after visual-gate
+iteration): loop 1 capped at 48 iterations (stride = streakLength*0.5/48),
+main sort loop capped at 96 iterations with **adaptive stride**
+(`max(1, streakLength/96)`) plus per-pixel ladder jitter, match window
+widened to `stride*0.75 + 1` texels. Worst-case samples 200 -> 152; output
+is sample-exact for streakLength <= 96, visually identical to ~192, slight
+streak ribbing at 250 (max) — judged within the "minor texture change"
+allowance. The plan's 32/48-iteration draft produced clearly visible
+periodic scalloping at max streak and was rejected at the visual gate;
+jitter alone and window-widening alone did not cure it.
+
+Perf (same static-image scenario, streakLength 250, intensity 0.7):
+- before: pipeline avg 0.073 ms / max 0.110 ms
+- after (adaptive): avg 0.088 ms / max 0.145 ms
+These CPU-side submission numbers do not discriminate (GPU execution is
+async and unmeasured; deltas are run-to-run noise at this canvas size).
+The change's benefit is bounded worst-case fragment ALU cost at high
+resolution/DPR — a theoretical guarantee, not demonstrated in this
+small-canvas scenario. Screenshot evidence: docs/plans/task8-screenshots/.
+
+**Methodology warning for future measurement sessions:** driving zustand
+stores via `browser_evaluate` dynamic imports SILENTLY FAILS after any HMR
+invalidation — Vite serves the app a `?t=`-versioned module while the
+un-versioned import creates a phantom second store instance. Restart the
+dev server before store-driven measurement, or drive the real UI.

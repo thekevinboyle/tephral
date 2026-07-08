@@ -4,6 +4,7 @@ import { useMotionStore } from '../stores/motionStore'
 import { useAcidStore } from '../stores/acidStore'
 import { useAsciiRenderStore } from '../stores/asciiRenderStore'
 import { useDestructionStore } from '../stores/destructionStore'
+import { useDestructionModeStore } from '../stores/destructionModeStore'
 import { useMorphStore } from '../stores/morphStore'
 import { useVisionTrackingStore } from '../stores/visionTrackingStore'
 import { useRoutingStore } from '../stores/routingStore'
@@ -65,7 +66,14 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     const s = useDestructionStore.getState()
     // Note: destruction-mode override (max datamosh) stays in Canvas.tsx's
     // structural effect — it depends on destructionActive, not these params.
-    pipeline.datamosh?.updateParams({ ...s.datamoshParams, mix: getMix('datamosh') })
+    // While destruction mode is active, the structural effect owns the
+    // datamosh uniforms (max override), so skip pushing store params here —
+    // otherwise this would clobber the MAX override on every effectMix
+    // change or per-frame modulation write (useContinuousModulation calls
+    // updateDatamoshParams every frame).
+    if (!useDestructionModeStore.getState().active) {
+      pipeline.datamosh?.updateParams({ ...s.datamoshParams, mix: getMix('datamosh') })
+    }
     pipeline.pixelSort?.updateParams({ ...s.pixelSortParams, mix: getMix('pixelSort') })
     pipeline.sonify?.updateParams({ ...s.sonifyParams, mix: getMix('sonify') })
     pipeline.pointCloud?.updateParams({ ...s.pointCloudParams, mix: getMix('point_cloud') })
@@ -181,6 +189,14 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     }),
     useRoutingStore.subscribe((s, prev) => {
       if (s.crossfaderPosition !== prev.crossfaderPosition) pushCrossfader()
+    }),
+    // Exiting destruction mode hands datamosh uniforms back to paramSync —
+    // re-push immediately so the user's datamoshParams restore without
+    // waiting for an unrelated store change. Entering destruction mode
+    // (false→true) is handled by Canvas.tsx's structural effect applying
+    // the MAX override; nothing to do here for that direction.
+    useDestructionModeStore.subscribe((s, prev) => {
+      if (prev.active && !s.active) pushDestruction()
     }),
   ]
 

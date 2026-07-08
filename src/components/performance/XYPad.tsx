@@ -227,9 +227,6 @@ export function XYPad() {
     }
   }, [selectedEffectId])
 
-  // Cancel any pending rAF-throttled change on unmount
-  useEffect(() => () => cancelAnimationFrame(xyRafRef.current), [])
-
   const xParam = AVAILABLE_PARAMS.find(p => p.id === xParamId)
   const yParam = AVAILABLE_PARAMS.find(p => p.id === yParamId)
 
@@ -336,6 +333,10 @@ export function XYPad() {
   // rAF-throttled updateParams dispatch — coalesce drag updates to ≤1 per frame
   const pendingXYRef = useRef<{ x: number; y: number } | null>(null)
   const xyRafRef = useRef(0)
+
+  // Cancel any pending rAF-throttled change on unmount
+  useEffect(() => () => cancelAnimationFrame(xyRafRef.current), [])
+
   const updateParamsRef = useRef(updateParams)
   updateParamsRef.current = updateParams
 

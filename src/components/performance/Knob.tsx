@@ -297,6 +297,13 @@ export function Knob({
 
   // Pointer cancel (e.g. touch interruption) — reset visual/drag state without click side-effects
   const handlePointerCancel = useCallback((e: React.PointerEvent) => {
+    // Cancel any pending rAF-throttled change
+    if (changeRafRef.current) {
+      cancelAnimationFrame(changeRafRef.current)
+      changeRafRef.current = 0
+    }
+    pendingValueRef.current = null
+
     try {
       ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
     } catch {}

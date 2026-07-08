@@ -20,6 +20,7 @@ import { useSlicerBufferStore } from '../stores/slicerBufferStore'
 import { SlicerCompositor } from '../effects/SlicerCompositor'
 import { OverlayContainer } from './overlays/OverlayContainer'
 import { Crosshair } from './ui/MicroVisuals'
+import { perfMonitor } from '../utils/perfMonitor'
 
 export interface CanvasHandle {
   getCanvas: () => HTMLCanvasElement | null
@@ -654,12 +655,14 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate)
+      const start = performance.now()
       try {
         pipeline.render()
       } catch (e) {
         // Prevent render errors (e.g. tainted texture) from crashing the loop
         console.warn('Render error:', e)
       }
+      perfMonitor.record(performance.now() - start)
     }
     animate()
 

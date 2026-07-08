@@ -1,9 +1,18 @@
+import { useState, useEffect } from 'react'
 import { useUIStore } from '../../stores/uiStore'
 import { SignalAnalysis, IrisScanner } from '../ui/MicroVisuals'
+import { perfMonitor } from '../../utils/perfMonitor'
 
 export function StatusBar() {
   const statusText = useUIStore((s) => s.statusText)
   const isIdle = statusText == null
+
+  const [perf, setPerf] = useState({ avgMs: 0, maxMs: 0, fps: 0 })
+  useEffect(() => {
+    if (!import.meta.env.DEV) return
+    const id = setInterval(() => setPerf(perfMonitor.getStats()), 500)
+    return () => clearInterval(id)
+  }, [])
 
   return (
     <div
@@ -59,6 +68,20 @@ export function StatusBar() {
           />
         )}
       </span>
+      {import.meta.env.DEV && (
+        <span
+          title="render pipeline avg/max ms"
+          style={{
+            fontSize: 10,
+            color: 'var(--text-muted)',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+            marginLeft: 8,
+          }}
+        >
+          {perf.avgMs.toFixed(1)}ms · {perf.fps.toFixed(0)}fps
+        </span>
+      )}
       <IrisScanner value={0.4} size={16} color="var(--text-ghost)" className="opacity-20 ml-1.5" />
     </div>
   )

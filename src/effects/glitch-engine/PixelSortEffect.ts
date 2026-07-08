@@ -114,10 +114,13 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     vec3 result = current;
     float displacement = 0.0;
 
-    float stride1 = max(1.0, streakLength * 0.5 / 48.0);
+    // Match the original shader's implicit search-range clamp (its 64-iter
+    // cap doubled as a 64-texel range limit); stride only within that range.
+    float searchRange1 = min(streakLength * 0.5, 64.0);
+    float stride1 = max(1.0, searchRange1 / 48.0);
     for (float i = 1.0; i <= 48.0; i++) {
       float d = i * stride1;
-      if (d > streakLength * 0.5) break;
+      if (d > searchRange1) break;
 
       vec2 sampleUV = uv - sortDir * d * texel.x;
       if (sampleUV.x < 0.0 || sampleUV.x > 1.0 || sampleUV.y < 0.0 || sampleUV.y > 1.0) break;
@@ -164,11 +167,15 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   // Adaptive stride: 1-texel (exact) sampling for streaks up to 96px,
   // wider steps only beyond, bounding worst-case samples without visible
   // banding. Per-pixel jitter dithers the ladder when stride exceeds 1.
-  float stride2 = max(1.0, streakLength / 96.0);
+  // The original's 128-iter cap doubled as a 128-texel search-range clamp —
+  // beyond it, long streaks fall through to the smooth displacement fallback.
+  // Preserve that range and stride only within it (max stride 1.33).
+  float searchRange2 = min(streakLength, 128.0);
+  float stride2 = max(1.0, searchRange2 / 96.0);
   float ladderJitter = (hash(uv * 731.3) - 0.5) * (stride2 - 1.0);
   for (float i = 0.0; i <= 96.0; i++) {
     float d = max(i * stride2 + ladderJitter, 0.0);
-    if (d > streakLength) break;
+    if (d > searchRange2) break;
 
     vec2 sampleUV = uv - sortDir * d * texel.x;
 

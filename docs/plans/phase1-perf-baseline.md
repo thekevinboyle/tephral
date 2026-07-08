@@ -142,12 +142,15 @@ errors.
 
 Final shader design (differs from the plan's first draft after visual-gate
 iteration): loop 1 capped at 48 iterations (stride = streakLength*0.5/48),
-main sort loop capped at 96 iterations with **adaptive stride**
-(`max(1, streakLength/96)`) plus per-pixel ladder jitter, match window
-widened to `stride*0.75 + 1` texels. Worst-case samples 200 -> 152; output
-is sample-exact for streakLength <= 96, visually identical to ~192, slight
-streak ribbing at 250 (max) — judged within the "minor texture change"
-allowance. The plan's 32/48-iteration draft produced clearly visible
+main sort loop capped at 96 iterations with **adaptive stride** inside the
+original's implicit search range (`min(streakLength, 128)` texels — the old
+128-iteration cap doubled as a range clamp, which the first stride draft
+wrongly removed, causing ghost-copy artifacts at the UI-max streak of 2000),
+plus per-pixel ladder jitter and a `stride*0.75 + 1` texel match window.
+Max stride is 128/96 = 1.33, sub-visible. Worst-case samples 201 -> 153
+(48+96+8 +1 for loop-2's inclusive zero rung); output is sample-exact for
+streakLength <= 96 and verified visually matching at 16 / 120 / 250 / 2000
+(UI max per effectParams.ts). The plan's 32/48-iteration draft produced clearly visible
 periodic scalloping at max streak and was rejected at the visual gate;
 jitter alone and window-widening alone did not cure it.
 

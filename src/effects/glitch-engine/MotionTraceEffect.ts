@@ -83,6 +83,7 @@ export class MotionTraceEffect extends TraceEffect {
 
   initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
     super.initialize(renderer, alpha, frameBufferType)
+    if (this.historyTarget) return
 
     const size = renderer.getSize(new THREE.Vector2())
 

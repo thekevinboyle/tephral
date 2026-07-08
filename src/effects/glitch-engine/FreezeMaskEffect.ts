@@ -112,6 +112,7 @@ export class FreezeMaskEffect extends Effect {
 
   initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
     super.initialize?.(renderer, alpha, frameBufferType)
+    if (this.freezeTarget) return
 
     const size = renderer.getSize(new THREE.Vector2())
 

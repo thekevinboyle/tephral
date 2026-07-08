@@ -121,6 +121,7 @@ export class MotionExtractEffect extends Effect {
 
   initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
     super.initialize?.(renderer, alpha, frameBufferType)
+    if (this.historyTargets.length > 0) return
 
     const size = renderer.getSize(new THREE.Vector2())
 

@@ -78,6 +78,7 @@ export class TraceEffect extends Effect {
 
   initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
     super.initialize?.(renderer, alpha, frameBufferType)
+    if (this.traceMaskTarget) return
 
     const size = renderer.getSize(new THREE.Vector2())
     const options = {

@@ -180,6 +180,7 @@ export class FeedbackLoopEffect extends Effect {
 
   initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
     super.initialize?.(renderer, alpha, frameBufferType)
+    if (this.feedbackTarget) return
 
     const size = renderer.getSize(new THREE.Vector2())
 

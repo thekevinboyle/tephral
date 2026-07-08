@@ -342,6 +342,7 @@ export class PointCloudEffect extends Effect {
 
   initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
     super.initialize?.(renderer, alpha, frameBufferType)
+    if (this.renderTarget) return
 
     // Use drawing buffer size (accounts for pixel ratio) to match postprocessing pipeline
     const drawingBufferSize = renderer.getDrawingBufferSize(new THREE.Vector2())

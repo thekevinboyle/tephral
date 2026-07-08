@@ -146,17 +146,18 @@ export class MotionTraceEffect extends TraceEffect {
     }
   }
 
-  // Release GPU render targets when the effect is disabled. Also releases
-  // the base TraceEffect's targets (traceMaskTarget/trailTarget1/2) since
-  // this instance owns them too. Materials/scenes created in initialize()
-  // are resolution-independent and get recreated (not disposed) the next
-  // time initialize()'s guards see null targets, so they're intentionally
-  // left alone here.
+  // Release ALL GPU resources allocated in initialize() when the effect is
+  // disabled — own targets/materials plus the inherited TraceEffect targets/
+  // materials/geometry (traceMaskTarget/trailTarget1/2/copyMaterial/
+  // trailMaterial/copyGeometry) via super.releaseTargets(), since this
+  // instance owns those too. three.js only frees compiled programs/VBOs via
+  // .dispose(), never via GC, so leaving any of these orphaned while a
+  // guarded initialize() re-runs (and unconditionally recreates them) leaks
+  // GPU resources on every disable/enable cycle.
   releaseTargets() {
+    super.releaseTargets()
     this.historyTarget?.dispose(); this.historyTarget = null
-    this.traceMaskTarget?.dispose(); this.traceMaskTarget = null
-    this.trailTarget1?.dispose(); this.trailTarget1 = null
-    this.trailTarget2?.dispose(); this.trailTarget2 = null
+    this.historyMaterial?.dispose(); this.historyMaterial = null
     this.hasHistory = false
   }
 

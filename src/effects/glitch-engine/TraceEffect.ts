@@ -48,6 +48,7 @@ export class TraceEffect extends Effect {
   // Copy infrastructure
   protected copyMaterial: THREE.ShaderMaterial | null = null
   protected trailMaterial: THREE.ShaderMaterial | null = null
+  protected copyGeometry: THREE.PlaneGeometry | null = null
   protected copyScene: THREE.Scene | null = null
   protected copyCamera: THREE.OrthographicCamera | null = null
 
@@ -128,7 +129,8 @@ export class TraceEffect extends Effect {
 
     this.copyScene = new THREE.Scene()
     this.copyCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.copyMaterial)
+    this.copyGeometry = new THREE.PlaneGeometry(2, 2)
+    const quad = new THREE.Mesh(this.copyGeometry, this.copyMaterial)
     this.copyScene.add(quad)
   }
 
@@ -218,6 +220,25 @@ export class TraceEffect extends Effect {
     }
   }
 
+  // Release ALL GPU resources allocated in initialize() when the effect is
+  // disabled — targets, materials, and geometry. three.js only frees
+  // compiled programs/VBOs via .dispose(), never via GC, so leaving any of
+  // these orphaned while a guarded initialize() re-runs (and unconditionally
+  // recreates them) leaks GPU resources on every disable/enable cycle.
+  // Subclasses that own additional targets/materials (e.g. MotionTraceEffect)
+  // should call `super.releaseTargets()` and release their own on top.
+  releaseTargets() {
+    this.traceMaskTarget?.dispose(); this.traceMaskTarget = null
+    this.trailTarget1?.dispose(); this.trailTarget1 = null
+    this.trailTarget2?.dispose(); this.trailTarget2 = null
+    this.trailSwap = false
+    this.copyMaterial?.dispose(); this.copyMaterial = null
+    this.trailMaterial?.dispose(); this.trailMaterial = null
+    this.copyGeometry?.dispose(); this.copyGeometry = null
+    this.copyScene = null
+    this.copyCamera = null
+  }
+
   dispose() {
     super.dispose()
     this.traceMaskTarget?.dispose()
@@ -225,5 +246,6 @@ export class TraceEffect extends Effect {
     this.trailTarget2?.dispose()
     this.copyMaterial?.dispose()
     this.trailMaterial?.dispose()
+    this.copyGeometry?.dispose()
   }
 }

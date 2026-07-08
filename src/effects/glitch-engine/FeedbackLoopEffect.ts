@@ -148,9 +148,15 @@ export class FeedbackLoopEffect extends Effect {
   private feedbackTarget: THREE.WebGLRenderTarget | null = null
   private tempTarget: THREE.WebGLRenderTarget | null = null
   private copyMaterial: THREE.ShaderMaterial | null = null
+  private copyGeometry: THREE.PlaneGeometry | null = null
   private copyScene: THREE.Scene | null = null
   private copyCamera: THREE.OrthographicCamera | null = null
   private time: number = 0
+  // True once captureFrame() has actually populated feedbackTarget with real
+  // content. Gates hasFeedback so the shader never samples a freshly
+  // (re-)initialized target before it has data — matters most after
+  // releaseTargets() + re-enable (mirrors DatamoshEffect.hasCapturedFrame).
+  private hasCapturedFrame: boolean = false
 
   constructor(params: Partial<FeedbackLoopParams> = {}) {
     const p = { ...DEFAULT_FEEDBACK_LOOP_PARAMS, ...params }
@@ -209,7 +215,8 @@ export class FeedbackLoopEffect extends Effect {
 
     this.copyScene = new THREE.Scene()
     this.copyCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.copyMaterial)
+    this.copyGeometry = new THREE.PlaneGeometry(2, 2)
+    const quad = new THREE.Mesh(this.copyGeometry, this.copyMaterial)
     this.copyScene.add(quad)
   }
 
@@ -223,7 +230,7 @@ export class FeedbackLoopEffect extends Effect {
 
     // Set feedback texture for next frame
     this.uniforms.get('feedbackTexture')!.value = this.feedbackTarget.texture
-    this.uniforms.get('hasFeedback')!.value = true
+    this.uniforms.get('hasFeedback')!.value = this.hasCapturedFrame
   }
 
   // Call this after the main render pass
@@ -237,6 +244,8 @@ export class FeedbackLoopEffect extends Effect {
     renderer.setRenderTarget(this.feedbackTarget)
     renderer.render(this.copyScene, this.copyCamera)
     renderer.setRenderTarget(null)
+
+    this.hasCapturedFrame = true
   }
 
   setSize(width: number, height: number) {
@@ -261,16 +270,19 @@ export class FeedbackLoopEffect extends Effect {
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 
-  // Release GPU render targets when the effect is disabled. Materials/scenes
-  // created in initialize() are resolution-independent and get recreated
-  // (not disposed) the next time initialize()'s guard sees a null target, so
-  // they're intentionally left alone here. There's no dedicated "has data"
-  // flag on this class (update() sets the hasFeedback uniform unconditionally
-  // once feedbackTarget exists) — reset the uniform directly so it starts
-  // false again until update() runs post re-initialize.
+  // Release ALL GPU resources allocated in initialize() when the effect is
+  // disabled — targets, materials, and geometry. three.js only frees
+  // compiled programs/VBOs via .dispose(), never via GC, so leaving any of
+  // these orphaned while a guarded initialize() re-runs (and unconditionally
+  // recreates them) leaks GPU resources on every disable/enable cycle.
   releaseTargets() {
     this.feedbackTarget?.dispose(); this.feedbackTarget = null
     this.tempTarget?.dispose(); this.tempTarget = null
+    this.copyMaterial?.dispose(); this.copyMaterial = null
+    this.copyGeometry?.dispose(); this.copyGeometry = null
+    this.copyScene = null
+    this.copyCamera = null
+    this.hasCapturedFrame = false
     this.uniforms.get('hasFeedback')!.value = false
   }
 
@@ -279,5 +291,6 @@ export class FeedbackLoopEffect extends Effect {
     this.feedbackTarget?.dispose()
     this.tempTarget?.dispose()
     this.copyMaterial?.dispose()
+    this.copyGeometry?.dispose()
   }
 }

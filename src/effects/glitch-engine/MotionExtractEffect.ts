@@ -94,6 +94,7 @@ export class MotionExtractEffect extends Effect {
   private historyTargets: THREE.WebGLRenderTarget[] = []
   private historyIndex = 0
   private copyMaterial: THREE.ShaderMaterial | null = null
+  private copyGeometry: THREE.PlaneGeometry | null = null
   private copyScene: THREE.Scene | null = null
   private copyCamera: THREE.OrthographicCamera | null = null
   private framesSinceInit = 0
@@ -144,11 +145,14 @@ export class MotionExtractEffect extends Effect {
 
     this.copyScene = new THREE.Scene()
     this.copyCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.copyMaterial)
+    this.copyGeometry = new THREE.PlaneGeometry(2, 2)
+    const quad = new THREE.Mesh(this.copyGeometry, this.copyMaterial)
     this.copyScene.add(quad)
   }
 
   update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
+    if (this.historyTargets.length === 0) return
+
     // Update uniforms with history textures
     for (let i = 0; i < 4; i++) {
       const idx = (this.historyIndex - i - 1 + 4) % 4
@@ -159,7 +163,7 @@ export class MotionExtractEffect extends Effect {
   }
 
   captureFrame(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget) {
-    if (!this.copyMaterial || !this.copyScene || !this.copyCamera) return
+    if (this.historyTargets.length === 0 || !this.copyMaterial || !this.copyScene || !this.copyCamera) return
 
     // Copy current frame to next history slot
     this.copyMaterial.uniforms.tDiffuse.value = inputBuffer.texture
@@ -187,13 +191,18 @@ export class MotionExtractEffect extends Effect {
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 
-  // Release GPU render targets when the effect is disabled. Materials/scenes
-  // created in initialize() are resolution-independent and get recreated
-  // (not disposed) the next time initialize()'s guard sees an empty
-  // historyTargets array, so they're intentionally left alone here.
+  // Release ALL GPU resources allocated in initialize() when the effect is
+  // disabled — targets, materials, and geometry. three.js only frees
+  // compiled programs/VBOs via .dispose(), never via GC, so leaving any of
+  // these orphaned while a guarded initialize() re-runs (and unconditionally
+  // recreates them) leaks GPU resources on every disable/enable cycle.
   releaseTargets() {
     for (const t of this.historyTargets) t.dispose()
     this.historyTargets = []
+    this.copyMaterial?.dispose(); this.copyMaterial = null
+    this.copyGeometry?.dispose(); this.copyGeometry = null
+    this.copyScene = null
+    this.copyCamera = null
     this.historyIndex = 0
     this.framesSinceInit = 0
   }
@@ -204,5 +213,6 @@ export class MotionExtractEffect extends Effect {
       target.dispose()
     }
     this.copyMaterial?.dispose()
+    this.copyGeometry?.dispose()
   }
 }

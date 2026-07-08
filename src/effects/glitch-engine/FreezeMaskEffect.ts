@@ -86,6 +86,7 @@ export class FreezeMaskEffect extends Effect {
   private freezeTarget: THREE.WebGLRenderTarget | null = null
   private tempTarget: THREE.WebGLRenderTarget | null = null
   private updateMaterial: THREE.ShaderMaterial | null = null
+  private updateGeometry: THREE.PlaneGeometry | null = null
   private updateScene: THREE.Scene | null = null
   private updateCamera: THREE.OrthographicCamera | null = null
   private hasInitialized = false
@@ -143,7 +144,8 @@ export class FreezeMaskEffect extends Effect {
 
     this.updateScene = new THREE.Scene()
     this.updateCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.updateMaterial)
+    this.updateGeometry = new THREE.PlaneGeometry(2, 2)
+    const quad = new THREE.Mesh(this.updateGeometry, this.updateMaterial)
     this.updateScene.add(quad)
   }
 
@@ -198,15 +200,20 @@ export class FreezeMaskEffect extends Effect {
     this.hasInitialized = false
   }
 
-  // Release GPU render targets when the effect is disabled. freezeTarget and
-  // tempTarget get swapped in captureFrame(), so both must be released
-  // regardless of which one currently holds the "live" reference. Materials/
-  // scenes created in initialize() are resolution-independent and get
-  // recreated (not disposed) the next time initialize()'s guard sees a null
-  // target, so they're intentionally left alone here.
+  // Release ALL GPU resources allocated in initialize() when the effect is
+  // disabled — targets, materials, and geometry. freezeTarget and tempTarget
+  // get swapped in captureFrame(), so both must be released regardless of
+  // which one currently holds the "live" reference. three.js only frees
+  // compiled programs/VBOs via .dispose(), never via GC, so leaving any of
+  // these orphaned while a guarded initialize() re-runs (and unconditionally
+  // recreates them) leaks GPU resources on every disable/enable cycle.
   releaseTargets() {
     this.freezeTarget?.dispose(); this.freezeTarget = null
     this.tempTarget?.dispose(); this.tempTarget = null
+    this.updateMaterial?.dispose(); this.updateMaterial = null
+    this.updateGeometry?.dispose(); this.updateGeometry = null
+    this.updateScene = null
+    this.updateCamera = null
     this.hasInitialized = false
   }
 
@@ -215,5 +222,6 @@ export class FreezeMaskEffect extends Effect {
     this.freezeTarget?.dispose()
     this.tempTarget?.dispose()
     this.updateMaterial?.dispose()
+    this.updateGeometry?.dispose()
   }
 }

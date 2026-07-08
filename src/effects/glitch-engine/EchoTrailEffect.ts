@@ -111,6 +111,7 @@ export class EchoTrailEffect extends Effect {
   private trailTarget: THREE.WebGLRenderTarget | null = null
   private tempTarget: THREE.WebGLRenderTarget | null = null
   private copyMaterial: THREE.ShaderMaterial | null = null
+  private copyGeometry: THREE.PlaneGeometry | null = null
   private copyScene: THREE.Scene | null = null
   private copyCamera: THREE.OrthographicCamera | null = null
   private hasInitialized = false
@@ -165,7 +166,8 @@ export class EchoTrailEffect extends Effect {
 
     this.copyScene = new THREE.Scene()
     this.copyCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.copyMaterial)
+    this.copyGeometry = new THREE.PlaneGeometry(2, 2)
+    const quad = new THREE.Mesh(this.copyGeometry, this.copyMaterial)
     this.copyScene.add(quad)
   }
 
@@ -211,13 +213,18 @@ export class EchoTrailEffect extends Effect {
     this.hasInitialized = false
   }
 
-  // Release GPU render targets when the effect is disabled. Materials/scenes
-  // created in initialize() are resolution-independent and get recreated
-  // (not disposed) the next time initialize()'s guard sees a null target, so
-  // they're intentionally left alone here.
+  // Release ALL GPU resources allocated in initialize() when the effect is
+  // disabled — targets, materials, and geometry. three.js only frees
+  // compiled programs/VBOs via .dispose(), never via GC, so leaving any of
+  // these orphaned while a guarded initialize() re-runs (and unconditionally
+  // recreates them) leaks GPU resources on every disable/enable cycle.
   releaseTargets() {
     this.trailTarget?.dispose(); this.trailTarget = null
     this.tempTarget?.dispose(); this.tempTarget = null
+    this.copyMaterial?.dispose(); this.copyMaterial = null
+    this.copyGeometry?.dispose(); this.copyGeometry = null
+    this.copyScene = null
+    this.copyCamera = null
     this.hasInitialized = false
   }
 
@@ -226,5 +233,6 @@ export class EchoTrailEffect extends Effect {
     this.trailTarget?.dispose()
     this.tempTarget?.dispose()
     this.copyMaterial?.dispose()
+    this.copyGeometry?.dispose()
   }
 }

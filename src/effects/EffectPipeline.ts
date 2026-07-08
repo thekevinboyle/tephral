@@ -91,6 +91,10 @@ export class EffectPipeline {
 
   private effectPasses: EffectPass[] = []
   private crossfaderPass: EffectPass | null = null
+  // Cache one EffectPass per Effect so param changes never recompile shaders.
+  // A pass is disposed only when its effect leaves the chain (or on dispose()).
+  private passCache = new Map<Effect, EffectPass>()
+  private lastChainKey = ''
 
   // Canvas dimensions
   private canvasWidth = 1
@@ -246,22 +250,7 @@ export class EffectPipeline {
     videoWidth: number
     videoHeight: number
   }) {
-    // Remove existing passes
-    for (const pass of this.effectPasses) {
-      this.composer.removePass(pass)
-    }
-    this.effectPasses = []
-    if (this.crossfaderPass) {
-      this.composer.removePass(this.crossfaderPass)
-      this.crossfaderPass = null
-    }
-
-    // If bypass is active, don't add any effect passes - just render the input
-    if (config.bypassActive) {
-      return
-    }
-
-    // Update crossfader position
+    // Update crossfader position (cheap uniform write, safe on every call)
     if (this.crossfaderEffect) {
       this.crossfaderEffect.setCrossfaderPosition(config.crossfaderPosition)
     }
@@ -302,24 +291,54 @@ export class EffectPipeline {
       track_hands: config.handsTraceEnabled,
     }
 
-    // Add transition pass first (dissolve between clips)
+    // Compute the active chain (empty when bypassed)
+    const activeIds = config.bypassActive
+      ? []
+      : config.effectOrder.filter((id) => enabledMap[id] && this.getEffectById(id))
 
-    // Add individual effect passes in order (like guitar pedals in a chain)
-    // Each effect processes the output of the previous one
-    for (const effectId of config.effectOrder) {
-      if (enabledMap[effectId]) {
-        const effect = this.getEffectById(effectId)
-        if (effect) {
-          const pass = new EffectPass(this.camera, effect)
-          this.composer.addPass(pass)
-          this.effectPasses.push(pass)
-        }
+    // Structural short-circuit: same chain -> nothing to rebuild
+    const chainKey = activeIds.join('|')
+    if (chainKey === this.lastChainKey) return
+    this.lastChainKey = chainKey
+
+    // Remove all current effect passes from the composer (they stay cached)
+    for (const pass of this.effectPasses) {
+      this.composer.removePass(pass)
+    }
+    this.effectPasses = []
+    if (this.crossfaderPass) {
+      this.composer.removePass(this.crossfaderPass)
+      this.crossfaderPass.dispose()
+      this.crossfaderPass = null
+    }
+
+    // Dispose cached passes whose effect is no longer in the chain.
+    // Disposing only here is safe: the effect itself is leaving the chain too.
+    const activeEffects = new Set(activeIds.map((id) => this.getEffectById(id)!))
+    for (const [effect, pass] of this.passCache) {
+      if (!activeEffects.has(effect)) {
+        pass.dispose()
+        this.passCache.delete(effect)
       }
+    }
+
+    // If bypass is active, don't add any effect passes - just render the input
+    if (config.bypassActive) return
+
+    // Add effect passes in order, reusing cached passes (guitar-pedal chain)
+    for (const effectId of activeIds) {
+      const effect = this.getEffectById(effectId)!
+      let pass = this.passCache.get(effect)
+      if (!pass) {
+        pass = new EffectPass(this.camera, effect)
+        this.passCache.set(effect, pass)
+      }
+      this.composer.addPass(pass)
+      this.effectPasses.push(pass)
     }
 
     // Add crossfader pass for A/B blending (source vs processed)
     // Always add the pass - source texture is set separately via setSourceTexture()
-    // and may be called after updateEffects() due to React effect ordering
     if (this.crossfaderEffect) {
       this.crossfaderEffect.setQuadScale(1, 1)
       this.crossfaderPass = new EffectPass(this.camera, this.crossfaderEffect)
@@ -434,6 +453,8 @@ export class EffectPipeline {
   }
 
   dispose() {
+    for (const [, pass] of this.passCache) pass.dispose()
+    this.passCache.clear()
     this.composer.dispose()
     this.quad.geometry.dispose()
     ;(this.quad.material as THREE.Material).dispose()
@@ -469,31 +490,5 @@ export class EffectPipeline {
     this.colorTrace?.dispose()
     this.faceTrace?.dispose()
     this.handsTrace?.dispose()
-  }
-
-  // Capture frame for temporal effects (call after render)
-  captureFrameForMotionEffects(renderer: THREE.WebGLRenderer) {
-    const outputBuffer = this.composer.outputBuffer
-    if (!outputBuffer) return
-
-    // Motion extract needs the input frame before effects
-    if (this.motionExtract) {
-      this.motionExtract.captureFrame(renderer, outputBuffer)
-    }
-
-    // Echo trail captures the output after effects
-    if (this.echoTrail) {
-      this.echoTrail.captureFrame(renderer, outputBuffer)
-    }
-
-    // Time smear accumulates frames
-    if (this.timeSmear) {
-      this.timeSmear.captureFrame(renderer, outputBuffer)
-    }
-
-    // Freeze mask updates its reference slowly
-    if (this.freezeMask) {
-      this.freezeMask.captureFrame(renderer, outputBuffer)
-    }
   }
 }

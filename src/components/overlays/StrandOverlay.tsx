@@ -5,6 +5,7 @@
 
 import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
+import { getSharedFrame } from './sharedReadback'
 import { renderBeachStatic } from './strand/beachStaticEffect'
 import { renderBridgeLink } from './strand/bridgeLinkEffect'
 import { renderChiralCloud } from './strand/chiralCloudEffect'
@@ -94,7 +95,8 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
         offscreen.width = w
         offscreen.height = h
       }
-      sourceCtx.drawImage(source, 0, 0, w, h)
+      const shared = getSharedFrame(source)
+      sourceCtx.drawImage(shared ?? source, 0, 0, w, h)
 
       const deltaTime = lastTimeRef.current ? timeSeconds - lastTimeRef.current : 0.016
       lastTimeRef.current = timeSeconds

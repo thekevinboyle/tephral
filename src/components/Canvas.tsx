@@ -22,6 +22,7 @@ import { OverlayContainer } from './overlays/OverlayContainer'
 import { Crosshair } from './ui/MicroVisuals'
 import { perfMonitor } from '../utils/perfMonitor'
 import { initParamSync } from '../effects/paramSync'
+import { advanceReadbackFrame } from './overlays/sharedReadback'
 
 export interface CanvasHandle {
   getCanvas: () => HTMLCanvasElement | null
@@ -449,6 +450,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate)
+      advanceReadbackFrame()
       const start = performance.now()
       try {
         pipeline.render()

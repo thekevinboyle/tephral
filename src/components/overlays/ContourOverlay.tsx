@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react'
 import { useContourStore } from '../../stores/contourStore'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { getSharedFrame } from './sharedReadback'
 
 interface Props {
   width: number
@@ -424,7 +425,8 @@ export function ContourOverlay({ width, height, glCanvas }: Props) {
 
       try {
         // Downsample source
-        offscreenCtx.drawImage(source, 0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
+        const shared = source instanceof HTMLCanvasElement ? getSharedFrame(source) : null
+        offscreenCtx.drawImage(shared ?? source, 0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
         const imageData = offscreenCtx.getImageData(0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
 
         // Detect blobs based on detection mode

@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react'
 import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { getSharedFrame } from './sharedReadback'
 
 interface Props {
   width: number
@@ -881,14 +882,15 @@ export function VisionTrackingOverlay({ width, height, glCanvas }: Props) {
       // Prepare source canvas for box filter sampling
       const srcCanvas = sourceCanvasRef.current
       const srcCtx = sourceCtxRef.current
+      const sharedFrame = source instanceof HTMLCanvasElement ? getSharedFrame(source) : null
       if (needsSourceCanvas && srcCanvas && srcCtx) {
         srcCanvas.width = currentWidth
         srcCanvas.height = currentHeight
-        srcCtx.drawImage(source, 0, 0, currentWidth, currentHeight)
+        srcCtx.drawImage(sharedFrame ?? source, 0, 0, currentWidth, currentHeight)
       }
 
       try {
-        offscreenCtx.drawImage(source, 0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
+        offscreenCtx.drawImage(sharedFrame ?? source, 0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
         const imageData = offscreenCtx.getImageData(0, 0, DOWNSAMPLE_WIDTH, DOWNSAMPLE_HEIGHT)
 
         // Brightness tracking

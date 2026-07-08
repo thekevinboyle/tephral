@@ -66,3 +66,74 @@ synthetic pointer events at the RGB card's AMT knob (`DragNumberBlock`), same
   initialized and ran per-frame with zero detections, no console errors, no
   crash; `faceHudParams` flow through `paramSync.ts`'s `pushMorph()` was
   confirmed by code review.
+
+## After Task 6 (shared overlay readback)
+
+Scope: `src/components/overlays/sharedReadback.ts` (new) — a single 960x540
+`drawImage()` snapshot of the WebGL canvas per main-loop frame
+(`advanceReadbackFrame()` called as the first line of `Canvas.tsx`'s
+`animate()`), reused by `getSharedFrame()` in `StrandOverlay`, `AcidOverlay`
+(both the pixel-read copy and the `preserveVideo` visible composite),
+`StippleOverlay`, `AsciiRenderOverlay`, `VisionTrackingOverlay` (both its
+box-filter source copy and its downsample copy), and `ContourOverlay` —
+replacing each overlay's own independent per-frame `drawImage()` off the
+live WebGL canvas.
+
+Same scenario as the Task 4 entry (`anima-morph/IMG_9153.PNG` via File
+source, 2560x1440 viewport, canvas render target 657x1161), stack = STRAND
+TAR + ACID HALF + Stipple (the brief's designated 3-overlay stack; GLITCH
+page hosts STIPPLE, ACID page hosts HALF, STRAND page hosts TAR — all three
+enabled simultaneously).
+
+**Method:** two measurements, before vs. after, each captured by
+`git stash` / `git stash pop` on the Task 6 files to toggle between the
+pre- and post-change code on the same running dev server, then reloading
+and re-driving the identical Playwright sequence (File source load → enable
+HALF → enable TAR → enable STIPPLE).
+
+1. **`perfMonitor.getStats()` (GPU-pipeline submission time only, per Task 1's
+   caveat — this does NOT include overlay readback cost, which happens
+   outside `pipeline.render()`):**
+   - Before: avg 0.077 ms, max 0.125 ms
+   - After: avg 0.083 ms, max 0.130 ms
+   - Indistinguishable within noise, as expected — this metric was never
+     going to move for a main-thread-only optimization.
+
+2. **rAF callback-to-callback interval, 5 s sample, main-thread total
+   frame cost (includes overlay readback):**
+   - Before: mean 43.45 ms (108 samples, ~23.0 fps)
+   - After: mean 46.42 ms (116 samples, ~21.5 fps)
+   - Also indistinguishable / within noise — too coarse a signal given
+     Playwright CDP overhead and ~110-sample variance at this frame rate.
+
+3. **Direct GPU-readback call count** (monkey-patched
+   `CanvasRenderingContext2D.prototype.drawImage`, counting only calls whose
+   source argument is the actual WebGL canvas — i.e. the sync GPU→CPU
+   readback the task targets, as opposed to cheap canvas-to-canvas copies
+   downstream of the shared snapshot), 3 s sample:
+   - Before: 207 calls / 3 s = **69 GPU readbacks/sec** (3 overlays each
+     forcing their own readback per rAF tick; ACID's `preserveVideo` path
+     adds a second readback when active)
+   - After: 59 calls / 3 s = **19.7 GPU readbacks/sec**
+   - **~3.5x reduction**, consistent with collapsing 3 overlays' independent
+     per-frame readbacks into one shared readback per main-loop tick
+     (main-loop fps ≈ 20-23 per the rAF-interval numbers above, so the
+     after-count roughly matches "1 readback per main-loop frame").
+   This is the metric that actually demonstrates the fix — the other two
+   are too coarse/noisy to show a main-thread-only win at this app's frame
+   rate and sample size.
+
+**Visual parity:** screenshots of the 3-overlay stack (STRAND TAR + ACID
+HALF + Stipple) compared before/after — no visible difference; halftone dot
+pattern, tar spread, and stipple particles all render identically. The
+brief's `AcidOverlay.tsx:204` `preserveVideo` caveat (composited straight to
+the visible canvas from the 960x540 shared snapshot instead of the raw
+WebGL canvas) was verified in isolation (ACID HALF only, `preserveVideo`
+toggled via direct store call since no UI control exists for it) — no
+visible softening at 2560x1440 viewport scale; line 204 was left using
+`getSharedFrame()` (no fallback to the raw source needed).
+
+VISION BRIGHT tracking (`VisionTrackingOverlay`, both readback call sites at
+~887 and ~891) verified working after the change — bounding boxes, labels,
+and trail lines render correctly over bright regions with no console
+errors.

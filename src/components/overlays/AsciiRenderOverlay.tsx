@@ -4,6 +4,7 @@ import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { AsciiRenderer } from '../../effects/vision/AsciiRenderEffect'
 import { calculateVideoArea } from '../../utils/videoArea'
+import { getSharedFrame } from './sharedReadback'
 
 interface AsciiRenderOverlayProps {
   width: number
@@ -103,7 +104,8 @@ export function AsciiRenderOverlay({ width, height, glCanvas }: AsciiRenderOverl
       offscreen.height = sampleHeight
 
       // Draw source to offscreen (downscaled)
-      offCtx.drawImage(source, 0, 0, sampleWidth, sampleHeight)
+      const shared = source instanceof HTMLCanvasElement ? getSharedFrame(source) : null
+      offCtx.drawImage(shared ?? source, 0, 0, sampleWidth, sampleHeight)
 
       let imageData: ImageData | null = null
       try {

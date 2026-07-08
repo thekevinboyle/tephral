@@ -7,6 +7,7 @@
 import { useRef, useEffect, useCallback } from 'react'
 import { useAcidStore } from '../../stores/acidStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { getSharedFrame } from './sharedReadback'
 
 // Canvas 2D effects
 // NOTE: renderDots is now handled by GPU shader in EffectPipeline
@@ -192,7 +193,8 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     }
 
     // Copy WebGL canvas to offscreen 2D canvas for pixel reading
-    sourceCtx.drawImage(source, 0, 0, currentWidth, currentHeight)
+    const sharedFrame = getSharedFrame(source)
+    sourceCtx.drawImage(sharedFrame ?? source, 0, 0, currentWidth, currentHeight)
 
     // Handle background based on preserveVideo setting
     if (!currentStore.preserveVideo) {
@@ -201,7 +203,7 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
       ctx.fillRect(0, 0, currentWidth, currentHeight)
     } else {
       // Draw source canvas first (preserve video)
-      ctx.drawImage(source, 0, 0, currentWidth, currentHeight)
+      ctx.drawImage(sharedFrame ?? source, 0, 0, currentWidth, currentHeight)
     }
 
     // Apply Canvas 2D effects in order (respecting per-effect bypass)

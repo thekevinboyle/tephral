@@ -3,6 +3,7 @@ import { useMediaStore } from '../../stores/mediaStore'
 import { useStippleStore } from '../../stores/stippleStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { calculateVideoArea } from '../../utils/videoArea'
+import { getSharedFrame } from './sharedReadback'
 
 interface Particle {
   x: number
@@ -150,7 +151,8 @@ export function StippleOverlay({ width, height, glCanvas }: StippleOverlayProps)
           offscreen.width = Math.min(srcWidth, 256) // Limit resolution
           offscreen.height = Math.min(srcHeight, 256)
 
-          offCtx.drawImage(source, 0, 0, offscreen.width, offscreen.height)
+          const shared = source instanceof HTMLCanvasElement ? getSharedFrame(source) : null
+          offCtx.drawImage(shared ?? source, 0, 0, offscreen.width, offscreen.height)
 
           try {
             const imageData = offCtx.getImageData(0, 0, offscreen.width, offscreen.height)

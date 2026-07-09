@@ -173,6 +173,12 @@ export type { AcidLedParams } from './AcidLedEffect'
 export { AcidHexEffect, DEFAULT_ACID_HEX_PARAMS } from './AcidHexEffect'
 export type { AcidHexParams } from './AcidHexEffect'
 
+export { AcidGlyphEffect, DEFAULT_ACID_GLYPH_PARAMS } from './AcidGlyphEffect'
+export type { AcidGlyphParams, AcidGlyphCharset } from './AcidGlyphEffect'
+
+export { AcidIconsEffect, DEFAULT_ACID_ICONS_PARAMS } from './AcidIconsEffect'
+export type { AcidIconsParams, AcidIconSet, AcidIconsColorMode } from './AcidIconsEffect'
+
 // STRAND overlay effects (Phase 3 GPU port)
 export { StrandBeachEffect, DEFAULT_STRAND_BEACH_PARAMS } from './StrandBeachEffect'
 export type { StrandBeachParams } from './StrandBeachEffect'

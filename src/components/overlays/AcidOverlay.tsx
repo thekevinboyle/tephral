@@ -12,8 +12,10 @@ import { getSharedFrame } from './sharedReadback'
 // Canvas 2D effects
 // NOTE: renderDots is now handled by GPU shader in EffectPipeline
 // import { renderDots } from './acid/dotsEffect'
-import { renderGlyphs } from './acid/glyphEffect'
-import { renderIcons } from './acid/iconsEffect'
+// NOTE: renderGlyphs and renderIcons are now handled by GPU shaders in
+// EffectPipeline (Phase 3 port) — see AcidGlyphEffect.ts / AcidIconsEffect.ts
+// import { renderGlyphs } from './acid/glyphEffect'
+// import { renderIcons } from './acid/iconsEffect'
 import { renderContour } from './acid/contourEffect'
 import { renderDecomp } from './acid/decompEffect'
 // NOTE: renderMirror and renderRipple are now handled by GPU shaders in
@@ -83,8 +85,8 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
   // shaders, so exclude from overlay check
   const anyActiveEffect =
     // (store.dotsEnabled && !effectBypassed['acid_dots']) || // GPU shader handles this
-    (store.glyphEnabled && !effectBypassed['acid_glyph']) ||
-    (store.iconsEnabled && !effectBypassed['acid_icons']) ||
+    // (store.glyphEnabled && !effectBypassed['acid_glyph']) || // GPU shader handles this
+    // (store.iconsEnabled && !effectBypassed['acid_icons']) || // GPU shader handles this
     (store.contourEnabled && !effectBypassed['acid_contour']) ||
     (store.decompEnabled && !effectBypassed['acid_decomp']) ||
     // (store.mirrorEnabled && !effectBypassed['acid_mirror']) || // GPU shader handles this
@@ -104,8 +106,8 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
   // shaders, so exclude from overlay check
   const anyEnabled =
     // store.dotsEnabled || // GPU shader handles this
-    store.glyphEnabled ||
-    store.iconsEnabled ||
+    // store.glyphEnabled || // GPU shader handles this
+    // store.iconsEnabled || // GPU shader handles this
     store.contourEnabled ||
     store.decompEnabled ||
     // store.mirrorEnabled || // GPU shader handles this
@@ -223,13 +225,15 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     //   renderDots(sourceCtx, ctx, currentWidth, currentHeight, currentStore.dotsParams)
     // }
 
-    if (currentStore.glyphEnabled && !bypassed['acid_glyph']) {
-      renderGlyphs(sourceCtx, ctx, currentWidth, currentHeight, currentStore.glyphParams)
-    }
+    // NOTE: Glyph and Icons effects are now handled by GPU shaders in
+    // EffectPipeline
+    // if (currentStore.glyphEnabled && !bypassed['acid_glyph']) {
+    //   renderGlyphs(sourceCtx, ctx, currentWidth, currentHeight, currentStore.glyphParams)
+    // }
 
-    if (currentStore.iconsEnabled && !bypassed['acid_icons']) {
-      renderIcons(sourceCtx, ctx, currentWidth, currentHeight, currentStore.iconsParams)
-    }
+    // if (currentStore.iconsEnabled && !bypassed['acid_icons']) {
+    //   renderIcons(sourceCtx, ctx, currentWidth, currentHeight, currentStore.iconsParams)
+    // }
 
     if (currentStore.contourEnabled && !bypassed['acid_contour']) {
       renderContour(sourceCtx, ctx, currentWidth, currentHeight, currentStore.contourParams, currentStore.preserveVideo)

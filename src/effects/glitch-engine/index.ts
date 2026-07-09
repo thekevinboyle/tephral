@@ -129,3 +129,9 @@ export type { LiquidMorphParams } from './LiquidMorphEffect'
 
 export { CrystallizeEffect, DEFAULT_CRYSTALLIZE_PARAMS } from './CrystallizeEffect'
 export type { CrystallizeParams } from './CrystallizeEffect'
+
+export { FeedbackTunnelEffect, DEFAULT_FEEDBACK_TUNNEL_PARAMS } from './FeedbackTunnelEffect'
+export type { FeedbackTunnelParams } from './FeedbackTunnelEffect'
+
+export { OpiumTrailsEffect, DEFAULT_OPIUM_TRAILS_PARAMS } from './OpiumTrailsEffect'
+export type { OpiumTrailsParams } from './OpiumTrailsEffect'

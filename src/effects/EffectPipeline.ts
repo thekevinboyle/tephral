@@ -44,6 +44,8 @@ import {
   DreamcoreEffect,
   LiquidMorphEffect,
   CrystallizeEffect,
+  FeedbackTunnelEffect,
+  OpiumTrailsEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -108,6 +110,8 @@ export class EffectPipeline {
   dreamcore: DreamcoreEffect | null = null
   liquidMorph: LiquidMorphEffect | null = null
   crystallize: CrystallizeEffect | null = null
+  feedbackTunnel: FeedbackTunnelEffect | null = null
+  opiumTrails: OpiumTrailsEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -215,6 +219,8 @@ export class EffectPipeline {
     this.dreamcore = new DreamcoreEffect()
     this.liquidMorph = new LiquidMorphEffect()
     this.crystallize = new CrystallizeEffect()
+    this.feedbackTunnel = new FeedbackTunnelEffect()
+    this.opiumTrails = new OpiumTrailsEffect()
   }
 
   // Map effect IDs to effect instances
@@ -263,6 +269,8 @@ export class EffectPipeline {
       case 'dreamcore': return this.dreamcore
       case 'liquid_morph': return this.liquidMorph
       case 'crystallize': return this.crystallize
+      case 'feedback_tunnel': return this.feedbackTunnel
+      case 'opium_trails': return this.opiumTrails
       default: return null
     }
   }
@@ -393,12 +401,14 @@ export class EffectPipeline {
     const temporalIds = [
       'feedback', 'datamosh', 'motion_extract', 'echo_trail',
       'time_smear', 'freeze_mask', 'track_motion',
+      'feedback_tunnel', 'opium_trails',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
       motion_extract: this.motionExtract, echo_trail: this.echoTrail,
       time_smear: this.timeSmear, freeze_mask: this.freezeMask,
       track_motion: this.motionTrace,
+      feedback_tunnel: this.feedbackTunnel, opium_trails: this.opiumTrails,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]
@@ -557,6 +567,10 @@ export class EffectPipeline {
 
       // Capture frames for trace effects (motion trace needs history)
       if (this.temporalEnabled['track_motion']) this.motionTrace?.captureFrame(renderer, outputBuffer)
+
+      // Trend effects (Phase 2)
+      if (this.temporalEnabled['feedback_tunnel']) this.feedbackTunnel?.captureFrame(renderer, outputBuffer)
+      if (this.temporalEnabled['opium_trails']) this.opiumTrails?.captureFrame(renderer, outputBuffer)
     }
   }
 
@@ -634,5 +648,7 @@ export class EffectPipeline {
     this.dreamcore?.dispose()
     this.liquidMorph?.dispose()
     this.crystallize?.dispose()
+    this.feedbackTunnel?.dispose()
+    this.opiumTrails?.dispose()
   }
 }

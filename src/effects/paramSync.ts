@@ -152,6 +152,8 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.dreamcore?.updateParams({ ...s.dreamcoreParams, mix: getMix('dreamcore') })
     pipeline.liquidMorph?.updateParams({ ...s.liquidMorphParams, mix: getMix('liquid_morph') })
     pipeline.crystallize?.updateParams({ ...s.crystallizeParams, mix: getMix('crystallize') })
+    pipeline.feedbackTunnel?.updateParams({ ...s.feedbackTunnelParams, mix: getMix('feedback_tunnel') })
+    pipeline.opiumTrails?.updateParams({ ...s.opiumTrailsParams, mix: getMix('opium_trails') })
   }
 
   // Initial push so a fresh pipeline gets current values immediately

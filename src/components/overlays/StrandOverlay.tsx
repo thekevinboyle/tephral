@@ -6,13 +6,10 @@
 import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { getSharedFrame } from './sharedReadback'
-import { renderChiralium } from './strand/chiraliumEffect'
 import { renderChiralPath } from './strand/chiralPathEffect'
 import { renderExtinction } from './strand/extinctionEffect'
-import { renderHandprints } from './strand/handprintsEffect'
 import { renderOdradek } from './strand/odradekEffect'
 import { renderTarSpread } from './strand/tarSpreadEffect'
-import { renderBBPod } from './strand/bbPodEffect'
 
 interface StrandOverlayProps {
   sourceCanvas: HTMLCanvasElement | null
@@ -37,7 +34,9 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
   sizeRef.current = { width, height }
 
   const anyEnabled =
-    store.handprintsEnabled ||
+    // strand_handprints is GPU-ported (StrandHandprintsEffect) — no longer
+    // part of the CPU overlay's render loop; store.handprintsEnabled
+    // intentionally excluded here, same as timefall/voidOut above.
     store.tarSpreadEnabled ||
     // strand_timefall is GPU-ported (StrandTimefallEffect) — no longer part
     // of the CPU overlay's render loop; store.timefallEnabled intentionally
@@ -54,14 +53,17 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
     // store.umbilicalEnabled intentionally excluded here, same as timefall
     // above.
     store.odradekEnabled ||
-    store.chiraliumEnabled ||
+    // strand_chiralium is GPU-ported (StrandChiraliumEffect) —
+    // store.chiraliumEnabled intentionally excluded here, same as
+    // handprints/timefall/voidOut above.
     // strand_beach is GPU-ported (StrandBeachEffect) — store.beachStaticEnabled
     // intentionally excluded here, same as voidOut above.
     // strand_dooms is GPU-ported (StrandDoomsEffect) — store.doomsEnabled
     // intentionally excluded here, same as voidOut above.
     // strand_cloud is GPU-ported (StrandCloudEffect) — store.chiralCloudEnabled
     // intentionally excluded here, same as beach/voidOut above.
-    store.bbPodEnabled ||
+    // strand_bbpod is GPU-ported (StrandBbpodEffect) — store.bbPodEnabled
+    // intentionally excluded here, same as handprints/chiralium above.
     // strand_seam is GPU-ported (StrandSeamEffect) — store.seamEnabled
     // intentionally excluded here, same as beach/voidOut/cloud above.
     store.extinctionEnabled
@@ -104,9 +106,9 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
       const deltaTime = lastTimeRef.current ? timeSeconds - lastTimeRef.current : 0.016
       lastTimeRef.current = timeSeconds
 
-      if (currentStore.handprintsEnabled) {
-        renderHandprints(ctx, w, h, currentStore.handprintsParams, timeSeconds, deltaTime)
-      }
+      // strand_handprints is GPU-ported (StrandHandprintsEffect in
+      // EffectPipeline) — its CPU dispatch is removed; see paramSync.ts
+      // pushStrandPorts().
 
       if (currentStore.tarSpreadEnabled) {
         renderTarSpread(sourceCtx, ctx, w, h, currentStore.tarSpreadParams, deltaTime)
@@ -122,9 +124,9 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
         renderChiralPath(sourceCtx, ctx, w, h, currentStore.chiralPathParams, deltaTime)
       }
 
-      if (currentStore.chiraliumEnabled) {
-        renderChiralium(sourceCtx, ctx, w, h, currentStore.chiraliumParams, timeSeconds)
-      }
+      // strand_chiralium is GPU-ported (StrandChiraliumEffect in
+      // EffectPipeline) — its CPU dispatch is removed; see paramSync.ts
+      // pushStrandPorts().
 
       if (currentStore.odradekEnabled) {
         renderOdradek(sourceCtx, ctx, w, h, currentStore.odradekParams, timeSeconds, deltaTime)
@@ -138,9 +140,8 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
         renderExtinction(sourceCtx, ctx, w, h, currentStore.extinctionParams, deltaTime)
       }
 
-      if (currentStore.bbPodEnabled) {
-        renderBBPod(ctx, w, h, currentStore.bbPodParams, timeSeconds)
-      }
+      // strand_bbpod is GPU-ported (StrandBbpodEffect in EffectPipeline) —
+      // its CPU dispatch is removed; see paramSync.ts pushStrandPorts().
     }
 
     frameIdRef.current = requestAnimationFrame(renderFrame)

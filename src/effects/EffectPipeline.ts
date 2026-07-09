@@ -72,6 +72,9 @@ import {
   StrandWebEffect,
   StrandTimefallEffect,
   StrandUmbilicalEffect,
+  StrandHandprintsEffect,
+  StrandBbpodEffect,
+  StrandChiraliumEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -166,6 +169,9 @@ export class EffectPipeline {
   strandWeb: StrandWebEffect | null = null
   strandTimefall: StrandTimefallEffect | null = null
   strandUmbilical: StrandUmbilicalEffect | null = null
+  strandHandprints: StrandHandprintsEffect | null = null
+  strandBbpod: StrandBbpodEffect | null = null
+  strandChiralium: StrandChiraliumEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -303,6 +309,9 @@ export class EffectPipeline {
     this.strandWeb = new StrandWebEffect()
     this.strandTimefall = new StrandTimefallEffect()
     this.strandUmbilical = new StrandUmbilicalEffect()
+    this.strandHandprints = new StrandHandprintsEffect()
+    this.strandBbpod = new StrandBbpodEffect()
+    this.strandChiralium = new StrandChiraliumEffect()
   }
 
   // Map effect IDs to effect instances
@@ -379,6 +388,9 @@ export class EffectPipeline {
       case 'strand_web': return this.strandWeb
       case 'strand_timefall': return this.strandTimefall
       case 'strand_umbilical': return this.strandUmbilical
+      case 'strand_handprints': return this.strandHandprints
+      case 'strand_bbpod': return this.strandBbpod
+      case 'strand_chiralium': return this.strandChiralium
       default: return null
     }
   }
@@ -733,6 +745,9 @@ export class EffectPipeline {
     this.strandWeb?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandTimefall?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandUmbilical?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandHandprints?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandBbpod?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandChiralium?.setResolution(this.canvasWidth, this.canvasHeight)
   }
 
   private updateQuadScale() {
@@ -874,5 +889,8 @@ export class EffectPipeline {
     this.strandWeb?.dispose()
     this.strandTimefall?.dispose()
     this.strandUmbilical?.dispose()
+    this.strandHandprints?.dispose()
+    this.strandBbpod?.dispose()
+    this.strandChiralium?.dispose()
   }
 }

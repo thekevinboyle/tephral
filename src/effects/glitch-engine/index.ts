@@ -209,3 +209,12 @@ export type { StrandTimefallParams } from './StrandTimefallEffect'
 
 export { StrandUmbilicalEffect, DEFAULT_STRAND_UMBILICAL_PARAMS } from './StrandUmbilicalEffect'
 export type { StrandUmbilicalParams } from './StrandUmbilicalEffect'
+
+export { StrandHandprintsEffect, DEFAULT_STRAND_HANDPRINTS_PARAMS } from './StrandHandprintsEffect'
+export type { StrandHandprintsParams } from './StrandHandprintsEffect'
+
+export { StrandBbpodEffect, DEFAULT_STRAND_BBPOD_PARAMS } from './StrandBbpodEffect'
+export type { StrandBbpodParams } from './StrandBbpodEffect'
+
+export { StrandChiraliumEffect, DEFAULT_STRAND_CHIRALIUM_PARAMS } from './StrandChiraliumEffect'
+export type { StrandChiraliumParams } from './StrandChiraliumEffect'

@@ -11,6 +11,7 @@ import { useStrandStore } from '../stores/strandStore'
 import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
 import { useMorphStore } from '../stores/morphStore'
+import { useTrendStore } from '../stores/trendStore'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -65,6 +66,7 @@ const str = () => useStrandStore.getState()
 const mot = () => useMotionStore.getState()
 const des = () => useDestructionStore.getState()
 const mor = () => useMorphStore.getState()
+const trd = () => useTrendStore.getState()
 
 export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
   // ═══════════════════════════════════════════════════════════════════════
@@ -1219,5 +1221,275 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
     ],
     setEnabled: (v) => mor().setFaceHudEnabled(v),
     getEnabled: () => mor().faceHudEnabled,
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // TREND EFFECTS — VISION
+  // ═══════════════════════════════════════════════════════════════════════
+  halation: {
+    getParams: () => [
+      { id: 'threshold', label: 'THRSH', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateHalationParams({ threshold: v }), read: () => trd().halationParams.threshold },
+      { id: 'radius', label: 'RAD', min: 4, max: 64, step: 1,
+        apply: (v) => trd().updateHalationParams({ radius: v }), read: () => trd().halationParams.radius },
+      { id: 'redBias', label: 'RBIAS', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateHalationParams({ redBias: v }), read: () => trd().halationParams.redBias },
+      { id: 'amount', label: 'AMT', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateHalationParams({ amount: v }), read: () => trd().halationParams.amount },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateHalationParams({ mix: v }), read: () => trd().halationParams.mix },
+    ],
+    setEnabled: (v) => trd().setHalationEnabled(v),
+    getEnabled: () => trd().halationEnabled,
+  },
+  y2k_digicam: {
+    getParams: () => [
+      { id: 'flash', label: 'FLASH', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateY2kParams({ flash: v }), read: () => trd().y2kParams.flash },
+      { id: 'vignette', label: 'VIG', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateY2kParams({ vignette: v }), read: () => trd().y2kParams.vignette },
+      { id: 'grain', label: 'GRAIN', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateY2kParams({ grain: v }), read: () => trd().y2kParams.grain },
+      { id: 'resDown', label: 'RESD', min: 1, max: 8, step: 1,
+        apply: (v) => trd().updateY2kParams({ resDown: v }), read: () => trd().y2kParams.resDown },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateY2kParams({ mix: v }), read: () => trd().y2kParams.mix },
+    ],
+    setEnabled: (v) => trd().setY2kEnabled(v),
+    getEnabled: () => trd().y2kEnabled,
+  },
+  thermal: {
+    getParams: () => [
+      { id: 'gain', label: 'GAIN', min: 0.5, max: 2, step: 0.01,
+        apply: (v) => trd().updateThermalParams({ gain: v }), read: () => trd().thermalParams.gain },
+      { id: 'grain', label: 'GRAIN', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateThermalParams({ grain: v }), read: () => trd().thermalParams.grain },
+      { id: 'vignette', label: 'VIG', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateThermalParams({ vignette: v }), read: () => trd().thermalParams.vignette },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateThermalParams({ mix: v }), read: () => trd().thermalParams.mix },
+    ],
+    getSelectParams: () => [
+      { id: 'palette', label: 'PLTE', type: 'select' as const,
+        options: [{ value: '0', label: 'THERMAL' }, { value: '1', label: 'NIGHTVIS' }, { value: '2', label: 'AMBER' }],
+        apply: (v) => trd().updateThermalParams({ palette: Number(v) }),
+        read: () => String(trd().thermalParams.palette) },
+    ],
+    setEnabled: (v) => trd().setThermalEnabled(v),
+    getEnabled: () => trd().thermalEnabled,
+  },
+  dreamcore: {
+    getParams: () => [
+      { id: 'bloom', label: 'BLOOM', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateDreamcoreParams({ bloom: v }), read: () => trd().dreamcoreParams.bloom },
+      { id: 'radius', label: 'RAD', min: 4, max: 64, step: 1,
+        apply: (v) => trd().updateDreamcoreParams({ radius: v }), read: () => trd().dreamcoreParams.radius },
+      { id: 'pastel', label: 'PSTL', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateDreamcoreParams({ pastel: v }), read: () => trd().dreamcoreParams.pastel },
+      { id: 'haze', label: 'HAZE', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateDreamcoreParams({ haze: v }), read: () => trd().dreamcoreParams.haze },
+      { id: 'drift', label: 'DRIFT', min: 0, max: 2, step: 0.01,
+        apply: (v) => trd().updateDreamcoreParams({ drift: v }), read: () => trd().dreamcoreParams.drift },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateDreamcoreParams({ mix: v }), read: () => trd().dreamcoreParams.mix },
+    ],
+    setEnabled: (v) => trd().setDreamcoreEnabled(v),
+    getEnabled: () => trd().dreamcoreEnabled,
+  },
+  anamorphic: {
+    getParams: () => [
+      { id: 'threshold', label: 'THRSH', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateAnamorphicParams({ threshold: v }), read: () => trd().anamorphicParams.threshold },
+      { id: 'streak', label: 'STRK', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateAnamorphicParams({ streak: v }), read: () => trd().anamorphicParams.streak },
+      { id: 'tint', label: 'TINT', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateAnamorphicParams({ tint: v }), read: () => trd().anamorphicParams.tint },
+      { id: 'squeeze', label: 'SQZ', min: 0, max: 0.3, step: 0.01,
+        apply: (v) => trd().updateAnamorphicParams({ squeeze: v }), read: () => trd().anamorphicParams.squeeze },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateAnamorphicParams({ mix: v }), read: () => trd().anamorphicParams.mix },
+    ],
+    setEnabled: (v) => trd().setAnamorphicEnabled(v),
+    getEnabled: () => trd().anamorphicEnabled,
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // TREND EFFECTS — MOTION
+  // ═══════════════════════════════════════════════════════════════════════
+  flow_smear: {
+    getParams: () => [
+      { id: 'strength', label: 'STR', min: 0, max: 100, step: 1,
+        apply: (v) => trd().updateFlowSmearParams({ strength: v }), read: () => trd().flowSmearParams.strength },
+      { id: 'decay', label: 'DECAY', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateFlowSmearParams({ decay: v }), read: () => trd().flowSmearParams.decay },
+      { id: 'blur', label: 'BLUR', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateFlowSmearParams({ blur: v }), read: () => trd().flowSmearParams.blur },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateFlowSmearParams({ mix: v }), read: () => trd().flowSmearParams.mix },
+    ],
+    setEnabled: (v) => trd().setFlowSmearEnabled(v),
+    getEnabled: () => trd().flowSmearEnabled,
+  },
+  feedback_tunnel: {
+    getParams: () => [
+      { id: 'zoom', label: 'ZOOM', min: 0.9, max: 1.1, step: 0.001,
+        apply: (v) => trd().updateFeedbackTunnelParams({ zoom: v }), read: () => trd().feedbackTunnelParams.zoom },
+      { id: 'rotate', label: 'ROT', min: -5, max: 5, step: 0.1,
+        apply: (v) => trd().updateFeedbackTunnelParams({ rotate: v }), read: () => trd().feedbackTunnelParams.rotate },
+      { id: 'decay', label: 'DECAY', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateFeedbackTunnelParams({ decay: v }), read: () => trd().feedbackTunnelParams.decay },
+      { id: 'hueShift', label: 'HUE', min: 0, max: 30, step: 1,
+        apply: (v) => trd().updateFeedbackTunnelParams({ hueShift: v }), read: () => trd().feedbackTunnelParams.hueShift },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateFeedbackTunnelParams({ mix: v }), read: () => trd().feedbackTunnelParams.mix },
+    ],
+    setEnabled: (v) => trd().setFeedbackTunnelEnabled(v),
+    getEnabled: () => trd().feedbackTunnelEnabled,
+  },
+  opium_trails: {
+    getParams: () => [
+      { id: 'decay', label: 'DECAY', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateOpiumTrailsParams({ decay: v }), read: () => trd().opiumTrailsParams.decay },
+      { id: 'crush', label: 'CRUSH', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateOpiumTrailsParams({ crush: v }), read: () => trd().opiumTrailsParams.crush },
+      { id: 'desat', label: 'DESAT', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateOpiumTrailsParams({ desat: v }), read: () => trd().opiumTrailsParams.desat },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateOpiumTrailsParams({ mix: v }), read: () => trd().opiumTrailsParams.mix },
+    ],
+    setEnabled: (v) => trd().setOpiumTrailsEnabled(v),
+    getEnabled: () => trd().opiumTrailsEnabled,
+  },
+  rutt_etra: {
+    getParams: () => [
+      { id: 'lines', label: 'LINES', min: 16, max: 128, step: 1,
+        apply: (v) => trd().updateRuttEtraParams({ lines: v }), read: () => trd().ruttEtraParams.lines },
+      { id: 'depth', label: 'DEPTH', min: 0, max: 100, step: 1,
+        apply: (v) => trd().updateRuttEtraParams({ depth: v }), read: () => trd().ruttEtraParams.depth },
+      { id: 'tilt', label: 'TILT', min: 0, max: 60, step: 1,
+        apply: (v) => trd().updateRuttEtraParams({ tilt: v }), read: () => trd().ruttEtraParams.tilt },
+      { id: 'glow', label: 'GLOW', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateRuttEtraParams({ glow: v }), read: () => trd().ruttEtraParams.glow },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateRuttEtraParams({ mix: v }), read: () => trd().ruttEtraParams.mix },
+    ],
+    setEnabled: (v) => trd().setRuttEtraEnabled(v),
+    getEnabled: () => trd().ruttEtraEnabled,
+  },
+  reaction_diffusion: {
+    getParams: () => [
+      { id: 'feed', label: 'FEED', min: 0.01, max: 0.1, step: 0.001,
+        apply: (v) => trd().updateReactionDiffusionParams({ feed: v }), read: () => trd().reactionDiffusionParams.feed },
+      { id: 'kill', label: 'KILL', min: 0.04, max: 0.07, step: 0.001,
+        apply: (v) => trd().updateReactionDiffusionParams({ kill: v }), read: () => trd().reactionDiffusionParams.kill },
+      { id: 'speed', label: 'SPD', min: 1, max: 8, step: 0.1,
+        apply: (v) => trd().updateReactionDiffusionParams({ speed: v }), read: () => trd().reactionDiffusionParams.speed },
+      { id: 'seedAmt', label: 'SEED', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateReactionDiffusionParams({ seedAmt: v }), read: () => trd().reactionDiffusionParams.seedAmt },
+      { id: 'colorize', label: 'COLR', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateReactionDiffusionParams({ colorize: v }), read: () => trd().reactionDiffusionParams.colorize },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateReactionDiffusionParams({ mix: v }), read: () => trd().reactionDiffusionParams.mix },
+    ],
+    setEnabled: (v) => trd().setReactionDiffusionEnabled(v),
+    getEnabled: () => trd().reactionDiffusionEnabled,
+  },
+  physarum: {
+    getParams: () => [
+      { id: 'agents', label: 'AGTS', min: 10000, max: 300000, step: 10000, controlType: 'slider' as const,
+        apply: (v) => trd().updatePhysarumParams({ agents: v }), read: () => trd().physarumParams.agents },
+      { id: 'sensorAngle', label: 'SANG', min: 10, max: 60, step: 1,
+        apply: (v) => trd().updatePhysarumParams({ sensorAngle: v }), read: () => trd().physarumParams.sensorAngle },
+      { id: 'sensorDist', label: 'SDST', min: 4, max: 32, step: 1,
+        apply: (v) => trd().updatePhysarumParams({ sensorDist: v }), read: () => trd().physarumParams.sensorDist },
+      { id: 'decay', label: 'DECAY', min: 0.8, max: 0.99, step: 0.01,
+        apply: (v) => trd().updatePhysarumParams({ decay: v }), read: () => trd().physarumParams.decay },
+      { id: 'deposit', label: 'DEP', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updatePhysarumParams({ deposit: v }), read: () => trd().physarumParams.deposit },
+      { id: 'lumaBias', label: 'LUMA', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updatePhysarumParams({ lumaBias: v }), read: () => trd().physarumParams.lumaBias },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updatePhysarumParams({ mix: v }), read: () => trd().physarumParams.mix },
+    ],
+    setEnabled: (v) => trd().setPhysarumEnabled(v),
+    getEnabled: () => trd().physarumEnabled,
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // TREND EFFECTS — DESTROY
+  // ═══════════════════════════════════════════════════════════════════════
+  kaleidoscope: {
+    getParams: () => [
+      { id: 'segments', label: 'SEG', min: 2, max: 16, step: 1,
+        apply: (v) => trd().updateKaleidoscopeParams({ segments: v }), read: () => trd().kaleidoscopeParams.segments },
+      { id: 'spin', label: 'SPIN', min: -2, max: 2, step: 0.01,
+        apply: (v) => trd().updateKaleidoscopeParams({ spin: v }), read: () => trd().kaleidoscopeParams.spin },
+      { id: 'offset', label: 'OFF', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateKaleidoscopeParams({ offset: v }), read: () => trd().kaleidoscopeParams.offset },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateKaleidoscopeParams({ mix: v }), read: () => trd().kaleidoscopeParams.mix },
+    ],
+    setEnabled: (v) => trd().setKaleidoscopeEnabled(v),
+    getEnabled: () => trd().kaleidoscopeEnabled,
+  },
+  liquid_morph: {
+    getParams: () => [
+      { id: 'speed', label: 'SPD', min: 0.1, max: 3, step: 0.01,
+        apply: (v) => trd().updateLiquidMorphParams({ speed: v }), read: () => trd().liquidMorphParams.speed },
+      { id: 'scale', label: 'SCALE', min: 1, max: 20, step: 0.1,
+        apply: (v) => trd().updateLiquidMorphParams({ scale: v }), read: () => trd().liquidMorphParams.scale },
+      { id: 'intensity', label: 'INT', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateLiquidMorphParams({ intensity: v }), read: () => trd().liquidMorphParams.intensity },
+      { id: 'chromeAmount', label: 'CHRM', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateLiquidMorphParams({ chromeAmount: v }), read: () => trd().liquidMorphParams.chromeAmount },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateLiquidMorphParams({ mix: v }), read: () => trd().liquidMorphParams.mix },
+    ],
+    setEnabled: (v) => trd().setLiquidMorphEnabled(v),
+    getEnabled: () => trd().liquidMorphEnabled,
+  },
+  crystallize: {
+    getParams: () => [
+      { id: 'cellCount', label: 'CELLS', min: 8, max: 128, step: 1,
+        apply: (v) => trd().updateCrystallizeParams({ cellCount: v }), read: () => trd().crystallizeParams.cellCount },
+      { id: 'shatter', label: 'SHTR', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateCrystallizeParams({ shatter: v }), read: () => trd().crystallizeParams.shatter },
+      { id: 'edgeGlow', label: 'GLOW', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateCrystallizeParams({ edgeGlow: v }), read: () => trd().crystallizeParams.edgeGlow },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateCrystallizeParams({ mix: v }), read: () => trd().crystallizeParams.mix },
+    ],
+    setEnabled: (v) => trd().setCrystallizeEnabled(v),
+    getEnabled: () => trd().crystallizeEnabled,
+  },
+  ripple_warp: {
+    getParams: () => [
+      { id: 'frequency', label: 'FREQ', min: 1, max: 40, step: 0.5,
+        apply: (v) => trd().updateRippleWarpParams({ frequency: v }), read: () => trd().rippleWarpParams.frequency },
+      { id: 'speed', label: 'SPD', min: 0.1, max: 5, step: 0.1,
+        apply: (v) => trd().updateRippleWarpParams({ speed: v }), read: () => trd().rippleWarpParams.speed },
+      { id: 'amplitude', label: 'AMP', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateRippleWarpParams({ amplitude: v }), read: () => trd().rippleWarpParams.amplitude },
+      { id: 'decay', label: 'DECAY', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateRippleWarpParams({ decay: v }), read: () => trd().rippleWarpParams.decay },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateRippleWarpParams({ mix: v }), read: () => trd().rippleWarpParams.mix },
+    ],
+    setEnabled: (v) => trd().setRippleWarpEnabled(v),
+    getEnabled: () => trd().rippleWarpEnabled,
+  },
+  fractal_domain: {
+    getParams: () => [
+      { id: 'iterations', label: 'ITER', min: 1, max: 8, step: 1,
+        apply: (v) => trd().updateFractalDomainParams({ iterations: v }), read: () => trd().fractalDomainParams.iterations },
+      { id: 'zoom', label: 'ZOOM', min: 1, max: 3, step: 0.01,
+        apply: (v) => trd().updateFractalDomainParams({ zoom: v }), read: () => trd().fractalDomainParams.zoom },
+      { id: 'spin', label: 'SPIN', min: -2, max: 2, step: 0.01,
+        apply: (v) => trd().updateFractalDomainParams({ spin: v }), read: () => trd().fractalDomainParams.spin },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateFractalDomainParams({ mix: v }), read: () => trd().fractalDomainParams.mix },
+    ],
+    setEnabled: (v) => trd().setFractalDomainEnabled(v),
+    getEnabled: () => trd().fractalDomainEnabled,
   },
 }

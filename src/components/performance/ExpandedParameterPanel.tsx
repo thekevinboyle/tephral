@@ -11,6 +11,7 @@ import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
 import { useMorphStore } from '../../stores/morphStore'
+import { useTrendStore } from '../../stores/trendStore'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
@@ -347,6 +348,7 @@ export function EffectParameters({ effectId }: { effectId: string }) {
   useMotionStore()
   useDestructionStore()
   useMorphStore()
+  useTrendStore()
   useTextureOverlayStore()
   useDataOverlayStore()
 

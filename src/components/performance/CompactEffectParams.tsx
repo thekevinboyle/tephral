@@ -11,6 +11,7 @@ import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
 import { useMorphStore } from '../../stores/morphStore'
+import { useTrendStore } from '../../stores/trendStore'
 import { Knob } from './Knob'
 import { BLOCK } from './blocks/blockTheme'
 
@@ -33,6 +34,7 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
   const motion = useMotionStore()
   const destruction = useDestructionStore()
   const morph = useMorphStore()
+  const trend = useTrendStore()
 
   const knobProps = { size: 'xs' as const, showArc: true, showValue: true, color }
 
@@ -693,6 +695,194 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
             onChange={v => morph.updateFaceHudParams({ smoothing: v })} paramId="face_hud.smoothing" {...knobProps} />
           <Knob label="SCAN" value={morph.faceHudParams.scanLines} min={0} max={1} step={0.01}
             onChange={v => morph.updateFaceHudParams({ scanLines: v })} paramId="face_hud.scanLines" {...knobProps} />
+        </div>
+      )
+
+    // ═══════════════════════════════════════════════════════════════
+    // TREND EFFECTS — VISION
+    // ═══════════════════════════════════════════════════════════════
+    case 'halation':
+      return (
+        <div className="flex gap-4">
+          <Knob label="AMT" value={trend.halationParams.amount} min={0} max={1} step={0.01}
+            onChange={v => trend.updateHalationParams({ amount: v })} paramId="halation.amount" {...knobProps} />
+          <Knob label="THRSH" value={trend.halationParams.threshold} min={0} max={1} step={0.01}
+            onChange={v => trend.updateHalationParams({ threshold: v })} paramId="halation.threshold" {...knobProps} />
+          <Knob label="RAD" value={trend.halationParams.radius} min={4} max={64} step={1}
+            onChange={v => trend.updateHalationParams({ radius: v })} paramId="halation.radius" {...knobProps} />
+        </div>
+      )
+    case 'y2k_digicam':
+      return (
+        <div className="flex gap-4">
+          <Knob label="FLASH" value={trend.y2kParams.flash} min={0} max={1} step={0.01}
+            onChange={v => trend.updateY2kParams({ flash: v })} paramId="y2k_digicam.flash" {...knobProps} />
+          <Knob label="GRAIN" value={trend.y2kParams.grain} min={0} max={1} step={0.01}
+            onChange={v => trend.updateY2kParams({ grain: v })} paramId="y2k_digicam.grain" {...knobProps} />
+          <Knob label="VIG" value={trend.y2kParams.vignette} min={0} max={1} step={0.01}
+            onChange={v => trend.updateY2kParams({ vignette: v })} paramId="y2k_digicam.vignette" {...knobProps} />
+        </div>
+      )
+    case 'thermal':
+      return (
+        <div className="flex gap-4">
+          <Knob label="GAIN" value={trend.thermalParams.gain} min={0.5} max={2} step={0.01}
+            onChange={v => trend.updateThermalParams({ gain: v })} paramId="thermal.gain" {...knobProps} />
+          <Knob label="PLTE" value={trend.thermalParams.palette} min={0} max={2} step={1}
+            onChange={v => trend.updateThermalParams({ palette: v })} paramId="thermal.palette" {...knobProps} />
+          <Knob label="GRAIN" value={trend.thermalParams.grain} min={0} max={1} step={0.01}
+            onChange={v => trend.updateThermalParams({ grain: v })} paramId="thermal.grain" {...knobProps} />
+        </div>
+      )
+    case 'dreamcore':
+      return (
+        <div className="flex gap-4">
+          <Knob label="BLOOM" value={trend.dreamcoreParams.bloom} min={0} max={1} step={0.01}
+            onChange={v => trend.updateDreamcoreParams({ bloom: v })} paramId="dreamcore.bloom" {...knobProps} />
+          <Knob label="PSTL" value={trend.dreamcoreParams.pastel} min={0} max={1} step={0.01}
+            onChange={v => trend.updateDreamcoreParams({ pastel: v })} paramId="dreamcore.pastel" {...knobProps} />
+          <Knob label="HAZE" value={trend.dreamcoreParams.haze} min={0} max={1} step={0.01}
+            onChange={v => trend.updateDreamcoreParams({ haze: v })} paramId="dreamcore.haze" {...knobProps} />
+        </div>
+      )
+    case 'anamorphic':
+      return (
+        <div className="flex gap-4">
+          <Knob label="STRK" value={trend.anamorphicParams.streak} min={0} max={1} step={0.01}
+            onChange={v => trend.updateAnamorphicParams({ streak: v })} paramId="anamorphic.streak" {...knobProps} />
+          <Knob label="THRSH" value={trend.anamorphicParams.threshold} min={0} max={1} step={0.01}
+            onChange={v => trend.updateAnamorphicParams({ threshold: v })} paramId="anamorphic.threshold" {...knobProps} />
+          <Knob label="SQZ" value={trend.anamorphicParams.squeeze} min={0} max={0.3} step={0.01}
+            onChange={v => trend.updateAnamorphicParams({ squeeze: v })} paramId="anamorphic.squeeze" {...knobProps} />
+        </div>
+      )
+
+    // ═══════════════════════════════════════════════════════════════
+    // TREND EFFECTS — MOTION
+    // ═══════════════════════════════════════════════════════════════
+    case 'flow_smear':
+      return (
+        <div className="flex gap-4">
+          <Knob label="STR" value={trend.flowSmearParams.strength} min={0} max={100} step={1}
+            onChange={v => trend.updateFlowSmearParams({ strength: v })} paramId="flow_smear.strength" {...knobProps} />
+          <Knob label="DECAY" value={trend.flowSmearParams.decay} min={0} max={1} step={0.01}
+            onChange={v => trend.updateFlowSmearParams({ decay: v })} paramId="flow_smear.decay" {...knobProps} />
+          <Knob label="BLUR" value={trend.flowSmearParams.blur} min={0} max={1} step={0.01}
+            onChange={v => trend.updateFlowSmearParams({ blur: v })} paramId="flow_smear.blur" {...knobProps} />
+        </div>
+      )
+    case 'feedback_tunnel':
+      return (
+        <div className="flex gap-4">
+          <Knob label="ZOOM" value={trend.feedbackTunnelParams.zoom} min={0.9} max={1.1} step={0.001}
+            onChange={v => trend.updateFeedbackTunnelParams({ zoom: v })} paramId="feedback_tunnel.zoom" {...knobProps} />
+          <Knob label="ROT" value={trend.feedbackTunnelParams.rotate} min={-5} max={5} step={0.1}
+            onChange={v => trend.updateFeedbackTunnelParams({ rotate: v })} paramId="feedback_tunnel.rotate" {...knobProps} />
+          <Knob label="DECAY" value={trend.feedbackTunnelParams.decay} min={0} max={1} step={0.01}
+            onChange={v => trend.updateFeedbackTunnelParams({ decay: v })} paramId="feedback_tunnel.decay" {...knobProps} />
+        </div>
+      )
+    case 'opium_trails':
+      return (
+        <div className="flex gap-4">
+          <Knob label="DECAY" value={trend.opiumTrailsParams.decay} min={0} max={1} step={0.01}
+            onChange={v => trend.updateOpiumTrailsParams({ decay: v })} paramId="opium_trails.decay" {...knobProps} />
+          <Knob label="CRUSH" value={trend.opiumTrailsParams.crush} min={0} max={1} step={0.01}
+            onChange={v => trend.updateOpiumTrailsParams({ crush: v })} paramId="opium_trails.crush" {...knobProps} />
+          <Knob label="DESAT" value={trend.opiumTrailsParams.desat} min={0} max={1} step={0.01}
+            onChange={v => trend.updateOpiumTrailsParams({ desat: v })} paramId="opium_trails.desat" {...knobProps} />
+        </div>
+      )
+    case 'rutt_etra':
+      return (
+        <div className="flex gap-4">
+          <Knob label="LINES" value={trend.ruttEtraParams.lines} min={16} max={128} step={1}
+            onChange={v => trend.updateRuttEtraParams({ lines: v })} paramId="rutt_etra.lines" {...knobProps} />
+          <Knob label="DEPTH" value={trend.ruttEtraParams.depth} min={0} max={100} step={1}
+            onChange={v => trend.updateRuttEtraParams({ depth: v })} paramId="rutt_etra.depth" {...knobProps} />
+          <Knob label="TILT" value={trend.ruttEtraParams.tilt} min={0} max={60} step={1}
+            onChange={v => trend.updateRuttEtraParams({ tilt: v })} paramId="rutt_etra.tilt" {...knobProps} />
+        </div>
+      )
+    case 'reaction_diffusion':
+      return (
+        <div className="flex gap-4">
+          <Knob label="FEED" value={trend.reactionDiffusionParams.feed} min={0.01} max={0.1} step={0.001}
+            onChange={v => trend.updateReactionDiffusionParams({ feed: v })} paramId="reaction_diffusion.feed" {...knobProps} />
+          <Knob label="KILL" value={trend.reactionDiffusionParams.kill} min={0.04} max={0.07} step={0.001}
+            onChange={v => trend.updateReactionDiffusionParams({ kill: v })} paramId="reaction_diffusion.kill" {...knobProps} />
+          <Knob label="SPD" value={trend.reactionDiffusionParams.speed} min={1} max={8} step={0.1}
+            onChange={v => trend.updateReactionDiffusionParams({ speed: v })} paramId="reaction_diffusion.speed" {...knobProps} />
+        </div>
+      )
+    case 'physarum':
+      return (
+        <div className="flex gap-4">
+          <Knob label="AGTS" value={trend.physarumParams.agents} min={10000} max={300000} step={10000}
+            onChange={v => trend.updatePhysarumParams({ agents: v })} paramId="physarum.agents" {...knobProps} />
+          <Knob label="SANG" value={trend.physarumParams.sensorAngle} min={10} max={60} step={1}
+            onChange={v => trend.updatePhysarumParams({ sensorAngle: v })} paramId="physarum.sensorAngle" {...knobProps} />
+          <Knob label="DECAY" value={trend.physarumParams.decay} min={0.8} max={0.99} step={0.01}
+            onChange={v => trend.updatePhysarumParams({ decay: v })} paramId="physarum.decay" {...knobProps} />
+        </div>
+      )
+
+    // ═══════════════════════════════════════════════════════════════
+    // TREND EFFECTS — DESTROY
+    // ═══════════════════════════════════════════════════════════════
+    case 'kaleidoscope':
+      return (
+        <div className="flex gap-4">
+          <Knob label="SEG" value={trend.kaleidoscopeParams.segments} min={2} max={16} step={1}
+            onChange={v => trend.updateKaleidoscopeParams({ segments: v })} paramId="kaleidoscope.segments" {...knobProps} />
+          <Knob label="SPIN" value={trend.kaleidoscopeParams.spin} min={-2} max={2} step={0.01}
+            onChange={v => trend.updateKaleidoscopeParams({ spin: v })} paramId="kaleidoscope.spin" {...knobProps} />
+          <Knob label="OFF" value={trend.kaleidoscopeParams.offset} min={0} max={1} step={0.01}
+            onChange={v => trend.updateKaleidoscopeParams({ offset: v })} paramId="kaleidoscope.offset" {...knobProps} />
+        </div>
+      )
+    case 'liquid_morph':
+      return (
+        <div className="flex gap-4">
+          <Knob label="INT" value={trend.liquidMorphParams.intensity} min={0} max={1} step={0.01}
+            onChange={v => trend.updateLiquidMorphParams({ intensity: v })} paramId="liquid_morph.intensity" {...knobProps} />
+          <Knob label="CHRM" value={trend.liquidMorphParams.chromeAmount} min={0} max={1} step={0.01}
+            onChange={v => trend.updateLiquidMorphParams({ chromeAmount: v })} paramId="liquid_morph.chromeAmount" {...knobProps} />
+          <Knob label="SPD" value={trend.liquidMorphParams.speed} min={0.1} max={3} step={0.01}
+            onChange={v => trend.updateLiquidMorphParams({ speed: v })} paramId="liquid_morph.speed" {...knobProps} />
+        </div>
+      )
+    case 'crystallize':
+      return (
+        <div className="flex gap-4">
+          <Knob label="CELLS" value={trend.crystallizeParams.cellCount} min={8} max={128} step={1}
+            onChange={v => trend.updateCrystallizeParams({ cellCount: v })} paramId="crystallize.cellCount" {...knobProps} />
+          <Knob label="SHTR" value={trend.crystallizeParams.shatter} min={0} max={1} step={0.01}
+            onChange={v => trend.updateCrystallizeParams({ shatter: v })} paramId="crystallize.shatter" {...knobProps} />
+          <Knob label="GLOW" value={trend.crystallizeParams.edgeGlow} min={0} max={1} step={0.01}
+            onChange={v => trend.updateCrystallizeParams({ edgeGlow: v })} paramId="crystallize.edgeGlow" {...knobProps} />
+        </div>
+      )
+    case 'ripple_warp':
+      return (
+        <div className="flex gap-4">
+          <Knob label="FREQ" value={trend.rippleWarpParams.frequency} min={1} max={40} step={0.5}
+            onChange={v => trend.updateRippleWarpParams({ frequency: v })} paramId="ripple_warp.frequency" {...knobProps} />
+          <Knob label="AMP" value={trend.rippleWarpParams.amplitude} min={0} max={1} step={0.01}
+            onChange={v => trend.updateRippleWarpParams({ amplitude: v })} paramId="ripple_warp.amplitude" {...knobProps} />
+          <Knob label="SPD" value={trend.rippleWarpParams.speed} min={0.1} max={5} step={0.1}
+            onChange={v => trend.updateRippleWarpParams({ speed: v })} paramId="ripple_warp.speed" {...knobProps} />
+        </div>
+      )
+    case 'fractal_domain':
+      return (
+        <div className="flex gap-4">
+          <Knob label="ITER" value={trend.fractalDomainParams.iterations} min={1} max={8} step={1}
+            onChange={v => trend.updateFractalDomainParams({ iterations: v })} paramId="fractal_domain.iterations" {...knobProps} />
+          <Knob label="ZOOM" value={trend.fractalDomainParams.zoom} min={1} max={3} step={0.01}
+            onChange={v => trend.updateFractalDomainParams({ zoom: v })} paramId="fractal_domain.zoom" {...knobProps} />
+          <Knob label="SPIN" value={trend.fractalDomainParams.spin} min={-2} max={2} step={0.01}
+            onChange={v => trend.updateFractalDomainParams({ spin: v })} paramId="fractal_domain.spin" {...knobProps} />
         </div>
       )
 

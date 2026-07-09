@@ -154,3 +154,12 @@ export type { AcidMirrorParams } from './AcidMirrorEffect'
 
 export { AcidRippleEffect, DEFAULT_ACID_RIPPLE_PARAMS } from './AcidRippleEffect'
 export type { AcidRippleParams } from './AcidRippleEffect'
+
+export { AcidScanEffect, DEFAULT_ACID_SCAN_PARAMS } from './AcidScanEffect'
+export type { AcidScanParams } from './AcidScanEffect'
+
+export { AcidSliceEffect, DEFAULT_ACID_SLICE_PARAMS } from './AcidSliceEffect'
+export type { AcidSliceParams } from './AcidSliceEffect'
+
+export { AcidThgridEffect, DEFAULT_ACID_THGRID_PARAMS } from './AcidThgridEffect'
+export type { AcidThgridParams } from './AcidThgridEffect'

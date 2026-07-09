@@ -53,6 +53,9 @@ import {
   // ACID overlay effects (Phase 3 GPU port)
   AcidMirrorEffect,
   AcidRippleEffect,
+  AcidScanEffect,
+  AcidSliceEffect,
+  AcidThgridEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -127,6 +130,9 @@ export class EffectPipeline {
   // ACID overlay effects (Phase 3 GPU port)
   acidMirror: AcidMirrorEffect | null = null
   acidRipple: AcidRippleEffect | null = null
+  acidScan: AcidScanEffect | null = null
+  acidSlice: AcidSliceEffect | null = null
+  acidThgrid: AcidThgridEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -244,6 +250,9 @@ export class EffectPipeline {
     // ACID overlay effects (Phase 3 GPU port)
     this.acidMirror = new AcidMirrorEffect()
     this.acidRipple = new AcidRippleEffect()
+    this.acidScan = new AcidScanEffect()
+    this.acidSlice = new AcidSliceEffect()
+    this.acidThgrid = new AcidThgridEffect()
   }
 
   // Map effect IDs to effect instances
@@ -301,6 +310,9 @@ export class EffectPipeline {
       // ACID overlay effects (Phase 3 GPU port)
       case 'acid_mirror': return this.acidMirror
       case 'acid_ripple': return this.acidRipple
+      case 'acid_scan': return this.acidScan
+      case 'acid_slice': return this.acidSlice
+      case 'acid_thgrid': return this.acidThgrid
       default: return null
     }
   }
@@ -637,6 +649,9 @@ export class EffectPipeline {
     this.crystallize?.setAspect(aspect)
     this.acidMirror?.setResolution(this.canvasWidth, this.canvasHeight)
     this.acidRipple?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.acidScan?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.acidSlice?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.acidThgrid?.setResolution(this.canvasWidth, this.canvasHeight)
   }
 
   private updateQuadScale() {
@@ -759,5 +774,8 @@ export class EffectPipeline {
     // ACID overlay effects (Phase 3 GPU port)
     this.acidMirror?.dispose()
     this.acidRipple?.dispose()
+    this.acidScan?.dispose()
+    this.acidSlice?.dispose()
+    this.acidThgrid?.dispose()
   }
 }

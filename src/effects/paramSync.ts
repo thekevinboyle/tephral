@@ -168,6 +168,9 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     const s = useAcidStore.getState()
     pipeline.acidMirror?.updateParams({ ...s.mirrorParams, preserveVideo: s.preserveVideo, mix: getMix('acid_mirror') })
     pipeline.acidRipple?.updateParams({ ...s.rippleParams, preserveVideo: s.preserveVideo, mix: getMix('acid_ripple') })
+    pipeline.acidScan?.updateParams({ ...s.scanParams, preserveVideo: s.preserveVideo, mix: getMix('acid_scan') })
+    pipeline.acidSlice?.updateParams({ ...s.sliceParams, preserveVideo: s.preserveVideo, mix: getMix('acid_slice') })
+    pipeline.acidThgrid?.updateParams({ ...s.thGridParams, preserveVideo: s.preserveVideo, mix: getMix('acid_thgrid') })
   }
 
   // STRAND overlay effects (Phase 3 GPU port) — same empty scaffold as

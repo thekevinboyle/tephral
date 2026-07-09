@@ -7,6 +7,7 @@ import { useContourStore } from './contourStore'
 import { useLandmarksStore } from './landmarksStore'
 import { useRoutingStore } from './routingStore'
 import { useSlicerStore } from './slicerStore'
+import { useTrendStore } from './trendStore'
 
 // Database constants
 const DB_NAME = 'segf4ult-presets'
@@ -220,6 +221,7 @@ function captureCurrentEffects(): BankSnapshot {
     },
     effectOrder: [...routingState.effectOrder],
     slicer: useSlicerStore.getState().getSnapshot(),
+    trend: useTrendStore.getState().getSnapshot(),
     savedAt: Date.now(),
   }
 }
@@ -284,6 +286,10 @@ function applyEffects(effects: BankSnapshot): void {
 
   if (effects.slicer) {
     useSlicerStore.getState().loadSnapshot(effects.slicer)
+  }
+
+  if (effects.trend) {
+    useTrendStore.getState().applySnapshot(effects.trend)
   }
 }
 

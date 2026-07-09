@@ -27,6 +27,7 @@ import { useContourStore } from './contourStore'
 import { useLandmarksStore } from './landmarksStore'
 import { useRoutingStore } from './routingStore'
 import { useSlicerStore, type SlicerSnapshot } from './slicerStore'
+import { useTrendStore, type TrendSnapshot } from './trendStore'
 
 /**
  * BankSnapshot stores a complete effect state for A/B/C/D bank recall
@@ -72,6 +73,8 @@ export interface BankSnapshot {
   effectOrder: string[]
   // Slicer
   slicer?: SlicerSnapshot
+  // Trend effects (Phase 2) — optional for backward compat with older presets
+  trend?: TrendSnapshot
   // Metadata
   savedAt: number
 }
@@ -151,6 +154,7 @@ export const useBankStore = create<BankState>((set, get) => ({
       },
       effectOrder: [...routingState.effectOrder],
       slicer: useSlicerStore.getState().getSnapshot(),
+      trend: useTrendStore.getState().getSnapshot(),
       savedAt: Date.now(),
     }
 
@@ -241,6 +245,11 @@ export const useBankStore = create<BankState>((set, get) => ({
     // Apply slicer state
     if (snapshot.slicer) {
       useSlicerStore.getState().loadSnapshot(snapshot.slicer)
+    }
+
+    // Apply trend effects state (older banks predate this field)
+    if (snapshot.trend) {
+      useTrendStore.getState().applySnapshot(snapshot.trend)
     }
 
     // Set activeBank to index

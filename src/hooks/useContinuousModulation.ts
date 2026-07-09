@@ -12,6 +12,7 @@ import { useMIDIStore } from '../stores/midiStore'
 import { useAudioReactiveStore } from '../stores/audioReactiveStore'
 import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
+import { useTrendStore } from '../stores/trendStore'
 
 /**
  * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope)
@@ -397,6 +398,162 @@ export function useContinuousModulation() {
           if (paramName === 'scaleX') dest.updatePointCloudParams({ scaleX: 0.3 + value * 1.7 })
           if (paramName === 'scaleY') dest.updatePointCloudParams({ scaleY: 0.3 + value * 1.7 })
           if (paramName === 'mix') dest.updatePointCloudParams({ mix: value })
+          break
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // TREND EFFECTS — VISION
+        // ═══════════════════════════════════════════════════════════════════════
+        case 'halation': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'threshold') trend.updateHalationParams({ threshold: value })
+          if (paramName === 'radius') trend.updateHalationParams({ radius: 4 + Math.floor(value * 60) })
+          if (paramName === 'redBias') trend.updateHalationParams({ redBias: value })
+          if (paramName === 'amount') trend.updateHalationParams({ amount: value })
+          if (paramName === 'mix') trend.updateHalationParams({ mix: value })
+          break
+        }
+        case 'y2k_digicam': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'flash') trend.updateY2kParams({ flash: value })
+          if (paramName === 'vignette') trend.updateY2kParams({ vignette: value })
+          if (paramName === 'grain') trend.updateY2kParams({ grain: value })
+          if (paramName === 'resDown') trend.updateY2kParams({ resDown: 1 + Math.floor(value * 7) })
+          if (paramName === 'mix') trend.updateY2kParams({ mix: value })
+          break
+        }
+        case 'thermal': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'palette') trend.updateThermalParams({ palette: Math.floor(value * 2.999) })
+          if (paramName === 'gain') trend.updateThermalParams({ gain: 0.5 + value * 1.5 })
+          if (paramName === 'grain') trend.updateThermalParams({ grain: value })
+          if (paramName === 'vignette') trend.updateThermalParams({ vignette: value })
+          if (paramName === 'mix') trend.updateThermalParams({ mix: value })
+          break
+        }
+        case 'dreamcore': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'bloom') trend.updateDreamcoreParams({ bloom: value })
+          if (paramName === 'radius') trend.updateDreamcoreParams({ radius: 4 + Math.floor(value * 60) })
+          if (paramName === 'pastel') trend.updateDreamcoreParams({ pastel: value })
+          if (paramName === 'haze') trend.updateDreamcoreParams({ haze: value })
+          if (paramName === 'drift') trend.updateDreamcoreParams({ drift: value * 2 })
+          if (paramName === 'mix') trend.updateDreamcoreParams({ mix: value })
+          break
+        }
+        case 'anamorphic': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'threshold') trend.updateAnamorphicParams({ threshold: value })
+          if (paramName === 'streak') trend.updateAnamorphicParams({ streak: value })
+          if (paramName === 'tint') trend.updateAnamorphicParams({ tint: value })
+          if (paramName === 'squeeze') trend.updateAnamorphicParams({ squeeze: value * 0.3 })
+          if (paramName === 'mix') trend.updateAnamorphicParams({ mix: value })
+          break
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // TREND EFFECTS — MOTION
+        // ═══════════════════════════════════════════════════════════════════════
+        case 'flow_smear': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'strength') trend.updateFlowSmearParams({ strength: value * 100 })
+          if (paramName === 'decay') trend.updateFlowSmearParams({ decay: value })
+          if (paramName === 'blur') trend.updateFlowSmearParams({ blur: value })
+          if (paramName === 'structure') trend.updateFlowSmearParams({ structure: value })
+          if (paramName === 'mix') trend.updateFlowSmearParams({ mix: value })
+          break
+        }
+        case 'feedback_tunnel': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'zoom') trend.updateFeedbackTunnelParams({ zoom: 0.9 + value * 0.2 })
+          if (paramName === 'rotate') trend.updateFeedbackTunnelParams({ rotate: value * 10 - 5 })
+          if (paramName === 'decay') trend.updateFeedbackTunnelParams({ decay: value })
+          if (paramName === 'hueShift') trend.updateFeedbackTunnelParams({ hueShift: value * 30 })
+          if (paramName === 'mix') trend.updateFeedbackTunnelParams({ mix: value })
+          break
+        }
+        case 'opium_trails': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'decay') trend.updateOpiumTrailsParams({ decay: value })
+          if (paramName === 'crush') trend.updateOpiumTrailsParams({ crush: value })
+          if (paramName === 'desat') trend.updateOpiumTrailsParams({ desat: value })
+          if (paramName === 'mix') trend.updateOpiumTrailsParams({ mix: value })
+          break
+        }
+        case 'rutt_etra': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'lines') trend.updateRuttEtraParams({ lines: 16 + Math.floor(value * 112) })
+          if (paramName === 'depth') trend.updateRuttEtraParams({ depth: value * 100 })
+          if (paramName === 'tilt') trend.updateRuttEtraParams({ tilt: value * 60 })
+          if (paramName === 'glow') trend.updateRuttEtraParams({ glow: value })
+          if (paramName === 'mix') trend.updateRuttEtraParams({ mix: value })
+          break
+        }
+        case 'reaction_diffusion': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'feed') trend.updateReactionDiffusionParams({ feed: 0.01 + value * 0.09 })
+          if (paramName === 'kill') trend.updateReactionDiffusionParams({ kill: 0.04 + value * 0.03 })
+          if (paramName === 'speed') trend.updateReactionDiffusionParams({ speed: 1 + value * 7 })
+          if (paramName === 'seedAmt') trend.updateReactionDiffusionParams({ seedAmt: value })
+          if (paramName === 'colorize') trend.updateReactionDiffusionParams({ colorize: value })
+          if (paramName === 'mix') trend.updateReactionDiffusionParams({ mix: value })
+          break
+        }
+        case 'physarum': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'agents') trend.updatePhysarumParams({ agents: 10000 + Math.floor(value * 290000) })
+          if (paramName === 'sensorAngle') trend.updatePhysarumParams({ sensorAngle: 10 + value * 50 })
+          if (paramName === 'sensorDist') trend.updatePhysarumParams({ sensorDist: 4 + value * 28 })
+          if (paramName === 'decay') trend.updatePhysarumParams({ decay: 0.8 + value * 0.19 })
+          if (paramName === 'deposit') trend.updatePhysarumParams({ deposit: value })
+          if (paramName === 'lumaBias') trend.updatePhysarumParams({ lumaBias: value })
+          if (paramName === 'mix') trend.updatePhysarumParams({ mix: value })
+          break
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // TREND EFFECTS — DESTROY
+        // ═══════════════════════════════════════════════════════════════════════
+        case 'kaleidoscope': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'segments') trend.updateKaleidoscopeParams({ segments: 2 + Math.floor(value * 14) })
+          if (paramName === 'spin') trend.updateKaleidoscopeParams({ spin: value * 4 - 2 })
+          if (paramName === 'offset') trend.updateKaleidoscopeParams({ offset: value })
+          if (paramName === 'mix') trend.updateKaleidoscopeParams({ mix: value })
+          break
+        }
+        case 'liquid_morph': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'speed') trend.updateLiquidMorphParams({ speed: 0.1 + value * 2.9 })
+          if (paramName === 'scale') trend.updateLiquidMorphParams({ scale: 1 + value * 19 })
+          if (paramName === 'intensity') trend.updateLiquidMorphParams({ intensity: value })
+          if (paramName === 'chromeAmount') trend.updateLiquidMorphParams({ chromeAmount: value })
+          if (paramName === 'mix') trend.updateLiquidMorphParams({ mix: value })
+          break
+        }
+        case 'crystallize': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'cellCount') trend.updateCrystallizeParams({ cellCount: 8 + Math.floor(value * 120) })
+          if (paramName === 'shatter') trend.updateCrystallizeParams({ shatter: value })
+          if (paramName === 'edgeGlow') trend.updateCrystallizeParams({ edgeGlow: value })
+          if (paramName === 'mix') trend.updateCrystallizeParams({ mix: value })
+          break
+        }
+        case 'ripple_warp': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'frequency') trend.updateRippleWarpParams({ frequency: 1 + value * 39 })
+          if (paramName === 'speed') trend.updateRippleWarpParams({ speed: 0.1 + value * 4.9 })
+          if (paramName === 'amplitude') trend.updateRippleWarpParams({ amplitude: value })
+          if (paramName === 'decay') trend.updateRippleWarpParams({ decay: value })
+          if (paramName === 'mix') trend.updateRippleWarpParams({ mix: value })
+          break
+        }
+        case 'fractal_domain': {
+          const trend = useTrendStore.getState()
+          if (paramName === 'iterations') trend.updateFractalDomainParams({ iterations: 1 + Math.floor(value * 7) })
+          if (paramName === 'zoom') trend.updateFractalDomainParams({ zoom: 1 + value * 2 })
+          if (paramName === 'spin') trend.updateFractalDomainParams({ spin: value * 4 - 2 })
+          if (paramName === 'mix') trend.updateFractalDomainParams({ mix: value })
           break
         }
       }

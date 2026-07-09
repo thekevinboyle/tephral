@@ -15,7 +15,7 @@ When adding a new effect page or new effects, you MUST update ALL of the followi
 - Example: `Math.min(5, page)` for 6 pages (0-5)
 
 ### 3. Performance Grid (`src/components/performance/PerformanceGrid.tsx`)
-- Import the new store (e.g., `useMotionStore`)
+- Import the new store (e.g., `useMotionStore`, `useTrendStore`)
 - Add store hook call
 - Add cases to `getEffectState()` for each new effect
 - Add case to `pageHasActiveEffects()` for new page
@@ -35,9 +35,10 @@ When adding a new effect page or new effects, you MUST update ALL of the followi
 
 ### 7. Canvas (`src/components/Canvas.tsx`) + Param Sync (`src/effects/paramSync.ts`)
 Enabled flags/order and per-frame params are split across two files:
-- **Canvas.tsx's structural effect**: import the new store, subscribe to
-  its *enabled* state only, pass to `pipeline.updateEffects()`. This effect
-  should only re-run on enable/disable/reorder — not on every param change.
+- **Canvas.tsx's structural effect**: import the new store (e.g.
+  `useMotionStore`, `useTrendStore`), subscribe to its *enabled* state only,
+  pass to `pipeline.updateEffects()`. This effect should only re-run on
+  enable/disable/reorder — not on every param change.
 - **paramSync.ts**: add the effect's params to (or add a new) `push*()`
   function that calls `pipeline.<effect>?.updateParams(...)`, call it once
   in the initial push list, and add a reference-equality slice check for

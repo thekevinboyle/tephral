@@ -261,3 +261,71 @@ temporary absolutely-positioned 1x1-or-larger marker `div` (`z-index:
 targeted by CSS id selector is a reliable way to get a real trusted drag
 of a specific pixel delta on a specific control — used throughout this
 task's regression pass and final knob-drag measurement.
+
+## Phase 2 effect costs (Task 18 wrap-up)
+
+Measured with Playwright MCP down, via puppeteer
+(`.superpowers/sdd/task18-perf.mjs`), same reproducibility setup as every
+entry above: `anima-morph/IMG_9153.PNG` via File source, 2560x1440
+viewport, canvas render target 657x1161, fresh dev server (no HMR
+invalidation), `perfMonitor.getStats()` read in-page via Vite's module
+graph. First attempt at this measurement caught a shader-compile stall
+inside the 120-frame ring buffer (max 112 ms on the baseline stack, avg
+skewed to ~1.0 ms) — re-run with a 5 s warm-up before the first read and a
+second read 3 s later to confirm the ring buffer had flushed the compile
+spike.
+
+**Baseline stack regression check** (RGB + TAR + ECHO + SORT, the same
+stack as every prior entry in this doc — this is a pre-Phase-2 scenario,
+confirming Phase 2's 16 new effects/stores/paramSync additions didn't
+regress it):
+
+- idle (image loaded, 0 effects): avg 0.063 ms, max 0.110 ms, fps ~15960
+- stack (RGB+TAR+ECHO+SORT), sample 1 (5 s after enable): avg 0.138 ms, max 0.190 ms, fps ~7240
+- stack, sample 2 (3 s later): avg 0.121 ms, max 0.175 ms, fps ~8230
+
+In line with the "After Phase 1 (final)" entry above (avg 0.102 ms, max
+0.135-0.155 ms, fps ~9800) — same order of magnitude, the small increase
+sits within this metric's established run-to-run noise band (this doc's
+own methodology note: "these CPU-side submission numbers do not
+discriminate... deltas are run-to-run noise at this canvas size"). No
+regression from Phase 2's additions.
+
+**Per-effect solo cost** (each effect enabled alone at its default
+params, all others off, 4 s warm-up before reading stats; values are
+`perfMonitor.getStats()` — CPU-side `pipeline.render()` submission time
+only, not GPU execution):
+
+| effect | avg ms | max ms | fps |
+|---|---|---|---|
+| halation | 0.080 | 0.130 | 12468 |
+| y2k_digicam | 0.082 | 0.130 | 12270 |
+| thermal | 0.082 | 0.130 | 12264 |
+| dreamcore | 0.081 | 0.140 | 12352 |
+| anamorphic | 0.075 | 0.145 | 13252 |
+| flow_smear | 0.109 | 0.155 | 9199 |
+| feedback_tunnel | 0.088 | 0.135 | 11326 |
+| opium_trails | 0.092 | 0.135 | 10825 |
+| rutt_etra | 0.120 | 0.185 | 8336 |
+| reaction_diffusion | 0.098 | 0.165 | 10200 |
+| physarum | 0.119 | 0.230 | 8392 |
+| kaleidoscope | 0.083 | 0.130 | 11982 |
+| liquid_morph | 0.082 | 0.145 | 12152 |
+| crystallize | 0.084 | 0.130 | 11846 |
+| ripple_warp | 0.086 | 0.135 | 11645 |
+| fractal_domain | 0.083 | 0.140 | 12036 |
+
+All 16 effects land well under 0.25 ms avg (idle is ~0.06 ms, so every
+effect's solo overhead is under ~0.17 ms CPU-side submission cost). The
+priciest are `rutt_etra` (mesh-based scanline render) and `physarum`
+(100k-agent GPGPU simulation, default agent count), followed by
+`flow_smear` (temporal accumulation buffer) — all still sub-millisecond
+and consistent with their category (WAVE-3 sims / WAVE-2 temporal costing
+more than WAVE-1 single-pass shaders like halation/y2k/thermal/dreamcore/
+anamorphic/kaleidoscope/liquid_morph/crystallize/ripple_warp/
+fractal_domain, which cluster tightly around 0.08 ms). As with every
+other entry in this doc, this metric is CPU submission time only — it
+does not capture `physarum`'s or `reaction_diffusion`'s actual GPU
+compute cost (async, unmeasured by this monitor), so these two numbers
+understate their true rendering cost more than the single-pass shaders'
+numbers do.

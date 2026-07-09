@@ -379,9 +379,48 @@ interface TrendState {
   updateCrystallizeParams: (params: Partial<CrystallizeParams>) => void
   updateRippleWarpParams: (params: Partial<RippleWarpParams>) => void
   updateFractalDomainParams: (params: Partial<FractalDomainParams>) => void
+
+  // Snapshot for presets
+  getSnapshot: () => TrendSnapshot
+  applySnapshot: (snapshot: TrendSnapshot) => void
 }
 
-export const useTrendStore = create<TrendState>()((set) => ({
+export interface TrendSnapshot {
+  halationEnabled: boolean
+  y2kEnabled: boolean
+  thermalEnabled: boolean
+  dreamcoreEnabled: boolean
+  anamorphicEnabled: boolean
+  flowSmearEnabled: boolean
+  feedbackTunnelEnabled: boolean
+  opiumTrailsEnabled: boolean
+  ruttEtraEnabled: boolean
+  reactionDiffusionEnabled: boolean
+  physarumEnabled: boolean
+  kaleidoscopeEnabled: boolean
+  liquidMorphEnabled: boolean
+  crystallizeEnabled: boolean
+  rippleWarpEnabled: boolean
+  fractalDomainEnabled: boolean
+  halationParams: HalationParams
+  y2kParams: Y2kParams
+  thermalParams: ThermalParams
+  dreamcoreParams: DreamcoreParams
+  anamorphicParams: AnamorphicParams
+  flowSmearParams: FlowSmearParams
+  feedbackTunnelParams: FeedbackTunnelParams
+  opiumTrailsParams: OpiumTrailsParams
+  ruttEtraParams: RuttEtraParams
+  reactionDiffusionParams: ReactionDiffusionParams
+  physarumParams: PhysarumParams
+  kaleidoscopeParams: KaleidoscopeParams
+  liquidMorphParams: LiquidMorphParams
+  crystallizeParams: CrystallizeParams
+  rippleWarpParams: RippleWarpParams
+  fractalDomainParams: FractalDomainParams
+}
+
+export const useTrendStore = create<TrendState>()((set, get) => ({
   halationEnabled: false,
   y2kEnabled: false,
   thermalEnabled: false,
@@ -496,4 +535,77 @@ export const useTrendStore = create<TrendState>()((set) => ({
   updateFractalDomainParams: (params) => set((state) => ({
     fractalDomainParams: { ...state.fractalDomainParams, ...params },
   })),
+
+  getSnapshot: () => {
+    const state = get()
+    return {
+      halationEnabled: state.halationEnabled,
+      y2kEnabled: state.y2kEnabled,
+      thermalEnabled: state.thermalEnabled,
+      dreamcoreEnabled: state.dreamcoreEnabled,
+      anamorphicEnabled: state.anamorphicEnabled,
+      flowSmearEnabled: state.flowSmearEnabled,
+      feedbackTunnelEnabled: state.feedbackTunnelEnabled,
+      opiumTrailsEnabled: state.opiumTrailsEnabled,
+      ruttEtraEnabled: state.ruttEtraEnabled,
+      reactionDiffusionEnabled: state.reactionDiffusionEnabled,
+      physarumEnabled: state.physarumEnabled,
+      kaleidoscopeEnabled: state.kaleidoscopeEnabled,
+      liquidMorphEnabled: state.liquidMorphEnabled,
+      crystallizeEnabled: state.crystallizeEnabled,
+      rippleWarpEnabled: state.rippleWarpEnabled,
+      fractalDomainEnabled: state.fractalDomainEnabled,
+      halationParams: { ...state.halationParams },
+      y2kParams: { ...state.y2kParams },
+      thermalParams: { ...state.thermalParams },
+      dreamcoreParams: { ...state.dreamcoreParams },
+      anamorphicParams: { ...state.anamorphicParams },
+      flowSmearParams: { ...state.flowSmearParams },
+      feedbackTunnelParams: { ...state.feedbackTunnelParams },
+      opiumTrailsParams: { ...state.opiumTrailsParams },
+      ruttEtraParams: { ...state.ruttEtraParams },
+      reactionDiffusionParams: { ...state.reactionDiffusionParams },
+      physarumParams: { ...state.physarumParams },
+      kaleidoscopeParams: { ...state.kaleidoscopeParams },
+      liquidMorphParams: { ...state.liquidMorphParams },
+      crystallizeParams: { ...state.crystallizeParams },
+      rippleWarpParams: { ...state.rippleWarpParams },
+      fractalDomainParams: { ...state.fractalDomainParams },
+    }
+  },
+
+  applySnapshot: (snapshot) => set({
+    halationEnabled: snapshot.halationEnabled,
+    y2kEnabled: snapshot.y2kEnabled,
+    thermalEnabled: snapshot.thermalEnabled,
+    dreamcoreEnabled: snapshot.dreamcoreEnabled,
+    anamorphicEnabled: snapshot.anamorphicEnabled,
+    flowSmearEnabled: snapshot.flowSmearEnabled,
+    feedbackTunnelEnabled: snapshot.feedbackTunnelEnabled,
+    opiumTrailsEnabled: snapshot.opiumTrailsEnabled,
+    ruttEtraEnabled: snapshot.ruttEtraEnabled,
+    reactionDiffusionEnabled: snapshot.reactionDiffusionEnabled,
+    physarumEnabled: snapshot.physarumEnabled,
+    kaleidoscopeEnabled: snapshot.kaleidoscopeEnabled,
+    liquidMorphEnabled: snapshot.liquidMorphEnabled,
+    crystallizeEnabled: snapshot.crystallizeEnabled,
+    rippleWarpEnabled: snapshot.rippleWarpEnabled,
+    fractalDomainEnabled: snapshot.fractalDomainEnabled,
+    halationParams: { ...snapshot.halationParams },
+    y2kParams: { ...snapshot.y2kParams },
+    thermalParams: { ...snapshot.thermalParams },
+    dreamcoreParams: { ...snapshot.dreamcoreParams },
+    anamorphicParams: { ...snapshot.anamorphicParams },
+    flowSmearParams: { ...snapshot.flowSmearParams },
+    feedbackTunnelParams: { ...snapshot.feedbackTunnelParams },
+    opiumTrailsParams: { ...snapshot.opiumTrailsParams },
+    ruttEtraParams: { ...snapshot.ruttEtraParams },
+    reactionDiffusionParams: { ...snapshot.reactionDiffusionParams },
+    physarumParams: { ...snapshot.physarumParams },
+    kaleidoscopeParams: { ...snapshot.kaleidoscopeParams },
+    liquidMorphParams: { ...snapshot.liquidMorphParams },
+    crystallizeParams: { ...snapshot.crystallizeParams },
+    rippleWarpParams: { ...snapshot.rippleWarpParams },
+    fractalDomainParams: { ...snapshot.fractalDomainParams },
+  }),
 }))

@@ -70,6 +70,8 @@ import {
   StrandDoomsEffect,
   StrandBridgeEffect,
   StrandWebEffect,
+  StrandTimefallEffect,
+  StrandUmbilicalEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -162,6 +164,8 @@ export class EffectPipeline {
   strandDooms: StrandDoomsEffect | null = null
   strandBridge: StrandBridgeEffect | null = null
   strandWeb: StrandWebEffect | null = null
+  strandTimefall: StrandTimefallEffect | null = null
+  strandUmbilical: StrandUmbilicalEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -297,6 +301,8 @@ export class EffectPipeline {
     this.strandDooms = new StrandDoomsEffect()
     this.strandBridge = new StrandBridgeEffect()
     this.strandWeb = new StrandWebEffect()
+    this.strandTimefall = new StrandTimefallEffect()
+    this.strandUmbilical = new StrandUmbilicalEffect()
   }
 
   // Map effect IDs to effect instances
@@ -371,6 +377,8 @@ export class EffectPipeline {
       case 'strand_dooms': return this.strandDooms
       case 'strand_bridge': return this.strandBridge
       case 'strand_web': return this.strandWeb
+      case 'strand_timefall': return this.strandTimefall
+      case 'strand_umbilical': return this.strandUmbilical
       default: return null
     }
   }
@@ -723,6 +731,8 @@ export class EffectPipeline {
     this.strandDooms?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandBridge?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandWeb?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandTimefall?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandUmbilical?.setResolution(this.canvasWidth, this.canvasHeight)
   }
 
   private updateQuadScale() {
@@ -862,5 +872,7 @@ export class EffectPipeline {
     this.strandDooms?.dispose()
     this.strandBridge?.dispose()
     this.strandWeb?.dispose()
+    this.strandTimefall?.dispose()
+    this.strandUmbilical?.dispose()
   }
 }

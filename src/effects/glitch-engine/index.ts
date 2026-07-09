@@ -203,3 +203,9 @@ export type { StrandBridgeParams } from './StrandBridgeEffect'
 
 export { StrandWebEffect, DEFAULT_STRAND_WEB_GPU_PARAMS } from './StrandWebEffect'
 export type { StrandWebGpuParams } from './StrandWebEffect'
+
+export { StrandTimefallEffect, DEFAULT_STRAND_TIMEFALL_PARAMS } from './StrandTimefallEffect'
+export type { StrandTimefallParams } from './StrandTimefallEffect'
+
+export { StrandUmbilicalEffect, DEFAULT_STRAND_UMBILICAL_PARAMS } from './StrandUmbilicalEffect'
+export type { StrandUmbilicalParams } from './StrandUmbilicalEffect'

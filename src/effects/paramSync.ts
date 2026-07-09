@@ -190,6 +190,8 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.strandDooms?.updateParams({ ...s.doomsParams, mix: getMix('strand_dooms') })
     pipeline.strandBridge?.updateParams({ ...s.bridgeLinkParams, mix: getMix('strand_bridge') })
     pipeline.strandWeb?.updateParams({ ...s.strandWebParams, mix: getMix('strand_web') })
+    pipeline.strandTimefall?.updateParams({ ...s.timefallParams, mix: getMix('strand_timefall') })
+    pipeline.strandUmbilical?.updateParams({ ...s.umbilicalParams, mix: getMix('strand_umbilical') })
   }
 
   // Initial push so a fresh pipeline gets current values immediately

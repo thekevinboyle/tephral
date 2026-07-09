@@ -120,3 +120,6 @@ export type { HalationParams } from './HalationEffect'
 
 export { AnamorphicEffect, DEFAULT_ANAMORPHIC_PARAMS } from './AnamorphicEffect'
 export type { AnamorphicParams } from './AnamorphicEffect'
+
+export { DreamcoreEffect, DEFAULT_DREAMCORE_PARAMS } from './DreamcoreEffect'
+export type { DreamcoreParams } from './DreamcoreEffect'

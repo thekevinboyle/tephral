@@ -41,6 +41,7 @@ import {
   Y2kDigicamEffect,
   HalationEffect,
   AnamorphicEffect,
+  DreamcoreEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -102,6 +103,7 @@ export class EffectPipeline {
   y2kDigicam: Y2kDigicamEffect | null = null
   halation: HalationEffect | null = null
   anamorphic: AnamorphicEffect | null = null
+  dreamcore: DreamcoreEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -206,6 +208,7 @@ export class EffectPipeline {
     this.y2kDigicam = new Y2kDigicamEffect()
     this.halation = new HalationEffect()
     this.anamorphic = new AnamorphicEffect()
+    this.dreamcore = new DreamcoreEffect()
   }
 
   // Map effect IDs to effect instances
@@ -251,6 +254,7 @@ export class EffectPipeline {
       case 'y2k_digicam': return this.y2kDigicam
       case 'halation': return this.halation
       case 'anamorphic': return this.anamorphic
+      case 'dreamcore': return this.dreamcore
       default: return null
     }
   }
@@ -617,5 +621,6 @@ export class EffectPipeline {
     this.y2kDigicam?.dispose()
     this.halation?.dispose()
     this.anamorphic?.dispose()
+    this.dreamcore?.dispose()
   }
 }

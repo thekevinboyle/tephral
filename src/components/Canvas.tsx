@@ -485,6 +485,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       pipeline.edgeTrace?.setResolution(container.clientWidth, container.clientHeight)
       pipeline.halation?.setResolution(container.clientWidth, container.clientHeight)
       pipeline.anamorphic?.setResolution(container.clientWidth, container.clientHeight)
+      pipeline.dreamcore?.setResolution(container.clientWidth, container.clientHeight)
     }
 
     updateSize()

@@ -16,14 +16,16 @@ import { renderGlyphs } from './acid/glyphEffect'
 import { renderIcons } from './acid/iconsEffect'
 import { renderContour } from './acid/contourEffect'
 import { renderDecomp } from './acid/decompEffect'
-import { renderMirror } from './acid/mirrorEffect'
+// NOTE: renderMirror and renderRipple are now handled by GPU shaders in
+// EffectPipeline (Phase 3 port) — see AcidMirrorEffect.ts / AcidRippleEffect.ts
+// import { renderMirror } from './acid/mirrorEffect'
 import { renderSlice } from './acid/sliceEffect'
 import { renderThGrid } from './acid/thgridEffect'
 import { renderLed } from './acid/ledEffect'
 import { renderHalftone } from './acid/halftoneEffect'
 import { renderHex } from './acid/hexEffect'
 import { renderScan } from './acid/scanEffect'
-import { renderRipple } from './acid/rippleEffect'
+// import { renderRipple } from './acid/rippleEffect'
 
 // WebGL effects
 import { CloudEffect } from './acid/cloudEffect'
@@ -71,14 +73,15 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
   sizeRef.current = { width, height }
 
   // Check if any effect is enabled AND not bypassed
-  // NOTE: Dots is now handled by GPU shader, so exclude from overlay check
+  // NOTE: Dots, Mirror, Ripple are now handled by GPU shaders, so exclude
+  // from overlay check
   const anyActiveEffect =
     // (store.dotsEnabled && !effectBypassed['acid_dots']) || // GPU shader handles this
     (store.glyphEnabled && !effectBypassed['acid_glyph']) ||
     (store.iconsEnabled && !effectBypassed['acid_icons']) ||
     (store.contourEnabled && !effectBypassed['acid_contour']) ||
     (store.decompEnabled && !effectBypassed['acid_decomp']) ||
-    (store.mirrorEnabled && !effectBypassed['acid_mirror']) ||
+    // (store.mirrorEnabled && !effectBypassed['acid_mirror']) || // GPU shader handles this
     (store.sliceEnabled && !effectBypassed['acid_slice']) ||
     (store.thGridEnabled && !effectBypassed['acid_thgrid']) ||
     (store.ledEnabled && !effectBypassed['acid_led']) ||
@@ -87,18 +90,19 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     (store.voronoiEnabled && !effectBypassed['acid_voronoi']) ||
     (store.halftoneEnabled && !effectBypassed['acid_halftone']) ||
     (store.hexEnabled && !effectBypassed['acid_hex']) ||
-    (store.scanEnabled && !effectBypassed['acid_scan']) ||
-    (store.rippleEnabled && !effectBypassed['acid_ripple'])
+    (store.scanEnabled && !effectBypassed['acid_scan'])
+    // (store.rippleEnabled && !effectBypassed['acid_ripple']) // GPU shader handles this
 
   // Check if any effect is enabled (for WebGL lifecycle)
-  // NOTE: Dots is now handled by GPU shader, so exclude from overlay check
+  // NOTE: Dots, Mirror, Ripple are now handled by GPU shaders, so exclude
+  // from overlay check
   const anyEnabled =
     // store.dotsEnabled || // GPU shader handles this
     store.glyphEnabled ||
     store.iconsEnabled ||
     store.contourEnabled ||
     store.decompEnabled ||
-    store.mirrorEnabled ||
+    // store.mirrorEnabled || // GPU shader handles this
     store.sliceEnabled ||
     store.thGridEnabled ||
     store.ledEnabled ||
@@ -107,8 +111,8 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     store.voronoiEnabled ||
     store.halftoneEnabled ||
     store.hexEnabled ||
-    store.scanEnabled ||
-    store.rippleEnabled
+    store.scanEnabled
+    // store.rippleEnabled // GPU shader handles this
 
   // WebGL effect initialization/disposal
   useEffect(() => {
@@ -229,9 +233,10 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
       renderDecomp(sourceCtx, ctx, currentWidth, currentHeight, currentStore.decompParams)
     }
 
-    if (currentStore.mirrorEnabled && !bypassed['acid_mirror']) {
-      renderMirror(sourceCtx, ctx, currentWidth, currentHeight, currentStore.mirrorParams)
-    }
+    // NOTE: Mirror effect is now handled by GPU shader in EffectPipeline
+    // if (currentStore.mirrorEnabled && !bypassed['acid_mirror']) {
+    //   renderMirror(sourceCtx, ctx, currentWidth, currentHeight, currentStore.mirrorParams)
+    // }
 
     if (currentStore.sliceEnabled && !bypassed['acid_slice']) {
       renderSlice(sourceCtx, ctx, currentWidth, currentHeight, currentStore.sliceParams)
@@ -257,9 +262,10 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
       renderScan(sourceCtx, ctx, currentWidth, currentHeight, currentStore.scanParams)
     }
 
-    if (currentStore.rippleEnabled && !bypassed['acid_ripple']) {
-      renderRipple(sourceCtx, ctx, currentWidth, currentHeight, currentStore.rippleParams)
-    }
+    // NOTE: Ripple effect is now handled by GPU shader in EffectPipeline
+    // if (currentStore.rippleEnabled && !bypassed['acid_ripple']) {
+    //   renderRipple(sourceCtx, ctx, currentWidth, currentHeight, currentStore.rippleParams)
+    // }
 
     // Render WebGL effects (they render to their own canvases)
     const timeSeconds = time * 0.001

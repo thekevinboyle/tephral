@@ -50,6 +50,9 @@ import {
   ReactionDiffusionEffect,
   RuttEtraEffect,
   PhysarumEffect,
+  // ACID overlay effects (Phase 3 GPU port)
+  AcidMirrorEffect,
+  AcidRippleEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -120,6 +123,10 @@ export class EffectPipeline {
   reactionDiffusion: ReactionDiffusionEffect | null = null
   ruttEtra: RuttEtraEffect | null = null
   physarum: PhysarumEffect | null = null
+
+  // ACID overlay effects (Phase 3 GPU port)
+  acidMirror: AcidMirrorEffect | null = null
+  acidRipple: AcidRippleEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -233,6 +240,10 @@ export class EffectPipeline {
     this.reactionDiffusion = new ReactionDiffusionEffect()
     this.ruttEtra = new RuttEtraEffect()
     this.physarum = new PhysarumEffect()
+
+    // ACID overlay effects (Phase 3 GPU port)
+    this.acidMirror = new AcidMirrorEffect()
+    this.acidRipple = new AcidRippleEffect()
   }
 
   // Map effect IDs to effect instances
@@ -287,6 +298,9 @@ export class EffectPipeline {
       case 'reaction_diffusion': return this.reactionDiffusion
       case 'rutt_etra': return this.ruttEtra
       case 'physarum': return this.physarum
+      // ACID overlay effects (Phase 3 GPU port)
+      case 'acid_mirror': return this.acidMirror
+      case 'acid_ripple': return this.acidRipple
       default: return null
     }
   }
@@ -621,6 +635,8 @@ export class EffectPipeline {
     this.y2kDigicam?.setAspect(aspect)
     this.liquidMorph?.setAspect(aspect)
     this.crystallize?.setAspect(aspect)
+    this.acidMirror?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.acidRipple?.setResolution(this.canvasWidth, this.canvasHeight)
   }
 
   private updateQuadScale() {
@@ -740,5 +756,8 @@ export class EffectPipeline {
     this.reactionDiffusion?.dispose()
     this.ruttEtra?.dispose()
     this.physarum?.dispose()
+    // ACID overlay effects (Phase 3 GPU port)
+    this.acidMirror?.dispose()
+    this.acidRipple?.dispose()
   }
 }

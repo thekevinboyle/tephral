@@ -147,3 +147,10 @@ export type { RuttEtraParams } from './RuttEtraEffect'
 
 export { PhysarumEffect, DEFAULT_PHYSARUM_PARAMS } from './PhysarumEffect'
 export type { PhysarumParams } from './PhysarumEffect'
+
+// ACID overlay effects (Phase 3 GPU port)
+export { AcidMirrorEffect, DEFAULT_ACID_MIRROR_PARAMS } from './AcidMirrorEffect'
+export type { AcidMirrorParams } from './AcidMirrorEffect'
+
+export { AcidRippleEffect, DEFAULT_ACID_RIPPLE_PARAMS } from './AcidRippleEffect'
+export type { AcidRippleParams } from './AcidRippleEffect'

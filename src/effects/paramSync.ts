@@ -165,7 +165,9 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
   // effect's pipeline property exists, matching the null-filtered
   // enabledMap pattern in EffectPipeline).
   const pushAcidPorts = () => {
-    // const s = useAcidStore.getState()
+    const s = useAcidStore.getState()
+    pipeline.acidMirror?.updateParams({ ...s.mirrorParams, preserveVideo: s.preserveVideo, mix: getMix('acid_mirror') })
+    pipeline.acidRipple?.updateParams({ ...s.rippleParams, preserveVideo: s.preserveVideo, mix: getMix('acid_ripple') })
   }
 
   // STRAND overlay effects (Phase 3 GPU port) — same empty scaffold as
@@ -214,7 +216,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
         s.thGridParams !== prev.thGridParams || s.contourParams !== prev.contourParams ||
         s.glyphParams !== prev.glyphParams || s.halftoneParams !== prev.halftoneParams ||
         s.hexParams !== prev.hexParams || s.iconsParams !== prev.iconsParams ||
-        s.ledParams !== prev.ledParams
+        s.ledParams !== prev.ledParams || s.preserveVideo !== prev.preserveVideo
       ) pushAcidPorts()
     }),
     useStrandStore.subscribe((s, prev) => {

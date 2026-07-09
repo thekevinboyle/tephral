@@ -72,21 +72,28 @@ float hpHash(float n) {
   return fract(sin(n * 127.1) * 43758.5453);
 }
 
-// Soft-edged ellipse coverage: 1 inside, 0 outside. The naive approach —
-// smoothstep a FIXED band width in ellipse-NORMALIZED distance (where the
-// boundary is at d=1) — produces a REAL-pixel transition width of
-// roughly band*min(rx,ry), which collapses to sub-pixel (i.e. a hard,
-// aliased edge) for thin/elongated ellipses like the fingers
-// (fingerWidth = handSize*0.12, radius in the short axis). Converting the
-// normalized distance to an approximate real-pixel distance first (via the
-// shorter radius, which dominates edge sharpness for anisotropic shapes)
-// keeps the AA transition a genuine ~aaPixels-wide band in actual screen
-// pixels regardless of how elongated the ellipse is.
+// Soft-edged ellipse coverage: 1 inside, 0 outside. AA must be a genuine
+// ~aaPixels band in ACTUAL screen pixels regardless of the ellipse's
+// aspect ratio. The prior approximation converted the ellipse-normalized
+// distance d (boundary at d=1) to a pixel distance via a single scalar
+// (min(rx,ry)) — but the pixel gradient of d is direction-dependent for
+// anisotropic ellipses, so one constant is wrong (over-soft at the thin
+// fingers' tips, near-hard elsewhere), reading as aliased/uneven edges.
+// The screen->ellipse-local map here is an isometry (rotation/mirror only,
+// no per-pixel scale), so |d gradient| wrt screen pixels equals |grad_p d|
+// = length(p / rr^2) / d exactly. Real-pixel distance to the boundary is
+// then (d-1) / |grad d| = (d-1)*d / length(p/rr^2) — an fwidth-free
+// analytic AA that stays correct in the divergent per-slot loop (fwidth in
+// non-uniform control flow is undefined). At the exact center (p=0 => the
+// gradient is 0/0) the point is deep interior, so force a large negative
+// (fully-covered) distance.
 float ellipseCoverage(vec2 p, float rx, float ry, float aaPixels) {
-  vec2 n = p / vec2(max(rx, 0.001), max(ry, 0.001));
+  vec2 rr = vec2(max(rx, 0.001), max(ry, 0.001));
+  vec2 n = p / rr;
   float d = length(n);
-  float minRadius = min(rx, ry);
-  float pixelDist = (d - 1.0) * minRadius;
+  vec2 g = vec2(p.x / (rr.x * rr.x), p.y / (rr.y * rr.y));
+  float gl = length(g);
+  float pixelDist = gl > 1e-4 ? (d - 1.0) * d / gl : -min(rr.x, rr.y);
   return 1.0 - smoothstep(-aaPixels, aaPixels, pixelDist);
 }
 
@@ -126,13 +133,19 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     float maxReach = handSize * 1.3;
     if (dot(rel, rel) > maxReach * maxReach) continue;
 
-    // Invert the CPU's translate->rotate(rot)->scale(-1,1 if isLeft) stack:
-    // rotate by -rot first, then apply the (self-inverse) mirror. unrot
-    // is now the exact local space the CPU draws its palm+finger ellipses
-    // in (same space handSize*0.4 etc. are defined against).
+    // The CPU draws in canvas space (Y-DOWN): its finger constants use
+    // NEGATIVE y (e.g. -handSize*0.5) to fan fingers ABOVE the palm. This
+    // shader's pixelCoord is GL-oriented (Y-UP, uv*resolution), so reusing
+    // those constants verbatim without flipping Y renders the hand mirrored
+    // (fingers below the palm — a paw). Convert rel into the CPU's
+    // canvas-oriented (y-down) frame FIRST (relC), then invert the CPU's
+    // translate->rotate(rot)->scale(-1,1 if isLeft) stack: rotate by -rot,
+    // then apply the (self-inverse) mirror. unrot is then the exact local
+    // space the CPU draws its palm+finger ellipses in.
+    vec2 relC = vec2(rel.x, -rel.y);
     float c = cos(-rot);
     float s = sin(-rot);
-    vec2 unrot = vec2(rel.x * c - rel.y * s, rel.x * s + rel.y * c);
+    vec2 unrot = vec2(relC.x * c - relC.y * s, relC.x * s + relC.y * c);
     if (isLeft) unrot.x = -unrot.x;
 
     float aa = 1.0;

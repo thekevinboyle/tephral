@@ -104,31 +104,51 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     float shimmerOffset = sin(time * 5.0 + seedPx.x * 0.1 + seedPx.y * 0.1) * shimmer * 0.5;
     float alpha = clamp(0.3 + shimmerOffset + brightness * 0.3, 0.0, 1.0);
 
-    // Faceted crystal body: a 6-vertex star whose per-vertex radius
-    // re-rolls every ~1/60s (frame-bucket hash), reproducing drawCrystal()'s
-    // per-frame geometry reroll (see header). The CPU draws a single
-    // CLOSED polygon (moveTo/lineTo chain back to the start), so the
-    // boundary is always a continuous, gap-free loop — interpolating
-    // linearly between the two vertex radii bounding the current angle
-    // (rather than snapping to one fixed radius per angular sector)
-    // reproduces that closure; a per-sector-only radius would leave visible
-    // gaps between facets whose independently-rolled radii differ sharply.
-    float angle = atan(local.y, local.x);
-    float facetCount = 6.0;
-    float facetPos = (angle + 3.14159265) / 6.28318530718 * facetCount;
-    float facetIdx = floor(facetPos);
-    float facetFrac = fract(facetPos);
+    // Faceted crystal body: a CLOSED polygon (CPU drawCrystal's moveTo/
+    // lineTo/closePath chain) with 5-7 vertices whose radii re-roll every
+    // ~1/60s (frame-bucket hash), reproducing the CPU's per-frame geometry
+    // reroll. facetCount is a per-seed hash of 5+floor(rand*3) (the CPU
+    // rolls it fresh each frame; a stable per-seed count reads the same and
+    // keeps the sectors coherent). Vertices sit at angle sectorSize*i,
+    // starting at angle 0 exactly like the CPU.
+    float facetCount = 5.0 + floor(chHash(fi * 19.7 + 11.0) * 3.0);
+    float sectorSize = 6.28318530718 / facetCount;
     float frameBucket = floor(time * 60.0);
-    float facetRandA = chHash(fi * 13.3 + facetIdx * 17.1 + frameBucket * 0.037);
-    float nextFacetIdx = mod(facetIdx + 1.0, facetCount);
-    float facetRandB = chHash(fi * 13.3 + nextFacetIdx * 17.1 + frameBucket * 0.037);
-    float facetR = seedSize * mix(0.5 + facetRandA * 0.5, 0.5 + facetRandB * 0.5, facetFrac);
 
     float dist = length(local);
-    float bodyCoverage = 1.0 - smoothstep(facetR - 1.5, facetR + 1.5, dist);
+    float ang = atan(local.y, local.x);
+    if (ang < 0.0) ang += 6.28318530718;
+    float k = floor(ang / sectorSize);
+    float kNext = mod(k + 1.0, facetCount);
+    float facetFrac = fract(ang / sectorSize);
+
+    // The two vertices bounding this angular sector.
+    float rk = seedSize * (0.5 + chHash(fi * 13.3 + k * 17.1 + frameBucket * 0.037) * 0.5);
+    float rn = seedSize * (0.5 + chHash(fi * 13.3 + kNext * 17.1 + frameBucket * 0.037) * 0.5);
+    float ak = k * sectorSize;
+    float an = (k + 1.0) * sectorSize;
+    vec2 vA = rk * vec2(cos(ak), sin(ak));
+    vec2 vB = rn * vec2(cos(an), sin(an));
+
+    // Boundary radius along this pixel's direction is the intersection of
+    // the ray r*D with the STRAIGHT edge (chord) vA->vB:
+    //   r = (vA x vB) / (D x vB - D x vA).
+    // The prior code linearly interpolated the two vertex radii instead,
+    // which bows each sector's edge OUTWARD into an arc and collapses the
+    // whole polygon into a near-circle (the reported "pale oval glow"). The
+    // chord solve gives true flat edges and sharp vertices at sector seams.
+    vec2 D = dist > 1e-4 ? local / dist : vec2(1.0, 0.0);
+    float cross_AB = vA.x * vB.y - vA.y * vB.x;
+    float denom = (D.x * vB.y - D.y * vB.x) - (D.x * vA.y - D.y * vA.x);
+    float facetR = abs(denom) > 1e-4 ? cross_AB / denom : seedSize;
+    facetR = clamp(facetR, 1.0, seedSize);
+
+    float bodyCoverage = 1.0 - smoothstep(facetR - 1.2, facetR + 1.2, dist);
 
     if (bodyCoverage > 0.0) {
-      float tr = clamp(dist / max(facetR, 0.001), 0.0, 1.0);
+      // Radial gradient over the full seedSize (CPU: createRadialGradient
+      // (0,0,0, 0,0,size)), NOT over the per-angle facet radius.
+      float tr = clamp(dist / max(seedSize, 0.001), 0.0, 1.0);
       vec3 cc0 = vec3(255.0, 235.0, 150.0) / 255.0;
       vec3 cc1 = vec3(255.0, 215.0, 0.0) / 255.0;
       vec3 cc2 = vec3(200.0, 150.0, 0.0) / 255.0;
@@ -143,20 +163,26 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
         crystalColor = mix(cc1, cc2, f);
         crystalAlphaBase = mix(alpha * 0.5, alpha * 0.2, f);
       }
+      // NORMAL alpha composite (source-over), NOT screen-against-video: the
+      // CPU draws each crystal onto a CLEARED (transparent) overlay canvas,
+      // where its 'screen' blend runs against black and thus keeps the fill
+      // SATURATED gold; that overlay is then source-over composited over the
+      // video. Screen-blending the gold against the bright video backdrop
+      // (the prior code) washes it toward white — the reported desaturation.
       float crystalAlpha = crystalAlphaBase * bodyCoverage;
-      colorSRGB = mix(colorSRGB, blendScreen(colorSRGB, crystalColor), crystalAlpha);
+      colorSRGB = mix(colorSRGB, crystalColor, crystalAlpha);
 
-      // Sharp edge stroke.
+      // Sharp edge stroke along the straight polygon edge.
       float edgeCoverage = 1.0 - smoothstep(0.0, 1.5, abs(dist - facetR));
       vec3 edgeColor = vec3(255.0, 255.0, 200.0) / 255.0;
-      colorSRGB = mix(colorSRGB, blendScreen(colorSRGB, edgeColor), alpha * edgeCoverage);
+      colorSRGB = mix(colorSRGB, edgeColor, alpha * edgeCoverage);
 
-      // Inner facet spokes (center -> 0.7*size along each facet boundary).
-      if (dist < facetR * 0.7) {
+      // Inner facet spokes (center -> 0.7*size toward each vertex).
+      if (dist < seedSize * 0.7) {
         float spokeDist = min(facetFrac, 1.0 - facetFrac);
         float spokeCoverage = 1.0 - smoothstep(0.0, 0.06, spokeDist);
         vec3 spokeColor = vec3(255.0, 235.0, 150.0) / 255.0;
-        colorSRGB = mix(colorSRGB, blendScreen(colorSRGB, spokeColor), alpha * 0.3 * spokeCoverage);
+        colorSRGB = mix(colorSRGB, spokeColor, alpha * 0.3 * spokeCoverage);
       }
     }
   }

@@ -136,12 +136,14 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.setCrossfaderPosition(useRoutingStore.getState().crossfaderPosition)
   }
 
-  // Trend effects (Phase 2) — empty until each effect task adds its own
+  // Trend effects (Phase 2) — each effect task adds its own
   // `pipeline.<camel>?.updateParams({ ...s.<camel>Params, mix: getMix('<id>') })`
   // line here (the optional-chain no-ops until that effect's pipeline
   // property exists, matching the null-filtered enabledMap pattern).
   const pushTrend = () => {
-    // const s = useTrendStore.getState()
+    const s = useTrendStore.getState()
+    pipeline.kaleidoscope?.updateParams({ ...s.kaleidoscopeParams, mix: getMix('kaleidoscope') })
+    pipeline.rippleWarp?.updateParams({ ...s.rippleWarpParams, mix: getMix('ripple_warp') })
   }
 
   // Initial push so a fresh pipeline gets current values immediately

@@ -98,3 +98,10 @@ export type { FaceTraceParams, FaceLandmarkData } from './FaceTraceEffect'
 
 export { HandsTraceEffect, DEFAULT_HANDS_TRACE_PARAMS } from './HandsTraceEffect'
 export type { HandsTraceParams, HandLandmarkData } from './HandsTraceEffect'
+
+// Trend effects (Phase 2)
+export { KaleidoscopeEffect, DEFAULT_KALEIDOSCOPE_PARAMS } from './KaleidoscopeEffect'
+export type { KaleidoscopeParams } from './KaleidoscopeEffect'
+
+export { RippleWarpEffect, DEFAULT_RIPPLE_WARP_PARAMS } from './RippleWarpEffect'
+export type { RippleWarpParams } from './RippleWarpEffect'

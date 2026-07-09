@@ -33,6 +33,9 @@ import {
   ColorTraceEffect,
   FaceTraceEffect,
   HandsTraceEffect,
+  // Trend effects
+  KaleidoscopeEffect,
+  RippleWarpEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -85,6 +88,10 @@ export class EffectPipeline {
   colorTrace: ColorTraceEffect | null = null
   faceTrace: FaceTraceEffect | null = null
   handsTrace: HandsTraceEffect | null = null
+
+  // Trend effects (Phase 2)
+  kaleidoscope: KaleidoscopeEffect | null = null
+  rippleWarp: RippleWarpEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -180,6 +187,10 @@ export class EffectPipeline {
     this.colorTrace = new ColorTraceEffect()
     this.faceTrace = new FaceTraceEffect()
     this.handsTrace = new HandsTraceEffect()
+
+    // Trend effects (Phase 2)
+    this.kaleidoscope = new KaleidoscopeEffect()
+    this.rippleWarp = new RippleWarpEffect()
   }
 
   // Map effect IDs to effect instances
@@ -217,6 +228,9 @@ export class EffectPipeline {
       case 'track_color': return this.colorTrace
       case 'track_face': return this.faceTrace
       case 'track_hands': return this.handsTrace
+      // Trend effects (Phase 2)
+      case 'kaleidoscope': return this.kaleidoscope
+      case 'ripple_warp': return this.rippleWarp
       default: return null
     }
   }
@@ -472,6 +486,9 @@ export class EffectPipeline {
     this.composer.setSize(width, height)
     this.updateQuadScale()
     this.updateSourceQuadScale()
+    const aspect = this.canvasWidth / this.canvasHeight
+    this.kaleidoscope?.setAspect(aspect)
+    this.rippleWarp?.setAspect(aspect)
   }
 
   private updateQuadScale() {
@@ -569,5 +586,8 @@ export class EffectPipeline {
     this.colorTrace?.dispose()
     this.faceTrace?.dispose()
     this.handsTrace?.dispose()
+    // Trend effects (Phase 2)
+    this.kaleidoscope?.dispose()
+    this.rippleWarp?.dispose()
   }
 }

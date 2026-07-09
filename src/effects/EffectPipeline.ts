@@ -67,6 +67,9 @@ import {
   StrandVoidoutEffect,
   StrandSeamEffect,
   StrandCloudEffect,
+  StrandDoomsEffect,
+  StrandBridgeEffect,
+  StrandWebEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -156,6 +159,9 @@ export class EffectPipeline {
   strandVoidout: StrandVoidoutEffect | null = null
   strandSeam: StrandSeamEffect | null = null
   strandCloud: StrandCloudEffect | null = null
+  strandDooms: StrandDoomsEffect | null = null
+  strandBridge: StrandBridgeEffect | null = null
+  strandWeb: StrandWebEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -288,6 +294,9 @@ export class EffectPipeline {
     this.strandVoidout = new StrandVoidoutEffect()
     this.strandSeam = new StrandSeamEffect()
     this.strandCloud = new StrandCloudEffect()
+    this.strandDooms = new StrandDoomsEffect()
+    this.strandBridge = new StrandBridgeEffect()
+    this.strandWeb = new StrandWebEffect()
   }
 
   // Map effect IDs to effect instances
@@ -359,6 +368,9 @@ export class EffectPipeline {
       case 'strand_voidout': return this.strandVoidout
       case 'strand_seam': return this.strandSeam
       case 'strand_cloud': return this.strandCloud
+      case 'strand_dooms': return this.strandDooms
+      case 'strand_bridge': return this.strandBridge
+      case 'strand_web': return this.strandWeb
       default: return null
     }
   }
@@ -708,6 +720,9 @@ export class EffectPipeline {
     this.strandVoidout?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandSeam?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandCloud?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandDooms?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandBridge?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandWeb?.setResolution(this.canvasWidth, this.canvasHeight)
   }
 
   private updateQuadScale() {
@@ -844,5 +859,8 @@ export class EffectPipeline {
     this.strandVoidout?.dispose()
     this.strandSeam?.dispose()
     this.strandCloud?.dispose()
+    this.strandDooms?.dispose()
+    this.strandBridge?.dispose()
+    this.strandWeb?.dispose()
   }
 }

@@ -6,14 +6,11 @@
 import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { getSharedFrame } from './sharedReadback'
-import { renderBridgeLink } from './strand/bridgeLinkEffect'
 import { renderChiralium } from './strand/chiraliumEffect'
 import { renderChiralPath } from './strand/chiralPathEffect'
-import { renderDooms } from './strand/doomsEffect'
 import { renderExtinction } from './strand/extinctionEffect'
 import { renderHandprints } from './strand/handprintsEffect'
 import { renderOdradek } from './strand/odradekEffect'
-import { renderStrandWeb } from './strand/strandWebEffect'
 import { renderTarSpread } from './strand/tarSpreadEffect'
 import { renderTimefall } from './strand/timefallEffect'
 import { renderUmbilical } from './strand/umbilicalEffect'
@@ -48,15 +45,18 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
     // strand_voidout is GPU-ported (StrandVoidoutEffect) — no longer part of
     // the CPU overlay's render loop; store.voidOutEnabled intentionally
     // excluded here.
-    store.strandWebEnabled ||
-    store.bridgeLinkEnabled ||
+    // strand_web is GPU-ported (StrandWebEffect) — store.strandWebEnabled
+    // intentionally excluded here, same as voidOut above.
+    // strand_bridge is GPU-ported (StrandBridgeEffect) — store.bridgeLinkEnabled
+    // intentionally excluded here, same as voidOut above.
     store.chiralPathEnabled ||
     store.umbilicalEnabled ||
     store.odradekEnabled ||
     store.chiraliumEnabled ||
     // strand_beach is GPU-ported (StrandBeachEffect) — store.beachStaticEnabled
     // intentionally excluded here, same as voidOut above.
-    store.doomsEnabled ||
+    // strand_dooms is GPU-ported (StrandDoomsEffect) — store.doomsEnabled
+    // intentionally excluded here, same as voidOut above.
     // strand_cloud is GPU-ported (StrandCloudEffect) — store.chiralCloudEnabled
     // intentionally excluded here, same as beach/voidOut above.
     store.bbPodEnabled ||
@@ -114,24 +114,14 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
         renderTimefall(sourceCtx, ctx, w, h, currentStore.timefallParams, deltaTime)
       }
 
-      // strand_beach and strand_voidout are GPU-ported (StrandBeachEffect /
-      // StrandVoidoutEffect in EffectPipeline) — their CPU dispatch is
-      // removed; see paramSync.ts pushStrandPorts().
-
-      if (currentStore.strandWebEnabled) {
-        renderStrandWeb(sourceCtx, ctx, w, h, currentStore.strandWebParams, timeSeconds)
-      }
+      // strand_beach, strand_voidout, strand_web, strand_bridge, and
+      // strand_dooms are GPU-ported (StrandBeachEffect / StrandVoidoutEffect /
+      // StrandWebEffect / StrandBridgeEffect / StrandDoomsEffect in
+      // EffectPipeline) — their CPU dispatch is removed; see paramSync.ts
+      // pushStrandPorts().
 
       if (currentStore.umbilicalEnabled) {
         renderUmbilical(ctx, w, h, currentStore.umbilicalParams, timeSeconds)
-      }
-
-      if (currentStore.bridgeLinkEnabled) {
-        renderBridgeLink(sourceCtx, ctx, w, h, currentStore.bridgeLinkParams, timeSeconds)
-      }
-
-      if (currentStore.doomsEnabled) {
-        renderDooms(sourceCtx, ctx, w, h, currentStore.doomsParams, timeSeconds)
       }
 
       if (currentStore.chiralPathEnabled) {

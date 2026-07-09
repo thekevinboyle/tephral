@@ -187,6 +187,9 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.strandVoidout?.updateParams({ ...s.voidOutParams, mix: getMix('strand_voidout') })
     pipeline.strandSeam?.updateParams({ ...s.seamParams, mix: getMix('strand_seam') })
     pipeline.strandCloud?.updateParams({ ...s.chiralCloudParams, mix: getMix('strand_cloud') })
+    pipeline.strandDooms?.updateParams({ ...s.doomsParams, mix: getMix('strand_dooms') })
+    pipeline.strandBridge?.updateParams({ ...s.bridgeLinkParams, mix: getMix('strand_bridge') })
+    pipeline.strandWeb?.updateParams({ ...s.strandWebParams, mix: getMix('strand_web') })
   }
 
   // Initial push so a fresh pipeline gets current values immediately

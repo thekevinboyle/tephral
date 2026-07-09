@@ -194,3 +194,12 @@ export type { StrandSeamParams } from './StrandSeamEffect'
 
 export { StrandCloudEffect, DEFAULT_STRAND_CLOUD_PARAMS } from './StrandCloudEffect'
 export type { StrandCloudParams } from './StrandCloudEffect'
+
+export { StrandDoomsEffect, DEFAULT_STRAND_DOOMS_PARAMS } from './StrandDoomsEffect'
+export type { StrandDoomsParams } from './StrandDoomsEffect'
+
+export { StrandBridgeEffect, DEFAULT_STRAND_BRIDGE_PARAMS } from './StrandBridgeEffect'
+export type { StrandBridgeParams } from './StrandBridgeEffect'
+
+export { StrandWebEffect, DEFAULT_STRAND_WEB_GPU_PARAMS } from './StrandWebEffect'
+export type { StrandWebGpuParams } from './StrandWebEffect'

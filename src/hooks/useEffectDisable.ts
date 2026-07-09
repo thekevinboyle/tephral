@@ -12,6 +12,7 @@ import { useStrandStore } from '../stores/strandStore'
 import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
 import { useMorphStore } from '../stores/morphStore'
+import { useTrendStore } from '../stores/trendStore'
 
 export function useEffectDisable() {
   const glitch = useGlitchEngineStore()
@@ -27,6 +28,7 @@ export function useEffectDisable() {
   const motion = useMotionStore()
   const destruction = useDestructionStore()
   const morph = useMorphStore()
+  const trend = useTrendStore()
 
   const disableEffect = useCallback((effectId: string) => {
     // Clear bypass state so re-enabling starts fresh
@@ -108,8 +110,27 @@ export function useEffectDisable() {
       case 'sonify': destruction.setSonifyEnabled(false); break
       case 'point_cloud': destruction.setPointCloudEnabled(false); break
       case 'face_hud': morph.setFaceHudEnabled(false); break
+      // Trend effects — VISION
+      case 'halation': trend.setHalationEnabled(false); break
+      case 'y2k_digicam': trend.setY2kEnabled(false); break
+      case 'thermal': trend.setThermalEnabled(false); break
+      case 'dreamcore': trend.setDreamcoreEnabled(false); break
+      case 'anamorphic': trend.setAnamorphicEnabled(false); break
+      // Trend effects — MOTION
+      case 'flow_smear': trend.setFlowSmearEnabled(false); break
+      case 'feedback_tunnel': trend.setFeedbackTunnelEnabled(false); break
+      case 'opium_trails': trend.setOpiumTrailsEnabled(false); break
+      case 'rutt_etra': trend.setRuttEtraEnabled(false); break
+      case 'reaction_diffusion': trend.setReactionDiffusionEnabled(false); break
+      case 'physarum': trend.setPhysarumEnabled(false); break
+      // Trend effects — DESTROY
+      case 'kaleidoscope': trend.setKaleidoscopeEnabled(false); break
+      case 'liquid_morph': trend.setLiquidMorphEnabled(false); break
+      case 'crystallize': trend.setCrystallizeEnabled(false); break
+      case 'ripple_warp': trend.setRippleWarpEnabled(false); break
+      case 'fractal_domain': trend.setFractalDomainEnabled(false); break
     }
-  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion, destruction, morph])
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion, destruction, morph, trend])
 
   return { disableEffect }
 }

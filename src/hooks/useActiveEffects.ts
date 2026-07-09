@@ -12,6 +12,7 @@ import { useStrandStore } from '../stores/strandStore'
 import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
 import { useMorphStore } from '../stores/morphStore'
+import { useTrendStore } from '../stores/trendStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { EFFECTS, PAGE_NAMES, getEffectsForPage } from '../config/effects'
 
@@ -37,6 +38,7 @@ export function useActiveEffects() {
   const motion = useMotionStore()
   const destruction = useDestructionStore()
   const morph = useMorphStore()
+  const trend = useTrendStore()
   const effectOrder = useRoutingStore(s => s.effectOrder)
 
   const sortedEffects = useMemo(() => {
@@ -185,6 +187,28 @@ export function useActiveEffects() {
       activeEffects.push({ id: 'face_hud', label: 'Face HUD', color: '#00ffcc', primaryValue: Math.round(morph.faceHudParams.wireframeOpacity * 100), primaryLabel: 'wire' })
     }
 
+    // Trend effects — VISION
+    if (trend.halationEnabled) activeEffects.push({ id: 'halation', label: 'HALATE', color: '#ff9e80', primaryValue: Math.round(trend.halationParams.amount * 100), primaryLabel: 'amt' })
+    if (trend.y2kEnabled) activeEffects.push({ id: 'y2k_digicam', label: 'Y2K', color: '#ffd54f', primaryValue: Math.round(trend.y2kParams.flash * 100), primaryLabel: 'flash' })
+    if (trend.thermalEnabled) activeEffects.push({ id: 'thermal', label: 'THERML', color: '#ff5252', primaryValue: Math.round(trend.thermalParams.gain * 100), primaryLabel: 'gain' })
+    if (trend.dreamcoreEnabled) activeEffects.push({ id: 'dreamcore', label: 'DREAM', color: '#b39ddb', primaryValue: Math.round(trend.dreamcoreParams.bloom * 100), primaryLabel: 'bloom' })
+    if (trend.anamorphicEnabled) activeEffects.push({ id: 'anamorphic', label: 'ANMRPH', color: '#64b5f6', primaryValue: Math.round(trend.anamorphicParams.streak * 100), primaryLabel: 'streak' })
+
+    // Trend effects — MOTION
+    if (trend.flowSmearEnabled) activeEffects.push({ id: 'flow_smear', label: 'FLOW', color: '#99EE22', primaryValue: Math.round(trend.flowSmearParams.strength), primaryLabel: 'str' })
+    if (trend.feedbackTunnelEnabled) activeEffects.push({ id: 'feedback_tunnel', label: 'TUNNEL', color: '#7CB342', primaryValue: Math.round(trend.feedbackTunnelParams.zoom * 100), primaryLabel: 'zoom' })
+    if (trend.opiumTrailsEnabled) activeEffects.push({ id: 'opium_trails', label: 'OPIUM', color: '#558B2F', primaryValue: Math.round(trend.opiumTrailsParams.decay * 100), primaryLabel: 'decay' })
+    if (trend.ruttEtraEnabled) activeEffects.push({ id: 'rutt_etra', label: 'RUTT', color: '#9CCC65', primaryValue: Math.round(trend.ruttEtraParams.lines), primaryLabel: 'lines' })
+    if (trend.reactionDiffusionEnabled) activeEffects.push({ id: 'reaction_diffusion', label: 'REACT', color: '#C0CA33', primaryValue: Math.round(trend.reactionDiffusionParams.feed * 1000), primaryLabel: 'feed' })
+    if (trend.physarumEnabled) activeEffects.push({ id: 'physarum', label: 'SLIME', color: '#AED581', primaryValue: Math.round(trend.physarumParams.agents / 1000), primaryLabel: 'agnt' })
+
+    // Trend effects — DESTROY
+    if (trend.kaleidoscopeEnabled) activeEffects.push({ id: 'kaleidoscope', label: 'KALEID', color: '#ff6699', primaryValue: Math.round(trend.kaleidoscopeParams.segments), primaryLabel: 'seg' })
+    if (trend.liquidMorphEnabled) activeEffects.push({ id: 'liquid_morph', label: 'LIQUID', color: '#4ecdc4', primaryValue: Math.round(trend.liquidMorphParams.intensity * 100), primaryLabel: 'int' })
+    if (trend.crystallizeEnabled) activeEffects.push({ id: 'crystallize', label: 'CRYSTL', color: '#a8e6cf', primaryValue: Math.round(trend.crystallizeParams.cellCount), primaryLabel: 'cell' })
+    if (trend.rippleWarpEnabled) activeEffects.push({ id: 'ripple_warp', label: 'RIPPLE', color: '#7b68ee', primaryValue: Math.round(trend.rippleWarpParams.frequency), primaryLabel: 'freq' })
+    if (trend.fractalDomainEnabled) activeEffects.push({ id: 'fractal_domain', label: 'FRACTL', color: '#ff6b9d', primaryValue: Math.round(trend.fractalDomainParams.iterations), primaryLabel: 'iter' })
+
     // Sort by effectOrder
     return [...activeEffects].sort((a, b) => {
       const aIndex = effectOrder.indexOf(a.id)
@@ -195,7 +219,7 @@ export function useActiveEffects() {
     })
   }, [
     glitch, ascii, stipple, landmarks, contour, acid, vision,
-    textureOverlay, dataOverlay, strand, motion, destruction, effectOrder,
+    textureOverlay, dataOverlay, strand, motion, destruction, morph, trend, effectOrder,
   ])
 
   return { sortedEffects }

@@ -16,6 +16,7 @@ import { useStrandStore } from '../../stores/strandStore'
 import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
 import { useMorphStore } from '../../stores/morphStore'
+import { useTrendStore } from '../../stores/trendStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { getEffectStatusText, getPageStatusText } from '../../config/statusDescriptions'
 import { DataGrid } from '../ui/MicroVisuals'
@@ -50,6 +51,9 @@ export function PerformanceGrid() {
   // Destruction store
   const destruction = useDestructionStore()
   const morph = useMorphStore()
+
+  // Trend effects store (16 new effects across VISION/MOTION/DESTROY)
+  const trend = useTrendStore()
 
   // Effect sequencer store — ensure tracks exist when toggling effects
   const ensureTrack = useEffectSequencerStore((s) => s.ensureTrack)
@@ -335,6 +339,58 @@ export function PerformanceGrid() {
             }
           },
           onValueChange: (v: number) => landmarks.setMinDetectionConfidence(v / 100),
+        }
+
+      // Trend effects — VISION
+      case 'halation':
+        return {
+          active: trend.halationEnabled,
+          value: trend.halationParams.amount,
+          onToggle: () => {
+            if (!trend.halationEnabled) moveToEndOfChain(effectId)
+            trend.setHalationEnabled(!trend.halationEnabled)
+          },
+          onValueChange: (v: number) => trend.updateHalationParams({ amount: v }),
+        }
+      case 'y2k_digicam':
+        return {
+          active: trend.y2kEnabled,
+          value: trend.y2kParams.flash,
+          onToggle: () => {
+            if (!trend.y2kEnabled) moveToEndOfChain(effectId)
+            trend.setY2kEnabled(!trend.y2kEnabled)
+          },
+          onValueChange: (v: number) => trend.updateY2kParams({ flash: v }),
+        }
+      case 'thermal':
+        return {
+          active: trend.thermalEnabled,
+          value: trend.thermalParams.gain,
+          onToggle: () => {
+            if (!trend.thermalEnabled) moveToEndOfChain(effectId)
+            trend.setThermalEnabled(!trend.thermalEnabled)
+          },
+          onValueChange: (v: number) => trend.updateThermalParams({ gain: v }),
+        }
+      case 'dreamcore':
+        return {
+          active: trend.dreamcoreEnabled,
+          value: trend.dreamcoreParams.bloom,
+          onToggle: () => {
+            if (!trend.dreamcoreEnabled) moveToEndOfChain(effectId)
+            trend.setDreamcoreEnabled(!trend.dreamcoreEnabled)
+          },
+          onValueChange: (v: number) => trend.updateDreamcoreParams({ bloom: v }),
+        }
+      case 'anamorphic':
+        return {
+          active: trend.anamorphicEnabled,
+          value: trend.anamorphicParams.streak,
+          onToggle: () => {
+            if (!trend.anamorphicEnabled) moveToEndOfChain(effectId)
+            trend.setAnamorphicEnabled(!trend.anamorphicEnabled)
+          },
+          onValueChange: (v: number) => trend.updateAnamorphicParams({ streak: v }),
         }
 
       // ═══════════════════════════════════════════════════════════════
@@ -870,6 +926,68 @@ export function PerformanceGrid() {
           onValueChange: (v: number) => motion.updateFreezeMask({ freezeThreshold: v / 100 }),
         }
 
+      // Trend effects — MOTION
+      case 'flow_smear':
+        return {
+          active: trend.flowSmearEnabled,
+          value: trend.flowSmearParams.strength,
+          onToggle: () => {
+            if (!trend.flowSmearEnabled) moveToEndOfChain(effectId)
+            trend.setFlowSmearEnabled(!trend.flowSmearEnabled)
+          },
+          onValueChange: (v: number) => trend.updateFlowSmearParams({ strength: v }),
+        }
+      case 'feedback_tunnel':
+        return {
+          active: trend.feedbackTunnelEnabled,
+          value: trend.feedbackTunnelParams.zoom,
+          onToggle: () => {
+            if (!trend.feedbackTunnelEnabled) moveToEndOfChain(effectId)
+            trend.setFeedbackTunnelEnabled(!trend.feedbackTunnelEnabled)
+          },
+          onValueChange: (v: number) => trend.updateFeedbackTunnelParams({ zoom: v }),
+        }
+      case 'opium_trails':
+        return {
+          active: trend.opiumTrailsEnabled,
+          value: trend.opiumTrailsParams.decay,
+          onToggle: () => {
+            if (!trend.opiumTrailsEnabled) moveToEndOfChain(effectId)
+            trend.setOpiumTrailsEnabled(!trend.opiumTrailsEnabled)
+          },
+          onValueChange: (v: number) => trend.updateOpiumTrailsParams({ decay: v }),
+        }
+      case 'rutt_etra':
+        return {
+          active: trend.ruttEtraEnabled,
+          value: trend.ruttEtraParams.lines,
+          onToggle: () => {
+            if (!trend.ruttEtraEnabled) moveToEndOfChain(effectId)
+            trend.setRuttEtraEnabled(!trend.ruttEtraEnabled)
+          },
+          onValueChange: (v: number) => trend.updateRuttEtraParams({ lines: v }),
+        }
+      case 'reaction_diffusion':
+        return {
+          active: trend.reactionDiffusionEnabled,
+          value: trend.reactionDiffusionParams.feed,
+          onToggle: () => {
+            if (!trend.reactionDiffusionEnabled) moveToEndOfChain(effectId)
+            trend.setReactionDiffusionEnabled(!trend.reactionDiffusionEnabled)
+          },
+          onValueChange: (v: number) => trend.updateReactionDiffusionParams({ feed: v }),
+        }
+      case 'physarum':
+        return {
+          active: trend.physarumEnabled,
+          value: trend.physarumParams.agents,
+          onToggle: () => {
+            if (!trend.physarumEnabled) moveToEndOfChain(effectId)
+            trend.setPhysarumEnabled(!trend.physarumEnabled)
+          },
+          onValueChange: (v: number) => trend.updatePhysarumParams({ agents: v }),
+        }
+
       // ═══════════════════════════════════════════════════════════════
       // PAGE 5: DESTRUCTION EFFECTS
       // ═══════════════════════════════════════════════════════════════
@@ -929,6 +1047,58 @@ export function PerformanceGrid() {
           onValueChange: (v: number) => morph.updateFaceHudParams({ wireframeOpacity: v / 100 }),
         }
 
+      // Trend effects — DESTROY
+      case 'kaleidoscope':
+        return {
+          active: trend.kaleidoscopeEnabled,
+          value: trend.kaleidoscopeParams.segments,
+          onToggle: () => {
+            if (!trend.kaleidoscopeEnabled) moveToEndOfChain(effectId)
+            trend.setKaleidoscopeEnabled(!trend.kaleidoscopeEnabled)
+          },
+          onValueChange: (v: number) => trend.updateKaleidoscopeParams({ segments: v }),
+        }
+      case 'liquid_morph':
+        return {
+          active: trend.liquidMorphEnabled,
+          value: trend.liquidMorphParams.intensity,
+          onToggle: () => {
+            if (!trend.liquidMorphEnabled) moveToEndOfChain(effectId)
+            trend.setLiquidMorphEnabled(!trend.liquidMorphEnabled)
+          },
+          onValueChange: (v: number) => trend.updateLiquidMorphParams({ intensity: v }),
+        }
+      case 'crystallize':
+        return {
+          active: trend.crystallizeEnabled,
+          value: trend.crystallizeParams.cellCount,
+          onToggle: () => {
+            if (!trend.crystallizeEnabled) moveToEndOfChain(effectId)
+            trend.setCrystallizeEnabled(!trend.crystallizeEnabled)
+          },
+          onValueChange: (v: number) => trend.updateCrystallizeParams({ cellCount: v }),
+        }
+      case 'ripple_warp':
+        return {
+          active: trend.rippleWarpEnabled,
+          value: trend.rippleWarpParams.frequency,
+          onToggle: () => {
+            if (!trend.rippleWarpEnabled) moveToEndOfChain(effectId)
+            trend.setRippleWarpEnabled(!trend.rippleWarpEnabled)
+          },
+          onValueChange: (v: number) => trend.updateRippleWarpParams({ frequency: v }),
+        }
+      case 'fractal_domain':
+        return {
+          active: trend.fractalDomainEnabled,
+          value: trend.fractalDomainParams.iterations,
+          onToggle: () => {
+            if (!trend.fractalDomainEnabled) moveToEndOfChain(effectId)
+            trend.setFractalDomainEnabled(!trend.fractalDomainEnabled)
+          },
+          onValueChange: (v: number) => trend.updateFractalDomainParams({ iterations: v }),
+        }
+
       // Reserved / empty slots
       default:
         if (effectId.startsWith('reserved')) {
@@ -961,7 +1131,9 @@ export function PerformanceGrid() {
         return visionTracking.brightEnabled || visionTracking.edgeEnabled ||
                visionTracking.colorEnabled || visionTracking.motionEnabled ||
                visionTracking.faceEnabled || visionTracking.handsEnabled ||
-               contour.enabled || landmarks.enabled || morph.faceHudEnabled
+               contour.enabled || landmarks.enabled || morph.faceHudEnabled ||
+               trend.halationEnabled || trend.y2kEnabled || trend.thermalEnabled ||
+               trend.dreamcoreEnabled || trend.anamorphicEnabled
       case 2: // GLITCH
         return glitch.rgbSplitEnabled || glitch.chromaticAberrationEnabled ||
                glitch.posterizeEnabled || glitch.colorGradeEnabled ||
@@ -982,9 +1154,14 @@ export function PerformanceGrid() {
                strand.seamEnabled || strand.extinctionEnabled
       case 4: // MOTION
         return motion.motionExtractEnabled || motion.echoTrailEnabled ||
-               motion.timeSmearEnabled || motion.freezeMaskEnabled
+               motion.timeSmearEnabled || motion.freezeMaskEnabled ||
+               trend.flowSmearEnabled || trend.feedbackTunnelEnabled ||
+               trend.opiumTrailsEnabled || trend.ruttEtraEnabled ||
+               trend.reactionDiffusionEnabled || trend.physarumEnabled
       case 5: // DESTRUCTION
-        return destruction.datamoshEnabled || destruction.pixelSortEnabled || destruction.sonifyEnabled || destruction.pointCloudEnabled
+        return destruction.datamoshEnabled || destruction.pixelSortEnabled || destruction.sonifyEnabled || destruction.pointCloudEnabled ||
+               trend.kaleidoscopeEnabled || trend.liquidMorphEnabled || trend.crystallizeEnabled ||
+               trend.rippleWarpEnabled || trend.fractalDomainEnabled
       default:
         return false
     }

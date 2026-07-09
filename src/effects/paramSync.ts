@@ -147,6 +147,8 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.fractalDomain?.updateParams({ ...s.fractalDomainParams, mix: getMix('fractal_domain') })
     pipeline.thermal?.updateParams({ ...s.thermalParams, mix: getMix('thermal') })
     pipeline.y2kDigicam?.updateParams({ ...s.y2kParams, mix: getMix('y2k_digicam') })
+    pipeline.halation?.updateParams({ ...s.halationParams, mix: getMix('halation') })
+    pipeline.anamorphic?.updateParams({ ...s.anamorphicParams, mix: getMix('anamorphic') })
   }
 
   // Initial push so a fresh pipeline gets current values immediately

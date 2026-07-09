@@ -114,3 +114,9 @@ export type { ThermalParams } from './ThermalEffect'
 
 export { Y2kDigicamEffect, DEFAULT_Y2K_PARAMS } from './Y2kDigicamEffect'
 export type { Y2kParams } from './Y2kDigicamEffect'
+
+export { HalationEffect, DEFAULT_HALATION_PARAMS } from './HalationEffect'
+export type { HalationParams } from './HalationEffect'
+
+export { AnamorphicEffect, DEFAULT_ANAMORPHIC_PARAMS } from './AnamorphicEffect'
+export type { AnamorphicParams } from './AnamorphicEffect'

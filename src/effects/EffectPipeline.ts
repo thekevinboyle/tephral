@@ -39,6 +39,8 @@ import {
   FractalDomainEffect,
   ThermalEffect,
   Y2kDigicamEffect,
+  HalationEffect,
+  AnamorphicEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -98,6 +100,8 @@ export class EffectPipeline {
   fractalDomain: FractalDomainEffect | null = null
   thermal: ThermalEffect | null = null
   y2kDigicam: Y2kDigicamEffect | null = null
+  halation: HalationEffect | null = null
+  anamorphic: AnamorphicEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -200,6 +204,8 @@ export class EffectPipeline {
     this.fractalDomain = new FractalDomainEffect()
     this.thermal = new ThermalEffect()
     this.y2kDigicam = new Y2kDigicamEffect()
+    this.halation = new HalationEffect()
+    this.anamorphic = new AnamorphicEffect()
   }
 
   // Map effect IDs to effect instances
@@ -243,6 +249,8 @@ export class EffectPipeline {
       case 'fractal_domain': return this.fractalDomain
       case 'thermal': return this.thermal
       case 'y2k_digicam': return this.y2kDigicam
+      case 'halation': return this.halation
+      case 'anamorphic': return this.anamorphic
       default: return null
     }
   }
@@ -607,5 +615,7 @@ export class EffectPipeline {
     this.fractalDomain?.dispose()
     this.thermal?.dispose()
     this.y2kDigicam?.dispose()
+    this.halation?.dispose()
+    this.anamorphic?.dispose()
   }
 }

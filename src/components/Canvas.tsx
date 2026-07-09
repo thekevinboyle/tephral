@@ -483,6 +483,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       pipeline.edgeDetection?.setResolution(container.clientWidth, container.clientHeight)
       pipeline.pixelate?.setResolution(container.clientWidth, container.clientHeight)
       pipeline.edgeTrace?.setResolution(container.clientWidth, container.clientHeight)
+      pipeline.halation?.setResolution(container.clientWidth, container.clientHeight)
+      pipeline.anamorphic?.setResolution(container.clientWidth, container.clientHeight)
     }
 
     updateSize()

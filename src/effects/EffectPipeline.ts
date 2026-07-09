@@ -56,6 +56,9 @@ import {
   AcidScanEffect,
   AcidSliceEffect,
   AcidThgridEffect,
+  AcidHalftoneEffect,
+  AcidLedEffect,
+  AcidHexEffect,
   // STRAND overlay effects (Phase 3 GPU port)
   StrandBeachEffect,
   StrandVoidoutEffect,
@@ -138,6 +141,9 @@ export class EffectPipeline {
   acidScan: AcidScanEffect | null = null
   acidSlice: AcidSliceEffect | null = null
   acidThgrid: AcidThgridEffect | null = null
+  acidHalftone: AcidHalftoneEffect | null = null
+  acidLed: AcidLedEffect | null = null
+  acidHex: AcidHexEffect | null = null
 
   // STRAND overlay effects (Phase 3 GPU port)
   strandBeach: StrandBeachEffect | null = null
@@ -264,6 +270,9 @@ export class EffectPipeline {
     this.acidScan = new AcidScanEffect()
     this.acidSlice = new AcidSliceEffect()
     this.acidThgrid = new AcidThgridEffect()
+    this.acidHalftone = new AcidHalftoneEffect()
+    this.acidLed = new AcidLedEffect()
+    this.acidHex = new AcidHexEffect()
 
     // STRAND overlay effects (Phase 3 GPU port)
     this.strandBeach = new StrandBeachEffect()
@@ -330,6 +339,9 @@ export class EffectPipeline {
       case 'acid_scan': return this.acidScan
       case 'acid_slice': return this.acidSlice
       case 'acid_thgrid': return this.acidThgrid
+      case 'acid_halftone': return this.acidHalftone
+      case 'acid_led': return this.acidLed
+      case 'acid_hex': return this.acidHex
       // STRAND overlay effects (Phase 3 GPU port)
       case 'strand_beach': return this.strandBeach
       case 'strand_voidout': return this.strandVoidout
@@ -674,6 +686,9 @@ export class EffectPipeline {
     this.acidScan?.setResolution(this.canvasWidth, this.canvasHeight)
     this.acidSlice?.setResolution(this.canvasWidth, this.canvasHeight)
     this.acidThgrid?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.acidHalftone?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.acidLed?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.acidHex?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandBeach?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandVoidout?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandSeam?.setResolution(this.canvasWidth, this.canvasHeight)
@@ -803,6 +818,9 @@ export class EffectPipeline {
     this.acidScan?.dispose()
     this.acidSlice?.dispose()
     this.acidThgrid?.dispose()
+    this.acidHalftone?.dispose()
+    this.acidLed?.dispose()
+    this.acidHex?.dispose()
     // STRAND overlay effects (Phase 3 GPU port)
     this.strandBeach?.dispose()
     this.strandVoidout?.dispose()

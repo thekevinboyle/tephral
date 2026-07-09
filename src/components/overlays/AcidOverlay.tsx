@@ -24,9 +24,12 @@ import { renderDecomp } from './acid/decompEffect'
 // AcidThgridEffect.ts / AcidScanEffect.ts
 // import { renderSlice } from './acid/sliceEffect'
 // import { renderThGrid } from './acid/thgridEffect'
-import { renderLed } from './acid/ledEffect'
-import { renderHalftone } from './acid/halftoneEffect'
-import { renderHex } from './acid/hexEffect'
+// NOTE: LED, Halftone, and Hex effects are now handled by GPU shaders in
+// EffectPipeline (Phase 3 port) — see AcidLedEffect.ts / AcidHalftoneEffect.ts
+// / AcidHexEffect.ts
+// import { renderLed } from './acid/ledEffect'
+// import { renderHalftone } from './acid/halftoneEffect'
+// import { renderHex } from './acid/hexEffect'
 // import { renderScan } from './acid/scanEffect'
 // import { renderRipple } from './acid/rippleEffect'
 
@@ -87,12 +90,12 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     // (store.mirrorEnabled && !effectBypassed['acid_mirror']) || // GPU shader handles this
     // (store.sliceEnabled && !effectBypassed['acid_slice']) || // GPU shader handles this
     // (store.thGridEnabled && !effectBypassed['acid_thgrid']) || // GPU shader handles this
-    (store.ledEnabled && !effectBypassed['acid_led']) ||
+    // (store.ledEnabled && !effectBypassed['acid_led']) || // GPU shader handles this
     (store.cloudEnabled && !effectBypassed['acid_cloud']) ||
     (store.slitEnabled && !effectBypassed['acid_slit']) ||
-    (store.voronoiEnabled && !effectBypassed['acid_voronoi']) ||
-    (store.halftoneEnabled && !effectBypassed['acid_halftone']) ||
-    (store.hexEnabled && !effectBypassed['acid_hex'])
+    (store.voronoiEnabled && !effectBypassed['acid_voronoi'])
+    // (store.halftoneEnabled && !effectBypassed['acid_halftone']) || // GPU shader handles this
+    // (store.hexEnabled && !effectBypassed['acid_hex']) // GPU shader handles this
     // (store.scanEnabled && !effectBypassed['acid_scan']) // GPU shader handles this
     // (store.rippleEnabled && !effectBypassed['acid_ripple']) // GPU shader handles this
 
@@ -108,12 +111,12 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     // store.mirrorEnabled || // GPU shader handles this
     // store.sliceEnabled || // GPU shader handles this
     // store.thGridEnabled || // GPU shader handles this
-    store.ledEnabled ||
+    // store.ledEnabled || // GPU shader handles this
     store.cloudEnabled ||
     store.slitEnabled ||
-    store.voronoiEnabled ||
-    store.halftoneEnabled ||
-    store.hexEnabled
+    store.voronoiEnabled
+    // store.halftoneEnabled || // GPU shader handles this
+    // store.hexEnabled || // GPU shader handles this
     // store.scanEnabled // GPU shader handles this
     // store.rippleEnabled // GPU shader handles this
 
@@ -251,17 +254,19 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     //   renderThGrid(sourceCtx, ctx, currentWidth, currentHeight, currentStore.thGridParams)
     // }
 
-    if (currentStore.ledEnabled && !bypassed['acid_led']) {
-      renderLed(sourceCtx, ctx, currentWidth, currentHeight, currentStore.ledParams)
-    }
+    // NOTE: LED, Halftone, and Hex effects are now handled by GPU shaders in
+    // EffectPipeline
+    // if (currentStore.ledEnabled && !bypassed['acid_led']) {
+    //   renderLed(sourceCtx, ctx, currentWidth, currentHeight, currentStore.ledParams)
+    // }
 
-    if (currentStore.halftoneEnabled && !bypassed['acid_halftone']) {
-      renderHalftone(sourceCtx, ctx, currentWidth, currentHeight, currentStore.halftoneParams)
-    }
+    // if (currentStore.halftoneEnabled && !bypassed['acid_halftone']) {
+    //   renderHalftone(sourceCtx, ctx, currentWidth, currentHeight, currentStore.halftoneParams)
+    // }
 
-    if (currentStore.hexEnabled && !bypassed['acid_hex']) {
-      renderHex(sourceCtx, ctx, currentWidth, currentHeight, currentStore.hexParams)
-    }
+    // if (currentStore.hexEnabled && !bypassed['acid_hex']) {
+    //   renderHex(sourceCtx, ctx, currentWidth, currentHeight, currentStore.hexParams)
+    // }
 
     // NOTE: Scan effect is now handled by GPU shader in EffectPipeline
     // if (currentStore.scanEnabled && !bypassed['acid_scan']) {

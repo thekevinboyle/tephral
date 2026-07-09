@@ -164,6 +164,15 @@ export type { AcidSliceParams } from './AcidSliceEffect'
 export { AcidThgridEffect, DEFAULT_ACID_THGRID_PARAMS } from './AcidThgridEffect'
 export type { AcidThgridParams } from './AcidThgridEffect'
 
+export { AcidHalftoneEffect, DEFAULT_ACID_HALFTONE_PARAMS } from './AcidHalftoneEffect'
+export type { AcidHalftoneParams } from './AcidHalftoneEffect'
+
+export { AcidLedEffect, DEFAULT_ACID_LED_PARAMS } from './AcidLedEffect'
+export type { AcidLedParams } from './AcidLedEffect'
+
+export { AcidHexEffect, DEFAULT_ACID_HEX_PARAMS } from './AcidHexEffect'
+export type { AcidHexParams } from './AcidHexEffect'
+
 // STRAND overlay effects (Phase 3 GPU port)
 export { StrandBeachEffect, DEFAULT_STRAND_BEACH_PARAMS } from './StrandBeachEffect'
 export type { StrandBeachParams } from './StrandBeachEffect'

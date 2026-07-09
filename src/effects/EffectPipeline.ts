@@ -59,6 +59,8 @@ import {
   // STRAND overlay effects (Phase 3 GPU port)
   StrandBeachEffect,
   StrandVoidoutEffect,
+  StrandSeamEffect,
+  StrandCloudEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -140,6 +142,8 @@ export class EffectPipeline {
   // STRAND overlay effects (Phase 3 GPU port)
   strandBeach: StrandBeachEffect | null = null
   strandVoidout: StrandVoidoutEffect | null = null
+  strandSeam: StrandSeamEffect | null = null
+  strandCloud: StrandCloudEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -264,6 +268,8 @@ export class EffectPipeline {
     // STRAND overlay effects (Phase 3 GPU port)
     this.strandBeach = new StrandBeachEffect()
     this.strandVoidout = new StrandVoidoutEffect()
+    this.strandSeam = new StrandSeamEffect()
+    this.strandCloud = new StrandCloudEffect()
   }
 
   // Map effect IDs to effect instances
@@ -327,6 +333,8 @@ export class EffectPipeline {
       // STRAND overlay effects (Phase 3 GPU port)
       case 'strand_beach': return this.strandBeach
       case 'strand_voidout': return this.strandVoidout
+      case 'strand_seam': return this.strandSeam
+      case 'strand_cloud': return this.strandCloud
       default: return null
     }
   }
@@ -668,6 +676,8 @@ export class EffectPipeline {
     this.acidThgrid?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandBeach?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandVoidout?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandSeam?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandCloud?.setResolution(this.canvasWidth, this.canvasHeight)
   }
 
   private updateQuadScale() {
@@ -796,5 +806,7 @@ export class EffectPipeline {
     // STRAND overlay effects (Phase 3 GPU port)
     this.strandBeach?.dispose()
     this.strandVoidout?.dispose()
+    this.strandSeam?.dispose()
+    this.strandCloud?.dispose()
   }
 }

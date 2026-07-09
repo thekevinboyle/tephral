@@ -170,3 +170,9 @@ export type { StrandBeachParams } from './StrandBeachEffect'
 
 export { StrandVoidoutEffect, DEFAULT_STRAND_VOIDOUT_PARAMS } from './StrandVoidoutEffect'
 export type { StrandVoidoutParams } from './StrandVoidoutEffect'
+
+export { StrandSeamEffect, DEFAULT_STRAND_SEAM_PARAMS } from './StrandSeamEffect'
+export type { StrandSeamParams } from './StrandSeamEffect'
+
+export { StrandCloudEffect, DEFAULT_STRAND_CLOUD_PARAMS } from './StrandCloudEffect'
+export type { StrandCloudParams } from './StrandCloudEffect'

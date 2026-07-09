@@ -179,6 +179,8 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     const s = useStrandStore.getState()
     pipeline.strandBeach?.updateParams({ ...s.beachStaticParams, mix: getMix('strand_beach') })
     pipeline.strandVoidout?.updateParams({ ...s.voidOutParams, mix: getMix('strand_voidout') })
+    pipeline.strandSeam?.updateParams({ ...s.seamParams, mix: getMix('strand_seam') })
+    pipeline.strandCloud?.updateParams({ ...s.chiralCloudParams, mix: getMix('strand_cloud') })
   }
 
   // Initial push so a fresh pipeline gets current values immediately

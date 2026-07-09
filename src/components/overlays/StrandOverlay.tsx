@@ -7,7 +7,6 @@ import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { getSharedFrame } from './sharedReadback'
 import { renderBridgeLink } from './strand/bridgeLinkEffect'
-import { renderChiralCloud } from './strand/chiralCloudEffect'
 import { renderChiralium } from './strand/chiraliumEffect'
 import { renderChiralPath } from './strand/chiralPathEffect'
 import { renderDooms } from './strand/doomsEffect'
@@ -19,7 +18,6 @@ import { renderTarSpread } from './strand/tarSpreadEffect'
 import { renderTimefall } from './strand/timefallEffect'
 import { renderUmbilical } from './strand/umbilicalEffect'
 import { renderBBPod } from './strand/bbPodEffect'
-import { renderSeam } from './strand/seamEffect'
 
 interface StrandOverlayProps {
   sourceCanvas: HTMLCanvasElement | null
@@ -59,9 +57,11 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
     // strand_beach is GPU-ported (StrandBeachEffect) — store.beachStaticEnabled
     // intentionally excluded here, same as voidOut above.
     store.doomsEnabled ||
-    store.chiralCloudEnabled ||
+    // strand_cloud is GPU-ported (StrandCloudEffect) — store.chiralCloudEnabled
+    // intentionally excluded here, same as beach/voidOut above.
     store.bbPodEnabled ||
-    store.seamEnabled ||
+    // strand_seam is GPU-ported (StrandSeamEffect) — store.seamEnabled
+    // intentionally excluded here, same as beach/voidOut/cloud above.
     store.extinctionEnabled
 
   const renderFrame = useCallback((time: number) => {
@@ -146,9 +146,9 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
         renderOdradek(sourceCtx, ctx, w, h, currentStore.odradekParams, timeSeconds, deltaTime)
       }
 
-      if (currentStore.chiralCloudEnabled) {
-        renderChiralCloud(sourceCtx, ctx, w, h, currentStore.chiralCloudParams, timeSeconds)
-      }
+      // strand_cloud and strand_seam are GPU-ported (StrandCloudEffect /
+      // StrandSeamEffect in EffectPipeline) — their CPU dispatch is
+      // removed; see paramSync.ts pushStrandPorts().
 
       if (currentStore.extinctionEnabled) {
         renderExtinction(sourceCtx, ctx, w, h, currentStore.extinctionParams, deltaTime)
@@ -156,10 +156,6 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
 
       if (currentStore.bbPodEnabled) {
         renderBBPod(ctx, w, h, currentStore.bbPodParams, timeSeconds)
-      }
-
-      if (currentStore.seamEnabled) {
-        renderSeam(sourceCtx, ctx, w, h, currentStore.seamParams, timeSeconds)
       }
     }
 

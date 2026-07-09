@@ -2,22 +2,36 @@ import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
 
 // GPU port of src/components/overlays/acid/rippleEffect.ts (CPU ground truth).
-// The CPU version does a per-frame CPU readback (getImageData) to find up to
-// 8 local brightness peaks on a coarse 64px grid (i.e. peaks that can sit
-// close together within any one bright region), then radiates a
+// The CPU version does a per-frame CPU readback (getImageData), searches an
+// actual 64px grid of cells for each cell's TRUE local brightness maximum
+// (not a single regional-average sample), sorts ALL qualifying peaks
+// (brightness > 0.5) by brightness, and CAPS the contributing set to the top
+// 8 (`candidates.slice(0, maxCenters=8)`) before radiating a
 // sin(dist*frequency*0.1 - time*5)-shaped wave from each, attenuated by
 // exp(-dist*decay*0.01) and weighted by that peak's brightness. Doing a true
-// global peak search per-pixel in a single fragment pass isn't tractable
-// without a separate reduction pass (defeats the "eliminate CPU readbacks"
-// goal of this port) — this uses a fixed 4x4 grid of 16 candidate centers
-// instead, each weighted by the brightness the GPU itself samples there.
-// Candidates below the same 0.5 brightness threshold the CPU uses are
-// skipped, so dark/empty regions correctly stay quiet, but the denser grid
-// (vs. an earlier 8-point pass, which read as a handful of isolated clean
-// rings) lets multiple nearby-and-bright candidates overlap the way the
-// CPU's clustered peaks do, producing the same dense interference texture
-// rather than a few widely-separated single-source ripples. Out-of-bounds
-// samples resolve to black, exactly like the CPU's explicit fallback.
+// per-cell local-max search + global sort per pixel in a single fragment
+// pass isn't tractable without a separate reduction pass (defeats the
+// "eliminate CPU readbacks" goal of this port) — this samples brightness at
+// a fixed 8x8 grid of 64 candidate positions instead (finer than an earlier
+// 4x4/16-point attempt, which under-sampled: a single regional-average
+// texture read per quadrant only found ~3 "active" (>0.5) spots on typical
+// content, versus the CPU's true per-cell local-max search finding many
+// more genuine peaks scattered through bright regions — the coarser grid's
+// few, widely-separated, strong sources each dominated large uncancelled
+// regions of the frame, producing a few big smooth vortex-like rings instead
+// of the CPU's dense zigzag interference texture). Rather than an O(n^2)
+// exact top-8 selection per pixel (too costly at 64 candidates), this counts
+// how many of the 64 pass the same 0.5 threshold the CPU uses, sums their
+// full contributions, then scales the SUMMED displacement by
+// min(1, 8/activeCount) — normalizing total displacement magnitude to the
+// CPU's effective cap of (at most) 8 active sources regardless of how many
+// of the finer grid's candidates individually qualify, which is what
+// "capped top-8 + matching amplitude scaling" means in aggregate: keep the
+// denser spatial texture from more candidate positions, but never let total
+// displacement exceed what ~8 CPU-strength sources would produce. Read at
+// low amplitude (5) both versions already matched closely; the fix targets
+// specifically the default/high-amplitude collapse. Out-of-bounds samples
+// resolve to black, exactly like the CPU's explicit fallback.
 const fragmentShader = `
 uniform float frequency;
 uniform float rippleAmplitude;
@@ -28,47 +42,41 @@ uniform vec2 resolution;
 uniform float preserveVideo;
 uniform float effectMix;
 
-const int NUM_CENTERS = 16;
+const int GRID = 8;
+const int NUM_CENTERS = 64;
+const float MAX_ACTIVE_CENTERS = 8.0;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   vec2 pixelCoord = uv * resolution;
 
-  vec2 centers[NUM_CENTERS];
-  centers[0] = vec2(0.125, 0.125);
-  centers[1] = vec2(0.375, 0.125);
-  centers[2] = vec2(0.625, 0.125);
-  centers[3] = vec2(0.875, 0.125);
-  centers[4] = vec2(0.125, 0.375);
-  centers[5] = vec2(0.375, 0.375);
-  centers[6] = vec2(0.625, 0.375);
-  centers[7] = vec2(0.875, 0.375);
-  centers[8] = vec2(0.125, 0.625);
-  centers[9] = vec2(0.375, 0.625);
-  centers[10] = vec2(0.625, 0.625);
-  centers[11] = vec2(0.875, 0.625);
-  centers[12] = vec2(0.125, 0.875);
-  centers[13] = vec2(0.375, 0.875);
-  centers[14] = vec2(0.625, 0.875);
-  centers[15] = vec2(0.875, 0.875);
-
   vec2 totalDisplace = vec2(0.0);
+  float activeCount = 0.0;
 
-  for (int i = 0; i < NUM_CENTERS; i++) {
-    vec2 centerUV = centers[i];
-    vec3 sampleColor = texture2D(inputBuffer, centerUV).rgb;
-    float brightness = dot(sampleColor, vec3(0.299, 0.587, 0.114));
-    if (brightness <= 0.5) continue;
+  for (int gx = 0; gx < GRID; gx++) {
+    for (int gy = 0; gy < GRID; gy++) {
+      vec2 centerUV = (vec2(float(gx), float(gy)) + 0.5) / float(GRID);
+      vec3 sampleColor = texture2D(inputBuffer, centerUV).rgb;
+      float brightness = dot(sampleColor, vec3(0.299, 0.587, 0.114));
+      if (brightness <= 0.5) continue;
+      activeCount += 1.0;
 
-    vec2 centerPx = centerUV * resolution;
-    vec2 delta = pixelCoord - centerPx;
-    float dist = length(delta);
-    if (dist < 1.0) continue;
+      vec2 centerPx = centerUV * resolution;
+      vec2 delta = pixelCoord - centerPx;
+      float dist = length(delta);
+      if (dist < 1.0) continue;
 
-    vec2 dir = delta / dist;
-    float wave = sin(dist * frequency * 0.1 - time * rippleSpeed * 5.0);
-    float distDecay = exp(-dist * decay * 0.01);
-    float displaceAmount = wave * rippleAmplitude * distDecay * brightness;
-    totalDisplace += dir * displaceAmount;
+      vec2 dir = delta / dist;
+      float wave = sin(dist * frequency * 0.1 - time * rippleSpeed * 5.0);
+      float distDecay = exp(-dist * decay * 0.01);
+      float displaceAmount = wave * rippleAmplitude * distDecay * brightness;
+      totalDisplace += dir * displaceAmount;
+    }
+  }
+
+  // Normalize total magnitude to what (at most) 8 CPU-strength sources would
+  // produce, regardless of how many of the finer 64-point grid qualified.
+  if (activeCount > MAX_ACTIVE_CENTERS) {
+    totalDisplace *= MAX_ACTIVE_CENTERS / activeCount;
   }
 
   vec2 samplePx = pixelCoord - totalDisplace;

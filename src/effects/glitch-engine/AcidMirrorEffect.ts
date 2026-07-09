@@ -3,29 +3,40 @@ import { Effect, BlendFunction } from 'postprocessing'
 
 // GPU port of src/components/overlays/acid/mirrorEffect.ts (CPU ground truth).
 // The CPU version clips the canvas into `segments` pie wedges about
-// (centerX, centerY) and, per wedge, draws the ENTIRE source image
-// transformed so only the "first wedge" region shows through the clip —
-// alternating wedges additionally get a horizontal flip. Working through the
-// canvas transform algebra (see task report), the net effect for any
-// destination angle is a rigid rotation about the center: fold the angle
-// (relative to `rotation`) into a period of `2 * segAngle`, then
-// triangle-fold that into [0, segAngle) — the classic "mirror-repeat"
-// identity, with NO extra intra-wedge half-fold (unlike the denser Phase-2
-// KaleidoscopeEffect, which folds to segAngle/2 for a busier look).
-// rotation is a static offset — the CPU source has no time-based spin.
+// (centerX, centerY) and, per wedge i, draws the ENTIRE source image through
+// a per-wedge canvas transform, clipped to that wedge's angular slice —
+// alternating (odd-index) wedges additionally get `scale(1,-1)` + an extra
+// `rotate(segmentAngle)` before the draw. This is NOT a continuous
+// mirror-repeat fold (that reads as a seamless, symmetric kaleidoscope —
+// verified WRONG against ground-truth screenshots, which show a *seamed*
+// rotational collage: hard edges at wedge boundaries, each wedge a distinct
+// rotated — and for odd wedges, additionally reflected — copy of the
+// source, not a smoothly blended reflection).
 //
-// Because it's a RIGID rotation (radius from center preserved), this must
-// run in raw PIXEL space, not aspect-corrected normalized UV space: folding
-// a corner's angle can point its (large) radius toward the horizontal axis,
-// and on a portrait canvas dividing that back through the aspect ratio
-// blows the sample far outside [0,1], producing a stretched clamp artifact
-// that doesn't match the CPU look at all. In pixel space this can't happen
-// — the rotated point just lands outside the source canvas, exactly as it
-// does for the CPU's clipped drawImage (which paints nothing there, letting
-// the pre-filled background show through). That background is black when
-// !preserveVideo (matching the CPU's solid black wedge-corners at high
-// segment counts on non-square canvases) or the untouched frame when
-// preserveVideo is set.
+// Solving the exact canvas transform composition per wedge (translate →
+// rotate(startAngle) → [scale(1,-1) → rotate(segAngle)] if odd →
+// translate back → translate → rotate(-rotation) → translate back), for a
+// destination point at angle theta the source angle is:
+//   wedge index i = floor(mod(theta - rotation, 2*PI) / segAngle)
+//   even i (no mirror): srcAngle = theta - i*segAngle           (pure rotation)
+//   odd  i (mirror):    srcAngle = 2*rotation + (i-1)*segAngle - theta  (rotation + reflection)
+// radius from center is preserved in both cases (verified numerically
+// against a standalone matrix replica of the exact ctx.translate/rotate/
+// scale call sequence — see task report). This produces the CPU's
+// characteristic hard per-wedge seams instead of a continuous fold.
+//
+// Because it's a RIGID rotation/reflection (radius from center preserved),
+// this must run in raw PIXEL space, not aspect-corrected normalized UV
+// space: folding a corner's angle can point its (large) radius toward the
+// horizontal axis, and on a portrait canvas dividing that back through the
+// aspect ratio blows the sample far outside [0,1], producing a stretched
+// clamp artifact that doesn't match the CPU look at all. In pixel space
+// this can't happen — the rotated point just lands outside the source
+// canvas, exactly as it does for the CPU's clipped drawImage (which paints
+// nothing there, letting the pre-filled background show through). That
+// background is black when !preserveVideo (matching the CPU's solid black
+// wedge-corners at high segment counts on non-square canvases) or the
+// untouched frame when preserveVideo is set.
 const fragmentShader = `
 uniform float segments;
 uniform float rotation;
@@ -45,11 +56,19 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   const float TWO_PI = 6.28318530718;
   float segAngle = TWO_PI / max(segments, 2.0);
 
-  // Mirror-repeat fold: alternating wedges reflect, matching the CPU's
-  // per-wedge shouldMirror = (i % 2 === 1) behavior.
-  float t = mod(theta - rotation, 2.0 * segAngle);
-  float local = t < segAngle ? t : (2.0 * segAngle - t);
-  float sampleAngle = rotation + local;
+  // Which wedge (pie slice, relative to rotation) does this destination
+  // pixel fall in, and its local angle folded into a canonical branch that
+  // lines up with i * segAngle below (matches CPU's startAngle = i *
+  // segmentAngle + rotation wedge boundaries exactly).
+  float normTheta = mod(theta - rotation, TWO_PI);
+  float i = floor(normTheta / segAngle);
+  float effTheta = normTheta + rotation;
+
+  bool shouldMirror = mod(i, 2.0) >= 1.0;
+
+  float sampleAngle = shouldMirror
+    ? (2.0 * rotation + (i - 1.0) * segAngle - effTheta)
+    : (effTheta - i * segAngle);
 
   vec2 p2 = vec2(cos(sampleAngle), sin(sampleAngle)) * r;
   vec2 samplePx = centerPx + p2;

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useEffectSequencerStore } from './effectSequencerStore'
 
 // Drag state for sequencer track routing
 interface SequencerDragState {
@@ -89,7 +90,14 @@ export const useUIStore = create<UIState>((set) => ({
   bottomPanelPage: 1,
   statusText: null,
 
-  setSelectedEffect: (id) => set({ selectedEffectId: id, selectedParamIndex: 0 }),
+  setSelectedEffect: (id) => {
+    // A step selection on another track would immediately re-select that
+    // track (UnifiedSequencerPanel's auto-switch), overriding this call —
+    // selectedStep must always belong to selectedEffectId or be null.
+    const { selectedStep, clearSelection } = useEffectSequencerStore.getState()
+    if (selectedStep && selectedStep.effectId !== id) clearSelection()
+    set({ selectedEffectId: id, selectedParamIndex: 0 })
+  },
   setSelectedParamIndex: (index) => set({ selectedParamIndex: index }),
 
   setGridPage: (page) => set({ gridPage: Math.max(0, Math.min(5, page)) }),

@@ -123,3 +123,6 @@ export type { AnamorphicParams } from './AnamorphicEffect'
 
 export { DreamcoreEffect, DEFAULT_DREAMCORE_PARAMS } from './DreamcoreEffect'
 export type { DreamcoreParams } from './DreamcoreEffect'
+
+export { LiquidMorphEffect, DEFAULT_LIQUID_MORPH_PARAMS } from './LiquidMorphEffect'
+export type { LiquidMorphParams } from './LiquidMorphEffect'

@@ -42,6 +42,7 @@ import {
   HalationEffect,
   AnamorphicEffect,
   DreamcoreEffect,
+  LiquidMorphEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -104,6 +105,7 @@ export class EffectPipeline {
   halation: HalationEffect | null = null
   anamorphic: AnamorphicEffect | null = null
   dreamcore: DreamcoreEffect | null = null
+  liquidMorph: LiquidMorphEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -209,6 +211,7 @@ export class EffectPipeline {
     this.halation = new HalationEffect()
     this.anamorphic = new AnamorphicEffect()
     this.dreamcore = new DreamcoreEffect()
+    this.liquidMorph = new LiquidMorphEffect()
   }
 
   // Map effect IDs to effect instances
@@ -255,6 +258,7 @@ export class EffectPipeline {
       case 'halation': return this.halation
       case 'anamorphic': return this.anamorphic
       case 'dreamcore': return this.dreamcore
+      case 'liquid_morph': return this.liquidMorph
       default: return null
     }
   }
@@ -516,6 +520,7 @@ export class EffectPipeline {
     this.fractalDomain?.setAspect(aspect)
     this.thermal?.setAspect(aspect)
     this.y2kDigicam?.setAspect(aspect)
+    this.liquidMorph?.setAspect(aspect)
   }
 
   private updateQuadScale() {
@@ -622,5 +627,6 @@ export class EffectPipeline {
     this.halation?.dispose()
     this.anamorphic?.dispose()
     this.dreamcore?.dispose()
+    this.liquidMorph?.dispose()
   }
 }

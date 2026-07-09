@@ -144,3 +144,6 @@ export type { ReactionDiffusionParams } from './ReactionDiffusionEffect'
 
 export { RuttEtraEffect, DEFAULT_RUTT_ETRA_PARAMS } from './RuttEtraEffect'
 export type { RuttEtraParams } from './RuttEtraEffect'
+
+export { PhysarumEffect, DEFAULT_PHYSARUM_PARAMS } from './PhysarumEffect'
+export type { PhysarumParams } from './PhysarumEffect'

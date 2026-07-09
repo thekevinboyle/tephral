@@ -49,6 +49,7 @@ import {
   FlowSmearEffect,
   ReactionDiffusionEffect,
   RuttEtraEffect,
+  PhysarumEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -118,6 +119,7 @@ export class EffectPipeline {
   flowSmear: FlowSmearEffect | null = null
   reactionDiffusion: ReactionDiffusionEffect | null = null
   ruttEtra: RuttEtraEffect | null = null
+  physarum: PhysarumEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -230,6 +232,7 @@ export class EffectPipeline {
     this.flowSmear = new FlowSmearEffect()
     this.reactionDiffusion = new ReactionDiffusionEffect()
     this.ruttEtra = new RuttEtraEffect()
+    this.physarum = new PhysarumEffect()
   }
 
   // Map effect IDs to effect instances
@@ -283,6 +286,7 @@ export class EffectPipeline {
       case 'flow_smear': return this.flowSmear
       case 'reaction_diffusion': return this.reactionDiffusion
       case 'rutt_etra': return this.ruttEtra
+      case 'physarum': return this.physarum
       default: return null
     }
   }
@@ -414,7 +418,7 @@ export class EffectPipeline {
       'feedback', 'datamosh', 'motion_extract', 'echo_trail',
       'time_smear', 'freeze_mask', 'track_motion',
       'feedback_tunnel', 'opium_trails', 'flow_smear',
-      'reaction_diffusion', 'rutt_etra',
+      'reaction_diffusion', 'rutt_etra', 'physarum',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
@@ -428,6 +432,7 @@ export class EffectPipeline {
       // releaseTargets() on disable.
       reaction_diffusion: this.reactionDiffusion,
       rutt_etra: this.ruttEtra,
+      physarum: this.physarum,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]
@@ -673,5 +678,6 @@ export class EffectPipeline {
     this.flowSmear?.dispose()
     this.reactionDiffusion?.dispose()
     this.ruttEtra?.dispose()
+    this.physarum?.dispose()
   }
 }

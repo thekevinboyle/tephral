@@ -10,6 +10,7 @@ import { useAsciiRenderStore } from '../stores/asciiRenderStore'
 import { useMediaStore } from '../stores/mediaStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useTrendStore } from '../stores/trendStore'
+import { useStrandStore } from '../stores/strandStore'
 import { useRecordingStore } from '../stores/recordingStore'
 import { useDestructionModeStore } from '../stores/destructionModeStore'
 import { useDestructionStore } from '../stores/destructionStore'
@@ -105,6 +106,45 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   const {
     dotsEnabled,
   } = useAcidStore()
+
+  // ACID overlay effects (Phase 3 GPU port) — enabled flags only; params
+  // flow through paramSync.ts. Overlay keeps rendering these in parallel
+  // until each port task removes its CPU dispatch from AcidOverlay.tsx.
+  const {
+    mirrorEnabled,
+    rippleEnabled,
+    scanEnabled,
+    sliceEnabled,
+    thGridEnabled,
+    contourEnabled,
+    glyphEnabled,
+    halftoneEnabled,
+    hexEnabled,
+    iconsEnabled,
+    ledEnabled,
+  } = useAcidStore()
+
+  // STRAND overlay effects (Phase 3 GPU port) — enabled flags only; params
+  // flow through paramSync.ts. Overlay keeps rendering these in parallel
+  // until each port task removes its CPU dispatch from StrandOverlay.tsx.
+  const {
+    handprintsEnabled,
+    tarSpreadEnabled,
+    timefallEnabled,
+    voidOutEnabled,
+    strandWebEnabled,
+    bridgeLinkEnabled,
+    chiralPathEnabled,
+    umbilicalEnabled,
+    odradekEnabled,
+    chiraliumEnabled,
+    beachStaticEnabled,
+    doomsEnabled,
+    chiralCloudEnabled,
+    bbPodEnabled,
+    seamEnabled,
+    extinctionEnabled,
+  } = useStrandStore()
 
   const {
     enabled: asciiEnabled,
@@ -279,6 +319,39 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       crystallizeEnabled: getEffectiveEnabled('crystallize', crystallizeEnabled && !effectBypassed['crystallize']),
       rippleWarpEnabled: getEffectiveEnabled('ripple_warp', rippleWarpEnabled && !effectBypassed['ripple_warp']),
       fractalDomainEnabled: getEffectiveEnabled('fractal_domain', fractalDomainEnabled && !effectBypassed['fractal_domain']),
+      // ACID overlay effects (Phase 3 GPU port) - not affected by glitchEnabled.
+      // getEffectById has no case for these yet, so the pipeline's null-filter
+      // keeps this inert; AcidOverlay.tsx continues to own the actual rendering.
+      mirrorEnabled: getEffectiveEnabled('acid_mirror', mirrorEnabled && !effectBypassed['acid_mirror']),
+      rippleEnabled: getEffectiveEnabled('acid_ripple', rippleEnabled && !effectBypassed['acid_ripple']),
+      scanEnabled: getEffectiveEnabled('acid_scan', scanEnabled && !effectBypassed['acid_scan']),
+      sliceEnabled: getEffectiveEnabled('acid_slice', sliceEnabled && !effectBypassed['acid_slice']),
+      thGridEnabled: getEffectiveEnabled('acid_thgrid', thGridEnabled && !effectBypassed['acid_thgrid']),
+      contourEnabled: getEffectiveEnabled('acid_contour', contourEnabled && !effectBypassed['acid_contour']),
+      glyphEnabled: getEffectiveEnabled('acid_glyph', glyphEnabled && !effectBypassed['acid_glyph']),
+      halftoneEnabled: getEffectiveEnabled('acid_halftone', halftoneEnabled && !effectBypassed['acid_halftone']),
+      hexEnabled: getEffectiveEnabled('acid_hex', hexEnabled && !effectBypassed['acid_hex']),
+      iconsEnabled: getEffectiveEnabled('acid_icons', iconsEnabled && !effectBypassed['acid_icons']),
+      ledEnabled: getEffectiveEnabled('acid_led', ledEnabled && !effectBypassed['acid_led']),
+      // STRAND overlay effects (Phase 3 GPU port) - not affected by glitchEnabled.
+      // Same null-filter inertness as the ACID block above; StrandOverlay.tsx
+      // continues to own the actual rendering until each port task lands.
+      handprintsEnabled: getEffectiveEnabled('strand_handprints', handprintsEnabled && !effectBypassed['strand_handprints']),
+      tarSpreadEnabled: getEffectiveEnabled('strand_tar', tarSpreadEnabled && !effectBypassed['strand_tar']),
+      timefallEnabled: getEffectiveEnabled('strand_timefall', timefallEnabled && !effectBypassed['strand_timefall']),
+      voidOutEnabled: getEffectiveEnabled('strand_voidout', voidOutEnabled && !effectBypassed['strand_voidout']),
+      strandWebEnabled: getEffectiveEnabled('strand_web', strandWebEnabled && !effectBypassed['strand_web']),
+      bridgeLinkEnabled: getEffectiveEnabled('strand_bridge', bridgeLinkEnabled && !effectBypassed['strand_bridge']),
+      chiralPathEnabled: getEffectiveEnabled('strand_path', chiralPathEnabled && !effectBypassed['strand_path']),
+      umbilicalEnabled: getEffectiveEnabled('strand_umbilical', umbilicalEnabled && !effectBypassed['strand_umbilical']),
+      odradekEnabled: getEffectiveEnabled('strand_odradek', odradekEnabled && !effectBypassed['strand_odradek']),
+      chiraliumEnabled: getEffectiveEnabled('strand_chiralium', chiraliumEnabled && !effectBypassed['strand_chiralium']),
+      beachStaticEnabled: getEffectiveEnabled('strand_beach', beachStaticEnabled && !effectBypassed['strand_beach']),
+      doomsEnabled: getEffectiveEnabled('strand_dooms', doomsEnabled && !effectBypassed['strand_dooms']),
+      chiralCloudEnabled: getEffectiveEnabled('strand_cloud', chiralCloudEnabled && !effectBypassed['strand_cloud']),
+      bbPodEnabled: getEffectiveEnabled('strand_bbpod', bbPodEnabled && !effectBypassed['strand_bbpod']),
+      seamEnabled: getEffectiveEnabled('strand_seam', seamEnabled && !effectBypassed['strand_seam']),
+      extinctionEnabled: getEffectiveEnabled('strand_extinction', extinctionEnabled && !effectBypassed['strand_extinction']),
       bypassActive,
       crossfaderPosition,
       hasSourceTexture: !!mediaTexture && !slicerEnabled,
@@ -350,6 +423,11 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     flowSmearEnabled, feedbackTunnelEnabled, opiumTrailsEnabled, ruttEtraEnabled,
     reactionDiffusionEnabled, physarumEnabled, kaleidoscopeEnabled, liquidMorphEnabled,
     crystallizeEnabled, rippleWarpEnabled, fractalDomainEnabled,
+    mirrorEnabled, rippleEnabled, scanEnabled, sliceEnabled, thGridEnabled,
+    contourEnabled, glyphEnabled, halftoneEnabled, hexEnabled, iconsEnabled, ledEnabled,
+    handprintsEnabled, tarSpreadEnabled, timefallEnabled, voidOutEnabled, strandWebEnabled,
+    bridgeLinkEnabled, chiralPathEnabled, umbilicalEnabled, odradekEnabled, chiraliumEnabled,
+    beachStaticEnabled, doomsEnabled, chiralCloudEnabled, bbPodEnabled, seamEnabled, extinctionEnabled,
   ])
 
   // Landmark data flows at detection cadence — keep it out of the structural effect

@@ -346,6 +346,38 @@ export class EffectPipeline {
     crystallizeEnabled: boolean
     rippleWarpEnabled: boolean
     fractalDomainEnabled: boolean
+    // ACID overlay effects (Phase 3 GPU port) — enabled flags only;
+    // getEffectById cases land one per effect task, so these are inert
+    // (null-filtered) until then. AcidOverlay.tsx owns the actual rendering.
+    mirrorEnabled: boolean
+    rippleEnabled: boolean
+    scanEnabled: boolean
+    sliceEnabled: boolean
+    thGridEnabled: boolean
+    contourEnabled: boolean
+    glyphEnabled: boolean
+    halftoneEnabled: boolean
+    hexEnabled: boolean
+    iconsEnabled: boolean
+    ledEnabled: boolean
+    // STRAND overlay effects (Phase 3 GPU port) — same inertness as ACID
+    // above. StrandOverlay.tsx owns the actual rendering until ported.
+    handprintsEnabled: boolean
+    tarSpreadEnabled: boolean
+    timefallEnabled: boolean
+    voidOutEnabled: boolean
+    strandWebEnabled: boolean
+    bridgeLinkEnabled: boolean
+    chiralPathEnabled: boolean
+    umbilicalEnabled: boolean
+    odradekEnabled: boolean
+    chiraliumEnabled: boolean
+    beachStaticEnabled: boolean
+    doomsEnabled: boolean
+    chiralCloudEnabled: boolean
+    bbPodEnabled: boolean
+    seamEnabled: boolean
+    extinctionEnabled: boolean
     bypassActive: boolean
     crossfaderPosition: number
     hasSourceTexture: boolean
@@ -408,6 +440,35 @@ export class EffectPipeline {
       crystallize: config.crystallizeEnabled,
       ripple_warp: config.rippleWarpEnabled,
       fractal_domain: config.fractalDomainEnabled,
+      // ACID overlay effects (Phase 3 GPU port)
+      acid_mirror: config.mirrorEnabled,
+      acid_ripple: config.rippleEnabled,
+      acid_scan: config.scanEnabled,
+      acid_slice: config.sliceEnabled,
+      acid_thgrid: config.thGridEnabled,
+      acid_contour: config.contourEnabled,
+      acid_glyph: config.glyphEnabled,
+      acid_halftone: config.halftoneEnabled,
+      acid_hex: config.hexEnabled,
+      acid_icons: config.iconsEnabled,
+      acid_led: config.ledEnabled,
+      // STRAND overlay effects (Phase 3 GPU port)
+      strand_handprints: config.handprintsEnabled,
+      strand_tar: config.tarSpreadEnabled,
+      strand_timefall: config.timefallEnabled,
+      strand_voidout: config.voidOutEnabled,
+      strand_web: config.strandWebEnabled,
+      strand_bridge: config.bridgeLinkEnabled,
+      strand_path: config.chiralPathEnabled,
+      strand_umbilical: config.umbilicalEnabled,
+      strand_odradek: config.odradekEnabled,
+      strand_chiralium: config.chiraliumEnabled,
+      strand_beach: config.beachStaticEnabled,
+      strand_dooms: config.doomsEnabled,
+      strand_cloud: config.chiralCloudEnabled,
+      strand_bbpod: config.bbPodEnabled,
+      strand_seam: config.seamEnabled,
+      strand_extinction: config.extinctionEnabled,
     }
 
     // Gate temporal frame-captures + release GPU targets on disable. This

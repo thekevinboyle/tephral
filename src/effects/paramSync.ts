@@ -9,6 +9,7 @@ import { useMorphStore } from '../stores/morphStore'
 import { useVisionTrackingStore } from '../stores/visionTrackingStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useTrendStore } from '../stores/trendStore'
+import { useStrandStore } from '../stores/strandStore'
 
 /**
  * Pushes effect parameters straight into shader uniforms via zustand
@@ -158,9 +159,25 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.physarum?.updateParams({ ...s.physarumParams, mix: getMix('physarum') })
   }
 
+  // ACID overlay effects (Phase 3 GPU port) — empty until each port task
+  // adds its own `pipeline.<camel>?.updateParams({ ...s.<camel>Params, mix:
+  // getMix('acid_<id>') })` line here (the optional-chain no-ops until that
+  // effect's pipeline property exists, matching the null-filtered
+  // enabledMap pattern in EffectPipeline).
+  const pushAcidPorts = () => {
+    // const s = useAcidStore.getState()
+  }
+
+  // STRAND overlay effects (Phase 3 GPU port) — same empty scaffold as
+  // pushAcidPorts(); each port task adds its own push line.
+  const pushStrandPorts = () => {
+    // const s = useStrandStore.getState()
+  }
+
   // Initial push so a fresh pipeline gets current values immediately
   pushGlitch(); pushMotion(); pushDots(); pushAscii()
   pushDestruction(); pushMorph(); pushTrace(); pushCrossfader(); pushTrend()
+  pushAcidPorts(); pushStrandPorts()
 
   // Subscribe with reference-equality slice checks (zustand v5 vanilla
   // subscribe gives (state, prevState)). effectMix lives in the glitch
@@ -170,6 +187,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
       if (s.effectMix !== prev.effectMix) {
         pushGlitch(); pushMotion(); pushDots(); pushAscii()
         pushDestruction(); pushMorph(); pushTrend()
+        pushAcidPorts(); pushStrandPorts()
         return
       }
       if (
@@ -190,6 +208,26 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     }),
     useAcidStore.subscribe((s, prev) => {
       if (s.dotsParams !== prev.dotsParams) pushDots()
+      if (
+        s.mirrorParams !== prev.mirrorParams || s.rippleParams !== prev.rippleParams ||
+        s.scanParams !== prev.scanParams || s.sliceParams !== prev.sliceParams ||
+        s.thGridParams !== prev.thGridParams || s.contourParams !== prev.contourParams ||
+        s.glyphParams !== prev.glyphParams || s.halftoneParams !== prev.halftoneParams ||
+        s.hexParams !== prev.hexParams || s.iconsParams !== prev.iconsParams ||
+        s.ledParams !== prev.ledParams
+      ) pushAcidPorts()
+    }),
+    useStrandStore.subscribe((s, prev) => {
+      if (
+        s.handprintsParams !== prev.handprintsParams || s.tarSpreadParams !== prev.tarSpreadParams ||
+        s.timefallParams !== prev.timefallParams || s.voidOutParams !== prev.voidOutParams ||
+        s.strandWebParams !== prev.strandWebParams || s.bridgeLinkParams !== prev.bridgeLinkParams ||
+        s.chiralPathParams !== prev.chiralPathParams || s.umbilicalParams !== prev.umbilicalParams ||
+        s.odradekParams !== prev.odradekParams || s.chiraliumParams !== prev.chiraliumParams ||
+        s.beachStaticParams !== prev.beachStaticParams || s.doomsParams !== prev.doomsParams ||
+        s.chiralCloudParams !== prev.chiralCloudParams || s.bbPodParams !== prev.bbPodParams ||
+        s.seamParams !== prev.seamParams || s.extinctionParams !== prev.extinctionParams
+      ) pushStrandPorts()
     }),
     useAsciiRenderStore.subscribe((s, prev) => {
       if (s.params !== prev.params) pushAscii()

@@ -75,6 +75,7 @@ import {
   StrandHandprintsEffect,
   StrandBbpodEffect,
   StrandChiraliumEffect,
+  StrandOdradekEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -172,6 +173,7 @@ export class EffectPipeline {
   strandHandprints: StrandHandprintsEffect | null = null
   strandBbpod: StrandBbpodEffect | null = null
   strandChiralium: StrandChiraliumEffect | null = null
+  strandOdradek: StrandOdradekEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -312,6 +314,7 @@ export class EffectPipeline {
     this.strandHandprints = new StrandHandprintsEffect()
     this.strandBbpod = new StrandBbpodEffect()
     this.strandChiralium = new StrandChiraliumEffect()
+    this.strandOdradek = new StrandOdradekEffect()
   }
 
   // Map effect IDs to effect instances
@@ -391,6 +394,7 @@ export class EffectPipeline {
       case 'strand_handprints': return this.strandHandprints
       case 'strand_bbpod': return this.strandBbpod
       case 'strand_chiralium': return this.strandChiralium
+      case 'strand_odradek': return this.strandOdradek
       default: return null
     }
   }
@@ -748,6 +752,7 @@ export class EffectPipeline {
     this.strandHandprints?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandBbpod?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandChiralium?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandOdradek?.setResolution(this.canvasWidth, this.canvasHeight)
   }
 
   private updateQuadScale() {
@@ -892,5 +897,6 @@ export class EffectPipeline {
     this.strandHandprints?.dispose()
     this.strandBbpod?.dispose()
     this.strandChiralium?.dispose()
+    this.strandOdradek?.dispose()
   }
 }

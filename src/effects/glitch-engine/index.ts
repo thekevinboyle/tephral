@@ -218,3 +218,6 @@ export type { StrandBbpodParams } from './StrandBbpodEffect'
 
 export { StrandChiraliumEffect, DEFAULT_STRAND_CHIRALIUM_PARAMS } from './StrandChiraliumEffect'
 export type { StrandChiraliumParams } from './StrandChiraliumEffect'
+
+export { StrandOdradekEffect, DEFAULT_STRAND_ODRADEK_PARAMS } from './StrandOdradekEffect'
+export type { StrandOdradekParams } from './StrandOdradekEffect'

@@ -195,6 +195,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.strandHandprints?.updateParams({ ...s.handprintsParams, mix: getMix('strand_handprints') })
     pipeline.strandBbpod?.updateParams({ ...s.bbPodParams, mix: getMix('strand_bbpod') })
     pipeline.strandChiralium?.updateParams({ ...s.chiraliumParams, mix: getMix('strand_chiralium') })
+    pipeline.strandOdradek?.updateParams({ ...s.odradekParams, mix: getMix('strand_odradek') })
   }
 
   // Initial push so a fresh pipeline gets current values immediately

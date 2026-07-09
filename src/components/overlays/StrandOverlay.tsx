@@ -8,7 +8,6 @@ import { useStrandStore } from '../../stores/strandStore'
 import { getSharedFrame } from './sharedReadback'
 import { renderChiralPath } from './strand/chiralPathEffect'
 import { renderExtinction } from './strand/extinctionEffect'
-import { renderOdradek } from './strand/odradekEffect'
 import { renderTarSpread } from './strand/tarSpreadEffect'
 
 interface StrandOverlayProps {
@@ -52,7 +51,9 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
     // strand_umbilical is GPU-ported (StrandUmbilicalEffect) —
     // store.umbilicalEnabled intentionally excluded here, same as timefall
     // above.
-    store.odradekEnabled ||
+    // strand_odradek is GPU-ported (StrandOdradekEffect) —
+    // store.odradekEnabled intentionally excluded here, same as timefall
+    // above.
     // strand_chiralium is GPU-ported (StrandChiraliumEffect) —
     // store.chiraliumEnabled intentionally excluded here, same as
     // handprints/timefall/voidOut above.
@@ -128,9 +129,9 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
       // EffectPipeline) — its CPU dispatch is removed; see paramSync.ts
       // pushStrandPorts().
 
-      if (currentStore.odradekEnabled) {
-        renderOdradek(sourceCtx, ctx, w, h, currentStore.odradekParams, timeSeconds, deltaTime)
-      }
+      // strand_odradek is GPU-ported (StrandOdradekEffect in
+      // EffectPipeline) — its CPU dispatch is removed; see paramSync.ts
+      // pushStrandPorts().
 
       // strand_cloud and strand_seam are GPU-ported (StrandCloudEffect /
       // StrandSeamEffect in EffectPipeline) — their CPU dispatch is

@@ -126,3 +126,6 @@ export type { DreamcoreParams } from './DreamcoreEffect'
 
 export { LiquidMorphEffect, DEFAULT_LIQUID_MORPH_PARAMS } from './LiquidMorphEffect'
 export type { LiquidMorphParams } from './LiquidMorphEffect'
+
+export { CrystallizeEffect, DEFAULT_CRYSTALLIZE_PARAMS } from './CrystallizeEffect'
+export type { CrystallizeParams } from './CrystallizeEffect'

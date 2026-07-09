@@ -105,3 +105,6 @@ export type { KaleidoscopeParams } from './KaleidoscopeEffect'
 
 export { RippleWarpEffect, DEFAULT_RIPPLE_WARP_PARAMS } from './RippleWarpEffect'
 export type { RippleWarpParams } from './RippleWarpEffect'
+
+export { FractalDomainEffect, DEFAULT_FRACTAL_DOMAIN_PARAMS } from './FractalDomainEffect'
+export type { FractalDomainParams } from './FractalDomainEffect'

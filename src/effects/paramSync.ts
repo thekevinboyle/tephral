@@ -144,6 +144,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     const s = useTrendStore.getState()
     pipeline.kaleidoscope?.updateParams({ ...s.kaleidoscopeParams, mix: getMix('kaleidoscope') })
     pipeline.rippleWarp?.updateParams({ ...s.rippleWarpParams, mix: getMix('ripple_warp') })
+    pipeline.fractalDomain?.updateParams({ ...s.fractalDomainParams, mix: getMix('fractal_domain') })
   }
 
   // Initial push so a fresh pipeline gets current values immediately

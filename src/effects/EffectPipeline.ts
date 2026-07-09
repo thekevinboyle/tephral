@@ -36,6 +36,7 @@ import {
   // Trend effects
   KaleidoscopeEffect,
   RippleWarpEffect,
+  FractalDomainEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -92,6 +93,7 @@ export class EffectPipeline {
   // Trend effects (Phase 2)
   kaleidoscope: KaleidoscopeEffect | null = null
   rippleWarp: RippleWarpEffect | null = null
+  fractalDomain: FractalDomainEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -191,6 +193,7 @@ export class EffectPipeline {
     // Trend effects (Phase 2)
     this.kaleidoscope = new KaleidoscopeEffect()
     this.rippleWarp = new RippleWarpEffect()
+    this.fractalDomain = new FractalDomainEffect()
   }
 
   // Map effect IDs to effect instances
@@ -231,6 +234,7 @@ export class EffectPipeline {
       // Trend effects (Phase 2)
       case 'kaleidoscope': return this.kaleidoscope
       case 'ripple_warp': return this.rippleWarp
+      case 'fractal_domain': return this.fractalDomain
       default: return null
     }
   }
@@ -489,6 +493,7 @@ export class EffectPipeline {
     const aspect = this.canvasWidth / this.canvasHeight
     this.kaleidoscope?.setAspect(aspect)
     this.rippleWarp?.setAspect(aspect)
+    this.fractalDomain?.setAspect(aspect)
   }
 
   private updateQuadScale() {
@@ -589,5 +594,6 @@ export class EffectPipeline {
     // Trend effects (Phase 2)
     this.kaleidoscope?.dispose()
     this.rippleWarp?.dispose()
+    this.fractalDomain?.dispose()
   }
 }

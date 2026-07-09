@@ -6,7 +6,6 @@
 import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { getSharedFrame } from './sharedReadback'
-import { renderBeachStatic } from './strand/beachStaticEffect'
 import { renderBridgeLink } from './strand/bridgeLinkEffect'
 import { renderChiralCloud } from './strand/chiralCloudEffect'
 import { renderChiralium } from './strand/chiraliumEffect'
@@ -19,7 +18,6 @@ import { renderStrandWeb } from './strand/strandWebEffect'
 import { renderTarSpread } from './strand/tarSpreadEffect'
 import { renderTimefall } from './strand/timefallEffect'
 import { renderUmbilical } from './strand/umbilicalEffect'
-import { renderVoidOut } from './strand/voidOutEffect'
 import { renderBBPod } from './strand/bbPodEffect'
 import { renderSeam } from './strand/seamEffect'
 
@@ -49,14 +47,17 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
     store.handprintsEnabled ||
     store.tarSpreadEnabled ||
     store.timefallEnabled ||
-    store.voidOutEnabled ||
+    // strand_voidout is GPU-ported (StrandVoidoutEffect) — no longer part of
+    // the CPU overlay's render loop; store.voidOutEnabled intentionally
+    // excluded here.
     store.strandWebEnabled ||
     store.bridgeLinkEnabled ||
     store.chiralPathEnabled ||
     store.umbilicalEnabled ||
     store.odradekEnabled ||
     store.chiraliumEnabled ||
-    store.beachStaticEnabled ||
+    // strand_beach is GPU-ported (StrandBeachEffect) — store.beachStaticEnabled
+    // intentionally excluded here, same as voidOut above.
     store.doomsEnabled ||
     store.chiralCloudEnabled ||
     store.bbPodEnabled ||
@@ -113,13 +114,9 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
         renderTimefall(sourceCtx, ctx, w, h, currentStore.timefallParams, deltaTime)
       }
 
-      if (currentStore.beachStaticEnabled) {
-        renderBeachStatic(sourceCtx, ctx, w, h, currentStore.beachStaticParams, timeSeconds)
-      }
-
-      if (currentStore.voidOutEnabled) {
-        renderVoidOut(sourceCtx, ctx, w, h, currentStore.voidOutParams, deltaTime)
-      }
+      // strand_beach and strand_voidout are GPU-ported (StrandBeachEffect /
+      // StrandVoidoutEffect in EffectPipeline) — their CPU dispatch is
+      // removed; see paramSync.ts pushStrandPorts().
 
       if (currentStore.strandWebEnabled) {
         renderStrandWeb(sourceCtx, ctx, w, h, currentStore.strandWebParams, timeSeconds)

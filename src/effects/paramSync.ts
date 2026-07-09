@@ -176,7 +176,9 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
   // STRAND overlay effects (Phase 3 GPU port) — same empty scaffold as
   // pushAcidPorts(); each port task adds its own push line.
   const pushStrandPorts = () => {
-    // const s = useStrandStore.getState()
+    const s = useStrandStore.getState()
+    pipeline.strandBeach?.updateParams({ ...s.beachStaticParams, mix: getMix('strand_beach') })
+    pipeline.strandVoidout?.updateParams({ ...s.voidOutParams, mix: getMix('strand_voidout') })
   }
 
   // Initial push so a fresh pipeline gets current values immediately

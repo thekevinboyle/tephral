@@ -56,6 +56,9 @@ import {
   AcidScanEffect,
   AcidSliceEffect,
   AcidThgridEffect,
+  // STRAND overlay effects (Phase 3 GPU port)
+  StrandBeachEffect,
+  StrandVoidoutEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -133,6 +136,10 @@ export class EffectPipeline {
   acidScan: AcidScanEffect | null = null
   acidSlice: AcidSliceEffect | null = null
   acidThgrid: AcidThgridEffect | null = null
+
+  // STRAND overlay effects (Phase 3 GPU port)
+  strandBeach: StrandBeachEffect | null = null
+  strandVoidout: StrandVoidoutEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -253,6 +260,10 @@ export class EffectPipeline {
     this.acidScan = new AcidScanEffect()
     this.acidSlice = new AcidSliceEffect()
     this.acidThgrid = new AcidThgridEffect()
+
+    // STRAND overlay effects (Phase 3 GPU port)
+    this.strandBeach = new StrandBeachEffect()
+    this.strandVoidout = new StrandVoidoutEffect()
   }
 
   // Map effect IDs to effect instances
@@ -313,6 +324,9 @@ export class EffectPipeline {
       case 'acid_scan': return this.acidScan
       case 'acid_slice': return this.acidSlice
       case 'acid_thgrid': return this.acidThgrid
+      // STRAND overlay effects (Phase 3 GPU port)
+      case 'strand_beach': return this.strandBeach
+      case 'strand_voidout': return this.strandVoidout
       default: return null
     }
   }
@@ -652,6 +666,8 @@ export class EffectPipeline {
     this.acidScan?.setResolution(this.canvasWidth, this.canvasHeight)
     this.acidSlice?.setResolution(this.canvasWidth, this.canvasHeight)
     this.acidThgrid?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandBeach?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.strandVoidout?.setResolution(this.canvasWidth, this.canvasHeight)
   }
 
   private updateQuadScale() {
@@ -777,5 +793,8 @@ export class EffectPipeline {
     this.acidScan?.dispose()
     this.acidSlice?.dispose()
     this.acidThgrid?.dispose()
+    // STRAND overlay effects (Phase 3 GPU port)
+    this.strandBeach?.dispose()
+    this.strandVoidout?.dispose()
   }
 }

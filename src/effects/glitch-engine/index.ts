@@ -163,3 +163,10 @@ export type { AcidSliceParams } from './AcidSliceEffect'
 
 export { AcidThgridEffect, DEFAULT_ACID_THGRID_PARAMS } from './AcidThgridEffect'
 export type { AcidThgridParams } from './AcidThgridEffect'
+
+// STRAND overlay effects (Phase 3 GPU port)
+export { StrandBeachEffect, DEFAULT_STRAND_BEACH_PARAMS } from './StrandBeachEffect'
+export type { StrandBeachParams } from './StrandBeachEffect'
+
+export { StrandVoidoutEffect, DEFAULT_STRAND_VOIDOUT_PARAMS } from './StrandVoidoutEffect'
+export type { StrandVoidoutParams } from './StrandVoidoutEffect'

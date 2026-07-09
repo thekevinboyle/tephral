@@ -56,11 +56,11 @@ export const EFFECTS: EffectDefinition[] = [
 
   // Row 3: Detection/HUD
   { id: 'face_hud', label: 'FACE HUD', color: '#00ffcc', row: 'vision', page: 1, min: 0, max: 1 },
-  { id: 'reserved_v4', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },
-  { id: 'reserved_v5', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },
-  { id: 'reserved_v6', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },
-  { id: 'reserved_v7', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },
-  { id: 'reserved_v8', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },
+  { id: 'halation', label: 'HALATE', color: '#ff9e80', row: 'color', page: 1, min: 0, max: 1 },
+  { id: 'y2k_digicam', label: 'Y2K', color: '#ffd54f', row: 'texture', page: 1, min: 0, max: 1 },
+  { id: 'thermal', label: 'THERML', color: '#ff5252', row: 'color', page: 1, min: 0.5, max: 2 },
+  { id: 'dreamcore', label: 'DREAM', color: '#b39ddb', row: 'color', page: 1, min: 0, max: 1 },
+  { id: 'anamorphic', label: 'ANMRPH', color: '#64b5f6', row: 'texture', page: 1, min: 0, max: 1 },
   { id: 'reserved_v9', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },
   { id: 'reserved_v10', label: '—', color: '#374151', row: 'reserved', page: 1, min: 0, max: 100 },
 
@@ -136,12 +136,12 @@ export const MOTION_EFFECTS: EffectDefinition[] = [
   { id: 'freeze_mask', label: 'FREEZE', color: '#BBFF33', row: 'render', page: 4, min: 0, max: 100 },
 
   // Row 2-4: Reserved
-  { id: 'motion_reserved_5', label: '—', color: '#374151', row: 'reserved', page: 4, min: 0, max: 100 },
-  { id: 'motion_reserved_6', label: '—', color: '#374151', row: 'reserved', page: 4, min: 0, max: 100 },
-  { id: 'motion_reserved_7', label: '—', color: '#374151', row: 'reserved', page: 4, min: 0, max: 100 },
-  { id: 'motion_reserved_8', label: '—', color: '#374151', row: 'reserved', page: 4, min: 0, max: 100 },
-  { id: 'motion_reserved_9', label: '—', color: '#374151', row: 'reserved', page: 4, min: 0, max: 100 },
-  { id: 'motion_reserved_10', label: '—', color: '#374151', row: 'reserved', page: 4, min: 0, max: 100 },
+  { id: 'flow_smear', label: 'FLOW', color: '#99EE22', row: 'render', page: 4, min: 0, max: 100 },
+  { id: 'feedback_tunnel', label: 'TUNNEL', color: '#7CB342', row: 'render', page: 4, min: 0.9, max: 1.1 },
+  { id: 'opium_trails', label: 'OPIUM', color: '#558B2F', row: 'render', page: 4, min: 0, max: 1 },
+  { id: 'rutt_etra', label: 'RUTT', color: '#9CCC65', row: 'render', page: 4, min: 16, max: 128 },
+  { id: 'reaction_diffusion', label: 'REACT', color: '#C0CA33', row: 'render', page: 4, min: 0.01, max: 0.1 },
+  { id: 'physarum', label: 'SLIME', color: '#AED581', row: 'render', page: 4, min: 10000, max: 300000 },
   { id: 'motion_reserved_11', label: '—', color: '#374151', row: 'reserved', page: 4, min: 0, max: 100 },
   { id: 'motion_reserved_12', label: '—', color: '#374151', row: 'reserved', page: 4, min: 0, max: 100 },
   { id: 'motion_reserved_13', label: '—', color: '#374151', row: 'reserved', page: 4, min: 0, max: 100 },
@@ -162,13 +162,13 @@ export const DESTRUCTION_EFFECTS: EffectDefinition[] = [
   { id: 'point_cloud', label: 'PTCLD', color: '#ff9900', row: 'color', page: 5, min: 0, max: 1 },
 
   // Row 2: Reserved
-  { id: 'destruction_reserved_5', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
-  { id: 'destruction_reserved_6', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
-  { id: 'destruction_reserved_7', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
-  { id: 'destruction_reserved_8', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'kaleidoscope', label: 'KALEID', color: '#ff6699', row: 'distortion', page: 5, min: 2, max: 16 },
+  { id: 'liquid_morph', label: 'LIQUID', color: '#4ecdc4', row: 'distortion', page: 5, min: 0, max: 1 },
+  { id: 'crystallize', label: 'CRYSTL', color: '#a8e6cf', row: 'texture', page: 5, min: 8, max: 128 },
+  { id: 'ripple_warp', label: 'RIPPLE', color: '#7b68ee', row: 'distortion', page: 5, min: 1, max: 40 },
 
   // Row 3: Reserved
-  { id: 'destruction_reserved_9', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+  { id: 'fractal_domain', label: 'FRACTL', color: '#ff6b9d', row: 'distortion', page: 5, min: 1, max: 8 },
   { id: 'destruction_reserved_10', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
   { id: 'destruction_reserved_11', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
   { id: 'destruction_reserved_12', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },

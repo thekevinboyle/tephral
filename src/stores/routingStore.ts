@@ -79,6 +79,24 @@ const defaultEffectOrder = [
   ...STRAND_EFFECTS.map(e => e.id),
   ...MOTION_EFFECTS.map(e => e.id),
   ...DESTRUCTION_EFFECTS.map(e => e.id),
+
+  // Phase 2: 16 trend effects (table order; EffectPipeline dedupes effectOrder via Set)
+  'halation',
+  'y2k_digicam',
+  'thermal',
+  'dreamcore',
+  'anamorphic',
+  'flow_smear',
+  'feedback_tunnel',
+  'opium_trails',
+  'rutt_etra',
+  'reaction_diffusion',
+  'physarum',
+  'kaleidoscope',
+  'liquid_morph',
+  'crystallize',
+  'ripple_warp',
+  'fractal_domain',
 ]
 
 // Initialize empty banks (4 banks × 4 presets)

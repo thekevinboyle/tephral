@@ -138,3 +138,6 @@ export type { OpiumTrailsParams } from './OpiumTrailsEffect'
 
 export { FlowSmearEffect, DEFAULT_FLOW_SMEAR_PARAMS } from './FlowSmearEffect'
 export type { FlowSmearParams } from './FlowSmearEffect'
+
+export { ReactionDiffusionEffect, DEFAULT_REACTION_DIFFUSION_PARAMS } from './ReactionDiffusionEffect'
+export type { ReactionDiffusionParams } from './ReactionDiffusionEffect'

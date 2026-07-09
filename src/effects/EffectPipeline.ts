@@ -47,6 +47,7 @@ import {
   FeedbackTunnelEffect,
   OpiumTrailsEffect,
   FlowSmearEffect,
+  ReactionDiffusionEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -114,6 +115,7 @@ export class EffectPipeline {
   feedbackTunnel: FeedbackTunnelEffect | null = null
   opiumTrails: OpiumTrailsEffect | null = null
   flowSmear: FlowSmearEffect | null = null
+  reactionDiffusion: ReactionDiffusionEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -224,6 +226,7 @@ export class EffectPipeline {
     this.feedbackTunnel = new FeedbackTunnelEffect()
     this.opiumTrails = new OpiumTrailsEffect()
     this.flowSmear = new FlowSmearEffect()
+    this.reactionDiffusion = new ReactionDiffusionEffect()
   }
 
   // Map effect IDs to effect instances
@@ -275,6 +278,7 @@ export class EffectPipeline {
       case 'feedback_tunnel': return this.feedbackTunnel
       case 'opium_trails': return this.opiumTrails
       case 'flow_smear': return this.flowSmear
+      case 'reaction_diffusion': return this.reactionDiffusion
       default: return null
     }
   }
@@ -406,6 +410,7 @@ export class EffectPipeline {
       'feedback', 'datamosh', 'motion_extract', 'echo_trail',
       'time_smear', 'freeze_mask', 'track_motion',
       'feedback_tunnel', 'opium_trails', 'flow_smear',
+      'reaction_diffusion',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
@@ -414,6 +419,9 @@ export class EffectPipeline {
       track_motion: this.motionTrace,
       feedback_tunnel: this.feedbackTunnel, opium_trails: this.opiumTrails,
       flow_smear: this.flowSmear,
+      // No captureFrame — advances its own sim in update(), not tied to the
+      // composited output — but still needs releaseTargets() on disable.
+      reaction_diffusion: this.reactionDiffusion,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]
@@ -657,5 +665,6 @@ export class EffectPipeline {
     this.feedbackTunnel?.dispose()
     this.opiumTrails?.dispose()
     this.flowSmear?.dispose()
+    this.reactionDiffusion?.dispose()
   }
 }

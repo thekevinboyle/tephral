@@ -108,3 +108,9 @@ export type { RippleWarpParams } from './RippleWarpEffect'
 
 export { FractalDomainEffect, DEFAULT_FRACTAL_DOMAIN_PARAMS } from './FractalDomainEffect'
 export type { FractalDomainParams } from './FractalDomainEffect'
+
+export { ThermalEffect, DEFAULT_THERMAL_PARAMS } from './ThermalEffect'
+export type { ThermalParams } from './ThermalEffect'
+
+export { Y2kDigicamEffect, DEFAULT_Y2K_PARAMS } from './Y2kDigicamEffect'
+export type { Y2kParams } from './Y2kDigicamEffect'

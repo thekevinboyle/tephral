@@ -37,6 +37,8 @@ import {
   KaleidoscopeEffect,
   RippleWarpEffect,
   FractalDomainEffect,
+  ThermalEffect,
+  Y2kDigicamEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -94,6 +96,8 @@ export class EffectPipeline {
   kaleidoscope: KaleidoscopeEffect | null = null
   rippleWarp: RippleWarpEffect | null = null
   fractalDomain: FractalDomainEffect | null = null
+  thermal: ThermalEffect | null = null
+  y2kDigicam: Y2kDigicamEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -194,6 +198,8 @@ export class EffectPipeline {
     this.kaleidoscope = new KaleidoscopeEffect()
     this.rippleWarp = new RippleWarpEffect()
     this.fractalDomain = new FractalDomainEffect()
+    this.thermal = new ThermalEffect()
+    this.y2kDigicam = new Y2kDigicamEffect()
   }
 
   // Map effect IDs to effect instances
@@ -235,6 +241,8 @@ export class EffectPipeline {
       case 'kaleidoscope': return this.kaleidoscope
       case 'ripple_warp': return this.rippleWarp
       case 'fractal_domain': return this.fractalDomain
+      case 'thermal': return this.thermal
+      case 'y2k_digicam': return this.y2kDigicam
       default: return null
     }
   }
@@ -494,6 +502,8 @@ export class EffectPipeline {
     this.kaleidoscope?.setAspect(aspect)
     this.rippleWarp?.setAspect(aspect)
     this.fractalDomain?.setAspect(aspect)
+    this.thermal?.setAspect(aspect)
+    this.y2kDigicam?.setAspect(aspect)
   }
 
   private updateQuadScale() {
@@ -595,5 +605,7 @@ export class EffectPipeline {
     this.kaleidoscope?.dispose()
     this.rippleWarp?.dispose()
     this.fractalDomain?.dispose()
+    this.thermal?.dispose()
+    this.y2kDigicam?.dispose()
   }
 }

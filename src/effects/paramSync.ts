@@ -145,6 +145,8 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.kaleidoscope?.updateParams({ ...s.kaleidoscopeParams, mix: getMix('kaleidoscope') })
     pipeline.rippleWarp?.updateParams({ ...s.rippleWarpParams, mix: getMix('ripple_warp') })
     pipeline.fractalDomain?.updateParams({ ...s.fractalDomainParams, mix: getMix('fractal_domain') })
+    pipeline.thermal?.updateParams({ ...s.thermalParams, mix: getMix('thermal') })
+    pipeline.y2kDigicam?.updateParams({ ...s.y2kParams, mix: getMix('y2k_digicam') })
   }
 
   // Initial push so a fresh pipeline gets current values immediately

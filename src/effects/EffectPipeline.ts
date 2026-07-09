@@ -48,6 +48,7 @@ import {
   OpiumTrailsEffect,
   FlowSmearEffect,
   ReactionDiffusionEffect,
+  RuttEtraEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -116,6 +117,7 @@ export class EffectPipeline {
   opiumTrails: OpiumTrailsEffect | null = null
   flowSmear: FlowSmearEffect | null = null
   reactionDiffusion: ReactionDiffusionEffect | null = null
+  ruttEtra: RuttEtraEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -227,6 +229,7 @@ export class EffectPipeline {
     this.opiumTrails = new OpiumTrailsEffect()
     this.flowSmear = new FlowSmearEffect()
     this.reactionDiffusion = new ReactionDiffusionEffect()
+    this.ruttEtra = new RuttEtraEffect()
   }
 
   // Map effect IDs to effect instances
@@ -279,6 +282,7 @@ export class EffectPipeline {
       case 'opium_trails': return this.opiumTrails
       case 'flow_smear': return this.flowSmear
       case 'reaction_diffusion': return this.reactionDiffusion
+      case 'rutt_etra': return this.ruttEtra
       default: return null
     }
   }
@@ -410,7 +414,7 @@ export class EffectPipeline {
       'feedback', 'datamosh', 'motion_extract', 'echo_trail',
       'time_smear', 'freeze_mask', 'track_motion',
       'feedback_tunnel', 'opium_trails', 'flow_smear',
-      'reaction_diffusion',
+      'reaction_diffusion', 'rutt_etra',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
@@ -419,9 +423,11 @@ export class EffectPipeline {
       track_motion: this.motionTrace,
       feedback_tunnel: this.feedbackTunnel, opium_trails: this.opiumTrails,
       flow_smear: this.flowSmear,
-      // No captureFrame — advances its own sim in update(), not tied to the
-      // composited output — but still needs releaseTargets() on disable.
+      // No captureFrame — advances its own sim/internal scene in update(),
+      // not tied to the composited output — but still needs
+      // releaseTargets() on disable.
       reaction_diffusion: this.reactionDiffusion,
+      rutt_etra: this.ruttEtra,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]
@@ -666,5 +672,6 @@ export class EffectPipeline {
     this.opiumTrails?.dispose()
     this.flowSmear?.dispose()
     this.reactionDiffusion?.dispose()
+    this.ruttEtra?.dispose()
   }
 }

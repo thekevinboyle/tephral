@@ -141,3 +141,6 @@ export type { FlowSmearParams } from './FlowSmearEffect'
 
 export { ReactionDiffusionEffect, DEFAULT_REACTION_DIFFUSION_PARAMS } from './ReactionDiffusionEffect'
 export type { ReactionDiffusionParams } from './ReactionDiffusionEffect'
+
+export { RuttEtraEffect, DEFAULT_RUTT_ETRA_PARAMS } from './RuttEtraEffect'
+export type { RuttEtraParams } from './RuttEtraEffect'

@@ -156,6 +156,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.opiumTrails?.updateParams({ ...s.opiumTrailsParams, mix: getMix('opium_trails') })
     pipeline.flowSmear?.updateParams({ ...s.flowSmearParams, mix: getMix('flow_smear') })
     pipeline.reactionDiffusion?.updateParams({ ...s.reactionDiffusionParams, mix: getMix('reaction_diffusion') })
+    pipeline.ruttEtra?.updateParams({ ...s.ruttEtraParams, mix: getMix('rutt_etra') })
   }
 
   // Initial push so a fresh pipeline gets current values immediately

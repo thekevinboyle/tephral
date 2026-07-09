@@ -9,6 +9,7 @@ import { useAcidStore } from '../stores/acidStore'
 import { useAsciiRenderStore } from '../stores/asciiRenderStore'
 import { useMediaStore } from '../stores/mediaStore'
 import { useRoutingStore } from '../stores/routingStore'
+import { useTrendStore } from '../stores/trendStore'
 import { useRecordingStore } from '../stores/recordingStore'
 import { useDestructionModeStore } from '../stores/destructionModeStore'
 import { useDestructionStore } from '../stores/destructionStore'
@@ -122,6 +123,26 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
   // Landmarks for face/hands trace effects
   const { faces, hands } = useLandmarksStore()
+
+  // Trend effects (Phase 2) — enabled flags only; params flow through paramSync.ts
+  const {
+    halationEnabled,
+    y2kEnabled,
+    thermalEnabled,
+    dreamcoreEnabled,
+    anamorphicEnabled,
+    flowSmearEnabled,
+    feedbackTunnelEnabled,
+    opiumTrailsEnabled,
+    ruttEtraEnabled,
+    reactionDiffusionEnabled,
+    physarumEnabled,
+    kaleidoscopeEnabled,
+    liquidMorphEnabled,
+    crystallizeEnabled,
+    rippleWarpEnabled,
+    fractalDomainEnabled,
+  } = useTrendStore()
 
   // Trace mask routing
   const { effectTraceMask } = useRoutingStore()
@@ -241,6 +262,23 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       colorTraceEnabled: getEffectiveEnabled('track_color', colorEnabled),
       faceTraceEnabled: getEffectiveEnabled('track_face', faceEnabled),
       handsTraceEnabled: getEffectiveEnabled('track_hands', handsEnabled),
+      // Trend effects (Phase 2) - not affected by glitchEnabled
+      halationEnabled: getEffectiveEnabled('halation', halationEnabled && !effectBypassed['halation']),
+      y2kEnabled: getEffectiveEnabled('y2k_digicam', y2kEnabled && !effectBypassed['y2k_digicam']),
+      thermalEnabled: getEffectiveEnabled('thermal', thermalEnabled && !effectBypassed['thermal']),
+      dreamcoreEnabled: getEffectiveEnabled('dreamcore', dreamcoreEnabled && !effectBypassed['dreamcore']),
+      anamorphicEnabled: getEffectiveEnabled('anamorphic', anamorphicEnabled && !effectBypassed['anamorphic']),
+      flowSmearEnabled: getEffectiveEnabled('flow_smear', flowSmearEnabled && !effectBypassed['flow_smear']),
+      feedbackTunnelEnabled: getEffectiveEnabled('feedback_tunnel', feedbackTunnelEnabled && !effectBypassed['feedback_tunnel']),
+      opiumTrailsEnabled: getEffectiveEnabled('opium_trails', opiumTrailsEnabled && !effectBypassed['opium_trails']),
+      ruttEtraEnabled: getEffectiveEnabled('rutt_etra', ruttEtraEnabled && !effectBypassed['rutt_etra']),
+      reactionDiffusionEnabled: getEffectiveEnabled('reaction_diffusion', reactionDiffusionEnabled && !effectBypassed['reaction_diffusion']),
+      physarumEnabled: getEffectiveEnabled('physarum', physarumEnabled && !effectBypassed['physarum']),
+      kaleidoscopeEnabled: getEffectiveEnabled('kaleidoscope', kaleidoscopeEnabled && !effectBypassed['kaleidoscope']),
+      liquidMorphEnabled: getEffectiveEnabled('liquid_morph', liquidMorphEnabled && !effectBypassed['liquid_morph']),
+      crystallizeEnabled: getEffectiveEnabled('crystallize', crystallizeEnabled && !effectBypassed['crystallize']),
+      rippleWarpEnabled: getEffectiveEnabled('ripple_warp', rippleWarpEnabled && !effectBypassed['ripple_warp']),
+      fractalDomainEnabled: getEffectiveEnabled('fractal_domain', fractalDomainEnabled && !effectBypassed['fractal_domain']),
       bypassActive,
       crossfaderPosition,
       hasSourceTexture: !!mediaTexture && !slicerEnabled,
@@ -308,6 +346,10 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     brightEnabled, edgeEnabled, colorEnabled, motionEnabled, faceEnabled, handsEnabled,
     effectTraceMask,
     videoElement,
+    halationEnabled, y2kEnabled, thermalEnabled, dreamcoreEnabled, anamorphicEnabled,
+    flowSmearEnabled, feedbackTunnelEnabled, opiumTrailsEnabled, ruttEtraEnabled,
+    reactionDiffusionEnabled, physarumEnabled, kaleidoscopeEnabled, liquidMorphEnabled,
+    crystallizeEnabled, rippleWarpEnabled, fractalDomainEnabled,
   ])
 
   // Landmark data flows at detection cadence — keep it out of the structural effect

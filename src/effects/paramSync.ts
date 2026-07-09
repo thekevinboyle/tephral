@@ -8,6 +8,7 @@ import { useDestructionModeStore } from '../stores/destructionModeStore'
 import { useMorphStore } from '../stores/morphStore'
 import { useVisionTrackingStore } from '../stores/visionTrackingStore'
 import { useRoutingStore } from '../stores/routingStore'
+import { useTrendStore } from '../stores/trendStore'
 
 /**
  * Pushes effect parameters straight into shader uniforms via zustand
@@ -135,9 +136,17 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.setCrossfaderPosition(useRoutingStore.getState().crossfaderPosition)
   }
 
+  // Trend effects (Phase 2) — empty until each effect task adds its own
+  // `pipeline.<camel>?.updateParams({ ...s.<camel>Params, mix: getMix('<id>') })`
+  // line here (the optional-chain no-ops until that effect's pipeline
+  // property exists, matching the null-filtered enabledMap pattern).
+  const pushTrend = () => {
+    // const s = useTrendStore.getState()
+  }
+
   // Initial push so a fresh pipeline gets current values immediately
   pushGlitch(); pushMotion(); pushDots(); pushAscii()
-  pushDestruction(); pushMorph(); pushTrace(); pushCrossfader()
+  pushDestruction(); pushMorph(); pushTrace(); pushCrossfader(); pushTrend()
 
   // Subscribe with reference-equality slice checks (zustand v5 vanilla
   // subscribe gives (state, prevState)). effectMix lives in the glitch
@@ -146,7 +155,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     useGlitchEngineStore.subscribe((s, prev) => {
       if (s.effectMix !== prev.effectMix) {
         pushGlitch(); pushMotion(); pushDots(); pushAscii()
-        pushDestruction(); pushMorph()
+        pushDestruction(); pushMorph(); pushTrend()
         return
       }
       if (
@@ -189,6 +198,18 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     }),
     useRoutingStore.subscribe((s, prev) => {
       if (s.crossfaderPosition !== prev.crossfaderPosition) pushCrossfader()
+    }),
+    useTrendStore.subscribe((s, prev) => {
+      if (
+        s.halationParams !== prev.halationParams || s.y2kParams !== prev.y2kParams ||
+        s.thermalParams !== prev.thermalParams || s.dreamcoreParams !== prev.dreamcoreParams ||
+        s.anamorphicParams !== prev.anamorphicParams || s.flowSmearParams !== prev.flowSmearParams ||
+        s.feedbackTunnelParams !== prev.feedbackTunnelParams || s.opiumTrailsParams !== prev.opiumTrailsParams ||
+        s.ruttEtraParams !== prev.ruttEtraParams || s.reactionDiffusionParams !== prev.reactionDiffusionParams ||
+        s.physarumParams !== prev.physarumParams || s.kaleidoscopeParams !== prev.kaleidoscopeParams ||
+        s.liquidMorphParams !== prev.liquidMorphParams || s.crystallizeParams !== prev.crystallizeParams ||
+        s.rippleWarpParams !== prev.rippleWarpParams || s.fractalDomainParams !== prev.fractalDomainParams
+      ) pushTrend()
     }),
     // Exiting destruction mode hands datamosh uniforms back to paramSync —
     // re-push immediately so the user's datamoshParams restore without

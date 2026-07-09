@@ -258,6 +258,24 @@ export class EffectPipeline {
     colorTraceEnabled: boolean
     faceTraceEnabled: boolean
     handsTraceEnabled: boolean
+    // Trend effects (Phase 2) — enabled flags only; getEffectById cases land
+    // one per effect task, so these are inert (null-filtered) until then.
+    halationEnabled: boolean
+    y2kEnabled: boolean
+    thermalEnabled: boolean
+    dreamcoreEnabled: boolean
+    anamorphicEnabled: boolean
+    flowSmearEnabled: boolean
+    feedbackTunnelEnabled: boolean
+    opiumTrailsEnabled: boolean
+    ruttEtraEnabled: boolean
+    reactionDiffusionEnabled: boolean
+    physarumEnabled: boolean
+    kaleidoscopeEnabled: boolean
+    liquidMorphEnabled: boolean
+    crystallizeEnabled: boolean
+    rippleWarpEnabled: boolean
+    fractalDomainEnabled: boolean
     bypassActive: boolean
     crossfaderPosition: number
     hasSourceTexture: boolean
@@ -303,6 +321,23 @@ export class EffectPipeline {
       track_color: config.colorTraceEnabled,
       track_face: config.faceTraceEnabled,
       track_hands: config.handsTraceEnabled,
+      // Trend effects (Phase 2)
+      halation: config.halationEnabled,
+      y2k_digicam: config.y2kEnabled,
+      thermal: config.thermalEnabled,
+      dreamcore: config.dreamcoreEnabled,
+      anamorphic: config.anamorphicEnabled,
+      flow_smear: config.flowSmearEnabled,
+      feedback_tunnel: config.feedbackTunnelEnabled,
+      opium_trails: config.opiumTrailsEnabled,
+      rutt_etra: config.ruttEtraEnabled,
+      reaction_diffusion: config.reactionDiffusionEnabled,
+      physarum: config.physarumEnabled,
+      kaleidoscope: config.kaleidoscopeEnabled,
+      liquid_morph: config.liquidMorphEnabled,
+      crystallize: config.crystallizeEnabled,
+      ripple_warp: config.rippleWarpEnabled,
+      fractal_domain: config.fractalDomainEnabled,
     }
 
     // Gate temporal frame-captures + release GPU targets on disable. This

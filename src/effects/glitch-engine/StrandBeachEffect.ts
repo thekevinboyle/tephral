@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
+import { COLOR_UTILS_GLSL } from './glsl-utils'
 
 // GPU port of src/components/overlays/strand/beachStaticEffect.ts (CPU ground
 // truth). The CPU version keeps two pieces of module-level state: a
@@ -40,7 +41,7 @@ import { Effect, BlendFunction } from 'postprocessing'
 // there's no "renders on black" mode on STRAND, so this shader has no
 // preserveVideo uniform; effectMix is the only blend control, same
 // contract as every other port in this file.
-const fragmentShader = `
+const fragmentShader = COLOR_UTILS_GLSL + /* glsl */ `
 uniform float grainAmount;
 uniform float invertProbability;
 uniform float flickerSpeed;
@@ -82,17 +83,25 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     }
   }
 
-  vec3 color = inputColor.rgb;
+  // The CPU reads/writes sRGB bytes: invert is '255 - byte' and grain noise
+  // is a byte-space ±50/255 offset added AFTER the invert. This pipeline's
+  // Effect passes work in scene-linear light, so convert to sRGB once,
+  // reproduce both operations there in the CPU's order, then convert back
+  // to linear immediately before outputColor (same pattern as
+  // StrandSeamEffect's screen-blend compositing).
+  vec3 colorSRGB = linearToSRGB(clamp(inputColor.rgb, 0.0, 1.0));
   if (invert) {
-    color = 1.0 - color;
+    colorSRGB = 1.0 - colorSRGB;
   }
 
   float grainRoll = hash(pixelCoord + vec2(time * 997.13, time * 613.71));
   if (grainRoll < grainAmount) {
     float noiseRoll = hash(pixelCoord * 1.37 + vec2(time * 811.37, time * 457.19));
     float noise = (noiseRoll - 0.5) * (100.0 / 255.0);
-    color = clamp(color + noise, 0.0, 1.0);
+    colorSRGB = clamp(colorSRGB + noise, 0.0, 1.0);
   }
+
+  vec3 color = sRGBToLinear(colorSRGB);
 
   outputColor = mix(inputColor, vec4(color, 1.0), effectMix);
 }

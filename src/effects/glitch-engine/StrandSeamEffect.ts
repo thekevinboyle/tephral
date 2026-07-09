@@ -119,30 +119,37 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   vec3 colorSRGB = linearToSRGB(clamp(color, 0.0, 1.0));
 
   if (pixelCoord.x >= leftBoundary && pixelCoord.x <= rightBoundary) {
-    // Void gap: sparse flickering particles. CPU draws a fixed COUNT (50)
-    // per frame at radius 1-2px regardless of gap width, so derive a
-    // per-cell hit probability from the current gap area to keep the
-    // expected fleck COUNT constant, then place a small randomly-jittered
-    // dot within the hit cell (rather than filling the whole cell) so
-    // fleck SIZE also matches the CPU's tiny circles.
-    float cellSize = 12.0;
-    float gapPixW = max(rightBoundary - leftBoundary, 0.001);
-    float prob = clamp(50.0 * cellSize * cellSize / (gapPixW * height), 0.0, 1.0);
+    // Void gap: sparse flickering particles. CPU seeds them with
+    // 'x = centerX - gapWidth/2 + Math.random()*gapWidth', i.e. confined to
+    // abs(x - centerX) < gapWidth*0.5 — a FIXED band that does not widen
+    // with parallaxAmount, unlike the render region above (which does widen,
+    // via leftOffset/rightOffset). Gate the hash test to that fixed band
+    // rather than the full boundary-to-boundary span. CPU draws a fixed
+    // COUNT (50) per frame at radius 1-2px regardless of band width, so
+    // derive a per-cell hit probability from the band's own area
+    // (gapWidth*height, not the parallax-widened gap) to keep the expected
+    // fleck COUNT constant, then place a small randomly-jittered dot within
+    // the hit cell (rather than filling the whole cell) so fleck SIZE also
+    // matches the CPU's tiny circles.
+    if (abs(pixelCoord.x - centerX) < gapWidth * 0.5) {
+      float cellSize = 12.0;
+      float prob = clamp(50.0 * cellSize * cellSize / (max(gapWidth, 0.001) * height), 0.0, 1.0);
 
-    vec2 cell = floor(pixelCoord / cellSize);
-    float frameBucket = floor(time * 60.0);
-    float roll = seamHash(cell + vec2(frameBucket * 13.7, frameBucket * 7.3));
-    if (roll < prob) {
-      vec2 jitter = vec2(
-        seamHash(cell + vec2(3.1, frameBucket)),
-        seamHash(cell + vec2(7.9, frameBucket))
-      );
-      vec2 dotCenter = (cell + jitter) * cellSize;
-      float dotRadius = 1.0 + seamHash(cell + vec2(5.3, frameBucket)) * 1.0;
-      if (distance(pixelCoord, dotCenter) < dotRadius) {
-        float a = 0.1 + seamHash(cell + vec2(1.7, frameBucket)) * 0.2;
-        vec3 particleColor = vec3(100.0, 50.0, 150.0) / 255.0;
-        colorSRGB = mix(colorSRGB, blendScreen(colorSRGB, particleColor), a);
+      vec2 cell = floor(pixelCoord / cellSize);
+      float frameBucket = floor(time * 60.0);
+      float roll = seamHash(cell + vec2(frameBucket * 13.7, frameBucket * 7.3));
+      if (roll < prob) {
+        vec2 jitter = vec2(
+          seamHash(cell + vec2(3.1, frameBucket)),
+          seamHash(cell + vec2(7.9, frameBucket))
+        );
+        vec2 dotCenter = (cell + jitter) * cellSize;
+        float dotRadius = 1.0 + seamHash(cell + vec2(5.3, frameBucket)) * 1.0;
+        if (distance(pixelCoord, dotCenter) < dotRadius) {
+          float a = 0.1 + seamHash(cell + vec2(1.7, frameBucket)) * 0.2;
+          vec3 particleColor = vec3(100.0, 50.0, 150.0) / 255.0;
+          colorSRGB = mix(colorSRGB, blendScreen(colorSRGB, particleColor), a);
+        }
       }
     }
   }

@@ -74,12 +74,20 @@ interface RoutingState {
 }
 
 // Default effect order based on EFFECTS config (includes all effect pages)
-const defaultEffectOrder = [
+export const defaultEffectOrder = [
   ...EFFECTS.map(e => e.id),
   ...STRAND_EFFECTS.map(e => e.id),
   ...MOTION_EFFECTS.map(e => e.id),
   ...DESTRUCTION_EFFECTS.map(e => e.id),
 ]
+
+// Reconciles a loaded effectOrder (e.g. from an old saved preset/bank) against the
+// canonical default order, appending any ids the loaded order is missing. Prevents
+// effects added after a preset was saved from being silently dropped from the chain.
+export const unionWithDefaultEffectOrder = (loadedOrder: string[]): string[] => {
+  const missing = defaultEffectOrder.filter(id => !loadedOrder.includes(id))
+  return [...loadedOrder, ...missing]
+}
 
 // Initialize empty banks (4 banks × 4 presets)
 const createEmptyBanks = (): (RoutingPreset | null)[][] => {

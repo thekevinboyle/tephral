@@ -5,7 +5,7 @@ import { useAsciiRenderStore } from './asciiRenderStore'
 import { useStippleStore } from './stippleStore'
 import { useContourStore } from './contourStore'
 import { useLandmarksStore } from './landmarksStore'
-import { useRoutingStore } from './routingStore'
+import { useRoutingStore, unionWithDefaultEffectOrder } from './routingStore'
 import { useSlicerStore } from './slicerStore'
 import { useTrendStore } from './trendStore'
 
@@ -281,7 +281,9 @@ function applyEffects(effects: BankSnapshot): void {
   })
 
   useRoutingStore.setState({
-    effectOrder: [...effects.effectOrder],
+    // Union in any effect ids added after this preset was saved so they aren't
+    // silently dropped from the render chain (see unionWithDefaultEffectOrder).
+    effectOrder: unionWithDefaultEffectOrder(effects.effectOrder),
   })
 
   if (effects.slicer) {

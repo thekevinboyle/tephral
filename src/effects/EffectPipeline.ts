@@ -328,8 +328,8 @@ export class EffectPipeline {
     colorTraceEnabled: boolean
     faceTraceEnabled: boolean
     handsTraceEnabled: boolean
-    // Trend effects (Phase 2) — enabled flags only; getEffectById cases land
-    // one per effect task, so these are inert (null-filtered) until then.
+    // Trend effects (Phase 2) — enabled flags driving each effect's entry
+    // in getEffectById() and the updateEffects()/enabledMap wiring below.
     halationEnabled: boolean
     y2kEnabled: boolean
     thermalEnabled: boolean

@@ -38,8 +38,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
 // ─── Offscreen Gray-Scott sim shader (raw THREE.ShaderMaterial — this never
 // touches the postprocessing composer's input/output chain; it only reads
-// its own ping-pong state plus the current video frame passed in via
-// update()'s inputBuffer). ──────────────────────────────────────────────────
+// its own ping-pong state plus the effect chain's current input buffer
+// (upstream effects included) passed in via update()'s inputBuffer). ───────
 const SIM_VERTEX_SHADER = /* glsl */ `
 varying vec2 vUv;
 void main() {
@@ -220,10 +220,10 @@ export class ReactionDiffusionEffect extends Effect {
 
   // Advances the Gray-Scott sim `speed` steps this frame. Unlike the
   // captureFrame-based temporal effects, this effect has no output-capture
-  // path — the sim doesn't depend on the composited frame, only on the raw
-  // video input — so all its GPU work happens here, gated by the pipeline's
-  // temporalEnabled bookkeeping but never wired into render()'s
-  // captureFrame block.
+  // path — the sim doesn't depend on the composited frame, only on the
+  // effect chain's current input buffer (upstream effects included) — so
+  // all its GPU work happens here, gated by the pipeline's temporalEnabled
+  // bookkeeping but never wired into render()'s captureFrame block.
   update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
     if (!this.simMaterial || !this.simScene || !this.simCamera || !this.readTarget || !this.writeTarget) return
 

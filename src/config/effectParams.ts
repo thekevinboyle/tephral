@@ -1324,6 +1324,8 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
         apply: (v) => trd().updateFlowSmearParams({ decay: v }), read: () => trd().flowSmearParams.decay },
       { id: 'blur', label: 'BLUR', min: 0, max: 1, step: 0.01,
         apply: (v) => trd().updateFlowSmearParams({ blur: v }), read: () => trd().flowSmearParams.blur },
+      { id: 'structure', label: 'STRUCT', min: 0, max: 1, step: 0.01,
+        apply: (v) => trd().updateFlowSmearParams({ structure: v }), read: () => trd().flowSmearParams.structure },
       { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
         apply: (v) => trd().updateFlowSmearParams({ mix: v }), read: () => trd().flowSmearParams.mix },
     ],

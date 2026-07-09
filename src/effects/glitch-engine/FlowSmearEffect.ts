@@ -14,6 +14,7 @@ uniform sampler2D accumTexture;
 uniform float strength;
 uniform float decay;
 uniform float blur;
+uniform float structure;
 uniform vec2 resolution;
 uniform bool hasCapturedFrame;
 uniform float effectMix;
@@ -58,7 +59,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   // flow effects fake the at-rest look by riding image contrast instead.
   // Actual inter-frame motion (temporalMotion) dominates this by roughly an
   // order of magnitude whenever the source is genuinely moving.
-  float motionMagnitude = temporalMotion + gradMag * 0.15;
+  float motionMagnitude = temporalMotion + gradMag * structure;
 
   // ─── Sample the accumulation buffer displaced along the flow ────────
   vec2 displacedUV = clamp(uv + direction * motionMagnitude * strength * texel, 0.001, 0.999);
@@ -94,6 +95,7 @@ export interface FlowSmearParams {
   strength: number  // 0-100
   decay: number      // 0-1
   blur: number        // 0-1
+  structure: number    // 0-1, resting painterly push from image contrast
   mix: number          // 0-1, dry/wet
 }
 
@@ -101,6 +103,7 @@ export const DEFAULT_FLOW_SMEAR_PARAMS: FlowSmearParams = {
   strength: 40,
   decay: 0.9,
   blur: 0.3,
+  structure: 0.15,
   mix: 1,
 }
 
@@ -131,6 +134,7 @@ export class FlowSmearEffect extends Effect {
         ['strength', new THREE.Uniform(p.strength)],
         ['decay', new THREE.Uniform(p.decay)],
         ['blur', new THREE.Uniform(p.blur)],
+        ['structure', new THREE.Uniform(p.structure)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1, 1))],
         ['hasCapturedFrame', new THREE.Uniform(false)],
         ['effectMix', new THREE.Uniform(p.mix)],
@@ -208,6 +212,7 @@ export class FlowSmearEffect extends Effect {
     if (params.strength !== undefined) this.uniforms.get('strength')!.value = params.strength
     if (params.decay !== undefined) this.uniforms.get('decay')!.value = params.decay
     if (params.blur !== undefined) this.uniforms.get('blur')!.value = params.blur
+    if (params.structure !== undefined) this.uniforms.get('structure')!.value = params.structure
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
   }
 

@@ -104,6 +104,7 @@ export interface FlowSmearParams {
   strength: number  // 0-100
   decay: number       // 0-1
   blur: number         // 0-1
+  structure: number     // 0-1, resting painterly push from image contrast
   mix: number           // 0-1, dry/wet
 }
 
@@ -111,6 +112,7 @@ export const DEFAULT_FLOW_SMEAR_PARAMS: FlowSmearParams = {
   strength: 40,
   decay: 0.9,
   blur: 0.3,
+  structure: 0.15,
   mix: 1,
 }
 

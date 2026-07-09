@@ -56,14 +56,25 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   float maxRadius = length(center);
 
   // Triangle wave: 0 -> maxRadius -> 0, period derived from the CPU's
-  // speed*200 px/sec accumulation rate.
-  float speedPx = max(voidSpeed, 0.0001) * 200.0;
-  float halfPeriod = maxRadius / speedPx;
-  float period = halfPeriod * 2.0;
-  float phase = fract(time / period);
-  float currentRadius = phase < 0.5
-    ? phase * 2.0 * maxRadius
-    : (1.0 - phase) * 2.0 * maxRadius;
+  // speed*200 px/sec accumulation rate. voidSpeed <= 0 is a genuine CPU
+  // edge case: currentRadius += speed*200*deltaTime adds zero every
+  // frame, so the CPU's accumulator freezes at its starting value (0) and
+  // never advances -- the ring never grows. An epsilon floor on speedPx
+  // would instead produce a near-infinite-period crawl that eventually
+  // reaches a nonzero radius, which is not what the CPU does. Guard
+  // directly instead: pin currentRadius to 0 when voidSpeed <= 0.
+  float speedPx = voidSpeed * 200.0;
+  float currentRadius;
+  if (speedPx <= 0.0) {
+    currentRadius = 0.0;
+  } else {
+    float halfPeriod = maxRadius / speedPx;
+    float period = halfPeriod * 2.0;
+    float phase = fract(time / period);
+    currentRadius = phase < 0.5
+      ? phase * 2.0 * maxRadius
+      : (1.0 - phase) * 2.0 * maxRadius;
+  }
 
   vec2 delta = pixelCoord - center;
   float dist = length(delta);

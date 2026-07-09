@@ -24,12 +24,16 @@ import { Effect, BlendFunction } from 'postprocessing'
 // flickers every frame like the CPU's fresh Math.random() calls, not a
 // static dither pattern.
 //
-// flickerSpeed === 0 is a genuine CPU edge case: `1/flickerSpeed` is
-// Infinity, so `time - lastFlickerTime` (bounded) never exceeds it and
-// invertBlocks stays permanently empty (initialized empty, never
-// populated) — no blocks ever appear. Reproduced explicitly below rather
-// than relying on floor(time*0)=0 (which would instead render one static,
-// never-changing block set).
+// flickerSpeed === 0 is a genuine CPU edge case, but NOT the one it looks
+// like: `1/flickerSpeed` is Infinity, so `time - lastFlickerTime` (bounded)
+// never exceeds it and the re-roll branch never re-fires — but the CPU's
+// `invertBlocks` array was already populated by the very first frame's
+// re-roll (time=0 always exceeds the initial `lastFlickerTime=0` check on
+// frame 1, or a prior nonzero flickerSpeed already populated it), so the
+// CPU FREEZES on whatever block set it last rolled rather than clearing to
+// zero blocks. Reproduced by pinning the hash bucket to a constant (0) when
+// flickerSpeed <= 0 while leaving blockCount untouched — the block set
+// still renders, just held static instead of re-rolling every frame.
 //
 // The CPU always writes a full opaque frame (putImageData covers every
 // pixel, sourced from the input frame with only invert/grain applied) —
@@ -53,8 +57,8 @@ float hash(vec2 p) {
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   vec2 pixelCoord = uv * resolution;
 
-  int blockCount = flickerSpeed > 0.0 ? int(floor(invertProbability * 20.0)) : 0;
-  float bucket = floor(time * flickerSpeed);
+  int blockCount = int(floor(invertProbability * 20.0));
+  float bucket = flickerSpeed > 0.0 ? floor(time * flickerSpeed) : 0.0;
 
   bool invert = false;
   for (int i = 0; i < MAX_BLOCKS; i++) {

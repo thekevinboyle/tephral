@@ -46,6 +46,7 @@ import {
   CrystallizeEffect,
   FeedbackTunnelEffect,
   OpiumTrailsEffect,
+  FlowSmearEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -112,6 +113,7 @@ export class EffectPipeline {
   crystallize: CrystallizeEffect | null = null
   feedbackTunnel: FeedbackTunnelEffect | null = null
   opiumTrails: OpiumTrailsEffect | null = null
+  flowSmear: FlowSmearEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -221,6 +223,7 @@ export class EffectPipeline {
     this.crystallize = new CrystallizeEffect()
     this.feedbackTunnel = new FeedbackTunnelEffect()
     this.opiumTrails = new OpiumTrailsEffect()
+    this.flowSmear = new FlowSmearEffect()
   }
 
   // Map effect IDs to effect instances
@@ -271,6 +274,7 @@ export class EffectPipeline {
       case 'crystallize': return this.crystallize
       case 'feedback_tunnel': return this.feedbackTunnel
       case 'opium_trails': return this.opiumTrails
+      case 'flow_smear': return this.flowSmear
       default: return null
     }
   }
@@ -401,7 +405,7 @@ export class EffectPipeline {
     const temporalIds = [
       'feedback', 'datamosh', 'motion_extract', 'echo_trail',
       'time_smear', 'freeze_mask', 'track_motion',
-      'feedback_tunnel', 'opium_trails',
+      'feedback_tunnel', 'opium_trails', 'flow_smear',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
@@ -409,6 +413,7 @@ export class EffectPipeline {
       time_smear: this.timeSmear, freeze_mask: this.freezeMask,
       track_motion: this.motionTrace,
       feedback_tunnel: this.feedbackTunnel, opium_trails: this.opiumTrails,
+      flow_smear: this.flowSmear,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]
@@ -571,6 +576,7 @@ export class EffectPipeline {
       // Trend effects (Phase 2)
       if (this.temporalEnabled['feedback_tunnel']) this.feedbackTunnel?.captureFrame(renderer, outputBuffer)
       if (this.temporalEnabled['opium_trails']) this.opiumTrails?.captureFrame(renderer, outputBuffer)
+      if (this.temporalEnabled['flow_smear']) this.flowSmear?.captureFrame(renderer, outputBuffer)
     }
   }
 
@@ -650,5 +656,6 @@ export class EffectPipeline {
     this.crystallize?.dispose()
     this.feedbackTunnel?.dispose()
     this.opiumTrails?.dispose()
+    this.flowSmear?.dispose()
   }
 }

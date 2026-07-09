@@ -135,3 +135,6 @@ export type { FeedbackTunnelParams } from './FeedbackTunnelEffect'
 
 export { OpiumTrailsEffect, DEFAULT_OPIUM_TRAILS_PARAMS } from './OpiumTrailsEffect'
 export type { OpiumTrailsParams } from './OpiumTrailsEffect'
+
+export { FlowSmearEffect, DEFAULT_FLOW_SMEAR_PARAMS } from './FlowSmearEffect'
+export type { FlowSmearParams } from './FlowSmearEffect'

@@ -156,7 +156,7 @@ void main() {
 
   float lum = dot(texture2D(video, vUv).rgb, vec3(0.299, 0.587, 0.114));
 
-  float v = blur * decay + lum * lumaBias * 0.14;
+  float v = min(blur * decay + lum * lumaBias * 0.14, 4.0);
   gl_FragColor = vec4(v, v, v, 1.0);
 }
 `

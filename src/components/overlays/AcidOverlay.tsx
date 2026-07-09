@@ -16,7 +16,9 @@ import { getSharedFrame } from './sharedReadback'
 // EffectPipeline (Phase 3 port) — see AcidGlyphEffect.ts / AcidIconsEffect.ts
 // import { renderGlyphs } from './acid/glyphEffect'
 // import { renderIcons } from './acid/iconsEffect'
-import { renderContour } from './acid/contourEffect'
+// NOTE: renderContour is now handled by GPU shader in EffectPipeline
+// (Phase 3 port) — see AcidContourEffect.ts
+// import { renderContour } from './acid/contourEffect'
 import { renderDecomp } from './acid/decompEffect'
 // NOTE: renderMirror and renderRipple are now handled by GPU shaders in
 // EffectPipeline (Phase 3 port) — see AcidMirrorEffect.ts / AcidRippleEffect.ts
@@ -87,7 +89,7 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     // (store.dotsEnabled && !effectBypassed['acid_dots']) || // GPU shader handles this
     // (store.glyphEnabled && !effectBypassed['acid_glyph']) || // GPU shader handles this
     // (store.iconsEnabled && !effectBypassed['acid_icons']) || // GPU shader handles this
-    (store.contourEnabled && !effectBypassed['acid_contour']) ||
+    // (store.contourEnabled && !effectBypassed['acid_contour']) || // GPU shader handles this
     (store.decompEnabled && !effectBypassed['acid_decomp']) ||
     // (store.mirrorEnabled && !effectBypassed['acid_mirror']) || // GPU shader handles this
     // (store.sliceEnabled && !effectBypassed['acid_slice']) || // GPU shader handles this
@@ -108,7 +110,7 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     // store.dotsEnabled || // GPU shader handles this
     // store.glyphEnabled || // GPU shader handles this
     // store.iconsEnabled || // GPU shader handles this
-    store.contourEnabled ||
+    // store.contourEnabled || // GPU shader handles this
     store.decompEnabled ||
     // store.mirrorEnabled || // GPU shader handles this
     // store.sliceEnabled || // GPU shader handles this
@@ -235,9 +237,10 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
     //   renderIcons(sourceCtx, ctx, currentWidth, currentHeight, currentStore.iconsParams)
     // }
 
-    if (currentStore.contourEnabled && !bypassed['acid_contour']) {
-      renderContour(sourceCtx, ctx, currentWidth, currentHeight, currentStore.contourParams, currentStore.preserveVideo)
-    }
+    // NOTE: Contour effect is now handled by GPU shader in EffectPipeline
+    // if (currentStore.contourEnabled && !bypassed['acid_contour']) {
+    //   renderContour(sourceCtx, ctx, currentWidth, currentHeight, currentStore.contourParams, currentStore.preserveVideo)
+    // }
 
     if (currentStore.decompEnabled && !bypassed['acid_decomp']) {
       renderDecomp(sourceCtx, ctx, currentWidth, currentHeight, currentStore.decompParams)

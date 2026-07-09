@@ -61,6 +61,7 @@ import {
   AcidHexEffect,
   AcidGlyphEffect,
   AcidIconsEffect,
+  AcidContourEffect,
   // STRAND overlay effects (Phase 3 GPU port)
   StrandBeachEffect,
   StrandVoidoutEffect,
@@ -148,6 +149,7 @@ export class EffectPipeline {
   acidHex: AcidHexEffect | null = null
   acidGlyph: AcidGlyphEffect | null = null
   acidIcons: AcidIconsEffect | null = null
+  acidContour: AcidContourEffect | null = null
 
   // STRAND overlay effects (Phase 3 GPU port)
   strandBeach: StrandBeachEffect | null = null
@@ -279,6 +281,7 @@ export class EffectPipeline {
     this.acidHex = new AcidHexEffect()
     this.acidGlyph = new AcidGlyphEffect()
     this.acidIcons = new AcidIconsEffect()
+    this.acidContour = new AcidContourEffect()
 
     // STRAND overlay effects (Phase 3 GPU port)
     this.strandBeach = new StrandBeachEffect()
@@ -350,6 +353,7 @@ export class EffectPipeline {
       case 'acid_hex': return this.acidHex
       case 'acid_glyph': return this.acidGlyph
       case 'acid_icons': return this.acidIcons
+      case 'acid_contour': return this.acidContour
       // STRAND overlay effects (Phase 3 GPU port)
       case 'strand_beach': return this.strandBeach
       case 'strand_voidout': return this.strandVoidout
@@ -699,6 +703,7 @@ export class EffectPipeline {
     this.acidHex?.setResolution(this.canvasWidth, this.canvasHeight)
     this.acidGlyph?.setResolution(this.canvasWidth, this.canvasHeight)
     this.acidIcons?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.acidContour?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandBeach?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandVoidout?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandSeam?.setResolution(this.canvasWidth, this.canvasHeight)
@@ -833,6 +838,7 @@ export class EffectPipeline {
     this.acidHex?.dispose()
     this.acidGlyph?.dispose()
     this.acidIcons?.dispose()
+    this.acidContour?.dispose()
     // STRAND overlay effects (Phase 3 GPU port)
     this.strandBeach?.dispose()
     this.strandVoidout?.dispose()

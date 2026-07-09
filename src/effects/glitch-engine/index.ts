@@ -179,6 +179,9 @@ export type { AcidGlyphParams, AcidGlyphCharset } from './AcidGlyphEffect'
 export { AcidIconsEffect, DEFAULT_ACID_ICONS_PARAMS } from './AcidIconsEffect'
 export type { AcidIconsParams, AcidIconSet, AcidIconsColorMode } from './AcidIconsEffect'
 
+export { AcidContourEffect, DEFAULT_ACID_CONTOUR_PARAMS } from './AcidContourEffect'
+export type { AcidContourParams } from './AcidContourEffect'
+
 // STRAND overlay effects (Phase 3 GPU port)
 export { StrandBeachEffect, DEFAULT_STRAND_BEACH_PARAMS } from './StrandBeachEffect'
 export type { StrandBeachParams } from './StrandBeachEffect'

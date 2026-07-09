@@ -176,6 +176,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.acidHex?.updateParams({ ...s.hexParams, preserveVideo: s.preserveVideo, mix: getMix('acid_hex') })
     pipeline.acidGlyph?.updateParams({ ...s.glyphParams, preserveVideo: s.preserveVideo, mix: getMix('acid_glyph') })
     pipeline.acidIcons?.updateParams({ ...s.iconsParams, preserveVideo: s.preserveVideo, mix: getMix('acid_icons') })
+    pipeline.acidContour?.updateParams({ ...s.contourParams, preserveVideo: s.preserveVideo, mix: getMix('acid_contour') })
   }
 
   // STRAND overlay effects (Phase 3 GPU port) — same empty scaffold as

@@ -107,9 +107,10 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     dotsEnabled,
   } = useAcidStore()
 
-  // ACID overlay effects (Phase 3 GPU port) — enabled flags only; params
-  // flow through paramSync.ts. Overlay keeps rendering these in parallel
-  // until each port task removes its CPU dispatch from AcidOverlay.tsx.
+  // ACID GPU-ported effects (Phase 3) — enabled flags only; params flow
+  // through paramSync.ts. All 11 render as GPU passes in EffectPipeline;
+  // AcidOverlay.tsx no longer has a CPU dispatch for any of these (it now
+  // only owns decomp + the already-GPU cloud/slit/voronoi sub-effects).
   const {
     mirrorEnabled,
     rippleEnabled,
@@ -124,9 +125,10 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     ledEnabled,
   } = useAcidStore()
 
-  // STRAND overlay effects (Phase 3 GPU port) — enabled flags only; params
-  // flow through paramSync.ts. Overlay keeps rendering these in parallel
-  // until each port task removes its CPU dispatch from StrandOverlay.tsx.
+  // STRAND GPU-ported effects (Phase 3) — enabled flags only; params flow
+  // through paramSync.ts. All 16 render as GPU passes in EffectPipeline;
+  // StrandOverlay.tsx has been deleted entirely (see docs/plans/... Phase 3
+  // teardown, Task 15).
   const {
     handprintsEnabled,
     tarSpreadEnabled,
@@ -319,9 +321,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       crystallizeEnabled: getEffectiveEnabled('crystallize', crystallizeEnabled && !effectBypassed['crystallize']),
       rippleWarpEnabled: getEffectiveEnabled('ripple_warp', rippleWarpEnabled && !effectBypassed['ripple_warp']),
       fractalDomainEnabled: getEffectiveEnabled('fractal_domain', fractalDomainEnabled && !effectBypassed['fractal_domain']),
-      // ACID overlay effects (Phase 3 GPU port) - not affected by glitchEnabled.
-      // getEffectById has no case for these yet, so the pipeline's null-filter
-      // keeps this inert; AcidOverlay.tsx continues to own the actual rendering.
+      // ACID GPU-ported effects (Phase 3) - not affected by glitchEnabled;
+      // rendered as GPU passes in EffectPipeline (getEffectById cases live
+      // there). AcidOverlay.tsx no longer dispatches any of these.
       mirrorEnabled: getEffectiveEnabled('acid_mirror', mirrorEnabled && !effectBypassed['acid_mirror']),
       rippleEnabled: getEffectiveEnabled('acid_ripple', rippleEnabled && !effectBypassed['acid_ripple']),
       scanEnabled: getEffectiveEnabled('acid_scan', scanEnabled && !effectBypassed['acid_scan']),
@@ -333,9 +335,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       hexEnabled: getEffectiveEnabled('acid_hex', hexEnabled && !effectBypassed['acid_hex']),
       iconsEnabled: getEffectiveEnabled('acid_icons', iconsEnabled && !effectBypassed['acid_icons']),
       ledEnabled: getEffectiveEnabled('acid_led', ledEnabled && !effectBypassed['acid_led']),
-      // STRAND overlay effects (Phase 3 GPU port) - not affected by glitchEnabled.
-      // Same null-filter inertness as the ACID block above; StrandOverlay.tsx
-      // continues to own the actual rendering until each port task lands.
+      // STRAND GPU-ported effects (Phase 3) - not affected by glitchEnabled;
+      // rendered as GPU passes in EffectPipeline. StrandOverlay.tsx has been
+      // deleted entirely.
       handprintsEnabled: getEffectiveEnabled('strand_handprints', handprintsEnabled && !effectBypassed['strand_handprints']),
       tarSpreadEnabled: getEffectiveEnabled('strand_tar', tarSpreadEnabled && !effectBypassed['strand_tar']),
       timefallEnabled: getEffectiveEnabled('strand_timefall', timefallEnabled && !effectBypassed['strand_timefall']),

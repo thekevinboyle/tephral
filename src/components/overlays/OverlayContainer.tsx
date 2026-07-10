@@ -7,7 +7,6 @@ import { LandmarksOverlay } from './LandmarksOverlay'
 import { AcidOverlay } from './AcidOverlay'
 import { TextureOverlay } from './TextureOverlay'
 import { DataOverlay } from './DataOverlay'
-import { StrandOverlay } from './StrandOverlay'
 import { useLandmarkDetection } from '../../hooks/useLandmarkDetection'
 import { useRoutingStore } from '../../stores/routingStore'
 
@@ -74,9 +73,6 @@ export function OverlayContainer({ containerRef, glCanvas }: OverlayContainerPro
 
       {/* Data overlay (text, watermarks) - always renders last so text is never obscured */}
       <DataOverlay width={dimensions.width} height={dimensions.height} />
-
-      {/* Strand effects overlay */}
-      <StrandOverlay sourceCanvas={glCanvas} width={dimensions.width} height={dimensions.height} />
     </div>
   )
 }

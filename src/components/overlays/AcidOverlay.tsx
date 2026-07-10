@@ -1,43 +1,27 @@
 /**
  * AcidOverlay.tsx
- * Main orchestrator component for all ACID visual effects
- * Reads from source canvas and renders effects on top
+ * Main orchestrator component for the remaining ACID visual effects that
+ * are NOT part of the main GPU postprocessing chain:
+ *   - decomp (recursive variance quad-tree — stays CPU by design, see
+ *     Phase 3's DISCOVERY/shared-context: not fragment-shader shaped)
+ *   - cloud / slit / voronoi (already independent WebGL effects, each
+ *     rendering into its own <canvas> layer straight from the source
+ *     canvas — never routed through the CPU pixel-readback path, so
+ *     Phase 3's GPU port didn't touch them)
+ *
+ * Every other ACID effect (mirror, ripple, scan, slice, thgrid, contour,
+ * glyph, halftone, hex, icons, led) was ported to a GPU pass in
+ * EffectPipeline during Phase 3 and removed from here — see
+ * src/effects/glitch-engine/Acid*.ts.
  */
 
 import { useRef, useEffect, useCallback } from 'react'
 import { useAcidStore } from '../../stores/acidStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { getSharedFrame } from './sharedReadback'
-
-// Canvas 2D effects
-// NOTE: renderDots is now handled by GPU shader in EffectPipeline
-// import { renderDots } from './acid/dotsEffect'
-// NOTE: renderGlyphs and renderIcons are now handled by GPU shaders in
-// EffectPipeline (Phase 3 port) — see AcidGlyphEffect.ts / AcidIconsEffect.ts
-// import { renderGlyphs } from './acid/glyphEffect'
-// import { renderIcons } from './acid/iconsEffect'
-// NOTE: renderContour is now handled by GPU shader in EffectPipeline
-// (Phase 3 port) — see AcidContourEffect.ts
-// import { renderContour } from './acid/contourEffect'
 import { renderDecomp } from './acid/decompEffect'
-// NOTE: renderMirror and renderRipple are now handled by GPU shaders in
-// EffectPipeline (Phase 3 port) — see AcidMirrorEffect.ts / AcidRippleEffect.ts
-// import { renderMirror } from './acid/mirrorEffect'
-// NOTE: renderSlice, renderThGrid, renderScan are now handled by GPU shaders
-// in EffectPipeline (Phase 3 port) — see AcidSliceEffect.ts /
-// AcidThgridEffect.ts / AcidScanEffect.ts
-// import { renderSlice } from './acid/sliceEffect'
-// import { renderThGrid } from './acid/thgridEffect'
-// NOTE: LED, Halftone, and Hex effects are now handled by GPU shaders in
-// EffectPipeline (Phase 3 port) — see AcidLedEffect.ts / AcidHalftoneEffect.ts
-// / AcidHexEffect.ts
-// import { renderLed } from './acid/ledEffect'
-// import { renderHalftone } from './acid/halftoneEffect'
-// import { renderHex } from './acid/hexEffect'
-// import { renderScan } from './acid/scanEffect'
-// import { renderRipple } from './acid/rippleEffect'
 
-// WebGL effects
+// WebGL effects (already GPU, independent of the pixel-readback path above)
 import { CloudEffect } from './acid/cloudEffect'
 import { SlitEffect } from './acid/slitEffect'
 import { VoronoiEffect } from './acid/voronoiEffect'
@@ -56,6 +40,7 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
   const voronoiCanvasRef = useRef<HTMLCanvasElement>(null)
 
   // Offscreen canvas for reading WebGL pixels (can't use getContext('2d') on WebGL canvas)
+  // — only needed while decomp is enabled (the only remaining CPU pixel-read effect).
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const offscreenCtxRef = useRef<CanvasRenderingContext2D | null>(null)
 
@@ -83,46 +68,18 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
   sizeRef.current = { width, height }
 
   // Check if any effect is enabled AND not bypassed
-  // NOTE: Dots, Mirror, Ripple, Slice, ThGrid, Scan are now handled by GPU
-  // shaders, so exclude from overlay check
   const anyActiveEffect =
-    // (store.dotsEnabled && !effectBypassed['acid_dots']) || // GPU shader handles this
-    // (store.glyphEnabled && !effectBypassed['acid_glyph']) || // GPU shader handles this
-    // (store.iconsEnabled && !effectBypassed['acid_icons']) || // GPU shader handles this
-    // (store.contourEnabled && !effectBypassed['acid_contour']) || // GPU shader handles this
     (store.decompEnabled && !effectBypassed['acid_decomp']) ||
-    // (store.mirrorEnabled && !effectBypassed['acid_mirror']) || // GPU shader handles this
-    // (store.sliceEnabled && !effectBypassed['acid_slice']) || // GPU shader handles this
-    // (store.thGridEnabled && !effectBypassed['acid_thgrid']) || // GPU shader handles this
-    // (store.ledEnabled && !effectBypassed['acid_led']) || // GPU shader handles this
     (store.cloudEnabled && !effectBypassed['acid_cloud']) ||
     (store.slitEnabled && !effectBypassed['acid_slit']) ||
     (store.voronoiEnabled && !effectBypassed['acid_voronoi'])
-    // (store.halftoneEnabled && !effectBypassed['acid_halftone']) || // GPU shader handles this
-    // (store.hexEnabled && !effectBypassed['acid_hex']) // GPU shader handles this
-    // (store.scanEnabled && !effectBypassed['acid_scan']) // GPU shader handles this
-    // (store.rippleEnabled && !effectBypassed['acid_ripple']) // GPU shader handles this
 
   // Check if any effect is enabled (for WebGL lifecycle)
-  // NOTE: Dots, Mirror, Ripple, Slice, ThGrid, Scan are now handled by GPU
-  // shaders, so exclude from overlay check
   const anyEnabled =
-    // store.dotsEnabled || // GPU shader handles this
-    // store.glyphEnabled || // GPU shader handles this
-    // store.iconsEnabled || // GPU shader handles this
-    // store.contourEnabled || // GPU shader handles this
     store.decompEnabled ||
-    // store.mirrorEnabled || // GPU shader handles this
-    // store.sliceEnabled || // GPU shader handles this
-    // store.thGridEnabled || // GPU shader handles this
-    // store.ledEnabled || // GPU shader handles this
     store.cloudEnabled ||
     store.slitEnabled ||
     store.voronoiEnabled
-    // store.halftoneEnabled || // GPU shader handles this
-    // store.hexEnabled || // GPU shader handles this
-    // store.scanEnabled // GPU shader handles this
-    // store.rippleEnabled // GPU shader handles this
 
   // WebGL effect initialization/disposal
   useEffect(() => {
@@ -186,106 +143,52 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
       return
     }
 
-    // Create or resize offscreen canvas for reading WebGL pixels
-    if (!offscreenCanvasRef.current) {
-      offscreenCanvasRef.current = document.createElement('canvas')
-      offscreenCtxRef.current = offscreenCanvasRef.current.getContext('2d')
-    }
+    const decompActive = currentStore.decompEnabled && !bypassed['acid_decomp']
 
-    const offscreenCanvas = offscreenCanvasRef.current
-    const sourceCtx = offscreenCtxRef.current
+    if (decompActive) {
+      // Create or resize offscreen canvas for reading WebGL pixels — only
+      // needed while decomp (the only remaining CPU pixel-read effect) is
+      // active, so cloud/slit/voronoi-only sessions never pay this readback.
+      if (!offscreenCanvasRef.current) {
+        offscreenCanvasRef.current = document.createElement('canvas')
+        offscreenCtxRef.current = offscreenCanvasRef.current.getContext('2d')
+      }
 
-    if (!sourceCtx) {
-      frameIdRef.current = requestAnimationFrame(renderFrame)
-      return
-    }
+      const offscreenCanvas = offscreenCanvasRef.current
+      const sourceCtx = offscreenCtxRef.current
 
-    // Resize offscreen canvas if needed
-    if (offscreenCanvas.width !== currentWidth || offscreenCanvas.height !== currentHeight) {
-      offscreenCanvas.width = currentWidth
-      offscreenCanvas.height = currentHeight
-    }
+      if (!sourceCtx) {
+        frameIdRef.current = requestAnimationFrame(renderFrame)
+        return
+      }
 
-    // Copy WebGL canvas to offscreen 2D canvas for pixel reading
-    const sharedFrame = getSharedFrame(source)
-    sourceCtx.drawImage(sharedFrame ?? source, 0, 0, currentWidth, currentHeight)
+      // Resize offscreen canvas if needed
+      if (offscreenCanvas.width !== currentWidth || offscreenCanvas.height !== currentHeight) {
+        offscreenCanvas.width = currentWidth
+        offscreenCanvas.height = currentHeight
+      }
 
-    // Handle background based on preserveVideo setting
-    if (!currentStore.preserveVideo) {
-      // Fill with black background
-      ctx.fillStyle = '#000'
-      ctx.fillRect(0, 0, currentWidth, currentHeight)
-    } else {
-      // Draw source canvas first (preserve video)
-      ctx.drawImage(sharedFrame ?? source, 0, 0, currentWidth, currentHeight)
-    }
+      // Copy WebGL canvas to offscreen 2D canvas for pixel reading
+      const sharedFrame = getSharedFrame(source)
+      sourceCtx.drawImage(sharedFrame ?? source, 0, 0, currentWidth, currentHeight)
 
-    // Apply Canvas 2D effects in order (respecting per-effect bypass)
-    // NOTE: Dots effect is now handled by GPU shader in EffectPipeline
-    // Skip Canvas 2D version to let GPU version respect effect chain order
-    // if (currentStore.dotsEnabled && !bypassed['acid_dots']) {
-    //   renderDots(sourceCtx, ctx, currentWidth, currentHeight, currentStore.dotsParams)
-    // }
+      // Handle background based on preserveVideo setting
+      if (!currentStore.preserveVideo) {
+        ctx.fillStyle = '#000'
+        ctx.fillRect(0, 0, currentWidth, currentHeight)
+      } else {
+        ctx.drawImage(sharedFrame ?? source, 0, 0, currentWidth, currentHeight)
+      }
 
-    // NOTE: Glyph and Icons effects are now handled by GPU shaders in
-    // EffectPipeline
-    // if (currentStore.glyphEnabled && !bypassed['acid_glyph']) {
-    //   renderGlyphs(sourceCtx, ctx, currentWidth, currentHeight, currentStore.glyphParams)
-    // }
-
-    // if (currentStore.iconsEnabled && !bypassed['acid_icons']) {
-    //   renderIcons(sourceCtx, ctx, currentWidth, currentHeight, currentStore.iconsParams)
-    // }
-
-    // NOTE: Contour effect is now handled by GPU shader in EffectPipeline
-    // if (currentStore.contourEnabled && !bypassed['acid_contour']) {
-    //   renderContour(sourceCtx, ctx, currentWidth, currentHeight, currentStore.contourParams, currentStore.preserveVideo)
-    // }
-
-    if (currentStore.decompEnabled && !bypassed['acid_decomp']) {
       renderDecomp(sourceCtx, ctx, currentWidth, currentHeight, currentStore.decompParams)
+    } else {
+      // No CPU pixel-read effect active — clear any stale content from a
+      // previous decomp-enabled frame instead of paying the readback.
+      ctx.clearRect(0, 0, currentWidth, currentHeight)
     }
 
-    // NOTE: Mirror effect is now handled by GPU shader in EffectPipeline
-    // if (currentStore.mirrorEnabled && !bypassed['acid_mirror']) {
-    //   renderMirror(sourceCtx, ctx, currentWidth, currentHeight, currentStore.mirrorParams)
-    // }
-
-    // NOTE: Slice and ThGrid effects are now handled by GPU shaders in
-    // EffectPipeline
-    // if (currentStore.sliceEnabled && !bypassed['acid_slice']) {
-    //   renderSlice(sourceCtx, ctx, currentWidth, currentHeight, currentStore.sliceParams)
-    // }
-
-    // if (currentStore.thGridEnabled && !bypassed['acid_thgrid']) {
-    //   renderThGrid(sourceCtx, ctx, currentWidth, currentHeight, currentStore.thGridParams)
-    // }
-
-    // NOTE: LED, Halftone, and Hex effects are now handled by GPU shaders in
-    // EffectPipeline
-    // if (currentStore.ledEnabled && !bypassed['acid_led']) {
-    //   renderLed(sourceCtx, ctx, currentWidth, currentHeight, currentStore.ledParams)
-    // }
-
-    // if (currentStore.halftoneEnabled && !bypassed['acid_halftone']) {
-    //   renderHalftone(sourceCtx, ctx, currentWidth, currentHeight, currentStore.halftoneParams)
-    // }
-
-    // if (currentStore.hexEnabled && !bypassed['acid_hex']) {
-    //   renderHex(sourceCtx, ctx, currentWidth, currentHeight, currentStore.hexParams)
-    // }
-
-    // NOTE: Scan effect is now handled by GPU shader in EffectPipeline
-    // if (currentStore.scanEnabled && !bypassed['acid_scan']) {
-    //   renderScan(sourceCtx, ctx, currentWidth, currentHeight, currentStore.scanParams)
-    // }
-
-    // NOTE: Ripple effect is now handled by GPU shader in EffectPipeline
-    // if (currentStore.rippleEnabled && !bypassed['acid_ripple']) {
-    //   renderRipple(sourceCtx, ctx, currentWidth, currentHeight, currentStore.rippleParams)
-    // }
-
-    // Render WebGL effects (they render to their own canvases)
+    // Render WebGL effects (they render to their own canvases, straight
+    // from the source canvas — no readback involved).
     const timeSeconds = time * 0.001
 
     if (currentStore.cloudEnabled && cloudEffectRef.current && !bypassed['acid_cloud']) {
@@ -355,7 +258,7 @@ export function AcidOverlay({ sourceCanvas, width, height }: AcidOverlayProps) {
 
   return (
     <>
-      {/* Main Canvas 2D effects layer */}
+      {/* Main Canvas 2D effects layer (decomp only) */}
       <canvas
         ref={canvasRef}
         width={width}

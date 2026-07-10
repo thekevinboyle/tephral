@@ -466,9 +466,9 @@ export class EffectPipeline {
     crystallizeEnabled: boolean
     rippleWarpEnabled: boolean
     fractalDomainEnabled: boolean
-    // ACID overlay effects (Phase 3 GPU port) — enabled flags only;
-    // getEffectById cases land one per effect task, so these are inert
-    // (null-filtered) until then. AcidOverlay.tsx owns the actual rendering.
+    // ACID overlay effects (Phase 3 GPU port) — rendered as GPU passes via
+    // getEffectById below. AcidOverlay.tsx no longer dispatches any of
+    // these (it only owns decomp + the already-GPU cloud/slit/voronoi).
     mirrorEnabled: boolean
     rippleEnabled: boolean
     scanEnabled: boolean
@@ -480,8 +480,8 @@ export class EffectPipeline {
     hexEnabled: boolean
     iconsEnabled: boolean
     ledEnabled: boolean
-    // STRAND overlay effects (Phase 3 GPU port) — same inertness as ACID
-    // above. StrandOverlay.tsx owns the actual rendering until ported.
+    // STRAND overlay effects (Phase 3 GPU port) — rendered as GPU passes.
+    // StrandOverlay.tsx has been deleted entirely.
     handprintsEnabled: boolean
     tarSpreadEnabled: boolean
     timefallEnabled: boolean

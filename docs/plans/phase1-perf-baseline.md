@@ -408,8 +408,13 @@ flattering isolated number.
 **Qualitative confirmation (the more durable claim than any single noisy
 readback-count run):** `StrandOverlay.tsx` no longer exists in the
 codebase; `AcidOverlay.tsx`'s only remaining `getSharedFrame()` call site
-is inside the `decompActive` branch (Item 1). Grep-verified: no import of
-`sharedReadback.ts` remains in any ACID/STRAND GPU-port file
-(`src/effects/glitch-engine/Acid*.ts` / `Strand*.ts`) — those files read
-`inputBuffer` (the postprocessing chain's own texture), never the CPU
-2D-canvas readback. The elimination is structural, not merely measured.
+is inside the `decompActive` branch (Item 1). Grep-verified with one
+deliberate exception: no import of `sharedReadback.ts` remains in any
+ACID/STRAND GPU-port file (`src/effects/glitch-engine/Acid*.ts` /
+`Strand*.ts`) — those files read `inputBuffer` (the postprocessing chain's
+own texture), never the CPU 2D-canvas readback. The exception is
+`StrandWebEffect.ts`, whose adjudicated hybrid design reads the shared
+960x540 frame once per frame (only while WEB is enabled) for CPU
+point-finding — matching that effect's CPU-era cost, and absent from the
+measured TAR+HALF stack above. For the other 26 ports the elimination is
+structural, not merely measured.

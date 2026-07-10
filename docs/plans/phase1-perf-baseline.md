@@ -329,3 +329,87 @@ does not capture `physarum`'s or `reaction_diffusion`'s actual GPU
 compute cost (async, unmeasured by this monitor), so these two numbers
 understate their true rendering cost more than the single-pass shaders'
 numbers do.
+
+## Phase 3 (Task 15 wrap-up): STRAND/ACID GPU-readback elimination
+
+**Goal restated:** Phase 3 ported all 27 STRAND/ACID Canvas-2D overlay
+effects to GPU passes in `EffectPipeline`, eliminating their per-frame CPU
+pixel loops (`getImageData`/`putImageData`) and the shared-readback
+(`getSharedFrame()`) consumption those loops needed. `acid_decomp` stays
+CPU by design (recursive variance quad-tree); `acid_cloud`/`acid_slit`/
+`acid_voronoi` were already independent WebGL sub-effects, untouched by
+this phase.
+
+**Method:** same instrumentation as "After Task 6" above (monkey-patched
+`CanvasRenderingContext2D.prototype.drawImage`, counting only calls whose
+source is the actual WebGL canvas — i.e. a real GPU→CPU readback, not a
+cheap canvas-to-canvas copy off the shared snapshot), 3 s sample after a
+1.5 s warm-up. Scenario: STRAND TAR + ACID HALF + GLITCH STIPPLE (this
+doc's standard 3-overlay stack), `anima-morph/IMG_9153.PNG` via File
+source, 2560x1440 viewport.
+
+**Environment change from earlier entries:** Playwright/a real windowed
+browser was unavailable for this measurement session; used puppeteer
+headless Chrome (`--use-gl=angle`) instead, same as the Phase 2 Task 18
+entry above. Headless Chrome has no real display/vsync, so its `rAF`
+callback rate is uncapped rather than compositor-throttled — the absolute
+readback/sec numbers below are **not comparable** to the windowed-browser
+"After Task 6" entry's 19.7/sec figure. To get a valid before/after
+comparison anyway, **master was measured in the same headless session**
+via a temporary `git worktree` (mirroring Task 6's git-stash-toggle
+precedent for apples-to-apples before/after on one running setup), rather
+than reusing the older doc entry.
+
+**Results** (3 s samples, same headless session/environment for both
+columns):
+
+| scenario | master (before, CPU dispatch) | Phase 3 (after, GPU passes) |
+|---|---|---|
+| TAR+HALF alone (no Stipple) | 27.3 readbacks/sec | **0.0 readbacks/sec** |
+| Stipple alone (no TAR/HALF) | 95.7 readbacks/sec | 99.3 readbacks/sec |
+| TAR+HALF+Stipple (3-stack) | 26.0 readbacks/sec | 9.3 readbacks/sec |
+
+**The headline proof:** TAR+HALF alone go from 27.3 readbacks/sec on
+master (StrandOverlay/AcidOverlay's CPU dispatch calling `getSharedFrame()`
+every frame to feed their `getImageData` pixel loops) to **exactly 0.0 on
+this branch** — confirmed by code as well as measurement: neither
+`StrandOverlay.tsx` (deleted) nor the current `AcidOverlay.tsx` (readback
+gated behind `decompEnabled` only, see Item 1) has any code path that
+calls `getSharedFrame()` while TAR/HALF are the only enabled effects. This
+is the exact claim Task 15 set out to prove: strand/acid readbacks are
+gone.
+
+**Stipple-alone is unchanged** (95.7 vs 99.3/sec, within this metric's
+run-to-run noise) — expected, since `StippleOverlay.tsx` was not touched
+by Phase 3 and still runs its own independent `requestAnimationFrame`
+loop calling `getSharedFrame()` every frame regardless of TAR/HALF.
+
+**The combined 3-stack number went DOWN (26.0 → 9.3), not up towards
+Stipple-alone's ~97/sec, which is counter to a naive prediction** ("TAR/HALF
+now cost the readback path nothing, so the stack should behave more like
+Stipple-alone"). Investigated and attributed to a different, real effect:
+`perfMonitor.getStats()` for the same 3-stack sample shows Phase 3's
+CPU-submission avg-ms is comparable to master's (0.089 ms vs master's
+figure in the same run) but the stack's realized fps drops from Stipple-
+alone's ~16450 to ~11200 once TAR+HALF are added — i.e. the two ported
+shaders (TAR's ping-pong CA sim, HALF's multi-tap rotated-grid sampling)
+add real **GPU-side** execution cost that paces down the browser's overall
+frame rate in this uncapped-rAF headless environment, which in turn paces
+down how often `advanceReadbackFrame()` (called once per Canvas.tsx main
+loop tick) advances the shared-frame stamp that Stipple's readback rides
+on. This is a GPU-shader-cost effect, not a CPU-readback regression: the
+readback call itself is still exactly "0 or 1 per main-loop tick," and
+TAR/HALF's own contribution to that count is verified 0 in isolation
+above. Not itself concerning (both effects were already gated by the
+same "escape hatch if too costly" review process the whole phase used),
+but flagged here for completeness rather than silently reporting only the
+flattering isolated number.
+
+**Qualitative confirmation (the more durable claim than any single noisy
+readback-count run):** `StrandOverlay.tsx` no longer exists in the
+codebase; `AcidOverlay.tsx`'s only remaining `getSharedFrame()` call site
+is inside the `decompActive` branch (Item 1). Grep-verified: no import of
+`sharedReadback.ts` remains in any ACID/STRAND GPU-port file
+(`src/effects/glitch-engine/Acid*.ts` / `Strand*.ts`) — those files read
+`inputBuffer` (the postprocessing chain's own texture), never the CPU
+2D-canvas readback. The elimination is structural, not merely measured.

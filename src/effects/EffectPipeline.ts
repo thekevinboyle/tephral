@@ -314,7 +314,7 @@ export class EffectPipeline {
     this.strandCloud = new StrandCloudEffect()
     this.strandDooms = new StrandDoomsEffect()
     this.strandBridge = new StrandBridgeEffect()
-    this.strandWeb = new StrandWebEffect()
+    this.strandWeb = new StrandWebEffect({}, renderer)
     this.strandTimefall = new StrandTimefallEffect()
     this.strandUmbilical = new StrandUmbilicalEffect()
     this.strandHandprints = new StrandHandprintsEffect()

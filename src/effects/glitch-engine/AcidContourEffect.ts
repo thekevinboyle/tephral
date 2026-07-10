@@ -50,6 +50,7 @@ uniform float blurEnabled;
 uniform float animate;
 uniform float time;
 uniform float preserveVideo;
+uniform float isFirstAcidPass;
 uniform float effectMix;
 
 float cornerBrightness(vec2 gridIdx) {
@@ -97,7 +98,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   float coverage = 1.0 - smoothstep(halfWidthBand - w * 0.5, halfWidthBand + w * 0.5, d);
   if (nearest < 1.0 || nearest > levels - 1.0) coverage = 0.0;
 
-  vec3 bg = preserveVideo > 0.5 ? linearToSRGB(clamp(inputColor.rgb, 0.0, 1.0)) : vec3(0.0);
+  vec3 bg = (isFirstAcidPass > 0.5 && preserveVideo <= 0.5) ? vec3(0.0) : linearToSRGB(clamp(inputColor.rgb, 0.0, 1.0));
   vec3 colorSRGB = mix(bg, vec3(1.0), coverage);
 
   vec3 result = sRGBToLinear(colorSRGB);
@@ -144,6 +145,7 @@ export class AcidContourEffect extends Effect {
         ['animate', new THREE.Uniform(p.animate ? 1 : 0)],
         ['time', new THREE.Uniform(0)],
         ['preserveVideo', new THREE.Uniform(p.preserveVideo ? 1 : 0)],
+        ['isFirstAcidPass', new THREE.Uniform(1)],
         ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
@@ -155,6 +157,15 @@ export class AcidContourEffect extends Effect {
 
   setResolution(width: number, height: number) {
     (this.uniforms.get('resolution')!.value as THREE.Vector2).set(width, height)
+  }
+
+  // Set by EffectPipeline.updateEffects: true when this is the
+  // chain-order-first ACID pass whose background depends on preserveVideo.
+  // Stacked ACID passes with preserveVideo=false must NOT each wipe to
+  // black — only the first should; later passes composite over the
+  // previous pass's output (which already carries the shared black bg).
+  setIsFirstAcidPass(isFirst: boolean) {
+    this.uniforms.get('isFirstAcidPass')!.value = isFirst ? 1 : 0
   }
 
   updateParams(params: Partial<AcidContourParams>) {

@@ -49,6 +49,7 @@ uniform float colorModeF; // 0 = mono, 1 = cmyk, 2 = rgb
 uniform float contrast;
 uniform vec2 resolution;
 uniform float preserveVideo;
+uniform float isFirstAcidPass;
 uniform float effectMix;
 
 vec3 sampleSRGB(vec2 screenPx) {
@@ -102,7 +103,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   vec2 pixelCoord = uv * resolution;
   vec2 canvasCenter = resolution * 0.5;
 
-  vec3 bg = preserveVideo > 0.5 ? linearToSRGB(clamp(inputColor.rgb, 0.0, 1.0)) : vec3(0.0);
+  vec3 bg = (isFirstAcidPass > 0.5 && preserveVideo <= 0.5) ? vec3(0.0) : linearToSRGB(clamp(inputColor.rgb, 0.0, 1.0));
   vec3 colorSRGB = bg;
 
   if (colorModeF < 0.5) {
@@ -174,6 +175,7 @@ export class AcidHalftoneEffect extends Effect {
         ['contrast', new THREE.Uniform(p.contrast)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['preserveVideo', new THREE.Uniform(p.preserveVideo ? 1 : 0)],
+        ['isFirstAcidPass', new THREE.Uniform(1)],
         ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
@@ -181,6 +183,15 @@ export class AcidHalftoneEffect extends Effect {
 
   setResolution(width: number, height: number) {
     (this.uniforms.get('resolution')!.value as THREE.Vector2).set(width, height)
+  }
+
+  // Set by EffectPipeline.updateEffects: true when this is the
+  // chain-order-first ACID pass whose background depends on preserveVideo.
+  // Stacked ACID passes with preserveVideo=false must NOT each wipe to
+  // black — only the first should; later passes composite over the
+  // previous pass's output (which already carries the shared black bg).
+  setIsFirstAcidPass(isFirst: boolean) {
+    this.uniforms.get('isFirstAcidPass')!.value = isFirst ? 1 : 0
   }
 
   updateParams(params: Partial<AcidHalftoneParams>) {

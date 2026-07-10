@@ -173,6 +173,15 @@ export class AcidScanEffect extends Effect {
     (this.uniforms.get('resolution')!.value as THREE.Vector2).set(width, height)
   }
 
+  // Set by EffectPipeline.updateEffects: true when this is the
+  // chain-order-first ACID pass whose background depends on preserveVideo.
+  // Stacked ACID passes with preserveVideo=false must NOT each wipe to
+  // black — only the first should; later passes composite over the
+  // previous pass's output (which already carries the shared black bg).
+  setIsFirstAcidPass(isFirst: boolean) {
+    this.uniforms.get('isFirstAcidPass')!.value = isFirst ? 1 : 0
+  }
+
   updateParams(params: Partial<AcidScanParams>) {
     if (params.speed !== undefined) {
       this.uniforms.get('scanSpeed')!.value = params.speed

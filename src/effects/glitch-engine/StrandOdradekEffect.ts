@@ -9,11 +9,15 @@ import { COLOR_UTILS_GLSL } from './glsl-utils'
 //
 // CPU mechanics (module-level state: `sweepAngle`, `pingTrails[]`):
 //   - `sweepAngle += sweepSpeed*deltaTime*2` every frame (monotonic,
-//     unbounded) — reproduced here as the closed-form `sweepAngle(t) =
-//     2*sweepSpeed*time` (same integral, dropping the CPU's frame-summed
-//     drift; identical angular velocity, only the arbitrary start phase
-//     differs — fine per the "animation phase differences fine" parity
-//     note).
+//     unbounded) — reproduced here via a CPU-side accumulator (`sweepPhase`,
+//     advanced in update() by `2*sweepSpeed*dt` using performance.now()
+//     deltas, same integral as the CPU's running sum) rather than the
+//     closed form `2*sweepSpeed*time`: the closed form recomputes the whole
+//     angle from `sweepSpeed` every frame, so a live speed-knob change
+//     instantly re-scales the ENTIRE elapsed time and the sweep visibly
+//     snaps to a new angle; the accumulator only changes the rate of
+//     future growth, matching the CPU's incremental `+=` exactly (Task 15
+//     ledger fix — same pattern applied to Timefall/Chiralium/Umbilical).
 //   - A coarse edge map is built once per frame from `sourceCtx`'s raw
 //     canvas bytes via `min(1, sqrt(gx^2+gy^2)/100)`, where
 //     `gx=abs(R(right)-R(left))`, `gy=abs(R(down)-R(up))` — RED-CHANNEL-ONLY
@@ -102,6 +106,7 @@ uniform float sweepSpeed;
 uniform float revealDuration;
 uniform float pingIntensity;
 uniform float time;
+uniform float sweepPhase;
 uniform vec2 resolution;
 uniform float effectMix;
 
@@ -166,7 +171,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   float pixelAngle = atan(relC.y, relC.x);
 
   float angularVel = max(2.0 * sweepSpeed, 1.0e-4);
-  float sweepAngle = 2.0 * sweepSpeed * time;
+  // Accumulated CPU-side (see header) — NOT a closed-form speed*time
+  // product, so live speed changes don't snap the sweep angle.
+  float sweepAngle = sweepPhase;
 
   vec3 colorSRGB = linearToSRGB(clamp(inputColor.rgb, 0.0, 1.0));
   vec3 gold = vec3(255.0, 215.0, 0.0) / 255.0;
@@ -281,14 +288,29 @@ export class StrandOdradekEffect extends Effect {
         ['revealDuration', new THREE.Uniform(p.revealDuration)],
         ['pingIntensity', new THREE.Uniform(p.pingIntensity)],
         ['time', new THREE.Uniform(0)],
+        ['sweepPhase', new THREE.Uniform(0)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
 
+  // CPU-side phase accumulator (Task 15 ledger fix) — see header comment.
+  // dt is derived from performance.now() deltas rather than trusted from
+  // the composer's deltaTime param, and clamped to guard against a huge
+  // jump after a long tab-backgrounded gap.
+  private lastUpdateMs: number | null = null
+
   update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
-    this.uniforms.get('time')!.value = performance.now() / 1000
+    const now = performance.now()
+    const dt = this.lastUpdateMs === null ? 0 : Math.min((now - this.lastUpdateMs) / 1000, 0.1)
+    this.lastUpdateMs = now
+
+    const sweepSpeed = this.uniforms.get('sweepSpeed')!.value as number
+    const sweepPhase = (this.uniforms.get('sweepPhase')!.value as number) + 2 * sweepSpeed * dt
+    this.uniforms.get('sweepPhase')!.value = sweepPhase
+
+    this.uniforms.get('time')!.value = now / 1000
   }
 
   setResolution(width: number, height: number) {

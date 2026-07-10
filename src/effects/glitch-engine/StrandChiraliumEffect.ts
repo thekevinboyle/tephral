@@ -47,11 +47,24 @@ import { COLOR_UTILS_GLSL } from './glsl-utils'
 // simply transparent); effectMix is the only blend control. Draws under
 // `ctx.globalCompositeOperation = 'screen'` throughout (verbatim from the
 // CPU source), reproduced with blendScreen().
+//
+// PHASE-SNAP FIX (Task 15 ledger): `rotation`'s CPU ground truth is
+// `seedAngle + time*shimmer*0.5` — a closed form that re-scales the ENTIRE
+// elapsed time by the current shimmer value every frame, so a live
+// shimmer-knob change snaps every crystal's rotation. Reproduced instead
+// via a CPU-side accumulator (`rotationPhase`, advanced in update() by
+// `shimmer*0.5*dt` using performance.now() deltas), matching the CPU's
+// incremental per-frame growth (same pattern as
+// Odradek/Timefall/Umbilical). The OTHER shimmer use — `shimmerOffset`'s
+// `sin(time*5.0 + ...)` — is a fixed-rate oscillation where shimmer only
+// scales amplitude, not the time multiplier, so it keeps using raw `time`
+// unchanged (no snap possible there).
 const fragmentShader = COLOR_UTILS_GLSL + /* glsl */ `
 uniform float threshold;
 uniform float density;
 uniform float shimmer;
 uniform float time;
+uniform float rotationPhase;
 uniform vec2 resolution;
 uniform float effectMix;
 
@@ -96,7 +109,10 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     float brightness = (seedColorSRGB.r + seedColorSRGB.g + seedColorSRGB.b) / 3.0;
     if (brightness < threshold * 0.8) continue;
 
-    float rotation = seedAngle + time * shimmer * 0.5;
+    // rotationPhase is the CPU-accumulated shimmer*0.5*dt sum (see header
+    // near update()) — NOT a closed-form time*shimmer product, so live
+    // shimmer-knob changes don't snap every crystal's rotation.
+    float rotation = seedAngle + rotationPhase;
     float c = cos(-rotation);
     float s = sin(-rotation);
     vec2 local = vec2(rel.x * c - rel.y * s, rel.x * s + rel.y * c);
@@ -217,14 +233,26 @@ export class StrandChiraliumEffect extends Effect {
         ['density', new THREE.Uniform(p.density)],
         ['shimmer', new THREE.Uniform(p.shimmer)],
         ['time', new THREE.Uniform(0)],
+        ['rotationPhase', new THREE.Uniform(0)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
 
+  // CPU-side phase accumulator (Task 15 ledger fix) — see header comment.
+  private lastUpdateMs: number | null = null
+
   update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
-    this.uniforms.get('time')!.value = performance.now() / 1000
+    const now = performance.now()
+    const dt = this.lastUpdateMs === null ? 0 : Math.min((now - this.lastUpdateMs) / 1000, 0.1)
+    this.lastUpdateMs = now
+
+    const shimmer = this.uniforms.get('shimmer')!.value as number
+    const rotationPhase = (this.uniforms.get('rotationPhase')!.value as number) + shimmer * 0.5 * dt
+    this.uniforms.get('rotationPhase')!.value = rotationPhase
+
+    this.uniforms.get('time')!.value = now / 1000
   }
 
   setResolution(width: number, height: number) {

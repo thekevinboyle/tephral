@@ -49,11 +49,20 @@ import { COLOR_UTILS_GLSL } from './glsl-utils'
 //
 // No preserveVideo uniform: same contract as every other STRAND port —
 // effectMix is the only blend control.
+//
+// PHASE-SNAP FIX (Task 15 ledger): the CPU's `pulseTime = time*pulseSpeed
+// + phase` is a closed form that re-scales the ENTIRE elapsed time by the
+// current pulseSpeed every frame, so a live pulseSpeed-knob change snaps
+// every tendril's pulse position. Reproduced instead via a CPU-side
+// accumulator (`pulsePhase`, advanced in update() by `pulseSpeed*dt` using
+// performance.now() deltas), matching the CPU's incremental per-frame
+// growth (same pattern as Odradek/Timefall/Chiralium).
 const fragmentShader = COLOR_UTILS_GLSL + /* glsl */ `
 uniform float tendrilCount;
 uniform float reachDistance;
 uniform float pulseSpeed;
 uniform float time;
+uniform float pulsePhase;
 uniform vec2 resolution;
 uniform float effectMix;
 
@@ -111,7 +120,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     float lenFrac = 0.5 + umbHash(vec2(fi, 1.0)) * 0.5;
     float phase = umbHash(vec2(fi, 2.0)) * 2.0 * UMB_PI;
 
-    float pulseTime = time * pulseSpeed + phase;
+    float pulseTime = pulsePhase + phase;
     float curLen = maxLength * lenFrac * (0.8 + 0.2 * sin(pulseTime));
     float lineWidth = 3.0 + sin(pulseTime) * 1.0;
 
@@ -198,14 +207,26 @@ export class StrandUmbilicalEffect extends Effect {
         ['reachDistance', new THREE.Uniform(p.reachDistance)],
         ['pulseSpeed', new THREE.Uniform(p.pulseSpeed)],
         ['time', new THREE.Uniform(0)],
+        ['pulsePhase', new THREE.Uniform(0)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
 
+  // CPU-side phase accumulator (Task 15 ledger fix) — see header comment.
+  private lastUpdateMs: number | null = null
+
   update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
-    this.uniforms.get('time')!.value = performance.now() / 1000
+    const now = performance.now()
+    const dt = this.lastUpdateMs === null ? 0 : Math.min((now - this.lastUpdateMs) / 1000, 0.1)
+    this.lastUpdateMs = now
+
+    const pulseSpeed = this.uniforms.get('pulseSpeed')!.value as number
+    const pulsePhase = (this.uniforms.get('pulsePhase')!.value as number) + pulseSpeed * dt
+    this.uniforms.get('pulsePhase')!.value = pulsePhase
+
+    this.uniforms.get('time')!.value = now / 1000
   }
 
   setResolution(width: number, height: number) {

@@ -38,10 +38,19 @@ import { COLOR_UTILS_GLSL } from './glsl-utils'
 // span, a pixel never needs to consult a neighbouring cell.
 //
 // intensity gates the phase-advance rate exactly as the CPU's
-// `y += speed*deltaTime*intensity` does: at intensity=0 the raw phase
-// (time*speed*intensity/span) stops advancing, freezing the drop at its
-// hash-derived initial offset — analogous to the CPU's drops never moving
-// but still being drawn each frame at their last position.
+// `y += speed*deltaTime*intensity` does: at intensity=0 the fall phase
+// (accumulated CPU-side, see below) stops advancing, freezing the drop at
+// its hash-derived initial offset — analogous to the CPU's drops never
+// moving but still being drawn each frame at their last position.
+//
+// PHASE-SNAP FIX (Task 15 ledger): the fall phase is accumulated in
+// update() as `fallPhase += intensity*dt` (performance.now() deltas)
+// rather than computed as the closed form `time*intensity` — the closed
+// form re-scales the ENTIRE elapsed time by the current intensity every
+// frame, so a live intensity-knob change snaps every drop to a new
+// position; the accumulator only changes the rate of future growth,
+// matching the CPU's incremental per-frame `+=` (same pattern as
+// Odradek/Chiralium/Umbilical).
 //
 // Per column-hit pixel: streakPos/streakIntensity/desaturate math is a
 // direct copy of the CPU's per-pixel loop body. The per-pixel noise flicker
@@ -64,6 +73,7 @@ uniform float intensity;
 uniform float streakCount;
 uniform float ageAmount;
 uniform float time;
+uniform float fallPhase;
 uniform vec2 resolution;
 uniform float effectMix;
 
@@ -91,7 +101,10 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   float initialPhase = tfHash(colIndex * 13.31 + 3.0);
 
   float span = height + 2.0 * length_;
-  float raw = time * speed * intensity / max(span, 1.0) + initialPhase;
+  // fallPhase is the CPU-accumulated intensity*dt sum (see header) — NOT
+  // a closed-form time*intensity product, so live intensity changes don't
+  // snap every drop's position.
+  float raw = fallPhase * speed / max(span, 1.0) + initialPhase;
   float loopIdx = floor(raw);
   float phaseFrac = fract(raw);
   float y = -length_ + phaseFrac * span;
@@ -161,14 +174,26 @@ export class StrandTimefallEffect extends Effect {
         ['streakCount', new THREE.Uniform(p.streakCount)],
         ['ageAmount', new THREE.Uniform(p.ageAmount)],
         ['time', new THREE.Uniform(0)],
+        ['fallPhase', new THREE.Uniform(0)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
   }
 
+  // CPU-side phase accumulator (Task 15 ledger fix) — see header comment.
+  private lastUpdateMs: number | null = null
+
   update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
-    this.uniforms.get('time')!.value = performance.now() / 1000
+    const now = performance.now()
+    const dt = this.lastUpdateMs === null ? 0 : Math.min((now - this.lastUpdateMs) / 1000, 0.1)
+    this.lastUpdateMs = now
+
+    const intensity = this.uniforms.get('intensity')!.value as number
+    const fallPhase = (this.uniforms.get('fallPhase')!.value as number) + intensity * dt
+    this.uniforms.get('fallPhase')!.value = fallPhase
+
+    this.uniforms.get('time')!.value = now / 1000
   }
 
   setResolution(width: number, height: number) {

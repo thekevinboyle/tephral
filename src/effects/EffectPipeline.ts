@@ -640,6 +640,37 @@ export class EffectPipeline {
           new Set(config.effectOrder.filter((id) => enabledMap[id] && this.getEffectById(id)))
         )
 
+    // Stacking adjudication (Task 15, from the P3 ledger): several ACID
+    // passes each paint their own solid-black background when
+    // preserveVideo=false (matching the CPU overlay's single shared
+    // canvas). In a real chained GPU pipeline that means every such pass
+    // after the first wipes out whatever earlier passes drew. The CPU
+    // never had this problem (one canvas, effects painted in sequence).
+    // Fix: tell only the chain-order-first ACID background pass to use
+    // black; every subsequent one composites over its input (which
+    // already carries the first pass's black bg + pattern), regardless of
+    // its own preserveVideo value. Runs unconditionally (not gated by the
+    // chainKey short-circuit below) since it's cheap uniform writes and
+    // must stay correct even when only effect order changes.
+    const ACID_BG_IDS = [
+      'acid_mirror', 'acid_scan', 'acid_halftone', 'acid_led',
+      'acid_hex', 'acid_glyph', 'acid_icons', 'acid_contour',
+    ] as const
+    const acidBgEffects: Record<string, { setIsFirstAcidPass(isFirst: boolean): void } | null> = {
+      acid_mirror: this.acidMirror,
+      acid_scan: this.acidScan,
+      acid_halftone: this.acidHalftone,
+      acid_led: this.acidLed,
+      acid_hex: this.acidHex,
+      acid_glyph: this.acidGlyph,
+      acid_icons: this.acidIcons,
+      acid_contour: this.acidContour,
+    }
+    const firstAcidBgId = activeIds.find((id) => acidBgEffects[id]) ?? null
+    for (const id of ACID_BG_IDS) {
+      acidBgEffects[id]?.setIsFirstAcidPass(id === firstAcidBgId)
+    }
+
     // Structural short-circuit: same chain -> nothing to rebuild.
     // Bypass gets its own sentinel key, distinct from the empty/no-effects
     // chain (''). Without this, "bypass on" and "zero effects enabled" would

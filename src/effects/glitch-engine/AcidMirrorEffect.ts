@@ -43,6 +43,7 @@ uniform float rotation;
 uniform vec2 center;
 uniform vec2 resolution;
 uniform float preserveVideo;
+uniform float isFirstAcidPass;
 uniform float effectMix;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
@@ -76,7 +77,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
   vec4 computed;
   if (uv2.x < 0.0 || uv2.x > 1.0 || uv2.y < 0.0 || uv2.y > 1.0) {
-    computed = preserveVideo > 0.5 ? inputColor : vec4(0.0, 0.0, 0.0, 1.0);
+    bool useBlack = isFirstAcidPass > 0.5 && preserveVideo <= 0.5;
+    computed = useBlack ? vec4(0.0, 0.0, 0.0, 1.0) : inputColor;
   } else {
     computed = texture2D(inputBuffer, uv2);
   }
@@ -115,6 +117,7 @@ export class AcidMirrorEffect extends Effect {
         ['center', new THREE.Uniform(new THREE.Vector2(p.centerX, p.centerY))],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['preserveVideo', new THREE.Uniform(p.preserveVideo ? 1 : 0)],
+        ['isFirstAcidPass', new THREE.Uniform(1)],
         ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })
@@ -122,6 +125,15 @@ export class AcidMirrorEffect extends Effect {
 
   setResolution(width: number, height: number) {
     (this.uniforms.get('resolution')!.value as THREE.Vector2).set(width, height)
+  }
+
+  // Set by EffectPipeline.updateEffects: true when this is the
+  // chain-order-first ACID pass whose background depends on preserveVideo.
+  // Stacked ACID passes with preserveVideo=false must NOT each wipe to
+  // black — only the first should; later passes composite over the
+  // previous pass's output (which already carries the shared black bg).
+  setIsFirstAcidPass(isFirst: boolean) {
+    this.uniforms.get('isFirstAcidPass')!.value = isFirst ? 1 : 0
   }
 
   updateParams(params: Partial<AcidMirrorParams>) {

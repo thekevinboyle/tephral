@@ -42,6 +42,7 @@ uniform float scanDirection; // 0 = horizontal, 1 = vertical, 2 = radial
 uniform float time;
 uniform vec2 resolution;
 uniform float preserveVideo;
+uniform float isFirstAcidPass;
 uniform float effectMix;
 
 const float TWO_PI = 6.28318530718;
@@ -50,7 +51,7 @@ const float SCAN_PI = 3.14159265359;
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   vec2 pixelCoord = uv * resolution;
   float brightness = dot(inputColor.rgb, vec3(0.299, 0.587, 0.114));
-  vec3 bg = preserveVideo > 0.5 ? inputColor.rgb : vec3(0.0);
+  vec3 bg = (isFirstAcidPass > 0.5 && preserveVideo <= 0.5) ? vec3(0.0) : inputColor.rgb;
   vec3 computed;
 
   if (scanDirection < 1.5) {
@@ -160,6 +161,7 @@ export class AcidScanEffect extends Effect {
         ['time', new THREE.Uniform(0)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['preserveVideo', new THREE.Uniform(p.preserveVideo ? 1 : 0)],
+        ['isFirstAcidPass', new THREE.Uniform(1)],
         ['effectMix', new THREE.Uniform(p.mix)],
       ]),
     })

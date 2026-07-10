@@ -78,6 +78,7 @@ import {
   StrandOdradekEffect,
   StrandTarEffect,
   StrandExtinctionEffect,
+  StrandChiralPathEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -178,6 +179,7 @@ export class EffectPipeline {
   strandOdradek: StrandOdradekEffect | null = null
   strandTar: StrandTarEffect | null = null
   strandExtinction: StrandExtinctionEffect | null = null
+  strandChiralPath: StrandChiralPathEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -321,6 +323,7 @@ export class EffectPipeline {
     this.strandOdradek = new StrandOdradekEffect()
     this.strandTar = new StrandTarEffect()
     this.strandExtinction = new StrandExtinctionEffect()
+    this.strandChiralPath = new StrandChiralPathEffect()
   }
 
   // Map effect IDs to effect instances
@@ -403,6 +406,7 @@ export class EffectPipeline {
       case 'strand_odradek': return this.strandOdradek
       case 'strand_tar': return this.strandTar
       case 'strand_extinction': return this.strandExtinction
+      case 'strand_path': return this.strandChiralPath
       default: return null
     }
   }
@@ -596,7 +600,7 @@ export class EffectPipeline {
       'time_smear', 'freeze_mask', 'track_motion',
       'feedback_tunnel', 'opium_trails', 'flow_smear',
       'reaction_diffusion', 'rutt_etra', 'physarum',
-      'strand_tar', 'strand_extinction',
+      'strand_tar', 'strand_extinction', 'strand_path',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
@@ -615,6 +619,10 @@ export class EffectPipeline {
       // on disable" contract as reaction_diffusion above.
       strand_tar: this.strandTar,
       strand_extinction: this.strandExtinction,
+      // Agent-sim + captured-prevFrame temporal effect (Wave B) — DOES use
+      // captureFrame (frame-diff motion needs a real previous-frame
+      // reference), gated in render() below like flow_smear.
+      strand_path: this.strandChiralPath,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]
@@ -802,6 +810,9 @@ export class EffectPipeline {
       if (this.temporalEnabled['feedback_tunnel']) this.feedbackTunnel?.captureFrame(renderer, outputBuffer)
       if (this.temporalEnabled['opium_trails']) this.opiumTrails?.captureFrame(renderer, outputBuffer)
       if (this.temporalEnabled['flow_smear']) this.flowSmear?.captureFrame(renderer, outputBuffer)
+
+      // STRAND overlay effects (Phase 3 GPU port)
+      if (this.temporalEnabled['strand_path']) this.strandChiralPath?.captureFrame(renderer, outputBuffer)
     }
   }
 
@@ -913,5 +924,6 @@ export class EffectPipeline {
     this.strandOdradek?.dispose()
     this.strandTar?.dispose()
     this.strandExtinction?.dispose()
+    this.strandChiralPath?.dispose()
   }
 }

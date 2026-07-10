@@ -227,3 +227,6 @@ export type { StrandTarParams } from './StrandTarEffect'
 
 export { StrandExtinctionEffect, DEFAULT_STRAND_EXTINCTION_PARAMS } from './StrandExtinctionEffect'
 export type { StrandExtinctionParams } from './StrandExtinctionEffect'
+
+export { StrandChiralPathEffect, DEFAULT_STRAND_CHIRAL_PATH_PARAMS } from './StrandChiralPathEffect'
+export type { StrandChiralPathParams } from './StrandChiralPathEffect'

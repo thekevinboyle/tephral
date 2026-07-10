@@ -6,7 +6,6 @@
 import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { getSharedFrame } from './sharedReadback'
-import { renderChiralPath } from './strand/chiralPathEffect'
 
 interface StrandOverlayProps {
   sourceCanvas: HTMLCanvasElement | null
@@ -46,7 +45,12 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
     // intentionally excluded here, same as voidOut above.
     // strand_bridge is GPU-ported (StrandBridgeEffect) — store.bridgeLinkEnabled
     // intentionally excluded here, same as voidOut above.
-    store.chiralPathEnabled ||
+    // strand_path is GPU-ported (StrandChiralPathEffect) — the LAST STRAND
+    // CPU dispatch; store.chiralPathEnabled intentionally excluded here,
+    // same as every other id above. anyEnabled is now unconditionally false
+    // (kept as an explicit `false` literal, not deleted, so the component
+    // still compiles/renders its "no-op" branch — StrandOverlay itself is
+    // NOT deleted here, that's Task 15's teardown).
     // strand_umbilical is GPU-ported (StrandUmbilicalEffect) —
     // store.umbilicalEnabled intentionally excluded here, same as timefall
     // above.
@@ -84,7 +88,6 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
     }
 
     const { width: w, height: h } = sizeRef.current
-    const currentStore = storeRef.current
     const timeSeconds = time * 0.001
 
     // Clear canvas
@@ -106,7 +109,6 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
       const shared = getSharedFrame(source)
       sourceCtx.drawImage(shared ?? source, 0, 0, w, h)
 
-      const deltaTime = lastTimeRef.current ? timeSeconds - lastTimeRef.current : 0.016
       lastTimeRef.current = timeSeconds
 
       // strand_handprints is GPU-ported (StrandHandprintsEffect in
@@ -122,9 +124,8 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
       // StrandBridgeEffect / StrandDoomsEffect in EffectPipeline) — their CPU
       // dispatch is removed; see paramSync.ts pushStrandPorts().
 
-      if (currentStore.chiralPathEnabled) {
-        renderChiralPath(sourceCtx, ctx, w, h, currentStore.chiralPathParams, deltaTime)
-      }
+      // strand_path is GPU-ported (StrandChiralPathEffect in EffectPipeline)
+      // — its CPU dispatch is removed; see paramSync.ts pushStrandPorts().
 
       // strand_chiralium is GPU-ported (StrandChiraliumEffect in
       // EffectPipeline) — its CPU dispatch is removed; see paramSync.ts

@@ -221,3 +221,9 @@ export type { StrandChiraliumParams } from './StrandChiraliumEffect'
 
 export { StrandOdradekEffect, DEFAULT_STRAND_ODRADEK_PARAMS } from './StrandOdradekEffect'
 export type { StrandOdradekParams } from './StrandOdradekEffect'
+
+export { StrandTarEffect, DEFAULT_STRAND_TAR_PARAMS } from './StrandTarEffect'
+export type { StrandTarParams } from './StrandTarEffect'
+
+export { StrandExtinctionEffect, DEFAULT_STRAND_EXTINCTION_PARAMS } from './StrandExtinctionEffect'
+export type { StrandExtinctionParams } from './StrandExtinctionEffect'

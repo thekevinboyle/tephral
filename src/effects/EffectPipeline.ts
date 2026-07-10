@@ -76,6 +76,8 @@ import {
   StrandBbpodEffect,
   StrandChiraliumEffect,
   StrandOdradekEffect,
+  StrandTarEffect,
+  StrandExtinctionEffect,
 } from './glitch-engine'
 import { FaceHudEffect } from './morph'
 
@@ -174,6 +176,8 @@ export class EffectPipeline {
   strandBbpod: StrandBbpodEffect | null = null
   strandChiralium: StrandChiraliumEffect | null = null
   strandOdradek: StrandOdradekEffect | null = null
+  strandTar: StrandTarEffect | null = null
+  strandExtinction: StrandExtinctionEffect | null = null
 
   // Crossfader for A/B blending (source vs processed)
   crossfaderEffect: CrossfaderEffect | null = null
@@ -315,6 +319,8 @@ export class EffectPipeline {
     this.strandBbpod = new StrandBbpodEffect()
     this.strandChiralium = new StrandChiraliumEffect()
     this.strandOdradek = new StrandOdradekEffect()
+    this.strandTar = new StrandTarEffect()
+    this.strandExtinction = new StrandExtinctionEffect()
   }
 
   // Map effect IDs to effect instances
@@ -395,6 +401,8 @@ export class EffectPipeline {
       case 'strand_bbpod': return this.strandBbpod
       case 'strand_chiralium': return this.strandChiralium
       case 'strand_odradek': return this.strandOdradek
+      case 'strand_tar': return this.strandTar
+      case 'strand_extinction': return this.strandExtinction
       default: return null
     }
   }
@@ -588,6 +596,7 @@ export class EffectPipeline {
       'time_smear', 'freeze_mask', 'track_motion',
       'feedback_tunnel', 'opium_trails', 'flow_smear',
       'reaction_diffusion', 'rutt_etra', 'physarum',
+      'strand_tar', 'strand_extinction',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
@@ -602,6 +611,10 @@ export class EffectPipeline {
       reaction_diffusion: this.reactionDiffusion,
       rutt_etra: this.ruttEtra,
       physarum: this.physarum,
+      // Ping-pong CA sims (Wave B) — same "no captureFrame, releaseTargets
+      // on disable" contract as reaction_diffusion above.
+      strand_tar: this.strandTar,
+      strand_extinction: this.strandExtinction,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]
@@ -898,5 +911,7 @@ export class EffectPipeline {
     this.strandBbpod?.dispose()
     this.strandChiralium?.dispose()
     this.strandOdradek?.dispose()
+    this.strandTar?.dispose()
+    this.strandExtinction?.dispose()
   }
 }

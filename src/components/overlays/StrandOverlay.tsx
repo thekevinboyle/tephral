@@ -7,8 +7,6 @@ import { useRef, useEffect, useCallback } from 'react'
 import { useStrandStore } from '../../stores/strandStore'
 import { getSharedFrame } from './sharedReadback'
 import { renderChiralPath } from './strand/chiralPathEffect'
-import { renderExtinction } from './strand/extinctionEffect'
-import { renderTarSpread } from './strand/tarSpreadEffect'
 
 interface StrandOverlayProps {
   sourceCanvas: HTMLCanvasElement | null
@@ -36,7 +34,8 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
     // strand_handprints is GPU-ported (StrandHandprintsEffect) — no longer
     // part of the CPU overlay's render loop; store.handprintsEnabled
     // intentionally excluded here, same as timefall/voidOut above.
-    store.tarSpreadEnabled ||
+    // strand_tar is GPU-ported (StrandTarEffect) — store.tarSpreadEnabled
+    // intentionally excluded here, same as voidOut/beach/cloud above.
     // strand_timefall is GPU-ported (StrandTimefallEffect) — no longer part
     // of the CPU overlay's render loop; store.timefallEnabled intentionally
     // excluded here.
@@ -67,7 +66,10 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
     // intentionally excluded here, same as handprints/chiralium above.
     // strand_seam is GPU-ported (StrandSeamEffect) — store.seamEnabled
     // intentionally excluded here, same as beach/voidOut/cloud above.
-    store.extinctionEnabled
+    // strand_extinction is GPU-ported (StrandExtinctionEffect) —
+    // store.extinctionEnabled intentionally excluded here, same as
+    // tar/voidOut/beach/cloud above.
+    false
 
   const renderFrame = useCallback((time: number) => {
     if (!isRunningRef.current) return
@@ -111,9 +113,8 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
       // EffectPipeline) — its CPU dispatch is removed; see paramSync.ts
       // pushStrandPorts().
 
-      if (currentStore.tarSpreadEnabled) {
-        renderTarSpread(sourceCtx, ctx, w, h, currentStore.tarSpreadParams, deltaTime)
-      }
+      // strand_tar is GPU-ported (StrandTarEffect in EffectPipeline) — its
+      // CPU dispatch is removed; see paramSync.ts pushStrandPorts().
 
       // strand_timefall, strand_beach, strand_voidout, strand_web,
       // strand_bridge, and strand_dooms are GPU-ported (StrandTimefallEffect
@@ -137,9 +138,9 @@ export function StrandOverlay({ sourceCanvas, width, height }: StrandOverlayProp
       // StrandSeamEffect in EffectPipeline) — their CPU dispatch is
       // removed; see paramSync.ts pushStrandPorts().
 
-      if (currentStore.extinctionEnabled) {
-        renderExtinction(sourceCtx, ctx, w, h, currentStore.extinctionParams, deltaTime)
-      }
+      // strand_extinction is GPU-ported (StrandExtinctionEffect in
+      // EffectPipeline) — its CPU dispatch is removed; see paramSync.ts
+      // pushStrandPorts().
 
       // strand_bbpod is GPU-ported (StrandBbpodEffect in EffectPipeline) —
       // its CPU dispatch is removed; see paramSync.ts pushStrandPorts().

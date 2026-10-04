@@ -124,7 +124,12 @@ export class SegStaleEffect extends Effect {
     const p = this.params
     if (p.autoBurst) {
       this.sinceBurst += deltaTime
-      if (this.sinceBurst >= this.burstInterval()) { this.sinceBurst = 0; this.autoPulse = 1 }
+      const interval = this.burstInterval()
+      if (this.sinceBurst >= interval - 1e-6) { // epsilon: summed 1/60 steps land a hair under the beat
+        // keep the overshoot so the beat grid doesn't drift; % caps a long stall at one fire per frame
+        this.sinceBurst = (this.sinceBurst - interval) % interval
+        this.autoPulse = 1
+      }
     }
     this.autoPulse = Math.max(0, this.autoPulse - deltaTime / BURST_DECAY_S)
     const burst = Math.min(1, Math.max(p.burst, this.autoPulse))

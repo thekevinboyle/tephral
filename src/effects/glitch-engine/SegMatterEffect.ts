@@ -154,7 +154,12 @@ export class SegMatterEffect extends Effect {
 
     if (this.auto) {
       this.sinceShuffle += deltaTime
-      if (this.sinceShuffle >= this.reshuffleInterval()) { this.sinceShuffle = 0; this.autoSeed = (this.autoSeed + 1) % 1000 }
+      const interval = this.reshuffleInterval()
+      if (this.sinceShuffle >= interval - 1e-6) { // epsilon: summed 1/60 steps land a hair under the beat
+        // keep the overshoot so the beat grid doesn't drift; % caps a long stall at one fire per frame
+        this.sinceShuffle = (this.sinceShuffle - interval) % interval
+        this.autoSeed = (this.autoSeed + 1) % 1000
+      }
     }
     this.uniforms.get('seed')!.value = (this.baseSeed + this.autoSeed * 17) % 1000
 

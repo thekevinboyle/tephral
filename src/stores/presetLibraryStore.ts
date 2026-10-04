@@ -9,6 +9,7 @@ import { useRoutingStore, unionWithDefaultEffectOrder } from './routingStore'
 import { useSlicerStore } from './slicerStore'
 import { useTrendStore } from './trendStore'
 import { useSegStore } from './segStore'
+import { buildSegExpPreset, FACTORY_FOLDER_ID, SEG_EXP_SEEDED_KEY } from '../presets/segExp'
 
 // Database constants
 const DB_NAME = 'segf4ult-presets'
@@ -335,8 +336,24 @@ export const usePresetLibraryStore = create<PresetLibraryState>((set, get) => ({
         }
       }
 
+      // Factory presets: seed once. The "seeded" marker lives in the metadata
+      // store (keyPath 'key'), so a user-deleted factory preset stays deleted.
+      let finalPresets = presets
+      const meta = await getAllFromStore<{ key: string; value: unknown }>(METADATA_STORE)
+      if (!meta.some((m) => m.key === SEG_EXP_SEEDED_KEY)) {
+        if (!finalFolders.some((f) => f.id === FACTORY_FOLDER_ID)) {
+          const factory: Folder = { id: FACTORY_FOLDER_ID, name: 'Factory', parentId: null, order: 3 }
+          await putInStore(FOLDERS_STORE, factory)
+          finalFolders = [...finalFolders, factory]
+        }
+        const preset = buildSegExpPreset(Date.now(), captureCurrentEffects())
+        await putInStore(PRESETS_STORE, preset)
+        finalPresets = [...presets, preset]
+        await putInStore(METADATA_STORE, { key: SEG_EXP_SEEDED_KEY, value: true })
+      }
+
       set({
-        presets: presets.sort((a, b) => b.updatedAt - a.updatedAt),
+        presets: finalPresets.sort((a, b) => b.updatedAt - a.updatedAt),
         folders: finalFolders.sort((a, b) => a.order - b.order),
         isLoading: false,
       })

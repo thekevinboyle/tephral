@@ -34,6 +34,7 @@ export class SegmentationService {
   private canvas = document.createElement('canvas')
   private ctx = this.canvas.getContext('2d', { willReadFrequently: false })!
   private lastTimestamp = 0
+  private loadId = 0 // bumps on every load start and on deactivate; stale loads are ignored
   private generation = 0 // bumps on setSource/setActive(false) to drop stale callbacks
 
   constructor() {
@@ -60,12 +61,15 @@ export class SegmentationService {
       this.schedule()
     } else {
       this.generation++
+      this.loadId++
+      this.lastImage = null
       if (this.timer) clearTimeout(this.timer)
       this.timer = null
       this.segmenter?.close()
       this.segmenter = null
       this.loadPromise = null
       this.status = 'idle'
+      useUIStore.getState().setStatusText(null)
       this.clearMask()
     }
   }
@@ -85,6 +89,7 @@ export class SegmentationService {
 
   private ensureLoaded() {
     if (this.loadPromise) return
+    const id = ++this.loadId
     this.status = 'loading'
     useUIStore.getState().setStatusText('SEG: loading person model…')
     this.loadPromise = (async () => {
@@ -97,11 +102,12 @@ export class SegmentationService {
           outputCategoryMask: true,
           outputConfidenceMasks: false,
         })
-        if (!this.active) { seg.close(); return }
+        if (id !== this.loadId) { seg.close(); return }
         this.segmenter = seg
         this.status = 'ready'
         useUIStore.getState().setStatusText(null)
       } catch (err) {
+        if (id !== this.loadId) return
         console.warn('[SEG] person model failed to load:', err)
         this.status = 'error'
         this.loadPromise = null
@@ -153,6 +159,7 @@ export class SegmentationService {
   private publish(data: Uint8Array, w: number, h: number) {
     const img = this.maskTexture.image as { data: Uint8Array; width: number; height: number }
     if (img.width !== w || img.height !== h) {
+      this.maskTexture.dispose() // free the GL texture so the next upload re-allocates at the new size
       img.data = new Uint8Array(w * h)
       img.width = w
       img.height = h

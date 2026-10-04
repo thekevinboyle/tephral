@@ -17,6 +17,10 @@ uniform float effectMix;
 
 float selAt(vec2 uvp) { return segSelected(segClass(uvp), classSel); }
 
+// Cell math runs in pixels relative to the canvas CENTRE, so a cell-size change
+// scales the grid about the middle instead of sliding it from the corner.
+vec2 toUv(vec2 p) { return (p + resolution * 0.5) / resolution; }
+
 vec3 cellColor(vec2 cellCenterUv, vec2 cellUv) {
   // 4-tap average inside the cell → flat block colour
   vec2 q = cellUv * 0.25;
@@ -48,7 +52,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     return;
   }
 
-  vec2 px = uv * resolution;
+  vec2 px = uv * resolution - resolution * 0.5;
   vec2 cell = floor(px / cellPx);
   vec2 cellUv = vec2(cellPx) / resolution;
 
@@ -59,15 +63,15 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   for (int dy = -2; dy <= 2; dy++) {
     for (int dx = -2; dx <= 2; dx++) {
       vec2 k = cell + vec2(float(dx), float(dy));
-      vec2 kc = (k + 0.5) * cellPx;                 // cell centre, px
-      vec2 kuv = kc / resolution;
+      vec2 kc = (k + 0.5) * cellPx;                 // cell centre, px from canvas centre
+      vec2 kuv = toUv(kc);
       if (selAt(kuv) < 0.5) continue;
 
       // Edge cell = any 4-neighbour outside the mask; outward = toward the outside
-      float l = selAt((kc + vec2(-cellPx, 0.0)) / resolution);
-      float r = selAt((kc + vec2( cellPx, 0.0)) / resolution);
-      float d = selAt((kc + vec2(0.0, -cellPx)) / resolution);
-      float u = selAt((kc + vec2(0.0,  cellPx)) / resolution);
+      float l = selAt(toUv(kc + vec2(-cellPx, 0.0)));
+      float r = selAt(toUv(kc + vec2( cellPx, 0.0)));
+      float d = selAt(toUv(kc + vec2(0.0, -cellPx)));
+      float u = selAt(toUv(kc + vec2(0.0,  cellPx)));
       vec2 grad = vec2(r - l, u - d);               // points INTO the mask
       float isEdge = step(0.5, 4.0 - (l + r + d + u));
 
@@ -97,11 +101,14 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 }
 `
 
+const CELL_HYSTERESIS_PX = 1.5
+
 export class SegVoxelEffect extends Effect {
   private seg: SegmentationService | null = null
   private baseSize = DEFAULT_SEG_VOXEL_PARAMS.size
   private depth = DEFAULT_SEG_VOXEL_PARAMS.depth
   private elapsed = 0
+  private cellPx: number // whole pixels; only follows coverage past CELL_HYSTERESIS_PX
 
   constructor(params: Partial<SegVoxelParams> = {}) {
     const p = { ...DEFAULT_SEG_VOXEL_PARAMS, ...params }
@@ -122,6 +129,12 @@ export class SegVoxelEffect extends Effect {
     })
     this.baseSize = p.size
     this.depth = p.depth
+    this.cellPx = this.targetCellPx()
+  }
+
+  // Close-ups (high coverage) get bigger blocks, like the reference
+  private targetCellPx(): number {
+    return Math.max(2, Math.round(this.baseSize * (1 + this.depth * (this.seg?.personCoverage ?? 0))))
   }
 
   setSegmentation(s: SegmentationService) {
@@ -136,15 +149,17 @@ export class SegVoxelEffect extends Effect {
   update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, deltaTime = 1 / 60) {
     this.elapsed += deltaTime
     this.uniforms.get('uTime')!.value = this.elapsed
-    const cov = this.seg?.personCoverage ?? 0
     this.uniforms.get('hasMask')!.value = this.seg?.hasMask ? 1 : 0
-    // Close-ups (high coverage) get bigger blocks, like the reference
-    this.uniforms.get('cellPx')!.value = Math.max(2, this.baseSize * (1 + this.depth * cov))
+    // Coverage jitters every inference; a continuous cell size would make the grid swim
+    const target = this.baseSize * (1 + this.depth * (this.seg?.personCoverage ?? 0))
+    if (Math.abs(target - this.cellPx) >= CELL_HYSTERESIS_PX) this.cellPx = this.targetCellPx()
+    this.uniforms.get('cellPx')!.value = this.cellPx
   }
 
   updateParams(params: Partial<SegVoxelParams>) {
     if (params.size !== undefined) this.baseSize = params.size
     if (params.depth !== undefined) this.depth = params.depth
+    if (params.size !== undefined || params.depth !== undefined) this.cellPx = this.targetCellPx() // user edits apply now
     if (params.scatter !== undefined) this.uniforms.get('scatterAmt')!.value = params.scatter
     if (params.shading !== undefined) this.uniforms.get('shadingAmt')!.value = params.shading
     if (params.classes !== undefined) this.uniforms.get('classSel')!.value = params.classes

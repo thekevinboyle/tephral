@@ -530,6 +530,8 @@ export class EffectPipeline {
     seamEnabled: boolean
     extinctionEnabled: boolean
     bypassActive: boolean
+    /** Raw segStore flags (VOXEL/ECHO4D/MATTER enabled), before bypass/solo/kill/slicer. */
+    segWanted: boolean
     crossfaderPosition: number
     hasSourceTexture: boolean
     videoWidth: number
@@ -673,10 +675,13 @@ export class EffectPipeline {
       this.temporalEnabled[id] = nowEnabled
     }
 
-    // Person segmentation runs only while a consumer is live.
-    this.segmentation.setActive(
-      !config.bypassActive && !!(enabledMap['seg_voxel'] || enabledMap['seg_echo'] || enabledMap['seg_matter'])
+    // Person segmentation: the model lives while a consumer is enabled at
+    // all (raw store flags); bypass/solo/kill/slicer only pause the tick
+    // loop so the last mask survives an un-bypass without a model reload.
+    this.segmentation.setPaused(
+      config.bypassActive || !(enabledMap['seg_voxel'] || enabledMap['seg_echo'] || enabledMap['seg_matter'])
     )
+    this.segmentation.setWanted(config.segWanted)
 
     // Compute the active chain (empty when bypassed). Deduped via Set so a
     // duplicate id in effectOrder can't add the same cached EffectPass twice.

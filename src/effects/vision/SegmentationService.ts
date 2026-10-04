@@ -28,14 +28,15 @@ export class SegmentationService {
   private loadPromise: Promise<void> | null = null
   private source: HTMLVideoElement | HTMLImageElement | null = null
   private lastImage: HTMLImageElement | null = null
-  private active = false
+  private wanted = false // a SEG consumer is enabled: keep the model loaded
+  private paused = false // every consumer is bypassed/soloed out/killed: stop ticking, keep the mask
   private busy = false
   private timer: ReturnType<typeof setTimeout> | null = null
   private canvas = document.createElement('canvas')
   private ctx = this.canvas.getContext('2d', { willReadFrequently: false })!
   private lastTimestamp = 0
   private loadId = 0 // bumps on every load start and on deactivate; stale loads are ignored
-  private generation = 0 // bumps on setSource/setActive(false) to drop stale callbacks
+  private generation = 0 // bumps on setSource/setWanted(false) to drop stale callbacks
 
   constructor() {
     this.maskTexture = new THREE.DataTexture(new Uint8Array(1), 1, 1, THREE.RedFormat, THREE.UnsignedByteType)
@@ -53,18 +54,18 @@ export class SegmentationService {
     this.clearMask()
   }
 
-  setActive(active: boolean) {
-    if (active === this.active) return
-    this.active = active
-    if (active) {
+  /** Load and keep the model while true; close it and clear the mask when false. */
+  setWanted(wanted: boolean) {
+    if (wanted === this.wanted) return
+    this.wanted = wanted
+    if (wanted) {
       this.ensureLoaded()
       this.schedule()
     } else {
       this.generation++
       this.loadId++
       this.lastImage = null
-      if (this.timer) clearTimeout(this.timer)
-      this.timer = null
+      this.stopTimer()
       this.segmenter?.close()
       this.segmenter = null
       this.loadPromise = null
@@ -74,8 +75,16 @@ export class SegmentationService {
     }
   }
 
+  /** Stop ticking while true; the model, last mask and hasMask are kept. */
+  setPaused(paused: boolean) {
+    if (paused === this.paused) return
+    this.paused = paused
+    if (paused) this.stopTimer()
+    else this.schedule()
+  }
+
   dispose() {
-    this.setActive(false)
+    this.setWanted(false)
     this.maskTexture.dispose()
   }
 
@@ -117,8 +126,13 @@ export class SegmentationService {
   }
 
   private schedule() {
-    if (!this.active) return
-    this.timer = setTimeout(() => { this.tick(); this.schedule() }, TICK_MS)
+    if (!this.wanted || this.paused || this.timer) return
+    this.timer = setTimeout(() => { this.timer = null; this.tick(); this.schedule() }, TICK_MS)
+  }
+
+  private stopTimer() {
+    if (this.timer) clearTimeout(this.timer)
+    this.timer = null
   }
 
   private tick() {

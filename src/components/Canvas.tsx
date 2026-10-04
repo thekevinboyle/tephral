@@ -364,6 +364,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       seamEnabled: getEffectiveEnabled('strand_seam', seamEnabled && !effectBypassed['strand_seam']),
       extinctionEnabled: getEffectiveEnabled('strand_extinction', extinctionEnabled && !effectBypassed['strand_extinction']),
       bypassActive,
+      // Raw flags: keeps the person model loaded across bypass/solo/kill
+      segWanted: segVoxelEnabled || segEchoEnabled || segMatterEnabled,
       crossfaderPosition,
       hasSourceTexture: !!mediaTexture && !slicerEnabled,
       videoWidth: videoElement?.videoWidth || imageElement?.naturalWidth || 1,

@@ -10,6 +10,7 @@ import { useAsciiRenderStore } from '../stores/asciiRenderStore'
 import { useMediaStore } from '../stores/mediaStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useTrendStore } from '../stores/trendStore'
+import { useSegStore } from '../stores/segStore'
 import { useStrandStore } from '../stores/strandStore'
 import { useRecordingStore } from '../stores/recordingStore'
 import { useDestructionModeStore } from '../stores/destructionModeStore'
@@ -185,6 +186,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     rippleWarpEnabled,
     fractalDomainEnabled,
   } = useTrendStore()
+  const { voxelEnabled: segVoxelEnabled, echoEnabled: segEchoEnabled, matterEnabled: segMatterEnabled,
+    staleEnabled: segStaleEnabled, tornEnabled: segTornEnabled } = useSegStore()
 
   // Trace mask routing
   const { effectTraceMask } = useRoutingStore()
@@ -321,6 +324,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       crystallizeEnabled: getEffectiveEnabled('crystallize', crystallizeEnabled && !effectBypassed['crystallize']),
       rippleWarpEnabled: getEffectiveEnabled('ripple_warp', rippleWarpEnabled && !effectBypassed['ripple_warp']),
       fractalDomainEnabled: getEffectiveEnabled('fractal_domain', fractalDomainEnabled && !effectBypassed['fractal_domain']),
+      // SEG_EXP effects
+      segVoxelEnabled: getEffectiveEnabled('seg_voxel', segVoxelEnabled && !effectBypassed['seg_voxel']),
+      segEchoEnabled: getEffectiveEnabled('seg_echo', segEchoEnabled && !effectBypassed['seg_echo']),
+      segMatterEnabled: getEffectiveEnabled('seg_matter', segMatterEnabled && !effectBypassed['seg_matter']),
+      segStaleEnabled: getEffectiveEnabled('seg_stale', segStaleEnabled && !effectBypassed['seg_stale']),
+      segTornEnabled: getEffectiveEnabled('seg_torn', segTornEnabled && !effectBypassed['seg_torn']),
       // ACID GPU-ported effects (Phase 3) - not affected by glitchEnabled;
       // rendered as GPU passes in EffectPipeline (getEffectById cases live
       // there). AcidOverlay.tsx no longer dispatches any of these.
@@ -425,12 +434,18 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     flowSmearEnabled, feedbackTunnelEnabled, opiumTrailsEnabled, ruttEtraEnabled,
     reactionDiffusionEnabled, physarumEnabled, kaleidoscopeEnabled, liquidMorphEnabled,
     crystallizeEnabled, rippleWarpEnabled, fractalDomainEnabled,
+    segVoxelEnabled, segEchoEnabled, segMatterEnabled, segStaleEnabled, segTornEnabled,
     mirrorEnabled, rippleEnabled, scanEnabled, sliceEnabled, thGridEnabled,
     contourEnabled, glyphEnabled, halftoneEnabled, hexEnabled, iconsEnabled, ledEnabled,
     handprintsEnabled, tarSpreadEnabled, timefallEnabled, voidOutEnabled, strandWebEnabled,
     bridgeLinkEnabled, chiralPathEnabled, umbilicalEnabled, odradekEnabled, chiraliumEnabled,
     beachStaticEnabled, doomsEnabled, chiralCloudEnabled, bbPodEnabled, seamEnabled, extinctionEnabled,
   ])
+
+  // Person segmentation follows the active source (video or still image)
+  useEffect(() => {
+    pipeline?.segmentation.setSource(videoElement ?? imageElement ?? null)
+  }, [pipeline, videoElement, imageElement])
 
   // Landmark data flows at detection cadence — keep it out of the structural effect
   useEffect(() => {

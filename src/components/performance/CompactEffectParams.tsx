@@ -12,6 +12,7 @@ import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
 import { useMorphStore } from '../../stores/morphStore'
 import { useTrendStore } from '../../stores/trendStore'
+import { useSegStore } from '../../stores/segStore'
 import { Knob } from './Knob'
 import { BLOCK } from './blocks/blockTheme'
 
@@ -35,6 +36,7 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
   const destruction = useDestructionStore()
   const morph = useMorphStore()
   const trend = useTrendStore()
+  const seg = useSegStore()
 
   const knobProps = { size: 'xs' as const, showArc: true, showValue: true, color }
 
@@ -883,6 +885,59 @@ export function CompactEffectParams({ effectId, color }: CompactEffectParamsProp
             onChange={v => trend.updateFractalDomainParams({ zoom: v })} paramId="fractal_domain.zoom" {...knobProps} />
           <Knob label="SPIN" value={trend.fractalDomainParams.spin} min={-2} max={2} step={0.01}
             onChange={v => trend.updateFractalDomainParams({ spin: v })} paramId="fractal_domain.spin" {...knobProps} />
+        </div>
+      )
+    case 'seg_voxel':
+      return (
+        <div className="flex gap-4">
+          <Knob label="SIZE" value={seg.voxelParams.size} min={4} max={64} step={1}
+            onChange={v => seg.updateVoxelParams({ size: v })} paramId="seg_voxel.size" {...knobProps} />
+          <Knob label="DPTH" value={seg.voxelParams.depth} min={0} max={4} step={0.05}
+            onChange={v => seg.updateVoxelParams({ depth: v })} paramId="seg_voxel.depth" {...knobProps} />
+          <Knob label="SCTR" value={seg.voxelParams.scatter} min={0} max={1} step={0.01}
+            onChange={v => seg.updateVoxelParams({ scatter: v })} paramId="seg_voxel.scatter" {...knobProps} />
+        </div>
+      )
+    case 'seg_echo':
+      return (
+        <div className="flex gap-4">
+          <Knob label="CPS" value={seg.echoParams.copies} min={1} max={8} step={1}
+            onChange={v => seg.updateEchoParams({ copies: v })} paramId="seg_echo.copies" {...knobProps} />
+          <Knob label="DLY" value={seg.echoParams.delay} min={1} max={12} step={1}
+            onChange={v => seg.updateEchoParams({ delay: v })} paramId="seg_echo.delay" {...knobProps} />
+          <Knob label="DCAY" value={seg.echoParams.decay} min={0} max={1} step={0.01}
+            onChange={v => seg.updateEchoParams({ decay: v })} paramId="seg_echo.decay" {...knobProps} />
+        </div>
+      )
+    case 'seg_matter':
+      return (
+        <div className="flex gap-4">
+          <Knob label="COV" value={seg.matterParams.coverage} min={0} max={1} step={0.01}
+            onChange={v => seg.updateMatterParams({ coverage: v })} paramId="seg_matter.coverage" {...knobProps} />
+          <Knob label="SEED" value={seg.matterParams.seed} min={0} max={999} step={1}
+            onChange={v => seg.updateMatterParams({ seed: v })} paramId="seg_matter.seed" {...knobProps} />
+          <Knob label="BEAT" value={seg.matterParams.reshuffleBeats} min={1} max={32} step={1}
+            onChange={v => seg.updateMatterParams({ reshuffleBeats: v })} paramId="seg_matter.reshuffleBeats" {...knobProps} />
+        </div>
+      )
+    case 'seg_stale':
+      return (
+        <div className="flex gap-4">
+          <Knob label="CELL" value={seg.staleParams.cellSize} min={8} max={96} step={1}
+            onChange={v => seg.updateStaleParams({ cellSize: v })} paramId="seg_stale.cellSize" {...knobProps} />
+          <Knob label="THR" value={seg.staleParams.threshold} min={0} max={1} step={0.01}
+            onChange={v => seg.updateStaleParams({ threshold: v })} paramId="seg_stale.threshold" {...knobProps} />
+          <Knob label="BRST" value={seg.staleParams.burst} min={0} max={1} step={0.01}
+            onChange={v => seg.updateStaleParams({ burst: v })} paramId="seg_stale.burst" {...knobProps} />
+        </div>
+      )
+    case 'seg_torn':
+      return (
+        <div className="flex gap-4">
+          <Knob label="DPTH" value={seg.tornParams.depth} min={0} max={0.2} step={0.005}
+            onChange={v => seg.updateTornParams({ depth: v })} paramId="seg_torn.depth" {...knobProps} />
+          <Knob label="BLK" value={seg.tornParams.blockSize} min={4} max={64} step={1}
+            onChange={v => seg.updateTornParams({ blockSize: v })} paramId="seg_torn.blockSize" {...knobProps} />
         </div>
       )
 

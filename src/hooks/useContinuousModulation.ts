@@ -13,6 +13,7 @@ import { useAudioReactiveStore } from '../stores/audioReactiveStore'
 import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
 import { useTrendStore } from '../stores/trendStore'
+import { useSegStore } from '../stores/segStore'
 
 /**
  * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope)
@@ -554,6 +555,52 @@ export function useContinuousModulation() {
           if (paramName === 'zoom') trend.updateFractalDomainParams({ zoom: 1 + value * 2 })
           if (paramName === 'spin') trend.updateFractalDomainParams({ spin: value * 4 - 2 })
           if (paramName === 'mix') trend.updateFractalDomainParams({ mix: value })
+          break
+        }
+        // SEG_EXP
+        case 'seg_voxel': {
+          const s = useSegStore.getState()
+          if (paramName === 'size') s.updateVoxelParams({ size: 4 + Math.round(value * 60) })
+          if (paramName === 'depth') s.updateVoxelParams({ depth: value * 4 })
+          if (paramName === 'scatter') s.updateVoxelParams({ scatter: value })
+          if (paramName === 'shading') s.updateVoxelParams({ shading: value })
+          if (paramName === 'mix') s.updateVoxelParams({ mix: value })
+          break
+        }
+        case 'seg_echo': {
+          const s = useSegStore.getState()
+          if (paramName === 'copies') s.updateEchoParams({ copies: 1 + Math.round(value * 7) })
+          if (paramName === 'delay') s.updateEchoParams({ delay: 1 + Math.round(value * 11) })
+          if (paramName === 'decay') s.updateEchoParams({ decay: value })
+          if (paramName === 'offsetX') s.updateEchoParams({ offsetX: value * 0.2 - 0.1 })
+          if (paramName === 'offsetY') s.updateEchoParams({ offsetY: value * 0.2 - 0.1 })
+          if (paramName === 'zoom') s.updateEchoParams({ zoom: 0.9 + value * 0.2 })
+          if (paramName === 'mix') s.updateEchoParams({ mix: value })
+          break
+        }
+        case 'seg_matter': {
+          const s = useSegStore.getState()
+          if (paramName === 'coverage') s.updateMatterParams({ coverage: value })
+          if (paramName === 'seed') s.updateMatterParams({ seed: Math.round(value * 999) })
+          if (paramName === 'mix') s.updateMatterParams({ mix: value })
+          break
+        }
+        case 'seg_stale': {
+          const s = useSegStore.getState()
+          if (paramName === 'cellSize') s.updateStaleParams({ cellSize: 8 + Math.round(value * 88) })
+          if (paramName === 'threshold') s.updateStaleParams({ threshold: value })
+          if (paramName === 'refresh') s.updateStaleParams({ refresh: value })
+          if (paramName === 'burst') s.updateStaleParams({ burst: value })
+          if (paramName === 'raggedness') s.updateStaleParams({ raggedness: value })
+          if (paramName === 'mix') s.updateStaleParams({ mix: value })
+          break
+        }
+        case 'seg_torn': {
+          const s = useSegStore.getState()
+          if (paramName === 'depth') s.updateTornParams({ depth: value * 0.2 })
+          if (paramName === 'blockSize') s.updateTornParams({ blockSize: 4 + Math.round(value * 60) })
+          if (paramName === 'speed') s.updateTornParams({ speed: value * 4 })
+          if (paramName === 'mix') s.updateTornParams({ mix: value })
           break
         }
       }

@@ -167,15 +167,17 @@ export const DESTRUCTION_EFFECTS: EffectDefinition[] = [
   { id: 'crystallize', label: 'CRYSTL', color: '#a8e6cf', row: 'texture', page: 5, min: 8, max: 128 },
   { id: 'ripple_warp', label: 'RIPPLE', color: '#7b68ee', row: 'distortion', page: 5, min: 1, max: 40 },
 
-  // Row 3: Reserved
+  // Row 3: Fractal
   { id: 'fractal_domain', label: 'FRACTL', color: '#ff6b9d', row: 'distortion', page: 5, min: 1, max: 8 },
-  { id: 'destruction_reserved_10', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
-  { id: 'destruction_reserved_11', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
-  { id: 'destruction_reserved_12', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
+
+  // Row 3-4: SEG_EXP (subject-targeted glitch layers)
+  { id: 'seg_voxel', label: 'VOXEL', color: '#ff8a3d', row: 'render', page: 5, min: 4, max: 64 },
+  { id: 'seg_echo', label: 'ECHO4D', color: '#ffb36b', row: 'render', page: 5, min: 1, max: 8 },
+  { id: 'seg_matter', label: 'MATTER', color: '#c86bff', row: 'render', page: 5, min: 0, max: 1 },
+  { id: 'seg_stale', label: 'STALE', color: '#9aa4b2', row: 'distortion', page: 5, min: 8, max: 96 },
+  { id: 'seg_torn', label: 'TORN', color: '#5b5b5b', row: 'texture', page: 5, min: 0, max: 0.2 },
 
   // Row 4: Reserved
-  { id: 'destruction_reserved_13', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
-  { id: 'destruction_reserved_14', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
   { id: 'destruction_reserved_15', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
   { id: 'destruction_reserved_16', label: '—', color: '#374151', row: 'reserved', page: 5, min: 0, max: 100 },
 ]

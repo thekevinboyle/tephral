@@ -13,6 +13,7 @@ import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
 import { useMorphStore } from '../stores/morphStore'
 import { useTrendStore } from '../stores/trendStore'
+import { useSegStore } from '../stores/segStore'
 
 export function useEffectDisable() {
   const glitch = useGlitchEngineStore()
@@ -29,6 +30,7 @@ export function useEffectDisable() {
   const destruction = useDestructionStore()
   const morph = useMorphStore()
   const trend = useTrendStore()
+  const seg = useSegStore()
 
   const disableEffect = useCallback((effectId: string) => {
     // Clear bypass state so re-enabling starts fresh
@@ -129,8 +131,14 @@ export function useEffectDisable() {
       case 'crystallize': trend.setCrystallizeEnabled(false); break
       case 'ripple_warp': trend.setRippleWarpEnabled(false); break
       case 'fractal_domain': trend.setFractalDomainEnabled(false); break
+      // SEG_EXP
+      case 'seg_voxel': seg.setVoxelEnabled(false); break
+      case 'seg_echo': seg.setEchoEnabled(false); break
+      case 'seg_matter': seg.setMatterEnabled(false); break
+      case 'seg_stale': seg.setStaleEnabled(false); break
+      case 'seg_torn': seg.setTornEnabled(false); break
     }
-  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion, destruction, morph, trend])
+  }, [glitch, ascii, stipple, contour, landmarks, acid, vision, textureOverlay, dataOverlay, strand, motion, destruction, morph, trend, seg])
 
   return { disableEffect }
 }

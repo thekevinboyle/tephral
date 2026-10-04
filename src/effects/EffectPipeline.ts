@@ -79,7 +79,13 @@ import {
   StrandTarEffect,
   StrandExtinctionEffect,
   StrandChiralPathEffect,
+  SegVoxelEffect,
+  SegEchoEffect,
+  SegMatterEffect,
+  SegStaleEffect,
+  SegTornEffect,
 } from './glitch-engine'
+import { SegmentationService } from './vision/SegmentationService'
 import { FaceHudEffect } from './morph'
 
 export class EffectPipeline {
@@ -149,6 +155,13 @@ export class EffectPipeline {
   reactionDiffusion: ReactionDiffusionEffect | null = null
   ruttEtra: RuttEtraEffect | null = null
   physarum: PhysarumEffect | null = null
+  // SEG_EXP effects + their shared person segmentation
+  segmentation: SegmentationService = new SegmentationService()
+  segVoxel: SegVoxelEffect | null = null
+  segEcho: SegEchoEffect | null = null
+  segMatter: SegMatterEffect | null = null
+  segStale: SegStaleEffect | null = null
+  segTorn: SegTornEffect | null = null
 
   // ACID overlay effects (Phase 3 GPU port)
   acidMirror: AcidMirrorEffect | null = null
@@ -293,6 +306,14 @@ export class EffectPipeline {
     this.reactionDiffusion = new ReactionDiffusionEffect()
     this.ruttEtra = new RuttEtraEffect()
     this.physarum = new PhysarumEffect()
+    this.segVoxel = new SegVoxelEffect()
+    this.segEcho = new SegEchoEffect()
+    this.segMatter = new SegMatterEffect()
+    this.segStale = new SegStaleEffect()
+    this.segTorn = new SegTornEffect()
+    this.segVoxel.setSegmentation(this.segmentation)
+    this.segEcho.setSegmentation(this.segmentation)
+    this.segMatter.setSegmentation(this.segmentation)
 
     // ACID overlay effects (Phase 3 GPU port)
     this.acidMirror = new AcidMirrorEffect()
@@ -378,6 +399,11 @@ export class EffectPipeline {
       case 'reaction_diffusion': return this.reactionDiffusion
       case 'rutt_etra': return this.ruttEtra
       case 'physarum': return this.physarum
+      case 'seg_voxel': return this.segVoxel
+      case 'seg_echo': return this.segEcho
+      case 'seg_matter': return this.segMatter
+      case 'seg_stale': return this.segStale
+      case 'seg_torn': return this.segTorn
       // ACID overlay effects (Phase 3 GPU port)
       case 'acid_mirror': return this.acidMirror
       case 'acid_ripple': return this.acidRipple
@@ -466,6 +492,11 @@ export class EffectPipeline {
     crystallizeEnabled: boolean
     rippleWarpEnabled: boolean
     fractalDomainEnabled: boolean
+    segVoxelEnabled: boolean
+    segEchoEnabled: boolean
+    segMatterEnabled: boolean
+    segStaleEnabled: boolean
+    segTornEnabled: boolean
     // ACID overlay effects (Phase 3 GPU port) — rendered as GPU passes via
     // getEffectById below. AcidOverlay.tsx no longer dispatches any of
     // these (it only owns decomp + the already-GPU cloud/slit/voronoi).
@@ -560,6 +591,11 @@ export class EffectPipeline {
       crystallize: config.crystallizeEnabled,
       ripple_warp: config.rippleWarpEnabled,
       fractal_domain: config.fractalDomainEnabled,
+      seg_voxel: config.segVoxelEnabled,
+      seg_echo: config.segEchoEnabled,
+      seg_matter: config.segMatterEnabled,
+      seg_stale: config.segStaleEnabled,
+      seg_torn: config.segTornEnabled,
       // ACID overlay effects (Phase 3 GPU port)
       acid_mirror: config.mirrorEnabled,
       acid_ripple: config.rippleEnabled,
@@ -601,6 +637,7 @@ export class EffectPipeline {
       'feedback_tunnel', 'opium_trails', 'flow_smear',
       'reaction_diffusion', 'rutt_etra', 'physarum',
       'strand_tar', 'strand_extinction', 'strand_path',
+      'seg_echo', 'seg_stale',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
@@ -623,6 +660,10 @@ export class EffectPipeline {
       // captureFrame (frame-diff motion needs a real previous-frame
       // reference), gated in render() below like flow_smear.
       strand_path: this.strandChiralPath,
+      // SEG_EXP — frame work happens in update() from inputBuffer (no
+      // captureFrame), but ring/held targets must be freed on disable.
+      seg_echo: this.segEcho,
+      seg_stale: this.segStale,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]
@@ -631,6 +672,11 @@ export class EffectPipeline {
       }
       this.temporalEnabled[id] = nowEnabled
     }
+
+    // Person segmentation runs only while a consumer is live.
+    this.segmentation.setActive(
+      !config.bypassActive && !!(enabledMap['seg_voxel'] || enabledMap['seg_echo'] || enabledMap['seg_matter'])
+    )
 
     // Compute the active chain (empty when bypassed). Deduped via Set so a
     // duplicate id in effectOrder can't add the same cached EffectPass twice.
@@ -805,6 +851,11 @@ export class EffectPipeline {
     this.strandBbpod?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandChiralium?.setResolution(this.canvasWidth, this.canvasHeight)
     this.strandOdradek?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.segVoxel?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.segEcho?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.segMatter?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.segStale?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.segTorn?.setResolution(this.canvasWidth, this.canvasHeight)
   }
 
   private updateQuadScale() {
@@ -927,6 +978,12 @@ export class EffectPipeline {
     this.reactionDiffusion?.dispose()
     this.ruttEtra?.dispose()
     this.physarum?.dispose()
+    this.segVoxel?.dispose()
+    this.segEcho?.dispose()
+    this.segMatter?.dispose()
+    this.segStale?.dispose()
+    this.segTorn?.dispose()
+    this.segmentation.dispose()
     // ACID overlay effects (Phase 3 GPU port)
     this.acidMirror?.dispose()
     this.acidRipple?.dispose()

@@ -17,6 +17,7 @@ import { useMotionStore } from '../../stores/motionStore'
 import { useDestructionStore } from '../../stores/destructionStore'
 import { useMorphStore } from '../../stores/morphStore'
 import { useTrendStore } from '../../stores/trendStore'
+import { useSegStore } from '../../stores/segStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { getEffectStatusText, getPageStatusText } from '../../config/statusDescriptions'
 import { DataGrid } from '../ui/MicroVisuals'
@@ -54,6 +55,8 @@ export function PerformanceGrid() {
 
   // Trend effects store (16 new effects across VISION/MOTION/DESTROY)
   const trend = useTrendStore()
+  // SEG_EXP effects (subject-targeted DESTROY layers)
+  const seg = useSegStore()
 
   // Effect sequencer store — ensure tracks exist when toggling effects
   const ensureTrack = useEffectSequencerStore((s) => s.ensureTrack)
@@ -1098,6 +1101,56 @@ export function PerformanceGrid() {
           },
           onValueChange: (v: number) => trend.updateFractalDomainParams({ iterations: v }),
         }
+      case 'seg_voxel':
+        return {
+          active: seg.voxelEnabled,
+          value: seg.voxelParams.size,
+          onToggle: () => {
+            if (!seg.voxelEnabled) moveToEndOfChain(effectId)
+            seg.setVoxelEnabled(!seg.voxelEnabled)
+          },
+          onValueChange: (v: number) => seg.updateVoxelParams({ size: v }),
+        }
+      case 'seg_echo':
+        return {
+          active: seg.echoEnabled,
+          value: seg.echoParams.copies,
+          onToggle: () => {
+            if (!seg.echoEnabled) moveToEndOfChain(effectId)
+            seg.setEchoEnabled(!seg.echoEnabled)
+          },
+          onValueChange: (v: number) => seg.updateEchoParams({ copies: Math.round(v) }),
+        }
+      case 'seg_matter':
+        return {
+          active: seg.matterEnabled,
+          value: seg.matterParams.coverage,
+          onToggle: () => {
+            if (!seg.matterEnabled) moveToEndOfChain(effectId)
+            seg.setMatterEnabled(!seg.matterEnabled)
+          },
+          onValueChange: (v: number) => seg.updateMatterParams({ coverage: v }),
+        }
+      case 'seg_stale':
+        return {
+          active: seg.staleEnabled,
+          value: seg.staleParams.cellSize,
+          onToggle: () => {
+            if (!seg.staleEnabled) moveToEndOfChain(effectId)
+            seg.setStaleEnabled(!seg.staleEnabled)
+          },
+          onValueChange: (v: number) => seg.updateStaleParams({ cellSize: v }),
+        }
+      case 'seg_torn':
+        return {
+          active: seg.tornEnabled,
+          value: seg.tornParams.depth,
+          onToggle: () => {
+            if (!seg.tornEnabled) moveToEndOfChain(effectId)
+            seg.setTornEnabled(!seg.tornEnabled)
+          },
+          onValueChange: (v: number) => seg.updateTornParams({ depth: v }),
+        }
 
       // Reserved / empty slots
       default:
@@ -1161,7 +1214,8 @@ export function PerformanceGrid() {
       case 5: // DESTRUCTION
         return destruction.datamoshEnabled || destruction.pixelSortEnabled || destruction.sonifyEnabled || destruction.pointCloudEnabled ||
                trend.kaleidoscopeEnabled || trend.liquidMorphEnabled || trend.crystallizeEnabled ||
-               trend.rippleWarpEnabled || trend.fractalDomainEnabled
+               trend.rippleWarpEnabled || trend.fractalDomainEnabled ||
+               seg.voxelEnabled || seg.echoEnabled || seg.matterEnabled || seg.staleEnabled || seg.tornEnabled
       default:
         return false
     }

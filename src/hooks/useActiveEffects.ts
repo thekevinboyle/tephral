@@ -13,6 +13,7 @@ import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
 import { useMorphStore } from '../stores/morphStore'
 import { useTrendStore } from '../stores/trendStore'
+import { useSegStore } from '../stores/segStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { EFFECTS, PAGE_NAMES, getEffectsForPage } from '../config/effects'
 
@@ -39,6 +40,7 @@ export function useActiveEffects() {
   const destruction = useDestructionStore()
   const morph = useMorphStore()
   const trend = useTrendStore()
+  const seg = useSegStore()
   const effectOrder = useRoutingStore(s => s.effectOrder)
 
   const sortedEffects = useMemo(() => {
@@ -209,6 +211,13 @@ export function useActiveEffects() {
     if (trend.rippleWarpEnabled) activeEffects.push({ id: 'ripple_warp', label: 'RIPPLE', color: '#7b68ee', primaryValue: Math.round(trend.rippleWarpParams.frequency), primaryLabel: 'freq' })
     if (trend.fractalDomainEnabled) activeEffects.push({ id: 'fractal_domain', label: 'FRACTL', color: '#ff6b9d', primaryValue: Math.round(trend.fractalDomainParams.iterations), primaryLabel: 'iter' })
 
+    // SEG_EXP — DESTROY
+    if (seg.voxelEnabled) activeEffects.push({ id: 'seg_voxel', label: 'VOXEL', color: '#ff8a3d', primaryValue: Math.round(seg.voxelParams.size), primaryLabel: 'px' })
+    if (seg.echoEnabled) activeEffects.push({ id: 'seg_echo', label: 'ECHO4D', color: '#ffb36b', primaryValue: seg.echoParams.copies, primaryLabel: 'cps' })
+    if (seg.matterEnabled) activeEffects.push({ id: 'seg_matter', label: 'MATTER', color: '#c86bff', primaryValue: Math.round(seg.matterParams.coverage * 100), primaryLabel: 'cov' })
+    if (seg.staleEnabled) activeEffects.push({ id: 'seg_stale', label: 'STALE', color: '#9aa4b2', primaryValue: Math.round(seg.staleParams.cellSize), primaryLabel: 'px' })
+    if (seg.tornEnabled) activeEffects.push({ id: 'seg_torn', label: 'TORN', color: '#5b5b5b', primaryValue: Math.round(seg.tornParams.depth * 100), primaryLabel: 'dep' })
+
     // Sort by effectOrder
     return [...activeEffects].sort((a, b) => {
       const aIndex = effectOrder.indexOf(a.id)
@@ -219,7 +228,7 @@ export function useActiveEffects() {
     })
   }, [
     glitch, ascii, stipple, landmarks, contour, acid, vision,
-    textureOverlay, dataOverlay, strand, motion, destruction, morph, trend, effectOrder,
+    textureOverlay, dataOverlay, strand, motion, destruction, morph, trend, seg, effectOrder,
   ])
 
   return { sortedEffects }

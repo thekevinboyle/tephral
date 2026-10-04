@@ -12,6 +12,7 @@ import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
 import { useMorphStore } from '../stores/morphStore'
 import { useTrendStore } from '../stores/trendStore'
+import { useSegStore } from '../stores/segStore'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -67,6 +68,7 @@ const mot = () => useMotionStore.getState()
 const des = () => useDestructionStore.getState()
 const mor = () => useMorphStore.getState()
 const trd = () => useTrendStore.getState()
+const sg = () => useSegStore.getState()
 
 export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
   // ═══════════════════════════════════════════════════════════════════════
@@ -1493,5 +1495,91 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
     ],
     setEnabled: (v) => trd().setFractalDomainEnabled(v),
     getEnabled: () => trd().fractalDomainEnabled,
+  },
+  seg_voxel: {
+    getParams: () => [
+      { id: 'size', label: 'SIZE', min: 4, max: 64, step: 1, apply: (v) => sg().updateVoxelParams({ size: v }), read: () => sg().voxelParams.size },
+      { id: 'depth', label: 'DPTH', min: 0, max: 4, step: 0.05, apply: (v) => sg().updateVoxelParams({ depth: v }), read: () => sg().voxelParams.depth },
+      { id: 'scatter', label: 'SCTR', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateVoxelParams({ scatter: v }), read: () => sg().voxelParams.scatter },
+      { id: 'shading', label: 'SHADE', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateVoxelParams({ shading: v }), read: () => sg().voxelParams.shading },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateVoxelParams({ mix: v }), read: () => sg().voxelParams.mix },
+    ],
+    getSelectParams: () => [
+      { id: 'classes', label: 'TARGET', type: 'select',
+        options: [{ value: '0', label: 'PERSON' }, { value: '1', label: 'SKIN' }, { value: '2', label: 'HAIR' }, { value: '3', label: 'CLOTHES' }],
+        apply: (v) => sg().updateVoxelParams({ classes: Number(v) }), read: () => String(sg().voxelParams.classes) },
+      { id: 'debugMask', label: 'MASK VIEW', type: 'select',
+        options: [{ value: '0', label: 'OFF' }, { value: '1', label: 'ON' }],
+        apply: (v) => sg().updateVoxelParams({ debugMask: v === '1' }), read: () => (sg().voxelParams.debugMask ? '1' : '0') },
+    ],
+    setEnabled: (v) => sg().setVoxelEnabled(v),
+    getEnabled: () => sg().voxelEnabled,
+  },
+  seg_echo: {
+    getParams: () => [
+      { id: 'copies', label: 'CPS', min: 1, max: 8, step: 1, apply: (v) => sg().updateEchoParams({ copies: v }), read: () => sg().echoParams.copies },
+      { id: 'delay', label: 'DLY', min: 1, max: 12, step: 1, apply: (v) => sg().updateEchoParams({ delay: v }), read: () => sg().echoParams.delay },
+      { id: 'decay', label: 'DCAY', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateEchoParams({ decay: v }), read: () => sg().echoParams.decay },
+      { id: 'offsetX', label: 'OFFX', min: -0.1, max: 0.1, step: 0.001, controlType: 'bipolar', apply: (v) => sg().updateEchoParams({ offsetX: v }), read: () => sg().echoParams.offsetX },
+      { id: 'offsetY', label: 'OFFY', min: -0.1, max: 0.1, step: 0.001, controlType: 'bipolar', apply: (v) => sg().updateEchoParams({ offsetY: v }), read: () => sg().echoParams.offsetY },
+      { id: 'zoom', label: 'ZOOM', min: 0.9, max: 1.1, step: 0.001, apply: (v) => sg().updateEchoParams({ zoom: v }), read: () => sg().echoParams.zoom },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateEchoParams({ mix: v }), read: () => sg().echoParams.mix },
+    ],
+    setEnabled: (v) => sg().setEchoEnabled(v),
+    getEnabled: () => sg().echoEnabled,
+  },
+  seg_matter: {
+    getParams: () => [
+      { id: 'coverage', label: 'COV', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateMatterParams({ coverage: v }), read: () => sg().matterParams.coverage },
+      { id: 'seed', label: 'SEED', min: 0, max: 999, step: 1, apply: (v) => sg().updateMatterParams({ seed: v }), read: () => sg().matterParams.seed },
+      { id: 'reshuffleBeats', label: 'BEATS', min: 1, max: 32, step: 1, apply: (v) => sg().updateMatterParams({ reshuffleBeats: v }), read: () => sg().matterParams.reshuffleBeats },
+      { id: 'wBlack', label: 'BLACK', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateMatterParams({ wBlack: v }), read: () => sg().matterParams.wBlack },
+      { id: 'wSolid', label: 'SOLID', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateMatterParams({ wSolid: v }), read: () => sg().matterParams.wSolid },
+      { id: 'wGradient', label: 'GRAD', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateMatterParams({ wGradient: v }), read: () => sg().matterParams.wGradient },
+      { id: 'wZebra', label: 'ZEBRA', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateMatterParams({ wZebra: v }), read: () => sg().matterParams.wZebra },
+      { id: 'wRainbow', label: 'RAINBW', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateMatterParams({ wRainbow: v }), read: () => sg().matterParams.wRainbow },
+      { id: 'wMosaic', label: 'MOSAIC', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateMatterParams({ wMosaic: v }), read: () => sg().matterParams.wMosaic },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateMatterParams({ mix: v }), read: () => sg().matterParams.mix },
+    ],
+    getSelectParams: () => [
+      { id: 'autoReshuffle', label: 'AUTO', type: 'select',
+        options: [{ value: '0', label: 'OFF' }, { value: '1', label: 'BEAT' }],
+        apply: (v) => sg().updateMatterParams({ autoReshuffle: v === '1' }), read: () => (sg().matterParams.autoReshuffle ? '1' : '0') },
+    ],
+    setEnabled: (v) => sg().setMatterEnabled(v),
+    getEnabled: () => sg().matterEnabled,
+  },
+  seg_stale: {
+    getParams: () => [
+      { id: 'cellSize', label: 'CELL', min: 8, max: 96, step: 1, apply: (v) => sg().updateStaleParams({ cellSize: v }), read: () => sg().staleParams.cellSize },
+      { id: 'threshold', label: 'THR', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateStaleParams({ threshold: v }), read: () => sg().staleParams.threshold },
+      { id: 'refresh', label: 'RFSH', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateStaleParams({ refresh: v }), read: () => sg().staleParams.refresh },
+      { id: 'burst', label: 'BRST', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateStaleParams({ burst: v }), read: () => sg().staleParams.burst },
+      { id: 'raggedness', label: 'RAG', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateStaleParams({ raggedness: v }), read: () => sg().staleParams.raggedness },
+      { id: 'burstBeats', label: 'BEATS', min: 1, max: 32, step: 1, apply: (v) => sg().updateStaleParams({ burstBeats: v }), read: () => sg().staleParams.burstBeats },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateStaleParams({ mix: v }), read: () => sg().staleParams.mix },
+    ],
+    getSelectParams: () => [
+      { id: 'autoBurst', label: 'AUTO', type: 'select',
+        options: [{ value: '0', label: 'OFF' }, { value: '1', label: 'BEAT' }],
+        apply: (v) => sg().updateStaleParams({ autoBurst: v === '1' }), read: () => (sg().staleParams.autoBurst ? '1' : '0') },
+    ],
+    setEnabled: (v) => sg().setStaleEnabled(v),
+    getEnabled: () => sg().staleEnabled,
+  },
+  seg_torn: {
+    getParams: () => [
+      { id: 'depth', label: 'DPTH', min: 0, max: 0.2, step: 0.005, apply: (v) => sg().updateTornParams({ depth: v }), read: () => sg().tornParams.depth },
+      { id: 'blockSize', label: 'BLK', min: 4, max: 64, step: 1, apply: (v) => sg().updateTornParams({ blockSize: v }), read: () => sg().tornParams.blockSize },
+      { id: 'speed', label: 'SPD', min: 0, max: 4, step: 0.05, apply: (v) => sg().updateTornParams({ speed: v }), read: () => sg().tornParams.speed },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateTornParams({ mix: v }), read: () => sg().tornParams.mix },
+    ],
+    getSelectParams: () => [
+      { id: 'fill', label: 'FILL', type: 'select',
+        options: [{ value: '0', label: 'BLACK' }, { value: '1', label: 'SMEAR' }],
+        apply: (v) => sg().updateTornParams({ fill: Number(v) }), read: () => String(sg().tornParams.fill) },
+    ],
+    setEnabled: (v) => sg().setTornEnabled(v),
+    getEnabled: () => sg().tornEnabled,
   },
 }

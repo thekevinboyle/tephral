@@ -230,3 +230,10 @@ export type { StrandExtinctionParams } from './StrandExtinctionEffect'
 
 export { StrandChiralPathEffect, DEFAULT_STRAND_CHIRAL_PATH_PARAMS } from './StrandChiralPathEffect'
 export type { StrandChiralPathParams } from './StrandChiralPathEffect'
+
+// SEG_EXP effects
+export { SegVoxelEffect } from './SegVoxelEffect'
+export { SegEchoEffect } from './SegEchoEffect'
+export { SegMatterEffect } from './SegMatterEffect'
+export { SegStaleEffect } from './SegStaleEffect'
+export { SegTornEffect } from './SegTornEffect'

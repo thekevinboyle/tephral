@@ -8,6 +8,7 @@ import { useLandmarksStore } from './landmarksStore'
 import { useRoutingStore, unionWithDefaultEffectOrder } from './routingStore'
 import { useSlicerStore } from './slicerStore'
 import { useTrendStore } from './trendStore'
+import { useSegStore } from './segStore'
 
 // Database constants
 const DB_NAME = 'segf4ult-presets'
@@ -164,7 +165,7 @@ function generateFolderId(): string {
 }
 
 // Capture current effect state as a BankSnapshot
-function captureCurrentEffects(): BankSnapshot {
+export function captureCurrentEffects(): BankSnapshot {
   const glitchState = useGlitchEngineStore.getState()
   const asciiState = useAsciiRenderStore.getState()
   const stippleState = useStippleStore.getState()
@@ -222,12 +223,13 @@ function captureCurrentEffects(): BankSnapshot {
     effectOrder: [...routingState.effectOrder],
     slicer: useSlicerStore.getState().getSnapshot(),
     trend: useTrendStore.getState().getSnapshot(),
+    seg: useSegStore.getState().getSnapshot(),
     savedAt: Date.now(),
   }
 }
 
 // Apply effects from a preset
-function applyEffects(effects: BankSnapshot): void {
+export function applyEffects(effects: BankSnapshot): void {
   const currentState = useGlitchEngineStore.getState()
   useGlitchEngineStore.setState({
     rgbSplitEnabled: effects.glitch.rgbSplitEnabled,
@@ -293,6 +295,9 @@ function applyEffects(effects: BankSnapshot): void {
   if (effects.trend) {
     useTrendStore.getState().applySnapshot(effects.trend)
   }
+
+  // Older presets predate SEG_EXP: applySnapshot(undefined) resets seg to defaults (all off)
+  useSegStore.getState().applySnapshot(effects.seg)
 }
 
 // Create default folders

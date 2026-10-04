@@ -10,6 +10,8 @@ import { useVisionTrackingStore } from '../stores/visionTrackingStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useTrendStore } from '../stores/trendStore'
 import { useStrandStore } from '../stores/strandStore'
+import { useSegStore } from '../stores/segStore'
+import { useSequencerStore } from '../stores/sequencerStore'
 
 /**
  * Pushes effect parameters straight into shader uniforms via zustand
@@ -159,6 +161,21 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.physarum?.updateParams({ ...s.physarumParams, mix: getMix('physarum') })
   }
 
+  // SEG_EXP effects
+  const pushSeg = () => {
+    const s = useSegStore.getState()
+    pipeline.segVoxel?.updateParams({ ...s.voxelParams, mix: s.voxelParams.mix * getMix('seg_voxel') })
+    pipeline.segEcho?.updateParams({ ...s.echoParams, mix: s.echoParams.mix * getMix('seg_echo') })
+    pipeline.segMatter?.updateParams({ ...s.matterParams, mix: s.matterParams.mix * getMix('seg_matter') })
+    pipeline.segStale?.updateParams({ ...s.staleParams, mix: s.staleParams.mix * getMix('seg_stale') })
+    pipeline.segTorn?.updateParams({ ...s.tornParams, mix: s.tornParams.mix * getMix('seg_torn') })
+  }
+  const pushBpm = () => {
+    const bpm = useSequencerStore.getState().bpm
+    pipeline.segMatter?.setBpm(bpm)
+    pipeline.segStale?.setBpm(bpm)
+  }
+
   // ACID overlay effects (Phase 3 GPU port) — empty until each port task
   // adds its own `pipeline.<camel>?.updateParams({ ...s.<camel>Params, mix:
   // getMix('acid_<id>') })` line here (the optional-chain no-ops until that
@@ -205,6 +222,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
   pushGlitch(); pushMotion(); pushDots(); pushAscii()
   pushDestruction(); pushMorph(); pushTrace(); pushCrossfader(); pushTrend()
   pushAcidPorts(); pushStrandPorts()
+  pushSeg(); pushBpm()
 
   // Subscribe with reference-equality slice checks (zustand v5 vanilla
   // subscribe gives (state, prevState)). effectMix lives in the glitch
@@ -214,7 +232,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
       if (s.effectMix !== prev.effectMix) {
         pushGlitch(); pushMotion(); pushDots(); pushAscii()
         pushDestruction(); pushMorph(); pushTrend()
-        pushAcidPorts(); pushStrandPorts()
+        pushAcidPorts(); pushStrandPorts(); pushSeg()
         return
       }
       if (
@@ -297,6 +315,16 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     // the MAX override; nothing to do here for that direction.
     useDestructionModeStore.subscribe((s, prev) => {
       if (prev.active && !s.active) pushDestruction()
+    }),
+    useSegStore.subscribe((s, prev) => {
+      if (
+        s.voxelParams !== prev.voxelParams || s.echoParams !== prev.echoParams ||
+        s.matterParams !== prev.matterParams || s.staleParams !== prev.staleParams ||
+        s.tornParams !== prev.tornParams
+      ) pushSeg()
+    }),
+    useSequencerStore.subscribe((s, prev) => {
+      if (s.bpm !== prev.bpm) pushBpm()
     }),
   ]
 

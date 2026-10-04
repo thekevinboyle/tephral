@@ -28,6 +28,7 @@ import { useLandmarksStore } from './landmarksStore'
 import { useRoutingStore, unionWithDefaultEffectOrder } from './routingStore'
 import { useSlicerStore, type SlicerSnapshot } from './slicerStore'
 import { useTrendStore, type TrendSnapshot } from './trendStore'
+import { useSegStore, type SegSnapshot } from './segStore'
 
 /**
  * BankSnapshot stores a complete effect state for A/B/C/D bank recall
@@ -75,6 +76,8 @@ export interface BankSnapshot {
   slicer?: SlicerSnapshot
   // Trend effects (Phase 2) — optional for backward compat with older presets
   trend?: TrendSnapshot
+  // SEG_EXP effects — optional for backward compat with older presets
+  seg?: SegSnapshot
   // Metadata
   savedAt: number
 }
@@ -155,6 +158,7 @@ export const useBankStore = create<BankState>((set, get) => ({
       effectOrder: [...routingState.effectOrder],
       slicer: useSlicerStore.getState().getSnapshot(),
       trend: useTrendStore.getState().getSnapshot(),
+      seg: useSegStore.getState().getSnapshot(),
       savedAt: Date.now(),
     }
 
@@ -253,6 +257,9 @@ export const useBankStore = create<BankState>((set, get) => ({
     if (snapshot.trend) {
       useTrendStore.getState().applySnapshot(snapshot.trend)
     }
+
+    // Older banks predate SEG_EXP: applySnapshot(undefined) resets seg to defaults (all off)
+    useSegStore.getState().applySnapshot(snapshot.seg)
 
     // Set activeBank to index
     set({ activeBank: index })

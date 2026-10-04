@@ -65,6 +65,20 @@ Enabled flags/order and per-frame params are split across two files:
 - Import new effects array
 - Include in `defaultEffectOrder`
 
+### 11. Param Registry (`src/config/effectParams.ts`)
+- Add an `EFFECT_PARAM_REGISTRY` entry (getParams, optional getSelectParams, setEnabled, getEnabled).
+  The Expanded Parameter Panel and param locks are driven from this registry.
+
+### 12. Continuous Modulation (`src/hooks/useContinuousModulation.ts`)
+- Add a `case '<effectId>'` mapping 0–1 modulation values onto each param's real range.
+
+### Presets/banks
+- New stores need a `<store>?: Snapshot` key on `BankSnapshot` (`src/stores/bankStore.ts`) plus
+  capture/apply lines in both `bankStore.ts` and `presetLibraryStore.ts`; `applySnapshot(undefined)`
+  must reset to defaults so older banks load cleanly.
+
+Note: `routingStore.defaultEffectOrder` is derived from the effect arrays automatically.
+
 ## Architecture
 
 ### Effect Card Stack (`src/components/performance/EffectCardStack.tsx`)

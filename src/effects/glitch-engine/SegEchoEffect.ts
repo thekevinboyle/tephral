@@ -119,7 +119,12 @@ export class SegEchoEffect extends Effect {
   update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget) {
     const hasMask = this.seg?.hasMask ? 1 : 0
     this.uniforms.get('hasMask')!.value = hasMask
-    if (!hasMask) return
+    if (!hasMask) {
+      // Mask lost (source change / model closed): forget old captures so they
+      // can't reappear as ghosts of the previous source once a mask returns
+      if (this.filled) { this.filled = 0; this.head = 0; this.uniforms.get('filled')!.value = 0 }
+      return
+    }
     this.ensureTargets()
     this.frame++
     if (this.frame % Math.max(1, Math.round(this.delay)) === 0) {

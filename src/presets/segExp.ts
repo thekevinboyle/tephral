@@ -16,11 +16,18 @@ const SEG_EXP_CHAIN = ['seg_stale', 'seg_matter', 'seg_voxel', 'seg_echo', 'seg_
  * The reference reel's look: torn stale background, swapped object
  * materials, cube-mosaic person with echoes, ragged border. Built from a
  * capture of the current state (passed in by presetLibraryStore, which
- * avoids a circular import) with every other effect switched off, so the
- * snapshot shape always matches the running app's BankSnapshot.
+ * avoids a circular import), so the snapshot shape always matches the
+ * running app's BankSnapshot.
+ *
+ * Only the sections BankSnapshot carries are switched off: glitch, ascii,
+ * stipple, contour, landmarks and trend. Applying it leaves the motion,
+ * destruction, acid, strand and morph stores as they are (BankSnapshot has
+ * no sections for them), and the slicer section is dropped so the slicer
+ * keeps its current state too.
  */
 export function buildSegExpPreset(now: number, base: BankSnapshot): Preset {
   const effects = structuredClone(base)
+  delete effects.slicer // optional in BankSnapshot; applyEffects skips it when absent
 
   // Turn off every *Enabled flag in every store section, then enable ours
   for (const section of Object.values(effects) as unknown[]) {

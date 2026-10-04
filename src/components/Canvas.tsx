@@ -444,11 +444,6 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     beachStaticEnabled, doomsEnabled, chiralCloudEnabled, bbPodEnabled, seamEnabled, extinctionEnabled,
   ])
 
-  // Person segmentation follows the active source (video or still image)
-  useEffect(() => {
-    pipeline?.segmentation.setSource(videoElement ?? imageElement ?? null)
-  }, [pipeline, videoElement, imageElement])
-
   // Landmark data flows at detection cadence — keep it out of the structural effect
   useEffect(() => {
     if (!pipeline) return
@@ -498,10 +493,15 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         const texHeight = (slicerTexture as THREE.DataTexture).image?.height || 270
         pipeline.setVideoSize(texWidth, texHeight)
         pipeline.setSourceVideoSize(texWidth, texHeight)
+        // The slicer frame isn't the video frame — a mask of the video would be misaligned
+        pipeline.segmentation.setSource(null)
 
         return
       }
     }
+
+    // Person segmentation follows the active source (video or still image)
+    pipeline.segmentation.setSource(videoElement ?? imageElement ?? null)
 
     if (mediaTexture) {
       pipeline.setInputTexture(mediaTexture)

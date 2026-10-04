@@ -18,7 +18,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   vec2 bc = (blk + 0.5) * blockPx;   // decide per block → blocky bites
   float shortSide = min(resolution.x, resolution.y);
   float edgeDist = min(min(bc.x, resolution.x - bc.x), min(bc.y, resolution.y - bc.y)) / shortSide;
-  float t = floor(uTime * speed * 8.0);
+  float t = mod(floor(uTime * speed * 8.0), 9973.0); // wrap: keeps hash inputs small after long sessions
   float n = hash(blk + t * 0.37);
   float slow = valueNoise(blk * 0.15 + t * 0.05);
   float bite = depth * (0.3 + 0.7 * n) * (0.5 + 0.5 * slow);

@@ -11,7 +11,7 @@ import { useRoutingStore } from '../stores/routingStore'
 import { useTrendStore } from '../stores/trendStore'
 import { useStrandStore } from '../stores/strandStore'
 import { useSegStore } from '../stores/segStore'
-import { useSequencerStore } from '../stores/sequencerStore'
+import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 
 /**
  * Pushes effect parameters straight into shader uniforms via zustand
@@ -171,7 +171,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     pipeline.segTorn?.updateParams({ ...s.tornParams, mix: s.tornParams.mix * getMix('seg_torn') })
   }
   const pushBpm = () => {
-    const bpm = useSequencerStore.getState().bpm
+    const bpm = useEffectSequencerStore.getState().bpm
     pipeline.segMatter?.setBpm(bpm)
     pipeline.segStale?.setBpm(bpm)
   }
@@ -323,7 +323,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
         s.tornParams !== prev.tornParams
       ) pushSeg()
     }),
-    useSequencerStore.subscribe((s, prev) => {
+    useEffectSequencerStore.subscribe((s, prev) => {
       if (s.bpm !== prev.bpm) pushBpm()
     }),
   ]

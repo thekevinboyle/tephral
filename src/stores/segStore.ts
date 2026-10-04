@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 
+/** Person-segmentation model state, written by SegmentationService. Not part of snapshots. */
+export type SegStatus = 'idle' | 'loading' | 'ready' | 'error'
+
 export interface SegVoxelParams {
   size: number      // 4-64 px, base cell size
   depth: number     // 0-4, cell growth with person coverage
@@ -71,6 +74,8 @@ export interface SegSnapshot {
 }
 
 interface SegState extends SegSnapshot {
+  segStatus: SegStatus
+  setSegStatus: (s: SegStatus) => void
   setVoxelEnabled: (v: boolean) => void
   setEchoEnabled: (v: boolean) => void
   setMatterEnabled: (v: boolean) => void
@@ -96,6 +101,8 @@ const defaults = (): SegSnapshot => ({
 
 export const useSegStore = create<SegState>((set, get) => ({
   ...defaults(),
+  segStatus: 'idle',
+  setSegStatus: (segStatus) => set({ segStatus }),
   setVoxelEnabled: (v) => set({ voxelEnabled: v }),
   setEchoEnabled: (v) => set({ echoEnabled: v }),
   setMatterEnabled: (v) => set({ matterEnabled: v }),

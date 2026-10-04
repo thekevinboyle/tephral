@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import type { ImageSegmenter, ImageSegmenterResult } from '@mediapipe/tasks-vision'
-import { useUIStore } from '../../stores/uiStore'
+import { useSegStore, type SegStatus } from '../../stores/segStore'
 
 const WASM_PATH = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.33/wasm'
 const MODEL_PATH =
@@ -11,8 +11,6 @@ const SLOW_TICK_WORK_MS = 8 // a tick's main-thread work above this triggers the
 const RECOVER_TICKS = 30 // consecutive fast ticks before returning to TICK_MS
 const INPUT_WIDTH = 256 // downscale before inference; mask comes back at this size
 const COVERAGE_SMOOTHING = 0.15
-
-export type SegStatus = 'idle' | 'loading' | 'ready' | 'error'
 
 /**
  * Person/part segmentation shared by the SEG effects. Runs MediaPipe's
@@ -88,8 +86,7 @@ export class SegmentationService {
       this.segmenter = null
       this.mpGl = null
       this.loadPromise = null
-      this.status = 'idle'
-      useUIStore.getState().setStatusText(null)
+      this.setStatus('idle')
       this.clearMask()
     }
   }
@@ -107,6 +104,12 @@ export class SegmentationService {
     this.maskTexture.dispose()
   }
 
+  /** Mirrors status into segStore.segStatus, the persistent channel the StatusBar shows. */
+  private setStatus(status: SegStatus) {
+    this.status = status
+    useSegStore.getState().setSegStatus(status)
+  }
+
   private clearMask() {
     this.hasMask = false
     this.personCoverage = 0
@@ -118,8 +121,7 @@ export class SegmentationService {
   private ensureLoaded() {
     if (this.loadPromise) return
     const id = ++this.loadId
-    this.status = 'loading'
-    useUIStore.getState().setStatusText('SEG: loading person model…')
+    this.setStatus('loading')
     this.loadPromise = (async () => {
       try {
         const { ImageSegmenter, FilesetResolver } = await import('@mediapipe/tasks-vision')
@@ -137,14 +139,12 @@ export class SegmentationService {
         this.mpGl = canvas.getContext('webgl2') // same context MediaPipe created (null if it chose webgl1)
         this.interval = TICK_MS
         this.fastStreak = 0
-        this.status = 'ready'
-        useUIStore.getState().setStatusText(null)
+        this.setStatus('ready')
       } catch (err) {
         if (id !== this.loadId) return
         console.warn('[SEG] person model failed to load:', err)
-        this.status = 'error'
+        this.setStatus('error')
         this.loadPromise = null
-        useUIStore.getState().setStatusText('SEG: person mask unavailable')
       }
     })()
   }

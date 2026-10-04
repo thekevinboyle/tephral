@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useUIStore } from '../../stores/uiStore'
+import { useSegStore } from '../../stores/segStore'
 import { SignalAnalysis, IrisScanner } from '../ui/MicroVisuals'
 import { perfMonitor } from '../../utils/perfMonitor'
 
 export function StatusBar() {
   const statusText = useUIStore((s) => s.statusText)
   const isIdle = statusText == null
+  // Persistent SEG model status — its own channel, so hover tooltips can't wipe it
+  const segStatus = useSegStore((s) => s.segStatus)
+  const segText =
+    segStatus === 'loading' ? 'SEG: loading model…' : segStatus === 'error' ? 'SEG: person mask unavailable' : null
 
   const [perf, setPerf] = useState({ avgMs: 0, maxMs: 0, fps: 0 })
   useEffect(() => {
@@ -68,6 +73,20 @@ export function StatusBar() {
           />
         )}
       </span>
+      {segText && (
+        <span
+          data-seg-status={segStatus}
+          style={{
+            fontSize: 10,
+            color: 'var(--text-muted)',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+            marginLeft: 8,
+          }}
+        >
+          {segText}
+        </span>
+      )}
       {import.meta.env.DEV && (
         <span
           title="render pipeline avg ms / fps"

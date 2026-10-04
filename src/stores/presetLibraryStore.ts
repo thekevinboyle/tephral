@@ -339,17 +339,21 @@ export const usePresetLibraryStore = create<PresetLibraryState>((set, get) => ({
       // Factory presets: seed once. The "seeded" marker lives in the metadata
       // store (keyPath 'key'), so a user-deleted factory preset stays deleted.
       let finalPresets = presets
-      const meta = await getAllFromStore<{ key: string; value: unknown }>(METADATA_STORE)
-      if (!meta.some((m) => m.key === SEG_EXP_SEEDED_KEY)) {
-        if (!finalFolders.some((f) => f.id === FACTORY_FOLDER_ID)) {
-          const factory: Folder = { id: FACTORY_FOLDER_ID, name: 'Factory', parentId: null, order: 3 }
-          await putInStore(FOLDERS_STORE, factory)
-          finalFolders = [...finalFolders, factory]
+      try {
+        const meta = await getAllFromStore<{ key: string; value: unknown }>(METADATA_STORE)
+        if (!meta.some((m) => m.key === SEG_EXP_SEEDED_KEY)) {
+          if (!finalFolders.some((f) => f.id === FACTORY_FOLDER_ID)) {
+            const factory: Folder = { id: FACTORY_FOLDER_ID, name: 'Factory', parentId: null, order: 3 }
+            await putInStore(FOLDERS_STORE, factory)
+            finalFolders = [...finalFolders, factory]
+          }
+          const preset = buildSegExpPreset(Date.now(), captureCurrentEffects())
+          await putInStore(PRESETS_STORE, preset)
+          finalPresets = [...presets, preset]
+          await putInStore(METADATA_STORE, { key: SEG_EXP_SEEDED_KEY, value: true })
         }
-        const preset = buildSegExpPreset(Date.now(), captureCurrentEffects())
-        await putInStore(PRESETS_STORE, preset)
-        finalPresets = [...presets, preset]
-        await putInStore(METADATA_STORE, { key: SEG_EXP_SEEDED_KEY, value: true })
+      } catch (err) {
+        console.error('Failed to seed factory presets:', err)
       }
 
       set({

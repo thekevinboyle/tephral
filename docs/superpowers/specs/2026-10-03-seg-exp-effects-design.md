@@ -44,8 +44,12 @@ committed.
 - **Ref-counted and lazy:** effects call `acquire()` / `release()`. The model loads on
   the first acquire and the segmenter is closed when the count reaches zero.
 - **Own throttled loop:** runs `segmentForVideo` on the current source element at up
-  to 30 fps, decoupled from the render loop; a slow inference never blocks a frame.
-  If an inference is still in flight, the tick is skipped.
+  to 30 fps on its own timer. It runs on the main thread between frames; it does not
+  block a render in progress, but a long tick delays the next frame. Mitigations:
+  unchanged video frames are skipped, the mask is read back one tick after submit
+  (GPU work flushed first, so the readback doesn't stall), and the interval backs
+  off to 66 ms while ticks take > 8 ms.
+  A Worker + OffscreenCanvas port is a follow-up.
 - **Output:** a 256×256 `THREE.DataTexture` (R8, nearest filtering) holding class IDs,
   re-uploaded per inference; plus a smoothed scalar `personCoverage` (fraction of
   non-background pixels, exponential smoothing) for VOXEL's depth scaling.

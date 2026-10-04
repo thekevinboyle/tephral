@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, type MouseEvent } from 'react'
 import { useClipStore, type ExportResolution, type ExportQuality, type ExportFrameRate, type ExportFormat } from '../../stores/clipStore'
 import { useVideoTranscode } from '../../hooks/useVideoTranscode'
+import { pickSaveTarget, saveBlob, SaveCancelledError } from '../../utils/exportTranscode'
 
 /**
  * Formats seconds to "M:SS" format
@@ -105,24 +106,23 @@ export function ClipDetailModal() {
     if (!selectedClip) return
 
     setExportError(null)
+    const fileName = `clip-${Date.now()}.${exportFormat}`
     try {
+      // Ask where to save first: the picker needs the click's user
+      // activation, which would expire during a long transcode.
+      const target = await pickSaveTarget(fileName, exportFormat)
+
       const resultBlob = await transcode(selectedClip.blob, {
         resolution: exportResolution,
         quality: exportQuality,
         frameRate: exportFrameRate,
         format: exportFormat,
+        durationSec: selectedClip.duration,
       })
 
-      // Download result blob
-      const url = URL.createObjectURL(resultBlob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `clip-${Date.now()}.${exportFormat}`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      await saveBlob(resultBlob, fileName, target)
     } catch (error) {
+      if (error instanceof SaveCancelledError) return
       console.error('Export failed:', error)
       setExportError(error instanceof Error ? error.message : 'Export failed. Please try again.')
     }

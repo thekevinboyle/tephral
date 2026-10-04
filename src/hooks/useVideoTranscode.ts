@@ -2,18 +2,14 @@ import { useState, useCallback, useRef } from 'react'
 import { FFmpeg } from '@ffmpeg/ffmpeg'
 import { fetchFile } from '@ffmpeg/util'
 import type { ExportResolution, ExportQuality, ExportFrameRate, ExportFormat } from '../stores/clipStore'
+import { buildScaleFilter, parseFfmpegTime, progressPercent } from '../utils/exportTranscode'
 
 interface TranscodeOptions {
   resolution: ExportResolution
   quality: ExportQuality
   frameRate: ExportFrameRate
   format: ExportFormat
-}
-
-const RESOLUTION_MAP: Record<ExportResolution, string> = {
-  'hd': '1280:720',
-  '1080p': '1920:1080',
-  '4k': '3840:2160',
+  durationSec: number // clip length; browser WebM has no duration header
 }
 
 const QUALITY_CRF: Record<ExportQuality, number> = {
@@ -29,6 +25,7 @@ export function useVideoTranscode() {
   const ffmpegRef = useRef<FFmpeg | null>(null)
   const cancelledRef = useRef(false) // Track if operation was cancelled
   const abortControllerRef = useRef<AbortController | null>(null) // For cancelling fetches
+  const durationRef = useRef(0) // duration of the clip being transcoded (s)
 
   const loadFFmpeg = useCallback(async () => {
     if (ffmpegRef.current) return ffmpegRef.current
@@ -39,13 +36,13 @@ export function useVideoTranscode() {
 
     const ffmpeg = new FFmpeg()
 
+    // ffmpeg's own 'progress' event divides by the input's duration header,
+    // which MediaRecorder WebM doesn't have (huge negative %). Derive progress
+    // from the stats line's time= against the clip's known duration instead.
     ffmpeg.on('log', ({ message }) => {
       console.log('[FFmpeg]', message)
-    })
-
-    ffmpeg.on('progress', ({ progress }) => {
-      console.log('[FFmpeg] Progress:', progress)
-      setProgress(Math.round(progress * 100))
+      const t = parseFfmpegTime(message)
+      if (t !== null) setProgress(progressPercent(t, durationRef.current))
     })
 
     // Create abort controller for this load operation
@@ -121,6 +118,7 @@ export function useVideoTranscode() {
     }
 
     cancelledRef.current = false
+    durationRef.current = options.durationSec
     setIsTranscoding(true)
     setProgress(0)
 
@@ -136,17 +134,20 @@ export function useVideoTranscode() {
 
       const args = [
         '-i', inputName,
-        '-vf', `scale=${RESOLUTION_MAP[options.resolution]}`,
+        '-vf', buildScaleFilter(options.resolution),
         '-r', String(options.frameRate),
         '-crf', String(QUALITY_CRF[options.quality]),
       ]
 
-      // Codec selection - mp4/mov use libx264 (webm returns early above)
-      args.push('-c:v', 'libx264', '-preset', 'medium')
+      // Codec selection - mp4/mov use libx264 (webm returns early above).
+      // ffmpeg.wasm is single-threaded with no SIMD x264 paths, so 'medium'
+      // runs at ~1 fps on large frames; 'veryfast' is several times quicker.
+      args.push('-c:v', 'libx264', '-preset', 'veryfast', '-pix_fmt', 'yuv420p')
 
       args.push('-y', outputName)
 
       await ffmpeg.exec(args)
+      setProgress(100)
 
       const data = await ffmpeg.readFile(outputName) as Uint8Array
       // At this point format is either 'mp4' or 'mov' (webm returns early)

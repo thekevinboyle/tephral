@@ -154,9 +154,9 @@ export class SegMatterEffect extends Effect {
 
     if (this.auto) {
       this.sinceShuffle += deltaTime
-      if (this.sinceShuffle >= this.reshuffleInterval()) { this.sinceShuffle = 0; this.autoSeed++ }
+      if (this.sinceShuffle >= this.reshuffleInterval()) { this.sinceShuffle = 0; this.autoSeed = (this.autoSeed + 1) % 1000 }
     }
-    this.uniforms.get('seed')!.value = this.baseSeed + this.autoSeed * 17.0
+    this.uniforms.get('seed')!.value = (this.baseSeed + this.autoSeed * 17) % 1000
 
     const mat = this.blurMat!
     mat.uniforms.tInput.value = inputBuffer.texture

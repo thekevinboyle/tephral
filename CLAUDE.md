@@ -62,8 +62,9 @@ Enabled flags/order and per-frame params are split across two files:
 - Add switch cases with full parameter controls (SliderRow, SelectRow, etc.)
 
 ### 10. Routing Store (`src/stores/routingStore.ts`)
-- Import new effects array
-- Include in `defaultEffectOrder`
+- `defaultEffectOrder` is built from `EFFECTS`, `STRAND_EFFECTS`, `MOTION_EFFECTS` and `DESTRUCTION_EFFECTS`.
+  Effects added to one of those existing arrays need no edit here.
+- Only a NEW effects array (a new page) must be imported and spread into `defaultEffectOrder`.
 
 ### 11. Param Registry (`src/config/effectParams.ts`)
 - Add an `EFFECT_PARAM_REGISTRY` entry (getParams, optional getSelectParams, setEnabled, getEnabled).
@@ -76,8 +77,6 @@ Enabled flags/order and per-frame params are split across two files:
 - New stores need a `<store>?: Snapshot` key on `BankSnapshot` (`src/stores/bankStore.ts`) plus
   capture/apply lines in both `bankStore.ts` and `presetLibraryStore.ts`; `applySnapshot(undefined)`
   must reset to defaults so older banks load cleanly.
-
-Note: `routingStore.defaultEffectOrder` is derived from the effect arrays automatically.
 
 ## Architecture
 

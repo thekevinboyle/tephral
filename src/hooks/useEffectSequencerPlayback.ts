@@ -6,6 +6,7 @@ import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useAudioReactiveStore } from '../stores/audioReactiveStore'
 import { useAudioSourceStore } from '../stores/audioSourceStore'
 import { EFFECT_PARAM_REGISTRY } from '../config/effectParams'
+import { readModBase } from '../effects/trackBandModulation'
 
 // Resolution to beat fraction
 const RESOLUTION_BEATS: Record<string, number> = {
@@ -256,7 +257,8 @@ export function useEffectSequencerPlayback() {
         const param = allParams.get(pid)
         if (!param) continue
         if (!(pid in saved)) {
-          saved[pid] = param.read()
+          // Save the band-mod base, not the modulated value (R16)
+          saved[pid] = readModBase(effectId, pid) ?? param.read()
         }
         param.apply(lockValue)
       }

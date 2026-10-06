@@ -79,6 +79,17 @@ export function stepTrackBandModulation(): void {
   }
 }
 
+/**
+ * The user-set base of a param this module is currently modulating, or
+ * undefined if it isn't. Anything that snapshots a param for later restore
+ * (sequencer p-locks) must save this rather than param.read(), which already
+ * includes the band offset — restoring that would ratchet the base upward.
+ */
+export function readModBase(effectId: string, paramId: string): number | undefined {
+  const a = active.get(effectId)
+  return a && a.param.id === paramId ? a.base : undefined
+}
+
 export function resetTrackBandModulation(): void {
   for (const a of active.values()) release(a)
   active.clear()

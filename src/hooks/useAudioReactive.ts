@@ -31,6 +31,9 @@ export function useAudioReactive() {
   // Per-track band normaliser + envelope state, keyed by effectId
   const trackStateRef = useRef<Record<string, { peak: { current: number }; floor: { current: number }; smoothed: number }>>({})
 
+  // True while an analyser+context were present last frame (clears stale levels once on removal)
+  const hadSourceRef = useRef(false)
+
   useEffect(() => {
     if (!enabled) {
       // Reset band values when disabled
@@ -45,6 +48,7 @@ export function useAudioReactive() {
       rollingFluxAvgRef.current = 0
       rollingFluxPeakRef.current = 0.01
       trackStateRef.current = {}
+      hadSourceRef.current = false
       return
     }
 
@@ -94,10 +98,17 @@ export function useAudioReactive() {
       const ctx = audioSource.audioContext
 
       if (!analyser || !ctx) {
+        // Source went away: zero everything once so gates can't fire on stale levels
+        if (hadSourceRef.current) {
+          hadSourceRef.current = false
+          useAudioReactiveStore.getState().updateBands(0, 0, 0, 0, 0)
+          trackStateRef.current = {}
+        }
         rafRef.current = requestAnimationFrame(loop)
         return
       }
 
+      hadSourceRef.current = true
       const now = performance.now()
       const dt = lastTimeRef.current > 0 ? (now - lastTimeRef.current) / 1000 : 1 / 60
       lastTimeRef.current = now

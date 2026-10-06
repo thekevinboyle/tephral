@@ -187,7 +187,7 @@ function ModBypassButton({ effectId, effectColor, isBypassed, onBypass }: {
         transition: 'opacity 150ms',
       }}
       title={hasRouting && sourceInfo
-        ? `Bypass modulated by ${sourceInfo.name} — double-click to remove`
+        ? `Bypass modulated by ${sourceInfo.name}: double-click to remove`
         : isInAssignmentMode
           ? 'Click to assign modulation to bypass'
           : 'Bypass'

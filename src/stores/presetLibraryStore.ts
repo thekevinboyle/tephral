@@ -55,11 +55,14 @@ interface PresetLibraryState {
   isLoading: boolean
   searchQuery: string
   collapsedFolders: Set<string>
+  /** Name of the preset last loaded; null once a bank loads or the chain is cleared (stage readout) */
+  activePresetName: string | null
 
   // Preset actions
   loadFromDB: () => Promise<void>
   createPreset: (name: string, folderId?: string | null, thumbnail?: string | null) => Promise<Preset>
   loadPreset: (id: string) => void
+  clearActivePresetName: () => void
   deletePreset: (id: string) => Promise<void>
   renamePreset: (id: string, name: string) => Promise<void>
   movePreset: (id: string, folderId: string | null) => Promise<void>
@@ -312,6 +315,7 @@ function createDefaultFolders(): Folder[] {
 
 export const usePresetLibraryStore = create<PresetLibraryState>((set, get) => ({
   presets: [],
+  activePresetName: null,
   folders: [],
   selectedFolderId: null,
   isLoading: true,
@@ -392,7 +396,12 @@ export const usePresetLibraryStore = create<PresetLibraryState>((set, get) => ({
     const preset = get().presets.find((p) => p.id === id)
     if (preset) {
       applyEffects(preset.effects)
+      set({ activePresetName: preset.name })
     }
+  },
+
+  clearActivePresetName: () => {
+    if (get().activePresetName !== null) set({ activePresetName: null })
   },
 
   deletePreset: async (id) => {

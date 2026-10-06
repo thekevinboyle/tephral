@@ -700,7 +700,7 @@ export function Knob({
                 backgroundColor: dot.info.color,
                 opacity: 0.7,
               }}
-              title={`${dot.info.name}: ${dot.routing.depth > 0 ? '+' : ''}${Math.round(dot.routing.depth * 100)}% — Drag to adjust, double-click to remove`}
+              title={`${dot.info.name}: ${dot.routing.depth > 0 ? '+' : ''}${Math.round(dot.routing.depth * 100)}%. Drag to adjust, double-click to remove`}
             />
           ))}
         </div>

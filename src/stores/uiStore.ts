@@ -31,9 +31,6 @@ interface UIState {
   // Info panel selection (unified)
   infoPanelSelection: InfoPanelSelection
 
-  // Card view mode for EffectCardStack
-  cardViewMode: 'compact' | 'full'
-
   // Bottom panel state
   bottomPanelTab: string | null  // null = collapsed, string = active tab name
   bottomPanelPage: number        // 1-indexed page within active tab
@@ -58,10 +55,6 @@ interface UIState {
   selectPreset: (presetId: string) => void
   clearInfoPanelSelection: () => void
 
-  // Card view mode actions
-  setCardViewMode: (mode: 'compact' | 'full') => void
-  toggleCardViewMode: () => void
-
   // Bottom panel actions
   toggleBottomPanelTab: (tab: string) => void
   setBottomPanelPage: (page: number) => void
@@ -85,7 +78,6 @@ export const useUIStore = create<UIState>((set) => ({
   },
 
   infoPanelSelection: null,
-  cardViewMode: 'compact',
   bottomPanelTab: null,
   bottomPanelPage: 1,
   statusText: null,
@@ -118,11 +110,6 @@ export const useUIStore = create<UIState>((set) => ({
   selectRouting: (routingId) => set({ infoPanelSelection: { type: 'routing', routingId } }),
   selectPreset: (presetId) => set({ infoPanelSelection: { type: 'preset', presetId } }),
   clearInfoPanelSelection: () => set({ infoPanelSelection: null }),
-
-  setCardViewMode: (mode) => set({ cardViewMode: mode }),
-  toggleCardViewMode: () => set((state) => ({
-    cardViewMode: state.cardViewMode === 'compact' ? 'full' : 'compact',
-  })),
 
   toggleBottomPanelTab: (tab) => set((state) => ({
     bottomPanelTab: state.bottomPanelTab === tab ? null : tab,

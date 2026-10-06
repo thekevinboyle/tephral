@@ -24,7 +24,7 @@ When adding a new effect page or new effects, you MUST update ALL of the followi
 ### 4. Active Effects Hook (`src/hooks/useActiveEffects.ts`)
 - Import the new store
 - Add enabled check and `activeEffects.push()` for each new effect
-- Include primaryValue/primaryLabel for card display
+- Include primaryValue/primaryLabel (shown on the chain row)
 
 ### 5. Effect Disable Hook (`src/hooks/useEffectDisable.ts`)
 - Add case to the switch statement mapping effectId to store setter
@@ -80,15 +80,27 @@ Enabled flags/order and per-frame params are split across two files:
 
 ## Architecture
 
-### Effect Card Stack (`src/components/performance/EffectCardStack.tsx`)
-The left column shows a vertically scrolling stack of effect cards. Each card has:
-- **Compact mode**: LED + label + 2-3 inline knobs + bypass + remove
-- **Full mode**: Header + full parameter controls (reuses `EffectParameters` from ExpandedParameterPanel)
-- Drag-and-drop reordering updates `routingStore.effectOrder`
-- View mode toggle (compact/full) stored in `uiStore.cardViewMode`
+### Layout Shell (`src/components/performance/PerformanceLayout.tsx` + `layout.css`)
+`.seg-shell` is a CSS grid whose children carry `data-area`: `header`, `effects`, `stage`, `chain`, `dock`, `status`.
+- **Laptop (1100-2199px)**: effects | stage | chain across the middle, dock spans the bottom (content-sized, capped at 34vh; 50vh while a modulation tab is open).
+- **Ultrawide (>= 2200px)**: the dock becomes a fourth, full-height right-hand column.
+- **Narrow (< 1100px)**: the page scrolls; stage first, then effects and chain side by side, then the dock.
+- `PerformanceLayout` re-renders every engine tick, so `HeaderBar`, `EffectsColumn`, `StageArea`, `ChainPanel` and `Dock` are `React.memo`. Keep their props stable and their store selectors narrow.
 
-### Effects Lane (`src/components/performance/EffectsLane.tsx`)
-The right column shows only the Modulation panel (LFO, Random, Step, Envelope, S&H).
+### Header (`src/components/performance/HeaderBar.tsx`)
+VIDEO/AUDIO source menus (portalled, `position: fixed`), the preset picker, and REC (`useRecordingControl`, red `--rec` token).
+
+### Effects Column (`src/components/performance/EffectsColumn.tsx`)
+Left column: page tabs + effect grid (`PerformanceGrid`), bank slots, crossfader, then the preset library.
+
+### Stage (`src/components/performance/StageArea.tsx`)
+Aspect-locked output frame that fits the free space, with corner ticks, ruler, ClipBin and four HUD readouts (`StageReadouts`): LIVE/REC + FPS, preset name (or bank), timecode, active band. The frame is a container; under 380px the readouts re-stack.
+
+### Chain Panel (`src/components/performance/ChainPanel.tsx`)
+Right column: the effect chain in signal order. Rows handle selection, drag (and Alt+Arrow) reorder, per-effect bypass (button or shift+click), remove (button, Delete, double-click), clear-all and bypass-all. It owns `ensureTrack` and auto-select for active effects. Below the rows it shows the selected effect's settings and audio band.
+
+### Dock (`src/components/performance/Dock.tsx`)
+Sequencer (`SequencerContainer` > `UnifiedSequencerPanel`, whose track list is the only scroller) above the modulation tabs (`BottomPanel`: LFO, Random, Step, Env, S&H, MIDI, Audio).
 
 Effect params flow through `src/effects/paramSync.ts` (zustand subscribe → uniform writes); Canvas.tsx's structural effect only rebuilds the pass chain on enable/disable/reorder.
 
@@ -100,8 +112,8 @@ Check `uiStore.ts` - the `setGridPage`, `nextGridPage`, `prevGridPage` functions
 ### Effects don't appear in grid
 Check `getEffectsForPage()` returns the right array and `pageHasActiveEffects()` includes the new page.
 
-### Effects don't appear in card stack
+### Effects don't appear in the chain
 Check `useActiveEffects.ts` has the enabled check for the new effect, and the effect ID is in `routingStore.defaultEffectOrder`.
 
-### Remove button doesn't work on a card
+### Remove button doesn't work on a chain row
 Check `useEffectDisable.ts` has a case for the effect ID mapping to the correct store setter.

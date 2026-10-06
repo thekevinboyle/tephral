@@ -1238,8 +1238,8 @@ export function PerformanceGrid() {
       }}
     >
       {/* Page navigation */}
-      <div className="flex items-center justify-center mb-1.5 px-1">
-        <div className="flex items-center gap-0.5">
+      <div className="flex items-center justify-center mb-1.5 px-1 w-full">
+        <div className="flex items-center gap-0.5 seg-page-tabs">
           {PAGE_NAMES.map((name, index) => {
             const hasActive = pageHasActiveEffects(index)
             const isSelected = gridPage === index

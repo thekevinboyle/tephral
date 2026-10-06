@@ -396,8 +396,8 @@ export function AudioFileTransport() {
         onDoubleClick={handleWaveformDoubleClick}
         onMouseEnter={() => setStatusText(
           hasLoopRegion
-            ? 'Click to seek — Drag edges to resize loop — Double-click to clear'
-            : 'Click to seek — Drag to create loop'
+            ? 'Click to seek. Drag edges to resize loop, double-click to clear'
+            : 'Click to seek. Drag to create loop'
         )}
       >
         {/* Canvas */}
@@ -479,7 +479,7 @@ export function AudioFileTransport() {
             border: '1px solid var(--border)',
           }}
           title={isPlaying ? 'Pause' : 'Play'}
-          onMouseEnter={() => setStatusText('Audio — Play/Pause')}
+          onMouseEnter={() => setStatusText('Audio: Play/Pause')}
           onMouseLeave={() => setStatusText(null)}
         >
           {isPlaying ? (

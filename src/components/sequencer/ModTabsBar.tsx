@@ -17,12 +17,12 @@ interface ModTabsBarProps {
 }
 
 const MOD_STATUS: Record<string, string> = {
-  lfo: 'LFO — Low-frequency oscillator modulation',
-  random: 'Random — Random value modulation',
-  step: 'Step — Step sequencer modulation',
-  envelope: 'Envelope — ADSR envelope modulation',
-  sh: 'S&H — Sample and hold modulation',
-  midi: 'MIDI — MIDI CC controller mapping',
+  lfo: 'LFO: Low-frequency oscillator modulation',
+  random: 'Random: Random value modulation',
+  step: 'Step: Step sequencer modulation',
+  envelope: 'Envelope: ADSR envelope modulation',
+  sh: 'S&H: Sample and hold modulation',
+  midi: 'MIDI: MIDI CC controller mapping',
 }
 
 export function ModTabsBar({ activeView, onSelectMod }: ModTabsBarProps) {

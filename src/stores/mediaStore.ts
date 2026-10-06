@@ -88,7 +88,11 @@ export const useMediaStore = create<MediaState>((set, get) => ({
   },
 
   stopCurrentMedia: () => {
-    const { source, videoElement } = get()
+    const { source, videoElement, imageElement, stashedImageElement } = get()
+    // Loaded files are blob: URLs from URL.createObjectURL; release them once the element is dropped
+    const revokeBlob = (url: string | undefined) => {
+      if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+    }
 
     if (source === 'webcam' && videoElement) {
       // Stop webcam stream
@@ -100,8 +104,15 @@ export const useMediaStore = create<MediaState>((set, get) => ({
     }
 
     if (source === 'file' && videoElement) {
+      const url = videoElement.src
       videoElement.pause()
       videoElement.src = ''
+      revokeBlob(url)
+    }
+
+    // A stashed image is restored later with its src intact, so only release unstashed ones
+    if (source === 'file' && imageElement && imageElement !== stashedImageElement) {
+      revokeBlob(imageElement.src)
     }
 
     if (source === 'screen' && videoElement) {

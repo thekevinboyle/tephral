@@ -186,7 +186,7 @@ export const EffectStepCell = memo(function EffectStepCell({
           : undefined,
         transition: 'background-color 0.06s, border-color 0.06s',
       }}
-      title={`Step ${stepIndex + 1}${hasProbability ? ` ${Math.round(step.probability * 100)}%` : ''}${hasLocks ? ` (${Object.keys(step.locks).length} lock${Object.keys(step.locks).length > 1 ? 's' : ''})` : ''}${lockValue != null ? ` [${automationParamId}: ${lockValue.toFixed(2)}]` : ''} — Cmd+drag to set probability`}
+      title={`Step ${stepIndex + 1}${hasProbability ? ` ${Math.round(step.probability * 100)}%` : ''}${hasLocks ? ` (${Object.keys(step.locks).length} lock${Object.keys(step.locks).length > 1 ? 's' : ''})` : ''}${lockValue != null ? ` [${automationParamId}: ${lockValue.toFixed(2)}]` : ''}. Cmd+drag to set probability`}
     >
       {/* P-lock fill — full cell, from bottom */}
       {showLockBar && (

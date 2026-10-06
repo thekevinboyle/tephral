@@ -301,7 +301,7 @@ function ModulationCard({
       onClick={onClick}
       data-mod-source={type}
       className={`flex flex-col cursor-pointer relative${active && routed ? ' alive-active' : ''}`}
-      onMouseEnter={() => setStatusText(`${label} — Click to select/enable, double-click to disable`)}
+      onMouseEnter={() => setStatusText(`${label}: Click to select/enable, double-click to disable`)}
       onMouseLeave={() => setStatusText(null)}
       style={{
         width: '80px',

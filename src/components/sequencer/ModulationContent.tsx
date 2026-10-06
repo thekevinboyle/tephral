@@ -74,7 +74,7 @@ export function ModSlider({
   return (
     <div
       className="flex items-center gap-2 py-0.5"
-      onMouseEnter={() => setStatusText(label ? `${label} — Drag to adjust` : null)}
+      onMouseEnter={() => setStatusText(label ? `${label}: Drag to adjust` : null)}
       onMouseLeave={() => setStatusText(null)}
     >
       <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
@@ -122,7 +122,7 @@ export function ModSelect<T extends string>({
   return (
     <div
       className="flex items-center gap-2 py-0.5"
-      onMouseEnter={() => setStatusText(label ? `${label} — Click to change mode` : null)}
+      onMouseEnter={() => setStatusText(label ? `${label}: Click to change mode` : null)}
       onMouseLeave={() => setStatusText(null)}
     >
       <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
@@ -228,7 +228,7 @@ export function ModulatorSection({
         className="w-full flex items-center gap-2 px-2 py-1.5 cursor-pointer"
         style={{ borderBottom: isExpanded ? '1px solid var(--border)' : 'none' }}
         onClick={onSelect}
-        onMouseEnter={() => setStatusText(`${title} — Click to expand/collapse`)}
+        onMouseEnter={() => setStatusText(`${title}: Click to expand/collapse`)}
         onMouseLeave={() => setStatusText(null)}
       >
         <button
@@ -1133,7 +1133,7 @@ function MIDIModContent() {
                 />
                 <button
                   onClick={() => removeRouting(routing.id)}
-                  onMouseEnter={() => setStatusText('Remove — Delete this MIDI CC routing')}
+                  onMouseEnter={() => setStatusText('Remove: Delete this MIDI CC routing')}
                   onMouseLeave={() => setStatusText(null)}
                   className="text-[8px] px-1"
                   style={{ color: 'var(--text-ghost)' }}
@@ -1420,7 +1420,7 @@ function AudioReactiveContent() {
               {/* Assign button */}
               <button
                 onClick={() => handleAssign(band.trackId)}
-                onMouseEnter={() => setStatusText(`${band.label} — ${isAssigning ? 'Click a knob to route' : 'Click to assign to effect parameters'}`)}
+                onMouseEnter={() => setStatusText(`${band.label}: ${isAssigning ? 'Click a knob to route' : 'Click to assign to effect parameters'}`)}
                 onMouseLeave={() => setStatusText(null)}
                 className="w-full text-[7px] uppercase py-0.5 rounded-sm"
                 style={{
@@ -1498,7 +1498,7 @@ function AudioReactiveContent() {
                 </div>
                 <button
                   onClick={() => removeRouting(routing.id)}
-                  onMouseEnter={() => setStatusText('Remove — Delete this audio routing')}
+                  onMouseEnter={() => setStatusText('Remove: Delete this audio routing')}
                   onMouseLeave={() => setStatusText(null)}
                   className="text-[8px] px-1 flex-shrink-0"
                   style={{ color: 'var(--text-ghost)' }}

@@ -3,6 +3,9 @@ import { useUIStore } from '../../stores/uiStore'
 import { Knob } from '../performance/Knob'
 import { ParamSection } from '../performance/blocks/ParamSection'
 import { SignalAnalysis } from '../ui/MicroVisuals'
+import { BandSpectrum } from './BandSpectrum'
+import { BAND_PRESETS, legacySourceToBand, type BandPresetName } from '../../utils/audioBands'
+import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 
 const ACCENT = '#FF3355'
 
@@ -13,6 +16,8 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
   const track = useEffectSequencerStore((s) => effectId ? s.tracks[effectId] : undefined)
   const setTrackAudioReactive = useEffectSequencerStore((s) => s.setTrackAudioReactive)
   const setTrackAudioReactiveEnabled = useEffectSequencerStore((s) => s.setTrackAudioReactiveEnabled)
+  const setTrackAudioBand = useEffectSequencerStore((s) => s.setTrackAudioBand)
+  const setTrackAudioMod = useEffectSequencerStore((s) => s.setTrackAudioMod)
   const trackAudioLevel = useEffectSequencerStore((s) => effectId ? (s.trackAudioLevels[effectId] ?? 0) : 0)
   const trackAutoThreshold = useEffectSequencerStore((s) => effectId ? (s.trackAutoThresholds[effectId] ?? 0.5) : 0.5)
 
@@ -55,25 +60,31 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
   }
 
   const isAboveThreshold = trackAudioLevel >= trackAutoThreshold
+  const band = config.band ?? legacySourceToBand(config.source) ?? BAND_PRESETS.FULL
+  const modParams = EFFECT_PARAM_REGISTRY[effectId]?.getParams() ?? []
 
   return (
     <ParamSection label="Audio Reactive" color={ACCENT} visual={SignalAnalysis}>
-    <div className="flex items-center gap-4">
-      {/* Sensitivity / kick multiplier knob */}
-      <Knob
-        label="SENS"
-        value={config.sensitivity}
-        min={0.1}
-        max={2}
-        step={0.05}
-        size="xs"
-        showArc
-        showValue
-        color={ACCENT}
-        onChange={(v) => setTrackAudioReactive(effectId, { sensitivity: v })}
-        formatValue={(v) => `${v.toFixed(1)}×`}
-      />
-
+    <div className="flex flex-col gap-2">
+      {/* Row 1: band */}
+      <div className="flex items-center gap-3">
+        <BandSpectrum band={band} color={ACCENT} onChange={(b) => setTrackAudioBand(effectId, b)} />
+        <div className="flex flex-wrap gap-1 max-w-[150px]">
+          {(Object.keys(BAND_PRESETS) as BandPresetName[]).map((name) => {
+            const p = BAND_PRESETS[name]
+            const on = Math.abs(band.lowHz - p.lowHz) < 0.5 && Math.abs(band.highHz - p.highHz) < 0.5
+            return (
+              <button
+                key={name}
+                onClick={() => setTrackAudioBand(effectId, { ...p })}
+                className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm"
+                style={{ color: on ? ACCENT : 'var(--text-ghost)', border: `1px solid ${on ? `${ACCENT}60` : 'var(--border)'}`, backgroundColor: on ? `${ACCENT}15` : 'transparent' }}
+              >
+                {name}
+              </button>
+            )
+          })}
+        </div>
       {/* Level meter with auto threshold */}
       <div className="flex-1 min-w-[60px] max-w-[120px] relative" style={{ height: 10 }}>
         <div
@@ -101,6 +112,53 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
         />
       </div>
 
+      </div>
+
+      {/* Row 2: gate + mod */}
+      <div className="flex items-center gap-4">
+      {/* Sensitivity / kick multiplier knob */}
+      <Knob
+        label="SENS"
+        value={config.sensitivity}
+        min={0.1}
+        max={2}
+        step={0.05}
+        size="xs"
+        showArc
+        showValue
+        color={ACCENT}
+        onChange={(v) => setTrackAudioReactive(effectId, { sensitivity: v })}
+        formatValue={(v) => `${v.toFixed(1)}×`}
+      />
+
+        <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
+          MOD
+          <select
+            data-track-mod-select
+            value={config.mod.param ?? ''}
+            onChange={(e) => setTrackAudioMod(effectId, { param: e.target.value || null })}
+            className="text-[10px] px-1 py-0.5 rounded-sm"
+            style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+          >
+            <option value="">—</option>
+            {modParams.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </select>
+        </label>
+        {config.mod.param && (
+          <Knob
+            label="AMT"
+            value={config.mod.amount}
+            min={-1}
+            max={1}
+            step={0.01}
+            size="xs"
+            showArc
+            showValue
+            color={ACCENT}
+            onChange={(v) => setTrackAudioMod(effectId, { amount: v })}
+            formatValue={(v) => `${v >= 0 ? '+' : ''}${Math.round(v * 100)}%`}
+          />
+        )}
       {/* Disable button */}
       <button
         onClick={() => setTrackAudioReactiveEnabled(effectId, false)}
@@ -112,6 +170,7 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
       >
         Off
       </button>
+      </div>
     </div>
     </ParamSection>
   )

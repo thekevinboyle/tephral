@@ -239,7 +239,11 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
   }, [activeSequencer])
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--bg-surface)' }}>
+    <div
+      className="flex flex-col h-full"
+      style={{ backgroundColor: 'var(--bg-surface)' }}
+      data-dock-empty={activeTrackIds.length === 0 || undefined}
+    >
       {/* ─── Zone 1: Effect tabs ─────────────────────────────────────── */}
       {!hideTabsBar && (
         <EffectTabsBar
@@ -275,13 +279,10 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
         {/* Track rows (scrollable) */}
         <div className="flex-1 min-w-0 overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
         {activeTrackIds.length === 0 ? (
-          <p
-            data-dock-hint
-            className="text-[11px]"
-            style={{ color: 'var(--text-muted)', margin: 0, padding: '4px 14px' }}
-          >
-            Effects you enable get a lane automatically.
-          </p>
+          <div className="seg-dock-empty">
+            <p className="hud-label seg-dock-empty-title">Sequencer</p>
+            <p data-dock-hint className="seg-dock-empty-hint">Effects you enable get a lane automatically.</p>
+          </div>
         ) : (
           activeTrackIds.map((effectId, index) => {
             const def = EFFECT_MAP.get(effectId)

@@ -1,4 +1,5 @@
 import { memo, useRef, useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useMediaSource } from '../../hooks/useMediaSource'
 import { useAudioSourceStore, type AudioSourceType } from '../../stores/audioSourceStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -25,35 +26,71 @@ function StyledDropdown({
   options,
   onChange,
   disabled,
+  menuId,
 }: {
   value: string
   options: { id: string; label: string }[]
   onChange: (id: string) => void
   disabled?: boolean
+  menuId: string
 }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ top: number; left: number; minWidth: number } | null>(null)
 
   const selected = options.find((o) => o.id === value)
 
+  // The header (and every grid area) clips overflow, so the menu lives in a portal with
+  // position:fixed, placed from the trigger rect (same pattern as PresetDropdownBar).
+  const place = useCallback(() => {
+    const r = triggerRef.current?.getBoundingClientRect()
+    if (r) setPos({ top: r.bottom + 2, left: r.left, minWidth: r.width })
+  }, [])
+
   useEffect(() => {
     if (!open) return
-    const close = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (triggerRef.current?.contains(t) || menuRef.current?.contains(t)) return
+      setOpen(false)
     }
-    window.addEventListener('mousedown', close)
-    return () => window.removeEventListener('mousedown', close)
-  }, [open])
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false)
+        triggerRef.current?.focus()
+      }
+    }
+    window.addEventListener('mousedown', onDown)
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('resize', place)
+    window.addEventListener('scroll', place, true)
+    return () => {
+      window.removeEventListener('mousedown', onDown)
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', place, true)
+    }
+  }, [open, place])
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }}>
       <button
-        onClick={() => !disabled && setOpen(!open)}
+        ref={triggerRef}
+        data-source-trigger={menuId}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => {
+          if (disabled) return
+          if (!open) place()
+          setOpen(!open)
+        }}
         style={{
           height: 28,
           minWidth: 80,
           backgroundColor: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
+          borderRadius: 2,
           color: 'var(--text-primary)',
           fontFamily: 'var(--font-mono)',
           fontSize: 11,
@@ -66,7 +103,7 @@ function StyledDropdown({
           position: 'relative',
         }}
       >
-        {selected?.label ?? '—'}
+        {selected?.label ?? '-'}
         <span
           style={{
             position: 'absolute',
@@ -82,17 +119,19 @@ function StyledDropdown({
         </span>
       </button>
 
-      {open && (
+      {open && pos && createPortal(
         <div
+          ref={menuRef}
+          role="listbox"
+          data-source-menu={menuId}
           style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            marginTop: 2,
-            minWidth: '100%',
+            position: 'fixed',
+            top: pos.top,
+            left: pos.left,
+            minWidth: pos.minWidth,
             backgroundColor: 'var(--bg-elevated)',
             border: '1px solid var(--border)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.8)',
+            borderRadius: 2,
             zIndex: 100,
           }}
         >
@@ -101,6 +140,8 @@ function StyledDropdown({
             return (
               <button
                 key={opt.id}
+                role="option"
+                aria-selected={isActive}
                 onClick={() => {
                   onChange(opt.id)
                   setOpen(false)
@@ -130,7 +171,8 @@ function StyledDropdown({
               </button>
             )
           })}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )
@@ -142,7 +184,7 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
   const setStatusText = useUIStore((s) => s.setStatusText)
 
   // Video source
-  const { source, isRecording, toggleWebcam, openFilePicker, switchCheck } = useMediaSource()
+  const { source, isRecording, toggleWebcam, openFilePicker, deactivateSource, switchCheck } = useMediaSource()
   const videoValue = source === 'webcam' ? 'cam' : source === 'file' ? 'file' : 'none'
 
   const handleVideoSelect = useCallback(
@@ -154,8 +196,9 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
       }
       if (id === 'cam') toggleWebcam()
       else if (id === 'file') openFilePicker()
+      else if (id === 'none') deactivateSource()
     },
-    [switchCheck, toggleWebcam, openFilePicker],
+    [switchCheck, toggleWebcam, openFilePicker, deactivateSource],
   )
 
   // Audio source
@@ -234,6 +277,7 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
           value={videoValue}
           options={VIDEO_OPTIONS}
           onChange={handleVideoSelect}
+          menuId="video"
           disabled={isRecording}
         />
       </div>
@@ -257,6 +301,7 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
           value={activeAudioSource}
           options={AUDIO_SOURCES}
           onChange={handleAudioSelect}
+          menuId="audio"
         />
         <input
           ref={fileInputRef}

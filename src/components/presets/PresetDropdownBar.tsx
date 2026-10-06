@@ -247,6 +247,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
         createPortal(
           <div
             ref={dropdownRef}
+            data-preset-menu
             className="fixed z-50 rounded-sm overflow-hidden"
             style={{
               top: dropdownPosition.top,

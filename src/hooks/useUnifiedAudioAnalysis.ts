@@ -113,10 +113,19 @@ export function useUnifiedAudioAnalysis() {
 
           // Reactive analyser for FFT band splitting
           const reactiveAnalyser = ctx.createAnalyser()
-          reactiveAnalyser.fftSize = 4096 // 4096 → ~11.7 Hz bins at 48 kHz, so narrow low bands (e.g. 40–100 Hz) span several bins
+          reactiveAnalyser.fftSize = 2048
           reactiveAnalyser.smoothingTimeConstant = 0.4
           source.connect(reactiveAnalyser)
           useAudioSourceStore.getState().setReactiveAnalyser(reactiveAnalyser)
+
+          // Per-track band analyser: 4096 → ~11.7 Hz bins at 48 kHz, so narrow low
+          // bands (e.g. 40–100 Hz) span several bins. Separate so the reactive
+          // analyser's flux/hit and latency stay at 2048 (R18).
+          const bandAnalyser = ctx.createAnalyser()
+          bandAnalyser.fftSize = 4096
+          bandAnalyser.smoothingTimeConstant = 0.4
+          source.connect(bandAnalyser)
+          useAudioSourceStore.getState().setBandAnalyser(bandAnalyser)
           useAudioSourceStore.getState().setAudioContext(ctx)
 
           console.log('[UnifiedAudio] file pipeline connected: source → analyser + destination')
@@ -206,10 +215,19 @@ export function useUnifiedAudioAnalysis() {
 
           // Reactive analyser for FFT band splitting
           const reactiveAnalyser = ctx.createAnalyser()
-          reactiveAnalyser.fftSize = 4096 // 4096 → ~11.7 Hz bins at 48 kHz, so narrow low bands (e.g. 40–100 Hz) span several bins
+          reactiveAnalyser.fftSize = 2048
           reactiveAnalyser.smoothingTimeConstant = 0.4
           source.connect(reactiveAnalyser)
           useAudioSourceStore.getState().setReactiveAnalyser(reactiveAnalyser)
+
+          // Per-track band analyser: 4096 → ~11.7 Hz bins at 48 kHz, so narrow low
+          // bands (e.g. 40–100 Hz) span several bins. Separate so the reactive
+          // analyser's flux/hit and latency stay at 2048 (R18).
+          const bandAnalyser = ctx.createAnalyser()
+          bandAnalyser.fftSize = 4096
+          bandAnalyser.smoothingTimeConstant = 0.4
+          source.connect(bandAnalyser)
+          useAudioSourceStore.getState().setBandAnalyser(bandAnalyser)
           useAudioSourceStore.getState().setAudioContext(ctx)
 
           audioCtxRef.current = ctx
@@ -293,6 +311,7 @@ export function useUnifiedAudioAnalysis() {
       analyserRef.current = null
     }
     useAudioSourceStore.getState().setReactiveAnalyser(null)
+    useAudioSourceStore.getState().setBandAnalyser(null)
     useAudioSourceStore.getState().setAudioContext(null)
     useAudioSourceStore.getState().setAudioBpm(null)
     // Clean up system audio capture stream

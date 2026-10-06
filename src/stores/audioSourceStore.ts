@@ -32,6 +32,9 @@ interface AudioSourceState {
 
   // Audio reactive FFT analyser
   reactiveAnalyser: AnalyserNode | null
+  // Higher-resolution analyser (fftSize 4096) on the same source, used only for
+  // per-track bands and the band spectrum strip; globals/flux stay on reactiveAnalyser
+  bandAnalyser: AnalyserNode | null
   audioContext: AudioContext | null
 
   setActiveSource: (source: AudioSourceType) => void
@@ -53,6 +56,7 @@ interface AudioSourceState {
   setAudioBpmSyncEnabled: (enabled: boolean) => void
   setSystemStream: (stream: MediaStream | null) => void
   setReactiveAnalyser: (node: AnalyserNode | null) => void
+  setBandAnalyser: (node: AnalyserNode | null) => void
   setAudioContext: (ctx: AudioContext | null) => void
 }
 
@@ -80,6 +84,7 @@ export const useAudioSourceStore = create<AudioSourceState>((set, get) => ({
   systemStream: null,
 
   reactiveAnalyser: null,
+  bandAnalyser: null,
   audioContext: null,
 
   setActiveSource: (source) => {
@@ -134,5 +139,6 @@ export const useAudioSourceStore = create<AudioSourceState>((set, get) => ({
   setAudioBpmSyncEnabled: (enabled) => set({ audioBpmSyncEnabled: enabled }),
   setSystemStream: (stream) => set({ systemStream: stream }),
   setReactiveAnalyser: (node) => set({ reactiveAnalyser: node }),
+  setBandAnalyser: (node) => set({ bandAnalyser: node }),
   setAudioContext: (ctx) => set({ audioContext: ctx }),
 }))

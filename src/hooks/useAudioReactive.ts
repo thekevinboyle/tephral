@@ -62,6 +62,8 @@ export function useAudioReactive() {
     }
 
     let cancelled = false
+    // Per-track band data from the 4096-point band analyser, reallocated on size change
+    let bandData: Uint8Array<ArrayBuffer> | null = null
 
     // Auto-normalize a raw band value using rolling peak + noise floor
     function autoNormalize(
@@ -255,6 +257,19 @@ export function useAudioReactive() {
       // over each audio-reactive track's own frequency window.
       const tracks = useEffectSequencerStore.getState().tracks
       const trackBands: Record<string, number> = {}
+      // Per-track bands read the higher-resolution band analyser when present (R18),
+      // else the reactive analyser's data. Read lazily, once per frame.
+      const bandAn = audioSource.bandAnalyser
+      let tbData: Uint8Array | null = null
+      let tbFft = fftSize
+      const trackBandData = () => {
+        if (tbData) return tbData
+        if (!bandAn) return (tbData = frequencyData)
+        if (!bandData || bandData.length !== bandAn.frequencyBinCount) bandData = new Uint8Array(bandAn.frequencyBinCount)
+        bandAn.getByteFrequencyData(bandData)
+        tbFft = bandAn.fftSize
+        return (tbData = bandData)
+      }
       const live = trackStateRef.current
       const seen = new Set<string>()
       for (const id in tracks) {
@@ -262,8 +277,9 @@ export function useAudioReactive() {
         if (!ar.enabled || !ar.band) continue
         seen.add(id)
         const st = live[id] ?? (live[id] = { peak: { current: 0.01 }, floor: { current: 0 }, smoothed: 0 })
-        const [first, last] = bandToBins(ar.band, sampleRate, fftSize)
-        const rawUnnorm = bandAverage(frequencyData, first, last)
+        const data = trackBandData()
+        const [first, last] = bandToBins(ar.band, sampleRate, tbFft)
+        const rawUnnorm = bandAverage(data, first, last)
         // Absolute floor (R17): narrow windows sit near silence most of the time, and
         // auto-normalise would scale that noise up to full scale. Below the floor the
         // track reads 0; the envelope still releases toward it. The rolling peak's

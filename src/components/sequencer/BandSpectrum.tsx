@@ -12,7 +12,7 @@ function fmtHz(hz: number) {
 
 /**
  * Live log-frequency spectrum with a draggable band window. Draws on rAF from
- * the reactive analyser (no React re-render per frame). Drag an edge to move
+ * the band analyser, falling back to the reactive analyser (no React re-render per frame). Drag an edge to move
  * that cutoff, drag inside to slide the window, double-click to reset to KICK.
  */
 export function BandSpectrum({ band, onChange, color }: { band: AudioBand; onChange: (b: AudioBand) => void; color: string }) {
@@ -32,7 +32,8 @@ export function BandSpectrum({ band, onChange, color }: { band: AudioBand; onCha
         const dpr = window.devicePixelRatio || 1
         if (c.width !== Math.round(W * dpr)) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr) }
         ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0)
-        const { reactiveAnalyser: an, audioContext: ac } = useAudioSourceStore.getState()
+        const { bandAnalyser, reactiveAnalyser, audioContext: ac } = useAudioSourceStore.getState()
+        const an = bandAnalyser ?? reactiveAnalyser
         ctx2d.clearRect(0, 0, W, H)
         const b = bandRef.current
         const x0 = hzToLogX(b.lowHz) * W

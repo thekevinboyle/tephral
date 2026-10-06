@@ -59,6 +59,10 @@ async function generateThumbnail(blob: Blob): Promise<string> {
     video.src = tempUrl
 
     const cleanup = () => {
+      // Detach the source before revoking, or the element keeps fetching the dead blob URL
+      video.onerror = null
+      video.removeAttribute('src')
+      video.load()
       URL.revokeObjectURL(tempUrl)
       video.remove()
     }

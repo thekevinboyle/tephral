@@ -77,6 +77,12 @@ export function useRecordingCapture(
 
         // Compositing function - draws all canvases in DOM order
         const compositeFrame = () => {
+          // A 0-sized canvas mid-resize makes drawImage throw: keep the previous frame and try again next tick
+          if (canvas.width === 0 || canvas.height === 0) {
+            animationFrameRef.current = requestAnimationFrame(compositeFrame)
+            return
+          }
+
           // Clear composite canvas
           compositeCtx.clearRect(0, 0, compositeCanvas.width, compositeCanvas.height)
 

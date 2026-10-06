@@ -364,8 +364,8 @@ export const UI_DESCRIPTIONS: Record<string, string> = {
   // Sequencer
   seqEffects: 'P-Lock \u2014 Effect step sequencer',
   seqSlicer: 'Slicer \u2014 Audio/video slicing sequencer',
-  clearAll: 'Clear All \u2014 Remove all active effects',
-  bypassAll: 'Bypass All \u2014 Temporarily disable all effects',
+  clearAll: 'Clear All. Remove all active effects',
+  bypassAll: 'Bypass All. Temporarily disable all effects',
   randomizeSteps: 'Randomize \u2014 Randomize steps on selected track',
   randomizeLocks: 'Randomize P-Locks \u2014 Randomize parameter locks',
   clearTrack: 'Clear Track \u2014 Clear all steps on selected track',

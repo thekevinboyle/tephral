@@ -45,3 +45,5 @@
   .seg-shell > [data-area="dock"] { max-height: none; }
   .seg-hide-narrow { display: none !important; }
 }
+
+.seg-shell [data-area="chain"] :focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }

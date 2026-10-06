@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEG_F4ULT Layout Mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* tinted neutrals (oklch, faint cool tint) */
+  --void: oklch(0.17 0.006 270);
+  --base: oklch(0.205 0.006 270);
+  --rail: oklch(0.225 0.007 270);
+  --raise: oklch(0.255 0.007 270);
+  --line: oklch(0.32 0.008 270);
+  --line-hi: oklch(0.42 0.008 270);
+  --tx: oklch(0.95 0.004 270);
+  --tx-2: oklch(0.76 0.006 270);
+  --tx-3: oklch(0.58 0.006 270);
+  --tx-4: oklch(0.44 0.006 270);
+  /* effect colours: the only chroma in the UI */
+  --fx-voxel: oklch(0.74 0.16 55);
+  --fx-matter: oklch(0.70 0.17 305);
+  --fx-stale: oklch(0.72 0.03 250);
+  --fx-echo: oklch(0.80 0.12 70);
+  --rec: oklch(0.66 0.21 25);
+  --f: 'JetBrains Mono', ui-monospace, monospace;
+  --gap: 1px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--void);color:var(--tx);font-family:var(--f);font-size:12px;-webkit-font-smoothing:antialiased}
+.app{height:100vh;display:grid;gap:var(--gap);background:var(--line);overflow:hidden}
+.app > *{background:var(--base);min-width:0;min-height:0;overflow:hidden;position:relative}
+
+/* ── shared atoms ─────────────────────────────── */
+.lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-3)}
+.val{font-size:12px;color:var(--tx);font-variant-numeric:tabular-nums}
+.hdr{display:flex;align-items:center;gap:20px;padding:0 16px;height:44px}
+.logo{font-weight:700;letter-spacing:.24em;font-size:13px}
+.logo i{color:var(--tx-3);font-style:normal}
+.sep{width:1px;height:20px;background:var(--line)}
+.field{display:flex;align-items:center;gap:8px}
+.select{border:1px solid var(--line-hi);padding:4px 22px 4px 8px;font-size:11px;color:var(--tx);position:relative;white-space:nowrap}
+.select:after{content:'';position:absolute;right:7px;top:50%;width:5px;height:5px;border-right:1px solid var(--tx-3);border-bottom:1px solid var(--tx-3);transform:translateY(-70%) rotate(45deg)}
+.grow{flex:1}
+.btn{border:1px solid var(--line-hi);padding:5px 10px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-2);white-space:nowrap}
+.btn.on{border-color:var(--tx);color:var(--tx)}
+.btn.rec{border-color:var(--rec);color:var(--rec)}
+.btn.rec:before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--rec);margin-right:6px;vertical-align:1px}
+.seg{display:flex;border:1px solid var(--line-hi)}
+.seg span{padding:5px 12px;font-size:10px;letter-spacing:.14em;color:var(--tx-3);text-transform:uppercase}
+.seg span.on{background:var(--tx);color:var(--void)}
+.secthead{display:flex;align-items:baseline;gap:10px;padding:10px 14px 8px;border-bottom:1px solid var(--line)}
+.secthead .lbl{color:var(--tx-2)}
+.secthead .count{color:var(--tx-4);font-size:10px}
+
+/* ── output stage ─────────────────────────────── */
+.stage{display:flex;flex-direction:column;background:var(--void)!important}
+.stage-bar{display:flex;align-items:center;gap:16px;padding:0 14px;height:34px;border-bottom:1px solid var(--line);background:var(--base)}
+.stage-body{flex:1;display:flex;align-items:center;justify-content:center;padding:18px;min-height:0}
+.frame{position:relative;max-width:100%;max-height:100%;aspect-ratio:16/9;height:100%}
+.frame canvas{width:100%;height:100%;display:block}
+.tick{position:absolute;width:14px;height:14px;border-color:var(--tx-2);border-style:solid}
+.tick.tl{left:-8px;top:-8px;border-width:1px 0 0 1px}.tick.tr{right:-8px;top:-8px;border-width:1px 1px 0 0}
+.tick.bl{left:-8px;bottom:-8px;border-width:0 0 1px 1px}.tick.br{right:-8px;bottom:-8px;border-width:0 1px 1px 0}
+.ruler{position:absolute;left:0;right:0;bottom:-16px;height:6px;background:repeating-linear-gradient(90deg,var(--tx-4) 0 1px,transparent 1px 10%)}
+.hud{position:absolute;font-size:10px;letter-spacing:.12em;color:var(--tx-2);background:oklch(0.17 0.006 270 / .72);padding:3px 6px}
+.hud.tl{left:10px;top:10px}.hud.tr{right:10px;top:10px}.hud.bl{left:10px;bottom:10px}.hud.br{right:10px;bottom:10px}
+
+/* ── effect browser ───────────────────────────── */
+.browser{display:flex;flex-direction:column;container-type:inline-size}
+@container (max-width:330px){.tabs{display:grid;grid-template-columns:repeat(3,1fr)}.tabs span{border-bottom:1px solid var(--line)}.cell{padding:9px 8px}.cell .nm{font-size:10px;letter-spacing:.04em}}
+.tabs{display:flex;border-bottom:1px solid var(--line);overflow:hidden}
+.tabs span{flex:1;text-align:center;padding:9px 0;font-size:10px;letter-spacing:.06em;color:var(--tx-3);border-right:1px solid var(--line);white-space:nowrap}
+.tabs span:last-child{border-right:0}
+.tabs span.on{color:var(--tx);box-shadow:inset 0 -2px 0 var(--tx)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
+.cell{background:var(--base);padding:10px 10px 9px;display:flex;flex-direction:column;gap:7px;min-height:52px}
+.cell .nm{font-size:11px;letter-spacing:.08em;color:var(--tx-2)}
+.cell .meter{height:3px;background:var(--line)}
+.cell .meter b{display:block;height:100%;background:var(--tx-4);width:40%}
+.cell.on{background:var(--rail)}
+.cell.on .nm{color:var(--tx)}
+.cell.on .meter b{background:var(--c)}
+.cell.on:before{content:'';position:absolute}
+.cell .led{width:6px;height:6px;border-radius:50%;background:var(--line-hi)}
+.cell.on .led{background:var(--c);box-shadow:0 0 6px var(--c)}
+.cell .row{display:flex;justify-content:space-between;align-items:center}
+.banks{display:grid;grid-template-columns:repeat(4,1fr) auto auto;gap:6px;padding:10px 14px;align-items:center}
+.banks .btn{text-align:center}
+.xfade{padding:12px 14px;display:flex;align-items:center;gap:12px}
+.xfade .track{flex:1;height:4px;background:var(--line);position:relative}
+.xfade .track b{position:absolute;left:62%;top:-6px;width:4px;height:16px;background:var(--tx)}
+
+/* ── chain (active effects) ───────────────────── */
+.chain{display:flex;flex-direction:column}
+.fx{display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line)}
+.fx .idx{font-size:10px;color:var(--tx-4)}
+.fx .nm{font-size:12px;letter-spacing:.08em;display:flex;align-items:center;gap:8px}
+.fx .nm:before{content:'';width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 6px var(--c)}
+.fx .params{display:flex;gap:14px;font-size:10px;color:var(--tx-3)}
+.fx .params b{color:var(--tx);font-weight:500;margin-left:4px}
+.fx.sel{background:var(--rail);box-shadow:inset 0 0 0 1px var(--line-hi)}
+.empty-hint{padding:14px;color:var(--tx-3);font-size:11px;line-height:1.6}
+.empty-hint b{color:var(--tx-2);font-weight:500}
+
+/* ── inspector ────────────────────────────────── */
+.insp{display:flex;flex-direction:column}
+.knobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:14px 10px;padding:14px}
+.knob{display:flex;flex-direction:column;align-items:center;gap:6px}
+.knob .dial{width:38px;height:38px;border-radius:50%;border:1px solid var(--line-hi);position:relative}
+.knob .dial:after{content:'';position:absolute;left:50%;top:4px;width:1px;height:12px;background:var(--tx);transform-origin:0 15px;transform:rotate(var(--a,40deg))}
+.knob .dial.c{border-color:var(--c)}
+.knob .lbl{font-size:9px}
+.band{margin:4px 14px 14px;border:1px solid var(--line);height:56px;position:relative;background:linear-gradient(to top,var(--void),var(--base))}
+.band .win{position:absolute;top:0;bottom:0;left:62%;width:22%;background:oklch(0.66 0.21 25 / .14);border-left:1px solid var(--rec);border-right:1px solid var(--rec)}
+.band svg{position:absolute;inset:0;width:100%;height:100%}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 14px}
+.chips .btn{padding:4px 8px}
+
+/* ── sequencer ────────────────────────────────── */
+.seq{display:flex;flex-direction:column}
+.seqbar{display:flex;align-items:center;gap:16px;padding:0 14px;height:40px;border-bottom:1px solid var(--line)}
+.play{width:26px;height:26px;border:1px solid var(--tx);display:flex;align-items:center;justify-content:center}
+.play:after{content:'';border-left:8px solid var(--tx);border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px}
+.bpm{font-size:18px;font-weight:700}
+.lane{display:grid;grid-template-columns:var(--lanehead,120px) 1fr;border-bottom:1px solid var(--line);min-height:34px}
+.lane .head{display:flex;align-items:center;gap:8px;padding:0 12px;font-size:11px;letter-spacing:.08em;border-right:1px solid var(--line)}
+.lane .head:before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c)}
+.steps{display:grid;grid-template-columns:repeat(var(--n,16),1fr);gap:3px;padding:7px 10px;align-items:stretch}
+.st{background:var(--rail);border:1px solid var(--line)}
+.st.on{background:var(--c);border-color:var(--c)}
+.st.on.ghost{opacity:.45}
+.st.cur{outline:1px solid var(--tx);outline-offset:1px}
+.st:nth-child(4n+1){border-left-color:var(--line-hi)}
+.ruler-steps{display:grid;grid-template-columns:var(--lanehead,120px) 1fr;border-bottom:1px solid var(--line)}
+.ruler-steps .nums{display:grid;grid-template-columns:repeat(var(--n,16),1fr);gap:3px;padding:4px 10px;font-size:9px;color:var(--tx-4)}
+.addlane{padding:10px 14px;color:var(--tx-4);font-size:10px;letter-spacing:.12em}
+.modtabs{display:flex;gap:18px;padding:0 14px;height:34px;align-items:center;border-top:1px solid var(--line);margin-top:auto}
+.modtabs span{font-size:10px;letter-spacing:.14em;color:var(--tx-3)}
+.modtabs span.on{color:var(--tx);box-shadow:0 2px 0 var(--tx)}
+
+.status{display:flex;align-items:center;gap:18px;padding:0 14px;height:24px;font-size:10px;color:var(--tx-3)}
+.status .ok:before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:oklch(0.75 0.14 150);margin-right:6px}
+
+/* ── direction A: Stage ───────────────────────── */
+.A{grid-template-columns:minmax(300px,22vw) 1fr minmax(280px,20vw);
+   grid-template-rows:44px 1fr auto 24px;
+   grid-template-areas:"hdr hdr hdr" "browser stage chain" "seq seq seq" "status status status"}
+.A .seq{grid-area:seq;max-height:34vh}
+@media (min-width:2200px){
+  .A{grid-template-columns:minmax(340px,16vw) 1fr minmax(320px,15vw) minmax(560px,26vw);
+     grid-template-areas:"hdr hdr hdr hdr" "browser stage chain seq" "browser stage chain seq" "status status status status";
+     grid-template-rows:44px 1fr 0 24px}
+  .A .seq{max-height:none}
+}
+@media (max-width:1100px){
+  .A{grid-template-columns:1fr 1fr;grid-template-rows:44px minmax(0,46vh) auto auto 24px;
+     grid-template-areas:"hdr hdr" "stage stage" "browser chain" "seq seq" "status status"}
+  .A .seq{max-height:none}
+}
+
+/* ── direction B: Editor ──────────────────────── */
+.B{grid-template-columns:minmax(300px,20vw) 1fr minmax(300px,22vw);
+   grid-template-rows:44px 1fr minmax(180px,30vh) 24px;
+   grid-template-areas:"hdr hdr hdr" "browser stage insp" "seq seq seq" "status status status"}
+@media (min-width:2200px){
+  .B{grid-template-columns:minmax(300px,14vw) 1fr minmax(360px,18vw);grid-template-rows:44px 1fr minmax(220px,30vh) 24px}
+}
+@media (max-width:1100px){
+  .B{grid-template-columns:1fr;grid-template-rows:44px minmax(0,42vh) auto auto auto 24px;
+     grid-template-areas:"hdr" "stage" "insp" "seq" "browser" "status"}
+}
+
+/* ── direction C: Modes ───────────────────────── */
+.C{grid-template-columns:1fr minmax(320px,24vw);
+   grid-template-rows:44px 1fr 24px;
+   grid-template-areas:"hdr hdr" "stage side" "status status"}
+@media (min-width:2200px){
+  .C{grid-template-columns:minmax(340px,15vw) 1fr minmax(380px,18vw);grid-template-areas:"hdr hdr hdr" "browser stage side" "status status status"}
+}
+@media (max-width:1100px){
+  .C{grid-template-columns:1fr;grid-template-rows:44px minmax(0,48vh) 1fr 24px;grid-template-areas:"hdr" "stage" "side" "status"}
+}
+.side{display:flex;flex-direction:column}
+
+.hdr-wrap{grid-area:hdr}.stage{grid-area:stage}.browser{grid-area:browser}.chain{grid-area:chain}.insp{grid-area:insp}.seq{grid-area:seq}.status{grid-area:status}.side{grid-area:side}
+.only-wide{display:none}
+@media (min-width:2200px){.only-wide{display:flex}}
+.hide-narrow{}
+@media (max-width:1100px){.hide-narrow{display:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const D = new URLSearchParams(location.search).get('d') || 'A'
+const FX = [
+  ['seg_stale','STALE','--fx-stale',[['CELL','32'],['THR','.18']]],
+  ['seg_matter','MATTER','--fx-matter',[['COV','.40'],['BEAT','4']]],
+  ['seg_voxel','VOXEL','--fx-voxel',[['SIZE','14'],['DPTH','2.2']]],
+  ['seg_echo','ECHO4D','--fx-echo',[['CPS','4'],['DLY','3']]],
+]
+const PAGES=['ACID','VISION','GLITCH','STRAND','MOTION','DESTROY']
+const GRID=['MOSH','SORT','SONIFY','PTCLD','KALEID','LIQUID','CRYSTL','RIPPLE','FRACTL','VOXEL','ECHO4D','MATTER','STALE','TORN','—','—']
+const ON={VOXEL:'--fx-voxel',ECHO4D:'--fx-echo',MATTER:'--fx-matter',STALE:'--fx-stale'}
+const h = (s)=>s
+
+function header(modes){
+  return `<div class="hdr-wrap"><div class="hdr">
+    <div class="logo">SEG<i>_</i>F4ULT</div><div class="sep"></div>
+    <div class="field"><span class="lbl">Video</span><div class="select">Webcam</div></div>
+    <div class="field"><span class="lbl">Audio</span><div class="select">Track · hats_loop.wav</div></div>
+    <div class="sep hide-narrow"></div>
+    <div class="field hide-narrow"><span class="lbl">Preset</span><div class="select">SEG_EXP</div></div>
+    <div class="grow"></div>
+    ${modes?`<div class="seg"><span class="on">Perform</span><span>Sequence</span><span>Shape</span></div><div class="sep"></div>`:''}
+    <span class="btn rec">Rec</span>
+  </div></div>`
+}
+function stage(){
+  return `<div class="stage">
+    <div class="stage-bar">
+      <span class="lbl">Output</span><span class="val">1920×1080</span>
+      <span class="lbl">Chain</span><span class="val">4 FX</span>
+      <div class="grow"></div>
+      <span class="lbl">Src</span><span class="val">CAM 01</span>
+      <span class="lbl hide-narrow">Frame</span><span class="val hide-narrow">5.8 ms</span>
+      <span class="btn">Fit</span><span class="btn">Full</span>
+    </div>
+    <div class="stage-body"><div class="frame">
+      <canvas id="out" width="1280" height="720"></canvas>
+      <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+      <span class="hud tl">● LIVE  60 FPS</span><span class="hud tr">SEG_EXP</span>
+      <span class="hud bl">00:01:24.18</span><span class="hud br">BAND HATS 6–14k</span>
+      <div class="ruler"></div>
+    </div></div>
+  </div>`
+}
+function browser(){
+  return `<div class="browser">
+    <div class="secthead"><span class="lbl">Effects</span><span class="count">80 · 4 on</span></div>
+    <div class="tabs">${PAGES.map(p=>`<span class="${p==='DESTROY'?'on':''}">${p}</span>`).join('')}</div>
+    <div class="grid">${GRID.map(n=>{const c=ON[n];return `<div class="cell ${c?'on':''}" style="${c?`--c:var(${c})`:''}"><div class="row"><span class="nm">${n}</span><span class="led"></span></div><div class="meter"><b style="width:${c?60:20}%"></b></div></div>`}).join('')}</div>
+    <div class="banks"><span class="btn on">A</span><span class="btn">B</span><span class="btn">C</span><span class="btn">D</span><span class="btn">Undo</span><span class="btn">Rekt</span></div>
+    <div class="xfade"><span class="lbl">Dry</span><div class="track"><b></b></div><span class="lbl">Wet</span></div>
+    <div class="secthead" style="border-top:1px solid var(--line)"><span class="lbl">Presets</span><span class="count">Factory · Mine</span></div>
+    ${['SEG_EXP','Thermal drift','Chrome melt','Slit cascade','Mosh garden'].map((n,i)=>`<div class="fx" style="grid-template-columns:18px 1fr auto"><span class="idx">${String(i+1).padStart(2,'0')}</span><span style="font-size:12px;letter-spacing:.06em;color:${i?'var(--tx-2)':'var(--tx)'}">${n}</span><span class="count lbl">${i?'mine':'factory'}</span></div>`).join('')}
+  </div>`
+}
+function chain(){
+  return `<div class="chain">
+    <div class="secthead"><span class="lbl">Chain</span><span class="count">signal flows top → bottom</span><span class="grow"></span>${D==='C'?'<span class="btn">+ Add effect</span>':''}</div>
+    ${FX.map(([id,nm,c,p],i)=>`<div class="fx ${i===2?'sel':''}" style="--c:var(${c})"><span class="idx">0${i+1}</span><span class="nm">${nm}</span><span class="params">${p.map(([k,v])=>`<span>${k}<b>${v}</b></span>`).join('')}</span></div>`).join('')}
+    <div class="empty-hint">Drag to reorder. <b>Click an effect</b> in the grid to add it to the end of the chain.</div>
+  </div>`
+}
+function inspector(){
+  return `<div class="insp" style="--c:var(--fx-voxel)">
+    <div class="secthead"><span class="lbl">VOXEL</span><span class="count">03 in chain · person cubes</span></div>
+    <div class="knobs">
+      ${[['SIZE','14',30],['DEPTH','2.2',80],['SCATTER','.50',0],['SHADE','.70',40],['MIX','1.0',130]].map(([l,v,a])=>`<div class="knob"><div class="dial c" style="--a:${a}deg"></div><span class="val">${v}</span><span class="lbl">${l}</span></div>`).join('')}
+    </div>
+    <div class="secthead"><span class="lbl">Audio band</span><span class="count">gate + mod → SIZE +50%</span></div>
+    <div class="band"><div class="win"></div><svg viewBox="0 0 200 56" preserveAspectRatio="none"><polyline fill="none" stroke="oklch(0.76 0.006 270)" stroke-width="1" points="${Array.from({length:80},(_,i)=>`${i*2.53},${56-(8+Math.abs(Math.sin(i*.37))*22+(i>48&&i<66?18:0))}`).join(' ')}"/></svg></div>
+    <div class="chips">${['KICK','BASS','SNARE','HATS','VOX','FULL'].map(c=>`<span class="btn ${c==='HATS'?'on':''}">${c}</span>`).join('')}</div>
+  </div>`
+}
+function seq(n=16){
+  const lanes=[['VOXEL','--fx-voxel',[0,4,8,12]],['MATTER','--fx-matter',[0,3,6,10,14]],['STALE','--fx-stale',[2,6,10,14]],['ECHO4D','--fx-echo',[0,1,8,9]]]
+  return `<div class="seq" style="--n:${n}">
+    <div class="seqbar"><span class="play"></span><span class="bpm">120</span><span class="lbl">BPM</span><span class="btn">Sync</span>
+      <span class="lbl">Swing</span><span class="val">0</span><span class="lbl">Res</span><span class="val">1/16</span><div class="grow"></div><span class="lbl">Page</span><span class="val">1 / 2</span></div>
+    <div class="ruler-steps"><span></span><div class="nums">${Array.from({length:n},(_,i)=>`<span>${i+1}</span>`).join('')}</div></div>
+    ${lanes.map(([nm,c,on])=>`<div class="lane" style="--c:var(${c})"><div class="head">${nm}</div><div class="steps">${Array.from({length:n},(_,i)=>`<span class="st ${on.includes(i)?'on':''} ${i===5?'cur':''}"></span>`).join('')}</div></div>`).join('')}
+    <div class="addlane">+ effects you enable get a lane automatically</div>
+    <div class="modtabs"><span class="on">LFO</span><span>RANDOM</span><span>STEP</span><span>ENV</span><span>S&amp;H</span><span>MIDI</span><span>AUDIO</span></div>
+  </div>`
+}
+const status = `<div class="status"><span class="ok">Ready</span><span>GPU 5.8 ms</span><span>Model ready</span><div class="grow"></div><span>localhost:5173</span></div>`
+
+let html=''
+if(D==='A') html = header()+stage()+browser()+`<div class="chain" style="overflow:auto">${chain().replace(/^<div class="chain">|<\/div>$/g,'')}${inspector().replace('class="insp"','class="insp" style="border-top:1px solid var(--line)"')}</div>`+seq()+status
+if(D==='B') html = header()+stage()+browser()+inspector()+seq(32)+status
+if(D==='C') html = header(true)+stage()+`<div class="browser only-wide" style="flex-direction:column">${browser().replace(/^<div class="browser">|<\/div>$/g,'')}</div>`+
+  `<div class="side">${chain().replace(/^<div class="chain">|<\/div>$/g,'')}${inspector().replace('class="insp"','class="insp" style="border-top:1px solid var(--line)"')}</div>`+status
+document.getElementById('app').className='app '+D
+document.getElementById('app').innerHTML=html
+
+// procedural output picture (abstract, generated here)
+const cv=document.getElementById('out'),x=cv.getContext('2d')
+const W=cv.width,H=cv.height
+const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,'#2a2230');g.addColorStop(.5,'#3b2c2a');g.addColorStop(1,'#16181f')
+x.fillStyle=g;x.fillRect(0,0,W,H)
+let s=7;const r=()=>(s=(s*16807)%2147483647)/2147483647
+for(let i=0;i<900;i++){const cx=W*.5+Math.cos(i*.13)*260*r(),cy=H*.52+Math.sin(i*.17)*210*r(),z=8+r()*26
+  const hue=20+r()*40;x.fillStyle=`hsl(${hue} 60% ${38+r()*28}%)`;x.fillRect(Math.round(cx/z)*z,Math.round(cy/z)*z,z,z)
+  x.fillStyle='rgba(255,255,255,.12)';x.fillRect(Math.round(cx/z)*z,Math.round(cy/z)*z,z,3)}
+for(let i=0;i<14;i++){const y=r()*H,hh=6+r()*30;x.globalAlpha=.5;x.drawImage(cv,0,y,W,hh,(r()-.5)*80,y,W,hh)}
+x.globalAlpha=1
+for(let k=0;k<5;k++){const px=r()*W*.8,py=r()*H*.8,w=80+r()*160,hh=50+r()*90;for(let j=0;j<hh;j+=3){x.fillStyle=`hsl(${(j*9+k*60)%360} 80% 60% / .55)`;x.fillRect(px,py+j,w,2)}}
+</script>
+</body>
+</html>

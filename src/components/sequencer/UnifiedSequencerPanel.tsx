@@ -16,7 +16,6 @@ import {
   DESTRUCTION_EFFECTS,
   type EffectDefinition,
 } from '../../config/effects'
-import { EffectTabsBar } from './EffectTabsBar'
 import { SequencerTransport } from './SequencerTransport'
 import { EffectTrackRow } from './EffectTrackRow'
 import { TrackParamPanel } from './TrackParamPanel'
@@ -30,7 +29,7 @@ const ALL_EFFECTS: EffectDefinition[] = [
 ]
 const EFFECT_MAP = new Map(ALL_EFFECTS.map((e) => [e.id, e]))
 
-export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: boolean } = {}) {
+export function UnifiedSequencerPanel() {
 
   // Store hooks
   const { selectedEffectId, setSelectedEffect } = useUIStore()
@@ -51,7 +50,6 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
     setResolution,
     setStepPage,
     setSwing,
-    ensureTrack,
     trackParamPanelOpen,
   } = useEffectSequencerStore()
 
@@ -67,27 +65,13 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
     [sortedEffects],
   )
 
-  // Ensure all active effects have sequencer tracks
-  useEffect(() => {
-    for (const id of activeEffectIds) {
-      ensureTrack(id)
-    }
-  }, [activeEffectIds, ensureTrack])
+  // ChainPanel owns ensureTrack + auto-select for active effects (always mounted beside the dock)
 
   // Active tracks (enabled effects that also have sequencer tracks)
   const activeTrackIds = useMemo(
     () => activeEffectIds.filter((id) => !!tracks[id]),
     [activeEffectIds, tracks],
   )
-
-  // ─── Auto-select / clear stale selection ──────────────────────────────
-  useEffect(() => {
-    if (selectedEffectId && !activeEffectIds.includes(selectedEffectId)) {
-      setSelectedEffect(activeEffectIds.length > 0 ? activeEffectIds[0] : null)
-    } else if (!selectedEffectId && activeEffectIds.length > 0) {
-      setSelectedEffect(activeEffectIds[0])
-    }
-  }, [activeEffectIds, selectedEffectId, setSelectedEffect])
 
   // ─── Auto-switch effect tab when step is selected on a track ──────────
   useEffect(() => {
@@ -245,16 +229,7 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
       style={{ backgroundColor: 'var(--bg-surface)' }}
       data-dock-empty={activeTrackIds.length === 0 || undefined}
     >
-      {/* ─── Zone 1: Effect tabs ─────────────────────────────────────── */}
-      {!hideTabsBar && (
-        <EffectTabsBar
-          activeEffectIds={activeEffectIds}
-          selectedEffectId={selectedEffectId}
-          onSelect={handleEffectTabSelect}
-        />
-      )}
-
-      {/* ─── Zone 2: Transport ───────────────────────────────────────── */}
+      {/* ─── Transport ───────────────────────────────────────── */}
       <SequencerTransport
         isPlaying={isPlaying}
         bpm={bpm}
@@ -270,7 +245,7 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
         onPageChange={setStepPage}
       />
 
-      {/* ─── Zone 3: Track list + param panel ───────────────────────── */}
+      {/* ─── Track list + param panel ───────────────────────── */}
       <div className="flex-1 min-h-0 flex">
         {/* Param panel column (full height, left side) */}
         {trackParamPanelOpen && tracks[trackParamPanelOpen] && (

@@ -12,7 +12,7 @@ export const Dock = memo(function Dock() {
   return (
     <div className="seg-dock">
       <div className="seg-dock-seq">
-        <SequencerContainer hideTabsBar />
+        <SequencerContainer />
       </div>
       <div className="seg-dock-tabs">
         <BottomPanel />

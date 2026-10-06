@@ -9,7 +9,8 @@ const SEQUENCER_MODES = [
   { id: 'slicer', icon: '\u2297', label: 'CHI_R0N', tip: 'seqSlicer' },
 ] as const
 
-export function SequencerContainer({ hideTabsBar = false }: { hideTabsBar?: boolean } = {}) {
+/** Docked sequencer: mode rail (P-LOCK / CHI_R0N) beside the active sequencer. */
+export function SequencerContainer() {
   const { activeSequencer, setActiveSequencer } = useSequencerContainerStore()
   const setStatusText = useUIStore((s) => s.setStatusText)
 
@@ -31,7 +32,7 @@ export function SequencerContainer({ hideTabsBar = false }: { hideTabsBar?: bool
               onClick={() => setActiveSequencer(mode.id)}
               className="w-full flex items-center justify-center transition-colors"
               style={{
-                height: hideTabsBar ? 44 : 64, // docked: both rail buttons must fit the collapsed dock
+                height: 44, // both rail buttons must fit the collapsed dock
                 borderBottom: '1px solid var(--border)',
                 borderLeft: isActive ? '2px solid var(--seq-accent)' : '2px solid transparent',
                 backgroundColor: 'transparent',
@@ -56,7 +57,7 @@ export function SequencerContainer({ hideTabsBar = false }: { hideTabsBar?: bool
 
       {/* Content */}
       <div className="flex-1 min-h-0 min-w-0">
-        {activeSequencer === 'effects' && <UnifiedSequencerPanel hideTabsBar={hideTabsBar} />}
+        {activeSequencer === 'effects' && <UnifiedSequencerPanel />}
         {activeSequencer === 'slicer' && <SlicerPanel />}
       </div>
     </div>

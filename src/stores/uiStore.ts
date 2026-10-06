@@ -55,8 +55,6 @@ interface UIState {
   selectPreset: (presetId: string) => void
   clearInfoPanelSelection: () => void
 
-  // Card view mode actions
-
   // Bottom panel actions
   toggleBottomPanelTab: (tab: string) => void
   setBottomPanelPage: (page: number) => void

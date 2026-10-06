@@ -47,3 +47,8 @@
 }
 
 .seg-shell [data-area="chain"] :focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+
+/* Effects column: page tabs never clip; 6 across when wide, 3x2 when narrow */
+.seg-page-tabs { display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px !important; width: 100%; }
+.seg-page-tabs > * { justify-content: center; min-width: 0; letter-spacing: .06em !important; }
+@container (max-width: 330px) { .seg-page-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

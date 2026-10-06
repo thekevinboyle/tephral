@@ -6,7 +6,6 @@ import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { getUIStatusText, getEffectStatusText } from '../../config/statusDescriptions'
-import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import { EffectParameters_v2 } from './ExpandedParameterPanel_v2'
 import { TrackAudioReactivePanel } from '../sequencer/TrackAudioReactivePanel'
 
@@ -272,11 +271,6 @@ function ChainPanelImpl() {
         >
           Clear
         </button>
-      </div>
-
-      {/* Temporary: Task 4 moves presets to the header */}
-      <div className="flex-shrink-0 rule-b">
-        <PresetDropdownBar />
       </div>
 
       {sortedEffects.length === 0 ? (

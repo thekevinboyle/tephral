@@ -4,11 +4,9 @@ import type { CanvasHandle } from '../Canvas'
 import { StageArea } from './StageArea'
 import { Dock } from './Dock'
 import { HeaderBar } from './HeaderBar'
-import { BankPanel } from './BankPanel'
-import { PerformanceGrid } from './PerformanceGrid'
+import { EffectsColumn } from './EffectsColumn'
 import { ClipDetailModal } from './ClipDetailModal'
 import { ChainPanel } from './ChainPanel'
-import { MiddleSection } from './MiddleSection'
 import { ModulationLines } from './ModulationLines'
 // DataTerminal stashed — component file kept, just not rendered
 // import { DataTerminal } from '../terminal/DataTerminal'
@@ -77,13 +75,8 @@ export function PerformanceLayout() {
 
   return (
     <div className="seg-shell grid-substrate">
-      <div data-area="header" className="panel-header"><HeaderBar /></div>
-      <div data-area="effects">
-        {/* Task 4 replaces this block with <EffectsColumn /> */}
-        <div style={{ flex: '1 1 auto', minHeight: 0 }}><PerformanceGrid /></div>
-        <div className="rule-b" style={{ height: 52, flexShrink: 0 }}><BankPanel /></div>
-        <div style={{ minHeight: 'var(--row-middle)', flexShrink: 0 }}><MiddleSection /></div>
-      </div>
+      <div data-area="header" className="panel-header"><HeaderBar canvasRef={captureRef} /></div>
+      <div data-area="effects"><EffectsColumn canvasRef={captureRef} /></div>
       <div data-area="stage"><StageArea ref={canvasRef} /></div>
       <div data-area="chain">
         <ChainPanel />

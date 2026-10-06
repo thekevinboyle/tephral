@@ -207,6 +207,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
     <>
       {/* Trigger bar */}
       <div
+        data-preset-dropdown
         className="h-10 flex items-center px-3"
         style={{
           backgroundColor: 'var(--bg-surface)',

@@ -3,6 +3,7 @@ import { useMediaSource } from '../../hooks/useMediaSource'
 import { useAudioSourceStore, type AudioSourceType } from '../../stores/audioSourceStore'
 import { useUIStore } from '../../stores/uiStore'
 import { HudGlyph } from '../ui/HudGlyph'
+import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 
 const AUDIO_SOURCES: { id: AudioSourceType; label: string }[] = [
   { id: 'video', label: 'Video' },
@@ -137,7 +138,7 @@ function StyledDropdown({
 
 /* ── Header Bar ──────────────────────────────────── */
 
-export function HeaderBar() {
+export function HeaderBar({ canvasRef }: { canvasRef?: React.RefObject<HTMLCanvasElement | null> }) {
   const setStatusText = useUIStore((s) => s.setStatusText)
 
   // Video source
@@ -189,9 +190,10 @@ export function HeaderBar() {
 
   return (
     <div
-      className="flex items-center flex-shrink-0"
+      className="flex items-center flex-shrink-0 min-w-0"
       style={{
         height: 'var(--row-header)',
+        overflow: 'hidden',
         padding: '0 var(--panel-padding)',
         gap: 'var(--gap-lg)',
         background: 'var(--bg-void)',
@@ -214,7 +216,7 @@ export function HeaderBar() {
       </div>
 
       {/* Divider */}
-      <div style={{ width: 1, height: 16, backgroundColor: 'var(--border)' }} />
+      <div className="seg-hide-narrow flex-shrink-0" style={{ width: 1, height: 16, backgroundColor: 'var(--border)' }} />
 
       {/* Video source dropdown */}
       <div
@@ -237,7 +239,7 @@ export function HeaderBar() {
       </div>
 
       {/* Divider */}
-      <div style={{ width: 1, height: 16, backgroundColor: 'var(--border)' }} />
+      <div className="seg-hide-narrow flex-shrink-0" style={{ width: 1, height: 16, backgroundColor: 'var(--border)' }} />
 
       {/* Audio source dropdown */}
       <div
@@ -265,10 +267,17 @@ export function HeaderBar() {
         />
       </div>
 
+      {/* Presets */}
+      <div className="flex-shrink-0">
+        <PresetDropdownBar canvasRef={canvasRef} />
+      </div>
+
       {/* Spacer */}
       <div className="flex-1" />
 
-      <HudGlyph glyph="diamond" size={10} color="var(--text-ghost)" animate="pulse" />
+      <span className="seg-hide-narrow flex-shrink-0 flex items-center">
+        <HudGlyph glyph="diamond" size={10} color="var(--text-ghost)" animate="pulse" />
+      </span>
     </div>
   )
 }

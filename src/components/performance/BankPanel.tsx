@@ -5,7 +5,6 @@ import { ShuffleIcon } from '../ui/DotMatrixIcons'
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { useBankStore } from '../../stores/bankStore'
-import { CornerFrame } from '../ui/CornerFrame'
 import { useGlitchEngineStore, type GlitchSnapshot } from '../../stores/glitchEngineStore'
 import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
 import { useStippleStore } from '../../stores/stippleStore'
@@ -235,71 +234,62 @@ export function BankPanel() {
 
   return (
     <div
-      className="h-full flex items-center"
+      className="h-full w-full grid items-center"
       style={{
-        padding: 'var(--space-1) var(--panel-padding-sm)',
-        gap: 'var(--gap-sm)',
-        overflow: 'visible',
+        gridTemplateColumns: 'repeat(4, minmax(0, 1fr)) repeat(3, minmax(0, 1.2fr))',
+        gap: 6,
+        padding: '8px 14px',
       }}
     >
       {/* Bank buttons */}
-      <CornerFrame color="var(--text-ghost)" style={{ padding: '2px 6px', flexShrink: 1, minWidth: 0 }}>
-        <div className="h-full flex items-center" style={{ gap: 'var(--gap-sm)' }}>
-          {BANK_LABELS.map((label, index) => (
-            <div key={label} className="h-full" style={{ width: 48, flexShrink: 0 }}>
-              <BankButton
-                label={label}
-                index={index}
-                isEmpty={banks[index] === null}
-                isActive={activeBank === index}
-                onLoad={() => loadBank(index)}
-                onSave={() => saveBank(index)}
-                onClear={() => clearBank(index)}
-              />
-            </div>
-          ))}
-        </div>
-      </CornerFrame>
-
-      {/* Spacer */}
-      <div className="flex-1" />
+      {BANK_LABELS.map((label, index) => (
+        <span key={label} data-bank-slot className="h-full min-w-0 block">
+          <BankButton
+            label={label}
+            index={index}
+            isEmpty={banks[index] === null}
+            isActive={activeBank === index}
+            onLoad={() => loadBank(index)}
+            onSave={() => saveBank(index)}
+            onClear={() => clearBank(index)}
+          />
+        </span>
+      ))}
 
       {/* Action buttons */}
-      <CornerFrame color="var(--text-ghost)" style={{ padding: '2px 6px', flexShrink: 0 }}>
-        <div className="h-full flex items-center" style={{ gap: 'var(--gap-sm)' }}>
-          <span onMouseEnter={() => setStatusText(getUIStatusText('randomize'))} onMouseLeave={() => setStatusText(null)} className="h-full" style={{ width: 48 }}>
-            <Button size="lg" className="h-full w-full" onClick={handleRandom} title="Randomize effects">
-              <ShuffleIcon size={16} />
-            </Button>
-          </span>
-          <span onMouseEnter={() => setStatusText(getUIStatusText('undo'))} onMouseLeave={() => setStatusText(null)} className="h-full" style={{ width: 48 }}>
-            <Button size="lg" className="h-full w-full" onClick={handleUndo} disabled={!hasPreviousState}>
-              UNDO
-            </Button>
-          </span>
-          <button
-            onPointerDown={handleRektDown}
-            onPointerUp={handleRektUp}
-            onPointerLeave={isRektLocked ? undefined : handleRektUp}
-            onPointerCancel={isRektLocked ? undefined : handleRektUp}
-            onMouseEnter={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)'); setStatusText(getUIStatusText('rekt')) }}
-            onMouseLeave={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'transparent'); setStatusText(null) }}
-            className="h-full text-[11px] font-bold transition-all select-none touch-none active:scale-95"
-            style={{
-              width: 48,
-              fontFamily: 'var(--font-mono)',
-              letterSpacing: '0.1em',
-              backgroundColor: isRekt ? '#FFFFFF' : 'transparent',
-              border: isRekt ? '1px solid #FFFFFF' : '1px solid var(--border)',
-              color: isRekt ? '#000000' : 'var(--text-muted)',
-              animation: isRektLocked ? (rektFlashOn ? undefined : 'hud-blink 0.5s step-end infinite') : undefined,
-            }}
-            title={isRektLocked ? 'Click to unlock' : 'Hold or tap to lock'}
-          >
-            REKT
-          </button>
-        </div>
-      </CornerFrame>
+      <span data-bank-slot onMouseEnter={() => setStatusText(getUIStatusText('randomize'))} onMouseLeave={() => setStatusText(null)} className="h-full min-w-0 block">
+        <Button size="lg" className="h-full w-full" onClick={handleRandom} title="Randomize effects">
+          <ShuffleIcon size={16} />
+        </Button>
+      </span>
+      <span data-bank-slot onMouseEnter={() => setStatusText(getUIStatusText('undo'))} onMouseLeave={() => setStatusText(null)} className="h-full min-w-0 block">
+        <Button size="lg" className="h-full w-full" style={{ padding: 0, fontSize: 10 }} onClick={handleUndo} disabled={!hasPreviousState}>
+          UNDO
+        </Button>
+      </span>
+      <span data-bank-slot className="h-full min-w-0 block">
+        <button
+          onPointerDown={handleRektDown}
+          onPointerUp={handleRektUp}
+          onPointerLeave={isRektLocked ? undefined : handleRektUp}
+          onPointerCancel={isRektLocked ? undefined : handleRektUp}
+          onMouseEnter={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)'); setStatusText(getUIStatusText('rekt')) }}
+          onMouseLeave={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'transparent'); setStatusText(null) }}
+          className="h-full text-[11px] font-bold transition-all select-none touch-none active:scale-95"
+          style={{
+            width: '100%',
+            fontFamily: 'var(--font-mono)',
+            letterSpacing: '0.1em',
+            backgroundColor: isRekt ? '#FFFFFF' : 'transparent',
+            border: isRekt ? '1px solid #FFFFFF' : '1px solid var(--border)',
+            color: isRekt ? '#000000' : 'var(--text-muted)',
+            animation: isRektLocked ? (rektFlashOn ? undefined : 'hud-blink 0.5s step-end infinite') : undefined,
+          }}
+          title={isRektLocked ? 'Click to unlock' : 'Hold or tap to lock'}
+        >
+          REKT
+        </button>
+      </span>
     </div>
   )
 }

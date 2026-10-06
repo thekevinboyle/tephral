@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { useAudioReactiveStore } from '../stores/audioReactiveStore'
 import { useAudioSourceStore } from '../stores/audioSourceStore'
+import { useEffectSequencerStore } from '../stores/effectSequencerStore'
+import { bandToBins, bandAverage } from '../utils/audioBands'
 
 export function useAudioReactive() {
   const enabled = useAudioReactiveStore((s) => s.enabled)
@@ -26,6 +28,9 @@ export function useAudioReactive() {
   const rollingFluxAvgRef = useRef(0)
   const rollingFluxPeakRef = useRef(0.01)
 
+  // Per-track band normaliser + envelope state, keyed by effectId
+  const trackStateRef = useRef<Record<string, { peak: { current: number }; floor: { current: number }; smoothed: number }>>({})
+
   useEffect(() => {
     if (!enabled) {
       // Reset band values when disabled
@@ -39,6 +44,7 @@ export function useAudioReactive() {
       noiseFloorHighRef.current = 0
       rollingFluxAvgRef.current = 0
       rollingFluxPeakRef.current = 0.01
+      trackStateRef.current = {}
       return
     }
 
@@ -47,8 +53,8 @@ export function useAudioReactive() {
     // Auto-normalize a raw band value using rolling peak + noise floor
     function autoNormalize(
       raw: number,
-      peakRef: React.MutableRefObject<number>,
-      floorRef: React.MutableRefObject<number>,
+      peakRef: { current: number },
+      floorRef: { current: number },
       dt: number,
       sensitivity: number,
     ): number {
@@ -222,9 +228,32 @@ export function useAudioReactive() {
       currentHitRef.current *= (1 - transientDecay)
       const hit = Math.min(1, currentHitRef.current)
 
-      // Single batched store write
       const rms = (sub + mid + high) / 3
-      useAudioReactiveStore.getState().updateBands(sub, mid, high, hit, rms)
+
+      // Per-track bands: same normalise → envelope → curve chain as the globals,
+      // over each audio-reactive track's own frequency window.
+      const tracks = useEffectSequencerStore.getState().tracks
+      const trackBands: Record<string, number> = {}
+      const live = trackStateRef.current
+      const seen = new Set<string>()
+      for (const id in tracks) {
+        const ar = tracks[id].audioReactive
+        if (!ar.enabled || !ar.band) continue
+        seen.add(id)
+        const st = live[id] ?? (live[id] = { peak: { current: 0.01 }, floor: { current: 0 }, smoothed: 0 })
+        const [first, last] = bandToBins(ar.band, sampleRate, fftSize)
+        const rawUnnorm = bandAverage(frequencyData, first, last)
+        const raw = autoMode
+          ? autoNormalize(rawUnnorm, st.peak, st.floor, dt, sensitivity)
+          : Math.min(1, rawUnnorm * gain)
+        st.smoothed = envelopeFollow(raw, st.smoothed)
+        trackBands[id] = Math.pow(st.smoothed, autoMode ? 3.0 - sensitivity * 2.2 : curve)
+      }
+      // Forget state for tracks that were disabled/removed so a re-enable starts fresh
+      for (const id in live) if (!seen.has(id)) delete live[id]
+
+      // Single batched store write
+      useAudioReactiveStore.getState().updateBands(sub, mid, high, hit, rms, trackBands)
 
       rafRef.current = requestAnimationFrame(loop)
     }

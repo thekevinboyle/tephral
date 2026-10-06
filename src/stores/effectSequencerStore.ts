@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { bjorklundPattern } from '../utils/bjorklund'
+import { BAND_PRESETS, clampBand, type AudioBand } from '../utils/audioBands'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -17,16 +18,25 @@ export interface EuclideanConfig {
   rotation: number
 }
 
+export interface TrackAudioMod {
+  param: string | null   // registry param id on this track's effect, or null = off
+  amount: number         // −1..1, bipolar depth
+}
+
 export interface TrackAudioReactiveConfig {
   enabled: boolean
   source: AudioReactiveSource
   sensitivity: number      // 0.1-2.0, kick multiplier / auto-threshold sensitivity
+  band: AudioBand | null   // per-track listening window; null → legacy `source`
+  mod: TrackAudioMod       // optional continuous param modulation by the band level
 }
 
 const DEFAULT_AUDIO_REACTIVE: TrackAudioReactiveConfig = {
   enabled: false,
   source: 'kick',
   sensitivity: 1.0,
+  band: { ...BAND_PRESETS.KICK },
+  mod: { param: null, amount: 0.5 },
 }
 
 export interface EffectStep {
@@ -108,6 +118,8 @@ interface EffectSequencerState {
   setTrackParamPanelOpen: (effectId: string | null) => void
   setTrackAudioReactive: (effectId: string, config: Partial<TrackAudioReactiveConfig>) => void
   setTrackAudioReactiveEnabled: (effectId: string, enabled: boolean) => void
+  setTrackAudioBand: (effectId: string, band: AudioBand) => void
+  setTrackAudioMod: (effectId: string, mod: Partial<TrackAudioMod>) => void
   advanceTrackStep: (effectId: string) => void
   resetTrackSteps: () => void
   setTrackAudioLevel: (effectId: string, level: number) => void
@@ -157,7 +169,7 @@ const createDefaultTrack = (effectId: string): EffectTrack => ({
   soloed: false,
   midiGate: false,
   audioGate: false,
-  audioReactive: { ...DEFAULT_AUDIO_REACTIVE },
+  audioReactive: { ...DEFAULT_AUDIO_REACTIVE, band: { ...BAND_PRESETS.KICK }, mod: { ...DEFAULT_AUDIO_REACTIVE.mod } },
   trackStep: 0,
   timeScale: 1,
   euclidean: null,
@@ -371,6 +383,34 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
             audioReactive: { ...track.audioReactive, enabled },
             trackStep: 0,
           },
+        },
+      }
+    })
+  },
+
+  setTrackAudioBand: (effectId, band) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      return {
+        tracks: {
+          ...state.tracks,
+          [effectId]: { ...track, audioReactive: { ...track.audioReactive, band: clampBand(band, 20000) } },
+        },
+      }
+    })
+  },
+
+  setTrackAudioMod: (effectId, mod) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      const next = { ...track.audioReactive.mod, ...mod }
+      next.amount = Math.max(-1, Math.min(1, next.amount))
+      return {
+        tracks: {
+          ...state.tracks,
+          [effectId]: { ...track, audioReactive: { ...track.audioReactive, mod: next } },
         },
       }
     })

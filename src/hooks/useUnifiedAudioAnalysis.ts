@@ -113,7 +113,7 @@ export function useUnifiedAudioAnalysis() {
 
           // Reactive analyser for FFT band splitting
           const reactiveAnalyser = ctx.createAnalyser()
-          reactiveAnalyser.fftSize = 2048
+          reactiveAnalyser.fftSize = 4096 // 4096 → ~11.7 Hz bins at 48 kHz, so narrow low bands (e.g. 40–100 Hz) span several bins
           reactiveAnalyser.smoothingTimeConstant = 0.4
           source.connect(reactiveAnalyser)
           useAudioSourceStore.getState().setReactiveAnalyser(reactiveAnalyser)
@@ -206,7 +206,7 @@ export function useUnifiedAudioAnalysis() {
 
           // Reactive analyser for FFT band splitting
           const reactiveAnalyser = ctx.createAnalyser()
-          reactiveAnalyser.fftSize = 2048
+          reactiveAnalyser.fftSize = 4096 // 4096 → ~11.7 Hz bins at 48 kHz, so narrow low bands (e.g. 40–100 Hz) span several bins
           reactiveAnalyser.smoothingTimeConstant = 0.4
           source.connect(reactiveAnalyser)
           useAudioSourceStore.getState().setReactiveAnalyser(reactiveAnalyser)

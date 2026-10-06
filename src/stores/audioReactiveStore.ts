@@ -8,6 +8,7 @@ interface AudioReactiveState {
   high: number   // 2000 Hz+
   hit: number    // transient detector (1 on hit, decays to 0)
   rms: number    // combined RMS (average of sub+mid+high)
+  trackBands: Record<string, number>   // per-track band level (0-1), keyed by effectId
 
   // Auto mode (adaptive gain + noise floor)
   autoMode: boolean      // true = auto-detection, false = manual (legacy)
@@ -32,7 +33,7 @@ interface AudioReactiveState {
   setCurve: (v: number) => void
   setTransientThreshold: (v: number) => void
   setTransientDecay: (v: number) => void
-  updateBands: (sub: number, mid: number, high: number, hit: number, rms: number) => void
+  updateBands: (sub: number, mid: number, high: number, hit: number, rms: number, trackBands?: Record<string, number>) => void
 }
 
 export const useAudioReactiveStore = create<AudioReactiveState>((set) => ({
@@ -42,6 +43,7 @@ export const useAudioReactiveStore = create<AudioReactiveState>((set) => ({
   high: 0,
   hit: 0,
   rms: 0,
+  trackBands: {},
 
   autoMode: true,
   sensitivity: 0.5,
@@ -63,5 +65,5 @@ export const useAudioReactiveStore = create<AudioReactiveState>((set) => ({
   setCurve: (v) => set({ curve: Math.max(0.5, Math.min(4, v)) }),
   setTransientThreshold: (v) => set({ transientThreshold: Math.max(0, Math.min(1, v)) }),
   setTransientDecay: (v) => set({ transientDecay: Math.max(0.01, Math.min(0.5, v)) }),
-  updateBands: (sub, mid, high, hit, rms) => set({ sub, mid, high, hit, rms }),
+  updateBands: (sub, mid, high, hit, rms, trackBands = {}) => set({ sub, mid, high, hit, rms, trackBands }),
 }))

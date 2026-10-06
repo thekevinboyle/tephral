@@ -5,11 +5,11 @@
 
 :root {
   /* Backgrounds — charcoal, readable contrast */
-  --bg-void: #18181b;
-  --bg-primary: #1e1e22;
-  --bg-surface: #26262b;
-  --bg-elevated: #2e2e34;
-  --bg-hover: #38383f;
+  --bg-void: oklch(0.17 0.006 270);
+  --bg-primary: oklch(0.205 0.006 270);
+  --bg-surface: oklch(0.225 0.007 270);
+  --bg-elevated: oklch(0.255 0.007 270);
+  --bg-hover: oklch(0.29 0.008 270);
 
   /* Layout grid */
   --col-left: 320px;
@@ -21,7 +21,7 @@
   --row-bottom-bar: 36px;
   --row-bottom-expanded: 240px;
   --gap: 8px;
-  --panel-radius: 8px;
+  --panel-radius: 2px;
 
   /* Spacing scale (4px base) */
   --space-1: 4px;
@@ -55,15 +55,15 @@
   --dot-size: 1px;
 
   /* Borders — visible edges for panel separation */
-  --border: #3a3a42;
-  --border-emphasis: #5a5a64;
-  --border-light: #30303a;
+  --border: oklch(0.32 0.008 270);
+  --border-emphasis: oklch(0.42 0.008 270);
+  --border-light: oklch(0.29 0.008 270);
 
   /* Text — high contrast on charcoal */
-  --text-primary: #F0F0F2;
-  --text-secondary: #B0B0B8;
-  --text-muted: #808088;
-  --text-ghost: #55555e;
+  --text-primary: oklch(0.95 0.004 270);
+  --text-secondary: oklch(0.80 0.006 270);
+  --text-muted: oklch(0.70 0.006 270);
+  --text-ghost: oklch(0.64 0.006 270);
 
   /* Accent — white base (effect colors provide the only color) */
   --accent: #FFFFFF;
@@ -90,8 +90,8 @@
   --seq-accent-glow: rgba(255, 255, 255, 0.15);
 
   /* Shadows — floating card depth */
-  --shadow-panel: 0 1px 4px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
-  --shadow-panel-lg: 0 2px 8px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+  --shadow-panel: none;
+  --shadow-panel-lg: none;
   --shadow-button: none;
   --shadow-button-hover: none;
   --shadow-knob: none;
@@ -529,3 +529,26 @@ button:active:not(:disabled) {
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
   animation: surface-scan 3.2s var(--ease-in-out-quart) infinite;
 }
+
+/* ── HUD type tiers ───────────────────────────────────────── */
+.hud-label { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
+.hud-value { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.hud-bpm   { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+
+/* ── Rules and raised rows (no cards) ─────────────────────── */
+.rule-b { border-bottom: 1px solid var(--border); }
+.surface-raised-row { background: var(--bg-surface); box-shadow: inset 0 0 0 1px var(--border-emphasis); }
+
+/* ── Output stage frame ───────────────────────────────────── */
+.stage-frame { position: relative; }
+.stage-tick { position: absolute; width: 14px; height: 14px; border-color: var(--text-secondary); border-style: solid; pointer-events: none; }
+.stage-tick.tl { left: -8px; top: -8px; border-width: 1px 0 0 1px; }
+.stage-tick.tr { right: -8px; top: -8px; border-width: 1px 1px 0 0; }
+.stage-tick.bl { left: -8px; bottom: -8px; border-width: 0 0 1px 1px; }
+.stage-tick.br { right: -8px; bottom: -8px; border-width: 0 1px 1px 0; }
+.stage-ruler { position: absolute; left: 0; right: 0; bottom: -16px; height: 6px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, var(--text-ghost) 0 1px, transparent 1px 10%); }
+.stage-readout { position: absolute; z-index: 2; pointer-events: none; font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10px; letter-spacing: .12em; color: var(--text-secondary); background: oklch(0.17 0.006 270 / .72); padding: 3px 6px; }
+.stage-readout.tl { left: 10px; top: 10px; } .stage-readout.tr { right: 10px; top: 10px; }
+.stage-readout.bl { left: 10px; bottom: 10px; } .stage-readout.br { right: 10px; bottom: 10px; }

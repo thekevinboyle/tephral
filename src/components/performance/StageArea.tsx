@@ -74,7 +74,7 @@ function StageReadouts() {
         <span className="stage-readout tl">● LIVE {fps} FPS</span>
       )}
       <span className="stage-readout tr">{presetName ?? `BANK ${String.fromCharCode(65 + activeBank)}`}</span>
-      <span ref={timeRef} className="stage-readout bl" style={{ left: 104 }}>{NO_TIME}</span>
+      <span ref={timeRef} className="stage-readout bl">{NO_TIME}</span>
       {band && <span className="stage-readout br">BAND {fmtHz(band.lowHz)}–{fmtHz(band.highHz)}</span>}
     </>
   )

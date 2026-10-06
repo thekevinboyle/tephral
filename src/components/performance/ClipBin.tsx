@@ -159,8 +159,9 @@ export function ClipBin() {
       <div
         style={{
           position: 'absolute',
-          bottom: 12,
-          left: 12,
+          bottom: 'var(--clipbin-inset)',
+          left: 'var(--clipbin-inset)',
+          maxWidth: 'var(--clipbin-w)', // shared with the timecode readout offset (theme.css .stage-frame)
           zIndex: 20,
         }}
         onDragOver={handleFileDragOver}

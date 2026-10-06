@@ -543,7 +543,10 @@ button:active:not(:disabled) {
 .surface-raised-row { background: var(--bg-surface); box-shadow: inset 0 0 0 1px var(--border-emphasis); }
 
 /* ── Output stage frame ───────────────────────────────────── */
-.stage-frame { position: relative; }
+/* The frame is a size container so readouts can re-stack in a narrow (portrait) frame.
+   --clipbin-inset/--clipbin-w: the ClipBin's offset and max stack width (80px card + 3 x 4px offsets);
+   the timecode readout starts just past it. */
+.stage-frame { position: relative; container-type: inline-size; --clipbin-inset: 12px; --clipbin-w: 92px; }
 .stage-tick { position: absolute; width: 14px; height: 14px; border-color: var(--text-secondary); border-style: solid; pointer-events: none; }
 .stage-tick.tl { left: -8px; top: -8px; border-width: 1px 0 0 1px; }
 .stage-tick.tr { right: -8px; top: -8px; border-width: 1px 1px 0 0; }
@@ -554,4 +557,11 @@ button:active:not(:disabled) {
 .stage-readout { position: absolute; z-index: 2; pointer-events: none; font-family: var(--font-mono, 'JetBrains Mono', monospace);
   font-size: 10px; letter-spacing: .12em; color: var(--text-secondary); background: oklch(0.17 0.006 270 / .72); padding: 3px 6px; }
 .stage-readout.tl { left: 10px; top: 10px; } .stage-readout.tr { right: 10px; top: 10px; }
-.stage-readout.bl { left: 10px; bottom: 10px; } .stage-readout.br { right: 10px; bottom: 10px; }
+.stage-readout.bl { left: calc(var(--clipbin-inset) + var(--clipbin-w)); bottom: 10px; } .stage-readout.br { right: 10px; bottom: 10px; }
+.stage-readout { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 20px); }
+/* Narrow frame: top-right drops under top-left, bottom-right stacks above the timecode */
+@container (max-width: 380px) {
+  .stage-readout.tr { right: auto; left: 10px; top: 36px; }
+  .stage-readout.br { right: auto; left: calc(var(--clipbin-inset) + var(--clipbin-w)); bottom: 36px;
+    max-width: calc(100% - var(--clipbin-inset) - var(--clipbin-w) - 10px); }
+}

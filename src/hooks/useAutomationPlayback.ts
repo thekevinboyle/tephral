@@ -6,6 +6,7 @@ import { useAcidStore } from '../stores/acidStore'
 import { useAsciiRenderStore } from '../stores/asciiRenderStore'
 import { useStippleStore } from '../stores/stippleStore'
 import { useVisionTrackingStore } from '../stores/visionTrackingStore'
+import { isInteractiveKeyTarget } from '../utils/keyboard'
 
 export function useAutomationPlayback() {
   const {
@@ -216,8 +217,8 @@ export function useAutomationPlayback() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in an input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      // Ignore keys aimed at a focused control (text fields, buttons, chain rows)
+      if (isInteractiveKeyTarget(e.target)) {
         return
       }
 

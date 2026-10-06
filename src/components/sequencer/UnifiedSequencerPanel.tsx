@@ -20,6 +20,7 @@ import { EffectTabsBar } from './EffectTabsBar'
 import { SequencerTransport } from './SequencerTransport'
 import { EffectTrackRow } from './EffectTrackRow'
 import { TrackParamPanel } from './TrackParamPanel'
+import { isInteractiveKeyTarget } from '../../utils/keyboard'
 
 const ALL_EFFECTS: EffectDefinition[] = [
   ...EFFECTS,
@@ -186,7 +187,7 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
     if (activeSequencer !== 'effects') return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (isInteractiveKeyTarget(e.target)) return
 
       const state = useEffectSequencerStore.getState()
 

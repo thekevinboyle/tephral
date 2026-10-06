@@ -70,10 +70,14 @@ const ChainRow = memo(function ChainRow(p: ChainRowProps) {
       onDoubleClick={() => p.onRemove(id)}
       onKeyDown={(ev) => {
         if (ev.target !== ev.currentTarget) return
-        if (ev.key === 'Enter' && ev.shiftKey) { ev.preventDefault(); p.onToggleBypass(id) }
-        else if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); p.onSelect(id) }
-        else if (ev.key === 'Delete' || ev.key === 'Backspace') { ev.preventDefault(); p.onRemove(id) }
-        else if (ev.altKey && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown')) { ev.preventDefault(); p.onMove(id, ev.key === 'ArrowUp' ? -1 : 1) }
+        // Every handled key stops here so window shortcuts (Space = sequencer play) do not also fire
+        if (ev.key === 'Enter' && ev.shiftKey) p.onToggleBypass(id)
+        else if (ev.key === 'Enter' || ev.key === ' ') p.onSelect(id)
+        else if (ev.key === 'Delete' || ev.key === 'Backspace') p.onRemove(id)
+        else if (ev.altKey && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown')) p.onMove(id, ev.key === 'ArrowUp' ? -1 : 1)
+        else return
+        ev.preventDefault()
+        ev.stopPropagation()
       }}
       className={`chain-row grid items-center gap-2.5 px-3.5 py-2.5 rule-b cursor-pointer ${isSel ? 'surface-raised-row' : ''}`}
       style={{ gridTemplateColumns: '18px 1fr auto auto auto', boxShadow: shadow, opacity: isBypassed ? 0.45 : 1, userSelect: 'none', ...FOCUS_RING }}

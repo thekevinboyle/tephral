@@ -100,6 +100,7 @@ export function BandSpectrum({ band, onChange, color }: { band: AudioBand; onCha
       <canvas
         ref={canvasRef}
         data-band-spectrum
+        aria-label={`Frequency band: ${Math.round(band.lowHz)}–${Math.round(band.highHz)} Hz`}
         width={W}
         height={H}
         onPointerDown={onPointerDown}

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useUIStore } from '../../stores/uiStore'
 import { Knob } from '../performance/Knob'
@@ -20,7 +21,8 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
   const setTrackAudioMod = useEffectSequencerStore((s) => s.setTrackAudioMod)
   const trackAudioLevel = useEffectSequencerStore((s) => effectId ? (s.trackAudioLevels[effectId] ?? 0) : 0)
   const trackAutoThreshold = useEffectSequencerStore((s) => effectId ? (s.trackAutoThresholds[effectId] ?? 0.5) : 0.5)
-
+  // MOD target list: the param set is fixed per effect, so rebuild only on effectId
+  const modParams = useMemo(() => (effectId ? EFFECT_PARAM_REGISTRY[effectId]?.getParams() ?? [] : []), [effectId])
 
   const config = track?.audioReactive
 
@@ -61,14 +63,13 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
 
   const isAboveThreshold = trackAudioLevel >= trackAutoThreshold
   const band = config.band ?? legacySourceToBand(config.source) ?? BAND_PRESETS.FULL
-  const modParams = EFFECT_PARAM_REGISTRY[effectId]?.getParams() ?? []
 
   return (
     <ParamSection label="Audio Reactive" color={ACCENT} visual={SignalAnalysis}>
     <div className="flex flex-col gap-2">
       {/* Row 1: band */}
       <div className="flex items-center gap-3">
-        <BandSpectrum band={band} color={ACCENT} onChange={(b) => setTrackAudioBand(effectId, b)} />
+        <BandSpectrum key={effectId} band={band} color={ACCENT} onChange={(b) => setTrackAudioBand(effectId, b)} />
         <div className="flex flex-wrap gap-1 max-w-[150px]">
           {(Object.keys(BAND_PRESETS) as BandPresetName[]).map((name) => {
             const p = BAND_PRESETS[name]

@@ -14,6 +14,7 @@ import { useMotionStore } from '../stores/motionStore'
 import { useDestructionStore } from '../stores/destructionStore'
 import { useTrendStore } from '../stores/trendStore'
 import { useSegStore } from '../stores/segStore'
+import { stepTrackBandModulation, resetTrackBandModulation } from '../effects/trackBandModulation'
 
 /**
  * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope)
@@ -719,6 +720,9 @@ export function useContinuousModulation() {
         }
       }
 
+      // Per-track band → param modulation (track's own frequency window)
+      stepTrackBandModulation()
+
       animationFrameId.current = requestAnimationFrame(modulationLoop)
     }
 
@@ -730,6 +734,7 @@ export function useContinuousModulation() {
         cancelAnimationFrame(animationFrameId.current)
         animationFrameId.current = null
       }
+      resetTrackBandModulation()
     }
   }, []) // Empty deps - loop manages its own state via getState()
 }

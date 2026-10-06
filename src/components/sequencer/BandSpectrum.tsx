@@ -5,6 +5,7 @@ import { clampBand, hzToLogX, logXToHz, BAND_PRESETS, type AudioBand } from '../
 const W = 160
 const H = 36
 const EDGE_GRAB_PX = 6
+const THIRD_OCTAVE = Math.pow(2, 1 / 3)
 
 function fmtHz(hz: number) {
   return hz >= 1000 ? `${(hz / 1000).toFixed(hz >= 10000 ? 0 : 1)}k` : `${Math.round(hz)}`
@@ -79,8 +80,9 @@ export function BandSpectrum({ band, onChange, color }: { band: AudioBand; onCha
     if (!d) return
     const x = (e.clientX - d.rect.left) / d.rect.width
     let next: AudioBand
-    if (d.mode === 'low') next = { lowHz: logXToHz(x), highHz: d.start.highHz }
-    else if (d.mode === 'high') next = { lowHz: d.start.lowHz, highHz: logXToHz(x) }
+    // Edge drags stop 1/3 octave short of the opposite edge instead of crossing it (R19)
+    if (d.mode === 'low') next = { lowHz: Math.min(logXToHz(x), d.start.highHz / THIRD_OCTAVE), highHz: d.start.highHz }
+    else if (d.mode === 'high') next = { lowHz: d.start.lowHz, highHz: Math.max(logXToHz(x), d.start.lowHz * THIRD_OCTAVE) }
     else {
       const dx = Math.max(-d.lx, Math.min(1 - d.hx, x - d.sx))
       next = { lowHz: logXToHz(d.lx + dx), highHz: logXToHz(d.hx + dx) }

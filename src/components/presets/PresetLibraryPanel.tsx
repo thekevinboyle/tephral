@@ -15,9 +15,11 @@ interface ContextMenuState {
 
 interface PresetLibraryPanelProps {
   canvasRef?: React.RefObject<HTMLCanvasElement | null>
+  /** Show the generic Inspector (InfoPanel) below the library. Default true. */
+  showInspector?: boolean
 }
 
-export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
+export function PresetLibraryPanel({ canvasRef, showInspector = true }: PresetLibraryPanelProps) {
   const {
     presets,
     folders,
@@ -192,7 +194,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
       {!isCollapsed && (
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
       {/* Search */}
-      <div className="px-2 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="px-2 py-2 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
         <div
           className="flex items-center gap-2 px-2 py-1 rounded"
           style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)' }}
@@ -224,7 +226,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
       </div>
 
       {/* Folder tree */}
-      <div className="flex-1 overflow-y-auto px-1" style={{ minHeight: 96 }}>
+      <div className="overflow-y-auto px-1" style={{ flex: '1 1 0', minHeight: 72 }}>
         {searchQuery ? (
           // Search results (flat list)
           <div className="py-2">
@@ -279,7 +281,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
 
       {/* Bottom actions */}
       <div
-        className="flex items-center gap-2 px-2 py-2"
+        className="flex items-center gap-2 px-2 py-2 flex-shrink-0"
         style={{ borderTop: '1px solid var(--border)' }}
       >
         <button
@@ -329,9 +331,11 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
       )}
 
       {/* Info Panel */}
-      <div className="min-h-0 overflow-y-auto" style={{ flex: '0 1 auto', maxHeight: '30%' }}>
-        <InfoPanel />
-      </div>
+      {showInspector && (
+        <div className="min-h-0 overflow-y-auto" style={{ flex: '0 1 auto', maxHeight: '30%' }}>
+          <InfoPanel />
+        </div>
+      )}
 
       {/* Context menus */}
       {contextMenu?.type === 'preset' && (

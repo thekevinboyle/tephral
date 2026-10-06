@@ -11,10 +11,10 @@ export const EffectsColumn = memo(function EffectsColumn({ canvasRef }: { canvas
       <div className="px-3.5 py-2.5 rule-b flex-shrink-0">
         <span className="hud-label" style={{ color: 'var(--text-secondary)' }}>Effects</span>
       </div>
-      <div style={{ flex: '1 1 0', minHeight: 240, maxHeight: 440 }}><PerformanceGrid /></div>
+      <div style={{ flex: '1 1 0', minHeight: 200, maxHeight: 440 }}><PerformanceGrid /></div>
       <div className="flex-shrink-0 rule-b" style={{ height: 52 }}><BankPanel /></div>
       <div className="flex-shrink-0 rule-b" style={{ minHeight: 'var(--row-middle)' }}><MiddleSection /></div>
-      <div className="overflow-hidden" style={{ flex: '1 1 0', minHeight: 270 }}><PresetLibraryPanel canvasRef={canvasRef} /></div>
+      <div className="overflow-hidden" style={{ flex: '1 1 0', minHeight: 200 }}><PresetLibraryPanel canvasRef={canvasRef} showInspector={false} /></div>
     </>
   )
 })

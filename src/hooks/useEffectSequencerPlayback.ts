@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { useEffectSequencerStore, type EffectTrack, type AudioReactiveSource } from '../stores/effectSequencerStore'
+import { useEffectSequencerStore, type EffectTrack, type TrackAudioReactiveConfig } from '../stores/effectSequencerStore'
 import { useSequencerStore } from '../stores/sequencerStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
@@ -55,9 +55,20 @@ export function useEffectSequencerPlayback() {
 
   // ─── Audio value reader ──────────────────────────────────────────────
 
-  const getAudioValue = useCallback((source: AudioReactiveSource): number => {
+  const getAudioValue = useCallback((effectId: string, config: TrackAudioReactiveConfig): number => {
     const ar = useAudioReactiveStore.getState()
     const as = useAudioSourceStore.getState()
+
+    // Per-track frequency window (normal case): already normalised + enveloped.
+    if (config.band) {
+      const v = ar.trackBands[effectId] ?? 0
+      if (ar.autoMode) return v
+      const invCurve = ar.curve > 0 ? 1 / ar.curve : 1
+      return Math.pow(Math.min(1, Math.max(0, v)), invCurve)
+    }
+
+    // Legacy path (band: null): fixed source selector
+    const source = config.source
 
     if (ar.autoMode) {
       // Auto mode: values are already well-normalized, no linearization needed
@@ -299,7 +310,7 @@ export function useEffectSequencerPlayback() {
           if (!track || !track.audioReactive.enabled) continue
 
           const config = track.audioReactive
-          const raw = getAudioValue(config.source)
+          const raw = getAudioValue(effectId, config)
 
           // Rolling peak: instant attack, ~1.5s decay half-life (faster decay = more dynamic range)
           const prevPeak = trackRollingPeak.current[effectId] ?? raw

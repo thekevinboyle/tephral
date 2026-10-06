@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useState } from 'react'
+import { forwardRef, memo, useEffect, useRef, useState } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { ClipBin } from './ClipBin'
 import { CanvasTransportBar } from './CanvasTransportBar'
@@ -31,9 +31,12 @@ function fmtTime(sec: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`
 }
 
-/** The output stage: aspect-locked frame that fits the free space, with HUD readouts. */
-export const StageArea = forwardRef<CanvasHandle>(function StageArea(_props, canvasRef) {
-  const videoAspect = useMediaStore((s) => s.videoAspect) ?? 16 / 9
+const NO_TIME = '--:--.--'
+
+const fmtHz = (hz: number) => (hz >= 1000 ? `${(hz / 1000).toFixed(hz >= 10000 ? 0 : 1)}k` : `${Math.round(hz)}`)
+
+/** HUD readouts. Owns all per-frame state so the stage and canvas never re-render for it. */
+function StageReadouts() {
   const videoElement = useMediaStore((s) => s.videoElement)
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)
   const band = useEffectSequencerStore((s) => {
@@ -42,16 +45,32 @@ export const StageArea = forwardRef<CanvasHandle>(function StageArea(_props, can
   })
   const activeBank = useRoutingStore((s) => s.activeBank)
   const fps = useFps()
-  const [time, setTime] = useState(0)
-  const timeRaf = useRef(0)
+  const timeRef = useRef<HTMLSpanElement>(null)
   useEffect(() => {
-    const tick = () => { setTime(videoElement ? videoElement.currentTime : performance.now() / 1000); timeRaf.current = requestAnimationFrame(tick) }
-    timeRaf.current = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(timeRaf.current)
+    let raf = 0
+    const tick = () => {
+      if (!document.hidden && timeRef.current) {
+        timeRef.current.textContent = videoElement ? fmtTime(videoElement.currentTime) : NO_TIME
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
   }, [videoElement])
 
-  const fmtHz = (hz: number) => (hz >= 1000 ? `${(hz / 1000).toFixed(hz >= 10000 ? 0 : 1)}k` : `${Math.round(hz)}`)
+  return (
+    <>
+      <span className="stage-readout tl">● LIVE {fps} FPS</span>
+      <span className="stage-readout tr">BANK {String.fromCharCode(65 + activeBank)}</span>
+      <span ref={timeRef} className="stage-readout bl" style={{ left: 104 }}>{NO_TIME}</span>
+      {band && <span className="stage-readout br">BAND {fmtHz(band.lowHz)}–{fmtHz(band.highHz)}</span>}
+    </>
+  )
+}
 
+/** The output stage: aspect-locked frame that fits the free space, with HUD readouts. */
+export const StageArea = memo(forwardRef<CanvasHandle>(function StageArea(_props, canvasRef) {
+  const videoAspect = useMediaStore((s) => s.videoAspect) ?? 16 / 9
   return (
     <div className="h-full flex flex-col">
       <CanvasTransportBar />
@@ -71,14 +90,11 @@ export const StageArea = forwardRef<CanvasHandle>(function StageArea(_props, can
             <ClipBin />
           </div>
           <span className="stage-tick tl" /><span className="stage-tick tr" /><span className="stage-tick bl" /><span className="stage-tick br" />
-          <span className="stage-readout tl">● LIVE {fps} FPS</span>
-          <span className="stage-readout tr">BANK {String.fromCharCode(65 + activeBank)}</span>
-          <span className="stage-readout bl" style={{ left: 104 }}>{fmtTime(time)}</span>
-          {band && <span className="stage-readout br">BAND {fmtHz(band.lowHz)}–{fmtHz(band.highHz)}</span>}
+          <StageReadouts />
           <div className="stage-ruler" />
         </div>
       </div>
       <TransportBar />
     </div>
   )
-})
+}))

@@ -5,6 +5,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { usePresetLibraryStore } from '../../stores/presetLibraryStore'
 import { getUIStatusText, getEffectStatusText } from '../../config/statusDescriptions'
 import { EffectParameters_v2 } from './ExpandedParameterPanel_v2'
 import { TrackAudioReactivePanel } from '../sequencer/TrackAudioReactivePanel'
@@ -269,6 +270,7 @@ function ChainPanelImpl() {
           }}
           onClick={() => {
             for (const id of ids) disableEffect(id)
+            usePresetLibraryStore.getState().clearActivePresetName()
           }}
           onMouseEnter={() => setStatusText(getUIStatusText('clearAll'))}
           onMouseLeave={() => setStatusText(null)}

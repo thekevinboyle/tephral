@@ -7,7 +7,9 @@ import { useMediaStore } from '../../stores/mediaStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useRoutingStore } from '../../stores/routingStore'
+import { useBankStore } from '../../stores/bankStore'
 import { useRecordingStore } from '../../stores/recordingStore'
+import { usePresetLibraryStore } from '../../stores/presetLibraryStore'
 
 /** Rolling frames-per-second from requestAnimationFrame (display cadence, not render cost). */
 function useFps(): number {
@@ -44,7 +46,11 @@ function StageReadouts() {
     const t = selectedEffectId ? s.tracks[selectedEffectId] : undefined
     return t?.audioReactive.enabled ? t.audioReactive.band : null
   })
-  const activeBank = useRoutingStore((s) => s.activeBank)
+  // The A-D bank buttons drive bankStore; routingStore's bank is the fallback before any bank is loaded
+  const loadedBank = useBankStore((s) => s.activeBank)
+  const routingBank = useRoutingStore((s) => s.activeBank)
+  const activeBank = loadedBank ?? routingBank
+  const presetName = usePresetLibraryStore((s) => s.activePresetName)
   const isRecording = useRecordingStore((s) => s.isRecording)
   const fps = useFps()
   const timeRef = useRef<HTMLSpanElement>(null)
@@ -67,7 +73,7 @@ function StageReadouts() {
       ) : (
         <span className="stage-readout tl">● LIVE {fps} FPS</span>
       )}
-      <span className="stage-readout tr">BANK {String.fromCharCode(65 + activeBank)}</span>
+      <span className="stage-readout tr">{presetName ?? `BANK ${String.fromCharCode(65 + activeBank)}`}</span>
       <span ref={timeRef} className="stage-readout bl" style={{ left: 104 }}>{NO_TIME}</span>
       {band && <span className="stage-readout br">BAND {fmtHz(band.lowHz)}–{fmtHz(band.highHz)}</span>}
     </>

@@ -29,6 +29,7 @@ import { useRoutingStore, unionWithDefaultEffectOrder } from './routingStore'
 import { useSlicerStore, type SlicerSnapshot } from './slicerStore'
 import { useTrendStore, type TrendSnapshot } from './trendStore'
 import { useSegStore, type SegSnapshot } from './segStore'
+import { usePresetLibraryStore } from './presetLibraryStore'
 
 /**
  * BankSnapshot stores a complete effect state for A/B/C/D bank recall
@@ -261,8 +262,9 @@ export const useBankStore = create<BankState>((set, get) => ({
     // Older banks predate SEG_EXP: applySnapshot(undefined) resets seg to defaults (all off)
     useSegStore.getState().applySnapshot(snapshot.seg)
 
-    // Set activeBank to index
+    // Set activeBank to index; the stage readout shows the bank again, not the last preset
     set({ activeBank: index })
+    usePresetLibraryStore.getState().clearActivePresetName()
   },
 
   clearBank: (index: number) => {

@@ -208,25 +208,23 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
       {/* Trigger bar */}
       <div
         data-preset-dropdown
-        className="h-10 flex items-center px-3"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          borderBottom: '1px solid var(--border)',
-        }}
+        className="flex items-center gap-1.5"
       >
-        <TechReadout value={presets.length / 50} size={18} color="var(--text-ghost)" className="opacity-20 mr-1.5" />
+        <TechReadout value={presets.length / 50} size={18} color="var(--text-ghost)" className="opacity-20" />
         <button
           ref={triggerRef}
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded transition-colors"
+          className="flex items-center gap-2 px-2.5 rounded-sm transition-colors"
           style={{
-            backgroundColor: isOpen ? 'var(--bg-hover)' : 'transparent',
+            height: 28,
+            backgroundColor: isOpen ? 'var(--bg-hover)' : 'var(--bg-elevated)',
+            border: '1px solid var(--border)',
             color: 'var(--text-primary)',
           }}
           onMouseEnter={() => setStatusText(getUIStatusText('presets'))}
           onMouseLeave={() => setStatusText(null)}
         >
-          <span className="text-[13px] font-medium">Presets</span>
+          <span className="hud-label" style={{ color: 'inherit', fontWeight: 600 }}>Presets</span>
           <svg
             width="10"
             height="10"
@@ -249,7 +247,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
         createPortal(
           <div
             ref={dropdownRef}
-            className="fixed z-50 rounded-lg shadow-xl overflow-hidden"
+            className="fixed z-50 rounded-sm overflow-hidden"
             style={{
               top: dropdownPosition.top,
               left: dropdownPosition.left,

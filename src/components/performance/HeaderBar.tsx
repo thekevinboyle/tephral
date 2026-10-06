@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from 'react'
+import { memo, useRef, useCallback, useEffect, useState } from 'react'
 import { useMediaSource } from '../../hooks/useMediaSource'
 import { useAudioSourceStore, type AudioSourceType } from '../../stores/audioSourceStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -138,7 +138,7 @@ function StyledDropdown({
 
 /* ── Header Bar ──────────────────────────────────── */
 
-export function HeaderBar({ canvasRef }: { canvasRef?: React.RefObject<HTMLCanvasElement | null> }) {
+export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: React.RefObject<HTMLCanvasElement | null> }) {
   const setStatusText = useUIStore((s) => s.setStatusText)
 
   // Video source
@@ -280,4 +280,4 @@ export function HeaderBar({ canvasRef }: { canvasRef?: React.RefObject<HTMLCanva
       </span>
     </div>
   )
-}
+})

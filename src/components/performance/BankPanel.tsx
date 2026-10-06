@@ -275,7 +275,7 @@ export function BankPanel() {
           onPointerCancel={isRektLocked ? undefined : handleRektUp}
           onMouseEnter={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)'); setStatusText(getUIStatusText('rekt')) }}
           onMouseLeave={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'transparent'); setStatusText(null) }}
-          className="h-full text-[11px] font-bold transition-all select-none touch-none active:scale-95"
+          className="h-full text-[10px] font-bold transition-all select-none touch-none active:scale-95"
           style={{
             width: '100%',
             fontFamily: 'var(--font-mono)',

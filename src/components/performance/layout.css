@@ -12,7 +12,7 @@
 }
 .seg-shell > [data-area] { background: var(--bg-primary); min-width: 0; min-height: 0; overflow: hidden; position: relative; }
 .seg-shell > [data-area="header"]  { grid-area: header; }
-.seg-shell > [data-area="effects"] { grid-area: effects; display: flex; flex-direction: column; container-type: inline-size; }
+.seg-shell > [data-area="effects"] { grid-area: effects; display: flex; flex-direction: column; container-type: inline-size; overflow-y: auto; }
 .seg-shell > [data-area="stage"]   { grid-area: stage; background: var(--bg-void); }
 .seg-shell > [data-area="chain"]   { grid-area: chain; display: flex; flex-direction: column; overflow-y: auto; }
 .seg-shell > [data-area="dock"]    { grid-area: dock; max-height: 34vh; display: flex; flex-direction: column; overflow-y: auto; }

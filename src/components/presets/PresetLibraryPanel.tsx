@@ -166,13 +166,12 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-100 transition-colors"
+        className="flex items-center justify-between px-3 py-2 cursor-pointer transition-colors hover:[background:var(--bg-hover)]"
         style={{ borderBottom: isCollapsed ? 'none' : '1px solid var(--border)' }}
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <span
-          className="text-[13px] font-semibold uppercase tracking-wider"
-          style={{ color: 'var(--text-muted)' }}
+          className="hud-label"
         >
           Presets
         </span>
@@ -213,7 +212,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="hover:bg-gray-100 rounded p-0.5"
+              className="hover:[background:var(--bg-hover)] rounded-sm p-0.5"
             >
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18" />
@@ -225,7 +224,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
       </div>
 
       {/* Folder tree */}
-      <div className="flex-1 overflow-y-auto px-1">
+      <div className="flex-1 overflow-y-auto px-1" style={{ minHeight: 96 }}>
         {searchQuery ? (
           // Search results (flat list)
           <div className="py-2">
@@ -237,7 +236,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
               displayPresets.map((preset) => (
                 <div
                   key={preset.id}
-                  className="flex items-center gap-2 px-2 py-1.5 cursor-pointer rounded hover:bg-gray-100"
+                  className="flex items-center gap-2 px-2 py-1.5 cursor-pointer rounded-sm hover:[background:var(--bg-hover)]"
                   onClick={() => handlePresetLoad(preset)}
                   onContextMenu={(e) => {
                     e.preventDefault()
@@ -330,7 +329,9 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
       )}
 
       {/* Info Panel */}
-      <InfoPanel />
+      <div className="min-h-0 overflow-y-auto" style={{ flex: '0 1 auto', maxHeight: '30%' }}>
+        <InfoPanel />
+      </div>
 
       {/* Context menus */}
       {contextMenu?.type === 'preset' && (
@@ -360,7 +361,7 @@ export function PresetLibraryPanel({ canvasRef }: PresetLibraryPanelProps) {
           onClick={() => setRenameState(null)}
         >
           <div
-            className="p-4 rounded-lg shadow-lg"
+            className="p-4 rounded-sm"
             style={{ backgroundColor: 'var(--bg-surface)', minWidth: '240px' }}
             onClick={(e) => e.stopPropagation()}
           >

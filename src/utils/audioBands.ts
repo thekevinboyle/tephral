@@ -23,9 +23,14 @@ const MIN_RATIO = Math.pow(2, MIN_BAND_OCTAVES)
  * around its geometric centre, then shifts to stay in range.
  */
 export function clampBand(band: AudioBand, nyquist: number): AudioBand {
-  const top = Math.max(MIN_HZ * MIN_RATIO, Math.min(MAX_HZ, nyquist))
-  let lo = Math.max(MIN_HZ, Math.min(band.lowHz, band.highHz))
-  let hi = Math.min(top, Math.max(band.lowHz, band.highHz))
+  // Sanitize NaN and infinite inputs
+  const safeNyquist = Number.isFinite(nyquist) ? nyquist : MAX_HZ
+  const safeLow = Number.isFinite(band.lowHz) ? band.lowHz : MIN_HZ
+  const safeHigh = Number.isFinite(band.highHz) ? band.highHz : MAX_HZ
+
+  const top = Math.max(MIN_HZ * MIN_RATIO, Math.min(MAX_HZ, safeNyquist))
+  let lo = Math.max(MIN_HZ, Math.min(safeLow, safeHigh))
+  let hi = Math.min(top, Math.max(safeLow, safeHigh))
   if (hi / lo < MIN_RATIO) {
     const centre = Math.sqrt(Math.max(lo, MIN_HZ) * Math.max(hi, MIN_HZ))
     lo = centre / Math.sqrt(MIN_RATIO)
@@ -47,9 +52,13 @@ export function bandToBins(band: AudioBand, sampleRate: number, fftSize: number)
 
 /** Mean of byte FFT magnitudes over [first, last], scaled to 0–1. */
 export function bandAverage(data: Uint8Array, first: number, last: number): number {
+  if (!Number.isFinite(first) || !Number.isFinite(last)) return 0
+  const clampedFirst = Math.max(0, Math.floor(first))
+  const clampedLast = Math.min(data.length - 1, Math.floor(last))
+  if (clampedLast < clampedFirst) return 0
   let sum = 0
-  for (let i = first; i <= last; i++) sum += data[i]
-  return last >= first ? sum / (last - first + 1) / 255 : 0
+  for (let i = clampedFirst; i <= clampedLast; i++) sum += data[i]
+  return sum / (clampedLast - clampedFirst + 1) / 255
 }
 
 const LOG_MIN = Math.log10(MIN_HZ)

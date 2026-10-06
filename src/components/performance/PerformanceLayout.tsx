@@ -1,17 +1,15 @@
 import { useRef, useEffect, useState } from 'react'
-import { Canvas, type CanvasHandle } from '../Canvas'
+import './layout.css'
+import type { CanvasHandle } from '../Canvas'
+import { StageArea } from './StageArea'
+import { Dock } from './Dock'
 import { HeaderBar } from './HeaderBar'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
-import { ClipBin } from './ClipBin'
 import { ClipDetailModal } from './ClipDetailModal'
 import { EffectCardStack } from './EffectCardStack'
-import { TransportBar } from './TransportBar'
-import { CanvasTransportBar } from './CanvasTransportBar'
 import { MiddleSection } from './MiddleSection'
 import { ModulationLines } from './ModulationLines'
-import { SequencerContainer } from '../sequencer/SequencerContainer'
-import { SharedEffectTabsBar } from '../sequencer/SharedEffectTabsBar'
 // DataTerminal stashed — component file kept, just not rendered
 // import { DataTerminal } from '../terminal/DataTerminal'
 import { useRecordingCapture } from '../../hooks/useRecordingCapture'
@@ -28,15 +26,11 @@ import { useAudioReactive } from '../../hooks/useAudioReactive'
 import { DestructionOverlay } from '../DestructionOverlay'
 // LFO Editor Panel hidden — component kept, just not rendered
 // import { LFOEditorPanel } from './LFOEditorPanel'
-import { useMediaStore } from '../../stores/mediaStore'
-import { BottomPanel } from './BottomPanel'
 import { StatusBar } from './StatusBar'
-import { IrisScanner } from '../ui/MicroVisuals'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null)
-  const videoAspect = useMediaStore((s) => s.videoAspect)
 
   // Initialize automation playback (handles keyboard shortcuts and event replay)
   useAutomationPlayback()
@@ -82,137 +76,21 @@ export function PerformanceLayout() {
   useRecordingCapture(captureRef, canvasElement)
 
   return (
-    <div
-      className="w-screen h-screen overflow-hidden grid-substrate"
-      style={{
-        display: 'grid',
-        gridTemplateRows: 'auto 1fr 1fr auto 24px',
-        gridTemplateColumns: 'auto var(--col-left) 2fr 1fr',
-        gap: 'var(--gap)',
-        padding: 'var(--gap)',
-      }}
-    >
-      {/* Row 1: Header Bar (spans all columns) */}
-      <div
-        className="panel-header"
-        style={{
-          gridRow: 1,
-          gridColumn: '1 / -1',
-          border: '1px solid var(--border)',
-          borderRadius: 0,
-        }}
-      >
-        <HeaderBar />
+    <div className="seg-shell grid-substrate">
+      <div data-area="header" className="panel-header"><HeaderBar /></div>
+      <div data-area="effects">
+        {/* Task 4 replaces this block with <EffectsColumn /> */}
+        <div style={{ flex: '1 1 auto', minHeight: 0 }}><PerformanceGrid /></div>
+        <div className="rule-b" style={{ height: 52, flexShrink: 0 }}><BankPanel /></div>
+        <div style={{ minHeight: 'var(--row-middle)', flexShrink: 0 }}><MiddleSection /></div>
       </div>
-
-      {/* Rows 2-4, Col 1: Vertical Effect Tabs Bar */}
-      <div
-        className="overflow-hidden"
-        style={{
-          gridRow: '2 / 5',
-          gridColumn: 1,
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--panel-radius)',
-          boxShadow: 'var(--shadow-panel)',
-        }}
-      >
-        <SharedEffectTabsBar />
+      <div data-area="stage"><StageArea ref={canvasRef} /></div>
+      <div data-area="chain">
+        {/* Task 3 replaces this with <ChainPanel /> */}
+        <EffectCardStack />
       </div>
-
-      {/* Rows 2-4, Col 2: Effect Card Stack + Grid + Crossfader */}
-      <div
-        className="flex flex-col overflow-hidden panel-raised"
-        style={{
-          gridRow: '2 / 5',
-          gridColumn: 2,
-          boxShadow: 'var(--shadow-panel-lg)',
-        }}
-      >
-        <div className="flex-1 min-h-0">
-          <EffectCardStack />
-        </div>
-        <div
-          className="flex-shrink-0"
-          style={{
-            borderTop: '1px solid var(--border-light)',
-          }}
-        >
-          <div
-            className="flex-shrink-0"
-            style={{
-              height: '52px',
-              borderBottom: '1px solid var(--border-light)',
-            }}
-          >
-            <BankPanel />
-          </div>
-          <div style={{ height: 224 }}>
-            <PerformanceGrid />
-          </div>
-        </div>
-        <div
-          className="flex-shrink-0"
-          style={{
-            borderTop: '1px solid var(--border-light)',
-            minHeight: 'var(--row-middle)',
-          }}
-        >
-          <MiddleSection />
-        </div>
-      </div>
-
-      {/* Rows 2-3, Col 3: Sequencer */}
-      <div
-        className="flex-1 min-w-0 overflow-hidden panel-raised"
-        style={{
-          gridRow: '2 / 4',
-          gridColumn: 3,
-        }}
-      >
-        <SequencerContainer hideTabsBar />
-      </div>
-
-      {/* Row 4, Col 3: Bottom Panel */}
-      <div style={{ gridRow: 4, gridColumn: 3 }}>
-        <BottomPanel />
-      </div>
-
-      {/* Rows 2-4, Col 4: Canvas + Transport */}
-      <div
-        className="flex flex-col overflow-hidden"
-        style={{
-          gridRow: '2 / 5',
-          gridColumn: 4,
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--panel-radius)',
-          boxShadow: 'var(--shadow-panel)',
-          backgroundColor: 'var(--bg-surface)',
-        }}
-      >
-        <CanvasTransportBar />
-        <div
-          className="relative w-full"
-          style={{
-            aspectRatio: videoAspect ?? 16 / 9,
-            overflow: 'hidden',
-            borderRadius: 6,
-            border: '1px solid var(--border-light)',
-          }}
-        >
-          <Canvas ref={canvasRef} />
-          <ClipBin />
-        </div>
-        <TransportBar />
-        {/* Fill remaining space */}
-        <div className="flex-1 flex items-center justify-center">
-          <IrisScanner value={0.5} size={48} color="var(--text-ghost)" className="opacity-10" />
-        </div>
-      </div>
-
-      {/* Row 5: Status Bar (spans all columns) */}
-      <div style={{ gridRow: 5, gridColumn: '1 / -1' }}>
-        <StatusBar />
-      </div>
+      <div data-area="dock"><Dock /></div>
+      <div data-area="status"><StatusBar /></div>
 
       <ClipDetailModal />
       <ModulationLines />

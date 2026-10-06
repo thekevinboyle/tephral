@@ -31,7 +31,7 @@ export function SequencerContainer({ hideTabsBar = false }: { hideTabsBar?: bool
               onClick={() => setActiveSequencer(mode.id)}
               className="w-full flex items-center justify-center transition-colors"
               style={{
-                height: 64,
+                height: hideTabsBar ? 44 : 64, // docked: both rail buttons must fit the collapsed dock
                 borderBottom: '1px solid var(--border)',
                 borderLeft: isActive ? '2px solid var(--seq-accent)' : '2px solid transparent',
                 backgroundColor: 'transparent',

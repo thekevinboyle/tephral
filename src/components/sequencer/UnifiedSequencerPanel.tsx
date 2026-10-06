@@ -20,7 +20,6 @@ import { EffectTabsBar } from './EffectTabsBar'
 import { SequencerTransport } from './SequencerTransport'
 import { EffectTrackRow } from './EffectTrackRow'
 import { TrackParamPanel } from './TrackParamPanel'
-import { Crosshair } from '../ui/MicroVisuals'
 
 const ALL_EFFECTS: EffectDefinition[] = [
   ...EFFECTS,
@@ -276,33 +275,13 @@ export function UnifiedSequencerPanel({ hideTabsBar = false }: { hideTabsBar?: b
         {/* Track rows (scrollable) */}
         <div className="flex-1 min-w-0 overflow-y-auto" style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
         {activeTrackIds.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center h-full gap-2"
-            style={{ color: 'var(--text-ghost)' }}
+          <p
+            data-dock-hint
+            className="text-[11px]"
+            style={{ color: 'var(--text-muted)', margin: 0, padding: '4px 14px' }}
           >
-            {/* Idle reticle — slow telemetry rotation while awaiting tracks */}
-            <span
-              className="inline-flex"
-              style={{ animation: 'hud-reticle-spin 24s linear infinite' }}
-            >
-              <Crosshair value={0.3} size={40} color="var(--text-ghost)" className="opacity-25" />
-            </span>
-            <span className="alive-idle text-[10px] uppercase tracking-wider">
-              Enable effects on the grid to add tracks
-              <span
-                aria-hidden
-                style={{
-                  display: 'inline-block',
-                  width: 5,
-                  height: 9,
-                  marginLeft: 6,
-                  verticalAlign: -1,
-                  backgroundColor: 'currentColor',
-                  animation: 'hud-typewriter-cursor 1.1s steps(1) infinite',
-                }}
-              />
-            </span>
-          </div>
+            Effects you enable get a lane automatically.
+          </p>
         ) : (
           activeTrackIds.map((effectId, index) => {
             const def = EFFECT_MAP.get(effectId)

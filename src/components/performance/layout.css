@@ -43,14 +43,14 @@
       "status  status";
   }
   .seg-shell > [data-area="dock"] { max-height: none; }
-  .seg-hide-narrow { display: none !important; }
+  .seg-hide-narrow { display: none; }
 }
 
 .seg-shell [data-area="chain"] :focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
 
 /* Effects column: page tabs never clip; 6 across when wide, 3x2 when narrow */
-.seg-page-tabs { display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px !important; width: 100%; }
-.seg-page-tabs > * { justify-content: center; min-width: 0; letter-spacing: .06em !important; }
+.seg-page-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; width: 100%; }
+.seg-page-tabs > * { justify-content: center; min-width: 0; letter-spacing: .06em; }
 @container (max-width: 330px) { .seg-page-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 /* Dock: content-sized up to the area's cap, snaps (no height transition). The track list is the only scroller. */

@@ -7,7 +7,7 @@ export function BottomPanel() {
   const isExpanded = bottomPanelTab !== null
 
   return (
-    <div style={{
+    <div data-expanded={isExpanded || undefined} style={{
       display: 'flex',
       flexDirection: 'column',
       border: '1px solid var(--border)',
@@ -16,7 +16,7 @@ export function BottomPanel() {
       overflow: 'hidden',
     }}>
       <BottomPanelTabBar />
-      <div style={{
+      <div data-bottom-content style={{
         maxHeight: isExpanded ? 'var(--row-bottom-expanded)' : '0px',
         opacity: isExpanded ? 1 : 0,
         transition: 'max-height 0.25s ease-out, opacity 0.2s ease-out',

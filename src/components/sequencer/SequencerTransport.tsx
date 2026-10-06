@@ -311,7 +311,7 @@ export function SequencerTransport({
                 useEffectSequencerStore.getState().setBpm(audioBpm)
               }
             }}
-            onMouseEnter={() => setStatusText(`Audio BPM: ${audioBpm} — click to ${audioBpmSyncEnabled ? 'unsync' : 'sync'}`)}
+            onMouseEnter={() => setStatusText(`Audio BPM: ${audioBpm}. Click to ${audioBpmSyncEnabled ? 'unsync' : 'sync'}`)}
             onMouseLeave={() => setStatusText(null)}
             className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-sm"
             style={{
@@ -319,7 +319,7 @@ export function SequencerTransport({
               color: audioBpmSyncEnabled ? AUDIO_COLOR : 'var(--text-ghost)',
               border: `1px solid ${audioBpmSyncEnabled ? `${AUDIO_COLOR}40` : 'var(--border)'}`,
             }}
-            title={audioBpmSyncEnabled ? `Synced to audio: ${audioBpm} BPM` : `Audio detected ${audioBpm} BPM — click to sync`}
+            title={audioBpmSyncEnabled ? `Synced to audio: ${audioBpm} BPM` : `Audio detected ${audioBpm} BPM. Click to sync`}
           >
             {audioBpmSyncEnabled ? `♪ ${audioBpm}` : `♪ ${audioBpm}`}
           </button>

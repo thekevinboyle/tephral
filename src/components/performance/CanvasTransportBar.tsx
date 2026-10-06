@@ -96,7 +96,7 @@ export function CanvasTransportBar() {
           cursor: hasPlayableContent ? 'pointer' : 'default',
         }}
         title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
-        onMouseEnter={() => setStatusText('Play/Pause — Start or stop playback (Space)')}
+        onMouseEnter={() => setStatusText('Play/Pause: Start or stop playback (Space)')}
         onMouseLeave={() => setStatusText(null)}
       >
         {isPlaying ? (

@@ -326,7 +326,7 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
       {/* Video source dropdown */}
       <div
         className="flex items-center gap-2 flex-shrink-0"
-        onMouseEnter={() => setStatusText('Video — Select video input source')}
+        onMouseEnter={() => setStatusText('Video: Select video input source')}
         onMouseLeave={() => setStatusText(null)}
       >
         <span
@@ -350,7 +350,7 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
       {/* Audio source dropdown */}
       <div
         className="flex items-center gap-2 flex-shrink-0"
-        onMouseEnter={() => setStatusText('Audio — Select audio input source')}
+        onMouseEnter={() => setStatusText('Audio: Select audio input source')}
         onMouseLeave={() => setStatusText(null)}
       >
         <span

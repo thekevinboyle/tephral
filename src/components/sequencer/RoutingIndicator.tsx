@@ -116,7 +116,7 @@ export function RoutingIndicator({ routing, trackColor, trackName }: RoutingIndi
           backgroundColor: trackColor,
           boxShadow: `0 0 4px ${trackColor}`,
         }}
-        title={`${trackName}: ${Math.round(routing.depth * 100)}% — Drag to adjust`}
+        title={`${trackName}: ${Math.round(routing.depth * 100)}%. Drag to adjust`}
       >
         {/* Arc visualization */}
         <svg width="12" height="12" viewBox="0 0 12 12">

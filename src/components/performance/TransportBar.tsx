@@ -571,7 +571,7 @@ export function TransportBar() {
                 border: '1px solid var(--border)',
               }}
               title={isAudioPlaying ? 'Pause' : 'Play'}
-              onMouseEnter={() => setStatusText('Audio — Play/Pause')}
+              onMouseEnter={() => setStatusText('Audio: Play/Pause')}
               onMouseLeave={() => setStatusText(null)}
             >
               {isAudioPlaying ? (
@@ -639,7 +639,7 @@ export function TransportBar() {
 
         {/* Clear */}
         <span
-          onMouseEnter={() => setStatusText('Clear — Reset source or clips')}
+          onMouseEnter={() => setStatusText('Clear: Reset source or clips')}
           onMouseLeave={() => setStatusText(null)}
         >
           <Button
@@ -673,7 +673,7 @@ export function TransportBar() {
               onPointerMove={handleVideoPointerMove}
               onPointerUp={handleVideoPointerUp}
               onPointerCancel={handleVideoPointerUp}
-              onMouseEnter={() => setStatusText('Timeline — Click or drag to scrub')}
+              onMouseEnter={() => setStatusText('Timeline: Click or drag to scrub')}
               onMouseLeave={() => setStatusText(null)}
             >
               {/* Track */}
@@ -730,10 +730,10 @@ export function TransportBar() {
             onDoubleClick={hasAudioFile ? handleWaveformDoubleClick : undefined}
             onMouseEnter={() => setStatusText(
               !hasAudioFile
-                ? 'Audio — Load an audio file to see waveform'
+                ? 'Audio: Load an audio file to see waveform'
                 : hasLoopRegion
-                  ? 'Click to seek — Drag edges to resize loop — Double-click to clear'
-                  : 'Click to seek — Drag to create loop'
+                  ? 'Click to seek. Drag edges to resize loop, double-click to clear'
+                  : 'Click to seek. Drag to create loop'
             )}
             onMouseLeave={() => {
               if (hasAudioFile) handleWaveformMouseLeave()

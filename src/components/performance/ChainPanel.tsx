@@ -151,18 +151,18 @@ function ChainPanelImpl() {
     disableRef.current = disableEffect
   })
 
-  // Every active effect gets a sequencer track (was SharedEffectTabsBar)
+  // Every active effect gets a sequencer track
   useEffect(() => {
     for (const id of ids) ensureTrack(id)
   }, [ids, ensureTrack])
 
-  // Keep a valid selection (was SharedEffectTabsBar)
+  // Keep a valid selection
   useEffect(() => {
     if (selectedEffectId && !ids.includes(selectedEffectId)) setSelectedEffect(ids[0] ?? null)
     else if (!selectedEffectId && ids.length > 0) setSelectedEffect(ids[0])
   }, [ids, selectedEffectId, setSelectedEffect])
 
-  // Drag reorder: same semantics as EffectTabsBar (drop above/below a row, or at the end)
+  // Drag reorder (drop above/below a row, or at the end)
   const dragged = useRef<string | null>(null)
   const [over, setOver] = useState<{ id: string; after: boolean } | null>(null)
   const drop = useCallback((targetId: string, after: boolean) => {

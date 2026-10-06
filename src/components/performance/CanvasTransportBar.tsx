@@ -1,12 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
-import { PlayIcon, PauseIcon, RecordIcon, StopIcon } from '../ui/DotMatrixIcons'
+import { PlayIcon, PauseIcon } from '../ui/DotMatrixIcons'
 import { useMediaStore } from '../../stores/mediaStore'
-import { useRecordingStore, type AutomationEvent } from '../../stores/recordingStore'
+import { useRecordingStore } from '../../stores/recordingStore'
 import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
-import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
-import { useAsciiRenderStore } from '../../stores/asciiRenderStore'
-import { useStippleStore } from '../../stores/stippleStore'
-import { useAcidStore } from '../../stores/acidStore'
 import { useSlicerStore } from '../../stores/slicerStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -20,8 +16,6 @@ export function CanvasTransportBar() {
     isPlaying: isRecordingPlaying,
     duration: recordingDuration,
     currentTime: recordingTime,
-    startRecording,
-    stopRecording,
     play: playRecording,
     pause: pauseRecording,
   } = useRecordingStore()
@@ -50,44 +44,6 @@ export function CanvasTransportBar() {
       videoElement.removeEventListener('pause', handlePause)
     }
   }, [videoElement, source])
-
-  const handleStartRecording = useCallback(() => {
-    const initialEvents: AutomationEvent[] = []
-    const glitch = useGlitchEngineStore.getState()
-    const ascii = useAsciiRenderStore.getState()
-    const stipple = useStippleStore.getState()
-    const acid = useAcidStore.getState()
-
-    if (glitch.rgbSplitEnabled) initialEvents.push({ t: 0, effect: 'rgb_split', action: 'on' })
-    if (glitch.blockDisplaceEnabled) initialEvents.push({ t: 0, effect: 'block_displace', action: 'on' })
-    if (glitch.scanLinesEnabled) initialEvents.push({ t: 0, effect: 'scan_lines', action: 'on' })
-    if (glitch.noiseEnabled) initialEvents.push({ t: 0, effect: 'noise', action: 'on' })
-    if (glitch.pixelateEnabled) initialEvents.push({ t: 0, effect: 'pixelate', action: 'on' })
-    if (glitch.edgeDetectionEnabled) initialEvents.push({ t: 0, effect: 'edges', action: 'on' })
-    if (glitch.chromaticAberrationEnabled) initialEvents.push({ t: 0, effect: 'chromatic', action: 'on' })
-    if (glitch.vhsTrackingEnabled) initialEvents.push({ t: 0, effect: 'vhs', action: 'on' })
-    if (glitch.lensDistortionEnabled) initialEvents.push({ t: 0, effect: 'lens', action: 'on' })
-    if (glitch.ditherEnabled) initialEvents.push({ t: 0, effect: 'dither', action: 'on' })
-    if (glitch.posterizeEnabled) initialEvents.push({ t: 0, effect: 'posterize', action: 'on' })
-    if (glitch.staticDisplacementEnabled) initialEvents.push({ t: 0, effect: 'static_displace', action: 'on' })
-    if (glitch.colorGradeEnabled) initialEvents.push({ t: 0, effect: 'color_grade', action: 'on' })
-    if (glitch.feedbackLoopEnabled) initialEvents.push({ t: 0, effect: 'feedback', action: 'on' })
-    if (ascii.enabled) initialEvents.push({ t: 0, effect: 'ascii', action: 'on' })
-    if (stipple.enabled) initialEvents.push({ t: 0, effect: 'stipple', action: 'on' })
-    if (acid.dotsEnabled) initialEvents.push({ t: 0, effect: 'acid_dots', action: 'on' })
-    if (acid.glyphEnabled) initialEvents.push({ t: 0, effect: 'acid_glyph', action: 'on' })
-    if (acid.iconsEnabled) initialEvents.push({ t: 0, effect: 'acid_icons', action: 'on' })
-    if (acid.contourEnabled) initialEvents.push({ t: 0, effect: 'acid_contour', action: 'on' })
-    if (acid.decompEnabled) initialEvents.push({ t: 0, effect: 'acid_decomp', action: 'on' })
-    if (acid.mirrorEnabled) initialEvents.push({ t: 0, effect: 'acid_mirror', action: 'on' })
-    if (acid.sliceEnabled) initialEvents.push({ t: 0, effect: 'acid_slice', action: 'on' })
-    if (acid.thGridEnabled) initialEvents.push({ t: 0, effect: 'acid_thgrid', action: 'on' })
-    if (acid.cloudEnabled) initialEvents.push({ t: 0, effect: 'acid_cloud', action: 'on' })
-    if (acid.ledEnabled) initialEvents.push({ t: 0, effect: 'acid_led', action: 'on' })
-    if (acid.slitEnabled) initialEvents.push({ t: 0, effect: 'acid_slit', action: 'on' })
-    if (acid.voronoiEnabled) initialEvents.push({ t: 0, effect: 'acid_voronoi', action: 'on' })
-    startRecording(initialEvents)
-  }, [startRecording])
 
   const handlePlayPause = useCallback(() => {
     const slicerState = useSlicerStore.getState()
@@ -128,29 +84,6 @@ export function CanvasTransportBar() {
         borderBottom: '1px solid var(--border-light)',
       }}
     >
-      {/* Record / Stop */}
-      <button
-        onClick={isRecording ? stopRecording : handleStartRecording}
-        disabled={!hasSource}
-        className="w-10 h-10 rounded-sm flex items-center justify-center transition-all"
-        style={{
-          backgroundColor: isRecording ? 'var(--accent)' : 'var(--bg-elevated)',
-          border: `1px solid ${isRecording ? 'var(--accent)' : 'var(--border)'}`,
-          boxShadow: isRecording ? '0 0 12px var(--accent-glow)' : 'none',
-          opacity: hasSource ? 1 : 0.4,
-          cursor: hasSource ? 'pointer' : 'not-allowed',
-        }}
-        title={isRecording ? 'Stop Recording' : 'Start Recording'}
-        onMouseEnter={() => setStatusText('Record — Capture effect automation')}
-        onMouseLeave={() => setStatusText(null)}
-      >
-        {isRecording ? (
-          <StopIcon size={16} color="var(--text-primary)" />
-        ) : (
-          <RecordIcon size={16} color="var(--accent)" />
-        )}
-      </button>
-
       {/* Play / Pause */}
       <button
         onClick={handlePlayPause}

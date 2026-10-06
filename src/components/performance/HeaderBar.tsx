@@ -5,6 +5,8 @@ import { useAudioSourceStore, type AudioSourceType } from '../../stores/audioSou
 import { useUIStore } from '../../stores/uiStore'
 import { HudGlyph } from '../ui/HudGlyph'
 import { PresetDropdownBar } from '../presets/PresetDropdownBar'
+import { useRecordingControl } from '../../hooks/useRecordingControl'
+import { useRecordingStore } from '../../stores/recordingStore'
 
 const AUDIO_SOURCES: { id: AudioSourceType; label: string }[] = [
   { id: 'video', label: 'Video' },
@@ -178,6 +180,66 @@ function StyledDropdown({
   )
 }
 
+/* ── REC ─────────────────────────────────────────── */
+
+const fmtElapsed = (ms: number) => {
+  const sec = Math.max(0, Math.floor(ms / 1000))
+  return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`
+}
+
+/** Header record toggle. The elapsed time is written straight to the DOM so the header never re-renders per tick. */
+const RecButton = memo(function RecButton() {
+  const { isRecording, canRecord, toggle } = useRecordingControl()
+  const setStatusText = useUIStore((s) => s.setStatusText)
+  const elapsedRef = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    if (!isRecording) return
+    const tick = () => {
+      const start = useRecordingStore.getState().startTime
+      if (elapsedRef.current && start != null) elapsedRef.current.textContent = fmtElapsed(performance.now() - start)
+    }
+    tick()
+    const id = setInterval(tick, 250)
+    return () => clearInterval(id)
+  }, [isRecording])
+
+  const disabled = !canRecord && !isRecording
+  return (
+    <button
+      data-rec
+      onClick={toggle}
+      disabled={disabled}
+      aria-pressed={isRecording}
+      title={disabled ? 'Choose a video source to record' : isRecording ? 'Stop recording' : 'Start recording'}
+      className="hud-label flex items-center flex-shrink-0"
+      style={{
+        height: 28,
+        gap: 8,
+        padding: '0 10px',
+        borderRadius: 2,
+        border: '1px solid var(--rec)',
+        background: 'transparent',
+        color: 'var(--rec)',
+        fontWeight: 600,
+        opacity: disabled ? 0.5 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+      }}
+      onMouseEnter={() => setStatusText(isRecording ? 'Stop recording and add the clip to the bin' : 'Record the output and its effect automation')}
+      onMouseLeave={() => setStatusText(null)}
+    >
+      {isRecording ? (
+        <>
+          <span>■ STOP</span>
+          <span ref={elapsedRef} className="tabular-nums">00:00</span>
+        </>
+      ) : (
+        <span>● REC</span>
+      )}
+    </button>
+  )
+})
+
 /* ── Header Bar ──────────────────────────────────── */
 
 export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: React.RefObject<HTMLCanvasElement | null> }) {
@@ -319,6 +381,8 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
 
       {/* Spacer */}
       <div className="flex-1" />
+
+      <RecButton />
 
       <span className="seg-hide-narrow flex-shrink-0 flex items-center">
         <HudGlyph glyph="diamond" size={10} color="var(--text-ghost)" animate="pulse" />

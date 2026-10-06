@@ -7,7 +7,7 @@ import { HeaderBar } from './HeaderBar'
 import { BankPanel } from './BankPanel'
 import { PerformanceGrid } from './PerformanceGrid'
 import { ClipDetailModal } from './ClipDetailModal'
-import { EffectCardStack } from './EffectCardStack'
+import { ChainPanel } from './ChainPanel'
 import { MiddleSection } from './MiddleSection'
 import { ModulationLines } from './ModulationLines'
 // DataTerminal stashed — component file kept, just not rendered
@@ -86,8 +86,7 @@ export function PerformanceLayout() {
       </div>
       <div data-area="stage"><StageArea ref={canvasRef} /></div>
       <div data-area="chain">
-        {/* Task 3 replaces this with <ChainPanel /> */}
-        <EffectCardStack />
+        <ChainPanel />
       </div>
       <div data-area="dock"><Dock /></div>
       <div data-area="status"><StatusBar /></div>

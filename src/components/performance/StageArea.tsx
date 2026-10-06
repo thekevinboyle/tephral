@@ -66,14 +66,14 @@ export const StageArea = forwardRef<CanvasHandle>(function StageArea(_props, can
             maxHeight: '100%',
           }}
         >
-          <div className="absolute inset-0 overflow-hidden" style={{ border: '1px solid var(--border-light)' }}>
+          <div className="absolute inset-0 overflow-hidden" style={{ border: '1px solid var(--border-light)', isolation: 'isolate', zIndex: 0 }}>
             <Canvas ref={canvasRef} />
             <ClipBin />
           </div>
           <span className="stage-tick tl" /><span className="stage-tick tr" /><span className="stage-tick bl" /><span className="stage-tick br" />
           <span className="stage-readout tl">● LIVE {fps} FPS</span>
           <span className="stage-readout tr">BANK {String.fromCharCode(65 + activeBank)}</span>
-          <span className="stage-readout bl">{fmtTime(time)}</span>
+          <span className="stage-readout bl" style={{ left: 104 }}>{fmtTime(time)}</span>
           {band && <span className="stage-readout br">BAND {fmtHz(band.lowHz)}–{fmtHz(band.highHz)}</span>}
           <div className="stage-ruler" />
         </div>

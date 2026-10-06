@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { bjorklundPattern } from '../utils/bjorklund'
 import { BAND_PRESETS, clampBand, type AudioBand } from '../utils/audioBands'
+import { useAudioReactiveStore } from './audioReactiveStore'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -386,6 +387,9 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
         },
       }
     })
+    // Band levels and MOD need global audio-reactive analysis running; it was
+    // otherwise only switched on from the playing transport loop (R20)
+    if (enabled) useAudioReactiveStore.getState().setEnabled(true)
   },
 
   setTrackAudioBand: (effectId, band) => {
@@ -414,6 +418,8 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
         },
       }
     })
+    // Picking a MOD param needs global audio-reactive running, transport or not (R20)
+    if (mod.param != null) useAudioReactiveStore.getState().setEnabled(true)
   },
 
   advanceTrackStep: (effectId) => {

@@ -4,6 +4,15 @@ import { useAudioSourceStore } from '../stores/audioSourceStore'
 import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 import { bandToBins, bandAverage } from '../utils/audioBands'
 
+// Per-track band gating (R17): raw byte-average below this is treated as silence.
+// R17 named 0.02 (≈5/255), but measured −50 dBFS broadband noise reads ~0.035 mean
+// and up to ~0.095 peak in the 6-bin KICK window of the 4096-point band analyser
+// (byte scale spans −100…−30 dB per bin), so 0.02 gates nothing. 0.15 (≈38/255,
+// ≈ −89.5 dB per bin) clears that floor with margin; real hits read 0.5–1.0.
+const TRACK_BAND_FLOOR = 0.15
+// Per-track rolling-peak minimum (globals use 0.001)
+const TRACK_MIN_PEAK = 0.05
+
 export function useAudioReactive() {
   const enabled = useAudioReactiveStore((s) => s.enabled)
   const rafRef = useRef<number | null>(null)
@@ -61,6 +70,7 @@ export function useAudioReactive() {
       floorRef: { current: number },
       dt: number,
       sensitivity: number,
+      minPeak = 0.001,
     ): number {
       // Rolling peak: instant attack, 5-second half-life decay
       const peakDecay = Math.pow(0.5, dt / 5.0)
@@ -69,7 +79,7 @@ export function useAudioReactive() {
       } else {
         peakRef.current *= peakDecay
       }
-      peakRef.current = Math.max(peakRef.current, 0.001)
+      peakRef.current = Math.max(peakRef.current, minPeak)
 
       // Noise floor: slow rise (10s), faster drop (2s)
       if (raw < floorRef.current) {
@@ -254,9 +264,15 @@ export function useAudioReactive() {
         const st = live[id] ?? (live[id] = { peak: { current: 0.01 }, floor: { current: 0 }, smoothed: 0 })
         const [first, last] = bandToBins(ar.band, sampleRate, fftSize)
         const rawUnnorm = bandAverage(frequencyData, first, last)
-        const raw = autoMode
-          ? autoNormalize(rawUnnorm, st.peak, st.floor, dt, sensitivity)
-          : Math.min(1, rawUnnorm * gain)
+        // Absolute floor (R17): narrow windows sit near silence most of the time, and
+        // auto-normalise would scale that noise up to full scale. Below the floor the
+        // track reads 0; the envelope still releases toward it. The rolling peak's
+        // minimum is also raised (0.05 vs the globals' 0.001) for the same reason.
+        const raw = rawUnnorm < TRACK_BAND_FLOOR
+          ? 0
+          : autoMode
+            ? autoNormalize(rawUnnorm, st.peak, st.floor, dt, sensitivity, TRACK_MIN_PEAK)
+            : Math.min(1, rawUnnorm * gain)
         st.smoothed = envelopeFollow(raw, st.smoothed)
         trackBands[id] = Math.pow(st.smoothed, autoMode ? 3.0 - sensitivity * 2.2 : curve)
       }

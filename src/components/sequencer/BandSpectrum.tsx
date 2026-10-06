@@ -19,6 +19,8 @@ export function BandSpectrum({ band, onChange, color }: { band: AudioBand; onCha
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const bandRef = useRef(band)
   useEffect(() => { bandRef.current = band }, [band])
+  const dragRef = useRef<{ mode: 'low' | 'high' | 'move'; start: AudioBand; sx: number; lx: number; hx: number; rect: DOMRect } | null>(null)
+  useEffect(() => () => { dragRef.current = null }, [])
 
   useEffect(() => {
     let raf = 0
@@ -27,6 +29,9 @@ export function BandSpectrum({ band, onChange, color }: { band: AudioBand; onCha
       const c = canvasRef.current
       const ctx2d = c?.getContext('2d')
       if (c && ctx2d) {
+        const dpr = window.devicePixelRatio || 1
+        if (c.width !== Math.round(W * dpr)) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr) }
+        ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0)
         const { reactiveAnalyser: an, audioContext: ac } = useAudioSourceStore.getState()
         ctx2d.clearRect(0, 0, W, H)
         const b = bandRef.current
@@ -57,28 +62,34 @@ export function BandSpectrum({ band, onChange, color }: { band: AudioBand; onCha
 
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
-    const toX = (clientX: number) => (clientX - rect.left) / rect.width
     const start = bandRef.current
-    const sx = toX(e.clientX)
+    const sx = (e.clientX - rect.left) / rect.width
     const lx = hzToLogX(start.lowHz), hx = hzToLogX(start.highHz)
     const grab = EDGE_GRAB_PX / rect.width
-    const mode = Math.abs(sx - lx) <= grab ? 'low' : Math.abs(sx - hx) <= grab ? 'high' : sx > lx && sx < hx ? 'move' : null
+    const dl = Math.abs(sx - lx), dh = Math.abs(sx - hx)
+    const mode = dl <= grab && dl <= dh ? 'low' : dh <= grab ? 'high' : sx > lx && sx < hx ? 'move' : null
     if (!mode) return
     e.currentTarget.setPointerCapture(e.pointerId)
-    const move = (ev: PointerEvent) => {
-      const x = toX(ev.clientX)
-      let next: AudioBand
-      if (mode === 'low') next = { lowHz: logXToHz(x), highHz: start.highHz }
-      else if (mode === 'high') next = { lowHz: start.lowHz, highHz: logXToHz(x) }
-      else {
-        const dx = Math.max(-lx, Math.min(1 - hx, x - sx))
-        next = { lowHz: logXToHz(lx + dx), highHz: logXToHz(hx + dx) }
-      }
-      onChange(clampBand(next, 20000))
+    dragRef.current = { mode, start, sx, lx, hx, rect }
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const d = dragRef.current
+    if (!d) return
+    const x = (e.clientX - d.rect.left) / d.rect.width
+    let next: AudioBand
+    if (d.mode === 'low') next = { lowHz: logXToHz(x), highHz: d.start.highHz }
+    else if (d.mode === 'high') next = { lowHz: d.start.lowHz, highHz: logXToHz(x) }
+    else {
+      const dx = Math.max(-d.lx, Math.min(1 - d.hx, x - d.sx))
+      next = { lowHz: logXToHz(d.lx + dx), highHz: logXToHz(d.hx + dx) }
     }
-    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
+    onChange(clampBand(next, 20000))
+  }
+
+  const endDrag = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    dragRef.current = null
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId)
   }
 
   return (
@@ -89,6 +100,9 @@ export function BandSpectrum({ band, onChange, color }: { band: AudioBand; onCha
         width={W}
         height={H}
         onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
         onDoubleClick={() => onChange({ ...BAND_PRESETS.KICK })}
         className="rounded-sm cursor-ew-resize"
         style={{ width: W, height: H, backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border)', touchAction: 'none' }}

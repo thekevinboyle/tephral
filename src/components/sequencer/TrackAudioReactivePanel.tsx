@@ -76,6 +76,7 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
             return (
               <button
                 key={name}
+                aria-pressed={on}
                 onClick={() => setTrackAudioBand(effectId, { ...p })}
                 className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm"
                 style={{ color: on ? ACCENT : 'var(--text-ghost)', border: `1px solid ${on ? `${ACCENT}60` : 'var(--border)'}`, backgroundColor: on ? `${ACCENT}15` : 'transparent' }}

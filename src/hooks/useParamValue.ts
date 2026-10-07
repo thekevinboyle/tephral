@@ -26,7 +26,15 @@ const STORES = [
 // One shared fan-out: a single subscription per store, created on the first listener and torn down when none remain
 const listeners = new Set<() => void>()
 let offs: Array<() => void> | null = null
-const notify = () => listeners.forEach((l) => l())
+let frame = 0
+// Coalesce store bursts into one notification per animation frame
+const notify = () => {
+  if (frame) return
+  frame = requestAnimationFrame(() => {
+    frame = 0
+    listeners.forEach((l) => l())
+  })
+}
 
 function subscribe(cb: () => void) {
   listeners.add(cb)
@@ -36,6 +44,7 @@ function subscribe(cb: () => void) {
     if (listeners.size === 0 && offs) {
       offs.forEach((off) => off())
       offs = null
+      if (frame) { cancelAnimationFrame(frame); frame = 0 }
     }
   }
 }

@@ -124,7 +124,7 @@ const ChainSettings = memo(function ChainSettings({ effectId }: { effectId: stri
   return (
     <div data-chain-settings={effectId} className="flex-shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
       <div style={{ padding: 8 }}><EffectSettings effectId={effectId} /></div>
-      <div style={{ borderTop: '1px solid var(--border)' }}><TrackAudioReactivePanel effectId={effectId} /></div>
+      <div style={{ borderTop: '1px solid var(--border)', padding: 8 }}><TrackAudioReactivePanel effectId={effectId} /></div>
     </div>
   )
 })

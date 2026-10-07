@@ -20,7 +20,7 @@ const StripKnob = memo(function StripKnob({ effectId, param }: { effectId: strin
     <Knob
       label={param.label} value={value} min={param.min} max={param.max} step={param.step}
       onChange={onChange} paramId={`${effectId}.${param.id}`} size="md" formatValue={formatParamValue}
-      resetOnDoubleClick
+      resetOnDoubleClick showArc color="var(--fx)"
     />
   )
 })
@@ -35,12 +35,12 @@ const ParamSelect = memo(function ParamSelect({ effectId, param }: { effectId: s
   const indexParam = useMemo<LockableParam>(() => ({
     id: param.id, label: param.label, min: 0, max: Math.max(1, param.options.length - 1), step: 1,
     apply: () => {},
-    read: () => Math.max(0, param.options.findIndex((o) => o.value === param.read())),
+    read: () => param.options.findIndex((o) => o.value === param.read()),
   }), [param])
   const idx = useParamValue(indexParam)
   return (
     <SelectBlock
-      label={param.label} value={param.options[idx]?.value ?? param.read()} options={param.options}
+      label={param.label} value={param.options[idx] ? param.options[idx].value : param.read()} options={param.options}
       onChange={(v) => param.apply(v)} paramId={`${effectId}.${param.id}`}
     />
   )

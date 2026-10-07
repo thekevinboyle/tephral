@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 import type { LockableParam } from '../config/effectParams'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
 import { useAcidStore } from '../stores/acidStore'
@@ -23,12 +23,28 @@ const STORES = [
   useStrandStore, useMotionStore, useDestructionStore, useMorphStore, useTrendStore, useSegStore,
 ]
 
+// One shared fan-out: a single subscription per store, created on the first listener and torn down when none remain
+const listeners = new Set<() => void>()
+let offs: Array<() => void> | null = null
+const notify = () => listeners.forEach((l) => l())
+
 function subscribe(cb: () => void) {
-  const offs = STORES.map((s) => s.subscribe(cb))
-  return () => offs.forEach((off) => off())
+  listeners.add(cb)
+  if (!offs) offs = STORES.map((s) => s.subscribe(notify))
+  return () => {
+    listeners.delete(cb)
+    if (listeners.size === 0 && offs) {
+      offs.forEach((off) => off())
+      offs = null
+    }
+  }
 }
 
-/** The param's live value; re-renders only when that number changes. */
+/** The param's live value (always finite); re-renders only when that number changes. */
 export function useParamValue(param: LockableParam): number {
-  return useSyncExternalStore(subscribe, param.read, param.read)
+  const getSnapshot = useCallback(() => {
+    const v = param.read()
+    return Number.isFinite(v) ? v : param.min
+  }, [param])
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }

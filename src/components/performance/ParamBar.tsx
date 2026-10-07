@@ -26,14 +26,14 @@ export const ParamBar = memo(function ParamBar({ effectId, param }: { effectId: 
       data-drop={ctl.isDropTarget || undefined}
       style={{
         ['--mod' as string]: first?.color ?? 'transparent',
-        ['--assign' as string]: ctl.assigningColor ?? 'transparent',
+        ...(ctl.assigningColor ? { ['--assign' as string]: ctl.assigningColor } : null),
       }}
       tabIndex={0}
       role="slider"
       aria-label={param.label}
       aria-valuemin={param.min}
       aria-valuemax={param.max}
-      aria-valuenow={value}
+      aria-valuenow={Math.min(param.max, Math.max(param.min, value))}
       aria-valuetext={formatParamValue(value)}
       {...ctl.wrapperProps}
       {...ctl.rootProps}

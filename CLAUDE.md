@@ -60,6 +60,7 @@ Enabled flags/order and per-frame params are split across two files:
 - Add an `EFFECT_PARAM_REGISTRY` entry (getParams, optional getSelectParams, setEnabled, getEnabled).
   Param locks are driven from this registry.
 - The registry entry drives the chain panel's settings: its first four numeric params form the knob strip, the rest render as segmented bars, and 0/1 integer params render as toggles. Selects come from `getSelectParams`; bespoke colour/texture controls live in `BlockExtras`.
+- If the effect uses a NEW store, add it to the `STORES` list in `src/hooks/useParamValue.ts`, or its bars and knobs won't update.
 
 ### 10. Continuous Modulation (`src/hooks/useContinuousModulation.ts`)
 - Add a `case '<effectId>'` mapping 0–1 modulation values onto each param's real range.

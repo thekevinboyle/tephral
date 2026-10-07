@@ -6,7 +6,6 @@ import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useTextureOverlayStore } from '../../stores/textureOverlayStore'
 import { useDataOverlayStore } from '../../stores/dataOverlayStore'
 import { useRoutingStore } from '../../stores/routingStore'
-import { ParamBlock } from './blocks/ParamBlock'
 import { ToggleBlock } from './blocks/ToggleBlock'
 import { SelectBlock } from './blocks/SelectBlock'
 import { ColorBlock } from './blocks/ColorBlock'
@@ -139,15 +138,8 @@ function TextureOverlayBlockExtras() {
           onChange={(v) => tex.setBlendMode(v as BlendMode)}
         />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-          <ParamBlock label="Opacity" value={tex.opacity} min={0} max={1} step={0.01} onChange={tex.setOpacity} paramId="texture_overlay.opacity" />
-          <ParamBlock label="Scale" value={tex.scale} min={0.5} max={3} step={0.1} onChange={tex.setScale} paramId="texture_overlay.scale" />
           <ToggleBlock label="Animate" value={tex.animated} onChange={tex.setAnimated} />
         </div>
-        {tex.animated && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-            <ParamBlock label="Speed" value={tex.animationSpeed} min={0.1} max={2} step={0.1} onChange={tex.setAnimationSpeed} paramId="texture_overlay.animationSpeed" />
-          </div>
-        )}
       </div>
     </ParamSection>
   )
@@ -200,8 +192,6 @@ function DataOverlayBlockExtras() {
           />
         )}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-          <ParamBlock label="Size" value={data.style.fontSize} min={12} max={48} step={1} onChange={(v) => data.setStyle({ fontSize: v })} paramId="data_overlay.fontSize" />
-          <ParamBlock label="Opacity" value={data.style.opacity} min={0} max={1} step={0.01} onChange={(v) => data.setStyle({ opacity: v })} paramId="data_overlay.opacity" />
           <ColorBlock label="Color" value={data.style.color} onChange={(v) => data.setStyle({ color: v })} />
         </div>
       </div>

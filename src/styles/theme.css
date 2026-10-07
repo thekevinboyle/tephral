@@ -53,7 +53,7 @@
   --gap-lg: var(--space-4);
 
   /* Line grid — replaces dot matrix */
-  --grid-dot: #2a2a30;
+  --grid-dot: #2c2d31;
   --grid-size: 20px;
   --dot-size: 1px;
 
@@ -108,10 +108,10 @@
   --shadow-inset: none;
 
   /* Knob surface */
-  --knob-body: #22222a;
-  --knob-body-highlight: #2a2a32;
-  --knob-rim: #3a3a42;
-  --knob-rim-highlight: #44444c;
+  --knob-body: #2c2d31;
+  --knob-body-highlight: #37383d;
+  --knob-rim: #37383d;
+  --knob-rim-highlight: #45464c;
 
   /* Surface highlights — removed */
   --border-top-highlight: none;
@@ -245,8 +245,8 @@ body {
 
 /* P-lock waiting flash */
 @keyframes plock-flash {
-  0%, 100% { border-color: #FF4060; box-shadow: 0 0 4px #FF406030; }
-  50% { border-color: #FF406040; box-shadow: none; }
+  0%, 100% { border-color: var(--rec); box-shadow: 0 0 4px color-mix(in srgb, var(--rec) 20%, transparent); }
+  50% { border-color: color-mix(in srgb, var(--rec) 25%, transparent); box-shadow: none; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

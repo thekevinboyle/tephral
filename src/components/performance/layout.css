@@ -89,10 +89,10 @@
   color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .param-bar-segs { flex: 1; align-self: stretch; display: flex; gap: 2px; min-width: 0; }
 .param-bar-segs > i { flex: 1; background: var(--bg-elevated); }
-.param-bar-segs > i[data-lit] { background: oklch(0.56 0.008 270); }
-.param-bar-segs > i[data-zero] { background: oklch(0.48 0.008 270); }
+.param-bar-segs > i[data-lit] { background: oklch(0.56 0 0); }
+.param-bar-segs > i[data-zero] { background: oklch(0.48 0 0); }
 .param-bar-segs > i[data-mod] { background: color-mix(in oklab, var(--mod) 40%, var(--bg-elevated)); }
-.param-bar-segs > i[data-mod][data-lit] { background: color-mix(in oklab, var(--mod) 75%, oklch(0.56 0.008 270)); }
+.param-bar-segs > i[data-mod][data-lit] { background: color-mix(in oklab, var(--mod) 75%, oklch(0.56 0 0)); }
 .param-bar-value { flex: none; width: 40px; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-primary); overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .param-bar-src { position: absolute; top: -1px; width: 6px; height: 6px; cursor: ns-resize; }
 

@@ -229,8 +229,10 @@ export function useParamControl({
   }, [axis, dragSpanPx, min, max, snapClamp, dispatchChange])
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    // Right-click opens the context menu; it must not toggle the p-lock
+    // Right-click opens the context menu; it must not toggle the automation target
     if (e.button !== 0) return
+    // Nothing was pressed on this control (e.g. a stray release): nothing to finish
+    if (dragStart.current === null && !depthAssignSource.current) return
     try { ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* not captured */ }
 
     setIsDragging(false)
@@ -428,7 +430,7 @@ export function useParamControl({
       setDotDragging((prev) => (prev ? { ...prev, depth: newDepth } : null))
     },
     onPointerUp: (e: React.PointerEvent) => {
-      e.stopPropagation() // markers may sit inside the control root; don't let the click toggle the p-lock
+      e.stopPropagation() // markers may sit inside the control root; don't let the click toggle the automation target
       const routingId = draggingRoutingRef.current
       const wasDrag = dotDidDrag.current
       draggingRoutingRef.current = null

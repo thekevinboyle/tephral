@@ -274,7 +274,8 @@ export function EffectButton({
         <span
           className="font-semibold truncate uppercase tracking-wide"
           style={{
-            // JetBrains Mono advance is 0.6em; letter-spacing adds 0.12em (0.05em for long names, tightened so they fit)
+            // Plex Mono advance is 0.6em; tracking-wide adds 0.025em (0.05em for long names, tightened so they fit); the formula is tuned for mono
+            fontFamily: 'var(--font-mono)',
             fontSize: `max(8px, min(11px, calc(100cqw / ${label.length * (label.length > 5 ? 0.66 : 0.73)})))`,
             letterSpacing: label.length > 5 ? '0.05em' : undefined,
             lineHeight: '16px', // fixed so shrunk names stay vertically centred with the rest

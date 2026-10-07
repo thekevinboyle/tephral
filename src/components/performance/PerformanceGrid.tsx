@@ -4,6 +4,7 @@ import { getEffectsForPage, PAGE_NAMES } from '../../config/effects'
 import { getEffectInfo, EFFECT_CATEGORIES } from '../../config/effectNames'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useUIStore } from '../../stores/uiStore'
+import { useVisionTrackingStore } from '../../stores/visionTrackingStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { toggleEffect, useEnabledEffectIds } from '../../hooks/useEffectToggle'
 import { getEffectStatusText, getPageStatusText } from '../../config/statusDescriptions'
@@ -29,9 +30,12 @@ export const PerformanceGrid = memo(function PerformanceGrid() {
   // Check if an effect is soloed
   const isSoloing = soloEffectId !== null
 
+  // Face/hand blob tracking has no pad but still runs on the Vision page
+  const visionTrackingOn = useVisionTrackingStore((s) => s.faceEnabled || s.handsEnabled)
+
   // A page's LED lights when any of its effects is enabled
   const pageHasActiveEffects = (pageIndex: number): boolean =>
-    getEffectsForPage(pageIndex).some((e) => enabled.has(e.id))
+    (pageIndex === 1 && visionTrackingOn) || getEffectsForPage(pageIndex).some((e) => enabled.has(e.id))
 
   // Get effects for current page
   const pageEffects = getEffectsForPage(gridPage)

@@ -37,7 +37,7 @@ export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   face_hud: 'Face HUD \u2014 Face mesh wireframe with HUD readouts',
   halation: 'Halation \u2014 Film glow bleeding around highlights',
   y2k_digicam: 'Y2K Digicam \u2014 Early 2000s digital camera look',
-  thermal: 'Thermal \u2014 Heat camera false colour',
+  thermal: 'Thermal \u2014 Heat camera false color',
   dreamcore: 'Dreamcore \u2014 Soft bloom and hazy dream tint',
   anamorphic: 'Anamorphic \u2014 Widescreen lens streaks and flares',
 
@@ -84,7 +84,7 @@ export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   freeze_mask: 'Freeze Mask \u2014 Freeze frame masking',
   flow_smear: 'Flow Smear \u2014 Pixels smeared along the motion',
   feedback_tunnel: 'Feedback Tunnel \u2014 Zooming recursive frame tunnel',
-  opium_trails: 'Opium Trails \u2014 Long fading colour trails',
+  opium_trails: 'Opium Trails \u2014 Long fading color trails',
   rutt_etra: 'Rutt-Etra \u2014 Scan lines lifted by brightness',
   reaction_diffusion: 'Reaction Diffusion \u2014 Growing Turing patterns',
   physarum: 'Physarum \u2014 Slime mould agents tracing the image',
@@ -101,9 +101,9 @@ export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   fractal_domain: 'Fractal Domain \u2014 Fractal domain-warp distortion',
   seg_voxel: 'Voxel \u2014 Person as extruded cubes',
   seg_echo: 'Echo 4D \u2014 Copies through time',
-  seg_matter: 'Matter \u2014 Colour fields in the mask',
+  seg_matter: 'Matter \u2014 Color fields in the mask',
   seg_stale: 'Stale \u2014 Freeze and decay areas',
-  seg_torn: 'Torn \u2014 Ripped paper strips',
+  seg_torn: 'Torn \u2014 Ragged bites torn into the frame edges',
 
   // OVERLAYS
   texture_grain: 'Grain \u2014 Film grain texture overlay',

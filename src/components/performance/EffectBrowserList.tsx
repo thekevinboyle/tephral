@@ -2,13 +2,22 @@ import { memo, useState } from 'react'
 import { EFFECT_CATEGORIES, filterCategories, type EffectInfo } from '../../config/effectNames'
 import { getEffectState, toggleEffect, useEnabledEffectIds } from '../../hooks/useEffectToggle'
 import { useUIStore } from '../../stores/uiStore'
+import { getEffectStatusText } from '../../config/statusDescriptions'
 import { useModulationStore } from '../../stores/modulationStore'
 import { useRecordingStore } from '../../stores/recordingStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 
 function onRowClick(id: string) {
+  const glitch = useGlitchEngineStore.getState()
+  // Mirror the pad: clicking the latched-solo effect only releases the solo (the effect stays on)
+  if (glitch.soloEffectId === id && glitch.soloLatched) {
+    glitch.clearSolo()
+    return
+  }
   const wasActive = getEffectState(id).active
   toggleEffect(id)
+  // Switching off the soloed effect must not leave every other effect bypassed by a dangling solo
+  if (wasActive && glitch.soloEffectId === id) glitch.clearSolo()
   // Same side effects as a pad tap: select it for the inspector and clear any modulator selection
   const ui = useUIStore.getState()
   ui.selectEffect(id)
@@ -31,6 +40,8 @@ const Row = memo(function Row({ info, inChain }: { info: EffectInfo; inChain: bo
       className="seg-fx-row"
       aria-pressed={inChain}
       onClick={() => onRowClick(info.id)}
+      onMouseEnter={() => useUIStore.getState().setStatusText(getEffectStatusText(info.id))}
+      onMouseLeave={() => useUIStore.getState().setStatusText(null)}
     >
       <span className="seg-fx-dot" style={{ backgroundColor: info.color }} aria-hidden />
       <span className="seg-fx-text">

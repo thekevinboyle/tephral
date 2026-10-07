@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import './layout.css'
 import type { CanvasHandle } from '../Canvas'
 import { StageArea } from './StageArea'
-import { Dock } from './Dock'
+import { BottomPanel2 } from './BottomPanel2'
 import { HeaderBar } from './HeaderBar'
 import { EffectBrowser } from './EffectBrowser'
 import { ClipDetailModal } from './ClipDetailModal'
@@ -96,7 +96,7 @@ export function PerformanceLayout() {
       <div data-area="browser" id="seg-panel-browser" role="region" aria-label="Effects browser" tabIndex={-1}><div data-area="effects" className="seg-area-fill"><EffectBrowser /></div></div>
       <div data-area="stage"><StageArea ref={canvasRef} /></div>
       <div data-area="inspector" id="seg-panel-inspector" role="region" aria-label="Inspector" tabIndex={-1}><div data-area="chain" className="seg-area-fill"><ChainPanel /></div></div>
-      <div data-area="bottom" id="seg-panel-bottom"><div data-area="dock" className="seg-area-fill"><Dock /></div></div>
+      <div data-area="bottom" id="seg-panel-bottom" role="region" aria-label="Chain and sequencer"><div data-area="dock" className="seg-area-fill"><BottomPanel2 /></div></div>
       <div data-area="footer"><div data-area="status" className="seg-area-fill"><StatusBar /></div></div>
       <ShellDrawers />
 

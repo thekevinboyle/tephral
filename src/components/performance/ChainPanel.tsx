@@ -11,11 +11,10 @@ import { EffectSettings } from './EffectSettings'
 import { TrackAudioReactivePanel } from '../sequencer/TrackAudioReactivePanel'
 
 /**
- * Right column: the effect chain (signal order, top to bottom) and the selected
- * effect's settings + audio band. Owns what the old left tab rail did:
- * selection, auto-select, ensureTrack per active effect, drag reorder,
- * per-effect bypass (button or shift+click), double-click remove, clear-all
- * and bypass-all.
+ * Temporary inspector content (Task 6 replaces it): the effect chain as rows plus the selected effect's
+ * settings and audio band. Drag reorder, per-effect bypass (button or shift+click), double-click remove,
+ * clear-all and bypass-all. ensureTrack and keeping a valid selection moved to DeviceChain (bottom panel),
+ * which is always mounted.
  */
 const FOCUS_RING = { outlineOffset: -1 } as const
 
@@ -132,10 +131,8 @@ const ChainSettings = memo(function ChainSettings({ effectId }: { effectId: stri
 function ChainPanelImpl() {
   const { sortedEffects } = useActiveEffects()
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)
-  const selectedModulator = useUIStore((s) => s.selectedModulator)
   const setSelectedEffect = useUIStore((s) => s.setSelectedEffect)
   const setStatusText = useUIStore((s) => s.setStatusText)
-  const ensureTrack = useEffectSequencerStore((s) => s.ensureTrack)
   const removeTrack = useEffectSequencerStore((s) => s.removeTrack)
   const bypassActive = useGlitchEngineStore((s) => s.bypassActive)
   const effectBypassed = useGlitchEngineStore((s) => s.effectBypassed)
@@ -151,17 +148,6 @@ function ChainPanelImpl() {
     idsRef.current = ids
     disableRef.current = disableEffect
   })
-
-  // Every active effect gets a sequencer track
-  useEffect(() => {
-    for (const id of ids) ensureTrack(id)
-  }, [ids, ensureTrack])
-
-  // Keep a valid selection
-  useEffect(() => {
-    if (selectedEffectId && !ids.includes(selectedEffectId)) setSelectedEffect(ids[0] ?? null)
-    else if (!selectedEffectId && !selectedModulator && ids.length > 0) setSelectedEffect(ids[0])
-  }, [ids, selectedEffectId, selectedModulator, setSelectedEffect])
 
   // Drag reorder (drop above/below a row, or at the end)
   const dragged = useRef<string | null>(null)

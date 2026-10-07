@@ -147,7 +147,8 @@ export function ClipDetailModal() {
   // Escape key handler - always works, cancels operation if busy
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !e.defaultPrevented) {
+        e.preventDefault()
         handleClose()
       }
     }

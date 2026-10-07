@@ -41,6 +41,7 @@ export function PresetContextMenu({
   useEffect(() => {
     function handleEscape(e: KeyboardEvent) {
       if (e.key === 'Escape' && !e.defaultPrevented) {
+        e.preventDefault()
         onClose()
       }
     }
@@ -227,7 +228,10 @@ export function FolderContextMenu({
 
   useEffect(() => {
     function handleEscape(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !e.defaultPrevented) onClose()
+      if (e.key === 'Escape' && !e.defaultPrevented) {
+        e.preventDefault()
+        onClose()
+      }
     }
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)

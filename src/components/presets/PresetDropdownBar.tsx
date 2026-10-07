@@ -93,6 +93,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !renameState && !e.defaultPrevented) {
+        e.preventDefault()
         setIsOpen(false)
       }
     }
@@ -388,7 +389,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
                     style={{
                       backgroundColor: 'var(--bg-elevated)',
                       border: '1px solid var(--border)',
-                      color: 'var(--text-muted)',
+                      color: 'var(--text-secondary)',
                     }}
                     onMouseEnter={() => setStatusText(getUIStatusText('presetImport'))}
                     onMouseLeave={() => setStatusText(null)}
@@ -402,7 +403,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
                     style={{
                       backgroundColor: 'var(--bg-elevated)',
                       border: '1px solid var(--border)',
-                      color: 'var(--text-muted)',
+                      color: 'var(--text-secondary)',
                       opacity: presets.length === 0 ? 0.5 : 1,
                     }}
                     onMouseEnter={() => setStatusText(getUIStatusText('presetExport'))}
@@ -474,7 +475,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
               <button
                 onClick={() => setRenameState(null)}
                 className="flex-1 h-7 text-[12px] rounded"
-                style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-muted)' }}
+                style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}
               >
                 Cancel
               </button>

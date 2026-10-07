@@ -41,7 +41,10 @@ export function ModulationContextMenu({ paramId, position, onClose }: Modulation
   // Close on Escape
   useEffect(() => {
     function handleEscape(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !e.defaultPrevented) onClose()
+      if (e.key === 'Escape' && !e.defaultPrevented) {
+        e.preventDefault()
+        onClose()
+      }
     }
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
@@ -120,6 +123,7 @@ export function ModulationContextMenu({ paramId, position, onClose }: Modulation
   return (
     <div
       ref={menuRef}
+      data-modulation-menu
       className="fixed z-50 py-1 rounded-sm shadow-lg"
       style={{
         ...adjustedStyle,

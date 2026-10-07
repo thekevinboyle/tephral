@@ -61,6 +61,7 @@ function StyledDropdown({
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !e.defaultPrevented) {
+        e.preventDefault()
         setOpen(false)
         triggerRef.current?.focus()
       }

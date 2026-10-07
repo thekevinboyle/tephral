@@ -1,5 +1,4 @@
 import { useParamControl } from '../../hooks/useParamControl'
-import { getParamStatusText } from '../../config/statusDescriptions'
 
 interface KnobProps {
   label: string
@@ -15,6 +14,7 @@ interface KnobProps {
   showArc?: boolean
   showValue?: boolean
   statusText?: string
+  resetOnDoubleClick?: boolean
 }
 
 export function Knob({
@@ -30,13 +30,13 @@ export function Knob({
   paramId,
   showArc,
   statusText,
+  resetOnDoubleClick = false,
 }: KnobProps) {
-  const resolvedStatusText = statusText ?? getParamStatusText(label)
 
   // Knob feel: full range over 150px of vertical drag
   const ctl = useParamControl({
     paramId, label, value, min, max, step, onChange,
-    axis: 'y', dragSpanPx: 150, statusText: resolvedStatusText,
+    axis: 'y', dragSpanPx: 150, statusText, resetOnDoubleClick,
   })
   const {
     isDragging, isHovered, isDropTarget, isAutomationTarget, isInAssignmentMode,
@@ -54,22 +54,23 @@ export function Knob({
     lg: { width: 72, height: 32 },
   }[size]
 
-  const ariaProps = {
-    'data-param-control': '',
-    'data-param-id': paramId,
-    tabIndex: 0,
-    role: 'slider',
-    'aria-label': label,
-    'aria-valuemin': min,
-    'aria-valuemax': max,
-    'aria-valuenow': value,
-  } as const
-
   const displayValue = formatValue
     ? formatValue(value)
     : step && step >= 1
       ? value.toFixed(0)
       : value.toFixed(1)
+
+  const ariaProps = {
+    'data-param-control': '',
+    'data-param-id': paramId,
+    tabIndex: paramId ? 0 : undefined,
+    role: 'slider',
+    'aria-label': label,
+    'aria-valuemin': min,
+    'aria-valuemax': max,
+    'aria-valuenow': value,
+    'aria-valuetext': displayValue,
+  } as const
 
   // Determine ring color: routing source > effect color
   const arcColor = sourceInfo ? sourceInfo.color : color
@@ -113,6 +114,7 @@ export function Knob({
     <div
       className="flex flex-col items-center relative"
       style={{ gap: isCompact ? 2 : 3, minWidth: isCompact ? 48 : undefined }}
+      {...ctl.wrapperProps}
     >
       {/* Label */}
       <span

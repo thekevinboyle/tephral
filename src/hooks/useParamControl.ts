@@ -22,6 +22,8 @@ export interface ParamControlArgs {
   dragSpanPx?: number
   /** Overrides the status text derived from the label */
   statusText?: string
+  /** Double-click resets to the midpoint (off by default) */
+  resetOnDoubleClick?: boolean
 }
 
 export interface RoutingView { id: string; trackId: string; depth: number; name: string; color: string }
@@ -33,14 +35,17 @@ export interface ParamControl {
     onPointerUp: (e: React.PointerEvent) => void
     onPointerCancel: (e: React.PointerEvent) => void
     onDoubleClick: () => void
+    onKeyDown: (e: React.KeyboardEvent) => void
+    onLostPointerCapture: () => void
+  }
+  /** Spread on the outer wrapper (whole control including its label) */
+  wrapperProps: {
     onContextMenu: (e: React.MouseEvent) => void
     onDragOver: (e: React.DragEvent) => void
     onDragLeave: () => void
     onDrop: (e: React.DragEvent) => void
-    onKeyDown: (e: React.KeyboardEvent) => void
     onMouseEnter: () => void
     onMouseLeave: () => void
-    onLostPointerCapture: () => void
   }
   dotProps: (r: RoutingView) => {
     onPointerDown: (e: React.PointerEvent) => void
@@ -66,7 +71,7 @@ export interface ParamControl {
 const EMPTY_IDS: string[] = []
 
 export function useParamControl({
-  paramId, label, value, min, max, step, onChange, axis, dragSpanPx, statusText,
+  paramId, label, value, min, max, step, onChange, axis, dragSpanPx, statusText, resetOnDoubleClick = false,
 }: ParamControlArgs): ParamControl {
   const resolvedStatusText = statusText ?? getParamStatusText(label)
 
@@ -234,21 +239,23 @@ export function useParamControl({
       const mod = useModulationStore.getState().assigningModulator
       const poly = usePolyEuclidStore.getState().assigningTrack
       const stepT = useSequencerStore.getState().assigningTrack
-      if (mod === null && poly === null && stepT === null) {
+      const currentSrc = mod ?? (poly !== null ? `polyEuclid-${poly}` : stepT)
+      if (currentSrc === null || currentSrc !== depthAssignSource.current) {
         resetDepthDrag()
         dragStart.current = null
         return
       }
 
       const drawn = depthAssignValue.current
-      const depth = Math.abs(drawn) <= 0.02 ? 0.5 : drawn // click without drag routes at 0.5
+      const isClick = Math.abs(drawn) <= 0.02
       const src = depthAssignSource.current
       const seq = useSequencerStore.getState()
       const existing = seq.routings.find((r) => r.trackId === src && r.targetParam === paramId)
       if (existing) {
-        seq.updateRoutingDepth(existing.id, depth)
+        if (!isClick) seq.updateRoutingDepth(existing.id, drawn)
+        else useUIStore.getState().selectRouting(existing.id)
       } else {
-        seq.addRouting(src, paramId, depth)
+        seq.addRouting(src, paramId, isClick ? 0.5 : drawn)
         if (src.startsWith('lfo-')) {
           const lfoIdx = parseInt(src.split('-')[1])
           useModulationStore.getState().setLFOEnabled(lfoIdx, true)
@@ -305,8 +312,9 @@ export function useParamControl({
   }, [])
 
   const handleDoubleClick = useCallback(() => {
+    if (!resetOnDoubleClick || isInAssignmentMode) return
     onChangeRef.current(snapClamp((min + max) / 2))
-  }, [min, max, snapClamp])
+  }, [resetOnDoubleClick, isInAssignmentMode, min, max, snapClamp])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     let next: number | null = null
@@ -444,14 +452,16 @@ export function useParamControl({
       onPointerUp: handlePointerUp,
       onPointerCancel: handlePointerCancel,
       onDoubleClick: handleDoubleClick,
+      onKeyDown: handleKeyDown,
+      onLostPointerCapture: handleLostPointerCapture,
+    },
+    wrapperProps: {
       onContextMenu: handleContextMenu,
       onDragOver: handleDragOver,
       onDragLeave: handleDragLeave,
       onDrop: handleDrop,
-      onKeyDown: handleKeyDown,
       onMouseEnter: handleMouseEnter,
       onMouseLeave: handleMouseLeave,
-      onLostPointerCapture: handleLostPointerCapture,
     },
     dotProps,
     isDragging,

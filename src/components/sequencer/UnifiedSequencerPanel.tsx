@@ -152,8 +152,8 @@ export function UnifiedSequencerPanel() {
       switch (e.key) {
         case ' ': {
           e.preventDefault()
-          if (state.isPlaying) state.stop()
-          else state.play()
+          if (state.isPlaying) linkedStop()
+          else linkedPlay()
           break
         }
         case 'Escape': {

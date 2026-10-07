@@ -8,6 +8,9 @@ import { useAudioReactiveStore } from './audioReactiveStore'
 // Types
 // ═══════════════════════════════════════════════════════════════════════════
 
+export const BPM_MIN = 20
+export const BPM_MAX = 300
+
 export type EffectStepResolution = '1/4' | '1/8' | '1/16' | '1/32'
 
 export type AudioReactiveSource = 'kick' | 'silence' | 'high' | 'mid' | 'low' | 'rms' | 'peak'
@@ -225,7 +228,7 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
     set({ isPlaying: false, currentStep: 0, tracks: newTracks, trackAudioLevels: {}, trackAutoThresholds: {} })
   },
 
-  setBpm: (bpm) => set({ bpm: Math.max(20, Math.min(300, bpm)) }),
+  setBpm: (bpm) => set({ bpm: Math.max(BPM_MIN, Math.min(BPM_MAX, bpm)) }),
 
   setResolution: (resolution) => set({ resolution }),
 

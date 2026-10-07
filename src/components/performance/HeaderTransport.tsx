@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
-import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
+import { useEffectSequencerStore, BPM_MIN, BPM_MAX } from '../../stores/effectSequencerStore'
 import { useMIDIStore } from '../../stores/midiStore'
 import { useAudioSourceStore } from '../../stores/audioSourceStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -69,13 +69,13 @@ export const HeaderTransport = memo(function HeaderTransport() {
     const el = e.currentTarget
     el.setPointerCapture(e.pointerId)
     let lastY = e.clientY
+    // Unrounded accumulator from the drag start; only the written value is rounded.
     let acc = useEffectSequencerStore.getState().bpm
     const move = (ev: PointerEvent) => {
       const dy = lastY - ev.clientY
       lastY = ev.clientY
-      acc += (dy / PX_PER_BPM) * (ev.shiftKey ? 0.1 : 1)
+      acc = Math.max(BPM_MIN, Math.min(BPM_MAX, acc + (dy / PX_PER_BPM) * (ev.shiftKey ? 0.1 : 1)))
       setBpm(round1(acc))
-      acc = useEffectSequencerStore.getState().bpm
     }
     const up = () => {
       el.removeEventListener('pointermove', move)
@@ -87,7 +87,9 @@ export const HeaderTransport = memo(function HeaderTransport() {
     el.addEventListener('pointercancel', up)
   }
 
+  const escaped = useRef(false)
   const commit = () => {
+    if (escaped.current) { escaped.current = false; setEditing(false); return }
     const v = parseFloat(draft)
     if (Number.isFinite(v)) setBpm(round1(v))
     setEditing(false)
@@ -109,7 +111,7 @@ export const HeaderTransport = memo(function HeaderTransport() {
     >
       <button
         data-transport="play"
-        aria-label={isPlaying ? 'Stop sequencer' : 'Play sequencer'}
+        aria-label={isPlaying ? 'Stop' : 'Play'}
         aria-pressed={isPlaying}
         title={isPlaying ? 'Stop' : 'Play'}
         onClick={isPlaying ? linkedStop : linkedPlay}
@@ -122,11 +124,11 @@ export const HeaderTransport = memo(function HeaderTransport() {
       </button>
       <button
         data-transport="stop"
-        aria-label="Stop and rewind sequencer"
-        title="Stop and rewind"
+        aria-label="Stop"
+        title="Stop"
         onClick={linkedStop}
         style={btn(false)}
-        {...hint('Stop the sequencer and rewind to step 1')}
+        {...hint('Stop the step sequencer and pause the video that goes with it')}
       >
         <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><rect x="2" y="2" width="8" height="8" /></svg>
       </button>
@@ -143,7 +145,7 @@ export const HeaderTransport = memo(function HeaderTransport() {
             onKeyDown={(e) => {
               e.stopPropagation()
               if (e.key === 'Enter') commit()
-              else if (e.key === 'Escape') setEditing(false)
+              else if (e.key === 'Escape') { escaped.current = true; setEditing(false) }
             }}
             style={{
               width: 56,
@@ -162,8 +164,8 @@ export const HeaderTransport = memo(function HeaderTransport() {
             role="spinbutton"
             tabIndex={0}
             aria-label="BPM"
-            aria-valuemin={20}
-            aria-valuemax={300}
+            aria-valuemin={BPM_MIN}
+            aria-valuemax={BPM_MAX}
             aria-valuenow={shown}
             aria-disabled={synced || undefined}
             onKeyDown={onKeyDown}

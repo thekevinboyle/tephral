@@ -492,7 +492,7 @@ function DataOverlayBlockExtras() {
 }
 
 // ─── Extra controls per effect (colors, toggles not in registry) ────────
-function BlockExtras({ effectId }: { effectId: string }) {
+export function BlockExtras({ effectId }: { effectId: string }) {
   const glitch = useGlitchEngineStore()
   const contour = useContourStore()
   const stipple = useStippleStore()

@@ -25,7 +25,6 @@ export const ParamBar = memo(function ParamBar({ effectId, param }: { effectId: 
       data-assigning={ctl.isInAssignmentMode || undefined}
       data-drop={ctl.isDropTarget || undefined}
       style={{
-        ['--mod' as string]: first?.color ?? 'transparent',
         ...(ctl.assigningColor ? { ['--assign' as string]: ctl.assigningColor } : null),
       }}
       tabIndex={0}

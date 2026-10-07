@@ -7,7 +7,7 @@ import { useRoutingStore } from '../../stores/routingStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { usePresetLibraryStore } from '../../stores/presetLibraryStore'
 import { getUIStatusText, getEffectStatusText } from '../../config/statusDescriptions'
-import { EffectParameters_v2 } from './ExpandedParameterPanel_v2'
+import { EffectSettings } from './EffectSettings'
 import { TrackAudioReactivePanel } from '../sequencer/TrackAudioReactivePanel'
 
 /**
@@ -123,7 +123,7 @@ const ChainRow = memo(function ChainRow(p: ChainRowProps) {
 const ChainSettings = memo(function ChainSettings({ effectId }: { effectId: string }) {
   return (
     <div data-chain-settings={effectId} className="flex-shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
-      <div style={{ padding: 8 }}><EffectParameters_v2 effectId={effectId} /></div>
+      <div style={{ padding: 8 }}><EffectSettings effectId={effectId} /></div>
       <div style={{ borderTop: '1px solid var(--border)' }}><TrackAudioReactivePanel effectId={effectId} /></div>
     </div>
   )

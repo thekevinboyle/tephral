@@ -91,7 +91,7 @@
 .param-bar-segs > i { flex: 1; background: oklch(0.245 0.007 270); }
 .param-bar-segs > i[data-lit] { background: oklch(0.56 0.008 270); }
 .param-bar-segs > i[data-zero] { background: oklch(0.48 0.008 270); }
-.param-bar-segs > i[data-mod] { background: color-mix(in oklch, var(--mod) 40%, oklch(0.245 0.007 270)); }
-.param-bar-segs > i[data-mod][data-lit] { background: color-mix(in oklch, var(--mod) 70%, oklch(0.56 0.008 270)); }
+.param-bar-segs > i[data-mod] { background: color-mix(in oklch, var(--fx) 40%, oklch(0.245 0.007 270)); }
+.param-bar-segs > i[data-mod][data-lit] { background: color-mix(in oklch, var(--fx) 70%, oklch(0.56 0.008 270)); }
 .param-bar-value { flex: none; width: 40px; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-primary); overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .param-bar-src { position: absolute; top: -1px; width: 6px; height: 6px; cursor: ns-resize; }

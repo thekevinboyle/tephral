@@ -6,13 +6,14 @@ import { SelectBlock } from './blocks/SelectBlock'
 import { BlockExtras } from './EffectExtras'
 import { ParamBar } from './ParamBar'
 import { useParamValue } from '../../hooks/useParamValue'
+import { displayParamLabel } from '../../config/paramNames'
 
 const ALL_EFFECTS = [...EFFECTS, ...STRAND_EFFECTS, ...MOTION_EFFECTS, ...DESTRUCTION_EFFECTS]
 const isToggle = (p: LockableParam) => p.min === 0 && p.max === 1 && p.step >= 1
 
-const ParamToggle = memo(function ParamToggle({ param }: { param: LockableParam }) {
+const ParamToggle = memo(function ParamToggle({ effectId, param }: { effectId: string; param: LockableParam }) {
   const value = useParamValue(param)
-  return <ToggleBlock label={param.label} value={value >= 0.5} onChange={(on) => param.apply(on ? 1 : 0)} />
+  return <ToggleBlock label={displayParamLabel(effectId, param)} value={value >= 0.5} onChange={(on) => param.apply(on ? 1 : 0)} />
 })
 
 const ParamSelect = memo(function ParamSelect({ effectId, param }: { effectId: string; param: LockableSelectParam }) {
@@ -25,7 +26,7 @@ const ParamSelect = memo(function ParamSelect({ effectId, param }: { effectId: s
   const idx = useParamValue(indexParam)
   return (
     <SelectBlock
-      label={param.label} value={param.options[idx] ? param.options[idx].value : param.read()} options={param.options}
+      label={displayParamLabel(effectId, param)} value={param.options[idx] ? param.options[idx].value : param.read()} options={param.options}
       onChange={(v) => param.apply(v)} paramId={`${effectId}.${param.id}`}
     />
   )
@@ -64,7 +65,7 @@ export const EffectSettings = memo(function EffectSettings({ effectId }: { effec
             {bars.length > 0 && <div>{bars.map((p) => <ParamBar key={p.id} effectId={effectId} param={p} />)}</div>}
             {toggles.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-                {toggles.map((p) => <ParamToggle key={p.id} param={p} />)}
+                {toggles.map((p) => <ParamToggle key={p.id} effectId={effectId} param={p} />)}
               </div>
             )}
             {selects.length > 0 && (

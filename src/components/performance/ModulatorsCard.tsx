@@ -3,6 +3,8 @@ import { useUIStore } from '../../stores/uiStore'
 import { useModulationStore } from '../../stores/modulationStore'
 import { useSequencerStore } from '../../stores/sequencerStore'
 import { MODULATOR_SLOTS, type ModulatorSlot } from './modulatorSlots'
+import { statusHover } from '../../utils/statusHover'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 /**
  * First card in the device chain: every modulator as a slot. The body selects it (the inspector edits it);
@@ -36,6 +38,7 @@ const Slot = memo(function Slot({ slot, selected, assigning, inUse }: { slot: Mo
         aria-pressed={selected}
         title={`Edit ${slot.name}`}
         onClick={() => useUIStore.getState().setSelectedModulator(slot.id)}
+        {...statusHover(`${slot.name}. ${getUIStatusText('modSlot')}`)}
       >
         <svg viewBox="0 0 20 12" width="20" height="12" aria-hidden>
           <path d={SHAPES[slot.shape]} fill="none" stroke="var(--mod)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -50,6 +53,7 @@ const Slot = memo(function Slot({ slot, selected, assigning, inUse }: { slot: Mo
           aria-pressed={assigning}
           aria-label={assigning ? `Stop routing ${slot.name}` : `Route ${slot.name}`}
           title={assigning ? 'Click a control to route, Escape to stop' : `Route ${slot.name}: click, then click a control (or drag this onto one)`}
+          {...statusHover(assigning ? getUIStatusText('modRouteStop') : `Route ${slot.name}. ${getUIStatusText('modRoute')}`)}
           draggable
           onDragStart={(ev) => {
             // Drop onto any control routes it (useParamControl accepts 'modulation-source')

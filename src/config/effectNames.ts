@@ -11,7 +11,7 @@ const titleCase = (s: string) =>
 
 const cache = new Map<string, EffectInfo>()
 
-/** Full name + one-line description for every effect; name from EFFECT_DESCRIPTIONS ("Name — desc"), else a title-cased label. */
+/** Full name + one-line description for every effect; name from EFFECT_DESCRIPTIONS ("Name: desc"), else a title-cased label. */
 export function getEffectInfo(id: string): EffectInfo {
   const hit = cache.get(id)
   if (hit) return hit
@@ -20,9 +20,9 @@ export function getEffectInfo(id: string): EffectInfo {
   let name: string
   let description = ''
   if (raw) {
-    const i = raw.indexOf('—')
+    const i = raw.indexOf(': ')
     name = (i >= 0 ? raw.slice(0, i) : raw).trim()
-    description = i >= 0 ? raw.slice(i + 1).trim() : ''
+    description = i >= 0 ? raw.slice(i + 2).trim() : ''
   } else {
     name = titleCase(def?.label ?? id.replace(/_/g, ' '))
   }

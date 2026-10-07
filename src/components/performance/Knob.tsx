@@ -119,12 +119,11 @@ export function Knob({
     >
       {/* Label */}
       {!showArc && <span
-        className="uppercase leading-none font-bold"
+        className="leading-none font-medium whitespace-nowrap"
         style={{
-          color: 'var(--text-muted)',
-          fontFamily: 'var(--font-mono)',
-          letterSpacing: '0.1em',
-          fontSize: isCompact ? 8 : 9,
+          color: 'var(--text-secondary)',
+          fontFamily: 'var(--font-sans)',
+          fontSize: isCompact ? 10 : 10.5,
         }}
       >
         {label}

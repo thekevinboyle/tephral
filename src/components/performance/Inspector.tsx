@@ -7,6 +7,7 @@ import { useModulationStore } from '../../stores/modulationStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useChainIds } from '../../hooks/useChainIds'
 import { getEffectInfo } from '../../config/effectNames'
+import { displayParamLabel } from '../../config/paramNames'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 import { resolveRoutingSource } from '../../utils/modulationSources'
 import { EffectSettings } from './EffectSettings'
@@ -14,6 +15,8 @@ import { ModulationAssignPanel } from './ModulationAssignPanel'
 import { ModulationContent, type ModulatorId } from '../sequencer/ModulationContent'
 import { TrackAudioReactivePanel } from '../sequencer/TrackAudioReactivePanel'
 import { modulatorName } from './modulatorSlots'
+import { statusHover } from '../../utils/statusHover'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 /**
  * Right-hand inspector. Contextual on uiStore: a selected modulator shows its editor, else the selected
@@ -50,6 +53,7 @@ const BypassButton = memo(function BypassButton({ effectId, name }: { effectId: 
       aria-label={`Bypass ${name}`}
       title={bypassed ? 'Turn the device back on' : 'Bypass this device'}
       onClick={() => useGlitchEngineStore.getState().toggleEffectBypassed(effectId)}
+      {...statusHover(`${name}. ${getUIStatusText('deviceBypass')}`)}
     >
       Bypass
     </button>
@@ -69,8 +73,8 @@ const InspectorRoutes = memo(function InspectorRoutes({ effectId }: { effectId: 
   const labels = useMemo(() => {
     const entry = EFFECT_PARAM_REGISTRY[effectId]
     const m = new Map<string, string>()
-    for (const p of entry?.getParams() ?? []) m.set(p.id, p.label)
-    for (const p of entry?.getSelectParams?.() ?? []) m.set(p.id, p.label)
+    for (const p of entry?.getParams() ?? []) m.set(p.id, displayParamLabel(effectId, p))
+    for (const p of entry?.getSelectParams?.() ?? []) m.set(p.id, displayParamLabel(effectId, p))
     return m
   }, [effectId])
   return (
@@ -98,6 +102,7 @@ const InspectorRoutes = memo(function InspectorRoutes({ effectId }: { effectId: 
                   data-route-remove
                   aria-label={`Remove route ${src.name} to ${label}`}
                   title="Remove route"
+                  {...statusHover(`${src.name} → ${label}. ${getUIStatusText('routeRemove')}`)}
                   onClick={() => useSequencerStore.getState().removeRouting(r.id)}
                 >
                   ×

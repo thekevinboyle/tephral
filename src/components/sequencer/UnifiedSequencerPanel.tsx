@@ -16,6 +16,7 @@ import {
 } from '../../config/effects'
 import { SequencerTransport } from './SequencerTransport'
 import { EffectTrackRow } from './EffectTrackRow'
+import { getEffectInfo } from '../../config/effectNames'
 import { TrackParamPanel } from './TrackParamPanel'
 import { linkedPlay, linkedStop } from '../../utils/sequencerTransport'
 import { isInteractiveKeyTarget } from '../../utils/keyboard'
@@ -271,7 +272,7 @@ export function UnifiedSequencerPanel() {
                   currentStep={currentStep}
                   selectedStep={selectedStep}
                   color={def?.color ?? 'var(--text-muted)'}
-                  label={def?.label ?? effectId}
+                  label={getEffectInfo(effectId).name}
                   isSelectedTrack={isSelectedTrack}
                   onSelectTrack={handleEffectTabSelect}
                   orderIndex={index + 1}

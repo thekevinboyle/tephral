@@ -9,6 +9,7 @@ import { getUIStatusText } from '../../config/statusDescriptions'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
 import { DeviceChain } from './DeviceChain'
 import { modulatorName } from './modulatorSlots'
+import { statusHover } from '../../utils/statusHover'
 
 /**
  * Bottom panel: header ("Chain · signal flows left to right", Devices/Sequencer tabs, Bypass all, Clear)
@@ -62,6 +63,7 @@ const Tabs = memo(function Tabs() {
           aria-pressed={tab === t}
           data-bottom-tab-btn={t}
           onClick={() => useUIStore.getState().setBottomTab(t)}
+          {...statusHover(getUIStatusText(t === 'devices' ? 'tabDevices' : 'tabSequencer'))}
         >
           {t === 'devices' ? 'Devices' : 'Sequencer'}
         </button>

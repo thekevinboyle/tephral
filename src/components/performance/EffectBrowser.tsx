@@ -4,6 +4,8 @@ import { EffectBrowserList } from './EffectBrowserList'
 import { PerformanceGrid } from './PerformanceGrid'
 import { BankPanel } from './BankPanel'
 import { MiddleSection } from './MiddleSection'
+import { statusHover } from '../../utils/statusHover'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 type Mode = 'list' | 'pads'
 const TOTAL = EFFECT_CATEGORIES.reduce((n, c) => n + c.effects.length, 0)
@@ -28,6 +30,7 @@ export const EffectBrowser = memo(function EffectBrowser() {
               data-browser-view={m}
               aria-pressed={mode === m}
               onClick={() => setMode(m)}
+              {...statusHover(getUIStatusText(m === 'list' ? 'browserList' : 'browserPads'))}
             >
               {m === 'list' ? 'List' : 'Pads'}
             </button>

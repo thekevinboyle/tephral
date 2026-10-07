@@ -258,13 +258,13 @@ export function BankPanel() {
 
       {/* Action buttons */}
       <span data-bank-slot onMouseEnter={() => setStatusText(getUIStatusText('randomize'))} onMouseLeave={() => setStatusText(null)} className="h-full min-w-0 block">
-        <Button size="lg" className="h-full w-full" onClick={handleRandom} title="Randomize effects">
+        <Button size="lg" className="h-full w-full" onClick={handleRandom} title="Randomize effects" aria-label="Randomize effects">
           <ShuffleIcon size={16} />
         </Button>
       </span>
       <span data-bank-slot onMouseEnter={() => setStatusText(getUIStatusText('undo'))} onMouseLeave={() => setStatusText(null)} className="h-full min-w-0 block">
-        <Button size="lg" className="h-full w-full" style={{ padding: 0, fontSize: 10 }} onClick={handleUndo} disabled={!hasPreviousState}>
-          UNDO
+        <Button size="lg" className="h-full w-full" style={{ padding: 0, fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0 }} onClick={handleUndo} disabled={!hasPreviousState} aria-label="Undo randomize" title="Undo the last randomize">
+          Undo
         </Button>
       </span>
       <span data-bank-slot className="h-full min-w-0 block">
@@ -275,11 +275,11 @@ export function BankPanel() {
           onPointerCancel={isRektLocked ? undefined : handleRektUp}
           onMouseEnter={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)'); setStatusText(getUIStatusText('rekt')) }}
           onMouseLeave={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'transparent'); setStatusText(null) }}
-          className="h-full text-[10px] font-bold transition-all select-none touch-none active:scale-95"
+          className="h-full text-[11px] font-medium transition-all select-none touch-none active:scale-95"
+          aria-label="Rekt chaos mode"
           style={{
             width: '100%',
-            fontFamily: 'var(--font-mono)',
-            letterSpacing: '0.1em',
+            fontFamily: 'var(--font-sans)',
             backgroundColor: isRekt ? '#FFFFFF' : 'transparent',
             border: isRekt ? '1px solid #FFFFFF' : '1px solid var(--border)',
             color: isRekt ? '#000000' : 'var(--text-muted)',
@@ -287,7 +287,7 @@ export function BankPanel() {
           }}
           title={isRektLocked ? 'Click to unlock' : 'Hold or tap to lock'}
         >
-          REKT
+          Rekt
         </button>
       </span>
     </div>

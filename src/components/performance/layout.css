@@ -239,7 +239,7 @@
 .param-bar:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
 .param-bar[data-locked] { border-color: var(--fx, var(--text-primary)); background: color-mix(in oklab, var(--fx, var(--text-primary)) 8%, var(--bg-surface)); }
 .param-bar[data-assigning], .param-bar[data-drop] { border: 1px dashed var(--assign, var(--text-secondary)); cursor: copy; }
-.param-bar-name { flex: none; width: 58px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+.param-bar-name { flex: none; width: 96px; font: 400 11px var(--font-sans);
   color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .param-bar-segs { flex: 1; align-self: stretch; display: flex; gap: 2px; min-width: 0; }
 .param-bar-segs > i { flex: 1; background: var(--bg-elevated); }
@@ -342,3 +342,18 @@
 /* CornerFrame hangs its label left of the frame (room in the old strip, clipped here): set it inside, above the content.
    !important because CornerFrame positions it with inline styles. */
 .seg-insp-editor [data-corner-label] { position: static !important; transform: none !important; padding: 0 0 6px !important; }
+
+/* ─── Select / toggle rows in the inspector (blocks/SelectBlock, blocks/ToggleBlock) ──────────────── */
+.seg-select { display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 4px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 2px; min-width: 0; }
+.seg-select-name { flex: none; width: 96px; font: 400 11px var(--font-sans); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-select-btn { flex: none; width: 20px; height: 20px; display: grid; place-items: center; padding: 0; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 500 14px/1 var(--font-sans); cursor: pointer; }
+.seg-select-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.seg-select-value { flex: 1 1 auto; min-width: 0; text-align: center; font: 500 12px var(--font-sans); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-select-count { flex: none; width: 26px; text-align: right; font: 400 10.5px var(--font-mono); color: var(--text-muted); }
+.seg-toggle-block { display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 28px; min-width: 0; padding: 0 8px; border-radius: var(--radius-ctrl); background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-secondary); font: 400 11px var(--font-sans); cursor: pointer; }
+.seg-toggle-block:hover { background: var(--bg-elevated); }
+.seg-toggle-block[data-on] { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-emphasis); }
+.seg-toggle-block-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-toggle-block-state { flex: none; font: 500 11px var(--font-mono); }
+/* Crossfader ends (HorizontalCrossfader): text buttons, not icons */
+.seg-xfade-end { flex: none; height: 24px; padding: 0 8px; border-radius: var(--radius-ctrl); font: 500 11px var(--font-sans); cursor: pointer; }

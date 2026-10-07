@@ -111,9 +111,9 @@ export const HeaderTransport = memo(function HeaderTransport() {
     >
       <button
         data-transport="play"
-        aria-label={isPlaying ? 'Stop' : 'Play'}
+        aria-label={isPlaying ? 'Stop playback' : 'Start playback'}
         aria-pressed={isPlaying}
-        title={isPlaying ? 'Stop' : 'Play'}
+        title={isPlaying ? 'Stop playback' : 'Start playback'}
         onClick={isPlaying ? linkedStop : linkedPlay}
         style={btn(isPlaying)}
         {...hint('Play or stop the step sequencer and the video that goes with it')}
@@ -124,8 +124,8 @@ export const HeaderTransport = memo(function HeaderTransport() {
       </button>
       <button
         data-transport="stop"
-        aria-label="Stop"
-        title="Stop"
+        aria-label="Stop playback"
+        title="Stop playback"
         onClick={linkedStop}
         style={btn(false)}
         {...hint('Stop the step sequencer and pause the video that goes with it')}

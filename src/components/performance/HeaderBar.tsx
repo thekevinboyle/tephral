@@ -4,6 +4,7 @@ import { useMediaSource } from '../../hooks/useMediaSource'
 import { useAudioSourceStore, type AudioSourceType } from '../../stores/audioSourceStore'
 import { useUIStore } from '../../stores/uiStore'
 import { HudGlyph } from '../ui/HudGlyph'
+import { getUIStatusText } from '../../config/statusDescriptions'
 import { HeaderTransport } from './HeaderTransport'
 import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import { useRecordingControl } from '../../hooks/useRecordingControl'
@@ -307,8 +308,8 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
       }}
     >
       {/* Brand */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <HudGlyph glyph="crosshair" size={14} color="var(--text-ghost)" animate="spin" />
+      <div className="flex items-center gap-2 flex-shrink-0" onMouseEnter={() => setStatusText(getUIStatusText('brand'))} onMouseLeave={() => setStatusText(null)}>
+        <span aria-hidden className="flex"><HudGlyph glyph="crosshair" size={14} color="var(--text-ghost)" animate="spin" /></span>
         <span
           className="text-[13px] font-bold uppercase"
           style={{
@@ -327,7 +328,7 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
       {/* Video source dropdown */}
       <div
         className="flex flex-col justify-center flex-shrink-0"
-        onMouseEnter={() => setStatusText('Video: Select video input source')}
+        onMouseEnter={() => setStatusText('Video: choose the video input (camera, file or screen)')}
         onMouseLeave={() => setStatusText(null)}
       >
         <span
@@ -351,7 +352,7 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
       {/* Audio source dropdown */}
       <div
         className="flex flex-col justify-center flex-shrink-0"
-        onMouseEnter={() => setStatusText('Audio: Select audio input source')}
+        onMouseEnter={() => setStatusText('Audio: choose the audio input that drives audio-reactive devices')}
         onMouseLeave={() => setStatusText(null)}
       >
         <span
@@ -389,9 +390,6 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
 
       <RecButton />
 
-      <span className="seg-hide-narrow flex-shrink-0 flex items-center">
-        <HudGlyph glyph="diamond" size={10} color="var(--text-ghost)" animate="pulse" />
-      </span>
     </div>
   )
 })

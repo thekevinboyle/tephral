@@ -2,7 +2,6 @@ import { useCallback, useRef, useState } from 'react'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
-import { SourceIcon, FxIcon } from '../ui/DotMatrixIcons'
 
 export function HorizontalCrossfader() {
   const { crossfaderPosition, setCrossfaderPosition } = useRoutingStore()
@@ -54,22 +53,23 @@ export function HorizontalCrossfader() {
   const nearCenter = Math.abs(crossfaderPosition - 0.5) < 0.02
 
   return (
-    <div className="px-4 py-3">
-      <div className="flex items-center gap-3">
+    <div className="px-2 py-3">
+      <div className="flex items-center gap-2">
         {/* Source icon (film frame) */}
         <button
           onClick={snapToSource}
           onMouseEnter={() => setStatusText(getUIStatusText('snapSource'))}
           onMouseLeave={() => setStatusText(null)}
-          className="p-2 rounded-sm flex-shrink-0 press-physical"
+          className="seg-xfade-end press-physical"
+          aria-label="Dry: snap to source"
           style={{
-            color: crossfaderPosition < 0.5 ? 'var(--text-primary)' : 'var(--text-ghost)',
+            color: crossfaderPosition < 0.5 ? 'var(--text-primary)' : 'var(--text-secondary)',
             backgroundColor: crossfaderPosition < 0.5 ? 'var(--accent-subtle)' : 'transparent',
             transition: 'transform var(--dur-instant) var(--ease-snap), color var(--dur-quick) var(--ease-out-expo), background-color var(--dur-quick) var(--ease-out-expo)',
           }}
-          title="Source"
+          title="Snap to the unprocessed source"
         >
-          <SourceIcon size={14} />
+          Dry
         </button>
 
         {/* Crossfader track */}
@@ -147,15 +147,16 @@ export function HorizontalCrossfader() {
           onClick={snapToProcessed}
           onMouseEnter={() => setStatusText(getUIStatusText('snapProcessed'))}
           onMouseLeave={() => setStatusText(null)}
-          className="p-2 rounded-sm flex-shrink-0 press-physical"
+          className="seg-xfade-end press-physical"
+          aria-label="Wet: snap to processed"
           style={{
-            color: crossfaderPosition > 0.5 ? 'var(--text-primary)' : 'var(--text-ghost)',
+            color: crossfaderPosition > 0.5 ? 'var(--text-primary)' : 'var(--text-secondary)',
             backgroundColor: crossfaderPosition > 0.5 ? 'var(--accent-subtle)' : 'transparent',
             transition: 'transform var(--dur-instant) var(--ease-snap), color var(--dur-quick) var(--ease-out-expo), background-color var(--dur-quick) var(--ease-out-expo)',
           }}
-          title="Processed"
+          title="Snap to the fully processed output"
         >
-          <FxIcon size={14} />
+          Wet
         </button>
       </div>
     </div>

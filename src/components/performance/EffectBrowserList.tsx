@@ -2,10 +2,11 @@ import { memo, useState } from 'react'
 import { EFFECT_CATEGORIES, filterCategories, type EffectInfo } from '../../config/effectNames'
 import { getEffectState, toggleEffect, useEnabledEffectIds } from '../../hooks/useEffectToggle'
 import { useUIStore } from '../../stores/uiStore'
-import { getEffectStatusText } from '../../config/statusDescriptions'
+import { getEffectStatusText, getUIStatusText } from '../../config/statusDescriptions'
 import { useModulationStore } from '../../stores/modulationStore'
 import { useRecordingStore } from '../../stores/recordingStore'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { statusHover } from '../../utils/statusHover'
 
 function onRowClick(id: string) {
   const glitch = useGlitchEngineStore.getState()
@@ -72,6 +73,7 @@ export const EffectBrowserList = memo(function EffectBrowserList({ query }: { qu
               aria-expanded={isOpen}
               disabled={searching}
               onClick={() => setOpen((o) => ({ ...o, [c.name]: !o[c.name] }))}
+              {...statusHover(`${c.name}: ${c.effects.length} effects. ${getUIStatusText('browserCategory')}`)}
             >
               <svg className="seg-fx-chevron" width="8" height="8" viewBox="0 0 8 8" aria-hidden>
                 <path d="M2 1 L6 4 L2 7 Z" fill="currentColor" />

@@ -3,6 +3,8 @@ import { useUIStore, type PanelId } from '../../stores/uiStore'
 import { useSegStore } from '../../stores/segStore'
 import { useNarrow } from '../../hooks/useNarrow'
 import { perfMonitor } from '../../utils/perfMonitor'
+import { statusHover } from '../../utils/statusHover'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
 const TOGGLES: { id: PanelId; label: string }[] = [
   { id: 'browser', label: 'Browser' },
@@ -31,6 +33,7 @@ const PanelToggle = memo(function PanelToggle({ id, label }: { id: PanelId; labe
         if (narrow && id !== 'bottom') st.toggleDrawer(id)
         else st.togglePanel(id)
       }}
+      {...statusHover(getUIStatusText(id === 'browser' ? 'toggleBrowser' : id === 'inspector' ? 'toggleInspector' : 'toggleBottom'))}
     >
       <i aria-hidden />
       {label}

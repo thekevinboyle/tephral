@@ -29,6 +29,7 @@ export interface ParamControlArgs {
 export interface RoutingView { id: string; trackId: string; depth: number; name: string; color: string }
 
 export interface ParamControl {
+  /** Interaction handlers. Its keys do not overlap with `wrapperProps`, so both can be spread on one element. */
   rootProps: {
     onPointerDown: (e: React.PointerEvent) => void
     onPointerMove: (e: React.PointerEvent) => void
@@ -417,6 +418,7 @@ export function useParamControl({
       setDotDragging((prev) => (prev ? { ...prev, depth: newDepth } : null))
     },
     onPointerUp: (e: React.PointerEvent) => {
+      e.stopPropagation() // markers may sit inside the control root; don't let the click toggle the p-lock
       const routingId = draggingRoutingRef.current
       const wasDrag = dotDidDrag.current
       draggingRoutingRef.current = null

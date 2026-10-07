@@ -269,11 +269,15 @@ export function EffectButton({
       </div>
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col justify-center relative">
-        {/* Label */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center relative" style={{ containerType: 'inline-size' }}>
+        {/* Label: 11px, shrunk just enough for long names to fit beside the mix bar (truncate is only a last resort) */}
         <span
-          className="text-[11px] font-semibold truncate uppercase tracking-wide"
+          className="font-semibold truncate uppercase tracking-wide"
           style={{
+            // JetBrains Mono advance is 0.6em; letter-spacing adds 0.12em (0.05em for long names, tightened so they fit)
+            fontSize: `max(8px, min(11px, calc(100cqw / ${label.length * (label.length > 5 ? 0.66 : 0.73)})))`,
+            letterSpacing: label.length > 5 ? '0.05em' : undefined,
+            lineHeight: '16px', // fixed so shrunk names stay vertically centred with the rest
             color: active ? color : 'var(--text-secondary)',
             transition: 'color var(--dur-settle) var(--ease-out-expo)',
           }}
@@ -308,7 +312,7 @@ export function EffectButton({
 
       {/* Vertical progress bar on the right - shows mix level */}
       <div
-        className="rounded-sm ml-1.5 relative overflow-hidden"
+        className="rounded-sm ml-1.5 relative overflow-hidden flex-shrink-0"
         style={{
           width: 4,
           backgroundColor: 'var(--border)',

@@ -8,10 +8,17 @@ export const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = 
   sampleHold: { name: 'S&H', color: '#AAFF00' },
 }
 
+/** MIDI blue, as the sequencer transport and track rows use it */
+export const MIDI_CC_COLOR = '#00AAFF'
+
 export function getSourceInfo(trackId: string): { name: string; color: string } | null {
   if (trackId.startsWith('lfo-')) {
     const idx = parseInt(trackId.split('-')[1])
-    return { name: `LFO ${idx + 1}`, color: '#707070' }
+    // Modulation has one hue (routes, arcs, source dots). CSS only: no canvas consumer paints this colour.
+    return { name: `LFO ${idx + 1}`, color: 'var(--mod)' }
+  }
+  if (trackId.startsWith('midi-cc-')) {
+    return { name: `CC ${trackId.slice('midi-cc-'.length)}`, color: MIDI_CC_COLOR }
   }
   if (trackId.startsWith('audio-')) {
     const AUDIO_SOURCES: Record<string, { name: string; color: string }> = {

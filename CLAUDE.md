@@ -24,7 +24,7 @@ When adding a new effect page or new effects, you MUST update ALL of the followi
 ### 4. Active Effects Hook (`src/hooks/useActiveEffects.ts`)
 - Import the new store
 - Add enabled check and `activeEffects.push()` for each new effect
-- Include primaryValue/primaryLabel (shown on the chain row)
+- Include primaryValue/primaryLabel
 
 ### 5. Effect Disable Hook (`src/hooks/useEffectDisable.ts`)
 - Add case to the switch statement mapping effectId to store setter
@@ -74,15 +74,12 @@ Enabled flags/order and per-frame params are split across two files:
 
 ### Layout Shell (`src/components/performance/PerformanceLayout.tsx` + `layout.css`)
 `.seg-shell` is a CSS grid whose children carry `data-area`: `header`, `browser`, `stage`, `inspector`, `bottom`, `footer`. Footer toggles show or hide the browser, inspector and bottom panel (hidden by CSS, never unmounted, so the canvas is never remounted).
-- **Sizes**: header 44px, footer 30px, browser 250px, inspector 300px (300px and 340px at >= 2200px). Bottom panel 172px on Devices; on Sequencer it follows the content up to 40vh.
+- **Sizes**: header 44px, footer 30px. Browser 250px / inspector 300px, and 300px / 340px at ≥2200px. Bottom panel 172px on Devices; on Sequencer it follows the content up to 40vh.
 - **Narrow (< 1100px)**: the browser and inspector become drawers over the stage (one at a time).
 - `PerformanceLayout` re-renders every engine tick, so `HeaderBar`, `EffectBrowser`, `StageArea`, `Inspector` and `BottomPanel2` are `React.memo`. Keep their props stable and their store selectors narrow.
 
 ### Header (`src/components/performance/HeaderBar.tsx`)
 VIDEO/AUDIO source menus (portalled, `position: fixed`), the preset picker, and REC (`useRecordingControl`, red `--rec` token).
-
-### Effects Column (`src/components/performance/EffectsColumn.tsx`)
-Left column: page tabs + effect grid (`PerformanceGrid`), bank slots, crossfader, then the preset library.
 
 ### Stage (`src/components/performance/StageArea.tsx`)
 Aspect-locked output frame that fits the free space, with corner ticks, ruler, ClipBin and four HUD readouts (`StageReadouts`): LIVE/REC + FPS, preset name (or bank), timecode, active band. The frame is a container; under 380px the readouts re-stack.
@@ -109,8 +106,8 @@ Check `uiStore.ts` - the `setGridPage`, `nextGridPage`, `prevGridPage` functions
 ### Effects don't appear in grid
 Check `getEffectsForPage()` returns the right array and `pageHasActiveEffects()` includes the new page.
 
-### Effects don't appear in the chain
-Check `useActiveEffects.ts` has the enabled check for the new effect, and the effect ID is in `routingStore.defaultEffectOrder`.
+### Effects don't appear in the device chain
+Check `isEffectActive` in `useEffectToggle.ts` (what `useChainIds` reads) and `useActiveEffects.ts` both have the enabled check for the new effect, and the effect ID is in `routingStore.defaultEffectOrder`.
 
-### Remove button doesn't work on a chain row
+### Remove button doesn't work on a device card
 Check `useEffectDisable.ts` has a case for the effect ID mapping to the correct store setter.

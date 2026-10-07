@@ -331,6 +331,7 @@
 .seg-insp-route-depth { flex: none; font: 500 11px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-primary); }
 .seg-insp-route-x { flex: none; width: 20px; height: 20px; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-muted); font: 400 14px/1 var(--font-sans); cursor: pointer; }
 .seg-insp-route-x:hover { background: var(--bg-elevated); color: var(--text-secondary); }
+.seg-insp-tabs { margin: 0 0 8px; width: max-content; }
 .seg-insp-pick { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font: 500 11px var(--font-sans); color: var(--text-secondary); }
 .seg-insp-pick > select { flex: 1 1 auto; min-width: 0; height: 24px; padding: 0 6px; border-radius: var(--radius-ctrl); border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-primary); font: 400 12px var(--font-sans); }
 /* Modulator editors were laid out for a wide bottom strip: in the 300px inspector, let their rows wrap and stack */

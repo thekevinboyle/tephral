@@ -1,4 +1,4 @@
-import { memo, useContext, useEffect, useMemo, useRef } from 'react'
+import { memo, useContext, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import type React from 'react'
 import { useChainIds } from '../../hooks/useChainIds'
 import { disableEffect } from '../../hooks/useEffectDisable'
@@ -86,8 +86,9 @@ export const DeviceChain = memo(function DeviceChain() {
 
   // Keep a valid selection. A selected modulator owns the inspector: never replace it with a device.
   // When the selected device leaves the chain, select the device that followed it, else the one before it.
+  // Layout effect: the re-selection lands before paint, so the inspector never flashes its empty state.
   const prevIdsRef = useRef(ids)
-  useEffect(() => {
+  useLayoutEffect(() => {
     const prev = prevIdsRef.current
     prevIdsRef.current = ids
     const { setSelectedEffect } = useUIStore.getState()

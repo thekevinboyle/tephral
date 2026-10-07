@@ -122,7 +122,7 @@ const EffectInspector = memo(function EffectInspector({ effectId, index, count }
         <BypassButton effectId={effectId} name={info.name} />
       </InspectorHeader>
       <div className="seg-insp-body">
-        <EffectSettings effectId={effectId} showStrip={false} showHeader={false} />
+        <EffectSettings effectId={effectId} />
         <InspectorRoutes effectId={effectId} />
         <section className="seg-insp-sec" data-inspector-band>
           <div className="seg-insp-sec-head"><span>Audio band</span></div>
@@ -144,14 +144,25 @@ const LfoEditor = memo(function LfoEditor({ index }: { index: number }) {
   return <div className="seg-insp-editor" data-inspector-editor="lfo"><ModulationAssignPanel /></div>
 })
 
-/** The Audio modulator is each device's band: pick the device (defaults to the last one inspected). */
+/** Audio: "Per device" edits one device's band (pick the device, defaults to the last one inspected);
+ *  "Global bands" routes the Sub/Mid/High/Hit/RMS sources to any control. */
 const AudioEditor = memo(function AudioEditor() {
   const ids = useChainIds()
+  const [view, setView] = useState<'device' | 'global'>('device')
   const [picked, setPicked] = useState<string | null>(lastEffectId)
   const effectId = picked && ids.includes(picked) ? picked : ids[0] ?? null
   return (
-    <div className="seg-insp-editor" data-inspector-editor="audio">
-      {effectId ? (
+    <div className="seg-insp-editor" data-inspector-editor="audio" data-audio-view={view}>
+      <div className="seg-seg seg-insp-tabs" role="tablist" aria-label="Audio modulator">
+        {([['device', 'Per device'], ['global', 'Global bands']] as const).map(([v, label]) => (
+          <button key={v} type="button" role="tab" aria-selected={view === v} aria-pressed={view === v} data-audio-tab={v} onClick={() => setView(v)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {view === 'global' ? (
+        <ModulationContent activeModulator="audio" />
+      ) : effectId ? (
         <>
           <label className="seg-insp-pick">
             <span>Device</span>

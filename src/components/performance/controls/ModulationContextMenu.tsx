@@ -4,7 +4,7 @@ import { useModulationStore, LFO_COUNT } from '../../../stores/modulationStore'
 const LFO_SOURCES = Array.from({ length: LFO_COUNT }, (_, i) => ({
   id: `lfo-${i}`,
   label: `LFO ${i + 1}`,
-  color: '#707070',
+  color: '#4fb3ff', // --mod (literal: alpha suffixes are appended below)
 }))
 
 const OTHER_SOURCES = [

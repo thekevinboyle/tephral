@@ -76,7 +76,7 @@ export function PerformanceLayout() {
   return (
     <div className="seg-shell grid-substrate">
       <div data-area="header" className="panel-header"><HeaderBar canvasRef={captureRef} /></div>
-      <div data-area="effects"><EffectsColumn canvasRef={captureRef} /></div>
+      <div data-area="effects"><EffectsColumn /></div>
       <div data-area="stage"><StageArea ref={canvasRef} /></div>
       <div data-area="chain">
         <ChainPanel />

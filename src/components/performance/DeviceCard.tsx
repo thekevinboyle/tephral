@@ -5,12 +5,13 @@ import { displayParamLabel, paramStatusText } from '../../config/paramNames'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { useParamValue } from '../../hooks/useParamValue'
 import { formatParamValue } from '../../utils/paramBar'
+import { useUIStore } from '../../stores/uiStore'
 import { Knob } from './Knob'
 import { DeviceChainContext } from './deviceChainContext'
 
 /**
  * One device in the bottom chain: a 26px side strip (colour stripe, power, vertical name, drag grip),
- * the effect's first 4 numeric params as dials (same rule as EffectSettings' strip) and a Mix bar.
+ * the effect's first 4 numeric params as dials (same rule as EffectSettings' strip) and a Dry/wet bar (effectMix; not the registry's own Mix param).
  * Props are primitives; the handlers come from DeviceChain through a context whose value never changes,
  * so a card re-renders only when its own selection/bypass/index flips. Dials and the mix bar subscribe
  * to their own values.
@@ -64,11 +65,13 @@ const MixBar = memo(function MixBar({ effectId, name }: { effectId: string; name
       className="seg-dev-mix"
       role="slider"
       tabIndex={0}
-      aria-label={`${name} mix`}
+      aria-label={`${name} dry/wet`}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={pct}
       aria-valuetext={`${pct}%`}
+      onMouseEnter={() => useUIStore.getState().setStatusText(`Dry/wet: how much of ${name} is blended over the original`)}
+      onMouseLeave={() => useUIStore.getState().setStatusText(null)}
       onPointerDown={(e) => {
         if (e.button !== 0) return
         e.preventDefault()
@@ -95,7 +98,7 @@ const MixBar = memo(function MixBar({ effectId, name }: { effectId: string; name
         e.stopPropagation()
       }}
     >
-      <span className="seg-dev-mix-label">Mix</span>
+      <span className="seg-dev-mix-label">Dry/wet</span>
       <span ref={trackRef} className="seg-dev-mix-track"><i style={{ width: `${pct}%` }} /></span>
       <span className="seg-dev-mix-value">{pct}%</span>
     </div>

@@ -106,6 +106,8 @@ export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   seg_torn: 'Torn: Ragged bites torn into the frame edges',
 
   // OVERLAYS
+  texture_overlay: 'Texture Overlay: Film texture laid over the frame',
+  data_overlay: 'Data Overlay: Readout text drawn over the frame',
   texture_grain: 'Grain: Film grain texture overlay',
   texture_dust: 'Dust: Dust particle overlay',
   texture_leak: 'Leak: Light leak/vignette overlay',

@@ -217,6 +217,21 @@ const EFFECT_ENTRIES: Record<string, EffectEntry> = {
       S.visionTracking.setHandsEnabled(!S.visionTracking.handsEnabled)
     },
   },
+  // Whole-layer overlays (not pads): no browser entry, but they get a device card and a sequencer lane
+  texture_overlay: {
+    active: () => S.textureOverlay.enabled,
+    toggle: (effectId) => {
+      if (!S.textureOverlay.enabled) moveToEndOfChain(effectId)
+      S.textureOverlay.setEnabled(!S.textureOverlay.enabled)
+    },
+  },
+  data_overlay: {
+    active: () => S.dataOverlay.enabled,
+    toggle: (effectId) => {
+      if (!S.dataOverlay.enabled) moveToEndOfChain(effectId)
+      S.dataOverlay.setEnabled(!S.dataOverlay.enabled)
+    },
+  },
   contour: {
     active: () => S.contour.enabled,
     toggle: (effectId) => {
@@ -844,9 +859,11 @@ const ENABLE_STORES = [
   useVisionTrackingStore, useAcidStore, useTextureOverlayStore, useDataOverlayStore, useStrandStore,
   useMotionStore, useDestructionStore, useMorphStore, useTrendStore, useSegStore,
 ] as const
-const ALL_IDS = [...EFFECTS, ...STRAND_EFFECTS, ...MOTION_EFFECTS, ...DESTRUCTION_EFFECTS]
+// Same set as useActiveEffects: the four ids below have lanes but no pad
+const EXTRA_IDS = ['texture_overlay', 'data_overlay', 'track_face', 'track_hands']
+const ALL_IDS = [...new Set([...[...EFFECTS, ...STRAND_EFFECTS, ...MOTION_EFFECTS, ...DESTRUCTION_EFFECTS]
   .map((e) => e.id)
-  .filter((id) => !id.includes('reserved'))
+  .filter((id) => !id.includes('reserved')), ...EXTRA_IDS])]
 
 function subscribeEnabled(onChange: () => void) {
   const unsubs = ENABLE_STORES.map((s) => s.subscribe(onChange))

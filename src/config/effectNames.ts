@@ -9,6 +9,9 @@ const BY_ID = new Map(ALL.map((e) => [e.id, e]))
 const titleCase = (s: string) =>
   s.toLowerCase().replace(/(^|[\s-])([a-z])/g, (_, sep: string, c: string) => sep + c.toUpperCase())
 
+// Effects that have a lane and a device card but no pad, so no entry in config/effects.ts
+const EXTRA_COLORS: Record<string, string> = { track_face: '#f97316', track_hands: '#a855f7', texture_overlay: '#a3a3a3', data_overlay: '#60a5fa' }
+
 const cache = new Map<string, EffectInfo>()
 
 /** Full name + one-line description for every effect; name from EFFECT_DESCRIPTIONS ("Name: desc"), else a title-cased label. */
@@ -26,7 +29,7 @@ export function getEffectInfo(id: string): EffectInfo {
   } else {
     name = titleCase(def?.label ?? id.replace(/_/g, ' '))
   }
-  const info: EffectInfo = { id, name, description, color: def?.color ?? '#9699a0', page: def?.page ?? 0 }
+  const info: EffectInfo = { id, name, description, color: def?.color ?? EXTRA_COLORS[id] ?? '#9699a0', page: def?.page ?? 0 }
   cache.set(id, info)
   return info
 }

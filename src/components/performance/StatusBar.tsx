@@ -72,8 +72,9 @@ export const StatusBar = memo(function StatusBar() {
     <div className="seg-footer">
       <span className="seg-footer-status">
         {statusText ?? 'Ready'}
-        {segText && <span data-seg-status={segStatus} style={{ marginLeft: 8 }}>{segText}</span>}
       </span>
+      {/* Sibling, not a child of the truncating status span: a long hover text must not hide it */}
+      {segText && <span data-seg-status={segStatus} className="seg-footer-seg" style={{ flex: 'none', color: 'var(--text-muted)', fontSize: 11, whiteSpace: 'nowrap' }}>{segText}</span>}
       <PanelToggles />
       <FpsReadout />
     </div>

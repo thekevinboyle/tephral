@@ -17,6 +17,10 @@ export type InfoPanelSelection =
   | { type: 'preset'; presetId: string }
   | null
 
+export type PanelId = 'browser' | 'inspector' | 'bottom'
+export type DrawerPanel = 'browser' | 'inspector'
+export type BottomTab = 'devices' | 'sequencer'
+
 interface UIState {
   // Selection state for graphic panel
   selectedEffectId: string | null
@@ -34,6 +38,20 @@ interface UIState {
   // Bottom panel state
   bottomPanelTab: string | null  // null = collapsed, string = active tab name
   bottomPanelPage: number        // 1-indexed page within active tab
+
+  // Shell panels (Bitwig-style). Browser/inspector/bottom visibility, bottom tab, modulator selection.
+  showBrowser: boolean
+  showInspector: boolean
+  showBottom: boolean
+  bottomTab: BottomTab
+  selectedModulator: string | null  // 'lfo-0'..'lfo-3' | 'random' | 'step' | 'envelope' | 'sampleHold' | 'midi' | 'audio'
+  // Below 1100px the browser/inspector are drawers; at most one is open
+  drawer: DrawerPanel | null
+  togglePanel: (p: PanelId) => void
+  toggleDrawer: (p: DrawerPanel) => void
+  closeDrawer: () => void
+  setBottomTab: (t: BottomTab) => void
+  setSelectedModulator: (id: string | null) => void
 
   setSelectedEffect: (id: string | null) => void
   setSelectedParamIndex: (index: number) => void
@@ -82,13 +100,29 @@ export const useUIStore = create<UIState>((set) => ({
   bottomPanelPage: 1,
   statusText: null,
 
+  showBrowser: true,
+  showInspector: true,
+  showBottom: true,
+  bottomTab: 'devices',
+  selectedModulator: null,
+  drawer: null,
+
+  togglePanel: (p) => set((state) =>
+    p === 'browser' ? { showBrowser: !state.showBrowser }
+    : p === 'inspector' ? { showInspector: !state.showInspector }
+    : { showBottom: !state.showBottom }),
+  toggleDrawer: (p) => set((state) => ({ drawer: state.drawer === p ? null : p })),
+  closeDrawer: () => set({ drawer: null }),
+  setBottomTab: (t) => set({ bottomTab: t }),
+  setSelectedModulator: (id) => set(id != null ? { selectedModulator: id, selectedEffectId: null } : { selectedModulator: null }),
+
   setSelectedEffect: (id) => {
     // A step selection on another track would immediately re-select that
     // track (UnifiedSequencerPanel's auto-switch), overriding this call —
     // selectedStep must always belong to selectedEffectId or be null.
     const { selectedStep, clearSelection } = useEffectSequencerStore.getState()
     if (selectedStep && selectedStep.effectId !== id) clearSelection()
-    set({ selectedEffectId: id, selectedParamIndex: 0 })
+    set(id != null ? { selectedEffectId: id, selectedParamIndex: 0, selectedModulator: null } : { selectedEffectId: id, selectedParamIndex: 0 })
   },
   setSelectedParamIndex: (index) => set({ selectedParamIndex: index }),
 

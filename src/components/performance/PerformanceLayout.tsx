@@ -25,6 +25,8 @@ import { DestructionOverlay } from '../DestructionOverlay'
 // LFO Editor Panel hidden — component kept, just not rendered
 // import { LFOEditorPanel } from './LFOEditorPanel'
 import { StatusBar } from './StatusBar'
+import { ShellDrawers } from './ShellDrawers'
+import { useUIStore } from '../../stores/uiStore'
 
 export function PerformanceLayout() {
   const canvasRef = useRef<CanvasHandle>(null)
@@ -73,16 +75,30 @@ export function PerformanceLayout() {
 
   useRecordingCapture(captureRef, canvasElement)
 
+  // Narrow selectors: panel flags change rarely. The children below keep a fixed position in the tree
+  // (hidden by CSS, never conditionally rendered) so the stage/canvas is never remounted.
+  const showBrowser = useUIStore((s) => s.showBrowser)
+  const showInspector = useUIStore((s) => s.showInspector)
+  const showBottom = useUIStore((s) => s.showBottom)
+  const drawer = useUIStore((s) => s.drawer)
+  const bottomTab = useUIStore((s) => s.bottomTab)
+
   return (
-    <div className="seg-shell grid-substrate">
+    <div
+      className="seg-shell"
+      data-browser={showBrowser ? 'on' : 'off'}
+      data-inspector={showInspector ? 'on' : 'off'}
+      data-bottom={showBottom ? 'on' : 'off'}
+      data-bottom-tab={bottomTab}
+      data-drawer={drawer ?? 'none'}
+    >
       <div data-area="header" className="panel-header"><HeaderBar canvasRef={captureRef} /></div>
-      <div data-area="effects"><EffectsColumn /></div>
+      <div data-area="browser"><div data-area="effects" className="seg-area-fill"><EffectsColumn /></div></div>
       <div data-area="stage"><StageArea ref={canvasRef} /></div>
-      <div data-area="chain">
-        <ChainPanel />
-      </div>
-      <div data-area="dock"><Dock /></div>
-      <div data-area="status"><StatusBar /></div>
+      <div data-area="inspector"><div data-area="chain" className="seg-area-fill"><ChainPanel /></div></div>
+      <div data-area="bottom"><div data-area="dock" className="seg-area-fill"><Dock /></div></div>
+      <div data-area="footer"><div data-area="status" className="seg-area-fill"><StatusBar /></div></div>
+      <ShellDrawers />
 
       <ClipDetailModal />
       <ModulationLines />

@@ -5,6 +5,7 @@ import { EffectStepCell } from './EffectStepCell'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 import { useUIStore } from '../../stores/uiStore'
 import { statusHover } from '../../utils/statusHover'
+import { paramDisplayName } from '../../utils/routeTargetLabel'
 
 const SEQ = '#9580FF'
 const MIDI_COLOR = '#00AAFF'
@@ -99,6 +100,7 @@ export function EffectTrackRow({
   // Does automation target this track?
   const automationTargetsThis = automationParam?.effectId === effectId
   const automationParamId = automationTargetsThis ? automationParam!.paramId : null
+  const automationLabel = automationParamId ? paramDisplayName(effectId, automationParamId) : null
   const automationMin = automationTargetsThis ? automationParam!.min : 0
   const automationMax = automationTargetsThis ? automationParam!.max : 1
   const automationStep = automationTargetsThis ? automationParam!.step : 0.01
@@ -482,6 +484,7 @@ export function EffectTrackRow({
               onMouseEnter={handleCellMouseEnter}
               onContextMenu={handleContextMenu}
               automationParamId={automationParamId}
+              automationLabel={automationLabel}
               automationMin={automationMin}
               automationMax={automationMax}
               automationStep={automationStep}

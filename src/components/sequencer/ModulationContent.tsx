@@ -11,6 +11,7 @@ import { useDestructionStore } from '../../stores/destructionStore'
 import { useUIStore } from '../../stores/uiStore'
 import { Knob } from '../performance/Knob'
 import { getUIStatusText } from '../../config/statusDescriptions'
+import { routeTargetLabel } from '../../utils/routeTargetLabel'
 
 // ════════════════════════════════════════════════════════════════════════════
 // Shared constants & helpers (also used by EffectsLane)
@@ -1120,7 +1121,7 @@ function MIDIModContent() {
               <div key={`${routing.trackId}-${routing.targetParam}`} className="flex items-center gap-2">
                 <span className="text-[8px] w-8" style={{ color }}>CC{ccNum}</span>
                 <span className="text-[8px] flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>
-                  {routing.targetParam}
+                  {routeTargetLabel(routing.targetParam)}
                 </span>
                 <ModSlider
                   label=""
@@ -1485,7 +1486,7 @@ function AudioReactiveContent() {
                   {band?.label || '?'}
                 </span>
                 <span className="text-[8px] flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>
-                  {routing.targetParam}
+                  {routeTargetLabel(routing.targetParam)}
                 </span>
                 <div className="w-16 flex-shrink-0">
                   <ModSlider

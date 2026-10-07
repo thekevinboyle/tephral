@@ -417,6 +417,8 @@ export function ModulationAssignPanel() {
               <button
                 key={i}
                 onClick={() => handleLFOSelect(i)}
+                aria-label={`Show LFO ${i + 1}`}
+                aria-pressed={isSelected}
                 className="flex flex-col items-center justify-center"
                 style={{
                   width: 36,

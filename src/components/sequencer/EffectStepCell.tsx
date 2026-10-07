@@ -16,6 +16,8 @@ interface EffectStepCellProps {
   onContextMenu: (e: React.MouseEvent) => void
   // Automation right-click drag
   automationParamId: string | null
+  /** Display name of the automation param, for the tooltip */
+  automationLabel?: string | null
   automationMin: number
   automationMax: number
   automationStep: number
@@ -37,6 +39,7 @@ export const EffectStepCell = memo(function EffectStepCell({
   onMouseEnter,
   onContextMenu,
   automationParamId,
+  automationLabel,
   automationMin,
   automationMax,
   automationStep,
@@ -186,7 +189,7 @@ export const EffectStepCell = memo(function EffectStepCell({
           : undefined,
         transition: 'background-color 0.06s, border-color 0.06s',
       }}
-      title={`Step ${stepIndex + 1}${hasProbability ? ` ${Math.round(step.probability * 100)}%` : ''}${hasLocks ? ` (${Object.keys(step.locks).length} lock${Object.keys(step.locks).length > 1 ? 's' : ''})` : ''}${lockValue != null ? ` [${automationParamId}: ${lockValue.toFixed(2)}]` : ''}. Cmd+drag to set probability`}
+      title={`Step ${stepIndex + 1}${hasProbability ? ` ${Math.round(step.probability * 100)}%` : ''}${hasLocks ? ` (${Object.keys(step.locks).length} lock${Object.keys(step.locks).length > 1 ? 's' : ''})` : ''}${lockValue != null ? ` [${automationLabel ?? automationParamId}: ${lockValue.toFixed(2)}]` : ''}. Cmd+drag to set probability`}
     >
       {/* P-lock fill — full cell, from bottom */}
       {showLockBar && (

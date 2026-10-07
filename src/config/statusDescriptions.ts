@@ -208,7 +208,7 @@ export const PARAM_DESCRIPTIONS: Record<string, string> = {
   TMODE: 'Tint Mode: Overlay/Multiply/Screen',
 
   // Feedback
-  ZOOM: 'Zoom: Feedback zoom scale',
+  ZOOM: 'Zoom: Zoom amount',
   HUE: 'Hue: Hue shift per iteration',
   'OF.X': 'Offset X: Feedback horizontal offset',
   'OF.Y': 'Offset Y: Feedback vertical offset',
@@ -273,7 +273,7 @@ export const PARAM_DESCRIPTIONS: Record<string, string> = {
   // Strand
   COV: 'Coverage: Effect coverage area',
   AGE: 'Age: Aging effect amount',
-  STRK: 'Streaks: Number of streaks',
+  STRK: 'Streak: Length of the light streaks',
   RING: 'Ring: Ring width',
   FLOW: 'Flow: Particle flow speed',
   REACH: 'Reach: Tendril reach distance',
@@ -281,7 +281,7 @@ export const PARAM_DESCRIPTIONS: Record<string, string> = {
   PING: 'Ping: Sonar ping intensity',
   RVDUR: 'Reveal: Reveal animation duration',
   SHMR: 'Shimmer: Shimmer effect intensity',
-  GRAIN: 'Grain: Sand grain amount',
+  GRAIN: 'Grain: Grain amount',
   INVP: 'Invert Prob: Invert probability',
   HALO: 'Halo: Halo size',
   SENS: 'Sensitivity: Detection sensitivity',

@@ -83,7 +83,7 @@ export const ABBREVIATIONS: Record<string, string> = {
   FEED: 'Feed rate',
   FILL: 'Fill mode',
   FILTER: 'Filter cutoff',
-  FINT: 'Box filter',
+  FINT: 'Fresnel',
   FLASH: 'Flash',
   FLCK: 'Flicker',
   FLICK: 'Flicker speed',
@@ -259,7 +259,6 @@ export const PARAM_NAME_OVERRIDES: Record<string, string> = {
   'contour.fadeMode': 'Fade mode',
   'strand_handprints.fadeSpeed': 'Fade speed',
   'seg_torn.fill': 'Fill',
-  'lens.fresnelIntensity': 'Fresnel',
   'echo_trail.hueAmount': 'Hue',
   'freeze_mask.invertMask': 'Invert mask',
   'landmarks.currentMode': 'Mode',
@@ -304,7 +303,55 @@ export const PARAM_NAME_OVERRIDES: Record<string, string> = {
   'dreamcore.radius': 'Glow radius',
   'feedback.edgeGlow': 'Edge glow',
   'crystallize.edgeGlow': 'Edge glow',
+  'track_bright.boxFilterIntensity': 'Box filter',
+  'track_edge.boxFilterIntensity': 'Box filter',
+  'track_color.boxFilterIntensity': 'Box filter',
+  'track_motion.boxFilterIntensity': 'Box filter',
+  'track_face.boxFilterIntensity': 'Box filter',
+  'track_hands.boxFilterIntensity': 'Box filter',
   'halation.radius': 'Glow radius',
+}
+
+/**
+ * Status-bar descriptions for overridden params, keyed `effectId.paramId`. An overridden param never borrows the
+ * shared code's PARAM_DESCRIPTIONS text (that text was written for another effect); without an entry here it shows
+ * its name alone.
+ */
+export const PARAM_DESCRIPTION_OVERRIDES: Record<string, string> = {
+  'chromatic.radialAmount': 'Radial vs linear aberration',
+  'lens.curvature': 'Lens curvature distortion',
+  'dither.colorDepth': 'Number of color levels per channel',
+  'posterize.saturationBoost': 'Extra saturation after posterizing',
+  'posterize.edgeContrast': 'Contrast boost along edges',
+  'feedback.decayCurve': 'Shape of the fade between feedback frames',
+  'echo_trail.decayCurve': 'Shape of the fade across the echoes',
+  'echo_trail.trailZoom': 'Zoom applied to each echo',
+  'echo_trail.trailRotation': 'Rotation applied to each echo',
+  'feedback.edgeGlow': 'Glow along edges in the feedback',
+  'crystallize.edgeGlow': 'Glow along the crystal cell edges',
+  'halation.radius': 'Spread of the glow around highlights',
+  'dreamcore.radius': 'Spread of the soft glow',
+  'motion_extract.amplify': 'Boosts the difference between frames',
+  'motion_extract.showOriginal': 'Show the original image under the motion',
+  'strand_voidout.distortAmount': 'How far the ring pushes pixels outward',
+  'reaction_diffusion.colorize': 'Blend of the simulation colors over the source',
+  'block_displace.blockSize': 'Size of the displaced blocks',
+  'pixelate.pixelSize': 'Size of each pixel block',
+  'ascii.fontSize': 'Character size',
+  'data_overlay.fontSize': 'Text size',
+  'scan_lines.lineCount': 'Number of scan lines',
+  'scan_lines.lineOpacity': 'Opacity of the scan lines',
+  'acid_slice.sliceCount': 'Number of slices',
+  'strand_path.particleCount': 'Number of particles',
+  'strand_umbilical.tendrilCount': 'Number of tendrils',
+  'strand_timefall.streakCount': 'Number of streaks',
+  'pixelSort.streakLength': 'Length of the sorted streaks',
+  'track_bright.boxFilterIntensity': 'Strength of the filter inside each tracked box',
+  'track_edge.boxFilterIntensity': 'Strength of the filter inside each tracked box',
+  'track_color.boxFilterIntensity': 'Strength of the filter inside each tracked box',
+  'track_motion.boxFilterIntensity': 'Strength of the filter inside each tracked box',
+  'track_face.boxFilterIntensity': 'Strength of the filter inside each tracked box',
+  'track_hands.boxFilterIntensity': 'Strength of the filter inside each tracked box',
 }
 
 /** Shorter names for the 50px device dials, keyed by the full display name (used only when `short` is asked for). */
@@ -359,6 +406,13 @@ export const SHORT_NAMES: Record<string, string> = {
   'Min saturation': 'Min sat',
   'Decay stages': 'Stages',
   'Seed amount': 'Seed',
+  'Blue offset': 'Blue off.',
+  'Green gamma': 'Green gam.',
+  'Noise scale': 'Noise size',
+  'Noise speed': 'Noise rate',
+  'Byte offset': 'Byte off.',
+  Sensitivity: 'Sensitive',
+  Perspective: 'Persp.',
   'Color bleed': 'Bleed',
   'Color depth': 'Colors',
   'Decay curve': 'Curve',
@@ -369,7 +423,7 @@ export const SHORT_NAMES: Record<string, string> = {
   'Sweep speed': 'Sweep',
   'Sample rate': 'Rate',
   'Glow radius': 'Radius',
-  'Invert chance': 'Invert',
+  'Invert chance': 'Inv. chance',
 }
 
 const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
@@ -418,9 +472,16 @@ export function paramStatusText(effectId: string, param: { id: string; label: st
   const hit = statusCache.get(key)
   if (hit !== undefined) return hit
   const name = displayParamLabel(effectId, param)
-  const desc = PARAM_DESCRIPTIONS[param.label]
-  const i = desc ? desc.indexOf(': ') : -1
-  const what = desc ? (i >= 0 ? desc.slice(i + 2) : desc) : null
+  const k = `${effectId}.${param.id}`
+  let what: string | null
+  if (PARAM_NAME_OVERRIDES[k] !== undefined) {
+    // An overridden name means the shared code means something else here: never borrow its description
+    what = PARAM_DESCRIPTION_OVERRIDES[k] ?? null
+  } else {
+    const desc = PARAM_DESCRIPTIONS[param.label]
+    const i = desc ? desc.indexOf(': ') : -1
+    what = desc ? (i >= 0 ? desc.slice(i + 2) : desc) : null
+  }
   const out = what ? `${name}: ${what}. Drag to change, double-click to reset` : `${name}. Drag to change, double-click to reset`
   statusCache.set(key, out)
   return out

@@ -176,3 +176,53 @@
 
 /* Knobs with a paramId are keyboard-focusable */
 [data-param-control][data-param-id]:not(.param-bar):focus-visible { outline: 1px solid var(--text-primary); outline-offset: 2px; }
+
+/* ─── Effects browser (EffectBrowser / EffectBrowserList) ─────────────────────────────────────────── */
+.seg-browser { container: seg-browser / inline-size; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.seg-browser-head { flex-shrink: 0; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 8px 0 10px; border-bottom: 1px solid var(--border); }
+.seg-browser-title { font: 600 12px var(--font-sans); color: var(--text-primary); }
+.seg-browser-total { font: 400 11px var(--font-mono); color: var(--text-muted); }
+.seg-seg { margin-left: auto; display: flex; padding: 2px; gap: 2px; border-radius: var(--radius-ctrl); background: var(--bg-void); }
+.seg-seg > button { font: 500 11px var(--font-sans); padding: 2px 8px; border-radius: 3px; color: var(--text-muted); background: transparent; cursor: pointer; }
+.seg-seg > button:hover { color: var(--text-secondary); }
+.seg-seg > button[aria-pressed="true"] { background: var(--bg-elevated); color: var(--text-primary); }
+.seg-browser-search { flex-shrink: 0; position: relative; margin: 8px 8px 4px; color: var(--text-muted); }
+.seg-browser-search > svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.seg-browser-search > input { width: 100%; height: 28px; padding: 0 8px 0 26px; border-radius: var(--radius-ctrl); border: 1px solid transparent; background: var(--bg-surface); color: var(--text-primary); font: 400 12px var(--font-sans); outline: none; }
+.seg-browser-search > input::placeholder { color: var(--text-muted); }
+.seg-browser-search > input:focus-visible { border-color: var(--border-emphasis); }
+.seg-browser-search > input::-webkit-search-cancel-button { display: none; }
+.seg-browser-body { flex: 1 1 0; min-height: 0; overflow-y: auto; }
+.seg-browser[data-browser-mode="pads"] .seg-browser-body { min-height: 200px; overflow: hidden; }
+.seg-browser-foot { flex-shrink: 0; border-top: 1px solid var(--border); }
+.seg-browser-banks { height: 52px; }
+.seg-browser-xfade { border-top: 1px solid var(--border); }
+.seg-browser-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 10px; font: 400 12px var(--font-sans); color: var(--text-secondary); overflow-wrap: anywhere; }
+.seg-browser-empty > button { font: 500 11px var(--font-sans); padding: 3px 10px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); cursor: pointer; }
+.seg-browser-empty > button:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.seg-fx-list { padding: 2px 0 8px; }
+.seg-fx-cat { width: 100%; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; font: 600 12px var(--font-sans); color: var(--text-primary); background: transparent; cursor: pointer; text-align: left; }
+.seg-fx-cat:disabled { cursor: default; }
+.seg-fx-cat:not(:disabled):hover { background: var(--bg-surface); }
+.seg-fx-chevron { color: var(--text-muted); flex-shrink: 0; transition: transform var(--dur-quick) var(--ease-out-expo); }
+.seg-fx-cat[aria-expanded="true"] .seg-fx-chevron { transform: rotate(90deg); }
+.seg-fx-cat-name { flex: 1 1 auto; min-width: 0; }
+.seg-fx-count { font: 400 11px var(--font-mono); color: var(--text-muted); }
+.seg-fx-row { width: 100%; display: flex; align-items: flex-start; gap: 8px; min-height: 28px; padding: 4px 10px 4px 24px; background: transparent; text-align: left; cursor: pointer; }
+.seg-fx-row:hover, .seg-fx-row:focus-visible { background: var(--bg-surface); outline: none; }
+.seg-fx-row:focus-visible { box-shadow: inset 2px 0 0 var(--text-primary); }
+.seg-fx-dot { width: 7px; height: 7px; border-radius: 2px; margin-top: 5px; flex-shrink: 0; }
+.seg-fx-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.seg-fx-name { font: 500 12px/17px var(--font-sans); color: var(--text-secondary); overflow-wrap: anywhere; }
+.seg-fx-desc { font: 400 11px/15px var(--font-sans); color: var(--text-muted); overflow-wrap: anywhere; }
+.seg-fx-badge { flex-shrink: 0; margin-top: 2px; font: 400 10px/15px var(--font-sans); color: var(--text-muted); white-space: nowrap; }
+.seg-fx-row[data-in-chain] .seg-fx-name { color: var(--text-primary); }
+.seg-fx-row[data-in-chain] .seg-fx-desc { color: var(--text-secondary); }
+
+/* Pads: 4 x 4, or 3 columns when the browser panel is under 340px wide (at 300px, 4 columns push two-word names to 3 lines) */
+.seg-pad-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); }
+@container seg-browser (width < 340px) {
+  .seg-pad-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(6, minmax(0, 1fr)); }
+  .seg-pad-grid > [data-pad-empty] { display: none; }
+}

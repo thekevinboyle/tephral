@@ -9,6 +9,18 @@ import { Crosshair } from '../ui/MicroVisuals'
 const HOLD_THRESHOLD = 200    // ms before hold triggers solo
 const DOUBLE_CLICK_GAP = 300  // ms max between clicks for double-click
 
+// Pads are narrow (3 columns at the 250px browser) and headless/desktop Chrome do not reliably auto-hyphenate,
+// so long words in pad labels carry explicit soft hyphens (display only; names stay plain everywhere else).
+const SOFT_BREAKS: Record<string, string> = {
+  Decomposition: 'Decom-position', Kaleidoscope: 'Kaleido-scope', Crystallize: 'Crystal-lize', Anamorphic: 'Ana-morphic',
+  Handprints: 'Hand-prints', Extinction: 'Extinc-tion', Landmarks: 'Land-marks', Posterize: 'Poster-ize',
+  Threshold: 'Thresh-old', Diffusion: 'Diffu-sion', Chiralium: 'Chira-lium', Chromatic: 'Chro-matic',
+  Dreamcore: 'Dream-core', Umbilical: 'Umbil-ical',
+}
+const padLabel = (name: string) => name.split(' ').map((w) => (SOFT_BREAKS[w] ? SOFT_BREAKS[w].replace('-', '\u00AD') : w)).join(' ')
+// Longest unbreakable run decides whether the font has to shrink
+const longestRun = (s: string) => Math.max(4, ...s.split(/[\s\u00AD-]+/).map((w) => w.length))
+
 interface EffectButtonProps {
   id: string
   label: string
@@ -208,11 +220,14 @@ export function EffectButton({
     if (statusText) setStatusText(null)
   }, [id, soloEffectId, soloLatched, clearSolo, statusText, setStatusText])
 
+  const padText = padLabel(label)
+
   // Mix percentage for the progress bar (0-100%)
   const mixPercent = Math.round(mix * 100)
 
   return (
     <div
+      data-pad={id}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -270,20 +285,24 @@ export function EffectButton({
 
       {/* Main content area */}
       <div className="flex-1 min-w-0 flex flex-col justify-center relative" style={{ containerType: 'inline-size' }}>
-        {/* Label: 11px, shrunk just enough for long names to fit beside the mix bar (truncate is only a last resort) */}
+        {/* Label: the full effect name (Plex Sans, normal case). Wraps to two lines at word breaks and hyphenates a single long
+            word (Kaleido-scope); the font only shrinks below 11px when the longest word would still not fit. */}
         <span
-          className="font-semibold truncate uppercase tracking-wide"
+          className="font-medium"
           style={{
-            // Plex Mono advance is 0.6em; tracking-wide adds 0.025em (0.05em for long names, tightened so they fit); the formula is tuned for mono
-            fontFamily: 'var(--font-mono)',
-            fontSize: `max(8px, min(11px, calc(100cqw / ${label.length * (label.length > 5 ? 0.66 : 0.73)})))`,
-            letterSpacing: label.length > 5 ? '0.05em' : undefined,
-            lineHeight: '16px', // fixed so shrunk names stay vertically centred with the rest
+            fontFamily: 'var(--font-sans)',
+            fontSize: `max(9.5px, min(11px, calc(100cqw / ${(longestRun(padText) * 0.6).toFixed(2)})))`,
+            lineHeight: 1.25,
+            hyphens: 'manual',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
             color: active ? color : 'var(--text-secondary)',
             transition: 'color var(--dur-settle) var(--ease-out-expo)',
           }}
         >
-          {label}
+          {padText}
         </span>
         {/* Running LED — pulses with the transport */}
         <span

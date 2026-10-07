@@ -65,7 +65,8 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
       const rect = triggerRef.current.getBoundingClientRect()
       setDropdownPosition({
         top: rect.bottom + 4,
-        left: rect.left,
+        // keep the 300px menu inside the viewport (the trigger sits at the header's right edge)
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - 300 - 8)),
       })
     }
   }, [isOpen])

@@ -10,6 +10,7 @@ export const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = 
 
 /** MIDI blue, as the sequencer transport and track rows use it */
 export const MIDI_CC_COLOR = '#00AAFF'
+export const AUDIO_SOURCE_COLOR = '#FF8800'
 
 export function getSourceInfo(trackId: string): { name: string; color: string } | null {
   if (trackId.startsWith('lfo-')) {

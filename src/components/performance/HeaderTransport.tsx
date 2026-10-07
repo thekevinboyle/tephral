@@ -2,12 +2,13 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useEffectSequencerStore, BPM_MIN, BPM_MAX } from '../../stores/effectSequencerStore'
 import { useMIDIStore } from '../../stores/midiStore'
 import { useAudioSourceStore } from '../../stores/audioSourceStore'
+import { MIDI_CC_COLOR, AUDIO_SOURCE_COLOR } from '../../utils/modulationSources'
 import { useUIStore } from '../../stores/uiStore'
 import { useMediaTimecode } from '../../hooks/useMediaTimecode'
 import { linkedPlay, linkedStop } from '../../utils/sequencerTransport'
 
-const MIDI_COLOR = '#00AAFF'
-const AUDIO_COLOR = '#FF8800'
+const MIDI_COLOR = MIDI_CC_COLOR
+const AUDIO_COLOR = AUDIO_SOURCE_COLOR
 const PX_PER_BPM = 4
 
 const round1 = (n: number) => Math.round(n * 10) / 10

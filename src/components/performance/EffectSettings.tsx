@@ -4,7 +4,7 @@ import { EFFECTS, STRAND_EFFECTS, MOTION_EFFECTS, DESTRUCTION_EFFECTS } from '..
 import { EffectHeaderBlock } from './blocks/EffectHeaderBlock'
 import { ToggleBlock } from './blocks/ToggleBlock'
 import { SelectBlock } from './blocks/SelectBlock'
-import { BlockExtras } from './ExpandedParameterPanel_v2'
+import { BlockExtras } from './EffectExtras'
 import { Knob } from './Knob'
 import { ParamBar } from './ParamBar'
 import { useParamValue } from '../../hooks/useParamValue'

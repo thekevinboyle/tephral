@@ -29,11 +29,7 @@ When adding a new effect page or new effects, you MUST update ALL of the followi
 ### 5. Effect Disable Hook (`src/hooks/useEffectDisable.ts`)
 - Add case to the switch statement mapping effectId to store setter
 
-### 6. Compact Effect Params (`src/components/performance/CompactEffectParams.tsx`)
-- Add a switch case with 2-3 Knob components for the most important parameters
-- Uses the same store hooks as the full parameters
-
-### 7. Canvas (`src/components/Canvas.tsx`) + Param Sync (`src/effects/paramSync.ts`)
+### 6. Canvas (`src/components/Canvas.tsx`) + Param Sync (`src/effects/paramSync.ts`)
 Enabled flags/order and per-frame params are split across two files:
 - **Canvas.tsx's structural effect**: import the new store (e.g.
   `useMotionStore`, `useTrendStore`), subscribe to its *enabled* state only,
@@ -46,7 +42,7 @@ Enabled flags/order and per-frame params are split across two files:
   `store.subscribe()` entry) so the uniform updates on every param change
   without going through React.
 
-### 8. Effect Pipeline (`src/effects/EffectPipeline.ts`)
+### 7. Effect Pipeline (`src/effects/EffectPipeline.ts`)
 - Import new effect classes
 - Add effect instance properties
 - Initialize effects in constructor
@@ -55,22 +51,17 @@ Enabled flags/order and per-frame params are split across two files:
 - Add to `dispose()` cleanup
 - If temporal effect: add to `render()` captureFrame calls
 
-### 9. Expanded Parameter Panel (`src/components/performance/ExpandedParameterPanel.tsx`)
-- Import the new store and effects config
-- Add store hook call to `EffectParameters`
-- Add effect lookup to include new effects array
-- Add switch cases with full parameter controls (SliderRow, SelectRow, etc.)
-
-### 10. Routing Store (`src/stores/routingStore.ts`)
+### 8. Routing Store (`src/stores/routingStore.ts`)
 - `defaultEffectOrder` is built from `EFFECTS`, `STRAND_EFFECTS`, `MOTION_EFFECTS` and `DESTRUCTION_EFFECTS`.
   Effects added to one of those existing arrays need no edit here.
 - Only a NEW effects array (a new page) must be imported and spread into `defaultEffectOrder`.
 
-### 11. Param Registry (`src/config/effectParams.ts`)
+### 9. Param Registry (`src/config/effectParams.ts`)
 - Add an `EFFECT_PARAM_REGISTRY` entry (getParams, optional getSelectParams, setEnabled, getEnabled).
-  The Expanded Parameter Panel and param locks are driven from this registry.
+  Param locks are driven from this registry.
+- The registry entry drives the chain panel's settings: its first four numeric params form the knob strip, the rest render as segmented bars, and 0/1 integer params render as toggles. Selects come from `getSelectParams`; bespoke colour/texture controls live in `BlockExtras`.
 
-### 12. Continuous Modulation (`src/hooks/useContinuousModulation.ts`)
+### 10. Continuous Modulation (`src/hooks/useContinuousModulation.ts`)
 - Add a `case '<effectId>'` mapping 0–1 modulation values onto each param's real range.
 
 ### Presets/banks
@@ -97,7 +88,7 @@ Left column: page tabs + effect grid (`PerformanceGrid`), bank slots, crossfader
 Aspect-locked output frame that fits the free space, with corner ticks, ruler, ClipBin and four HUD readouts (`StageReadouts`): LIVE/REC + FPS, preset name (or bank), timecode, active band. The frame is a container; under 380px the readouts re-stack.
 
 ### Chain Panel (`src/components/performance/ChainPanel.tsx`)
-Right column: the effect chain in signal order. Rows handle selection, drag (and Alt+Arrow) reorder, per-effect bypass (button or shift+click), remove (button, Delete, double-click), clear-all and bypass-all. It owns `ensureTrack` and auto-select for active effects. Below the rows it shows the selected effect's settings and audio band.
+Right column: the effect chain in signal order. Rows handle selection, drag (and Alt+Arrow) reorder, per-effect bypass (button or shift+click), remove (button, Delete, double-click), clear-all and bypass-all. It owns `ensureTrack` and auto-select for active effects. Below the rows it shows the selected effect's settings (rendered by `EffectSettings`: a knob strip plus segmented `ParamBar`s, with `useParamControl` supplying the shared drag, p-lock, reset, context-menu and modulation-drop behaviour; `BlockExtras` in `EffectExtras.tsx` adds colour/texture extras) and audio band.
 
 ### Dock (`src/components/performance/Dock.tsx`)
 Sequencer (`SequencerContainer` > `UnifiedSequencerPanel`, whose track list is the only scroller) above the modulation tabs (`BottomPanel`: LFO, Random, Step, Env, S&H, MIDI, Audio).

@@ -1,41 +1,5 @@
-import { useRef, useCallback, useMemo, useState, useEffect } from 'react'
-import { useSequencerStore } from '../../stores/sequencerStore'
-import { useModulationStore } from '../../stores/modulationStore'
-import { usePolyEuclidStore } from '../../stores/polyEuclidStore'
-import { useUIStore } from '../../stores/uiStore'
-import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
-import { ModulationContextMenu } from './controls/ModulationContextMenu'
+import { useParamControl } from '../../hooks/useParamControl'
 import { getParamStatusText } from '../../config/statusDescriptions'
-
-// Modulation source colors (same as SliderRow)
-const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = {
-  euclidean: { name: 'Euclidean', color: '#FF0055' },
-  ricochet: { name: 'Ricochet', color: '#FF0055' },
-  random: { name: 'Random', color: '#FF6B6B' },
-  step: { name: 'Step', color: '#4ECDC4' },
-  envelope: { name: 'Envelope', color: '#AA55FF' },
-  sampleHold: { name: 'S&H', color: '#AAFF00' },
-}
-
-function getSourceInfo(trackId: string): { name: string; color: string } | null {
-  if (trackId.startsWith('lfo-')) {
-    const idx = parseInt(trackId.split('-')[1])
-    return { name: `LFO ${idx + 1}`, color: '#707070' }
-  }
-  if (trackId.startsWith('audio-')) {
-    const AUDIO_SOURCES: Record<string, { name: string; color: string }> = {
-      'audio-sub': { name: 'Sub', color: '#FF3333' },
-      'audio-mid': { name: 'Mid', color: '#FF8800' },
-      'audio-high': { name: 'High', color: '#33CCFF' },
-      'audio-hit': { name: 'Hit', color: '#FF00FF' },
-      'audio-rms': { name: 'RMS', color: '#FFFFFF' },
-    }
-    return AUDIO_SOURCES[trackId] || null
-  }
-  return SPECIAL_SOURCES[trackId] || null
-}
-const POLY_EUCLID_COLOR = '#FF0055'
-const STEP_SEQ_COLOR = '#FF9500'
 
 interface KnobProps {
   label: string
@@ -69,348 +33,17 @@ export function Knob({
 }: KnobProps) {
   const resolvedStatusText = statusText ?? getParamStatusText(label)
 
-  const dragStartY = useRef<number | null>(null)
-  const dragStartValue = useRef<number>(0)
-  const didDrag = useRef(false)
-  const [isDragging, setIsDragging] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-
-  // rAF-throttled onChange dispatch — coalesce drag updates to ≤1 per frame
-  const pendingValueRef = useRef<number | null>(null)
-  const changeRafRef = useRef(0)
-  const onChangeRef = useRef(onChange)
-  onChangeRef.current = onChange
-
-  // Depth-drag assignment refs/state
-  const depthAssignSource = useRef<string | null>(null)
-  const depthAssignStartY = useRef(0)
-  const depthAssignValue = useRef(0)
-  const [isDepthDragging, setIsDepthDragging] = useState(false)
-  const [depthDragDisplay, setDepthDragDisplay] = useState(0)
-
-  // Automation target state
-  const automationParam = useEffectSequencerStore((s) => s.automationParam)
-  const setAutomationParam = useEffectSequencerStore((s) => s.setAutomationParam)
-  const clearAutomationParam = useEffectSequencerStore((s) => s.clearAutomationParam)
-  const isAutomationTarget = paramId != null && automationParam?.fullParamId === paramId
-
-  // Modulation routing state — only subscribe when paramId is provided
+  // Knob feel: full range over 150px of vertical drag
+  const ctl = useParamControl({
+    paramId, label, value, min, max, step, onChange,
+    axis: 'y', dragSpanPx: 150, statusText: resolvedStatusText,
+  })
   const {
-    addRouting,
-    routings,
-    tracks: seqTracks,
-    updateRoutingDepth,
-    removeRouting,
-    assigningTrack: assigningStepTrack,
-    setAssigningTrack: setAssigningStepTrack,
-  } = useSequencerStore()
-  const { assigningModulator } = useModulationStore()
-  const {
-    assigningTrack: assigningPolyEuclid,
-    tracks: polyEuclidTracks,
-    setAssigningTrack: setAssigningPolyEuclid,
-  } = usePolyEuclidStore()
-  const { selectRouting, setStatusText } = useUIStore()
-  const [isDropTarget, setIsDropTarget] = useState(false)
-  const [, setIsModulationDrag] = useState(false)
-  const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null)
-
-  // Check assignment mode
-  const isInAssignmentMode = (assigningModulator !== null || assigningPolyEuclid !== null || assigningStepTrack !== null) && !!paramId
-
-  // Listen for global drag events
-  useEffect(() => {
-    if (!paramId) return
-    const handleDragStart = (e: DragEvent) => {
-      if (e.dataTransfer?.types.includes('modulation-source') ||
-          e.dataTransfer?.types.includes('sequencer-track')) {
-        setIsModulationDrag(true)
-      }
-    }
-    const handleDragEnd = () => setIsModulationDrag(false)
-    document.addEventListener('dragstart', handleDragStart)
-    document.addEventListener('dragend', handleDragEnd)
-    return () => {
-      document.removeEventListener('dragstart', handleDragStart)
-      document.removeEventListener('dragend', handleDragEnd)
-    }
-  }, [paramId])
-
-  // Cancel any pending rAF-throttled change on unmount
-  useEffect(() => () => cancelAnimationFrame(changeRafRef.current), [])
-
-  // Routing info
-  const paramRoutings = paramId ? routings.filter(r => r.targetParam === paramId) : []
-  const hasRouting = paramRoutings.length > 0
-  const firstRouting = hasRouting ? paramRoutings[0] : null
-
-  const sourceInfo = useMemo(() => {
-    if (!firstRouting) return null
-    if (firstRouting.trackId.startsWith('polyEuclid-')) {
-      const polyTrackId = firstRouting.trackId.replace('polyEuclid-', '')
-      const polyTrack = polyEuclidTracks.find(t => t.id === polyTrackId)
-      if (polyTrack) {
-        const trackIndex = polyEuclidTracks.indexOf(polyTrack)
-        return { name: `Euclid T${trackIndex + 1}`, color: POLY_EUCLID_COLOR }
-      }
-    }
-    const stepTrack = seqTracks.find(t => t.id === firstRouting.trackId)
-    if (stepTrack) {
-      const trackIndex = seqTracks.indexOf(stepTrack)
-      return { name: `Step T${trackIndex + 1}`, color: STEP_SEQ_COLOR }
-    }
-    return getSourceInfo(firstRouting.trackId)
-  }, [firstRouting, seqTracks, polyEuclidTracks])
-
-  // Assigning color
-  const assigningColor = assigningModulator
-    ? (getSourceInfo(assigningModulator)?.color ?? SPECIAL_SOURCES[assigningModulator]?.color)
-    : assigningPolyEuclid
-      ? POLY_EUCLID_COLOR
-      : assigningStepTrack
-        ? STEP_SEQ_COLOR
-        : undefined
-
-  // Knob drag
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-
-    // In assignment mode, start depth-drag instead of instant assign
-    if (isInAssignmentMode && paramId) {
-      let trackId: string | null = null
-      if (assigningModulator) trackId = assigningModulator
-      else if (assigningPolyEuclid) trackId = `polyEuclid-${assigningPolyEuclid}`
-      else if (assigningStepTrack) trackId = assigningStepTrack
-
-      if (trackId) {
-        depthAssignSource.current = trackId
-        depthAssignStartY.current = e.clientY
-        depthAssignValue.current = 0
-        setIsDepthDragging(true)
-        setDepthDragDisplay(0)
-        ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-      }
-      return
-    }
-
-    didDrag.current = false
-    dragStartY.current = e.clientY
-    dragStartValue.current = value
-    setIsDragging(true)
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-  }, [value, isInAssignmentMode, paramId, assigningModulator, assigningPolyEuclid, assigningStepTrack, routings, addRouting, setAssigningPolyEuclid, setAssigningStepTrack])
-
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    // Depth-drag in assignment mode
-    if (isDepthDragging) {
-      const deltaY = depthAssignStartY.current - e.clientY
-      const depth = Math.max(-1, Math.min(1, deltaY / 100))
-      depthAssignValue.current = depth
-      setDepthDragDisplay(depth)
-      return
-    }
-
-    if (dragStartY.current === null) return
-    const deltaY = dragStartY.current - e.clientY
-    if (Math.abs(deltaY) > 3) didDrag.current = true
-    const range = max - min
-    const sensitivity = range / 150
-    let newValue = Math.min(max, Math.max(min, dragStartValue.current + deltaY * sensitivity))
-    if (step) {
-      newValue = Math.round(newValue / step) * step
-    }
-    pendingValueRef.current = newValue
-    if (!changeRafRef.current) {
-      changeRafRef.current = requestAnimationFrame(() => {
-        changeRafRef.current = 0
-        if (pendingValueRef.current !== null) {
-          onChangeRef.current(pendingValueRef.current)
-          pendingValueRef.current = null
-        }
-      })
-    }
-  }, [isDepthDragging, min, max, step])
-
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    try {
-      ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
-    } catch {}
-
-    setIsDragging(false)
-
-    // Flush any pending rAF-throttled change synchronously so the final
-    // value always lands, even if the frame hasn't fired yet.
-    if (changeRafRef.current) {
-      cancelAnimationFrame(changeRafRef.current)
-      changeRafRef.current = 0
-    }
-    if (pendingValueRef.current !== null) {
-      onChangeRef.current(pendingValueRef.current)
-      pendingValueRef.current = null
-    }
-
-    // Commit depth-drag assignment
-    if (isDepthDragging && depthAssignSource.current && paramId) {
-      const depth = depthAssignValue.current
-      const src = depthAssignSource.current
-      if (Math.abs(depth) > 0.02) {
-        const existing = routings.find(r => r.trackId === src && r.targetParam === paramId)
-        if (existing) {
-          updateRoutingDepth(existing.id, depth)
-        } else {
-          addRouting(src, paramId, depth)
-          // Auto-enable the LFO if it was disabled
-          if (src.startsWith('lfo-')) {
-            const lfoIdx = parseInt(src.split('-')[1])
-            useModulationStore.getState().setLFOEnabled(lfoIdx, true)
-          }
-        }
-      }
-      setIsDepthDragging(false)
-      depthAssignSource.current = null
-      return
-    }
-
-    // Click (not drag) → toggle automation target
-    if (!didDrag.current && !isInAssignmentMode && paramId) {
-      if (isAutomationTarget) {
-        clearAutomationParam()
-      } else {
-        const parts = paramId.split('.')
-        if (parts.length === 2) {
-          setAutomationParam({
-            effectId: parts[0],
-            paramId: parts[1],
-            fullParamId: paramId,
-            label: label,
-            min: min,
-            max: max,
-            step: step ?? 0.01,
-          })
-        }
-      }
-    }
-
-    dragStartY.current = null
-  }, [isDepthDragging, isInAssignmentMode, isAutomationTarget, paramId, label, min, max, step, routings, addRouting, updateRoutingDepth, setAutomationParam, clearAutomationParam])
-
-  // Pointer cancel (e.g. touch interruption) — reset visual/drag state without click side-effects
-  const handlePointerCancel = useCallback((e: React.PointerEvent) => {
-    // Cancel any pending rAF-throttled change
-    if (changeRafRef.current) {
-      cancelAnimationFrame(changeRafRef.current)
-      changeRafRef.current = 0
-    }
-    pendingValueRef.current = null
-
-    try {
-      ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
-    } catch {}
-    setIsDragging(false)
-    setIsDepthDragging(false)
-    depthAssignSource.current = null
-    dragStartY.current = null
-  }, [])
-
-  // Drop target handlers
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    if (!paramId) return
-    if (e.dataTransfer.types.includes('sequencer-track') ||
-        e.dataTransfer.types.includes('modulation-source')) {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = 'link'
-      setIsDropTarget(true)
-    }
-  }, [paramId])
-
-  const handleDragLeave = useCallback(() => setIsDropTarget(false), [])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    const trackId = e.dataTransfer.getData('sequencer-track') ||
-                    e.dataTransfer.getData('modulation-source')
-    if (trackId && paramId) {
-      const existing = routings.find(r => r.trackId === trackId && r.targetParam === paramId)
-      if (!existing) addRouting(trackId, paramId, 0.5)
-    }
-    setIsDropTarget(false)
-  }, [paramId, routings, addRouting])
-
-  // Dot drag state for modulation indicators on the arc
-  const draggingRoutingRef = useRef<string | null>(null)
-  const dotDragStartY = useRef(0)
-  const dotDragStartDepth = useRef(0)
-  const dotDidDrag = useRef(false)
-  const [dotDraggingInfo, setDotDraggingInfo] = useState<{ name: string; depth: number; color: string } | null>(null)
-
-  // Get source info for any routing (not just firstRouting)
-  const getRoutingInfo = useCallback((routing: { trackId: string }) => {
-    if (routing.trackId.startsWith('polyEuclid-')) {
-      const polyTrackId = routing.trackId.replace('polyEuclid-', '')
-      const polyTrack = polyEuclidTracks.find(t => t.id === polyTrackId)
-      if (polyTrack) {
-        const trackIndex = polyEuclidTracks.indexOf(polyTrack)
-        return { name: `Euclid T${trackIndex + 1}`, color: POLY_EUCLID_COLOR }
-      }
-    }
-    const stepTrack = seqTracks.find(t => t.id === routing.trackId)
-    if (stepTrack) {
-      const trackIndex = seqTracks.indexOf(stepTrack)
-      return { name: `Step T${trackIndex + 1}`, color: STEP_SEQ_COLOR }
-    }
-    return getSourceInfo(routing.trackId)
-  }, [seqTracks, polyEuclidTracks])
-
-  const handleDotPointerDown = useCallback((e: React.PointerEvent, routing: { id: string; trackId: string; depth: number }) => {
-    e.preventDefault()
-    e.stopPropagation()
-    // Alt+click = instant remove
-    if (e.altKey) {
-      removeRouting(routing.id)
-      return
-    }
-    draggingRoutingRef.current = routing.id
-    dotDidDrag.current = false
-    dotDragStartY.current = e.clientY
-    dotDragStartDepth.current = routing.depth
-    const info = getRoutingInfo(routing)
-    if (info) setDotDraggingInfo({ name: info.name, depth: routing.depth, color: info.color })
-    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
-  }, [getRoutingInfo, removeRouting])
-
-  const handleDotPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!draggingRoutingRef.current) return
-    e.stopPropagation()
-    const deltaY = dotDragStartY.current - e.clientY
-    if (Math.abs(deltaY) > 3) dotDidDrag.current = true
-    const deltaDepth = deltaY / 50
-    const newDepth = Math.max(-1, Math.min(1, dotDragStartDepth.current + deltaDepth))
-    updateRoutingDepth(draggingRoutingRef.current, newDepth)
-    setDotDraggingInfo(prev => prev ? { ...prev, depth: newDepth } : null)
-  }, [updateRoutingDepth])
-
-  const handleDotPointerUp = useCallback((e: React.PointerEvent) => {
-    const routingId = draggingRoutingRef.current
-    const wasDrag = dotDidDrag.current
-    draggingRoutingRef.current = null
-    dotDidDrag.current = false
-    setDotDraggingInfo(null)
-    try { ;(e.target as HTMLElement).releasePointerCapture(e.pointerId) } catch {}
-    if (!routingId) return
-    // Snap-remove: if depth near zero after drag, delete the routing
-    if (wasDrag) {
-      const routing = routings.find(r => r.id === routingId)
-      if (routing && Math.abs(routing.depth) < 0.05) removeRouting(routingId)
-    } else {
-      selectRouting(routingId)
-    }
-  }, [routings, removeRouting, selectRouting])
-
-  const handleDotDoubleClick = useCallback((e: React.MouseEvent, routingId: string) => {
-    e.stopPropagation()
-    removeRouting(routingId)
-  }, [removeRouting])
+    isDragging, isHovered, isDropTarget, isAutomationTarget, isInAssignmentMode,
+    assigningColor, isDepthDragging, depthDragDisplay, depthSourceName, routings, dotDragging,
+  } = ctl
+  const hasRouting = routings.length > 0
+  const sourceInfo = hasRouting ? routings[0] : null
 
   const normalized = (value - min) / (max - min)
 
@@ -421,14 +54,16 @@ export function Knob({
     lg: { width: 72, height: 32 },
   }[size]
 
-  // Modulation routing indicators
-  const modDots = useMemo(() => {
-    return paramRoutings.map(routing => {
-      const info = getRoutingInfo(routing)
-      if (!info) return null
-      return { routing, info }
-    }).filter((d): d is NonNullable<typeof d> => d !== null)
-  }, [paramRoutings, getRoutingInfo])
+  const ariaProps = {
+    'data-param-control': '',
+    'data-param-id': paramId,
+    tabIndex: 0,
+    role: 'slider',
+    'aria-label': label,
+    'aria-valuemin': min,
+    'aria-valuemax': max,
+    'aria-valuenow': value,
+  } as const
 
   const displayValue = formatValue
     ? formatValue(value)
@@ -478,15 +113,6 @@ export function Knob({
     <div
       className="flex flex-col items-center relative"
       style={{ gap: isCompact ? 2 : 3, minWidth: isCompact ? 48 : undefined }}
-      onDragOver={paramId ? handleDragOver : undefined}
-      onDragLeave={paramId ? handleDragLeave : undefined}
-      onDrop={paramId ? handleDrop : undefined}
-      onContextMenu={paramId ? (e) => {
-        e.preventDefault()
-        setContextMenuPos({ x: e.clientX, y: e.clientY })
-      } : undefined}
-      onMouseEnter={resolvedStatusText ? () => setStatusText(resolvedStatusText) : undefined}
-      onMouseLeave={resolvedStatusText ? () => setStatusText(null) : undefined}
     >
       {/* Label */}
       <span
@@ -504,12 +130,8 @@ export function Knob({
       {showArc ? (
         /* Circular arc knob */
         <div
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerCancel}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          {...ctl.rootProps}
+          {...ariaProps}
           className="relative select-none touch-none flex flex-col items-center"
           style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         >
@@ -594,12 +216,8 @@ export function Knob({
       ) : (
       /* Rectangular value container — all pointer events */
       <div
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        {...ctl.rootProps}
+        {...ariaProps}
         className={`relative select-none touch-none ${hasRouting && !isDragging && !isAutomationTarget ? 'alive-active' : ''}`}
         style={{
           width: dimensions.width,
@@ -632,8 +250,7 @@ export function Knob({
               color: '#000',
             }}>
             {(() => {
-              const src = depthAssignSource.current
-              const name = src ? getSourceInfo(src)?.name ?? '' : ''
+              const name = depthSourceName
               const sign = depthDragDisplay > 0 ? '+' : ''
               return name ? `${name}: ${sign}${(depthDragDisplay * 100).toFixed(0)}%` : `${sign}${(depthDragDisplay * 100).toFixed(0)}%`
             })()}
@@ -641,10 +258,10 @@ export function Knob({
         )}
 
         {/* Dot drag tooltip */}
-        {dotDraggingInfo && (
+        {dotDragging && (
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 text-[9px] font-bold tabular-nums whitespace-nowrap z-20"
-            style={{ backgroundColor: dotDraggingInfo.color, color: '#000' }}>
-            {dotDraggingInfo.name}: {dotDraggingInfo.depth > 0 ? '+' : ''}{(dotDraggingInfo.depth * 100).toFixed(0)}%
+            style={{ backgroundColor: dotDragging.color, color: '#000' }}>
+            {dotDragging.name}: {dotDragging.depth > 0 ? '+' : ''}{(dotDragging.depth * 100).toFixed(0)}%
           </div>
         )}
 
@@ -684,36 +301,27 @@ export function Knob({
       )}
 
       {/* Modulation indicators */}
-      {modDots.length > 0 && (
+      {routings.length > 0 && (
         <div className="flex" style={{ gap: 2 }}>
-          {modDots.map(dot => (
+          {routings.map(r => (
             <div
-              key={dot.routing.id}
-              onPointerDown={(e) => handleDotPointerDown(e, dot.routing)}
-              onPointerMove={handleDotPointerMove}
-              onPointerUp={handleDotPointerUp}
-              onDoubleClick={(e) => handleDotDoubleClick(e, dot.routing.id)}
+              key={r.id}
+              {...ctl.dotProps(r)}
               className="cursor-ns-resize touch-none hover:opacity-100 transition-opacity"
               style={{
                 width: isCompact ? 14 : 18,
                 height: 3,
-                backgroundColor: dot.info.color,
+                backgroundColor: r.color,
                 opacity: 0.7,
               }}
-              title={`${dot.info.name}: ${dot.routing.depth > 0 ? '+' : ''}${Math.round(dot.routing.depth * 100)}%. Drag to adjust, double-click to remove`}
+              title={`${r.name}: ${r.depth > 0 ? '+' : ''}${Math.round(r.depth * 100)}%. Drag to adjust, double-click to remove`}
             />
           ))}
         </div>
       )}
 
       {/* Modulation context menu */}
-      {contextMenuPos && paramId && (
-        <ModulationContextMenu
-          paramId={paramId}
-          position={contextMenuPos}
-          onClose={() => setContextMenuPos(null)}
-        />
-      )}
+      {ctl.contextMenu}
     </div>
   )
 }

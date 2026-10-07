@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Option C Mix</title>
+<style>
+:root{
+  --bg-void:oklch(0.17 0.006 270);--bg-primary:oklch(0.205 0.006 270);--bg-surface:oklch(0.225 0.007 270);
+  --bg-elevated:oklch(0.255 0.007 270);--bg-hover:oklch(0.29 0.008 270);--border:oklch(0.32 0.008 270);
+  --border-emphasis:oklch(0.42 0.008 270);--text-primary:oklch(0.95 0.004 270);--text-secondary:oklch(0.80 0.006 270);
+  --text-muted:oklch(0.70 0.006 270);--text-ghost:oklch(0.64 0.006 270);
+  --fx:#ff9900;--lfo:#4ecdc4;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg-void);color:var(--text-primary);font:12px/1.4 'JetBrains Mono',ui-monospace,monospace;padding:24px 20px}
+h1{font-size:14px;letter-spacing:.2em;margin-bottom:6px}
+.intro{color:var(--text-muted);max-width:110ch;margin-bottom:22px}
+.board{display:grid;grid-template-columns:repeat(1,320px);gap:28px;align-items:start}
+.opt h2{font-size:12px;letter-spacing:.14em;margin-bottom:4px}
+.opt .why{color:var(--text-muted);font-size:11px;height:auto;margin-bottom:10px}
+.tag{display:inline-block;font-size:9px;letter-spacing:.12em;padding:1px 5px;border:1px solid var(--border-emphasis);color:var(--text-secondary);margin-left:6px;vertical-align:2px}
+.tag.pick{border-color:var(--fx);color:var(--fx)}
+/* the right column as shipped, 320px wide, clipped at the laptop fold */
+.col{width:320px;height:760px;background:var(--bg-primary);border:1px solid var(--border);position:relative;overflow:hidden}
+.fold{position:absolute;left:0;right:0;top:525px;border-top:1px dashed oklch(0.63 0.2 25);z-index:5}
+.fold span{position:absolute;right:4px;top:-15px;font-size:9px;letter-spacing:.1em;color:oklch(0.63 0.2 25);background:var(--bg-primary);padding:0 3px}
+.below{position:absolute;left:0;right:0;top:526px;bottom:0;background:linear-gradient(to bottom,transparent,oklch(0.17 0.006 270 / .55));pointer-events:none;z-index:4}
+.lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted)}
+.hd{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
+.btn{font-size:9px;letter-spacing:.12em;border:1px solid var(--border-emphasis);padding:4px 7px;color:var(--text-secondary)}
+.row{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-bottom:1px solid var(--border);font-size:11px}
+.row .i{color:var(--text-ghost);width:16px}.row .led{width:7px;height:7px}
+.row .n{flex:1;letter-spacing:.1em}.row .v{color:var(--text-muted);font-size:10px}.row .v b{color:var(--text-primary);font-weight:500}
+.row.sel{background:var(--bg-elevated);outline:1px solid var(--border-emphasis);outline-offset:-1px}
+.fxh{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.fxh .t{font-size:13px;letter-spacing:.14em;font-weight:600}
+.body{padding:8px 10px}
+/* A: today's tiles */
+.sec{border:1px solid var(--border);margin-bottom:6px;padding:6px}
+.sec .lbl{font-size:9px;margin-bottom:5px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.tile{border:1px solid var(--border-emphasis);background:var(--bg-surface);padding:5px 6px;height:46px;position:relative}
+.tile .tv{font-size:12px;font-weight:600}.tile .tl{font-size:8px;letter-spacing:.1em;color:var(--text-muted);margin-left:4px}
+.tile .tb{position:absolute;left:6px;right:6px;bottom:6px;height:3px;background:var(--bg-hover)}
+.tile .tb i{display:block;height:100%;background:var(--text-secondary)}
+.tile.vf{height:46px}.tile.vf .tb{left:auto;right:6px;top:6px;width:3px;height:auto}
+.tile.bip .tb i{margin-left:50%}
+/* B: rows */
+.prow{display:grid;grid-template-columns:62px 1fr 48px;align-items:center;gap:8px;height:24px;padding:0 2px;position:relative}
+.prow+.prow{border-top:1px solid oklch(0.32 0.008 270 / .5)}
+.prow .pl{font-size:10px;letter-spacing:.1em;color:var(--text-muted)}
+.prow .pv{font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.bar{position:relative;height:14px}
+.bar::before{content:'';position:absolute;left:0;right:0;top:6px;height:2px;background:var(--bg-hover)}
+.bar .f{position:absolute;left:0;top:6px;height:2px;background:var(--text-secondary)}
+.bar .h{position:absolute;top:2px;width:2px;height:10px;background:var(--text-primary)}
+.bar .z{position:absolute;left:50%;top:3px;width:1px;height:8px;background:var(--border-emphasis)}
+.bar .mod{position:absolute;top:4px;height:6px;background:color-mix(in oklch,var(--lfo) 35%,transparent);border-left:1px solid var(--lfo);border-right:1px solid var(--lfo)}
+.prow .dot{position:absolute;left:-7px;top:9px;width:5px;height:5px;border-radius:50%;background:var(--lfo)}
+.prow.lock{outline:1px solid var(--fx);outline-offset:-1px;background:color-mix(in oklch,var(--fx) 8%,transparent)}
+.prow.assign{outline:1px dashed var(--lfo);outline-offset:-1px}
+.prow.fx .f{background:var(--fx)}
+.legend{margin-top:8px;font-size:9px;color:var(--text-muted);letter-spacing:.06em;display:grid;gap:3px}
+.legend i{display:inline-block;width:10px;height:6px;vertical-align:1px;margin-right:5px}
+/* knobs */
+.knobs{display:grid;gap:8px 4px;padding:4px 0 8px}
+.k4{grid-template-columns:repeat(4,1fr)}
+.knob{display:flex;flex-direction:column;align-items:center;gap:2px}
+.knob svg{width:46px;height:46px}
+.knob .kv{font-size:11px;font-variant-numeric:tabular-nums}.knob .kl{font-size:9px;letter-spacing:.1em;color:var(--text-muted)}
+.strip{border-bottom:1px solid var(--border);margin:-8px -10px 8px;padding:8px 10px 2px;background:var(--bg-surface)}
+.strip .lbl{font-size:9px;margin-bottom:2px}
+.audio{margin-top:10px;border-top:1px solid var(--border);padding-top:8px}
+.audio .lbl{font-size:9px}
+.spec{height:34px;margin-top:6px;background:repeating-linear-gradient(90deg,var(--bg-hover) 0 2px,transparent 2px 5px);opacity:.7}
+
+/* C1: thick track + tall handle */
+.v1 .prow{height:30px;grid-template-columns:58px 1fr 46px}
+.v1 .bar{height:20px}
+.v1 .bar::before{top:7px;height:6px;background:var(--bg-hover);border-radius:1px}
+.v1 .bar .f{top:7px;height:6px}
+.v1 .bar .h{top:1px;width:6px;height:18px;margin-left:-2px;background:var(--text-primary);border-radius:1px}
+.v1 .bar .mod{top:4px;height:12px}
+.v1 .bar .z{top:3px;height:14px}
+.v1 .prow .dot{top:12px}
+/* C2: full-height fill bar, value inside (DAW parameter bar) */
+.v2 .prow{display:block;height:28px;padding:0;margin-bottom:3px;border:none!important}
+.v2 .prow+.prow{border-top:none}
+.v2 .pbar{position:relative;height:28px;background:var(--bg-surface);border:1px solid var(--border);overflow:hidden}
+.v2 .pbar .ff{position:absolute;top:0;bottom:0;left:0;background:oklch(0.36 0.008 270)}
+.v2 .pbar .zz{position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--border-emphasis)}
+.v2 .pbar .mm{position:absolute;top:0;bottom:0;background:color-mix(in oklch,var(--lfo) 28%,transparent);border-left:1px solid var(--lfo);border-right:1px solid var(--lfo)}
+.v2 .pbar .edge{position:absolute;top:0;bottom:0;width:2px;background:var(--text-primary)}
+.v2 .pbar .tx{position:absolute;inset:0;display:flex;justify-content:space-between;align-items:center;padding:0 9px;font-size:11px;letter-spacing:.1em}
+.v2 .pbar .tx .pl{color:var(--text-secondary)}
+.v2 .pbar .tx .pv{font-size:12px;font-variant-numeric:tabular-nums}
+.v2 .prow.lock .pbar{border-color:var(--fx);outline:none}
+.v2 .prow.lock{outline:none;background:none}
+.v2 .prow.assign{outline:none}.v2 .prow.assign .pbar{border:1px dashed var(--lfo)}
+.v2 .prow .dot{left:auto;right:-1px;top:-1px;border-radius:0;width:6px;height:6px}
+/* C3: segmented LED fader */
+.v3 .prow{height:30px;grid-template-columns:58px 1fr 46px}
+.v3 .seg{display:flex;gap:2px;height:16px;position:relative}
+.v3 .seg i{flex:1;background:var(--bg-hover)}
+.v3 .seg i.on{background:var(--text-secondary)}
+.v3 .seg i.m{box-shadow:inset 0 -3px 0 var(--lfo)}
+.v3 .prow .dot{top:12px}
+
+
+/* C2+C3 hybrid: segmented fill inside a full-size bar */
+.v4 .prow{display:block;height:28px;padding:0;margin-bottom:3px;border:none!important;position:relative}
+.v4 .prow.lock,.v4 .prow.assign{outline:none;background:none}
+.v4 .hb{position:relative;height:28px;display:flex;align-items:center;gap:5px;padding:3px 4px;background:var(--bg-surface);border:1px solid var(--border);overflow:hidden}
+.v4 .prow.lock .hb{border-color:var(--fx)}
+.v4 .prow.assign .hb{border:1px dashed var(--lfo)}
+.v4 .hs{flex:1;align-self:stretch;display:flex;gap:2px}
+.v4 .hs i{flex:1;background:oklch(0.245 0.007 270)}
+.v4 .hs i.on{background:oklch(0.56 0.008 270)}
+.v4 .hs i.m{background:color-mix(in oklch,var(--lfo) 40%,oklch(0.25 0.007 270))}
+.v4 .hs i.on.m{background:color-mix(in oklch,var(--lfo) 70%,oklch(0.56 0.008 270))}
+.v4 .hs i.z{background:oklch(0.48 0.008 270)}
+.v4 .edge{position:absolute;top:0;bottom:0;width:2px;background:var(--text-primary)}
+.v4 .pl,.v4 .pv{font-size:11px;letter-spacing:.1em;color:var(--text-primary);flex:none}.v4 .pl{width:58px;color:var(--text-secondary)}.v4 .pv{width:40px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
+.v4 .tx .pl,.v4 .tx .pv{color:var(--text-primary);background:var(--bg-surface);padding:1px 5px;border:1px solid var(--border)}
+.v4 .tx .pv{font-size:12px;font-variant-numeric:tabular-nums}
+.v4 .prow .dot{left:auto;right:-1px;top:-1px;border-radius:0;width:6px;height:6px}
+
+.note{margin-top:28px;color:var(--text-muted);max-width:110ch;font-size:11px}
+</style></head><body>
+<h1>EFFECT SETTINGS · FINAL</h1>
+<p class="intro">Every column is the real right-hand chain column at its shipped width (320px), showing POINT CLOUD. It is the worst case: 13 settings, including ints, ranges and two bipolar rotations. The dashed red line is where the screen ends at 1440×900 with the sequencer docked. Anything below it needs scrolling. In the rows and knobs, N.SPD is modulated by LFO 1 (teal), one is the p-lock target (orange outline), and one is being hovered in "click to route" mode (dashed).</p>
+<div class="board" id="board"></div>
+<p class="note" hidden>The values are illustrative. Option A is today's tile grid, redrawn from the shipped components. Options B to D are proposals. With B, the bug fix (click to route working on every setting) comes first, and it is the same for all four options.</p>
+<script>
+const P=[['DENS',256,64,512,0],['SIZE',4.5,1,20,0],['DEPTH',1.2,0,2,0],['NOISE',.35,0,1,0],['N.SCALE',2.4,.1,10,0],['N.SPD',.6,0,2,0],
+['OPAC',.85,0,1,0],['ROT.X',.42,-3.14,3.14,1],['ROT.Y',-.2,-1.57,1.57,1],['ZOOM',1.6,.5,5,0],['SCL.X',1,.3,2,0],['SCL.Y',1,.3,2,0],['MIX',1,0,1,0]]
+const fmt=v=>Number.isInteger(v)?String(v):(Math.abs(v)<10?v.toFixed(2).replace(/^0/,'').replace(/^-0/,'-'):v.toFixed(1))
+const pct=(v,a,b)=>(v-a)/(b-a)*100
+const chain=()=>`<div class="hd"><span class="lbl">Chain</span><span><span class="btn">BYPASS</span> <span class="btn">CLEAR</span></span></div>
+${[['01','#ff5c8a','KALEID','SEG','6'],['02','#5fe3c0','CRYSTL','CELL','32'],['03','#ff9900','PTCLD','DENS','256'],['04','#a78bfa','RIPPLE','FREQ','12']].map(([i,c,n,k,v],x)=>`<div class="row ${x==2?'sel':''}"><span class="i">${i}</span><span class="led" style="background:${c}"></span><span class="n">${n}</span><span class="v">${k} <b>${v}</b></span><span class="v">ON</span><span class="v">×</span></div>`).join('')}
+<div class="fxh"><span class="lbl" style="font-size:9px">[COLOR]</span><span class="t">POINT CLOUD</span></div>`
+const fold=`<div class="fold"><span>FOLD @ 1440×900</span></div><div class="below"></div>`
+const audio=`<div class="audio"><span class="lbl">Audio band · off for this track</span><div class="spec"></div></div>`
+function tiles(){
+  const secs=[['Geometry',[0,1,2,9,10,11]],['Noise',[3,4,5]],['Rotation',[7,8]],['Output',[6,12]]]
+  return secs.map(([n,ix])=>`<div class="sec"><div class="lbl">${n}</div><div class="tiles">${ix.map(i=>{const [l,v,a,b,bi]=P[i];const cls=i==0?'vf':bi?'bip':'';const w=bi?Math.abs(pct(v,a,b)-50):pct(v,a,b);return `<div class="tile ${cls}"><span class="tv">${fmt(v)}</span><span class="tl">${l}</span><div class="tb"><i style="width:${w}%;${bi&&v<0?'margin-left:'+(50-w)+'%':''}"></i></div></div>`}).join('')}</div></div>`).join('')
+}
+function row(i,extra=''){
+  const [l,v,a,b,bi]=P[i];const p=pct(v,a,b)
+  const fill=bi?`<span class="z"></span><span class="f" style="left:${Math.min(50,p)}%;width:${Math.abs(p-50)}%"></span>`:`<span class="f" style="width:${p}%"></span>`
+  const mod=i==5?`<span class="mod" style="left:${p-18}%;width:36%"></span>`:''
+  const cls=i==9?'lock':i==6?'assign':''
+  return `<div class="prow ${cls}">${i==5?'<span class="dot"></span>':''}<span class="pl">${l}</span><span class="bar">${fill}${mod}<span class="h" style="left:calc(${p}% - 1px)"></span></span><span class="pv">${fmt(v)}</span></div>`
+}
+function knob(i){
+  const [l,v,a,b,bi]=P[i];const p=pct(v,a,b)/100;const R=17,c=23,start=135,sweep=270
+  const pt=t=>{const ang=(start+sweep*t)*Math.PI/180;return [c+R*Math.cos(ang),c+R*Math.sin(ang)]}
+  const arc=(t0,t1,col,w)=>{const [x0,y0]=pt(t0),[x1,y1]=pt(t1);const large=(t1-t0)*sweep>180?1:0;return `<path d="M${x0} ${y0} A${R} ${R} 0 ${large} 1 ${x1} ${y1}" stroke="${col}" stroke-width="${w}" fill="none"/>`}
+  const from=bi?.5:0;const [hx,hy]=pt(p)
+  const mod=i==3?arc(Math.max(0,p-.18),Math.min(1,p+.18),'#4ecdc4',5):''
+  const ring=i==9?'<circle cx="23" cy="23" r="22" fill="none" stroke="#ff9900" stroke-width="1"/>':i==6?'<circle cx="23" cy="23" r="22" fill="none" stroke="#4ecdc4" stroke-width="1" stroke-dasharray="3 2"/>':''
+  return `<div class="knob"><svg viewBox="0 0 46 46">${ring}${arc(0,1,'oklch(0.29 0.008 270)',2)}${mod}${arc(Math.min(from,p),Math.max(from,p),'oklch(0.80 0.006 270)',2)}<line x1="23" y1="23" x2="${hx}" y2="${hy}" stroke="oklch(0.95 0.004 270)" stroke-width="1.5"/></svg><span class="kv">${fmt(v)}</span><span class="kl">${l}</span></div>`
+}
+const legend=`<div class="legend"><span><i style="background:color-mix(in oklch,#4ecdc4 35%,transparent);border:1px solid #4ecdc4"></i>LFO 1 modulation range, drawn on the control</span><span><i style="border:1px solid #ff9900"></i>p-lock target (click a setting)</span><span><i style="border:1px dashed #4ecdc4"></i>"click to route" hover while assigning</span></div>`
+
+function row1(i){return row(i)}
+function row2(i){
+  const [l,v,a,b,bi]=P[i];const p=pct(v,a,b)
+  const fill=bi?`<span class="zz"></span><span class="ff" style="left:${Math.min(50,p)}%;width:${Math.abs(p-50)}%"></span>`:`<span class="ff" style="width:${p}%"></span>`
+  const mod=i==5?`<span class="mm" style="left:${p-18}%;width:36%"></span>`:''
+  const cls=i==9?'lock':i==6?'assign':''
+  return `<div class="prow ${cls}" style="position:relative">${i==5?'<span class="dot"></span>':''}<div class="pbar">${fill}${mod}<span class="edge" style="left:calc(${p}% - 1px)"></span><div class="tx"><span class="pl">${l}</span><span class="pv">${fmt(v)}</span></div></div></div>`
+}
+function row3(i){
+  const [l,v,a,b,bi]=P[i];const p=pct(v,a,b);const N=20
+  const segs=Array.from({length:N},(_,k)=>{const c=(k+.5)/N*100;const on=bi?((c>=Math.min(50,p)&&c<=Math.max(50,p))):c<=p;const m=i==5&&Math.abs(c-p)<=18;return `<i class="${on?'on':''} ${m?'m':''}"></i>`}).join('')
+  const cls=i==9?'lock':i==6?'assign':''
+  return `<div class="prow ${cls}">${i==5?'<span class="dot"></span>':''}<span class="pl">${l}</span><span class="seg">${segs}</span><span class="pv">${fmt(v)}</span></div>`
+}
+
+function rowH(i,N){
+  const [l,v,a,b,bi]=P[i];const p=pct(v,a,b)
+  const segs=Array.from({length:N},(_,k)=>{const lo=k/N*100,hi=(k+1)/N*100,c=(lo+hi)/2;
+    const on=bi?(c>=Math.min(50,p)&&c<=Math.max(50,p)):c<=p;const m=i==5&&Math.abs(c-p)<=18;const z=bi&&lo<=50&&hi>50&&!on;
+    return `<i class="${on?'on':''} ${m?'m':''} ${z?'z':''}"></i>`}).join('')
+  const cls=i==9?'lock':i==6?'assign':''
+  return `<div class="prow ${cls}">${i==5?'<span class="dot"></span>':''}<div class="hb"><span class="pl">${l}</span><span class="hs">${segs}</span><span class="pv">${fmt(v)}</span></div></div>`
+}
+const strip=`<div class="strip"><div class="lbl">Main</div><div class="knobs k4">${[0,1,2,3].map(knob).join('')}</div></div>`
+const opts=[
+ ['FINAL · C2+C3, 32 SEGMENTS','pick','Knob strip for the first 4 settings, then a full-size bar per setting filled with 32 LED segments. Name on the left, segments in the middle, value on the right, all inside one bar, and the whole bar is the grab target. There is no white value line; the number shows the exact value.',`<div class="v4">${strip}${P.map((_,i)=>i>3?rowH(i,32):'').join('')}</div>`],
+]
+document.getElementById('board').innerHTML=opts.map(([t,tag,w,body])=>`<div class="opt"><h2>${t}${tag?'<span class="tag pick">FINAL</span>':''}</h2><div class="why">${w}</div><div class="col">${chain()}<div class="body">${body}${audio}</div>${fold}</div></div>`).join('')
+</script>
+</body></html>

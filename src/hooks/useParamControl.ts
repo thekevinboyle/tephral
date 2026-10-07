@@ -229,6 +229,8 @@ export function useParamControl({
   }, [axis, dragSpanPx, min, max, snapClamp, dispatchChange])
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    // Right-click opens the context menu; it must not toggle the p-lock
+    if (e.button !== 0) return
     try { ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* not captured */ }
 
     setIsDragging(false)

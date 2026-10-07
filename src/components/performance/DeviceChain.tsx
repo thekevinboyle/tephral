@@ -34,6 +34,16 @@ function focusBrowserSearch() {
   })
 }
 
+/** The device after `gone` in the previous chain that is still in the chain, else the nearest one before it, else the first. */
+function neighbourIn(prev: string[], ids: string[], gone: string): string | null {
+  const i = prev.indexOf(gone)
+  if (i >= 0) {
+    for (let j = i + 1; j < prev.length; j++) if (ids.includes(prev[j])) return prev[j]
+    for (let j = i - 1; j >= 0; j--) if (ids.includes(prev[j])) return prev[j]
+  }
+  return ids[0] ?? null
+}
+
 const clearDropMarks = (root: HTMLElement | null) => {
   root?.querySelectorAll('[data-drop]').forEach((el) => el.removeAttribute('data-drop'))
 }
@@ -75,10 +85,14 @@ export const DeviceChain = memo(function DeviceChain() {
   }, [ids])
 
   // Keep a valid selection. A selected modulator owns the inspector: never replace it with a device.
+  // When the selected device leaves the chain, select the device that followed it, else the one before it.
+  const prevIdsRef = useRef(ids)
   useEffect(() => {
+    const prev = prevIdsRef.current
+    prevIdsRef.current = ids
     const { setSelectedEffect } = useUIStore.getState()
     if (selectedModulator) return
-    if (selectedEffectId && !ids.includes(selectedEffectId)) setSelectedEffect(ids[0] ?? null)
+    if (selectedEffectId && !ids.includes(selectedEffectId)) setSelectedEffect(neighbourIn(prev, ids, selectedEffectId))
     else if (!selectedEffectId && ids.length > 0) setSelectedEffect(ids[0])
   }, [ids, selectedEffectId, selectedModulator])
 

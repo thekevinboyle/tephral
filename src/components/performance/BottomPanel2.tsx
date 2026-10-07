@@ -116,7 +116,7 @@ export const BottomPanel2 = memo(function BottomPanel2() {
   return (
     <div className="seg-bottom" data-bottom-panel data-tab={tab}>
       <div className="seg-bottom-head">
-        <span className="seg-bottom-title">Chain</span>
+        <span className="seg-bottom-title">{tab === 'devices' ? 'Chain' : 'Sequencer'}</span>
         <HeaderNote />
         <span className="seg-bottom-spacer" />
         <ChainActions />

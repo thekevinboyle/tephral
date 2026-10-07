@@ -27,3 +27,21 @@ export function getSourceInfo(trackId: string): { name: string; color: string } 
 }
 export const POLY_EUCLID_COLOR = '#FF0055'
 export const STEP_SEQ_COLOR = '#FF9500'
+
+/**
+ * Name and colour for any routing source id: poly-Euclid tracks ("Euclid T2"), step-sequencer tracks
+ * ("Step T1"), then the modulators and audio bands (getSourceInfo). Pass the current track id lists.
+ */
+export function resolveRoutingSource(
+  trackId: string,
+  seqTrackIds: readonly string[],
+  polyTrackIds: readonly string[],
+): { name: string; color: string } | null {
+  if (trackId.startsWith('polyEuclid-')) {
+    const idx = polyTrackIds.indexOf(trackId.replace('polyEuclid-', ''))
+    if (idx >= 0) return { name: `Euclid T${idx + 1}`, color: POLY_EUCLID_COLOR }
+  }
+  const sIdx = seqTrackIds.indexOf(trackId)
+  if (sIdx >= 0) return { name: `Step T${sIdx + 1}`, color: STEP_SEQ_COLOR }
+  return getSourceInfo(trackId)
+}

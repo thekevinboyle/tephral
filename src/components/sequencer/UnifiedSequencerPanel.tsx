@@ -62,7 +62,7 @@ export function UnifiedSequencerPanel() {
     [sortedEffects],
   )
 
-  // ChainPanel owns ensureTrack + auto-select for active effects (always mounted beside the dock)
+  // DeviceChain owns ensureTrack + auto-select for active effects (always mounted in the bottom panel)
 
   // Active tracks (enabled effects that also have sequencer tracks)
   const activeTrackIds = useMemo(

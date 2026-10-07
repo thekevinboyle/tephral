@@ -46,7 +46,17 @@ const ParamSelect = memo(function ParamSelect({ effectId, param }: { effectId: s
   )
 })
 
-export const EffectSettings = memo(function EffectSettings({ effectId }: { effectId: string }) {
+interface EffectSettingsProps {
+  effectId: string
+  /** true (default): the first 4 numeric params as a knob strip, the rest as bars. false: every numeric param is a
+   *  ParamBar, in a "Main" section (the 4 the device card shows as dials) and a "More" section (the rest, toggles,
+   *  selects and extras). The Inspector uses false. */
+  showStrip?: boolean
+  /** Show EffectHeaderBlock (default true). The Inspector draws its own header. */
+  showHeader?: boolean
+}
+
+export const EffectSettings = memo(function EffectSettings({ effectId, showStrip = true, showHeader = true }: EffectSettingsProps) {
   const color = ALL_EFFECTS.find((e) => e.id === effectId)?.color ?? 'var(--text-primary)'
   // getParams() builds closures; build once per effect so memoised children see stable param objects
   const { strip, bars, toggles, selects } = useMemo(() => {
@@ -60,18 +70,8 @@ export const EffectSettings = memo(function EffectSettings({ effectId }: { effec
       selects: entry?.getSelectParams?.() ?? [],
     }
   }, [effectId])
-  return (
-    <div data-effect-settings={effectId} style={{ ['--fx' as string]: color, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <EffectHeaderBlock effectId={effectId} />
-      {strip.length > 0 && (
-        <div data-knob-strip style={{ background: 'var(--bg-surface)', margin: '0 -8px', padding: '6px 8px 4px', borderBottom: '1px solid var(--border)' }}>
-          <span className="hud-label" style={{ fontSize: 9, color: 'var(--text-muted)' }}>Main</span>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', justifyItems: 'center', gap: 4, marginTop: 2 }}>
-            {strip.map((p) => <StripKnob key={p.id} effectId={effectId} param={p} />)}
-          </div>
-        </div>
-      )}
-      {bars.length > 0 && <div>{bars.map((p) => <ParamBar key={p.id} effectId={effectId} param={p} />)}</div>}
+  const rest = (
+    <>
       {toggles.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
           {toggles.map((p) => <ParamToggle key={p.id} param={p} />)}
@@ -83,6 +83,45 @@ export const EffectSettings = memo(function EffectSettings({ effectId }: { effec
         </div>
       )}
       <BlockExtras effectId={effectId} />
+    </>
+  )
+  if (!showStrip) {
+    return (
+      <div data-effect-settings={effectId} className="seg-insp-settings" style={{ ['--fx' as string]: color }}>
+        {showHeader && <EffectHeaderBlock effectId={effectId} />}
+        {strip.length > 0 && (
+          <section className="seg-insp-sec" data-settings-section="main">
+            <div className="seg-insp-sec-head"><span>Main</span><span className="seg-insp-sec-note">first {strip.length} on the device</span></div>
+            <div>{strip.map((p) => <ParamBar key={p.id} effectId={effectId} param={p} />)}</div>
+          </section>
+        )}
+        {bars.length + toggles.length + selects.length > 0 ? (
+          <section className="seg-insp-sec" data-settings-section="more">
+            <div className="seg-insp-sec-head"><span>More</span></div>
+            <div className="seg-insp-more">
+              {bars.length > 0 && <div>{bars.map((p) => <ParamBar key={p.id} effectId={effectId} param={p} />)}</div>}
+              {rest}
+            </div>
+          </section>
+        ) : (
+          <BlockExtras effectId={effectId} />
+        )}
+      </div>
+    )
+  }
+  return (
+    <div data-effect-settings={effectId} style={{ ['--fx' as string]: color, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {showHeader && <EffectHeaderBlock effectId={effectId} />}
+      {strip.length > 0 && (
+        <div data-knob-strip style={{ background: 'var(--bg-surface)', margin: '0 -8px', padding: '6px 8px 4px', borderBottom: '1px solid var(--border)' }}>
+          <span className="hud-label" style={{ fontSize: 9, color: 'var(--text-muted)' }}>Main</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', justifyItems: 'center', gap: 4, marginTop: 2 }}>
+            {strip.map((p) => <StripKnob key={p.id} effectId={effectId} param={p} />)}
+          </div>
+        </div>
+      )}
+      {bars.length > 0 && <div>{bars.map((p) => <ParamBar key={p.id} effectId={effectId} param={p} />)}</div>}
+      {rest}
     </div>
   )
 })

@@ -1,6 +1,5 @@
 import { useCallback, useState, useEffect, useMemo } from 'react'
 import { useEffectSequencerStore, type EffectTrack } from '../../stores/effectSequencerStore'
-import { useUIStore } from '../../stores/uiStore'
 import { useMIDIStore } from '../../stores/midiStore'
 import { EffectStepCell } from './EffectStepCell'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
@@ -61,8 +60,6 @@ export function EffectTrackRow({
 
   const trackAudioLevel = useEffectSequencerStore((s) => s.trackAudioLevels[effectId] ?? 0)
   const trackAutoThreshold = useEffectSequencerStore((s) => s.trackAutoThresholds[effectId] ?? 0.5)
-  const toggleBottomPanelTab = useUIStore((s) => s.toggleBottomPanelTab)
-  const bottomPanelTab = useUIStore((s) => s.bottomPanelTab)
   const trackNoteMap = useMIDIStore((s) => s.trackNoteMap)
   const noteStates = useMIDIStore((s) => s.noteStates)
   const setNoteForTrack = useMIDIStore((s) => s.setNoteForTrack)
@@ -340,9 +337,6 @@ export function EffectTrackRow({
               const enabling = !track.audioReactive?.enabled
               setTrackAudioReactiveEnabled(effectId, enabling)
               onSelectTrack?.(effectId)
-              if (enabling && bottomPanelTab !== 'Audio') {
-                toggleBottomPanelTab('Audio')
-              }
             }}
             className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm relative overflow-hidden"
             style={{

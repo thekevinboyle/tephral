@@ -1,3 +1,5 @@
+import { getSourceInfo } from '../../utils/modulationSources'
+
 export interface ModulatorSlot {
   /** Routing id (sequencerStore routing trackId) and uiStore.selectedModulator value */
   id: string
@@ -22,5 +24,5 @@ export const MODULATOR_SLOTS: ModulatorSlot[] = [
 
 /** Display name for a routing source id while assigning ("LFO 1", "Envelope", ...) */
 export function modulatorName(id: string): string {
-  return MODULATOR_SLOTS.find((s) => s.id === id)?.name ?? id
+  return MODULATOR_SLOTS.find((s) => s.id === id)?.name ?? getSourceInfo(id)?.name ?? id
 }

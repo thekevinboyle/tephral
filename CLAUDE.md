@@ -73,11 +73,10 @@ Enabled flags/order and per-frame params are split across two files:
 ## Architecture
 
 ### Layout Shell (`src/components/performance/PerformanceLayout.tsx` + `layout.css`)
-`.seg-shell` is a CSS grid whose children carry `data-area`: `header`, `effects`, `stage`, `chain`, `dock`, `status`.
-- **Laptop (1100-2199px)**: effects | stage | chain across the middle, dock spans the bottom (content-sized, capped at 34vh; 50vh while a modulation tab is open).
-- **Ultrawide (>= 2200px)**: the dock becomes a fourth, full-height right-hand column.
-- **Narrow (< 1100px)**: the page scrolls; stage first, then effects and chain side by side, then the dock.
-- `PerformanceLayout` re-renders every engine tick, so `HeaderBar`, `EffectsColumn`, `StageArea`, `ChainPanel` and `Dock` are `React.memo`. Keep their props stable and their store selectors narrow.
+`.seg-shell` is a CSS grid whose children carry `data-area`: `header`, `browser`, `stage`, `inspector`, `bottom`, `footer`. Footer toggles show or hide the browser, inspector and bottom panel (hidden by CSS, never unmounted, so the canvas is never remounted).
+- **Sizes**: header 44px, footer 30px, browser 250px, inspector 300px (300px and 340px at >= 2200px). Bottom panel 172px on Devices; on Sequencer it follows the content up to 40vh.
+- **Narrow (< 1100px)**: the browser and inspector become drawers over the stage (one at a time).
+- `PerformanceLayout` re-renders every engine tick, so `HeaderBar`, `EffectBrowser`, `StageArea`, `Inspector` and `BottomPanel2` are `React.memo`. Keep their props stable and their store selectors narrow.
 
 ### Header (`src/components/performance/HeaderBar.tsx`)
 VIDEO/AUDIO source menus (portalled, `position: fixed`), the preset picker, and REC (`useRecordingControl`, red `--rec` token).
@@ -88,11 +87,17 @@ Left column: page tabs + effect grid (`PerformanceGrid`), bank slots, crossfader
 ### Stage (`src/components/performance/StageArea.tsx`)
 Aspect-locked output frame that fits the free space, with corner ticks, ruler, ClipBin and four HUD readouts (`StageReadouts`): LIVE/REC + FPS, preset name (or bank), timecode, active band. The frame is a container; under 380px the readouts re-stack.
 
-### Chain Panel (`src/components/performance/ChainPanel.tsx`)
-Right column: the effect chain in signal order. Rows handle selection, drag (and Alt+Arrow) reorder, per-effect bypass (button or shift+click), remove (button, Delete, double-click), clear-all and bypass-all. It owns `ensureTrack` and auto-select for active effects. Below the rows it shows the selected effect's settings (rendered by `EffectSettings`: a knob strip plus segmented `ParamBar`s, with `useParamControl` supplying the shared drag, p-lock, reset, context-menu and modulation-drop behaviour; `BlockExtras` in `EffectExtras.tsx` adds colour/texture extras) and audio band.
+### Browser (`src/components/performance/EffectBrowser.tsx`)
+Left panel: every effect by category with its full name and description (`src/config/effectNames.ts`), a search box, and List/Pads views. Clicking a row adds the effect to the end of the chain (or removes it).
 
-### Dock (`src/components/performance/Dock.tsx`)
-Sequencer (`SequencerContainer` > `UnifiedSequencerPanel`, whose track list is the only scroller) above the modulation tabs (`BottomPanel`: LFO, Random, Step, Env, S&H, MIDI, Audio).
+### Inspector (`src/components/performance/Inspector.tsx`)
+Right panel, contextual on `uiStore`. Its root carries `data-inspector-mode`:
+- `effect` (a device is selected): header (colour, full name, "· 3 of 5 in chain", Bypass), then `EffectSettings showStrip={false}` (every numeric param as a `ParamBar`, in "Main" and "More" sections, with `useParamControl` supplying drag, p-lock, reset, context menu and modulation drop), then the Modulation list (`[data-inspector-routes]`: routes whose `targetParam` starts with `${effectId}.`, named via `resolveRoutingSource`, × removes), then the audio band (`TrackAudioReactivePanel`).
+- `modulator` (a slot in the Modulators card is selected): that modulator's editor. LFO slots open `ModulationAssignPanel` on that LFO (`selectedLFOIndex`); Random/Step/Envelope/S&H/MIDI use `ModulationContent` (`sampleHold` maps to `sh`); Audio shows `TrackAudioReactivePanel` with a device picker.
+- `empty`: "Select a device or modulator to edit it."
+
+### Device chain (`src/components/performance/BottomPanel2.tsx`, `DeviceChain.tsx`, `DeviceCard.tsx`, `ModulatorsCard.tsx`)
+Bottom panel with Devices and Sequencer tabs (both stay mounted; the title reads "Chain" or "Sequencer"). Devices: the Modulators card (● arms routing, then click or drag any control), then one card per active effect in signal order with 4 dials and a Mix bar. `DeviceChain` owns `ensureTrack`, drag/keyboard reorder, bypass, remove, and selection: it auto-selects a device unless a modulator is selected, and when the selected device is removed it selects the next device (else the previous, else none). Sequencer: `SequencerContainer` > `UnifiedSequencerPanel`.
 
 Effect params flow through `src/effects/paramSync.ts` (zustand subscribe → uniform writes); Canvas.tsx's structural effect only rebuilds the pass chain on enable/disable/reorder.
 

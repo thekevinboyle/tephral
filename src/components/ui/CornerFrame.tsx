@@ -77,7 +77,7 @@ export function CornerFrame({
 
       {/* Label — left of frame */}
       {label && (
-        <div style={{
+        <div data-corner-label style={{
           position: 'absolute',
           top: '50%',
           right: '100%',

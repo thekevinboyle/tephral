@@ -35,10 +35,6 @@ interface UIState {
   // Info panel selection (unified)
   infoPanelSelection: InfoPanelSelection
 
-  // Bottom panel state
-  bottomPanelTab: string | null  // null = collapsed, string = active tab name
-  bottomPanelPage: number        // 1-indexed page within active tab
-
   // Shell panels (Bitwig-style). Browser/inspector/bottom visibility, bottom tab, modulator selection.
   showBrowser: boolean
   showInspector: boolean
@@ -73,12 +69,6 @@ interface UIState {
   selectPreset: (presetId: string) => void
   clearInfoPanelSelection: () => void
 
-  // Bottom panel actions
-  toggleBottomPanelTab: (tab: string) => void
-  setBottomPanelPage: (page: number) => void
-  nextBottomPanelPage: () => void
-  prevBottomPanelPage: () => void
-
   // Status bar
   statusText: string | null
   setStatusText: (text: string | null) => void
@@ -96,8 +86,6 @@ export const useUIStore = create<UIState>((set) => ({
   },
 
   infoPanelSelection: null,
-  bottomPanelTab: null,
-  bottomPanelPage: 1,
   statusText: null,
 
   showBrowser: true,
@@ -151,13 +139,6 @@ export const useUIStore = create<UIState>((set) => ({
   selectPreset: (presetId) => set({ infoPanelSelection: { type: 'preset', presetId } }),
   clearInfoPanelSelection: () => set({ infoPanelSelection: null }),
 
-  toggleBottomPanelTab: (tab) => set((state) => ({
-    bottomPanelTab: state.bottomPanelTab === tab ? null : tab,
-    bottomPanelPage: state.bottomPanelTab === tab ? state.bottomPanelPage : 1,
-  })),
-  setBottomPanelPage: (page) => set({ bottomPanelPage: Math.max(1, Math.min(4, page)) }),
-  nextBottomPanelPage: () => set((state) => ({ bottomPanelPage: Math.min(4, state.bottomPanelPage + 1) })),
-  prevBottomPanelPage: () => set((state) => ({ bottomPanelPage: Math.max(1, state.bottomPanelPage - 1) })),
 
   setStatusText: (text) => set({ statusText: text }),
 }))

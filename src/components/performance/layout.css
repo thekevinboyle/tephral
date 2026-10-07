@@ -302,3 +302,42 @@
   .seg-pad-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(6, minmax(0, 1fr)); }
   .seg-pad-grid > [data-pad-empty] { display: none; }
 }
+
+/* ─── Inspector (Inspector.tsx): effect / modulator / empty ───────────────────────────────────────── */
+.seg-insp { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; min-width: 0; }
+.seg-insp-head { flex: none; display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 6px 0 10px; border-bottom: 1px solid var(--border); min-width: 0; }
+.seg-insp-swatch { flex: none; width: 9px; height: 9px; border-radius: 2px; }
+.seg-insp-name { flex: 0 1 auto; min-width: 0; font: 600 12px var(--font-sans); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-insp-pos { flex: none; font: 400 11px var(--font-sans); color: var(--text-muted); white-space: nowrap; }
+.seg-insp-kind { flex: none; font: 400 11px var(--font-sans); color: var(--text-muted); padding-right: 4px; }
+.seg-insp-spacer { flex: 1 1 auto; }
+.seg-insp-btn { flex: none; font: 500 11px var(--font-sans); height: 22px; padding: 0 9px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); cursor: pointer; }
+.seg-insp-btn:hover { background: var(--bg-hover); color: var(--text-secondary); }
+.seg-insp-btn[data-on] { background: var(--bg-hover); color: var(--text-primary); }
+.seg-insp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.seg-insp :focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-insp-settings { display: flex; flex-direction: column; }
+.seg-insp-sec { padding: 8px 10px 10px; border-bottom: 1px solid var(--border); min-width: 0; }
+.seg-insp-sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; font: 500 11px var(--font-sans); color: var(--text-secondary); }
+.seg-insp-sec-note { font: 400 11px var(--font-sans); color: var(--text-muted); }
+.seg-insp-more { display: flex; flex-direction: column; gap: 8px; }
+.seg-insp-hint { margin: 0; font: 400 11px/16px var(--font-sans); color: var(--text-muted); }
+.seg-insp-empty { margin: 0; padding: 14px 10px; font: 400 12px/18px var(--font-sans); color: var(--text-secondary); }
+.seg-insp-routes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.seg-insp-route { display: flex; align-items: center; gap: 7px; height: 24px; padding: 0 2px 0 4px; border-radius: var(--radius-ctrl); }
+.seg-insp-route:hover { background: var(--bg-surface); }
+.seg-insp-route-dot { flex: none; width: 8px; height: 8px; border-radius: 2px; }
+.seg-insp-route-text { flex: 1 1 auto; min-width: 0; font: 400 12px var(--font-sans); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-insp-route-depth { flex: none; font: 500 11px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.seg-insp-route-x { flex: none; width: 20px; height: 20px; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-muted); font: 400 14px/1 var(--font-sans); cursor: pointer; }
+.seg-insp-route-x:hover { background: var(--bg-elevated); color: var(--text-secondary); }
+.seg-insp-pick { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font: 500 11px var(--font-sans); color: var(--text-secondary); }
+.seg-insp-pick > select { flex: 1 1 auto; min-width: 0; height: 24px; padding: 0 6px; border-radius: var(--radius-ctrl); border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-primary); font: 400 12px var(--font-sans); }
+/* Modulator editors were laid out for a wide bottom strip: in the 300px inspector, let their rows wrap and stack */
+.seg-insp-body > .seg-insp-editor { padding: 8px 10px 12px; }
+.seg-insp-editor { min-width: 0; }
+.seg-insp-editor .flex { flex-wrap: wrap; }
+.seg-insp-editor .h-full { height: auto; }
+/* CornerFrame hangs its label left of the frame (room in the old strip, clipped here): set it inside, above the content.
+   !important because CornerFrame positions it with inline styles. */
+.seg-insp-editor [data-corner-label] { position: static !important; transform: none !important; padding: 0 0 6px !important; }

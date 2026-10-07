@@ -114,7 +114,13 @@ export const useUIStore = create<UIState>((set) => ({
   toggleDrawer: (p) => set((state) => ({ drawer: state.drawer === p ? null : p })),
   closeDrawer: () => set({ drawer: null }),
   setBottomTab: (t) => set({ bottomTab: t }),
-  setSelectedModulator: (id) => set(id != null ? { selectedModulator: id, selectedEffectId: null } : { selectedModulator: null }),
+  setSelectedModulator: (id) => {
+    if (id == null) { set({ selectedModulator: null }); return }
+    // Clear any step selection first: UnifiedSequencerPanel re-selects a step's effect when
+    // selectedStep.effectId != selectedEffectId, which would undo this modulator selection.
+    useEffectSequencerStore.getState().clearSelection()
+    set({ selectedModulator: id, selectedEffectId: null, selectedParamIndex: 0 })
+  },
 
   setSelectedEffect: (id) => {
     // A step selection on another track would immediately re-select that

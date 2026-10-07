@@ -23,6 +23,7 @@ const PanelToggle = memo(function PanelToggle({ id, label }: { id: PanelId; labe
       type="button"
       className="seg-toggle"
       data-toggle={id}
+      aria-controls={`seg-panel-${id}`}
       data-on={on ? '' : undefined}
       aria-pressed={on}
       onClick={() => {

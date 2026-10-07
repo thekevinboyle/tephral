@@ -132,6 +132,7 @@ const ChainSettings = memo(function ChainSettings({ effectId }: { effectId: stri
 function ChainPanelImpl() {
   const { sortedEffects } = useActiveEffects()
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)
+  const selectedModulator = useUIStore((s) => s.selectedModulator)
   const setSelectedEffect = useUIStore((s) => s.setSelectedEffect)
   const setStatusText = useUIStore((s) => s.setStatusText)
   const ensureTrack = useEffectSequencerStore((s) => s.ensureTrack)
@@ -159,8 +160,8 @@ function ChainPanelImpl() {
   // Keep a valid selection
   useEffect(() => {
     if (selectedEffectId && !ids.includes(selectedEffectId)) setSelectedEffect(ids[0] ?? null)
-    else if (!selectedEffectId && ids.length > 0) setSelectedEffect(ids[0])
-  }, [ids, selectedEffectId, setSelectedEffect])
+    else if (!selectedEffectId && !selectedModulator && ids.length > 0) setSelectedEffect(ids[0])
+  }, [ids, selectedEffectId, selectedModulator, setSelectedEffect])
 
   // Drag reorder (drop above/below a row, or at the end)
   const dragged = useRef<string | null>(null)

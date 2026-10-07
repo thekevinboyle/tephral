@@ -154,6 +154,8 @@ interface SequencerTransportProps {
   onResolutionChange: (res: EffectStepResolution) => void
   onSwingChange: (swing: number) => void
   onPageChange: (page: number) => void
+  /** Inside the bottom panel: play/stop and BPM live in the header, so hide them here. */
+  compact?: boolean
 }
 
 export function SequencerTransport({
@@ -169,6 +171,7 @@ export function SequencerTransport({
   onResolutionChange: _onResolutionChange,
   onSwingChange,
   onPageChange,
+  compact = false,
 }: SequencerTransportProps) {
   void _resolution
   void _onResolutionChange
@@ -238,6 +241,8 @@ export function SequencerTransport({
     >
       {/* Group 1: Play + BPM + Sync */}
       <div className="flex items-center gap-3" style={{ marginRight: 16 }}>
+        {!compact && (
+          <>
         <button
           onClick={isPlaying ? onStop : onPlay}
           onMouseEnter={(e) => {
@@ -284,6 +289,9 @@ export function SequencerTransport({
           </span>
           <span className="text-[9px] tracking-[0.15em] uppercase" style={{ color: isMidiSynced ? MIDI_COLOR : isAudioSynced ? AUDIO_COLOR : 'var(--text-muted)' }}>BPM</span>
         </div>
+
+          </>
+        )}
 
         {isConnected && midiInputs.length > 0 && (
           <button

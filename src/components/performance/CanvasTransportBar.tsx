@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { PlayIcon, PauseIcon } from '../ui/DotMatrixIcons'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useRecordingStore } from '../../stores/recordingStore'
@@ -8,7 +9,8 @@ import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useUIStore } from '../../stores/uiStore'
 
 export function CanvasTransportBar() {
-  const { source, videoElement } = useMediaStore()
+  const source = useMediaStore((s) => s.source)
+  const videoElement = useMediaStore((s) => s.videoElement)
   const setStatusText = useUIStore((s) => s.setStatusText)
 
   const {
@@ -18,7 +20,14 @@ export function CanvasTransportBar() {
     currentTime: recordingTime,
     play: playRecording,
     pause: pauseRecording,
-  } = useRecordingStore()
+  } = useRecordingStore(useShallow((s) => ({
+    isRecording: s.isRecording,
+    isPlaying: s.isPlaying,
+    duration: s.duration,
+    currentTime: s.currentTime,
+    play: s.play,
+    pause: s.pause,
+  })))
   const { resetEffects } = useAutomationPlayback()
 
   const hasSource = source !== 'none'
@@ -30,7 +39,7 @@ export function CanvasTransportBar() {
   const isPlaying = isRecordingMode ? isRecordingPlaying : isSourcePlaying
   const hasPlayableContent = hasRecording || hasSourceVideo
 
-  const sourceLabel = source === 'none' ? 'NONE' : source === 'webcam' ? 'CAMERA' : 'FILE'
+  const sourceLabel = source === 'none' ? 'None' : source === 'webcam' ? 'Camera' : 'File'
 
   useEffect(() => {
     if (!videoElement || source !== 'file') return
@@ -77,45 +86,45 @@ export function CanvasTransportBar() {
     <div
       className="flex items-center flex-shrink-0"
       style={{
-        height: 64,
-        gap: 12,
-        padding: '0 12px',
-        backgroundColor: 'var(--bg-void)',
-        borderBottom: '1px solid var(--border-light)',
+        height: 32,
+        gap: 10,
+        padding: '0 10px',
+        backgroundColor: 'var(--bg-primary)',
+        borderTop: '1px solid var(--border)',
       }}
     >
-      {/* Play / Pause */}
       <button
+        data-media="playpause"
         onClick={handlePlayPause}
         disabled={!hasPlayableContent}
-        className="w-10 h-10 rounded-sm flex items-center justify-center transition-all"
+        aria-label={isPlaying ? 'Pause video' : 'Play video'}
+        className="flex items-center justify-center"
         style={{
-          backgroundColor: isPlaying ? 'var(--text-primary)' : 'var(--bg-elevated)',
-          border: `1px solid ${isPlaying ? 'var(--text-primary)' : 'var(--border)'}`,
+          width: 28,
+          height: 24,
+          borderRadius: 'var(--radius-ctrl)',
+          backgroundColor: isPlaying ? 'var(--bg-hover)' : 'var(--bg-elevated)',
+          border: '1px solid var(--border)',
           opacity: hasPlayableContent ? 1 : 0.4,
           cursor: hasPlayableContent ? 'pointer' : 'default',
         }}
-        title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
-        onMouseEnter={() => setStatusText('Play/Pause: Start or stop playback (Space)')}
+        title={isPlaying ? 'Pause video (Space)' : 'Play video (Space)'}
+        onMouseEnter={() => setStatusText('Play or pause the video source (Space)')}
         onMouseLeave={() => setStatusText(null)}
       >
         {isPlaying ? (
-          <PauseIcon size={16} color="var(--bg-primary)" />
+          <PauseIcon size={14} color="var(--text-primary)" />
         ) : (
-          <PlayIcon size={16} color="var(--text-muted)" />
+          <PlayIcon size={14} color="var(--text-secondary)" />
         )}
       </button>
 
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* SRC label */}
       <span
-        className="text-[9px] font-medium uppercase"
+        data-media="src"
         style={{
-          color: hasSource ? 'var(--text-secondary)' : 'var(--text-ghost)',
+          color: hasSource ? 'var(--text-secondary)' : 'var(--text-muted)',
           fontFamily: 'var(--font-mono)',
-          letterSpacing: '0.12em',
+          fontSize: 11,
         }}
       >
         SRC: {sourceLabel}

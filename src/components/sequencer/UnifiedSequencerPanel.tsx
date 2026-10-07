@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useSequencerContainerStore } from '../../stores/sequencerContainerStore'
 import { useRoutingStore } from '../../stores/routingStore'
-import { useMediaStore } from '../../stores/mediaStore'
-import { useRecordingStore } from '../../stores/recordingStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useEffectSequencerPlayback } from '../../hooks/useEffectSequencerPlayback'
 import { useWebMIDI } from '../../hooks/useWebMIDI'
@@ -19,6 +17,7 @@ import {
 import { SequencerTransport } from './SequencerTransport'
 import { EffectTrackRow } from './EffectTrackRow'
 import { TrackParamPanel } from './TrackParamPanel'
+import { linkedPlay, linkedStop } from '../../utils/sequencerTransport'
 import { isInteractiveKeyTarget } from '../../utils/keyboard'
 
 const ALL_EFFECTS: EffectDefinition[] = [
@@ -44,8 +43,6 @@ export function UnifiedSequencerPanel() {
     stepPage,
     selectedStep,
     swing,
-    play,
-    stop,
     setBpm,
     setResolution,
     setStepPage,
@@ -79,29 +76,6 @@ export function UnifiedSequencerPanel() {
       setSelectedEffect(selectedStep.effectId)
     }
   }, [selectedStep, selectedEffectId, setSelectedEffect])
-
-  // ─── Linked play/stop (also toggles video/recording playback) ─────────
-  const linkedPlay = useCallback(() => {
-    play()
-    const { source, videoElement } = useMediaStore.getState()
-    const rec = useRecordingStore.getState()
-    if (rec.duration > 0 && !rec.isRecording) {
-      rec.play()
-    } else if (source === 'file' && videoElement && videoElement.paused) {
-      videoElement.play().catch(console.error)
-    }
-  }, [play])
-
-  const linkedStop = useCallback(() => {
-    stop()
-    const { source, videoElement } = useMediaStore.getState()
-    const rec = useRecordingStore.getState()
-    if (rec.isPlaying) {
-      rec.pause()
-    } else if (source === 'file' && videoElement && !videoElement.paused) {
-      videoElement.pause()
-    }
-  }, [stop])
 
   // ─── Effect tab click → switch to effect params ────────────────────────
   const handleEffectTabSelect = useCallback(
@@ -239,6 +213,7 @@ export function UnifiedSequencerPanel() {
         stepPage={stepPage}
         onPlay={linkedPlay}
         onStop={linkedStop}
+        compact
         onBpmChange={setBpm}
         onResolutionChange={setResolution}
         onSwingChange={setSwing}

@@ -4,6 +4,7 @@ import { useMediaSource } from '../../hooks/useMediaSource'
 import { useAudioSourceStore, type AudioSourceType } from '../../stores/audioSourceStore'
 import { useUIStore } from '../../stores/uiStore'
 import { HudGlyph } from '../ui/HudGlyph'
+import { HeaderTransport } from './HeaderTransport'
 import { PresetDropdownBar } from '../presets/PresetDropdownBar'
 import { useRecordingControl } from '../../hooks/useRecordingControl'
 import { useRecordingStore } from '../../stores/recordingStore'
@@ -325,15 +326,15 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
 
       {/* Video source dropdown */}
       <div
-        className="flex items-center gap-2 flex-shrink-0"
+        className="flex flex-col justify-center flex-shrink-0"
         onMouseEnter={() => setStatusText('Video: Select video input source')}
         onMouseLeave={() => setStatusText(null)}
       >
         <span
-          className="text-[9px] uppercase tracking-widest"
-          style={{ color: 'var(--text-ghost)', fontFamily: 'var(--font-mono)' }}
+          className="text-[10px]"
+          style={{ color: 'var(--text-muted)', lineHeight: '12px' }}
         >
-          VIDEO
+          Video
         </span>
         <StyledDropdown
           value={videoValue}
@@ -349,15 +350,15 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
 
       {/* Audio source dropdown */}
       <div
-        className="flex items-center gap-2 flex-shrink-0"
+        className="flex flex-col justify-center flex-shrink-0"
         onMouseEnter={() => setStatusText('Audio: Select audio input source')}
         onMouseLeave={() => setStatusText(null)}
       >
         <span
-          className="text-[9px] uppercase tracking-widest"
-          style={{ color: 'var(--text-ghost)', fontFamily: 'var(--font-mono)' }}
+          className="text-[10px]"
+          style={{ color: 'var(--text-muted)', lineHeight: '12px' }}
         >
-          AUDIO
+          Audio
         </span>
         <StyledDropdown
           value={activeAudioSource}
@@ -375,12 +376,16 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
       </div>
 
       {/* Presets */}
-      <div className="flex-shrink-0">
+      <div className="flex-1" />
+
+      <HeaderTransport />
+
+      <div className="flex-1" />
+
+      <div className="flex flex-col justify-center flex-shrink-0">
+        <span className="text-[10px]" style={{ color: 'var(--text-muted)', lineHeight: '12px' }}>Preset</span>
         <PresetDropdownBar canvasRef={canvasRef} />
       </div>
-
-      {/* Spacer */}
-      <div className="flex-1" />
 
       <RecButton />
 

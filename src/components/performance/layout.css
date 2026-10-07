@@ -95,3 +95,6 @@
 .param-bar-segs > i[data-mod][data-lit] { background: color-mix(in oklab, var(--fx) 70%, oklch(0.56 0.008 270)); }
 .param-bar-value { flex: none; width: 40px; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-primary); overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .param-bar-src { position: absolute; top: -1px; width: 6px; height: 6px; cursor: ns-resize; }
+
+/* Knobs with a paramId are keyboard-focusable */
+[data-param-control][data-param-id]:not(.param-bar):focus-visible { outline: 1px solid var(--text-primary); outline-offset: 2px; }

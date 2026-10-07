@@ -8,6 +8,7 @@ import { useUIStore } from '../stores/uiStore'
 import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 import { ModulationContextMenu } from '../components/performance/controls/ModulationContextMenu'
 import { getParamStatusText } from '../config/statusDescriptions'
+import { snap } from '../utils/paramBar'
 import { getSourceInfo, SPECIAL_SOURCES, POLY_EUCLID_COLOR, STEP_SEQ_COLOR } from '../utils/modulationSources'
 
 export interface ParamControlArgs {
@@ -151,11 +152,15 @@ export function useParamControl({
         ? STEP_SEQ_COLOR
         : undefined
 
-  const snapClamp = useCallback((v: number) => {
-    let out = v
-    if (step) out = Math.round(out / step) * step
-    return Math.min(max, Math.max(min, out))
-  }, [min, max, step])
+  const snapClamp = useCallback((v: number) => snap(v, min, max, step ?? 0), [min, max, step])
+
+  // Last value dispatched via onChange, so key auto-repeat steps from it rather than a stale prop
+  const lastValueRef = useRef(value)
+  useLayoutEffect(() => { lastValueRef.current = value }, [value])
+  const dispatchChange = useCallback((v: number) => {
+    lastValueRef.current = v
+    onChangeRef.current(v)
+  }, [])
 
   const resetDepthDrag = () => {
     setIsDepthDragging(false)
@@ -164,6 +169,8 @@ export function useParamControl({
   }
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    // Only the primary button drags / toggles; right-click opens the context menu
+    if (e.button !== 0) return
     e.preventDefault()
     e.stopPropagation()
 
@@ -179,7 +186,7 @@ export function useParamControl({
         depthAssignValue.current = 0
         setIsDepthDragging(true)
         setDepthDragDisplay(0)
-        setDepthSourceName(getSourceInfo(trackId)?.name ?? '')
+        setDepthSourceName(getRoutingInfo(trackId)?.name ?? '')
         ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
       }
       return
@@ -190,7 +197,7 @@ export function useParamControl({
     dragStartValue.current = value
     setIsDragging(true)
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-  }, [value, axis, isInAssignmentMode, paramId, assigningModulator, assigningPolyEuclid, assigningStepTrack])
+  }, [value, axis, isInAssignmentMode, paramId, assigningModulator, assigningPolyEuclid, assigningStepTrack, getRoutingInfo])
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (depthAssignSource.current) {
@@ -204,6 +211,7 @@ export function useParamControl({
     if (dragStart.current === null) return
     const delta = axis === 'y' ? dragStart.current - e.clientY : e.clientX - dragStart.current
     if (Math.abs(delta) > 3) didDrag.current = true
+    if (!didDrag.current) return
     const span = dragSpanPx ?? 200
     const newValue = snapClamp(
       dragStartValue.current + (delta / span) * (max - min) * (e.shiftKey ? 0.1 : 1)
@@ -213,12 +221,12 @@ export function useParamControl({
       changeRafRef.current = requestAnimationFrame(() => {
         changeRafRef.current = 0
         if (pendingValueRef.current !== null) {
-          onChangeRef.current(pendingValueRef.current)
+          dispatchChange(pendingValueRef.current)
           pendingValueRef.current = null
         }
       })
     }
-  }, [axis, dragSpanPx, min, max, snapClamp])
+  }, [axis, dragSpanPx, min, max, snapClamp, dispatchChange])
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     try { ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* not captured */ }
@@ -231,7 +239,7 @@ export function useParamControl({
       changeRafRef.current = 0
     }
     if (pendingValueRef.current !== null) {
-      onChangeRef.current(pendingValueRef.current)
+      dispatchChange(pendingValueRef.current)
       pendingValueRef.current = null
     }
 
@@ -287,7 +295,7 @@ export function useParamControl({
     }
 
     dragStart.current = null
-  }, [isInAssignmentMode, isAutomationTarget, paramId, label, min, max, step, setAutomationParam, clearAutomationParam])
+  }, [isInAssignmentMode, isAutomationTarget, paramId, label, min, max, step, setAutomationParam, clearAutomationParam, dispatchChange])
 
   const handlePointerCancel = useCallback((e: React.PointerEvent) => {
     if (changeRafRef.current) {
@@ -314,8 +322,8 @@ export function useParamControl({
 
   const handleDoubleClick = useCallback(() => {
     if (!resetOnDoubleClick || isInAssignmentMode) return
-    onChangeRef.current(snapClamp((min + max) / 2))
-  }, [resetOnDoubleClick, isInAssignmentMode, min, max, snapClamp])
+    dispatchChange(snapClamp((min + max) / 2))
+  }, [resetOnDoubleClick, isInAssignmentMode, min, max, snapClamp, dispatchChange])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     let next: number | null = null
@@ -324,11 +332,11 @@ export function useParamControl({
     switch (e.key) {
       case 'ArrowRight':
       case 'ArrowUp':
-        next = value + inc
+        next = lastValueRef.current + inc
         break
       case 'ArrowLeft':
       case 'ArrowDown':
-        next = value - inc
+        next = lastValueRef.current - inc
         break
       case 'Home':
         next = min
@@ -341,8 +349,8 @@ export function useParamControl({
     }
     e.preventDefault()
     e.stopPropagation()
-    onChangeRef.current(snapClamp(next))
-  }, [value, min, max, step, snapClamp])
+    dispatchChange(snapClamp(next))
+  }, [min, max, step, snapClamp, dispatchChange])
 
   // Drop target
   const handleDragOver = useCallback((e: React.DragEvent) => {

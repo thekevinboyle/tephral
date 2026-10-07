@@ -1,4 +1,5 @@
 import { useParamControl } from '../../hooks/useParamControl'
+import { ModReadout } from './ModReadout'
 
 interface KnobProps {
   label: string
@@ -42,6 +43,7 @@ export function Knob({
     isDragging, isHovered, isDropTarget, isAutomationTarget, isInAssignmentMode,
     assigningColor, isDepthDragging, depthDragDisplay, depthSourceName, routings, dotDragging,
   } = ctl
+  const readoutDepth = isDepthDragging ? { name: depthSourceName, value: depthDragDisplay, color: assigningColor } : null
   const hasRouting = routings.length > 0
   const sourceInfo = hasRouting ? routings[0] : null
 
@@ -63,6 +65,8 @@ export function Knob({
   const ariaProps = {
     'data-param-control': '',
     'data-param-id': paramId,
+    'data-assigning': isInAssignmentMode || isDropTarget ? '' : undefined,
+    'data-locked': isAutomationTarget ? '' : undefined,
     tabIndex: paramId ? 0 : undefined,
     role: 'slider',
     'aria-label': label,
@@ -137,6 +141,20 @@ export function Knob({
           className="relative select-none touch-none flex flex-col items-center"
           style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         >
+          <ModReadout depth={readoutDepth} dot={dotDragging} />
+          {(isAutomationTarget || isInAssignmentMode || isDropTarget) && (
+            <span
+              aria-hidden
+              data-knob-ring={isAutomationTarget ? 'lock' : 'assign'}
+              className="absolute pointer-events-none"
+              style={{
+                left: 0, top: 0, width: arcSize, height: arcSize, borderRadius: '50%', boxSizing: 'border-box',
+                border: isAutomationTarget
+                  ? `1px solid ${color}`
+                  : `1px dashed ${assigningColor ?? 'var(--text-secondary)'}`,
+              }}
+            />
+          )}
           <svg
             width={arcSize}
             height={arcSize}
@@ -244,28 +262,7 @@ export function Knob({
           animation: isAutomationTarget ? 'hud-blink 0.5s step-end infinite' : undefined,
         }}
       >
-        {/* Depth drag indicator */}
-        {isDepthDragging && (
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 text-[9px] font-bold tabular-nums whitespace-nowrap z-20"
-            style={{
-              backgroundColor: assigningColor ?? 'var(--accent)',
-              color: '#000',
-            }}>
-            {(() => {
-              const name = depthSourceName
-              const sign = depthDragDisplay > 0 ? '+' : ''
-              return name ? `${name}: ${sign}${(depthDragDisplay * 100).toFixed(0)}%` : `${sign}${(depthDragDisplay * 100).toFixed(0)}%`
-            })()}
-          </div>
-        )}
-
-        {/* Dot drag tooltip */}
-        {dotDragging && (
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 text-[9px] font-bold tabular-nums whitespace-nowrap z-20"
-            style={{ backgroundColor: dotDragging.color, color: '#000' }}>
-            {dotDragging.name}: {dotDragging.depth > 0 ? '+' : ''}{(dotDragging.depth * 100).toFixed(0)}%
-          </div>
-        )}
+        <ModReadout depth={readoutDepth} dot={dotDragging} />
 
         {/* Value */}
         <span

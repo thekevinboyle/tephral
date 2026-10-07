@@ -2,6 +2,7 @@ import { memo, useCallback } from 'react'
 import type { LockableParam } from '../../config/effectParams'
 import { useParamValue } from '../../hooks/useParamValue'
 import { useParamControl } from '../../hooks/useParamControl'
+import { ModReadout } from './ModReadout'
 import { buildSegments, formatParamValue } from '../../utils/paramBar'
 
 export const ParamBar = memo(function ParamBar({ effectId, param }: { effectId: string; param: LockableParam }) {
@@ -15,7 +16,7 @@ export const ParamBar = memo(function ParamBar({ effectId, param }: { effectId: 
   })
   const first = ctl.routings[0]
   const segs = buildSegments({ value, min: param.min, max: param.max, step: param.step, modDepth: first ? first.depth : null })
-  return (
+  const bar = (
     <div
       className="param-bar"
       data-param-control
@@ -48,7 +49,9 @@ export const ParamBar = memo(function ParamBar({ effectId, param }: { effectId: 
         <span key={r.id} className="param-bar-src" title={`${r.name} ${Math.round(r.depth * 100)}%`}
           style={{ background: r.color, right: -1 + i * 8 }} {...ctl.dotProps(r)} />
       ))}
-      {ctl.contextMenu}
+      <ModReadout depth={ctl.isDepthDragging ? { name: ctl.depthSourceName, value: ctl.depthDragDisplay, color: ctl.assigningColor } : null} dot={ctl.dotDragging} />
     </div>
   )
+  // The menu is a sibling: inside the bar, its clicks would reach the bar's pointer handlers
+  return <>{bar}{ctl.contextMenu}</>
 })

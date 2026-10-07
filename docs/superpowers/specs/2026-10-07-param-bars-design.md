@@ -66,7 +66,7 @@ One 28px bar, all of it the grab target:
   | Focused (keyboard) | 1px `--text-primary` outline at -1px offset |
   | p-lock target | Frame in the effect's colour, plus an 8% tint of that colour |
   | Assignment mode | Dashed 1px frame in the assigning source's colour, on every bar and knob |
-  | Modulated | Segments inside the modulated range (value ± depth × range) blend with the first source's colour: 40% unlit, 70% lit. A 6×6 square in the source colour sits on the top-right corner, one per source, up to 3. |
+  | Modulated | The source drives the setting through the bottom `abs(depth)` of its range: `applyModulation` maps the source's 0–1 output times depth onto min..max. Segments inside that span (0 to `abs(depth)`) blend with the first source's colour, 40% unlit and 70% lit. The live value keeps moving the lit segments. A 6×6 square in the source colour sits on the top-right corner, one per source, up to 3. Dragging a square vertically changes that routing's depth, Alt-click or double-click removes it, and a plain click selects the routing. These are the same rules as `Knob`'s arc dots. |
 
 **Contrast.** The name and value must be at least 4.5:1 on `--bg-surface`; both tokens already pass. Lit segments are graphics and need at least 3:1 against the unlit ones.
 
@@ -78,7 +78,7 @@ One 28px bar, all of it the grab target:
 | Click without dragging | Toggles this setting as the p-lock automation target. Same as today's `onTap` and `Knob`. |
 | Double-click | Resets to the midpoint of the range, as today's blocks do. The registry has no defaults. |
 | Right-click | `ModulationContextMenu`, unchanged. |
-| Click or drag in assignment mode | Routes the assigning source. Dragging vertically sets the depth (-1 to 1), as `Knob` does today. Release commits the route, or updates its depth if the route already exists. |
+| Click or drag in assignment mode | Routes the assigning source. A click without dragging routes at depth 0.5, the same default as a drop. Dragging vertically sets the depth (-1 to 1) first. Release commits the route, or updates its depth if the route already exists. This **changes `Knob` too**: today a click without a drag does nothing, despite the "Click a knob to route" hint. |
 | Drop of a `modulation-source` or `sequencer-track` drag | Routes it, as `Knob` does today. |
 | Keyboard (focused) | Left/Right or Down/Up step by `step`; with Shift, by `step × 10`. Home/End go to min/max. The control has `role="slider"`, `aria-valuemin/max/now`, `aria-valuetext` and `aria-label` set to the setting name. |
 

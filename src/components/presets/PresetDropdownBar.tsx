@@ -91,7 +91,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
     }
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !renameState) {
+      if (e.key === 'Escape' && !renameState && !e.defaultPrevented) {
         setIsOpen(false)
       }
     }

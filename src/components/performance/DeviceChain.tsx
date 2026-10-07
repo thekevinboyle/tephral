@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef } from 'react'
+import { memo, useContext, useEffect, useMemo, useRef } from 'react'
 import type React from 'react'
 import { useChainIds } from '../../hooks/useChainIds'
 import { disableEffect } from '../../hooks/useEffectDisable'
@@ -38,9 +38,22 @@ const clearDropMarks = (root: HTMLElement | null) => {
   root?.querySelectorAll('[data-drop]').forEach((el) => el.removeAttribute('data-drop'))
 }
 
-const AddGap = memo(function AddGap() {
+/** "+" between devices: click opens the browser search; dropping a dragged card here moves it to this spot. */
+const AddGap = memo(function AddGap({ beforeId }: { beforeId: string | null }) {
+  const a = useContext(DeviceChainContext)
   return (
-    <div className="seg-chain-plus" aria-hidden title="Add a device" onClick={focusBrowserSearch}>+</div>
+    <div
+      className="seg-chain-plus"
+      data-chain-gap={beforeId ?? 'end'}
+      aria-hidden
+      title="Add a device"
+      onClick={focusBrowserSearch}
+      onDragOver={(ev) => a.gapOver(ev)}
+      onDragLeave={a.dragLeave}
+      onDrop={(ev) => a.dropAt(beforeId, ev)}
+    >
+      +
+    </div>
   )
 })
 
@@ -48,6 +61,8 @@ export const DeviceChain = memo(function DeviceChain() {
   const ids = useChainIds()
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)
   const selectedModulator = useUIStore((s) => s.selectedModulator)
+  const bottomTab = useUIStore((s) => s.bottomTab)
+  const showBottom = useUIStore((s) => s.showBottom)
   const effectBypassed = useGlitchEngineStore((s) => s.effectBypassed)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const idsRef = useRef(ids)
@@ -78,7 +93,7 @@ export const DeviceChain = memo(function DeviceChain() {
     const pad = 8
     if (r.left < s.left + pad) sc.scrollLeft -= s.left + pad - r.left
     else if (r.right > s.right - pad) sc.scrollLeft += Math.min(r.right - (s.right - pad), r.left - (s.left + pad))
-  }, [selectedEffectId, ids])
+  }, [selectedEffectId, ids, bottomTab, showBottom])
 
   const draggedRef = useRef<string | null>(null)
   const actions = useMemo<DeviceChainActions>(() => {
@@ -89,6 +104,13 @@ export const DeviceChain = memo(function DeviceChain() {
       let to = effectOrder.indexOf(targetId) + (after ? 1 : 0)
       if (from < to) to--
       if (from !== -1 && to >= 0 && from !== to) reorderEffect(from, to)
+    }
+    // Move src just before beforeId (null = after the last active device)
+    const moveBefore = (src: string, beforeId: string | null) => {
+      if (beforeId) { if (beforeId !== src) reorder(src, beforeId, false); return }
+      const list = idsRef.current
+      const last = list[list.length - 1]
+      if (last && last !== src) reorder(src, last, true)
     }
     const sideOf = (ev: React.DragEvent) => {
       const r = ev.currentTarget.getBoundingClientRect()
@@ -148,6 +170,24 @@ export const DeviceChain = memo(function DeviceChain() {
         ev.preventDefault()
         if (src !== id) reorder(src, id, sideOf(ev))
       },
+      gapOver: (ev) => {
+        if (!dragged.current) return
+        ev.preventDefault()
+        ev.dataTransfer.dropEffect = 'move'
+        const el = ev.currentTarget as HTMLElement
+        if (el.getAttribute('data-drop') !== 'gap') {
+          clearDropMarks(scrollerRef.current)
+          el.setAttribute('data-drop', 'gap')
+        }
+      },
+      dropAt: (beforeId, ev) => {
+        const src = dragged.current
+        dragged.current = null
+        clearDropMarks(scrollerRef.current)
+        if (!src) return
+        ev.preventDefault()
+        moveBefore(src, beforeId)
+      },
       dragEnd: () => {
         dragged.current = null
         clearDropMarks(scrollerRef.current)
@@ -172,15 +212,15 @@ export const DeviceChain = memo(function DeviceChain() {
     <DeviceChainContext.Provider value={actions}>
       <div className="seg-chain" data-device-chain ref={scrollerRef} onWheel={onWheel}>
         <ModulatorsCard />
-        <div className="seg-chain-devices" role="listbox" aria-label="Device chain" aria-orientation="horizontal">
+        <div className="seg-chain-devices" role="list" aria-label="Device chain, signal flows left to right">
           {ids.map((id, i) => (
-            <div key={id} className="seg-chain-slot">
-              <AddGap />
+            <div key={id} className="seg-chain-slot" role="listitem">
+              <AddGap beforeId={id} />
               <DeviceCard effectId={id} index={i} selected={id === selected} bypassed={!!effectBypassed[id]} />
             </div>
           ))}
         </div>
-        <AddGap />
+        <AddGap beforeId={null} />
         <button
           type="button"
           data-device-add
@@ -188,20 +228,9 @@ export const DeviceChain = memo(function DeviceChain() {
           aria-label="Add a device: search effects"
           title="Add a device"
           onClick={focusBrowserSearch}
-          onDragOver={(ev) => { ev.preventDefault(); ev.dataTransfer.dropEffect = 'move' }}
-          onDrop={(ev) => {
-            ev.preventDefault()
-            const src = ev.dataTransfer.getData('text/plain')
-            const list = idsRef.current
-            const last = list[list.length - 1]
-            if (src && last && src !== last && list.includes(src)) {
-              const { effectOrder, reorderEffect } = useRoutingStore.getState()
-              const from = effectOrder.indexOf(src)
-              const to = effectOrder.indexOf(last)
-              if (from !== -1 && to !== -1) reorderEffect(from, to)
-            }
-            clearDropMarks(scrollerRef.current)
-          }}
+          onDragOver={(ev) => actions.gapOver(ev)}
+          onDragLeave={actions.dragLeave}
+          onDrop={(ev) => actions.dropAt(null, ev)}
         >
           +
         </button>

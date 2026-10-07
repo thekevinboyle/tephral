@@ -20,14 +20,18 @@ const HeaderNote = memo(function HeaderNote() {
   const assigning = useModulationStore((s) => s.assigningModulator)
   const tab = useUIStore((s) => s.bottomTab)
 
-  // Escape cancels routing assignment (nothing else clears assigningModulator)
+  // Escape cancels routing assignment (nothing else clears assigningModulator). Capture phase + preventDefault,
+  // so the same keypress does not also close a drawer or a dropdown (those skip defaultPrevented events).
   useEffect(() => {
     if (!assigning) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') useModulationStore.getState().setAssigningModulator(null)
+      if (e.key !== 'Escape' || e.defaultPrevented) return
+      if (!useModulationStore.getState().assigningModulator) return
+      e.preventDefault()
+      useModulationStore.getState().setAssigningModulator(null)
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
   }, [assigning])
 
   if (assigning) {

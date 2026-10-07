@@ -157,6 +157,7 @@ export function UnifiedSequencerPanel() {
           break
         }
         case 'Escape': {
+          if (e.defaultPrevented) break // already handled (e.g. cancelled a routing assignment)
           state.clearSelection()
           state.clearAutomationParam()
           break

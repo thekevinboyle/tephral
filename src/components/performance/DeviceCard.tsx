@@ -108,10 +108,12 @@ export const DeviceCard = memo(function DeviceCard({ effectId, index, selected, 
   const { name, color } = getEffectInfo(effectId)
   return (
     <div
-      role="option"
+      role="group"
       tabIndex={0}
-      aria-selected={selected}
-      aria-label={`${name}, device ${index + 1}${bypassed ? ', bypassed' : ''}`}
+      aria-roledescription="device"
+      aria-label={name}
+      aria-current={selected || undefined}
+      data-index={index}
       data-device-card={effectId}
       data-selected={selected || undefined}
       data-bypassed={bypassed || undefined}

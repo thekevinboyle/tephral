@@ -174,6 +174,7 @@
 .seg-chain-slot { display: flex; align-items: stretch; gap: 2px; flex: none; }
 .seg-chain-plus { flex: none; width: 18px; display: grid; place-items: center; color: var(--text-muted); font: 400 14px var(--font-sans); cursor: pointer; border-radius: var(--radius-ctrl); }
 .seg-chain-plus:hover { background: var(--bg-primary); color: var(--text-secondary); }
+.seg-chain-plus[data-drop="gap"], .seg-chain-add[data-drop="gap"] { background: var(--bg-elevated); color: var(--text-primary); box-shadow: inset 0 0 0 1px var(--text-primary); }
 .seg-chain-add { flex: none; width: 60px; display: grid; place-items: center; border: 1px dashed var(--border-emphasis); border-radius: var(--radius-panel); background: transparent; color: var(--text-muted); font: 400 16px var(--font-sans); cursor: pointer; }
 .seg-chain-add:hover { background: var(--bg-primary); color: var(--text-secondary); }
 .seg-chain-empty { align-self: center; margin: 0 0 0 10px; font: 400 12px var(--font-sans); color: var(--text-muted); white-space: nowrap; }

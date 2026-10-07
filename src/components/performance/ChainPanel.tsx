@@ -137,8 +137,6 @@ function ChainPanelImpl() {
   const bypassActive = useGlitchEngineStore((s) => s.bypassActive)
   const effectBypassed = useGlitchEngineStore((s) => s.effectBypassed)
   const { disableEffect } = useEffectDisable()
-  // disableEffect changes identity on every store tick; keep handlers stable via a ref
-  const disableRef = useRef(disableEffect)
 
   // Referentially stable id list: only changes when membership/order changes, not on param ticks
   const idsKey = sortedEffects.map((e) => e.id).join('|')
@@ -146,7 +144,6 @@ function ChainPanelImpl() {
   const idsRef = useRef(ids)
   useEffect(() => {
     idsRef.current = ids
-    disableRef.current = disableEffect
   })
 
   // Drag reorder (drop above/below a row, or at the end)
@@ -197,9 +194,9 @@ function ChainPanelImpl() {
   }, [])
 
   const remove = useCallback((id: string) => {
-    disableRef.current(id)
+    disableEffect(id)
     removeTrack(id)
-  }, [removeTrack])
+  }, [removeTrack, disableEffect])
   const onSelect = useCallback((id: string) => setSelectedEffect(id), [setSelectedEffect])
   const onToggleBypass = useCallback((id: string) => useGlitchEngineStore.getState().toggleEffectBypassed(id), [])
   const onHover = useCallback((id: string | null) => {

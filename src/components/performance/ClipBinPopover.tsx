@@ -41,7 +41,7 @@ export function ClipBinPopover({ onClose, anchorRect }: ClipBinPopoverProps) {
     }
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape' && !e.defaultPrevented) onClose()
     }
 
     // Use mouseup instead of mousedown to allow drag to start

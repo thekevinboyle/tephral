@@ -491,7 +491,7 @@ export function ModulationAssignPanel() {
                   height: 20,
                   padding: '0 8px',
                   backgroundColor: active ? 'rgba(255,255,255,0.10)' : 'transparent',
-                  color: active ? '#F5F0EB' : '#5A5450',
+                  color: active ? '#F5F0EB' : 'var(--text-secondary)',
                   borderRight: mode === 'free' ? '1px solid rgba(255,255,255,0.08)' : 'none',
                   cursor: 'pointer',
                   fontFamily: 'var(--font-sans)',

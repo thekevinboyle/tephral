@@ -13,6 +13,17 @@ import { Knob } from '../performance/Knob'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { routeTargetLabel } from '../../utils/routeTargetLabel'
 
+/** Text colour for a button filled with an accent colour: near-black or white, whichever reads better. */
+const onAccent = (hex: string): string => {
+  const c = hex.replace('#', '')
+  const [r, g, b] = [0, 2, 4].map((i) => {
+    const v = parseInt(c.slice(i, i + 2), 16) / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  })
+  const l = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return (l + 0.05) / 0.05 > 1.05 / (l + 0.05) ? '#111' : 'white'
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // Shared constants & helpers (also used by EffectsLane)
 // ════════════════════════════════════════════════════════════════════════════
@@ -137,9 +148,8 @@ export function ModSelect<T extends string>({
             className="flex-1 text-[10px] py-0.5 rounded-sm transition-colors"
             style={{
               backgroundColor: value === opt.value ? (color || 'var(--accent)') : 'var(--bg-elevated)',
-              color: value === opt.value ? 'white' : 'var(--text-muted)',
+              color: value === opt.value ? onAccent(color || '#4a9eff') : 'var(--text-secondary)',
               border: '1px solid var(--border)',
-              opacity: value === opt.value ? 1 : 0.7,
             }}
           >
             {opt.label}
@@ -833,7 +843,7 @@ function EnvelopeContent({ mod, wrapped, selected, onSelect, routingCount }: { m
           className="flex-1 text-[10px] py-1 rounded-sm"
           style={{
             backgroundColor: mod.envelope.phase !== 'idle' ? color : 'var(--bg-elevated)',
-            color: mod.envelope.phase !== 'idle' ? 'white' : 'var(--text-muted)',
+            color: mod.envelope.phase !== 'idle' ? onAccent(color) : 'var(--text-secondary)',
             border: '1px solid var(--border)',
           }}
         >
@@ -879,9 +889,8 @@ function SampleHoldContent({ mod, bpm, wrapped, selected, onSelect, routingCount
               className="flex-1 text-[10px] py-0.5 rounded-sm transition-colors"
               style={{
                 backgroundColor: mod.sampleHold.rateMode === mode ? color : 'var(--bg-elevated)',
-                color: mod.sampleHold.rateMode === mode ? 'white' : 'var(--text-muted)',
+                color: mod.sampleHold.rateMode === mode ? onAccent(color) : 'var(--text-secondary)',
                 border: '1px solid var(--border)',
-                opacity: mod.sampleHold.rateMode === mode ? 1 : 0.7,
               }}
             >
               {mode === 'metronomic' ? 'Sync' : mode}
@@ -908,9 +917,8 @@ function SampleHoldContent({ mod, bpm, wrapped, selected, onSelect, routingCount
               className="flex-1 text-[10px] py-0.5 rounded-sm transition-colors"
               style={{
                 backgroundColor: mod.sampleHold.clockMode === mode ? color : 'var(--bg-elevated)',
-                color: mod.sampleHold.clockMode === mode ? 'white' : 'var(--text-muted)',
+                color: mod.sampleHold.clockMode === mode ? onAccent(color) : 'var(--text-secondary)',
                 border: '1px solid var(--border)',
-                opacity: mod.sampleHold.clockMode === mode ? 1 : 0.7,
               }}
             >
               {mode}
@@ -1076,7 +1084,7 @@ function MIDIModContent() {
           className="text-[10px] px-2 py-1 rounded-sm"
           style={{
             backgroundColor: isLearning ? color : 'var(--bg-elevated)',
-            color: isLearning ? 'white' : 'var(--text-muted)',
+            color: isLearning ? onAccent(color) : 'var(--text-secondary)',
             border: '1px solid var(--border)',
           }}
         >
@@ -1426,7 +1434,7 @@ function AudioReactiveContent() {
                 className="w-full text-[10px] py-0.5 rounded-sm"
                 style={{
                   backgroundColor: isAssigning ? band.color : `${band.color}15`,
-                  color: isAssigning ? 'white' : band.color,
+                  color: isAssigning ? onAccent(band.color) : band.color,
                   border: `1px solid ${band.color}40`,
                 }}
               >
@@ -1460,7 +1468,7 @@ function AudioReactiveContent() {
             className="text-[10px] py-1 px-2 rounded-sm"
             style={{
               backgroundColor: 'var(--bg-elevated)',
-              color: 'var(--text-muted)',
+              color: 'var(--text-secondary)',
               border: '1px solid var(--border)',
             }}
           >

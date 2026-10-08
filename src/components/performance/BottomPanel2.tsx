@@ -8,12 +8,13 @@ import { disableEffect } from '../../hooks/useEffectDisable'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
 import { DeviceChain } from './DeviceChain'
+import { WarpEditor } from './warp/WarpEditor'
 import { modulatorName } from './modulatorSlots'
 import { statusHover } from '../../utils/statusHover'
 
 /**
- * Bottom panel: header ("Chain · signal flows left to right", Devices/Sequencer tabs, Bypass all, Clear)
- * over two bodies. Both bodies stay mounted and the inactive one is hidden, so switching tabs never
+ * Bottom panel: header ("Chain · signal flows left to right", Devices/Warp/Sequencer tabs, Bypass all, Clear)
+ * over three bodies. All bodies stay mounted and the inactive ones are hidden, so switching tabs never
  * remounts the sequencer (which owns the Space/arrow shortcuts) or touches the stage.
  */
 
@@ -45,14 +46,20 @@ const HeaderNote = memo(function HeaderNote() {
       </span>
     )
   }
-  return <span className="seg-bottom-sub">{tab === 'devices' ? '· signal flows left to right' : '· one lane per device'}</span>
+  const sub = tab === 'devices' ? '· signal flows left to right'
+    : tab === 'warp' ? '· Flat = freeze, steps = repeats, slope = slow, rising = reverse'
+    : '· one lane per device'
+  return <span className="seg-bottom-sub">{sub}</span>
 })
+
+const TABS = [['devices', 'Devices', 'tabDevices'], ['warp', 'Warp', 'tabWarp'], ['sequencer', 'Sequencer', 'tabSequencer']] as const
+const TITLES = { devices: 'Chain', warp: 'Warp', sequencer: 'Sequencer' } as const
 
 const Tabs = memo(function Tabs() {
   const tab = useUIStore((s) => s.bottomTab)
   return (
     <div className="seg-seg" role="tablist" aria-label="Bottom panel">
-      {(['devices', 'sequencer'] as const).map((t) => (
+      {TABS.map(([t, name, status]) => (
         <button
           key={t}
           type="button"
@@ -63,9 +70,9 @@ const Tabs = memo(function Tabs() {
           aria-pressed={tab === t}
           data-bottom-tab-btn={t}
           onClick={() => useUIStore.getState().setBottomTab(t)}
-          {...statusHover(getUIStatusText(t === 'devices' ? 'tabDevices' : 'tabSequencer'))}
+          {...statusHover(getUIStatusText(status))}
         >
-          {t === 'devices' ? 'Devices' : 'Sequencer'}
+          {name}
         </button>
       ))}
     </div>
@@ -118,10 +125,10 @@ export const BottomPanel2 = memo(function BottomPanel2() {
   return (
     <div className="seg-bottom" data-bottom-panel data-tab={tab}>
       <div className="seg-bottom-head">
-        <span className="seg-bottom-title">{tab === 'devices' ? 'Chain' : 'Sequencer'}</span>
+        <span className="seg-bottom-title">{TITLES[tab]}</span>
         <HeaderNote />
         <span className="seg-bottom-spacer" />
-        <ChainActions />
+        {tab !== 'warp' && <ChainActions />}
         <Tabs />
       </div>
       <div
@@ -133,6 +140,16 @@ export const BottomPanel2 = memo(function BottomPanel2() {
         hidden={tab !== 'devices'}
       >
         <DeviceChain />
+      </div>
+      <div
+        className="seg-bottom-body"
+        data-bottom-body="warp"
+        id="seg-bottom-body-warp"
+        role="tabpanel"
+        aria-labelledby="seg-bottom-tab-warp"
+        hidden={tab !== 'warp'}
+      >
+        <WarpEditor />
       </div>
       <div
         className="seg-bottom-body seg-bottom-seq"

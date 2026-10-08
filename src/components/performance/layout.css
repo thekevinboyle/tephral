@@ -379,3 +379,62 @@
 .seg-stage-drop:not([data-ok]) span { color: var(--text-secondary); }
 .seg-header-field[data-audio-drop] { outline: 1.5px dashed var(--text-secondary); outline-offset: 3px; border-radius: var(--radius-ctrl); }
 .seg-header-field[data-audio-drop="ok"] { outline-color: var(--live); }
+
+/* ─── Warp tab (time warp editor): graph column + 268px side panel ─────────────────────────────────── */
+:root { --warp: #e8c35a; }
+.seg-shell[data-bottom-tab="warp"] > [data-area="bottom"] { height: 300px; }
+.seg-warp { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 268px; gap: 2px; background: var(--gutter); outline: none; }
+.seg-warp-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg-void); }
+.seg-warp-tools { flex: none; display: flex; align-items: center; gap: 4px; padding: 6px 8px; }
+.seg-warp-tool { height: 24px; padding: 0 8px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.seg-warp-tool:hover { background: var(--bg-hover); }
+.seg-warp-tool[aria-pressed="true"] { background: var(--bg-hover); color: var(--text-primary); }
+.seg-warp-tools-gap { flex: 1 1 auto; }
+.seg-warp-graph { flex: 1 1 auto; min-height: 0; position: relative; margin: 0 8px 6px; border: 1px solid var(--border); border-radius: var(--radius-ctrl); overflow: hidden; background: var(--bg-primary); }
+.seg-warp-graph > svg, .seg-warp-graph > canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.seg-warp-graph > canvas[data-warp-thumbs] { top: auto; bottom: 0; height: 34px; opacity: .55; }
+.seg-warp-graph > svg[data-warp-graph] { outline: none; touch-action: none; cursor: crosshair; }
+.seg-warp-graph[data-tool="curve"] > svg[data-warp-graph] { cursor: ns-resize; }
+.seg-warp-graph[data-tool="erase"] > svg[data-warp-graph] { cursor: cell; }
+.seg-warp-graph > svg[data-warp-graph]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-warp-playhead { position: absolute; left: 0; top: 0; bottom: 0; width: 1.5px; background: var(--live); pointer-events: none; will-change: transform; }
+.seg-warp-graph[data-off] .seg-warp-playhead { opacity: .35; }
+[data-warp-point] { cursor: grab; }
+[data-warp-bend] { cursor: ns-resize; }
+.seg-warp-normal { font: 400 10.5px var(--font-sans); fill: var(--text-muted); pointer-events: none; }
+.seg-warp-settings { flex: none; display: flex; gap: 2px; padding: 0 8px 8px; }
+.seg-warp-set { flex: 1 1 0; min-width: 0; height: 26px; border-radius: var(--radius-ctrl); background: var(--bg-surface); display: flex; align-items: center; justify-content: center; gap: 6px;
+  font: 400 11.5px var(--font-sans); color: var(--text-secondary); cursor: ns-resize; touch-action: none; user-select: none; white-space: nowrap; overflow: hidden; }
+.seg-warp-set:hover { background: var(--bg-elevated); }
+.seg-warp-set > b { font: 500 12px var(--font-mono); color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.seg-warp-set:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-warp-limit { flex: none; height: 26px; padding: 0 8px; display: flex; align-items: center; border-radius: var(--radius-ctrl); background: var(--bg-surface); font: 400 11px var(--font-sans); color: var(--warp); white-space: nowrap; }
+.seg-warp-side { min-width: 0; min-height: 0; background: var(--bg-primary); padding: 8px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+.seg-warp-sect { display: flex; align-items: center; gap: 8px; font: 400 11px var(--font-sans); color: var(--text-muted); }
+.seg-warp-sect > span { flex: 1 1 auto; }
+.seg-warp-power { flex: none; height: 20px; padding: 0 8px 0 6px; display: inline-flex; align-items: center; gap: 6px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 500 11px var(--font-sans); cursor: pointer; }
+.seg-warp-power:hover { background: var(--bg-hover); }
+.seg-warp-power > i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--text-secondary); }
+.seg-warp-power[aria-pressed="true"] { color: var(--text-primary); }
+.seg-warp-power[aria-pressed="true"] > i { background: var(--warp); border-color: var(--warp); }
+.seg-warp-seg { display: flex; gap: 2px; }
+.seg-warp-seg > button { flex: 1 1 0; min-width: 0; height: 24px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-warp-seg > button:hover { background: var(--bg-hover); }
+.seg-warp-seg > button[aria-pressed="true"] { background: var(--warp); color: #1b1b1b; font-weight: 600; }
+.seg-warp-knobs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; min-height: 66px; }
+.seg-warp-mix { display: flex; align-items: center; gap: 6px; font: 400 11px var(--font-sans); color: var(--text-muted); }
+.seg-warp-mix-track { flex: 1 1 auto; position: relative; height: 14px; display: flex; align-items: center; cursor: ew-resize; touch-action: none; border-radius: 2px; }
+.seg-warp-mix-track::before { content: ''; position: absolute; left: 0; right: 0; height: 4px; border-radius: 2px; background: var(--bg-elevated); }
+.seg-warp-mix-track > i { position: absolute; left: 0; height: 4px; border-radius: 2px; background: var(--warp); }
+.seg-warp-mix-track:focus-visible { outline: 1px solid var(--text-primary); outline-offset: 1px; }
+.seg-warp-mix > b { flex: none; width: 36px; text-align: right; font: 500 11px var(--font-mono); color: var(--text-primary); }
+.seg-warp-actions { display: flex; gap: 2px; margin-top: auto; }
+.seg-warp-actions > button { flex: 1 1 0; min-width: 0; height: 24px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; }
+.seg-warp-actions > button:hover, .seg-warp-actions > button[aria-expanded="true"] { background: var(--bg-hover); color: var(--text-primary); }
+.seg-warp :focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+/* Presets menu: portalled (every area clips overflow), position: fixed from the trigger rect */
+.seg-warp-menu { position: fixed; z-index: 1000; min-width: 160px; padding: 4px; display: flex; flex-direction: column; gap: 1px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-ctrl); }
+.seg-warp-menu > button { height: 24px; padding: 0 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 3px; background: transparent; color: var(--text-secondary); font: 400 12px var(--font-sans); text-align: left; cursor: pointer; white-space: nowrap; }
+.seg-warp-menu > button:hover, .seg-warp-menu > button:focus-visible { background: var(--bg-hover); color: var(--text-primary); outline: none; }
+.seg-warp-menu > button[aria-checked="true"] { color: var(--text-primary); }
+.seg-warp-menu > button[aria-checked="true"]::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--warp); }

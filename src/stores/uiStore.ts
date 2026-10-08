@@ -19,7 +19,7 @@ export type InfoPanelSelection =
 
 export type PanelId = 'browser' | 'inspector' | 'bottom'
 export type DrawerPanel = 'browser' | 'inspector'
-export type BottomTab = 'devices' | 'sequencer'
+export type BottomTab = 'devices' | 'warp' | 'sequencer'
 
 interface UIState {
   // Selection state for graphic panel

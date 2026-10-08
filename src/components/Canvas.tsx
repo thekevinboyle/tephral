@@ -26,6 +26,7 @@ import { perfMonitor } from '../utils/perfMonitor'
 import { initParamSync } from '../effects/paramSync'
 import { advanceReadbackFrame } from './overlays/sharedReadback'
 import { WarpCompositor, type WarpVideoOptions } from '../effects/warp/WarpCompositor'
+import { setActiveWarpCompositor } from '../effects/warp/warpRegistry'
 import { getHeardWarpPhase, warpLoopSecondsAt, warpNow } from '../effects/warp/warpClock'
 import { delaySeconds } from '../effects/warp/warpMath'
 import { useWarpStore } from '../stores/warpStore'
@@ -632,7 +633,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       const live = base?.live ?? null
       if (base && live && w.enabled && w.appliesTo !== 'audio') {
         let comp = warpCompositor.current
-        if (!comp) { comp = new WarpCompositor(renderer); warpCompositor.current = comp }
+        if (!comp) { comp = new WarpCompositor(renderer); warpCompositor.current = comp; setActiveWarpCompositor(comp) }
         const now = warpNow()
         const loop = warpLoopSecondsAt(now)
         const phase = getHeardWarpPhase()
@@ -687,6 +688,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       slicerCompositor.current?.dispose()
       warpCompositor.current?.dispose()
       warpCompositor.current = null
+      setActiveWarpCompositor(null)
       warpApplied.current = null
     }
   }, [pipeline, renderer, frameIdRef])

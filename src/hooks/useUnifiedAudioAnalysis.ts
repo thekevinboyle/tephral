@@ -144,7 +144,9 @@ export function useUnifiedAudioAnalysis() {
             return
           }
           const ctx = g.ctx
-          if (ctx.state === 'suspended') await ctx.resume()
+          // Always resume: suspend() from parkVideoGraph is async, so state can still read 'running'
+          // while a park of this same element is in flight; a conditional resume would leave it silent.
+          await ctx.resume()
           if (cancelled) return
           const source = g.source
           const analyser = ctx.createAnalyser()

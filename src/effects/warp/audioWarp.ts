@@ -1,5 +1,5 @@
 // Inserts the warp worklet between an audio source and its outputs, and takes it out again.
-import { useWarpStore, v1EngineFor } from '../../stores/warpStore'
+import { useWarpStore } from '../../stores/warpStore'
 import { onWarpClockChange, warpClockSegments, type WarpClockSegment } from './warpClock'
 
 export const WARP_WORKLET_URL = '/worklets/warp-processor.js'
@@ -26,16 +26,15 @@ export function loadWarpModule(ctx: BaseAudioContext): Promise<void> {
 
 type WarpState = ReturnType<typeof useWarpStore.getState>
 
-/**
- * The worklet still runs the v1 engines (clean / smear / degrade); the 7 store profiles are mapped onto them
- * by v1EngineFor until Task 3 replaces the worklet's engine.
- */
+/** The worklet runs all 7 profiles itself: it gets the profile, that profile's 4 knobs and the Output section. */
 export function warpParamsMessage(s: WarpState = useWarpStore.getState()) {
-  const { engine, params: p } = v1EngineFor(s.profile, s.profileParams)
+  const k = s.profileParams[s.profile]
   return {
     type: 'params' as const,
-    amount: s.amount, skew: s.skew, profile: engine,
-    smooth: p.smooth, grain: p.grain, blend: p.blend, rate: p.rate, crunch: p.crunch,
+    profile: s.profile,
+    knobs: [k[0], k[1], k[2], k[3]],
+    output: { low: s.output.low, high: s.output.high, levelDb: s.output.levelDb },
+    amount: s.amount, skew: s.skew, lengthBeats: s.lengthBeats,
     mix: s.mix, active: true,
   }
 }
@@ -53,7 +52,7 @@ export function warpInitMessages() {
 }
 
 const sameParams = (a: WarpState, b: WarpState) =>
-  a.amount === b.amount && a.skew === b.skew && a.profile === b.profile && a.profileParams === b.profileParams && a.mix === b.mix
+  a.amount === b.amount && a.skew === b.skew && a.profile === b.profile && a.profileParams === b.profileParams && a.output.low === b.output.low && a.output.high === b.output.high && a.output.levelDb === b.output.levelDb && a.mix === b.mix
 
 /**
  * input -> outputs becomes input -> warp -> outputs. Resolves to restore(), which puts the original

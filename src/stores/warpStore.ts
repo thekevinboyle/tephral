@@ -88,7 +88,8 @@ export const WARP_DEFAULTS: WarpSnapshot = {
 }
 
 /**
- * The v1 three-engine model the worklet and the video compositor still run (Tasks 3 and 4 replace them).
+ * Video only: the v1 three-engine model the video compositor still runs (Task 4 replaces it). The audio
+ * worklet runs the 7 profiles itself and no longer uses this bridge.
  * clean -> clean, flange -> smear, every other profile -> degrade. Knobs come from profileParams.
  */
 export type V1Engine = 'clean' | 'smear' | 'degrade'

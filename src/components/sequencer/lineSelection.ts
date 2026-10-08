@@ -1,0 +1,33 @@
+import { create } from 'zustand'
+import type { WarpTool } from '../performance/lines/LinePlot'
+import type { EffectStepResolution } from '../../stores/effectSequencerStore'
+
+interface LineEditState {
+  tool: WarpTool
+  selected: number | null
+  setTool: (t: WarpTool) => void
+  setSelected: (i: number | null) => void
+}
+
+/** The lane editor's tool and selected point. One lane (the selected track's) is edited at a time. */
+export const useLineEditStore = create<LineEditState>((set) => ({
+  tool: 'draw',
+  selected: null,
+  setTool: (tool) => set({ tool }),
+  setSelected: (selected) => set({ selected }),
+}))
+
+const FRACTIONS: Record<string, string> = { '0.25': '¼', '0.5': '½', '0.75': '¾', '1.5': '1½' }
+
+/** A track's time scale as the header badge and the lane show it: ¼×, ½×, 1×, 1½×, 2× … */
+export const fmtScale = (s: number): string => `${FRACTIONS[String(s)] ?? String(s)}×`
+
+const STEP_BEATS: Record<EffectStepResolution, number> = { '1/4': 1, '1/8': 0.5, '1/16': 0.25, '1/32': 0.125 }
+
+/** Bars a track's loop spans: length × beats per step / time scale / 4. */
+export function trackBars(length: number, resolution: EffectStepResolution, timeScale: number): number {
+  return (length * (STEP_BEATS[resolution] ?? 0.25)) / (timeScale || 1) / 4
+}
+
+/** Bars formatted for the lane's span label: whole numbers plain, otherwise up to two decimals. */
+export const fmtBars = (b: number): string => (Number.isInteger(b) ? String(b) : String(Math.round(b * 100) / 100))

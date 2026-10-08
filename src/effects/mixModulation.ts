@@ -80,6 +80,11 @@ export function captureUserMix(effectId: string, stored: number): number {
   return base
 }
 
+/** The user's own Dry/wet remembered by captureUserMix (or by modulation starting), if any. */
+export function getUserMix(effectId: string): number | undefined {
+  return userMix.get(effectId)
+}
+
 export function setGateOpen(effectId: string, open: boolean): void {
   gateOpen.set(effectId, open)
 }

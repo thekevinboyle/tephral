@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
+import { externalGateBase } from '../effects/mixModulation'
 import { useMediaStore } from '../stores/mediaStore'
 
 const THRESHOLD = 0.05
@@ -118,7 +119,7 @@ export function useAudioGate() {
       for (const effectId of Object.keys(currentTracks)) {
         const track = currentTracks[effectId]
         if (track.audioGate && !(effectId in baseMixRef.current)) {
-          baseMixRef.current[effectId] = ge.getEffectMix(effectId)
+          baseMixRef.current[effectId] = externalGateBase(effectId, ge.getEffectMix(effectId), useEffectSequencerStore.getState().isPlaying)
         }
       }
 
@@ -150,7 +151,7 @@ export function useAudioGate() {
 
           // Capture base mix if not yet captured (track toggled on mid-stream)
           if (!(effectId in baseMixRef.current)) {
-            baseMixRef.current[effectId] = ge.getEffectMix(effectId)
+            baseMixRef.current[effectId] = externalGateBase(effectId, ge.getEffectMix(effectId), useEffectSequencerStore.getState().isPlaying)
           }
 
           const base = baseMixRef.current[effectId] ?? 1

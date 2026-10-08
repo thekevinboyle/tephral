@@ -6,6 +6,12 @@ import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 import { useUIStore } from '../../stores/uiStore'
 import { statusHover } from '../../utils/statusHover'
 import { paramDisplayName } from '../../utils/routeTargetLabel'
+import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
+import { gateOpenLevel, getUserMix } from '../../effects/mixModulation'
+import { LineLane } from './LineLane'
+import { fmtScale } from './lineFormat'
+import { useLineLockStore } from './lineLocks'
+import { LockIcon } from '../performance/warp/WarpLock'
 
 const SEQ = '#9580FF'
 const MIDI_COLOR = '#00AAFF'
@@ -36,14 +42,13 @@ export function EffectTrackRow({
   stepPage,
   currentStep,
   selectedStep,
-  color: _color,
+  color,
   label,
   isSelectedTrack,
   onSelectTrack,
   orderIndex: _orderIndex,
 }: EffectTrackRowProps) {
   void _orderIndex
-  void _color
   const {
     setTrackMuted,
     setTrackSoloed,
@@ -193,12 +198,26 @@ export function EffectTrackRow({
   const isPlayheadOnPage =
     effectiveStep >= pageStart && effectiveStep < pageStart + 8
 
-  // Dim tracks where no steps are active
-  const hasAnyActiveSteps = track.steps.some((s) => s.active)
+  // Dim tracks where no steps are active (a Line track always counts as active)
+  const isLine = track.mode === 'line'
+  const showLock = useLineLockStore((s) => s.lockMode) && isLine
+  const lineLocked = useLineLockStore((s) => !!s.locks[effectId])
+  const hasAnyActiveSteps = isLine || track.steps.some((s) => s.active)
+
+  // Line info: the Dry/wet ceiling is the user's own value while stopped (the stored one); while playing, when the
+  // line writes the stored one every frame, it is the gate's open level over the remembered base (the modulated
+  // value while a route drives Dry/wet). Subscribed only while it is shown and stopped.
+  const showLineInfo = isLine && !!isSelectedTrack
+  const isPlaying = useEffectSequencerStore((s) => s.isPlaying)
+  const storedMix = useGlitchEngineStore((s) => (showLineInfo && !isPlaying ? s.effectMix[effectId] ?? 1 : -1))
+  // (the row re-renders on every step while playing, so the non-reactive reads stay current)
+  const ceiling = !showLineInfo ? 0 : storedMix >= 0 ? storedMix
+    : gateOpenLevel(effectId, getUserMix(effectId) ?? useGlitchEngineStore.getState().effectMix[effectId] ?? 1)
 
   return (
     <div
       className="flex"
+      data-track-row={effectId}
       style={{
         borderBottom: isSelectedTrack ? `1px solid ${SEQ}50` : '1px solid transparent',
         borderTop: isSelectedTrack ? `1px solid ${SEQ}50` : '1px solid transparent',
@@ -263,8 +282,15 @@ export function EffectTrackRow({
                 border: `1px solid ${SEQ}30`,
               }}
             >
-              ×{track.timeScale}
+              {fmtScale(track.timeScale)}
             </span>
+          )}
+          {showLock && (
+            <button type="button" className="seg-line-lock" data-line-lock={effectId} aria-pressed={lineLocked} aria-label={`Lock ${label} line`}
+              onClick={(e) => { e.stopPropagation(); useLineLockStore.getState().toggleLock(effectId) }}
+              {...statusHover(lineLocked ? `${label} line locked: Dice all lines keeps it. Click to unlock` : `${label} line unlocked: Dice all lines changes it. Click to lock`)}>
+              <LockIcon open={!lineLocked} />
+            </button>
           )}
         </div>
 
@@ -297,8 +323,8 @@ export function EffectTrackRow({
           </div>
         )}
 
-        {/* Controls row: Mode, Mute, Solo */}
-        <div className="flex items-center gap-1.5">
+        {/* Controls row: Mute, Solo, Audio, MIDI note gate; the Steps / Line switch wraps onto its own line */}
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
           {/* Mute */}
           <button
             onClick={(e) => {
@@ -434,10 +460,30 @@ export function EffectTrackRow({
             </span>
           </button>
 
+          <div className="seg-mode-switch" data-track-mode-switch={effectId} role="group" aria-label={`${label} track mode`}>
+            {(['gate', 'line'] as const).map((m) => (
+              <button key={m} type="button" data-mode={m} aria-pressed={(track.mode === 'line') === (m === 'line')}
+                onClick={(e) => { e.stopPropagation(); useEffectSequencerStore.getState().setTrackMode(effectId, m); onSelectTrack?.(effectId) }}
+                {...statusHover(m === 'line' ? `Line: draw how much of ${label} plays across the loop` : `Steps: switch ${label} on and off per step`)}>
+                {m === 'line' ? 'Line' : 'Steps'}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {showLineInfo && (
+          <div className="seg-line-info" data-line-info>
+            Length <b>{track.length}</b> · Scale <b>{fmtScale(track.timeScale ?? 1)}</b><br />Dry/wet ceiling <b>{Math.round(ceiling * 100)}%</b>
+          </div>
+        )}
       </div>
 
-      {/* Step cells grid */}
+      {isLine ? (
+        <div className="flex-1 min-w-0 flex items-center" style={{ padding: '4px 3px' }}>
+          <LineLane effectId={effectId} track={track} color={color} label={label} selected={!!isSelectedTrack} onSelect={() => onSelectTrack?.(effectId)} />
+        </div>
+      ) : (
+      /* Step cells grid */
       <div
         className="flex-1 min-w-0"
         style={{
@@ -497,6 +543,7 @@ export function EffectTrackRow({
           )
         })}
       </div>
+      )}
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useUIStore } from '../../../stores/uiStore'
 import { useWarpStore } from '../../../stores/warpStore'
-import { PRESETS } from '../../../effects/warp/warpMath'
+import { PRESETS, type WarpPoint } from '../../../effects/warp/warpMath'
 import { statusHover } from '../../../utils/statusHover'
 import { cleanLineName, deleteLine, loadLines, MAX_LINES, MAX_POINTS, saveLine, type WarpLine } from './warpLines'
 
@@ -11,14 +11,27 @@ const ROW_H = 25
 
 const status = (t: string | null) => useUIStore.getState().setStatusText(t)
 
+interface LinesMenuProps {
+  builtIns: readonly string[]
+  /** The loaded line's name, or null for an edited (Custom) line. */
+  current: string | null
+  /** "Warp lines" or "<Effect> lines": the trigger's and the menu's aria-label. */
+  label: string
+  /** Prefix of every data attribute: data-<attr>-lines, data-<attr>-lines-menu, data-<attr>-line, … */
+  attr: 'warp' | 'line'
+  onPickBuiltIn: (name: string) => void
+  onPickUser: (l: WarpLine) => void
+  trigger?: 'lines' | 'presets'
+}
+
 /**
  * Lines ▾ (spec §2): the user's saved lines (each with a delete ×), then the built-in lines. The menu is
  * portalled with position: fixed, since every layout area clips overflow. Escape closes it (checking and
  * setting defaultPrevented); ArrowUp / ArrowDown move between its items.
- * variant 'presets' is the side panel footer's "Presets ▾" trigger for the same menu.
+ * trigger 'presets' is the warp side panel footer's "Presets ▾" trigger for the same menu.
+ * Shared by the warp (attr 'warp') and the Line tracks' toolbar (attr 'line').
  */
-export const WarpLinesMenu = memo(function WarpLinesMenu({ variant = 'lines' }: { variant?: 'lines' | 'presets' }) {
-  const presetName = useWarpStore((s) => s.presetName)
+export function LinesMenu({ builtIns, current: presetName, label, attr, onPickBuiltIn, onPickUser, trigger: variant = 'lines' }: LinesMenuProps) {
   const [open, setOpen] = useState(false)
   const [lines, setLines] = useState<WarpLine[]>([])
   const [pos, setPos] = useState<{ left: number; top?: number; bottom?: number; minWidth: number } | null>(null)
@@ -69,7 +82,7 @@ export const WarpLinesMenu = memo(function WarpLinesMenu({ variant = 'lines' }: 
     if (open) { setOpen(false); return }
     const l = loadLines()
     setLines(l)
-    place(l.length + BUILT_INS.length)
+    place(l.length + builtIns.length)
     setOpen(true)
   }
 
@@ -84,14 +97,14 @@ export const WarpLinesMenu = memo(function WarpLinesMenu({ variant = 'lines' }: 
   }
 
   const loadUser = (l: WarpLine) => {
-    useWarpStore.getState().patch({ points: l.points.map((q) => ({ ...q })), presetName: l.name })
+    onPickUser(l)
     close(true)
   }
   const remove = (name: string) => {
     if (!deleteLine(name)) { status('Could not delete the line: storage is unavailable in this browser'); return }
     const l = loadLines()
     setLines(l)
-    place(l.length + BUILT_INS.length)
+    place(l.length + builtIns.length)
     status(`Deleted line ${name}`)
     menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true })
   }
@@ -103,7 +116,7 @@ export const WarpLinesMenu = memo(function WarpLinesMenu({ variant = 'lines' }: 
         <button
           ref={triggerRef}
           type="button"
-          data-warp-presets
+          {...{ [`data-${attr}-presets`]: true }}
           aria-haspopup="menu"
           aria-expanded={open}
           onClick={toggle}
@@ -116,10 +129,10 @@ export const WarpLinesMenu = memo(function WarpLinesMenu({ variant = 'lines' }: 
           ref={triggerRef}
           type="button"
           className="seg-warp-tool seg-warp-lines"
-          data-warp-lines
+          {...{ [`data-${attr}-lines`]: true }}
           aria-haspopup="menu"
           aria-expanded={open}
-          aria-label={`Warp lines: ${name}`}
+          aria-label={`${label}: ${name}`}
           onClick={toggle}
           {...statusHover('Lines: load one of your saved lines or a built-in line')}
         >
@@ -127,24 +140,24 @@ export const WarpLinesMenu = memo(function WarpLinesMenu({ variant = 'lines' }: 
         </button>
       )}
       {open && pos && createPortal(
-        <div ref={menuRef} className="seg-warp-menu" role="menu" data-warp-lines-menu aria-label="Warp lines" onKeyDown={onMenuKey}
+        <div ref={menuRef} className="seg-warp-menu" role="menu" {...{ [`data-${attr}-lines-menu`]: true }} aria-label={label} onKeyDown={onMenuKey}
           style={{ left: pos.left, top: pos.top, bottom: pos.bottom, minWidth: pos.minWidth }}>
           {lines.map((l) => (
             <div key={l.name} className="seg-warp-menu-row" role="none">
-              <button type="button" role="menuitemradio" aria-checked={presetName === l.name} data-warp-line={l.name}
+              <button type="button" role="menuitemradio" aria-checked={presetName === l.name} {...{ [`data-${attr}-line`]: l.name }}
                 onClick={() => loadUser(l)} {...statusHover(`Load your line ${l.name}`)}>
                 {l.name}
               </button>
-              <button type="button" role="menuitem" className="seg-warp-menu-del" data-warp-line-delete={l.name} aria-label={`Delete line ${l.name}`}
+              <button type="button" role="menuitem" className="seg-warp-menu-del" {...{ [`data-${attr}-line-delete`]: l.name }} aria-label={`Delete line ${l.name}`}
                 onClick={() => remove(l.name)} {...statusHover(`Delete your line ${l.name}`)}>
                 <span aria-hidden="true">×</span>
               </button>
             </div>
           ))}
           {lines.length > 0 && <div className="seg-warp-menu-sep" role="separator" />}
-          {BUILT_INS.map((n) => (
-            <button key={n} type="button" role="menuitemradio" aria-checked={presetName === n} data-warp-preset={n}
-              onClick={() => { useWarpStore.getState().loadPreset(n); close(true) }} {...statusHover(`Load the built-in ${n} line`)}>
+          {builtIns.map((n) => (
+            <button key={n} type="button" role="menuitemradio" aria-checked={presetName === n} {...{ [`data-${attr}-preset`]: n }}
+              onClick={() => { onPickBuiltIn(n); close(true) }} {...statusHover(`Load the built-in ${n} line`)}>
               {n}
             </button>
           ))}
@@ -153,16 +166,31 @@ export const WarpLinesMenu = memo(function WarpLinesMenu({ variant = 'lines' }: 
       )}
     </>
   )
+}
+
+/** The warp's Lines ▾ (or the side panel's Presets ▾): LinesMenu on the warp store. */
+export const WarpLinesMenu = memo(function WarpLinesMenu({ variant = 'lines' }: { variant?: 'lines' | 'presets' }) {
+  const presetName = useWarpStore((s) => s.presetName)
+  return <LinesMenu attr="warp" label="Warp lines" builtIns={BUILT_INS} current={presetName} trigger={variant}
+    onPickBuiltIn={(n) => useWarpStore.getState().loadPreset(n)}
+    onPickUser={(l) => useWarpStore.getState().patch({ points: l.points.map((q) => ({ ...q })), presetName: l.name })} />
 })
 
-interface SaveProps { onAnnounce: (t: string) => void }
+interface SaveProps {
+  attr: 'warp' | 'line'
+  /** The line to save, read when Enter is pressed. */
+  getPoints: () => WarpPoint[]
+  /** Called with the name after a save or replace. */
+  onSaved: (name: string) => void
+  onAnnounce: (t: string) => void
+}
 
 /**
  * Save line (spec §2): opens an inline name field in place of the button (no modal). Enter saves the current
  * line under that name; Escape (checking and setting defaultPrevented) or leaving the field cancels.
  * With storage unavailable it only reports that in the status bar.
  */
-export const WarpSaveLine = memo(function WarpSaveLine({ onAnnounce }: SaveProps) {
+export function SaveLine({ attr, getPoints, onSaved, onAnnounce }: SaveProps) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState('')
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -180,11 +208,9 @@ export const WarpSaveLine = memo(function WarpSaveLine({ onAnnounce }: SaveProps
   const commit = () => {
     const name = cleanLineName(value)
     if (!name) { say('Type a name to save the line'); return }
-    const s = useWarpStore.getState()
-    const r = saveLine(name, s.points)
+    const r = saveLine(name, getPoints())
     if (r === 'saved' || r === 'replaced') {
-      // Name the loaded line without touching the points (a patch would re-set them and drop the point selection)
-      useWarpStore.setState({ presetName: name })
+      onSaved(name)
       say(`${r === 'replaced' ? 'Replaced' : 'Saved'} line ${name}`)
     } else if (r === 'builtin') {
       say(`${name} is a built-in line name. Choose another name`)
@@ -209,7 +235,7 @@ export const WarpSaveLine = memo(function WarpSaveLine({ onAnnounce }: SaveProps
 
   if (!editing) {
     return (
-      <button ref={btnRef} type="button" className="seg-warp-tool" data-warp-save
+      <button ref={btnRef} type="button" className="seg-warp-tool" {...{ [`data-${attr}-save`]: true }}
         onClick={() => { setValue(''); setEditing(true) }}
         {...statusHover('Save line: keep the current line under a name of your own, listed first in Lines')}>
         Save line
@@ -219,7 +245,7 @@ export const WarpSaveLine = memo(function WarpSaveLine({ onAnnounce }: SaveProps
   return (
     <input
       className="seg-warp-save-name"
-      data-warp-save-name
+      {...{ [`data-${attr}-save-name`]: true }}
       type="text"
       autoFocus
       maxLength={40}
@@ -232,4 +258,13 @@ export const WarpSaveLine = memo(function WarpSaveLine({ onAnnounce }: SaveProps
       {...statusHover('Type a name, then Enter saves the line. Escape cancels')}
     />
   )
+}
+
+/**
+ * The warp's Save line: SaveLine on the warp store. A save names the loaded line without touching the points
+ * (a patch would re-set them and drop the point selection).
+ */
+export const WarpSaveLine = memo(function WarpSaveLine({ onAnnounce }: { onAnnounce: (t: string) => void }) {
+  return <SaveLine attr="warp" getPoints={() => useWarpStore.getState().points}
+    onSaved={(n) => useWarpStore.setState({ presetName: n })} onAnnounce={onAnnounce} />
 })

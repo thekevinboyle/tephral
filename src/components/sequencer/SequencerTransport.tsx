@@ -7,6 +7,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 import { displayParamLabel } from '../../config/paramNames'
+import { LineToolbar } from './LineToolbar'
 
 const MIDI_COLOR = '#00AAFF'
 const AUDIO_COLOR = '#FF8800'
@@ -190,6 +191,9 @@ export function SequencerTransport({
   const isConnected = useMIDIStore((s) => s.isConnected)
   const midiInputs = useMIDIStore((s) => s.inputs)
   const setClockSyncEnabled = useMIDIStore((s) => s.setClockSyncEnabled)
+  // A selected Line track swaps the step tools for its line tools (spec §4)
+  const selectedEffectId = useUIStore((s) => s.selectedEffectId)
+  const lineSelected = useEffectSequencerStore((s) => !!selectedEffectId && s.tracks[selectedEffectId]?.mode === 'line')
 
   const audioBpm = useAudioSourceStore((s) => s.audioBpm)
   const audioBpmSyncEnabled = useAudioSourceStore((s) => s.audioBpmSyncEnabled)
@@ -241,9 +245,9 @@ export function SequencerTransport({
     <div
       className="flex-shrink-0 flex items-center"
       style={{
-        padding: '0 var(--panel-padding)',
+        padding: lineSelected ? '6px var(--panel-padding)' : '0 var(--panel-padding)',
         gap: 0,
-        height: 64,
+        minHeight: 64,
         backgroundColor: 'var(--bg-void)',
         borderBottom: '1px solid var(--border-light)',
       }}
@@ -371,16 +375,24 @@ export function SequencerTransport({
       {/* Divider */}
       <div className="w-px h-6" style={{ backgroundColor: 'var(--border)', marginRight: 16 }} />
 
-      {/* Group 3: Track tools */}
-      <div className="flex items-center gap-1.5">
-        <RandomizeButton />
-        <RandomizeAllButton />
-        <RandomizeLocksButton />
-        <ClearTrackButton />
-      </div>
+      {/* Group 3: Track tools (a Line track's line tools fill the free space and wrap when narrow) */}
+      {lineSelected && selectedEffectId ? (
+        <div className="seg-line-tools-slot">
+          <LineToolbar effectId={selectedEffectId} />
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-1.5">
+            <RandomizeButton />
+            <RandomizeAllButton />
+            <RandomizeLocksButton />
+            <ClearTrackButton />
+          </div>
 
-      {/* Spacer */}
-      <div className="flex-1" />
+          {/* Spacer */}
+          <div className="flex-1" />
+        </>
+      )}
 
       {/* Group 4: Page dots */}
       <div className="flex items-center gap-1.5">

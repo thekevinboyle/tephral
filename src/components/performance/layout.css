@@ -509,3 +509,36 @@
 .seg-warp-menu-row > button[aria-checked="true"]::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--warp); }
 .seg-warp-menu-del { flex: none; width: 24px; justify-content: center; padding: 0; font-size: 14px; }
 .seg-warp-menu-sep { height: 1px; margin: 3px 4px; background: var(--border); }
+
+/* ─── Line tracks (Sequencer): Steps / Line switch, lanes, header info ───────────────────────────── */
+.seg-mode-switch { flex: 0 0 100%; display: flex; gap: 2px; }
+.seg-mode-switch > button { flex: 1 1 0; min-width: 0; height: 18px; padding: 0 5px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-muted); font: 400 10.5px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.seg-mode-switch > button:hover { color: var(--text-secondary); }
+.seg-mode-switch > button[aria-pressed="true"] { background: var(--bg-hover); color: var(--text-primary); }
+.seg-mode-switch > button:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-line-lane { position: relative; flex: 1; min-width: 0; height: 58px; background: var(--bg-void); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; cursor: pointer; }
+.seg-line-lane[data-selected] { height: 170px; cursor: default; }
+.seg-line-lane > svg { position: absolute; inset: 0; }
+.seg-line-lane svg[data-line-graph] { outline: none; touch-action: none; cursor: crosshair; }
+.seg-line-lane[data-tool="curve"] svg[data-line-graph] { cursor: ns-resize; }
+.seg-line-lane[data-tool="erase"] svg[data-line-graph] { cursor: cell; }
+.seg-line-lane svg[data-line-graph]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-line-edge { font: 400 10px var(--font-mono); fill: var(--text-muted); stroke: var(--bg-void); stroke-width: 3px; stroke-linejoin: round; paint-order: stroke; }
+.seg-line-playhead { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--live); pointer-events: none; }
+.seg-line-owner { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid var(--border); border-radius: var(--radius-ctrl); background: var(--bg-primary); color: var(--text-secondary); font: 400 11px var(--font-sans); white-space: nowrap; pointer-events: none; }
+.seg-line-info { margin-top: 4px; font: 400 11px/1.35 var(--font-sans); color: var(--text-muted); }
+.seg-line-info b { font-weight: 500; color: var(--text-primary); }
+.seg-line-lane[data-locked] { outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
+/* the Sequencer toolbar's line tools (spec §4): one row, wrapping under 1100 px; never scrolls sideways */
+.seg-line-tools-slot { flex: 1 1 0; min-width: 0; margin-right: 16px; }
+.seg-line-tools { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0 }
+.seg-line-ctx { color: var(--text-muted); font-size: 11.5px; margin-right: 4px }
+.seg-line-tools > .seg-warp-set { flex: none; height: 24px; padding: 0 8px; background: var(--bg-elevated); }
+.seg-line-tools > .seg-warp-set:hover { background: var(--bg-hover); }
+.seg-line-tools > .seg-warp-set:focus-visible, .seg-line-tools .seg-warp-tool:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-line-dice { flex: none; margin-left: auto; display: flex; gap: 4px; align-items: center; }
+.seg-line-dice > .seg-line-lockmode[aria-pressed="true"] { color: var(--warp); outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
+.seg-line-lock { flex: none; width: 18px; height: 18px; margin-left: auto; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-secondary); cursor: pointer; }
+.seg-line-lock:hover { background: var(--bg-hover); }
+.seg-line-lock[aria-pressed="false"] > svg { opacity: .45; }
+.seg-line-lock[aria-pressed="true"] { color: var(--warp); }

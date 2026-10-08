@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
+import { externalGateBase } from '../effects/mixModulation'
 import { useMIDIStore } from '../stores/midiStore'
 
 export function useMIDINoteGate() {
@@ -37,7 +38,7 @@ export function useMIDINoteGate() {
     for (const effectId of Object.keys(currentTracks)) {
       const track = currentTracks[effectId]
       if (track.midiGate && !(effectId in baseMixRef.current)) {
-        baseMixRef.current[effectId] = ge.getEffectMix(effectId)
+        baseMixRef.current[effectId] = externalGateBase(effectId, ge.getEffectMix(effectId), useEffectSequencerStore.getState().isPlaying)
       }
     }
 
@@ -52,7 +53,7 @@ export function useMIDINoteGate() {
 
         // Capture base if not yet captured
         if (!(effectId in baseMixRef.current)) {
-          baseMixRef.current[effectId] = ge.getEffectMix(effectId)
+          baseMixRef.current[effectId] = externalGateBase(effectId, ge.getEffectMix(effectId), useEffectSequencerStore.getState().isPlaying)
         }
 
         const mappedNote = midiState.trackNoteMap[effectId]

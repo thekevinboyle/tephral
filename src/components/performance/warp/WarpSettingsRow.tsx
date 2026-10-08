@@ -14,7 +14,9 @@ const idx = (list: readonly number[], v: number) => {
 }
 
 interface SpinProps {
-  id: 'amount' | 'length' | 'snap' | 'skew'
+  id: string
+  /** The data attribute naming the control: data-<attr>={id}. Default 'warp-setting'. */
+  attr?: string
   label: string
   value: string
   now: number
@@ -30,7 +32,7 @@ interface SpinProps {
 }
 
 /** BPM-style numeric control: drag up or down, or step with the arrow keys. */
-const Spin = memo(function Spin({ id, label, value, now, min, max, step, pxPerStep, status, locked }: SpinProps) {
+export const Spin = memo(function Spin({ id, attr, label, value, now, min, max, step, pxPerStep, status, locked }: SpinProps) {
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
     e.preventDefault()
@@ -72,7 +74,7 @@ const Spin = memo(function Spin({ id, label, value, now, min, max, step, pxPerSt
       aria-valuemin={min}
       aria-valuemax={max}
       aria-valuetext={value}
-      data-warp-setting={id}
+      {...{ [`data-${attr ?? 'warp-setting'}`]: id }}
       data-locked={locked || undefined}
       onKeyDown={onKeyDown}
       onPointerDown={onPointerDown}

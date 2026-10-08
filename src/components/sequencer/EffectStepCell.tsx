@@ -162,6 +162,7 @@ export const EffectStepCell = memo(function EffectStepCell({
 
   return (
     <div
+      data-step-cell
       onMouseDown={(e) => {
         if (e.button === 0 && !e.altKey && !e.metaKey && !e.ctrlKey) onMouseDown(stepIndex, e)
       }}

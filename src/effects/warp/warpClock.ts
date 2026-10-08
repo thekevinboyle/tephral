@@ -14,12 +14,13 @@ import { useWarpStore } from '../../stores/warpStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useAudioSourceStore } from '../../stores/audioSourceStore'
 
-export interface WarpClockSegment { at: number; t0: number; bpm: number; lengthBeats: number }
+/** keep: a phase-preserving change (tempo/length); a late arrival is applied keeping the phase. */
+export interface WarpClockSegment { at: number; t0: number; bpm: number; lengthBeats: number; keep?: boolean }
 /** Sent to listeners. `reset` replaces the whole list (time base changed); otherwise it is one new segment. */
 export type WarpClockEvent = { reset: true; segments: WarpClockSegment[] } | { reset: false; segment: WarpClockSegment }
 
 /** Tempo/length changes take effect this far ahead so the worklet can switch on the same sample. */
-export const WARP_CLOCK_LOOKAHEAD = 0.05
+export const WARP_CLOCK_LOOKAHEAD = 0.1
 
 let timeBase: BaseAudioContext | null = null
 let perfOffset = 0
@@ -49,16 +50,27 @@ export function getWarpPhase(ctxTime: number): number {
   return frac((ctxTime - s.t0) / loopSeconds(s.lengthBeats, s.bpm))
 }
 
+/**
+ * Phase of what is being heard right now: the context's time minus its output and base latency
+ * (0 on the performance.now fallback). For the video side, so pictures line up with the sound.
+ */
+export function getHeardWarpPhase(): number {
+  const ac = timeBase instanceof AudioContext ? timeBase : null
+  const lat = ac ? (ac.outputLatency || 0) + (ac.baseLatency || 0) : 0
+  return getWarpPhase(warpNow() - lat)
+}
+
 function emit(e: WarpClockEvent) { listeners.forEach((fn) => fn(e)) }
 
 /**
  * Anchor the loop so the phase at `ctxTime` is `phase` (default 0), using the current BPM and length.
- * Passing the phase the clock already has at `ctxTime` keeps x continuous (tempo/length changes).
+ * Passing the phase the clock already has at `ctxTime` keeps x continuous (tempo/length changes);
+ * `keep` marks such a change so a worklet that receives it late still keeps its phase.
  */
-export function setWarpAnchor(ctxTime: number, phase = 0): void {
+export function setWarpAnchor(ctxTime: number, phase = 0, keep = false): void {
   const bpm = useEffectSequencerStore.getState().bpm
   const lengthBeats = useWarpStore.getState().lengthBeats
-  const seg: WarpClockSegment = { at: ctxTime, t0: ctxTime - phase * loopSeconds(lengthBeats, bpm), bpm, lengthBeats }
+  const seg: WarpClockSegment = { at: ctxTime, t0: ctxTime - phase * loopSeconds(lengthBeats, bpm), bpm, lengthBeats, keep }
   // Later segments are superseded; segments wholly in the past (a newer one has started) are dropped.
   segs = segs.filter((s) => s.at < ctxTime)
   segs.push(seg)
@@ -100,7 +112,7 @@ export function setWarpTimeBase(ctx: BaseAudioContext | null): void {
 /** Re-anchor on BPM/length changes (x preserved) and on sequencer play (x = 0 at step 0). */
 function reanchorKeepingPhase() {
   const at = warpNow() + WARP_CLOCK_LOOKAHEAD
-  setWarpAnchor(at, getWarpPhase(at))
+  setWarpAnchor(at, getWarpPhase(at), true)
 }
 
 let wired = false

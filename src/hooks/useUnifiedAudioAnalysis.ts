@@ -11,27 +11,43 @@ const WAVEFORM_SIZE = 128
 // A video file's soundtrack is played through Web Audio (and the warp) when Audio = Video.
 // createMediaElementSource can be called only once per element and binds the element to that
 // context for good, so the context and source node are cached per element and only disconnected
-// (never re-created) when the routing changes. The context is closed once the element is dropped.
-const videoGraphs = new WeakMap<HTMLMediaElement, { ctx: AudioContext; source: MediaElementAudioSourceNode }>()
+// (never re-created) when the routing changes. While not routed the context is suspended; it is
+// closed as soon as the element is neither the current nor the stashed video element.
+const videoGraphs = new Map<HTMLMediaElement, { ctx: AudioContext; source: MediaElementAudioSourceNode }>()
 
 function videoGraphFor(el: HTMLMediaElement) {
   let g = videoGraphs.get(el)
   if (!g || g.ctx.state === 'closed') {
     const ctx = new AudioContext()
-    g = { ctx, source: ctx.createMediaElementSource(el) }
+    try {
+      g = { ctx, source: ctx.createMediaElementSource(el) }
+    } catch (err) {
+      ctx.close().catch(() => {})
+      throw err
+    }
     videoGraphs.set(el, g)
   }
   return g
 }
 
-/** Close the cached context of an element that is neither the current nor the stashed video. */
-function releaseVideoGraph(el: HTMLMediaElement) {
+/** Close every cached context whose element is neither the current nor the stashed video element. */
+function sweepVideoGraphs() {
   const m = useMediaStore.getState()
-  if (m.videoElement === el || m.stashedVideoElement === el) return
+  for (const [el, g] of videoGraphs) {
+    if (el === m.videoElement || el === m.stashedVideoElement) continue
+    videoGraphs.delete(el)
+    g.ctx.close().catch(() => {})
+  }
+}
+useMediaStore.subscribe((s, prev) => {
+  if (s.videoElement !== prev.videoElement || s.stashedVideoElement !== prev.stashedVideoElement) sweepVideoGraphs()
+})
+
+/** Not routed any more: close it if the element is gone, otherwise suspend it until it is routed again. */
+function parkVideoGraph(el: HTMLMediaElement) {
+  sweepVideoGraphs()
   const g = videoGraphs.get(el)
-  if (!g) return
-  videoGraphs.delete(el)
-  g.ctx.close().catch(() => {})
+  if (g && g.ctx.state === 'running') g.ctx.suspend().catch(() => {})
 }
 
 // One warp slot for the app's single audible graph (this hook is mounted once, in PerformanceLayout).
@@ -124,6 +140,7 @@ export function useUnifiedAudioAnalysis() {
             g = videoGraphFor(videoElement)
           } catch (err) {
             console.warn('[UnifiedAudio] createMediaElementSource failed:', err)
+            setVideoMuted(videoElement, true)
             return
           }
           const ctx = g.ctx
@@ -399,7 +416,7 @@ export function useUnifiedAudioAnalysis() {
     useAudioSourceStore.getState().setBandAnalyser(null)
     useAudioSourceStore.getState().setAudioContext(null)
     if (videoGraphElRef.current) {
-      releaseVideoGraph(videoGraphElRef.current)
+      parkVideoGraph(videoGraphElRef.current)
       videoGraphElRef.current = null
     }
     ownsCtxRef.current = true

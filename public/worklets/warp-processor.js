@@ -11,10 +11,14 @@
 //
 // Messages (port):
 //   {type:'lut', lut: Float32Array(1024)}
-//   {type:'clock', t0, bpm, lengthBeats, at?, reset?}   at = time the segment takes effect
+//   {type:'clock', t0, bpm, lengthBeats, at?, keep?, reset?}   at = time the segment takes effect.
+//      keep: phase-preserving change (tempo/length). If it arrives after `at`, it is applied now with
+//      t0 re-derived so the phase stays continuous. Without keep (sequencer play) it is a deliberate jump.
+//   {type:'dispose'}   drop the rings; process() returns false so the processor can be collected
 //   {type:'params', amount, skew, profile, smooth, grain, blend, rate, crunch, mix, active, probe?}
 // processorOptions.messages: the same messages, applied in the constructor (initial state).
 // probe: test only; channel 1 carries the loop phase instead of audio.
+// Posts 'alive' when constructed and 'disposed' after dispose (audioWarp counts live processors).
 
 const MAX_DELAY_SECONDS = 8
 const EPS = 1e-5
@@ -52,19 +56,23 @@ class WarpProcessor extends AudioWorkletProcessor {
     const sr = sampleRate
     this.size = Math.ceil((MAX_DELAY_SECONDS + 0.25) * sr) // 8 s + grain/interp margin
     this.ring = [new Float32Array(this.size), new Float32Array(this.size)]
+    this.disposed = false
     this.n = 0 // absolute frame index of the next input sample
     this.lut = null
     this.segs = [{ at: -Infinity, t0: 0, bpm: 120, lengthBeats: 4 }]
     this.p = { amount: 1, skew: 0, profile: 'clean', smooth: 0.3, grain: 0.4, blend: 0.5, rate: 0.5, crunch: 0.3, mix: 1, active: true, probe: false }
-    this.mixS = -1 // smoothed effective mix; -1 = take target on first sample
-    this.prevP = -1
-    this.xfOld = 0 // click guard: old read head
+    this.mixS = 0 // smoothed effective mix; starts dry so an inserted warp fades in
+    this.prevP = null // previous read position (may be negative early on: before the first sample)
+    // click guard: old voice is a read head (xfOld) or, when retriggered mid-fade, a held value (xfHold)
+    this.xfOld = 0
+    this.xfHold = null
     this.xfPos = 0
     this.xfLen = 0
-    // smear grains
+    this.lastW = [0, 0] // last wet sample (before degrade)
+    // smear grains: each grain keeps its own length until its next restart
     this.gAge = [0, 0]
     this.gStart = [0, 0]
-    this.gLen = 0
+    this.gLen = [0, 0]
     // degrade
     this.hold = [0, 0]
     this.holdCount = 0
@@ -72,15 +80,36 @@ class WarpProcessor extends AudioWorkletProcessor {
     // Initial state arrives synchronously so the first block is already right.
     const init = options && options.processorOptions
     if (init && Array.isArray(init.messages)) init.messages.forEach((m) => this.onMsg(m))
+    this.port.postMessage('alive')
+  }
+
+  phaseAt(t) {
+    while (this.segs.length > 1 && this.segs[1].at <= t) this.segs.shift()
+    const s = this.segs[0]
+    const L = loopSeconds(s.lengthBeats, s.bpm)
+    const ph = (t - s.t0) / L
+    return ph - Math.floor(ph)
   }
 
   onMsg(m) {
     if (!m || typeof m !== 'object') return
-    if (m.type === 'lut' && m.lut && m.lut.length > 1) this.lut = Float32Array.from(m.lut)
+    if (m.type === 'lut' && m.lut && m.lut.length > 1) this.lut = m.lut instanceof Float32Array ? m.lut : Float32Array.from(m.lut) // already a structured-clone copy
     else if (m.type === 'params') Object.assign(this.p, m)
-    else if (m.type === 'clock') {
+    else if (m.type === 'dispose') {
+      this.disposed = true
+      this.ring = null
+      this.lut = null
+      this.port.postMessage('disposed')
+    } else if (m.type === 'clock') {
       const seg = { at: typeof m.at === 'number' ? m.at : -Infinity, t0: m.t0, bpm: m.bpm, lengthBeats: m.lengthBeats }
       if (m.reset) { this.segs = [seg]; return }
+      const now = currentTime
+      if (m.keep && seg.at < now) {
+        // Arrived late: switch now, keeping the phase this processor is already at.
+        const ph = this.phaseAt(now)
+        seg.at = now
+        seg.t0 = now - ph * loopSeconds(seg.lengthBeats, seg.bpm)
+      }
       while (this.segs.length && this.segs[this.segs.length - 1].at >= seg.at) this.segs.pop()
       this.segs.push(seg)
     }
@@ -97,6 +126,7 @@ class WarpProcessor extends AudioWorkletProcessor {
   }
 
   process(inputs, outputs) {
+    if (this.disposed) return false
     const input = inputs[0]
     const out = outputs[0]
     const frames = out[0].length
@@ -105,11 +135,10 @@ class WarpProcessor extends AudioWorkletProcessor {
     const inL = input && input.length ? input[0] : null
     const inR = input && input.length > 1 ? input[1] : inL
     const target = p.active ? p.mix : 0
-    if (this.mixS < 0) this.mixS = target
     const mixK = 1 - Math.exp(-1 / (0.005 * sr))
     const fadeLen = Math.round(p.smooth * 0.03 * sr)
     const jumpSamples = 0.01 * sr
-    const grainLen = Math.max(1, Math.round((0.01 + p.grain * 0.11) * sr))
+    const grainLen = Math.max(2, Math.round((0.01 + p.grain * 0.11) * sr))
     const holdN = 1 + Math.round(p.rate * 23)
     const half = Math.pow(2, 16 - Math.round(p.crunch * 14)) / 2
     const doWarp = p.active && this.lut
@@ -124,11 +153,9 @@ class WarpProcessor extends AudioWorkletProcessor {
 
       // phase from the shared clock, per sample
       const t = currentTime + i / sr
-      while (this.segs.length > 1 && this.segs[1].at <= t) this.segs.shift()
+      const phase = this.phaseAt(t)
       const s = this.segs[0]
       const L = loopSeconds(s.lengthBeats, s.bpm)
-      let phase = (t - s.t0) / L
-      phase -= Math.floor(phase)
 
       let P = n // read position (absolute frames)
       if (doWarp) {
@@ -137,9 +164,12 @@ class WarpProcessor extends AudioWorkletProcessor {
         const d = Math.min(delayFraction(xs, y) * L, MAX_DELAY_SECONDS)
         P = n - d * sr
       }
-      // click guard: a jump in read position > 10 ms crossfades over smooth*30 ms
-      if (this.prevP >= 0 && Math.abs(P - (this.prevP + 1)) > jumpSamples && fadeLen > 0) {
-        this.xfOld = this.prevP + 1
+      // click guard: a jump in read position > 10 ms crossfades over smooth*30 ms.
+      // Mid-fade retriggers fade from the last wet sample (held), so the output never steps.
+      if (this.prevP !== null && Math.abs(P - (this.prevP + 1)) > jumpSamples && fadeLen > 0) {
+        // smear's output is not a single read head, so it always fades from the held last sample
+        if (this.xfPos < this.xfLen || p.profile === 'smear') this.xfHold = [this.lastW[0], this.lastW[1]]
+        else { this.xfHold = null; this.xfOld = this.prevP + 1 }
         this.xfPos = 0
         this.xfLen = fadeLen
       }
@@ -147,12 +177,11 @@ class WarpProcessor extends AudioWorkletProcessor {
 
       let wL, wR
       if (p.profile === 'smear' && doWarp) {
-        if (this.gLen !== grainLen) { this.gLen = grainLen; this.gAge[0] = 0; this.gAge[1] = grainLen >> 1; this.gStart[0] = P; this.gStart[1] = P - (grainLen >> 1) }
         let gL = 0, gR = 0
         for (let g = 0; g < 2; g++) {
-          if (this.gAge[g] >= grainLen) { this.gAge[g] = 0; this.gStart[g] = P }
-          const ph = this.gAge[g] / grainLen
-          const win = Math.sin(Math.PI * ph) ** 2
+          if (this.gLen[g] === 0) { this.gLen[g] = grainLen; this.gAge[g] = g ? grainLen >> 1 : 0; this.gStart[g] = P - this.gAge[g] }
+          if (this.gAge[g] >= this.gLen[g]) { this.gAge[g] = 0; this.gStart[g] = P; this.gLen[g] = grainLen } // re-time only on restart
+          const win = Math.sin(Math.PI * (this.gAge[g] / this.gLen[g])) ** 2
           const pos = Math.min(this.gStart[g] + this.gAge[g], n)
           gL += win * this.read(0, pos)
           gR += win * this.read(1, pos)
@@ -168,12 +197,15 @@ class WarpProcessor extends AudioWorkletProcessor {
       }
       if (this.xfPos < this.xfLen) {
         const g = this.xfPos / this.xfLen
-        const pos = Math.min(this.xfOld, n)
-        wL = this.read(0, pos) * (1 - g) + wL * g
-        wR = this.read(1, pos) * (1 - g) + wR * g
-        this.xfOld++
+        let oL, oR
+        if (this.xfHold) { oL = this.xfHold[0]; oR = this.xfHold[1] }
+        else { const pos = Math.min(this.xfOld, n); oL = this.read(0, pos); oR = this.read(1, pos); this.xfOld++ }
+        wL = oL * (1 - g) + wL * g
+        wR = oR * (1 - g) + wR * g
         this.xfPos++
       }
+      this.lastW[0] = wL
+      this.lastW[1] = wR
       if (p.profile === 'degrade' && doWarp) {
         if (this.holdCount <= 0) { this.hold[0] = wL; this.hold[1] = wR; this.holdCount = holdN }
         this.holdCount--

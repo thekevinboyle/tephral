@@ -380,8 +380,10 @@ export function useEffectSequencerPlayback() {
       const baseMsPerStep = getMsPerStep()
 
       // Advance global currentStep at base rate (for UI display)
+      // Accumulate (no rounding up to whole frames, so step 0 stays on the warp loop's x = 0);
+      // resync if more than 4 steps behind (e.g. the tab was in the background).
       if (timestamp - lastStepTime.current >= baseMsPerStep) {
-        lastStepTime.current = timestamp
+        lastStepTime.current = timestamp - lastStepTime.current > 4 * baseMsPerStep ? timestamp : lastStepTime.current + baseMsPerStep
         useEffectSequencerStore.getState().advanceStep()
       }
 
@@ -400,7 +402,7 @@ export function useEffectSequencerPlayback() {
         const elapsed = timestamp - trackLastStepTime.current[effectId]
 
         if (elapsed >= trackMsPerStep) {
-          trackLastStepTime.current[effectId] = timestamp
+          trackLastStepTime.current[effectId] = elapsed > 4 * trackMsPerStep ? timestamp : trackLastStepTime.current[effectId] + trackMsPerStep
 
           const stepIndex = track.trackStep % track.length
           executeTrackAtStep(effectId, track, stepIndex, fill, hasSolo)

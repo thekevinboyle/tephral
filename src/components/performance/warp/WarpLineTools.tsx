@@ -15,8 +15,9 @@ const status = (t: string | null) => useUIStore.getState().setStatusText(t)
  * Lines ▾ (spec §2): the user's saved lines (each with a delete ×), then the built-in lines. The menu is
  * portalled with position: fixed, since every layout area clips overflow. Escape closes it (checking and
  * setting defaultPrevented); ArrowUp / ArrowDown move between its items.
+ * variant 'presets' is the side panel footer's "Presets ▾" trigger for the same menu.
  */
-export const WarpLinesMenu = memo(function WarpLinesMenu() {
+export const WarpLinesMenu = memo(function WarpLinesMenu({ variant = 'lines' }: { variant?: 'lines' | 'presets' }) {
   const presetName = useWarpStore((s) => s.presetName)
   const [open, setOpen] = useState(false)
   const [lines, setLines] = useState<WarpLine[]>([])
@@ -98,19 +99,33 @@ export const WarpLinesMenu = memo(function WarpLinesMenu() {
   const name = presetName ?? 'Custom'
   return (
     <>
-      <button
-        ref={triggerRef}
-        type="button"
-        className="seg-warp-tool seg-warp-lines"
-        data-warp-lines
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={`Warp lines: ${name}`}
-        onClick={toggle}
-        {...statusHover('Lines: load one of your saved lines or a built-in line')}
-      >
-        <span className="seg-warp-lines-name">Lines: {name}</span> <span aria-hidden="true">▾</span>
-      </button>
+      {variant === 'presets' ? (
+        <button
+          ref={triggerRef}
+          type="button"
+          data-warp-presets
+          aria-haspopup="menu"
+          aria-expanded={open}
+          onClick={toggle}
+          {...statusHover('Presets: load one of your saved lines or a built-in line')}
+        >
+          Presets <span aria-hidden="true">▾</span>
+        </button>
+      ) : (
+        <button
+          ref={triggerRef}
+          type="button"
+          className="seg-warp-tool seg-warp-lines"
+          data-warp-lines
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label={`Warp lines: ${name}`}
+          onClick={toggle}
+          {...statusHover('Lines: load one of your saved lines or a built-in line')}
+        >
+          <span className="seg-warp-lines-name">Lines: {name}</span> <span aria-hidden="true">▾</span>
+        </button>
+      )}
       {open && pos && createPortal(
         <div ref={menuRef} className="seg-warp-menu" role="menu" data-warp-lines-menu aria-label="Warp lines" onKeyDown={onMenuKey}
           style={{ left: pos.left, top: pos.top, bottom: pos.bottom, minWidth: pos.minWidth }}>

@@ -1,10 +1,10 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { memo, useRef } from 'react'
 import { KNOB_NAMES, PROFILE_IDS, PROFILE_NAMES, useWarpStore, type Knobs, type ProfileId, type WarpApplies } from '../../../stores/warpStore'
-import { PRESETS } from '../../../effects/warp/warpMath'
 import { statusHover } from '../../../utils/statusHover'
 import { Knob } from '../Knob'
-import { useLockOutline, useWarpLockStore, type LockGroup } from './warpLocks'
+import { useLockOutline, useWarpLockStore } from './warpLocks'
+import { LockButton, LockIcon } from './WarpLock'
+import { WarpLinesMenu } from './WarpLineTools'
 
 const PROFILE_STATUS: Record<ProfileId, string> = {
   clean: 'Clean: plays the line as it is, with vibrato, echo and circuit-bend',
@@ -22,11 +22,6 @@ const APPLIES: { id: WarpApplies; name: string; status: string }[] = [
   { id: 'audio', name: 'Audio', status: 'Applies to: warp only the sound; the video plays live' },
 ]
 
-const LOCK_NAMES: Record<LockGroup, string> = {
-  amount: 'Amount', profile: 'Profile', graph: 'Graph', settings: 'Length, Quantize and Skew', knobs: 'Knobs', output: 'Output',
-}
-
-const PRESET_NAMES = Object.keys(PRESETS)
 const pct = (v: number) => String(Math.round(v * 100))
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
@@ -37,118 +32,6 @@ const setKnob = (profile: ProfileId, k: number, v: number) => {
   s.patch({ profileParams: { ...s.profileParams, [profile]: next } })
 }
 
-/** Closed or open padlock, drawn in currentColor. */
-export function LockIcon({ open = false }: { open?: boolean }) {
-  return (
-    <svg width="11" height="12" viewBox="0 0 11 12" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.3">
-      <rect x="1.5" y="5.5" width="8" height="5.5" rx="1" fill="currentColor" stroke="none" />
-      <path d={open ? 'M3.3 5.5V3.6a2.2 2.2 0 0 1 4.3-.6' : 'M3.3 5.5V3.6a2.2 2.2 0 0 1 4.4 0v1.9'} strokeLinecap="round" />
-    </svg>
-  )
-}
-
-/** A group's lock (spec §5): shown only in lock mode. Locked = Dice leaves the group alone. */
-export const LockButton = memo(function LockButton({ group }: { group: LockGroup }) {
-  const show = useWarpLockStore((s) => s.lockMode)
-  const locked = useWarpLockStore((s) => s.locks[group])
-  if (!show) return null
-  const name = LOCK_NAMES[group]
-  return (
-    <button
-      type="button"
-      className="seg-warp-lock"
-      data-warp-lock={group}
-      aria-pressed={locked}
-      aria-label={`Lock ${name}`}
-      onClick={() => useWarpLockStore.getState().toggleLock(group)}
-      {...statusHover(locked ? `${name} locked: Dice keeps it. Click to unlock` : `${name} unlocked: Dice changes it. Click to lock`)}
-    >
-      <LockIcon open={!locked} />
-    </button>
-  )
-})
-
-/** Preset picker in the footer. The menu is portalled with position: fixed (every layout area clips overflow). */
-const WarpPresetMenu = memo(function WarpPresetMenu() {
-  const presetName = useWarpStore((s) => s.presetName)
-  const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState<{ left: number; top?: number; bottom?: number; minWidth: number } | null>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  const place = useCallback(() => {
-    const r = triggerRef.current?.getBoundingClientRect()
-    if (!r) return
-    const menuH = PRESET_NAMES.length * 25 + 10
-    const left = Math.max(8, Math.min(r.left, window.innerWidth - Math.max(160, r.width) - 8))
-    // Open upward when there is no room below (the side panel sits at the bottom of the window)
-    if (r.bottom + 2 + menuH > window.innerHeight - 8) setPos({ left, bottom: window.innerHeight - r.top + 2, minWidth: r.width })
-    else setPos({ left, top: r.bottom + 2, minWidth: r.width })
-  }, [])
-
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e: MouseEvent) => {
-      const t = e.target as Node
-      if (triggerRef.current?.contains(t) || menuRef.current?.contains(t)) return
-      setOpen(false)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.defaultPrevented) return
-      e.preventDefault()
-      setOpen(false)
-      triggerRef.current?.focus()
-    }
-    window.addEventListener('mousedown', onDown)
-    window.addEventListener('keydown', onKey)
-    window.addEventListener('resize', place)
-    return () => {
-      window.removeEventListener('mousedown', onDown)
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('resize', place)
-    }
-  }, [open, place])
-
-  return (
-    <>
-      <button
-        ref={triggerRef}
-        type="button"
-        data-warp-presets
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label="Warp presets"
-        onClick={() => { if (!open) place(); setOpen(!open) }}
-        {...statusHover('Presets: load a ready-made line')}
-      >
-        Presets <span aria-hidden="true">▾</span>
-      </button>
-      {open && pos && createPortal(
-        <div ref={menuRef} className="seg-warp-menu" role="menu" data-warp-preset-menu aria-label="Warp presets"
-          style={{ left: pos.left, top: pos.top, bottom: pos.bottom, minWidth: pos.minWidth }}>
-          {PRESET_NAMES.map((n) => (
-            <button
-              key={n}
-              type="button"
-              role="menuitemradio"
-              aria-checked={presetName === n}
-              data-warp-preset={n}
-              onClick={() => {
-                useWarpStore.getState().loadPreset(n)
-                setOpen(false)
-                triggerRef.current?.focus()
-              }}
-              {...statusHover(`Load the ${n} line`)}
-            >
-              {n}
-            </button>
-          ))}
-        </div>,
-        document.body,
-      )}
-    </>
-  )
-})
 
 // ── Output sliders ────────────────────────────────────────────────────────────────────────────────
 
@@ -465,7 +348,7 @@ const Footer = memo(function Footer() {
         </svg>
         Dice
       </button>
-      <WarpPresetMenu />
+      <WarpLinesMenu variant="presets" />
     </div>
   )
 })

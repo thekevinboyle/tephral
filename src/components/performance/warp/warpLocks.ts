@@ -2,9 +2,9 @@
 // `seg.warp.locks`, never in banks or presets. Every access is wrapped in try/catch: with storage unavailable
 // (private mode, blocked site data) the defaults are used and changes last for the session only.
 import { create } from 'zustand'
+import type { LockGroup, WarpLocks } from '../../../stores/warpStore'
 
-export type LockGroup = 'amount' | 'profile' | 'graph' | 'settings' | 'knobs' | 'output'
-export type WarpLocks = Record<LockGroup, boolean>
+export type { LockGroup, WarpLocks }
 
 export const LOCK_GROUPS: readonly LockGroup[] = ['amount', 'profile', 'graph', 'settings', 'knobs', 'output']
 
@@ -47,7 +47,6 @@ interface LockState {
   locks: WarpLocks
   setLockMode: (v: boolean) => void
   toggleLock: (g: LockGroup) => void
-  setLocks: (l: WarpLocks) => void
 }
 
 export const useWarpLockStore = create<LockState>((set, get) => ({
@@ -56,11 +55,6 @@ export const useWarpLockStore = create<LockState>((set, get) => ({
   setLockMode: (lockMode) => set({ lockMode }),
   toggleLock: (g) => {
     const locks = { ...get().locks, [g]: !get().locks[g] }
-    set({ locks })
-    saveLocks(locks)
-  },
-  setLocks: (l) => {
-    const locks = { ...l }
     set({ locks })
     saveLocks(locks)
   },

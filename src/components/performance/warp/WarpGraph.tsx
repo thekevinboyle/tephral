@@ -7,7 +7,7 @@ import { getHeardWarpPhase, getWarpPhase, warpLoopSecondsAt, warpNow } from '../
 import { describePoint, editPoints } from './warpEdit'
 import { getActiveWarpCompositor } from '../../../effects/warp/warpRegistry'
 import { useLockOutline } from './warpLocks'
-import { LockIcon } from './WarpSidePanel'
+import { LockIcon } from './WarpLock'
 
 export type WarpTool = 'draw' | 'steps' | 'curve' | 'erase'
 
@@ -491,7 +491,8 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
         </svg>
       )}
       {w > 0 && <span className="seg-warp-edge" data-warp-edge="live" aria-hidden="true" style={{ top: PAD + 6 }}>live</span>}
-      {w > 0 && <span className="seg-warp-edge" data-warp-edge="back" aria-hidden="true" style={{ top: gh - PAD - 20 }}>1 loop back</span>}
+      {/* bottom left, clear of the bottom right corner where the guide (and most lines) end */}
+      {w > 0 && <span className="seg-warp-edge seg-warp-edge-back" data-warp-edge="back" aria-hidden="true" style={{ top: gh - PAD - 20 }}>1 loop back</span>}
       {locked && (
         <span className="seg-warp-locked-note" data-warp-locked-note>
           <LockIcon /> Graph locked: dice keeps this line

@@ -4,7 +4,7 @@ import { useEffectSequencerStore } from '../../../stores/effectSequencerStore'
 import { MAX_DELAY_SECONDS } from '../../../effects/warp/warpMath'
 import { statusHover } from '../../../utils/statusHover'
 import { useLockOutline } from './warpLocks'
-import { LockButton } from './WarpSidePanel'
+import { LockButton } from './WarpLock'
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 const idx = (list: readonly number[], v: number) => {

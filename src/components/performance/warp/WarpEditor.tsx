@@ -5,7 +5,8 @@ import { statusHover } from '../../../utils/statusHover'
 import { WarpGraph, type WarpTool } from './WarpGraph'
 import { describePoint, editPoints, isOwnEdit } from './warpEdit'
 import { WarpSettingsRow } from './WarpSettingsRow'
-import { LockIcon, WarpSidePanel } from './WarpSidePanel'
+import { WarpSidePanel } from './WarpSidePanel'
+import { LockIcon } from './WarpLock'
 import { useWarpLockStore } from './warpLocks'
 import { WarpLinesMenu, WarpSaveLine } from './WarpLineTools'
 
@@ -28,7 +29,7 @@ const GraphLock = memo(function GraphLock() {
   const locked = useWarpLockStore((s) => s.locks.graph)
   if (!show) return null
   return (
-    <button type="button" className="seg-warp-tool seg-warp-graph-lock" data-warp-lock="graph" aria-pressed={locked} aria-label="Lock Graph"
+    <button type="button" className="seg-warp-tool seg-warp-graph-lock" data-warp-lock="graph" aria-pressed={locked}
       onClick={() => useWarpLockStore.getState().toggleLock('graph')}
       {...statusHover(locked ? 'Graph locked: Dice keeps this line. Click to unlock' : 'Graph unlocked: Dice draws a new line. Click to lock')}>
       <LockIcon open={!locked} />
@@ -66,7 +67,7 @@ export const WarpEditor = memo(function WarpEditor() {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return
     const target = e.target as Element
     // portalled menus: React still bubbles their keys here; text fields keep their own keys
-    if (target.closest('[data-warp-preset-menu], [data-warp-lines-menu], input, textarea')) return
+    if (target.closest('[data-warp-lines-menu], input, textarea')) return
     const s = useWarpStore.getState()
     if (e.key === 'r' || e.key === 'R') {
       e.preventDefault(); e.stopPropagation()

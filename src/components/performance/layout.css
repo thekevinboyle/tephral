@@ -436,6 +436,7 @@
 [data-warp-bend] { cursor: ns-resize; }
 .seg-warp-guide-label { font: 400 10.5px var(--font-mono); fill: var(--text-muted); pointer-events: none; paint-order: stroke; stroke: var(--bg-primary); stroke-width: 4px; stroke-linejoin: round; }
 .seg-warp-edge { position: absolute; right: 11px; padding: 0 3px; border-radius: 2px; background: var(--bg-primary); font: 400 10px/14px var(--font-mono); color: var(--text-muted); pointer-events: none; }
+.seg-warp-edge-back { right: auto; left: 11px; }
 .seg-warp-settings { flex: none; display: flex; gap: 2px; padding: 0 8px 8px; }
 .seg-warp-set { flex: 1 1 0; min-width: 0; height: 26px; border-radius: var(--radius-ctrl); background: var(--bg-surface); display: flex; align-items: center; justify-content: center; gap: 6px;
   font: 400 11.5px var(--font-sans); color: var(--text-secondary); cursor: ns-resize; touch-action: none; user-select: none; white-space: nowrap; overflow: hidden; }

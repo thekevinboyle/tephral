@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { buildLut, cleanPoints, normalizePoints, PRESETS, randomCurves, randomSteps, type WarpPoint } from '../effects/warp/warpMath'
 
-/** Dice lock groups (mirrors `LockGroup` in components/performance/warp/warpLocks.ts). */
-export type DiceLocks = Record<'amount' | 'profile' | 'graph' | 'settings' | 'knobs' | 'output', boolean>
+/** Dice lock groups: which parts Dice leaves alone (the lock store lives in components/performance/warp/warpLocks.ts). */
+export type LockGroup = 'amount' | 'profile' | 'graph' | 'settings' | 'knobs' | 'output'
+export type WarpLocks = Record<LockGroup, boolean>
 
 export type ProfileId = 'clean' | 'flange' | 'degrade' | 'filterspam' | 'harmonicer' | 'fauxcoder' | 'lofizzly'
 export type WarpApplies = 'both' | 'video' | 'audio'
@@ -122,7 +123,7 @@ interface WarpState extends WarpSnapshot {
    * Dice (spec §5): randomize every unlocked group. Never touches enabled or appliesTo. `rand` is for
    * seeded tests.
    */
-  dice: (locks: DiceLocks, rand?: () => number) => void
+  dice: (locks: Readonly<WarpLocks>, rand?: () => number) => void
   applySnapshot: (s: WarpSnapshot | undefined) => void
   getSnapshot: () => WarpSnapshot
 }

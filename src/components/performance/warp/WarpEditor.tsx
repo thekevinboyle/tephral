@@ -5,23 +5,29 @@ import { statusHover } from '../../../utils/statusHover'
 import { WarpGraph, type WarpTool } from './WarpGraph'
 import { describePoint, editPoints, isOwnEdit } from './warpEdit'
 import { WarpSettingsRow } from './WarpSettingsRow'
-import { WarpPresetMenu, WarpSidePanel } from './WarpSidePanel'
+import { WarpSidePanel } from './WarpSidePanel'
+import { WarpLinesMenu, WarpSaveLine } from './WarpLineTools'
 
 const TOOLS: { id: WarpTool; name: string; status: string }[] = [
-  { id: 'draw', name: 'Draw', status: 'Draw: click to add a point, drag to paint points, drag a point to move it' },
-  { id: 'steps', name: 'Steps', status: 'Steps: drag to paint a staircase on the snap grid (stutters and repeats)' },
+  { id: 'draw', name: 'Draw', status: 'Draw: click to add a point, drag to paint points, drag a point to move it. Hold Shift to paint steps, Alt snaps the height' },
+  { id: 'steps', name: 'Steps', status: 'Steps: drag to paint a staircase on the quantize grid (repeats). Shift while drawing does the same' },
   { id: 'curve', name: 'Curve', status: 'Curve: drag up or down over a segment to bend it' },
   { id: 'erase', name: 'Erase', status: 'Erase: drag over points to remove them' },
 ]
 
+const randomSteps = () => useWarpStore.getState().randomizeSteps()
+const randomCurves = () => useWarpStore.getState().randomizeCurves()
+const clearLine = () => useWarpStore.getState().clearLine()
+
 const GRID_Y = 1 / 16
 
 /**
- * The Warp tab (spec §4): tools, the graph, the settings row and the side panel.
- * Keys (handled here, every handled key stops propagating): R randomizes; with the graph focused,
+ * The Warp tab (v1 spec §4, v2 spec §2): tools, line actions, Lines / Save line, the graph, the settings row
+ * and the side panel.
+ * Keys (handled here, every handled key stops propagating): R is Random steps; with the graph focused,
  * [ and ] select the previous / next point; with a point selected, Delete removes it, the arrows
  * nudge it one grid step and Escape deselects it. The selection is announced (status bar + aria-live).
- * Keys from inside the portalled presets menu are left to the menu.
+ * Keys from inside the portalled menus and from text fields are left to them.
  */
 export const WarpEditor = memo(function WarpEditor() {
   const visible = useUIStore((s) => s.bottomTab === 'warp' && s.showBottom)
@@ -43,9 +49,10 @@ export const WarpEditor = memo(function WarpEditor() {
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return
     const target = e.target as Element
-    if (target.closest('[data-warp-preset-menu]')) return // portalled: React still bubbles its keys here
+    // portalled menus: React still bubbles their keys here; text fields keep their own keys
+    if (target.closest('[data-warp-preset-menu], [data-warp-lines-menu], input, textarea')) return
     const s = useWarpStore.getState()
-    if ((e.key === 'r' || e.key === 'R') && !(e.target as Element).closest('input, textarea')) {
+    if (e.key === 'r' || e.key === 'R') {
       e.preventDefault(); e.stopPropagation()
       s.randomizeSteps()
       setSelected(null)
@@ -97,10 +104,26 @@ export const WarpEditor = memo(function WarpEditor() {
             <button key={t.id} type="button" className="seg-warp-tool" data-warp-tool={t.id} aria-pressed={tool === t.id}
               onClick={() => setTool(t.id)} {...statusHover(t.status)}>
               {t.name}
+              {t.id === 'steps' && <span className="seg-warp-kbd" aria-hidden="true">⇧</span>}
             </button>
           ))}
+          <span className="seg-warp-sep" aria-hidden="true" />
+          <button type="button" className="seg-warp-tool" data-warp-random="steps" onClick={randomSteps}
+            {...statusHover('Random steps: a new staircase of holds and repeats on the quantize grid (R)')}>
+            Random steps
+          </button>
+          <button type="button" className="seg-warp-tool" data-warp-random="curves" onClick={randomCurves}
+            {...statusHover('Random curves: a new line of slopes and curves on the quantize grid')}>
+            Random curves
+          </button>
+          <button type="button" className="seg-warp-tool" data-warp-clear onClick={clearLine}
+            {...statusHover('Clear: a flat line along the top, so everything plays live')}>
+            Clear
+          </button>
+          <span className="seg-warp-sep" aria-hidden="true" />
           <span className="seg-warp-tools-gap" />
-          <WarpPresetMenu variant="tools" />
+          <WarpLinesMenu />
+          <WarpSaveLine onAnnounce={setAnnounce} />
         </div>
         <WarpGraph tool={tool} visible={visible} selected={selected} onSelect={setSelected} />
         <span className="sr-only" aria-live="polite" data-warp-announce>{announce}</span>

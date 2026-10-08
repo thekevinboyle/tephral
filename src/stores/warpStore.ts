@@ -34,9 +34,12 @@ export const PROFILE_NEUTRAL: Record<ProfileId, (number | null)[]> = {
   lofizzly: [0, 0, 0, null],
 }
 
-/** Default knobs: away from neutral so each profile is audible. */
+/**
+ * Default knobs: away from neutral so each profile is audible. Clean is the default profile and is
+ * neutral (Vib speed does nothing while Vibrato is 0), so turning the warp on changes nothing until you draw.
+ */
 export const PROFILE_DEFAULTS: Record<ProfileId, Knobs> = {
-  clean: [0.15, 0.4, 0, 0.1],
+  clean: [0, 0.4, 0, 0],
   flange: [0.4, 0.3, 0.4, 0.5],
   degrade: [0.5, 0.7, 0.4, 0.2],
   filterspam: [0.5, 0.5, 0.4, 0.2],
@@ -119,8 +122,10 @@ interface WarpState extends WarpSnapshot {
   getSnapshot: () => WarpSnapshot
 }
 
-const LENGTHS = [0.5, 1, 2, 4, 8, 16] as const
-const SNAPS = [0, 1 / 4, 1 / 8, 1 / 16, 1 / 32, 1 / 64]
+/** Loop lengths in beats, shortest first. */
+export const LENGTHS: readonly LengthBeats[] = [0.5, 1, 2, 4, 8, 16]
+/** Quantize settings, Off (0) first, then coarse to fine. */
+export const SNAPS: readonly number[] = [0, 1 / 4, 1 / 8, 1 / 16, 1 / 32, 1 / 64]
 const APPLIES: WarpApplies[] = ['both', 'video', 'audio']
 
 const num = (v: unknown, fallback: number, lo: number, hi: number) =>
@@ -173,6 +178,11 @@ export function sanitize(s: Partial<WarpSnapshot> | undefined, base: WarpSnapsho
   const profileParams = i.profileParams === undefined && i.params !== undefined
     ? fromV1Params(i.params, base.profileParams)
     : sanitizeProfileParams(i.profileParams, base.profileParams)
+  const low = num(out.low, base.output.low, 20, 2000)
+  const high = num(out.high, base.output.high, 500, 20000)
+  const levelDb = num(out.levelDb, base.output.levelDb, -24, 6)
+  // An inverted band (low at or above high) would silence the wet signal: keep the base band instead
+  const output: WarpOutput = low >= high ? { ...base.output } : { low, high, levelDb }
   return {
     enabled: typeof i.enabled === 'boolean' ? i.enabled : base.enabled,
     points,
@@ -182,11 +192,7 @@ export function sanitize(s: Partial<WarpSnapshot> | undefined, base: WarpSnapsho
     skew: num(i.skew, base.skew, -1, 1),
     profile: profileId(i.profile, base.profile),
     profileParams,
-    output: {
-      low: num(out.low, base.output.low, 20, 2000),
-      high: num(out.high, base.output.high, 500, 20000),
-      levelDb: num(out.levelDb, base.output.levelDb, -24, 6),
-    },
+    output,
     appliesTo: APPLIES.includes(i.appliesTo as WarpApplies) ? (i.appliesTo as WarpApplies) : base.appliesTo,
     mix: num(i.mix, base.mix, 0, 1),
     presetName: typeof i.presetName === 'string' ? i.presetName : i.presetName === null ? null : base.presetName,

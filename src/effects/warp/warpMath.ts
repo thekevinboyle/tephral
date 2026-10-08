@@ -17,7 +17,7 @@ export function normalizePoints(pts: WarpPoint[]): WarpPoint[] {
     .map(({ p, i }) => ({ pt: { ...p, x: clamp01(Number.isFinite(p.x) ? p.x : 0), y: clamp01(Number.isFinite(p.y) ? p.y : 0) }, i }))
     .sort((a, b) => a.pt.x - b.pt.x || a.i - b.i)
     .map((e) => e.pt)
-  if (out.length === 0) return [{ x: 0, y: 0 }, { x: 1, y: 1 }]
+  if (out.length === 0) return [{ x: 0, y: 0 }, { x: 1, y: 0 }] // flat along the top: live
   if (out[0].x > 0) out.unshift({ x: 0, y: out[0].y })
   if (out[out.length - 1].x < 1) out.push({ x: 1, y: out[out.length - 1].y })
   return out
@@ -31,7 +31,7 @@ function curve(t: number, bend: number): number {
 /** y at x for a normalised line. At duplicate x the LATER point's y wins. */
 export function sampleLine(pts: WarpPoint[], x: number): number {
   const n = pts.length
-  if (n === 0) return x
+  if (n === 0) return 0 // no line: live
   if (x >= pts[n - 1].x) return pts[n - 1].y
   if (x < pts[0].x) return pts[0].y
   // last index with pts[i].x <= x (binary search)

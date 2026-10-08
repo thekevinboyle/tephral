@@ -1,11 +1,8 @@
 import { memo } from 'react'
-import { useWarpStore, type WarpSnapshot } from '../../../stores/warpStore'
+import { LENGTHS, SNAPS, useWarpStore, type WarpSnapshot } from '../../../stores/warpStore'
 import { useEffectSequencerStore } from '../../../stores/effectSequencerStore'
 import { MAX_DELAY_SECONDS } from '../../../effects/warp/warpMath'
 import { statusHover } from '../../../utils/statusHover'
-
-const LENGTHS = [1, 2, 4, 8, 16] as const
-const SNAPS = [1 / 4, 1 / 8, 1 / 16, 1 / 32, 1 / 64]
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 const idx = (list: readonly number[], v: number) => {
@@ -95,13 +92,13 @@ const stepLength = (dir: number) => {
   const i = clamp(idx(LENGTHS, useWarpStore.getState().lengthBeats) + dir, 0, LENGTHS.length - 1)
   patch({ lengthBeats: LENGTHS[i] })
 }
-// Up = finer grid (1/4 -> 1/64)
+// Up = finer grid: Off, 1/4 .. 1/64 (aria-valuenow is the denominator, 0 = Off, so it rises with each step)
 const stepSnap = (dir: number) => {
   const i = clamp(idx(SNAPS, useWarpStore.getState().snap) + dir, 0, SNAPS.length - 1)
   patch({ snap: SNAPS[i] })
 }
 
-/** Amount, Length, Snap and Skew, plus a note when the loop is longer than the 8 s history. */
+/** Amount, Length, Quantize and Skew, plus a note when the loop is longer than the 8 s history. */
 export const WarpSettingsRow = memo(function WarpSettingsRow() {
   const amount = Math.round(useWarpStore((s) => s.amount) * 100)
   const lengthBeats = useWarpStore((s) => s.lengthBeats)
@@ -114,10 +111,10 @@ export const WarpSettingsRow = memo(function WarpSettingsRow() {
     <div className="seg-warp-settings">
       <Spin id="amount" label="Amount" value={`${amount}%`} now={amount} min={0} max={100} step={stepAmount} pxPerStep={2}
         status="Amount: how much of the line is used. 0% plays live, 100% follows the line. Drag or use the arrow keys" />
-      <Spin id="length" label="Length" value={`${lengthBeats === 0.5 ? '½' : lengthBeats} ${lengthBeats <= 1 ? 'beat' : 'beats'}`} now={lengthBeats} min={1} max={16} step={stepLength} pxPerStep={14}
+      <Spin id="length" label="Length" value={`${lengthBeats === 0.5 ? '½' : lengthBeats} ${lengthBeats <= 1 ? 'beat' : 'beats'}`} now={lengthBeats} min={LENGTHS[0]} max={LENGTHS[LENGTHS.length - 1]} step={stepLength} pxPerStep={14}
         status="Length: how many beats the loop lasts at the current tempo. Drag or use the arrow keys" />
-      <Spin id="snap" label="Snap" value={snapDen ? `1/${snapDen}` : 'Off'} now={snapDen} min={4} max={64} step={stepSnap} pxPerStep={14}
-        status="Snap: the grid points and steps snap to across the loop. Drag or use the arrow keys" />
+      <Spin id="snap" label="Quantize" value={snapDen ? `1/${snapDen}` : 'Off'} now={snapDen} min={0} max={Math.round(1 / SNAPS[SNAPS.length - 1])} step={stepSnap} pxPerStep={14}
+        status="Quantize: the grid points and steps land on across the loop. Off places points freely. Drag or use the arrow keys" />
       <Spin id="skew" label="Skew" value={`${skew > 0 ? '+' : skew < 0 ? '−' : '+'}${Math.abs(skew)}%`} now={skew} min={-100} max={100} step={stepSkew} pxPerStep={2}
         status="Skew: bends time before the line is read. Positive plays the start of the loop faster. Drag or use the arrow keys" />
       {limited && (

@@ -403,8 +403,16 @@
 .seg-warp-tool:hover { background: var(--bg-hover); }
 .seg-warp-tool[aria-pressed="true"] { background: var(--bg-hover); color: var(--text-primary); }
 .seg-warp-tools-gap { flex: 1 1 auto; }
+.seg-warp-tools { min-width: 0; }
+.seg-warp-tool { flex: none; display: inline-flex; align-items: center; gap: 5px; }
+.seg-warp-kbd { font: 400 10.5px var(--font-mono); color: var(--text-secondary); }
+.seg-warp-sep { flex: none; width: 1px; height: 16px; margin: 0 4px; background: var(--border); }
+.seg-warp-lines { flex: 0 1 auto; min-width: 0; max-width: 220px; }
+.seg-warp-lines-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.seg-warp-save-name { flex: none; width: 140px; height: 24px; padding: 0 8px; border: 1px solid var(--text-secondary); border-radius: var(--radius-ctrl); background: var(--bg-surface); color: var(--text-primary); font: 400 11.5px var(--font-sans); outline: none; }
+.seg-warp-save-name::placeholder { color: var(--text-secondary); }
 .seg-warp-graph { flex: 1 1 auto; min-height: 0; position: relative; margin: 0 8px 6px; border: 1px solid var(--border); border-radius: var(--radius-ctrl); overflow: hidden; background: var(--bg-primary); }
-.seg-warp-graph > svg, .seg-warp-graph > canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.seg-warp-graph > svg, .seg-warp-graph > canvas { position: absolute; left: 0; top: 0; width: 100%; height: calc(100% - 34px); } /* the plot; the frame strip is below */
 .seg-warp-graph > canvas[data-warp-thumbs] { top: auto; bottom: 0; height: 34px; opacity: .55; }
 .seg-warp-graph > svg[data-warp-graph] { outline: none; touch-action: none; cursor: crosshair; }
 .seg-warp-graph[data-tool="curve"] > svg[data-warp-graph] { cursor: ns-resize; }
@@ -414,7 +422,8 @@
 .seg-warp-graph[data-off] .seg-warp-playhead { opacity: .35; }
 [data-warp-point] { cursor: grab; }
 [data-warp-bend] { cursor: ns-resize; }
-.seg-warp-normal { font: 400 10.5px var(--font-sans); fill: var(--text-muted); pointer-events: none; }
+.seg-warp-guide-label { font: 400 10.5px var(--font-mono); fill: var(--text-muted); pointer-events: none; }
+.seg-warp-edge { position: absolute; right: 14px; font: 400 10px/14px var(--font-mono); color: var(--text-muted); pointer-events: none; }
 .seg-warp-settings { flex: none; display: flex; gap: 2px; padding: 0 8px 8px; }
 .seg-warp-set { flex: 1 1 0; min-width: 0; height: 26px; border-radius: var(--radius-ctrl); background: var(--bg-surface); display: flex; align-items: center; justify-content: center; gap: 6px;
   font: 400 11.5px var(--font-sans); color: var(--text-secondary); cursor: ns-resize; touch-action: none; user-select: none; white-space: nowrap; overflow: hidden; }
@@ -451,3 +460,11 @@
 .seg-warp-menu > button:hover, .seg-warp-menu > button:focus-visible { background: var(--bg-hover); color: var(--text-primary); outline: none; }
 .seg-warp-menu > button[aria-checked="true"] { color: var(--text-primary); }
 .seg-warp-menu > button[aria-checked="true"]::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--warp); }
+.seg-warp-menu-row { display: flex; gap: 1px; }
+.seg-warp-menu-row > button { height: 24px; padding: 0 8px; display: flex; align-items: center; gap: 12px; border-radius: 3px; background: transparent; color: var(--text-secondary); font: 400 12px var(--font-sans); text-align: left; cursor: pointer; white-space: nowrap; }
+.seg-warp-menu-row > button:first-child { flex: 1 1 auto; min-width: 0; justify-content: space-between; overflow: hidden; text-overflow: ellipsis; }
+.seg-warp-menu-row > button:hover, .seg-warp-menu-row > button:focus-visible { background: var(--bg-hover); color: var(--text-primary); outline: none; }
+.seg-warp-menu-row > button[aria-checked="true"] { color: var(--text-primary); }
+.seg-warp-menu-row > button[aria-checked="true"]::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--warp); }
+.seg-warp-menu-del { flex: none; width: 24px; justify-content: center; padding: 0; font-size: 14px; }
+.seg-warp-menu-sep { height: 1px; margin: 3px 4px; background: var(--border); }

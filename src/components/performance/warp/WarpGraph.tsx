@@ -10,6 +10,7 @@ import { getActiveWarpCompositor } from '../../../effects/warp/warpRegistry'
 export type WarpTool = 'draw' | 'steps' | 'curve' | 'erase'
 
 const PAD = 6
+const THUMB_H = 34 // the frame strip under the plot
 const COLS = 16
 const BARS = 120
 const THUMBS = 16
@@ -21,14 +22,14 @@ const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
 const EPS = 1e-9
 
 const STATUS: Record<WarpTool, string> = {
-  draw: "Click to add a point, drag to move, drag a segment's middle to bend it. Shift snaps the height",
-  steps: 'Steps: drag across the graph to paint a staircase on the snap grid',
+  draw: "Click to add a point, drag to move, drag a segment's middle to bend it. Hold Shift to paint steps, Alt snaps the height",
+  steps: 'Steps: drag across the graph to paint a staircase on the quantize grid',
   curve: 'Curve: drag up or down over a segment to bend it',
   erase: 'Erase: drag over points to remove them',
 }
-const STATUS_POINT = 'Drag to move this point (Shift snaps the height). Double-click to delete it. Arrows nudge, Delete removes'
+const STATUS_POINT = 'Drag to move this point (Alt snaps the height). Double-click to delete it. Arrows nudge, Delete removes'
 const STATUS_BEND = 'Drag up or down to bend this segment into a curve'
-const STATUS_NORMAL = 'Normal: the dashed diagonal plays time as it is'
+const STATUS_GUIDE = 'Stopped: along the dashed line time stands still. Steeper than it plays in reverse'
 
 /** Bend (-1..1) that puts the segment's midpoint at fraction `f` of the way from a.y to b.y (inverse of warpMath's curve at t = 0.5). */
 function bendForMid(f: number): number {
@@ -58,9 +59,11 @@ function previewEnvelope(lut: Float32Array, amount: number, out: Float32Array) {
 interface Props { tool: WarpTool; visible: boolean; selected: number | null; onSelect: (i: number | null) => void }
 
 /**
- * The warp graph: 16-column grid, dashed identity, the white line with points and bend handles, the --live playhead,
- * the output waveform and the frame strip behind. The line is React (it changes on edits only); the playhead and
- * waveform are drawn by rAF and the thumbnails every 250 ms, both only while the tab is visible.
+ * The warp graph (v2 spec §2): the plot (16-column grid, the dashed y = x "stopped" guide, the "live" and
+ * "1 loop back" edges, the white line with points and bend handles, the output waveform) above the frame
+ * strip, with the --live playhead across both. Top is live, lower is further back. The line is React (it
+ * changes on edits only); the playhead and waveform are drawn by rAF and the thumbnails every 250 ms, both
+ * only while the tab is visible.
  */
 export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSelect }: Props) {
   const points = useWarpStore((s) => s.points)
@@ -72,7 +75,6 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
   const thumbRef = useRef<HTMLCanvasElement>(null)
   const headRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
-  const [nearNormal, setNearNormal] = useState(false)
   const lastStatus = useRef<string | null>(null)
 
   useLayoutEffect(() => {
@@ -87,18 +89,19 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
   }, [])
 
   const { w, h } = size
-  const iw = Math.max(1, w - 2 * PAD), ih = Math.max(1, h - 2 * PAD)
+  const gh = Math.max(1, h - THUMB_H) // plot height; the frame strip sits below it
+  const iw = Math.max(1, w - 2 * PAD), ih = Math.max(1, gh - 2 * PAD)
   const X = (x: number) => PAD + x * iw
   const Y = (y: number) => PAD + y * ih
 
   // ── playhead + waveform (rAF, visible only) ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (!visible || w < 2 || h < 2) return
+    if (!visible || w < 2 || gh < 2) return
     const cv = waveRef.current, head = headRef.current
     const ctx = cv?.getContext('2d')
     if (!cv || !ctx || !head) return
     const dpr = window.devicePixelRatio || 1
-    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr)
+    cv.width = Math.round(w * dpr); cv.height = Math.round(gh * dpr)
     const warp = getComputedStyle(cv).getPropertyValue('--warp').trim() || '#e8c35a'
     const env = new Float32Array(BARS) // measured output, filled as the playhead passes
     const preview = new Float32Array(BARS)
@@ -133,9 +136,9 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
         src = preview; norm = 1
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.clearRect(0, 0, w, h)
+      ctx.clearRect(0, 0, w, gh)
       ctx.fillStyle = warp
-      const mid = h * 0.6, amp = h * 0.22
+      const mid = gh * 0.58, amp = gh * 0.26
       for (let i = 0; i < BARS; i++) {
         const a = Math.min(1, src[i] * norm) * amp
         if (a < 0.5) { ctx.globalAlpha = 0.3; ctx.fillRect(PAD + ((i + 0.5) / BARS) * iw - 1, mid - 0.5, 2, 1); continue }
@@ -146,7 +149,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     }
     frame()
     return () => cancelAnimationFrame(raf)
-  }, [visible, w, h, iw])
+  }, [visible, w, gh, iw])
 
   // ── thumbnails: the frame each column plays in the last completed pass of the loop. Refreshed every
   // 250 ms while visible; 16 reused canvases, and columns that play the same frame share one readback.
@@ -156,7 +159,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     const ctx = cv?.getContext('2d')
     if (!cv || !ctx) return
     const dpr = window.devicePixelRatio || 1
-    const th = 34
+    const th = THUMB_H
     cv.width = Math.round(w * dpr); cv.height = Math.round(th * dpr)
     const surface = getComputedStyle(cv).getPropertyValue('--bg-surface').trim() || '#2c2d31'
     const cells = Array.from({ length: THUMBS }, () => document.createElement('canvas'))
@@ -224,7 +227,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     return { x: clamp01((e.clientX - r.left - PAD) / iw), y: clamp01((e.clientY - r.top - PAD) / ih) }
   }
   const snapX = (x: number) => (snap > 0 ? clamp01(Math.round(x / snap) * snap) : clamp01(x)) // 0 = quantize Off
-  const snapY = (y: number, shift: boolean) => (shift ? clamp01(Math.round(y * 16) / 16) : y)
+  const snapY = (y: number, alt: boolean) => (alt ? clamp01(Math.round(y * 16) / 16) : y) // Alt snaps the height
   const setPoints = editPoints
   const hitPoint = (clientX: number, clientY: number, pts: WarpPoint[]) => {
     const r = svgRef.current!.getBoundingClientRect()
@@ -260,7 +263,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
       // Endpoints keep x = 0 / 1; inner points stay between their neighbours (equal x allowed: a step)
       const x = i === 0 ? 0 : i === last ? 1 : Math.min(cur[i + 1].x, Math.max(cur[i - 1].x, snapX(v.x)))
       const next = cur.slice()
-      next[i] = { ...cur[i], x, y: snapY(v.y, ev.shiftKey) }
+      next[i] = { ...cur[i], x, y: snapY(v.y, ev.altKey) }
       setPoints(next)
     })
   }
@@ -277,13 +280,16 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     })
   }
 
-  /** Steps (staircase on the snap grid) or Draw (one point per grid column) painted across a drag. */
+  /**
+   * Steps (staircase on the quantize grid) or Draw (one point per grid column) painted across a drag. With
+   * quantize Off, steps use 1/16 and Draw paints on a fine 1/64 grid.
+   */
   const paint = (e: React.PointerEvent, mode: 'steps' | 'draw', base: WarpPoint[], first?: { x: number; y: number }) => {
-    const n = Math.max(1, Math.round(1 / (snap > 0 ? snap : 1 / 16)))
+    const n = Math.max(1, Math.round(1 / (snap > 0 ? snap : mode === 'steps' ? 1 / 16 : 1 / 64)))
     const cols = new Map<number, number>()
     let lastCol: number | null = null
     const colOf = (x: number) => (mode === 'steps' ? Math.min(n - 1, Math.floor(x * n)) : Math.round(x * n))
-    const yOf = (y: number) => (mode === 'steps' ? Math.round(y * n) / n : y)
+    const yOf = (y: number, alt: boolean) => (mode === 'steps' ? Math.round(y * n) / n : snapY(y, alt))
     const apply = () => {
       const ks = [...cols.keys()]
       const lo = Math.min(...ks), hi = Math.max(...ks)
@@ -304,8 +310,8 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
       const k = now.findIndex((p) => Math.abs(p.x - lx) < EPS && p.y === ly)
       onSelect(k < 0 ? null : k)
     }
-    const at = (v: { x: number; y: number }) => {
-      const c = colOf(v.x), y = clamp01(yOf(v.y))
+    const at = (v: { x: number; y: number }, alt: boolean) => {
+      const c = colOf(v.x), y = clamp01(yOf(v.y, alt))
       if (lastCol !== null && lastCol !== c) {
         // fill the columns skipped by a fast drag
         const dir = Math.sign(c - lastCol)
@@ -315,8 +321,8 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
       lastCol = c
       apply()
     }
-    if (first) { cols.set(colOf(first.x), first.y); lastCol = colOf(first.x) } else at(toVal(e))
-    track(e, (ev) => at(toVal(ev)))
+    if (first) { cols.set(colOf(first.x), first.y); lastCol = colOf(first.x) } else at(toVal(e), e.altKey)
+    track(e, (ev) => at(toVal(ev), ev.altKey))
   }
 
   const erase = (e: React.PointerEvent) => {
@@ -339,7 +345,8 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     const cur = useWarpStore.getState().points
     const hit = hitPoint(e.clientX, e.clientY, cur)
     if (tool === 'erase') { erase(e); return }
-    if (tool === 'steps') { paint(e, 'steps', cur); return }
+    // Holding Shift in Draw switches to step drawing for this drag (spec §2)
+    if (tool === 'steps' || (tool === 'draw' && e.shiftKey)) { paint(e, 'steps', cur); return }
     if (tool === 'curve') {
       const v = toVal(e)
       let i = cur.findIndex((p, k) => k > 0 && cur[k - 1].x <= v.x && v.x < p.x)
@@ -355,7 +362,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     if (bh) { bendSegment(Number(bh.getAttribute('data-warp-bend')), e); return }
     // Empty space: add a point (x on the snap grid), then a drag paints points along its path
     const v = toVal(e)
-    const p = { x: snapX(v.x), y: snapY(v.y, e.shiftKey) }
+    const p = { x: snapX(v.x), y: snapY(v.y, e.altKey) }
     // Snapped onto an existing point's x: move that point (the nearest in y) instead of making an accidental step
     let same = -1
     cur.forEach((q, k) => { if (Math.abs(q.x - p.x) < EPS && (same < 0 || Math.abs(q.y - p.y) < Math.abs(cur[same].y - p.y))) same = k })
@@ -386,28 +393,25 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     onSelect(null)
   }
 
-  // Hover: status text (only written when it changes) and the "Normal" label on the identity line
+  // Hover: status text (only written when it changes)
   const onPointerMove = (e: React.PointerEvent) => {
     if (e.buttons) return
     const t = e.target as Element
     let st = STATUS[tool]
-    let normal = false
     const hp = hitPoint(e.clientX, e.clientY, useWarpStore.getState().points)
     if (hp >= 0) st = `${describePoint(useWarpStore.getState().points, hp)}. ${STATUS_POINT}`
     else if (t.closest('[data-warp-bend]')) st = STATUS_BEND
     else {
       const r = svgRef.current!.getBoundingClientRect()
       const px = e.clientX - r.left - PAD, py = e.clientY - r.top - PAD
-      // distance to the diagonal from (0,0) to (iw,ih)
+      // distance to the stopped guide, the diagonal from (0,0) to (iw,ih)
       const d = Math.abs(ih * px - iw * py) / Math.hypot(iw, ih)
-      if (d < 5) { st = STATUS_NORMAL; normal = true }
+      if (d < 5) st = STATUS_GUIDE
     }
-    if (normal !== nearNormal) setNearNormal(normal)
     if (st !== lastStatus.current) { lastStatus.current = st; useUIStore.getState().setStatusText(st) }
   }
   const onPointerLeave = () => {
     lastStatus.current = null
-    if (nearNormal) setNearNormal(false)
     useUIStore.getState().setStatusText(null)
   }
 
@@ -429,33 +433,38 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     <div className="seg-warp-graph" ref={boxRef} data-tool={tool} data-off={enabled ? undefined : ''}>
       <canvas ref={thumbRef} data-warp-thumbs aria-hidden="true" />
       {w > 0 && (
-        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true" data-warp-back>
+        <svg width={w} height={gh} viewBox={`0 0 ${w} ${gh}`} aria-hidden="true" data-warp-back>
           <g data-warp-grid>
             {Array.from({ length: COLS + 1 }, (_, i) => (
-              <line key={i} x1={X(i / COLS)} y1={0} x2={X(i / COLS)} y2={h} style={{ stroke: i % 4 === 0 ? 'var(--border)' : 'var(--warp-grid)' }} strokeWidth={1} />
+              <line key={i} x1={X(i / COLS)} y1={0} x2={X(i / COLS)} y2={gh} style={{ stroke: i % 4 === 0 ? 'var(--border)' : 'var(--warp-grid)' }} strokeWidth={1} />
+            ))}
+            {[0.25, 0.5, 0.75].map((y) => (
+              <line key={`h${y}`} x1={0} y1={Y(y)} x2={w} y2={Y(y)} style={{ stroke: 'var(--warp-grid)' }} strokeWidth={1} />
             ))}
           </g>
-          <line data-warp-identity x1={X(0)} y1={Y(0)} x2={X(1)} y2={Y(1)} style={{ stroke: 'var(--warp-identity)' }} strokeDasharray="6 6" />
+          <line data-warp-guide x1={X(0)} y1={Y(0)} x2={X(1)} y2={Y(1)} style={{ stroke: 'var(--warp-identity)' }} strokeDasharray="6 6" />
+          <text className="seg-warp-guide-label" data-warp-guide-label x={X(0.62) + 8} y={Y(0.62) - 6}>stopped</text>
         </svg>
       )}
+      {w > 0 && <span className="seg-warp-edge" data-warp-edge="live" aria-hidden="true" style={{ top: PAD + 6 }}>live</span>}
+      {w > 0 && <span className="seg-warp-edge" data-warp-edge="back" aria-hidden="true" style={{ top: gh - PAD - 20 }}>1 loop back</span>}
       <canvas ref={waveRef} aria-hidden="true" />
       <div ref={headRef} className="seg-warp-playhead" data-warp-playhead aria-hidden="true" />
       {w > 0 && (
         <svg
           ref={svgRef}
           width={w}
-          height={h}
-          viewBox={`0 0 ${w} ${h}`}
+          height={gh}
+          viewBox={`0 0 ${w} ${gh}`}
           tabIndex={0}
           role="application"
-          aria-label="Warp line: x is the position in the loop, y is the position played"
+          aria-label="Warp line: x is the position in the loop, height is how far back it plays. Top is live, the dashed line is stopped"
           data-warp-graph
           onPointerDown={onPointerDown}
           onDoubleClick={onDoubleClick}
           onPointerMove={onPointerMove}
           onPointerLeave={onPointerLeave}
         >
-          {nearNormal && <text className="seg-warp-normal" x={X(0.86)} y={Y(0.86) + 14}>Normal</text>}
           <path d={d} style={{ stroke: 'var(--text-primary)' }} strokeWidth={2} fill="none" strokeLinejoin="round" pointerEvents="none" />
           {tool === 'draw' && points.map((b, i) => {
             if (i === 0) return null

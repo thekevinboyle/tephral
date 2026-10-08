@@ -48,7 +48,7 @@ const material = (frag: string, uniforms: Record<string, THREE.IUniform>) => new
  *
  * Jumps (clean crossfade start, degrade re-hold) are discontinuities in the delay: the line is
  * walked one LUT cell at a time between the previous and current phase, and a cell whose delay
- * change exceeds max(1.5 frames, 8 cells of loop time) is a step or a mod-wrap. Delay change
+ * change exceeds max(1.5 frames, 8 cells of loop time) is a step or the loop boundary. Delay change
  * the walk does not explain (line edited, re-anchor) is a jump too. Continuous slopes, however
  * steep the drift per tick (reverse = 2x), are not.
  */

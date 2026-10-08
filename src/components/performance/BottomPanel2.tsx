@@ -47,7 +47,7 @@ const HeaderNote = memo(function HeaderNote() {
     )
   }
   const sub = tab === 'devices' ? '· signal flows left to right'
-    : tab === 'warp' ? '· Flat = freeze, steps = repeats, slope = slow, rising = reverse'
+    : tab === 'warp' ? 'Top = live · lower = further back · flat = normal · along the dashed line = stopped · steeper = reverse'
     : '· one lane per device'
   return <span className="seg-bottom-sub">{sub}</span>
 })

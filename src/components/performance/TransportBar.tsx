@@ -522,6 +522,9 @@ export function TransportBar() {
         {/* Tabs */}
         <button
           onClick={() => setMode('video')}
+          onMouseEnter={() => setStatusText('Video timeline: scrub the loaded video')}
+          onMouseLeave={() => setStatusText(null)}
+          aria-pressed={mode === 'video'}
           className="flex items-center gap-1"
           style={{
             padding: '0 6px',
@@ -529,18 +532,20 @@ export function TransportBar() {
             backgroundColor: 'transparent',
             border: 'none',
             borderBottom: mode === 'video' ? '1px solid var(--accent)' : '1px solid transparent',
-            color: mode === 'video' ? 'var(--text-secondary)' : 'var(--text-ghost)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9,
-            fontWeight: 600,
-            letterSpacing: '0.1em',
+            color: mode === 'video' ? 'var(--text-primary)' : 'var(--text-secondary)',
+            fontFamily: 'var(--font-sans)',
+            fontSize: 11,
+            fontWeight: 500,
             cursor: 'pointer',
           }}
         >
-          VID
+          Video
         </button>
         <button
           onClick={() => setMode('audio')}
+          onMouseEnter={() => setStatusText('Audio timeline: the imported audio file, its playback and loop region')}
+          onMouseLeave={() => setStatusText(null)}
+          aria-pressed={mode === 'audio'}
           className="flex items-center gap-1"
           style={{
             padding: '0 6px',
@@ -548,15 +553,14 @@ export function TransportBar() {
             backgroundColor: 'transparent',
             border: 'none',
             borderBottom: mode === 'audio' ? `1px solid ${ACCENT}` : '1px solid transparent',
-            color: mode === 'audio' ? 'var(--text-secondary)' : 'var(--text-ghost)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9,
-            fontWeight: 600,
-            letterSpacing: '0.1em',
+            color: mode === 'audio' ? 'var(--text-primary)' : 'var(--text-secondary)',
+            fontFamily: 'var(--font-sans)',
+            fontSize: 11,
+            fontWeight: 500,
             cursor: 'pointer',
           }}
         >
-          AUD
+          Audio
         </button>
 
         {/* Audio-specific controls */}

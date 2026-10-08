@@ -216,6 +216,9 @@ export function ModulationAssignPanel() {
           <div className="flex items-center" style={{ gap: 4 }}>
             <button
               onClick={() => toggleLFO(idx)}
+              onMouseEnter={() => setStatusText(`LFO ${idx + 1}: ${lfo.enabled ? 'on' : 'off'}. Click to turn it ${lfo.enabled ? 'off' : 'on'}`)}
+              onMouseLeave={() => setStatusText(null)}
+              aria-pressed={lfo.enabled}
               className="flex items-center gap-1"
               style={{ cursor: 'pointer' }}
             >
@@ -228,9 +231,9 @@ export function ModulationAssignPanel() {
                 }}
               />
               <span
-                className="text-[9px] font-medium uppercase tracking-wider"
+                className="text-[11px] font-medium"
                 style={{
-                  color: lfo.enabled ? 'var(--text-secondary)' : 'var(--text-ghost)',
+                  color: lfo.enabled ? 'var(--text-primary)' : 'var(--text-secondary)',
                   fontFamily: 'var(--font-sans)',
                 }}
               >
@@ -243,6 +246,7 @@ export function ModulationAssignPanel() {
               options={LFO_SHAPES as unknown as LFOShape[]}
               onChange={(v) => setLFOShape(idx, v)}
               width={76}
+              name="Shape"
             />
           </div>
           <div style={{ width: 160, height: 68 }}>
@@ -254,14 +258,15 @@ export function ModulationAssignPanel() {
         <div className="flex flex-col items-center" style={{ gap: 3 }}>
           {lfo.syncMode === 'sync' ? (
             <>
-              <span className="text-[9px] uppercase tracking-wide leading-none font-medium" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>
-                Div
+              <span className="text-[10.5px] leading-none font-medium" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>
+                Division
               </span>
               <LFODropdown
                 value={lfo.syncDivision}
                 options={SYNC_DIVISIONS.map(d => d.label)}
                 onChange={(v) => setLFOSyncDivision(idx, v)}
                 width={64}
+                name="Sync division"
               />
             </>
           ) : (
@@ -275,7 +280,7 @@ export function ModulationAssignPanel() {
                 size="md"
                 color="var(--text-muted)"
                 onChange={(v) => setLFORate(idx, v)}
-                statusText="LFO Rate \u2014 Modulation speed in Hz"
+                statusText="Rate: modulation speed in Hz"
               />
               <EditableValuePill
                 value={lfo.rate}
@@ -301,7 +306,7 @@ export function ModulationAssignPanel() {
             size="sm"
             color="var(--text-muted)"
             onChange={(v) => setLFOTilt(idx, v)}
-            statusText="Tilt \u2014 Wave asymmetry"
+            statusText="Tilt: wave asymmetry"
           />
           <EditableValuePill
             value={lfo.tilt}
@@ -324,7 +329,7 @@ export function ModulationAssignPanel() {
             size="sm"
             color="var(--text-muted)"
             onChange={(v) => setLFOCurve(idx, v)}
-            statusText="Curve \u2014 Wave curvature"
+            statusText="Curve: wave curvature"
           />
           <EditableValuePill
             value={lfo.curve}
@@ -347,7 +352,7 @@ export function ModulationAssignPanel() {
             size="sm"
             color="var(--text-muted)"
             onChange={(v) => setLFOPhaseOffset(idx, v)}
-            statusText="Phase \u2014 Cycle offset in degrees"
+            statusText="Phase: cycle offset in degrees"
           />
           <EditableValuePill
             value={lfo.phaseOffset}
@@ -366,7 +371,7 @@ export function ModulationAssignPanel() {
         <div className="flex items-center" style={{ height: 68 }}>
           <button
             onClick={() => toggleAssignmentMode(`lfo-${idx}`)}
-            className="text-[8px] font-medium uppercase tracking-wider px-2.5"
+            className="text-[11px] font-medium px-2.5"
             style={{
               height: 20,
               backgroundColor: isAssigning ? 'var(--accent)' : 'transparent',
@@ -379,7 +384,7 @@ export function ModulationAssignPanel() {
               boxShadow: isAssigning ? '0 0 8px var(--accent-glow)' : 'var(--shadow-button)',
               transition: 'all var(--transition-normal)',
             }}
-            onMouseEnter={() => setStatusText('Assign \u2014 Map LFO to effect parameters')}
+            onMouseEnter={() => setStatusText(`Assign LFO ${idx + 1}: click, then click or drag a control to route it`)}
             onMouseLeave={() => setStatusText(null)}
           >
             {isAssigning ? 'Assign\u2026' : isAnyAssigning ? `LFO ${parseInt(assigningModulator!.split('-')[1]) + 1}` : 'Assign'}
@@ -390,7 +395,7 @@ export function ModulationAssignPanel() {
       </ParamSection>
 
       {/* Row 2: 4x2 LFO selector grid + Sync */}
-      <ParamSection label="LFO Select" color="var(--accent)" visual={DataGrid}>
+      <ParamSection label="LFO select" color="var(--accent)" visual={DataGrid}>
       <div className="flex items-center" style={{ gap: 6 }}>
         {/* 4x2 mini waveform grid */}
         <div
@@ -412,6 +417,8 @@ export function ModulationAssignPanel() {
               <button
                 key={i}
                 onClick={() => handleLFOSelect(i)}
+                aria-label={`Show LFO ${i + 1}`}
+                aria-pressed={isSelected}
                 className="flex flex-col items-center justify-center"
                 style={{
                   width: 36,
@@ -425,7 +432,7 @@ export function ModulationAssignPanel() {
                   boxShadow: isSelected ? '0 0 6px var(--accent-glow)' : 'none',
                   transition: 'all var(--transition-fast)',
                 }}
-                onMouseEnter={() => setStatusText(`LFO ${i + 1} \u2014 Select modulator`)}
+                onMouseEnter={() => setStatusText(`LFO ${i + 1}: show this LFO in the editor`)}
                 onMouseLeave={() => setStatusText(null)}
               >
                 <MiniWaveform tilt={l.tilt} curve={l.curve} active={isSelected} enabled={l.enabled} />
@@ -476,12 +483,15 @@ export function ModulationAssignPanel() {
               <button
                 key={mode}
                 onClick={() => setLFOSyncMode(idx, mode)}
-                className="text-[9px] font-medium uppercase tracking-wider"
+                onMouseEnter={() => setStatusText(mode === 'free' ? 'Free: the LFO runs at its own rate in Hz' : 'Sync: the LFO follows the BPM in note divisions')}
+                onMouseLeave={() => setStatusText(null)}
+                aria-pressed={active}
+                className="text-[11px] font-medium"
                 style={{
                   height: 20,
                   padding: '0 8px',
                   backgroundColor: active ? 'rgba(255,255,255,0.10)' : 'transparent',
-                  color: active ? '#F5F0EB' : '#5A5450',
+                  color: active ? '#F5F0EB' : 'var(--text-secondary)',
                   borderRight: mode === 'free' ? '1px solid rgba(255,255,255,0.08)' : 'none',
                   cursor: 'pointer',
                   fontFamily: 'var(--font-sans)',

@@ -82,8 +82,8 @@ export function Knob({
   const isCompact = size === 'xs'
 
   // Arc knob geometry
-  const arcSize = { xs: 28, sm: 32, md: 36, lg: 44 }[size]
-  const arcStroke = 2.5
+  const arcSize = 40
+  const arcStroke = 3
   const arcRadius = (arcSize - arcStroke) / 2
   const arcCenter = arcSize / 2
   // Arc spans 270° (from 135° to 405°)
@@ -104,15 +104,12 @@ export function Knob({
     return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`
   }
 
-  // Indicator line drawn at 12 o'clock (angle 360) and rotated into place via CSS
-  // transform — lets the settle spring animate on transform only (no path recompute)
-  const indicatorEnd = polarToCartesian(arcCenter, arcCenter, arcRadius - 3, 360)
-  const indicatorStart = polarToCartesian(arcCenter, arcCenter, arcRadius * 0.35, 360)
-  const indicatorRotation = valueAngle - 360 // continuous over [-225°, +45°], no wrap
-
-  // 12 o'clock reference tick
-  const tickOuter = polarToCartesian(arcCenter, arcCenter, arcRadius, 360)
-  const tickInner = polarToCartesian(arcCenter, arcCenter, arcRadius - 3, 360)
+  // Modulation range: first routing's depth swings the value, drawn as a 5px --mod arc
+  const modDepth = sourceInfo ? sourceInfo.depth : 0
+  const modLo = Math.max(0, Math.min(1, normalized + Math.min(0, modDepth)))
+  const modHi = Math.max(0, Math.min(1, normalized + Math.max(0, modDepth)))
+  const showModArc = hasRouting && modHi - modLo > 0.005
+  const dotPos = polarToCartesian(arcCenter, arcCenter, arcRadius, valueAngle)
 
   return (
     <div
@@ -121,17 +118,16 @@ export function Knob({
       {...ctl.wrapperProps}
     >
       {/* Label */}
-      <span
-        className="uppercase leading-none font-bold"
+      {!showArc && <span
+        className="leading-none font-medium whitespace-nowrap"
         style={{
-          color: 'var(--text-muted)',
-          fontFamily: 'var(--font-mono)',
-          letterSpacing: '0.1em',
-          fontSize: isCompact ? 8 : 9,
+          color: 'var(--text-secondary)',
+          fontFamily: 'var(--font-sans)',
+          fontSize: isCompact ? 10 : 10.5,
         }}
       >
         {label}
-      </span>
+      </span>}
 
       {showArc ? (
         /* Circular arc knob */
@@ -169,17 +165,10 @@ export function Knob({
             <path
               d={describeArc(arcCenter, arcCenter, arcRadius, startAngle, endAngle)}
               fill="none"
-              stroke={isHovered || isDragging ? 'var(--border-emphasis)' : 'var(--border)'}
+              stroke={isHovered || isDragging ? 'var(--bg-hover)' : 'var(--bg-elevated)'}
               strokeWidth={arcStroke}
               strokeLinecap="round"
               style={{ transition: 'stroke var(--dur-quick) var(--ease-out-expo)' }}
-            />
-            {/* 12 o'clock reference tick */}
-            <line
-              x1={tickInner.x} y1={tickInner.y}
-              x2={tickOuter.x} y2={tickOuter.y}
-              stroke="var(--text-ghost)"
-              strokeWidth={1}
             />
             {/* Active arc */}
             {normalized > 0.005 && (
@@ -191,46 +180,47 @@ export function Knob({
                 strokeLinecap="round"
                 style={{
                   opacity: isDragging ? 1 : 0.9,
-                  filter: isDragging ? 'drop-shadow(0 0 3px var(--accent-glow))' : 'none',
-                  transition: 'opacity var(--dur-quick) var(--ease-out-expo), filter var(--dur-quick) var(--ease-out-expo)',
+                  transition: 'opacity var(--dur-quick) var(--ease-out-expo)',
                 }}
               />
             )}
-            {/* Indicator line — rotated group so release settles with spring */}
-            <g
-              style={{
-                transform: `rotate(${indicatorRotation}deg)`,
-                transformOrigin: `${arcCenter}px ${arcCenter}px`,
-                transition: isDragging ? 'none' : 'transform var(--dur-settle) var(--ease-out-back)',
-              }}
-            >
-              <line
-                x1={indicatorStart.x} y1={indicatorStart.y}
-                x2={indicatorEnd.x} y2={indicatorEnd.y}
-                stroke={isDragging ? 'var(--accent)' : arcColor}
-                strokeWidth={1.5}
-                strokeLinecap="round"
-                style={{
-                  filter: isDragging ? 'drop-shadow(0 0 2px var(--accent-glow))' : 'none',
-                  transition: 'stroke var(--dur-quick) var(--ease-out-expo), filter var(--dur-quick) var(--ease-out-expo)',
-                }}
+            {/* Modulation range */}
+            {showModArc && (
+              <path
+                d={describeArc(arcCenter, arcCenter, arcRadius, startAngle + modLo * angleRange, startAngle + modHi * angleRange)}
+                fill="none"
+                stroke="var(--mod)"
+                strokeWidth={5}
+                strokeLinecap="butt"
+                opacity={0.55}
               />
-            </g>
+            )}
+            {/* Position dot */}
+            <circle cx={dotPos.x} cy={dotPos.y} r={2.6} fill="#fff" />
           </svg>
           {/* Value below arc */}
           <span
-            className="tabular-nums font-bold"
+            className="tabular-nums"
             style={{
-              fontSize: isCompact ? 9 : 10,
-              color: isDragging ? 'var(--accent)' : arcColor,
-              textShadow: isDragging ? '0 0 6px var(--accent-glow)' : 'none',
+              fontSize: 11,
+              fontWeight: 500,
+              color: 'var(--text-primary)',
               fontFamily: 'var(--font-mono)',
-              letterSpacing: '0.06em',
-              marginTop: -2,
-              transition: 'color var(--dur-quick) var(--ease-out-expo), text-shadow var(--dur-quick) var(--ease-out-expo)',
+              marginTop: 1,
+              lineHeight: 1.2,
             }}
           >
             {displayValue}
+          </span>
+          <span
+            style={{
+              fontSize: 10.5,
+              color: 'var(--text-muted)',
+              fontFamily: 'var(--font-sans)',
+              lineHeight: 1.2,
+            }}
+          >
+            {label}
           </span>
         </div>
       ) : (

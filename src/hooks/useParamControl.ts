@@ -9,7 +9,7 @@ import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 import { ModulationContextMenu } from '../components/performance/controls/ModulationContextMenu'
 import { getParamStatusText } from '../config/statusDescriptions'
 import { snap } from '../utils/paramBar'
-import { getSourceInfo, SPECIAL_SOURCES, POLY_EUCLID_COLOR, STEP_SEQ_COLOR } from '../utils/modulationSources'
+import { getSourceInfo, resolveRoutingSource, SPECIAL_SOURCES, POLY_EUCLID_COLOR, STEP_SEQ_COLOR } from '../utils/modulationSources'
 
 export interface ParamControlArgs {
   paramId?: string
@@ -125,15 +125,10 @@ export function useParamControl({
 
   useEffect(() => () => cancelAnimationFrame(changeRafRef.current), [])
 
-  const getRoutingInfo = useCallback((trackId: string): { name: string; color: string } | null => {
-    if (trackId.startsWith('polyEuclid-')) {
-      const idx = polyTrackIds.indexOf(trackId.replace('polyEuclid-', ''))
-      if (idx >= 0) return { name: `Euclid T${idx + 1}`, color: POLY_EUCLID_COLOR }
-    }
-    const sIdx = seqTrackIds.indexOf(trackId)
-    if (sIdx >= 0) return { name: `Step T${sIdx + 1}`, color: STEP_SEQ_COLOR }
-    return getSourceInfo(trackId)
-  }, [seqTrackIds, polyTrackIds])
+  const getRoutingInfo = useCallback(
+    (trackId: string) => resolveRoutingSource(trackId, seqTrackIds, polyTrackIds),
+    [seqTrackIds, polyTrackIds],
+  )
 
   const routings = useMemo<RoutingView[]>(() => {
     const out: RoutingView[] = []
@@ -229,6 +224,10 @@ export function useParamControl({
   }, [axis, dragSpanPx, min, max, snapClamp, dispatchChange])
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    // Right-click opens the context menu; it must not toggle the automation target
+    if (e.button !== 0) return
+    // Nothing was pressed on this control (e.g. a stray release): nothing to finish
+    if (dragStart.current === null && !depthAssignSource.current) return
     try { ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* not captured */ }
 
     setIsDragging(false)
@@ -426,7 +425,7 @@ export function useParamControl({
       setDotDragging((prev) => (prev ? { ...prev, depth: newDepth } : null))
     },
     onPointerUp: (e: React.PointerEvent) => {
-      e.stopPropagation() // markers may sit inside the control root; don't let the click toggle the p-lock
+      e.stopPropagation() // markers may sit inside the control root; don't let the click toggle the automation target
       const routingId = draggingRoutingRef.current
       const wasDrag = dotDidDrag.current
       draggingRoutingRef.current = null

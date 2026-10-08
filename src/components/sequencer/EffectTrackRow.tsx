@@ -1,9 +1,11 @@
 import { useCallback, useState, useEffect, useMemo } from 'react'
 import { useEffectSequencerStore, type EffectTrack } from '../../stores/effectSequencerStore'
-import { useUIStore } from '../../stores/uiStore'
 import { useMIDIStore } from '../../stores/midiStore'
 import { EffectStepCell } from './EffectStepCell'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
+import { useUIStore } from '../../stores/uiStore'
+import { statusHover } from '../../utils/statusHover'
+import { paramDisplayName } from '../../utils/routeTargetLabel'
 
 const SEQ = '#9580FF'
 const MIDI_COLOR = '#00AAFF'
@@ -61,8 +63,6 @@ export function EffectTrackRow({
 
   const trackAudioLevel = useEffectSequencerStore((s) => s.trackAudioLevels[effectId] ?? 0)
   const trackAutoThreshold = useEffectSequencerStore((s) => s.trackAutoThresholds[effectId] ?? 0.5)
-  const toggleBottomPanelTab = useUIStore((s) => s.toggleBottomPanelTab)
-  const bottomPanelTab = useUIStore((s) => s.bottomPanelTab)
   const trackNoteMap = useMIDIStore((s) => s.trackNoteMap)
   const noteStates = useMIDIStore((s) => s.noteStates)
   const setNoteForTrack = useMIDIStore((s) => s.setNoteForTrack)
@@ -100,6 +100,7 @@ export function EffectTrackRow({
   // Does automation target this track?
   const automationTargetsThis = automationParam?.effectId === effectId
   const automationParamId = automationTargetsThis ? automationParam!.paramId : null
+  const automationLabel = automationParamId ? paramDisplayName(effectId, automationParamId) : null
   const automationMin = automationTargetsThis ? automationParam!.min : 0
   const automationMax = automationTargetsThis ? automationParam!.max : 1
   const automationStep = automationTargetsThis ? automationParam!.step : 0.01
@@ -237,6 +238,9 @@ export function EffectTrackRow({
               transition: 'color 0.1s, background-color 0.1s',
             }}
             title="Track parameters"
+            aria-label={`${label} track parameters`}
+            onMouseEnter={() => useUIStore.getState().setStatusText(`${label} track parameters: open the step tools for this track`)}
+            onMouseLeave={() => useUIStore.getState().setStatusText(null)}
           >
             <svg width="10" height="10" viewBox="0 0 10 10">
               <rect x="0" y="1" width="6" height="1.5" rx="0.5" fill="currentColor" />
@@ -245,7 +249,7 @@ export function EffectTrackRow({
             </svg>
           </button>
           <span
-            className="text-[11px] font-bold uppercase tracking-wider truncate"
+            className="text-[11px] font-medium truncate"
             style={{ color: 'var(--text-secondary)' }}
           >
             {label}
@@ -306,10 +310,13 @@ export function EffectTrackRow({
               backgroundColor: track.muted
                 ? 'rgba(255, 100, 100, 0.2)'
                 : 'transparent',
-              color: track.muted ? '#ff6666' : 'var(--border)',
+              color: track.muted ? '#ff6666' : 'var(--text-muted)',
               border: '1px solid var(--border)',
             }}
             title="Mute track"
+            aria-label={`Mute ${label}`}
+            aria-pressed={!!track.muted}
+            {...statusHover(`Mute: silence the ${label} lane's steps`)}
           >
             M
           </button>
@@ -325,10 +332,13 @@ export function EffectTrackRow({
               backgroundColor: track.soloed
                 ? `${SEQ}30`
                 : 'transparent',
-              color: track.soloed ? SEQ : 'var(--border)',
+              color: track.soloed ? SEQ : 'var(--text-muted)',
               border: '1px solid var(--border)',
             }}
             title="Solo track"
+            aria-label={`Solo ${label}`}
+            aria-pressed={!!track.soloed}
+            {...statusHover(`Solo: play only the ${label} lane`)}
           >
             S
           </button>
@@ -340,16 +350,13 @@ export function EffectTrackRow({
               const enabling = !track.audioReactive?.enabled
               setTrackAudioReactiveEnabled(effectId, enabling)
               onSelectTrack?.(effectId)
-              if (enabling && bottomPanelTab !== 'Audio') {
-                toggleBottomPanelTab('Audio')
-              }
             }}
             className="text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-sm relative overflow-hidden"
             style={{
               backgroundColor: track.audioReactive?.enabled
                 ? 'rgba(255, 51, 85, 0.35)'
                 : 'transparent',
-              color: track.audioReactive?.enabled ? '#FF3355' : 'var(--border)',
+              color: track.audioReactive?.enabled ? '#FF3355' : 'var(--text-muted)',
               border: `1px solid ${track.audioReactive?.enabled ? '#FF335560' : 'var(--border)'}`,
             }}
             title={
@@ -357,6 +364,9 @@ export function EffectTrackRow({
                 ? 'Audio reactive: audio drives step advancement (click to disable)'
                 : 'Audio reactive: audio drives step advancement'
             }
+            aria-label={`Audio reactive ${label}`}
+            aria-pressed={!!track.audioReactive?.enabled}
+            {...statusHover(`Audio: let the audio level advance the ${label} lane`)}
           >
             {track.audioReactive?.enabled && (
               <span
@@ -395,7 +405,7 @@ export function EffectTrackRow({
               backgroundColor: track.midiGate
                 ? `${MIDI_COLOR}20`
                 : 'transparent',
-              color: midiLearnMode ? MIDI_COLOR : track.midiGate ? MIDI_COLOR : 'var(--border)',
+              color: midiLearnMode ? MIDI_COLOR : track.midiGate ? MIDI_COLOR : 'var(--text-muted)',
               border: `1px solid ${track.midiGate ? `${MIDI_COLOR}60` : 'var(--border)'}`,
               animation: midiLearnMode ? 'pulse 0.8s infinite' : 'none',
             }}
@@ -406,6 +416,8 @@ export function EffectTrackRow({
                   ? `MIDI note: ${midiNoteName(mappedNote)} (click to clear)`
                   : 'MIDI note gate: assign a MIDI note to trigger this effect'
             }
+            aria-label={`MIDI note gate ${label}`}
+            {...statusHover(`Note gate: trigger the ${label} lane from a MIDI note. Click, then play a note`)}
           >
             {track.midiGate && mappedNote !== undefined && (noteStates[mappedNote] ?? false) && (
               <span
@@ -472,6 +484,7 @@ export function EffectTrackRow({
               onMouseEnter={handleCellMouseEnter}
               onContextMenu={handleContextMenu}
               automationParamId={automationParamId}
+              automationLabel={automationLabel}
               automationMin={automationMin}
               automationMax={automationMax}
               automationStep={automationStep}

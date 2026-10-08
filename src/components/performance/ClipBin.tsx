@@ -181,7 +181,7 @@ export function ClipBin() {
             }}
           >
             <div
-              className="text-[9px] font-medium uppercase tracking-wider"
+              className="text-[11px] font-medium"
               style={{ color: 'var(--accent)' }}
             >
               Importing
@@ -218,14 +218,17 @@ export function ClipBin() {
             onClick={() => fileInputRef.current?.click()}
             onMouseEnter={() => setStatusText(getUIStatusText('clipImport'))}
             onMouseLeave={() => setStatusText(null)}
-            className="flex items-center justify-center rounded-sm cursor-pointer transition-all hover:scale-105"
+            className="flex flex-col items-center justify-center gap-1 rounded-sm cursor-pointer transition-all hover:scale-105"
             style={{
               width: cardWidth,
               height: cardHeight,
               backgroundColor: 'var(--bg-surface)',
               border: '1px dashed var(--border)',
+              color: 'var(--text-secondary)',
+              font: '500 11px var(--font-sans)',
             }}
             title="Import video clip"
+            aria-label="Add a video clip"
           >
             {/* Idle pulse — invites the first media import */}
             <svg
@@ -241,6 +244,7 @@ export function ClipBin() {
             >
               <path d="M12 5v14M5 12h14" />
             </svg>
+            <span aria-hidden>Add clip</span>
           </button>
         )}
 
@@ -254,7 +258,7 @@ export function ClipBin() {
               zIndex: 100,
             }}
           >
-            <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--accent)' }}>
+            <span className="text-[11px] font-medium" style={{ color: 'var(--accent)' }}>
               Drop
             </span>
           </div>
@@ -362,6 +366,7 @@ export function ClipBin() {
                 zIndex: maxVisibleCards + 2,
               }}
               title="Add video clip"
+              aria-label="Add another clip"
             >
               <svg
                 width="10"

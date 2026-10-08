@@ -5,11 +5,12 @@
 
 :root {
   /* Backgrounds — charcoal, readable contrast */
-  --bg-void: oklch(0.17 0.006 270);
-  --bg-primary: oklch(0.205 0.006 270);
-  --bg-surface: oklch(0.225 0.007 270);
-  --bg-elevated: oklch(0.255 0.007 270);
-  --bg-hover: oklch(0.29 0.008 270);
+  --gutter: #0e0f10;
+  --bg-void: #18191b;
+  --bg-primary: #222326;
+  --bg-surface: #2c2d31;
+  --bg-elevated: #37383d;
+  --bg-hover: #45464c;
 
   /* Layout grid */
   --col-left: 320px;
@@ -18,10 +19,10 @@
   --col-canvas: 480px;
   --row-header: 48px;
   --row-middle: 100px;
-  --row-bottom-bar: 36px;
-  --row-bottom-expanded: 240px;
   --gap: 8px;
-  --panel-radius: 2px;
+  --panel-radius: 6px;
+  --radius-panel: 6px;
+  --radius-ctrl: 4px;
 
   /* Spacing scale (4px base) */
   --space-1: 4px;
@@ -50,23 +51,26 @@
   --gap-lg: var(--space-4);
 
   /* Line grid — replaces dot matrix */
-  --grid-dot: #2a2a30;
+  --grid-dot: #2c2d31;
   --grid-size: 20px;
   --dot-size: 1px;
 
   /* Borders — visible edges for panel separation */
-  --border: oklch(0.32 0.008 270);
-  --border-emphasis: oklch(0.42 0.008 270);
-  --border-light: oklch(0.29 0.008 270);
+  --border: #3a3b40;
+  --border-emphasis: #4a4b51;
+  --border-light: #45464c;
 
   /* Text — high contrast on charcoal */
-  --text-primary: oklch(0.95 0.004 270);
-  --text-secondary: oklch(0.80 0.006 270);
-  --text-muted: oklch(0.70 0.006 270);
-  --text-ghost: oklch(0.64 0.006 270);
+  --text-primary: #ececee;
+  --text-secondary: #b4b6bc;
+  --text-muted: #9699a0;
+  --text-ghost: #9699a0;
 
   /* Recording: the one non-effect colour (REC stays red). >= 4.5:1 on --bg-void and --bg-primary */
-  --rec: oklch(0.63 0.2 25);
+  --rec: #ff5a4e;
+  --mod: #4fb3ff;
+  --live: #b8f35a;
+  --sel: #f2f2f4;
 
   /* Accent — white base (effect colors provide the only color) */
   --accent: #FFFFFF;
@@ -102,10 +106,10 @@
   --shadow-inset: none;
 
   /* Knob surface */
-  --knob-body: #22222a;
-  --knob-body-highlight: #2a2a32;
-  --knob-rim: #3a3a42;
-  --knob-rim-highlight: #44444c;
+  --knob-body: #2c2d31;
+  --knob-body-highlight: #37383d;
+  --knob-rim: #37383d;
+  --knob-rim-highlight: #45464c;
 
   /* Surface highlights — removed */
   --border-top-highlight: none;
@@ -116,9 +120,9 @@
   --transition-normal: 150ms ease;
   --transition-slow: 250ms ease;
 
-  /* Typography — monospace everywhere */
-  --font-sans: 'JetBrains Mono', 'SF Mono', monospace;
-  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  /* Typography: Plex Sans for UI, Plex Mono for values */
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --text-micro: 10px;
   --text-tiny: 11px;
   --text-small: 12px;
@@ -133,7 +137,7 @@
 
 /* Base styles */
 body {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   background-color: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -239,8 +243,8 @@ body {
 
 /* P-lock waiting flash */
 @keyframes plock-flash {
-  0%, 100% { border-color: #FF4060; box-shadow: 0 0 4px #FF406030; }
-  50% { border-color: #FF406040; box-shadow: none; }
+  0%, 100% { border-color: var(--rec); box-shadow: 0 0 4px color-mix(in srgb, var(--rec) 20%, transparent); }
+  50% { border-color: color-mix(in srgb, var(--rec) 25%, transparent); box-shadow: none; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -534,13 +538,12 @@ button:active:not(:disabled) {
 }
 
 /* ── HUD type tiers ───────────────────────────────────────── */
-.hud-label { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
-.hud-value { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-primary); }
-.hud-bpm   { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.hud-label { font: 500 11px var(--font-sans); letter-spacing: normal; text-transform: none; color: var(--text-muted); }
+.hud-value { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.hud-bpm   { font-family: var(--font-mono, ui-monospace, monospace); font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); }
 
-/* ── Rules and raised rows (no cards) ─────────────────────── */
+/* ── Rules ────────────────────────────────────────────────── */
 .rule-b { border-bottom: 1px solid var(--border); }
-.surface-raised-row { background: var(--bg-surface); box-shadow: inset 0 0 0 1px var(--border-emphasis); }
 
 /* ── Output stage frame ───────────────────────────────────── */
 /* The frame is a size container so readouts can re-stack in a narrow (portrait) frame.
@@ -554,8 +557,8 @@ button:active:not(:disabled) {
 .stage-tick.br { right: -8px; bottom: -8px; border-width: 0 1px 1px 0; }
 .stage-ruler { position: absolute; left: 0; right: 0; bottom: -16px; height: 6px; pointer-events: none;
   background: repeating-linear-gradient(90deg, var(--text-ghost) 0 1px, transparent 1px 10%); }
-.stage-readout { position: absolute; z-index: 2; pointer-events: none; font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: 10px; letter-spacing: .12em; color: var(--text-secondary); background: oklch(0.17 0.006 270 / .72); padding: 3px 6px; }
+.stage-readout { position: absolute; z-index: 2; pointer-events: none; font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px; letter-spacing: .12em; color: var(--text-secondary); background: rgba(24, 25, 27, .72); padding: 3px 6px; }
 .stage-readout.tl { left: 10px; top: 10px; } .stage-readout.tr { right: 10px; top: 10px; }
 .stage-readout.bl { left: calc(var(--clipbin-inset) + var(--clipbin-w)); bottom: 10px; } .stage-readout.br { right: 10px; bottom: 10px; }
 .stage-readout { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 20px); }

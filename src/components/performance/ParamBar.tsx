@@ -4,13 +4,15 @@ import { useParamValue } from '../../hooks/useParamValue'
 import { useParamControl } from '../../hooks/useParamControl'
 import { ModReadout } from './ModReadout'
 import { buildSegments, formatParamValue } from '../../utils/paramBar'
+import { displayParamLabel, paramStatusText } from '../../config/paramNames'
 
 export const ParamBar = memo(function ParamBar({ effectId, param }: { effectId: string; param: LockableParam }) {
   const value = useParamValue(param)
   const onChange = useCallback((v: number) => param.apply(v), [param])
   const paramId = `${effectId}.${param.id}`
+  const name = displayParamLabel(effectId, param)
   const ctl = useParamControl({
-    paramId, label: param.label, value,
+    paramId, label: name, value, statusText: paramStatusText(effectId, param),
     min: param.min, max: param.max, step: param.step, onChange, axis: 'x',
     resetOnDoubleClick: true,
   })
@@ -30,7 +32,7 @@ export const ParamBar = memo(function ParamBar({ effectId, param }: { effectId: 
       }}
       tabIndex={0}
       role="slider"
-      aria-label={param.label}
+      aria-label={name}
       aria-valuemin={param.min}
       aria-valuemax={param.max}
       aria-valuenow={Math.min(param.max, Math.max(param.min, value))}
@@ -38,7 +40,7 @@ export const ParamBar = memo(function ParamBar({ effectId, param }: { effectId: 
       {...ctl.wrapperProps}
       {...ctl.rootProps}
     >
-      <span className="param-bar-name">{param.label}</span>
+      <span className="param-bar-name" title={name}>{name}</span>
       <span className="param-bar-segs" aria-hidden>
         {segs.map((s, i) => (
           <i key={i} data-lit={s.lit || undefined} data-zero={s.zero || undefined} data-mod={s.mod || undefined} />

@@ -14,17 +14,17 @@ When adding a new effect page or new effects, you MUST update ALL of the followi
 - Update `nextGridPage` max value
 - Example: `Math.min(5, page)` for 6 pages (0-5)
 
-### 3. Performance Grid (`src/components/performance/PerformanceGrid.tsx`)
-- Import the new store (e.g., `useMotionStore`, `useTrendStore`)
-- Add store hook call
-- Add cases to `getEffectState()` for each new effect
-- Add case to `pageHasActiveEffects()` for new page
-- Update navigation button max page index
+### 3. Active and toggle logic (`EFFECT_ENTRIES` in `src/hooks/useEffectToggle.ts`)
+- Add an `EFFECT_ENTRIES[effectId]` entry with `active()` (read the enabled flag) and `toggle(effectId)` (call `moveToEndOfChain` when turning on, then flip the store's setter).
+  The pad grid, the browser list and the device chain all read it; `PerformanceGrid.tsx` needs no store imports.
+- If the effect uses a NEW store, add it to `ENABLE_STORES` in the same file so `useEnabledEffectIds` / `useChainIds` re-render when it flips.
+- An effect with a lane but no pad (like `track_face` or the overlays) goes in `EXTRA_IDS` there, so it still gets a device card.
+- Update `PerformanceGrid.tsx` only for a NEW page: `pageHasActiveEffects()` and the navigation button max page index.
 
 ### 4. Active Effects Hook (`src/hooks/useActiveEffects.ts`)
 - Import the new store
 - Add enabled check and `activeEffects.push()` for each new effect
-- Include primaryValue/primaryLabel (shown on the chain row)
+- Include primaryValue/primaryLabel
 
 ### 5. Effect Disable Hook (`src/hooks/useEffectDisable.ts`)
 - Add case to the switch statement mapping effectId to store setter
@@ -59,11 +59,20 @@ Enabled flags/order and per-frame params are split across two files:
 ### 9. Param Registry (`src/config/effectParams.ts`)
 - Add an `EFFECT_PARAM_REGISTRY` entry (getParams, optional getSelectParams, setEnabled, getEnabled).
   Param locks are driven from this registry.
-- The registry entry drives the chain panel's settings: its first four numeric params form the knob strip, the rest render as segmented bars, and 0/1 integer params render as toggles. Selects come from `getSelectParams`; bespoke colour/texture controls live in `BlockExtras`.
-- If the effect uses a NEW store, add it to the `STORES` list in `src/hooks/useParamValue.ts`, or its bars and knobs won't update.
+- The registry entry drives the device card and the inspector: the first four numeric params become the device-card dials and the inspector "Main" bars, the rest render as "More" bars, and 0/1 integer params render as toggles. Selects come from `getSelectParams`; bespoke colour/texture controls live in `BlockExtras`.
 
 ### 10. Continuous Modulation (`src/hooks/useContinuousModulation.ts`)
 - Add a `case '<effectId>'` mapping 0–1 modulation values onto each param's real range.
+
+### 11. Names and descriptions (`EFFECT_DESCRIPTIONS` in `src/config/statusDescriptions.ts`)
+- Add `<effectId>: 'Full Name: one-line description'`. `src/config/effectNames.ts` reads it for the device card, browser and inspector names, so no short codes appear in the UI.
+- An effect with no `src/config/effects.ts` entry also needs a colour in `EXTRA_COLORS` in `effectNames.ts`.
+
+### 12. Param display names (`src/config/paramNames.ts`)
+- Give params a readable name (`PARAM_NAME_OVERRIDES`, `<effectId>.<paramId>`) and, where a shared code means something different, a hover text (`PARAM_DESCRIPTION_OVERRIDES`). Dial names are at most 10 characters.
+
+### 13. Live param values (`STORES` in `src/hooks/useParamValue.ts`)
+- If the effect uses a NEW store, add it to `STORES`, or its bars and dials won't update.
 
 ### Presets/banks
 - New stores need a `<store>?: Snapshot` key on `BankSnapshot` (`src/stores/bankStore.ts`) plus
@@ -73,26 +82,28 @@ Enabled flags/order and per-frame params are split across two files:
 ## Architecture
 
 ### Layout Shell (`src/components/performance/PerformanceLayout.tsx` + `layout.css`)
-`.seg-shell` is a CSS grid whose children carry `data-area`: `header`, `effects`, `stage`, `chain`, `dock`, `status`.
-- **Laptop (1100-2199px)**: effects | stage | chain across the middle, dock spans the bottom (content-sized, capped at 34vh; 50vh while a modulation tab is open).
-- **Ultrawide (>= 2200px)**: the dock becomes a fourth, full-height right-hand column.
-- **Narrow (< 1100px)**: the page scrolls; stage first, then effects and chain side by side, then the dock.
-- `PerformanceLayout` re-renders every engine tick, so `HeaderBar`, `EffectsColumn`, `StageArea`, `ChainPanel` and `Dock` are `React.memo`. Keep their props stable and their store selectors narrow.
+`.seg-shell` is a CSS grid whose children carry `data-area`: `header`, `browser`, `stage`, `inspector`, `bottom`, `footer`. Footer toggles show or hide the browser, inspector and bottom panel (hidden by CSS, never unmounted, so the canvas is never remounted).
+- **Sizes**: header 44px, footer 30px. Browser 250px / inspector 300px, and 300px / 340px at ≥2200px. Bottom panel 172px on Devices; on Sequencer it follows the content up to 40vh.
+- **Narrow (< 1100px)**: the browser and inspector become drawers over the stage (one at a time).
+- `PerformanceLayout` re-renders every engine tick, so `HeaderBar`, `EffectBrowser`, `StageArea`, `Inspector` and `BottomPanel2` are `React.memo`. Keep their props stable and their store selectors narrow.
 
 ### Header (`src/components/performance/HeaderBar.tsx`)
 VIDEO/AUDIO source menus (portalled, `position: fixed`), the preset picker, and REC (`useRecordingControl`, red `--rec` token).
 
-### Effects Column (`src/components/performance/EffectsColumn.tsx`)
-Left column: page tabs + effect grid (`PerformanceGrid`), bank slots, crossfader, then the preset library.
-
 ### Stage (`src/components/performance/StageArea.tsx`)
 Aspect-locked output frame that fits the free space, with corner ticks, ruler, ClipBin and four HUD readouts (`StageReadouts`): LIVE/REC + FPS, preset name (or bank), timecode, active band. The frame is a container; under 380px the readouts re-stack.
 
-### Chain Panel (`src/components/performance/ChainPanel.tsx`)
-Right column: the effect chain in signal order. Rows handle selection, drag (and Alt+Arrow) reorder, per-effect bypass (button or shift+click), remove (button, Delete, double-click), clear-all and bypass-all. It owns `ensureTrack` and auto-select for active effects. Below the rows it shows the selected effect's settings (rendered by `EffectSettings`: a knob strip plus segmented `ParamBar`s, with `useParamControl` supplying the shared drag, p-lock, reset, context-menu and modulation-drop behaviour; `BlockExtras` in `EffectExtras.tsx` adds colour/texture extras) and audio band.
+### Browser (`src/components/performance/EffectBrowser.tsx`)
+Left panel: every effect by category with its full name and description (`src/config/effectNames.ts`), a search box, and List/Pads views. Clicking a row adds the effect to the end of the chain (or removes it).
 
-### Dock (`src/components/performance/Dock.tsx`)
-Sequencer (`SequencerContainer` > `UnifiedSequencerPanel`, whose track list is the only scroller) above the modulation tabs (`BottomPanel`: LFO, Random, Step, Env, S&H, MIDI, Audio).
+### Inspector (`src/components/performance/Inspector.tsx`)
+Right panel, contextual on `uiStore`. Its root carries `data-inspector-mode`:
+- `effect` (a device is selected): header (colour, full name, "· 3 of 5 in chain", Bypass), then `EffectSettings` (every numeric param as a `ParamBar`, in "Main" and "More" sections, with `useParamControl` supplying drag, p-lock, reset, context menu and modulation drop), then the Modulation list (`[data-inspector-routes]`: routes whose `targetParam` starts with `${effectId}.`, named via `resolveRoutingSource`, × removes), then the audio band (`TrackAudioReactivePanel`).
+- `modulator` (a slot in the Modulators card is selected): that modulator's editor. LFO slots open `ModulationAssignPanel` on that LFO (`selectedLFOIndex`); Random/Step/Envelope/S&H/MIDI use `ModulationContent` (`sampleHold` maps to `sh`); Audio shows `TrackAudioReactivePanel` with a device picker.
+- `empty`: "Select a device or modulator to edit it."
+
+### Device chain (`src/components/performance/BottomPanel2.tsx`, `DeviceChain.tsx`, `DeviceCard.tsx`, `ModulatorsCard.tsx`)
+Bottom panel with Devices and Sequencer tabs (both stay mounted; the title reads "Chain" or "Sequencer"). Devices: the Modulators card (● arms routing, then click or drag any control), then one card per active effect in signal order with 4 dials and a Dry/wet bar (`effectMix`). `DeviceChain` owns `ensureTrack`, drag/keyboard reorder, bypass, remove, and selection: it auto-selects a device unless a modulator is selected, and when the selected device is removed it selects the next device (else the previous, else none). Sequencer: `SequencerContainer` > `UnifiedSequencerPanel`.
 
 Effect params flow through `src/effects/paramSync.ts` (zustand subscribe → uniform writes); Canvas.tsx's structural effect only rebuilds the pass chain on enable/disable/reorder.
 
@@ -104,8 +115,8 @@ Check `uiStore.ts` - the `setGridPage`, `nextGridPage`, `prevGridPage` functions
 ### Effects don't appear in grid
 Check `getEffectsForPage()` returns the right array and `pageHasActiveEffects()` includes the new page.
 
-### Effects don't appear in the chain
-Check `useActiveEffects.ts` has the enabled check for the new effect, and the effect ID is in `routingStore.defaultEffectOrder`.
+### Effects don't appear in the device chain
+Check `isEffectActive` in `useEffectToggle.ts` (what `useChainIds` reads) and `useActiveEffects.ts` both have the enabled check for the new effect, and the effect ID is in `routingStore.defaultEffectOrder`.
 
-### Remove button doesn't work on a chain row
+### Remove button doesn't work on a device card
 Check `useEffectDisable.ts` has a case for the effect ID mapping to the correct store setter.

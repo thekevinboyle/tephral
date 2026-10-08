@@ -125,11 +125,14 @@ export function LFODropdown<T extends string>({
   options,
   onChange,
   width = 80,
+  name = 'Option',
 }: {
   value: T
   options: T[]
   onChange: (v: T) => void
   width?: number
+  /** What the dropdown picks ("Shape"), for its aria-label and status text */
+  name?: string
 }) {
   const [open, setOpen] = useState(false)
   const [hovered, setHovered] = useState(false)
@@ -149,8 +152,11 @@ export function LFODropdown<T extends string>({
       {/* Trigger button */}
       <button
         onClick={() => setOpen(!open)}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseEnter={() => { setHovered(true); useUIStore.getState().setStatusText(`${name}: ${value}. Click to choose another`) }}
+        onMouseLeave={() => { setHovered(false); useUIStore.getState().setStatusText(null) }}
+        aria-label={`${name}: ${value}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
         className="w-full flex items-center justify-between text-[10px] font-medium"
         style={{
           height: 22,
@@ -226,12 +232,14 @@ export function LFODropdown<T extends string>({
                   transition: 'background-color 60ms ease',
                 }}
                 onMouseEnter={(e) => {
+                  useUIStore.getState().setStatusText(`${name}: ${opt}`)
                   if (!isActive) {
                     e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'
                     e.currentTarget.style.color = '#E0DBD6'
                   }
                 }}
                 onMouseLeave={(e) => {
+                  useUIStore.getState().setStatusText(null)
                   e.currentTarget.style.backgroundColor = isActive ? 'rgba(255,255,255,0.08)' : 'transparent'
                   e.currentTarget.style.color = isActive ? '#FFFFFF' : '#B0AAA4'
                 }}
@@ -350,7 +358,7 @@ export function LFOEditorPanel() {
                 boxShadow: isSelected ? '0 0 8px var(--accent-glow)' : 'none',
                 transition: 'all var(--transition-fast)',
               }}
-              onMouseEnter={() => setStatusText(`LFO ${i + 1} \u2014 Select modulator`)}
+              onMouseEnter={() => setStatusText(`LFO ${i + 1}: show this LFO in the editor`)}
               onMouseLeave={() => setStatusText(null)}
             >
               <SidebarMiniWaveform tilt={l.tilt} curve={l.curve} active={isSelected} enabled={l.enabled} />
@@ -414,7 +422,7 @@ export function LFOEditorPanel() {
                   height: 20,
                   padding: '0 8px',
                   backgroundColor: active ? 'rgba(255,255,255,0.10)' : 'transparent',
-                  color: active ? '#F5F0EB' : '#5A5450',
+                  color: active ? '#F5F0EB' : 'var(--text-secondary)',
                   borderRight: mode === 'free' ? '1px solid rgba(255,255,255,0.08)' : 'none',
                   cursor: 'pointer',
                   fontFamily: 'var(--font-sans)',
@@ -459,7 +467,7 @@ export function LFOEditorPanel() {
             color="var(--accent)"
             onChange={(v) => setLFORate(idx, v)}
             formatValue={(v) => `${v.toFixed(1)} Hz`}
-            statusText="LFO Rate \u2014 Modulation speed in Hz"
+            statusText="Rate: modulation speed in Hz"
           />
         )}
         <Knob
@@ -473,7 +481,7 @@ export function LFOEditorPanel() {
           color="var(--accent)"
           onChange={(v) => setLFOTilt(idx, v)}
           formatValue={(v) => v.toFixed(2)}
-          statusText="Tilt \u2014 Wave asymmetry"
+          statusText="Tilt: wave asymmetry"
         />
         <Knob
           label="Curve"
@@ -486,7 +494,7 @@ export function LFOEditorPanel() {
           color="var(--accent)"
           onChange={(v) => setLFOCurve(idx, v)}
           formatValue={(v) => v.toFixed(2)}
-          statusText="Curve \u2014 Wave curvature"
+          statusText="Curve: wave curvature"
         />
       </div>
 
@@ -506,7 +514,7 @@ export function LFOEditorPanel() {
           fontFamily: 'var(--font-sans)',
           transition: 'all var(--transition-normal)',
         }}
-        onMouseEnter={() => setStatusText('Assign \u2014 Map LFO to effect parameters')}
+        onMouseEnter={() => setStatusText('Assign: map the LFO to effect parameters')}
         onMouseLeave={() => setStatusText(null)}
       >
         {isAssigning ? 'Click a param\u2026' : 'Assign [M]'}

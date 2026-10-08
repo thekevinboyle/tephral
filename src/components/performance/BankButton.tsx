@@ -87,6 +87,7 @@ export function BankButton({
     <button
       onClick={handleClick}
       onContextMenu={handleContextMenu}
+      aria-label={`Bank ${label}`}
       onMouseEnter={() => setStatusText(getBankStatusText(label, isEmpty))}
       onMouseLeave={() => setStatusText(null)}
       className="w-full h-full flex items-center justify-center rounded-sm text-[12px] font-medium select-none transition-all duration-100"

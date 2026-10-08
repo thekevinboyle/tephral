@@ -1,107 +1,82 @@
-import { useState, useEffect } from 'react'
-import { useUIStore } from '../../stores/uiStore'
+import { memo, useState, useEffect } from 'react'
+import { useUIStore, type PanelId } from '../../stores/uiStore'
 import { useSegStore } from '../../stores/segStore'
-import { SignalAnalysis, IrisScanner } from '../ui/MicroVisuals'
+import { useNarrow } from '../../hooks/useNarrow'
 import { perfMonitor } from '../../utils/perfMonitor'
+import { statusHover } from '../../utils/statusHover'
+import { getUIStatusText } from '../../config/statusDescriptions'
 
-export function StatusBar() {
-  const statusText = useUIStore((s) => s.statusText)
-  const isIdle = statusText == null
-  // Persistent SEG model status — its own channel, so hover tooltips can't wipe it
-  const segStatus = useSegStore((s) => s.segStatus)
-  const segText =
-    segStatus === 'loading' ? 'SEG: loading model…' : segStatus === 'error' ? 'SEG: person mask unavailable' : null
+const TOGGLES: { id: PanelId; label: string }[] = [
+  { id: 'browser', label: 'Browser' },
+  { id: 'inspector', label: 'Inspector' },
+  { id: 'bottom', label: 'Bottom' },
+]
 
-  const [perf, setPerf] = useState({ avgMs: 0, maxMs: 0, fps: 0 })
+/** One footer toggle. At narrow widths browser/inspector open a drawer instead of the docked panel. */
+const PanelToggle = memo(function PanelToggle({ id, label }: { id: PanelId; label: string }) {
+  const narrow = useNarrow()
+  const on = useUIStore((s) =>
+    narrow && id !== 'bottom'
+      ? s.drawer === id
+      : id === 'browser' ? s.showBrowser : id === 'inspector' ? s.showInspector : s.showBottom,
+  )
+  return (
+    <button
+      type="button"
+      className="seg-toggle"
+      data-toggle={id}
+      aria-controls={`seg-panel-${id}`}
+      data-on={on ? '' : undefined}
+      aria-pressed={on}
+      onClick={() => {
+        const st = useUIStore.getState()
+        if (narrow && id !== 'bottom') st.toggleDrawer(id)
+        else st.togglePanel(id)
+      }}
+      {...statusHover(getUIStatusText(id === 'browser' ? 'toggleBrowser' : id === 'inspector' ? 'toggleInspector' : 'toggleBottom'))}
+    >
+      <i aria-hidden />
+      {label}
+    </button>
+  )
+})
+
+const PanelToggles = memo(function PanelToggles() {
+  return (
+    <div className="seg-footer-toggles" role="group" aria-label="Panels">
+      {TOGGLES.map((t) => <PanelToggle key={t.id} id={t.id} label={t.label} />)}
+    </div>
+  )
+})
+
+const FpsReadout = memo(function FpsReadout() {
+  const [perf, setPerf] = useState({ avgMs: 0, fps: 0 })
   useEffect(() => {
     if (!import.meta.env.DEV) return
     const id = setInterval(() => setPerf(perfMonitor.getStats()), 500)
     return () => clearInterval(id)
   }, [])
+  if (!import.meta.env.DEV) return null
+  return <span className="seg-footer-fps" title="render pipeline avg ms / fps">{perf.avgMs.toFixed(1)}ms · {perf.fps.toFixed(0)} fps</span>
+})
+
+/** Footer: status text, then the panel toggles, then fps. */
+export const StatusBar = memo(function StatusBar() {
+  const statusText = useUIStore((s) => s.statusText)
+  // Persistent SEG model status: its own channel, so hover tooltips can't wipe it
+  const segStatus = useSegStore((s) => s.segStatus)
+  const segText =
+    segStatus === 'loading' ? 'SEG: loading model…' : segStatus === 'error' ? 'SEG: person mask unavailable' : null
 
   return (
-    <div
-      style={{
-        height: 24,
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 8px',
-        background: 'linear-gradient(to right, var(--bg-elevated), var(--bg-surface), var(--bg-elevated))',
-        borderTop: '1px solid var(--border)',
-        boxShadow: 'inset 0 1px 0 var(--surface-highlight)',
-      }}
-    >
-      <SignalAnalysis value={0.3} size={16} color="var(--text-ghost)" className="opacity-20 mr-1.5" />
-      {/* System-online indicator — breathes while idle, steady when a status is live */}
-      <span
-        aria-hidden
-        style={{
-          width: 5,
-          height: 5,
-          borderRadius: '50%',
-          flexShrink: 0,
-          marginRight: 6,
-          backgroundColor: 'var(--text-muted)',
-          animation: isIdle
-            ? 'alive-breathe var(--dur-breathe) var(--ease-in-out-quart) infinite'
-            : 'none',
-        }}
-      />
-      <span
-        style={{
-          fontSize: 10,
-          color: 'var(--text-muted)',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          flex: 1,
-        }}
-      >
+    <div className="seg-footer">
+      <span className="seg-footer-status">
         {statusText ?? 'Ready'}
-        {isIdle && (
-          <span
-            aria-hidden
-            style={{
-              display: 'inline-block',
-              width: 4,
-              height: 8,
-              marginLeft: 5,
-              verticalAlign: -1,
-              backgroundColor: 'var(--text-muted)',
-              animation: 'hud-typewriter-cursor 1.1s steps(1) infinite',
-            }}
-          />
-        )}
       </span>
-      {segText && (
-        <span
-          data-seg-status={segStatus}
-          style={{
-            fontSize: 10,
-            color: 'var(--text-muted)',
-            whiteSpace: 'nowrap',
-            flexShrink: 0,
-            marginLeft: 8,
-          }}
-        >
-          {segText}
-        </span>
-      )}
-      {import.meta.env.DEV && (
-        <span
-          title="render pipeline avg ms / fps"
-          style={{
-            fontSize: 10,
-            color: 'var(--text-muted)',
-            whiteSpace: 'nowrap',
-            flexShrink: 0,
-            marginLeft: 8,
-          }}
-        >
-          {perf.avgMs.toFixed(1)}ms · {perf.fps.toFixed(0)}fps
-        </span>
-      )}
-      <IrisScanner value={0.4} size={16} color="var(--text-ghost)" className="opacity-20 ml-1.5" />
+      {/* Sibling, not a child of the truncating status span: a long hover text must not hide it */}
+      {segText && <span data-seg-status={segStatus} className="seg-footer-seg" style={{ flex: 'none', color: 'var(--text-muted)', fontSize: 11, whiteSpace: 'nowrap' }}>{segText}</span>}
+      <PanelToggles />
+      <FpsReadout />
     </div>
   )
-}
+})

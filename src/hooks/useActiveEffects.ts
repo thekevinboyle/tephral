@@ -216,7 +216,7 @@ export function useActiveEffects() {
     if (seg.echoEnabled) activeEffects.push({ id: 'seg_echo', label: 'ECHO4D', color: '#ffb36b', primaryValue: seg.echoParams.copies, primaryLabel: 'cps' })
     if (seg.matterEnabled) activeEffects.push({ id: 'seg_matter', label: 'MATTER', color: '#c86bff', primaryValue: Math.round(seg.matterParams.coverage * 100), primaryLabel: 'cov' })
     if (seg.staleEnabled) activeEffects.push({ id: 'seg_stale', label: 'STALE', color: '#9aa4b2', primaryValue: Math.round(seg.staleParams.cellSize), primaryLabel: 'px' })
-    if (seg.tornEnabled) activeEffects.push({ id: 'seg_torn', label: 'TORN', color: '#5b5b5b', primaryValue: Math.round(seg.tornParams.depth * 100), primaryLabel: 'dep' })
+    if (seg.tornEnabled) activeEffects.push({ id: 'seg_torn', label: 'TORN', color: '#8a8f99', primaryValue: Math.round(seg.tornParams.depth * 100), primaryLabel: 'dep' })
 
     // Sort by effectOrder
     return [...activeEffects].sort((a, b) => {

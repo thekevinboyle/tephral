@@ -62,23 +62,23 @@ function VisionTrackingBlockExtras({
             <ToggleBlock label="Labels" value={params.showLabels} onChange={(v) => updateParams({ showLabels: v })} />
           </div>
           <SelectBlock
-            label="Box Shape"
+            label="Box shape"
             value={params.boxShape}
             options={BOX_SHAPE_OPTIONS}
             onChange={(v) => updateParams({ boxShape: v })}
           />
           <SelectBlock
-            label="Line Style"
+            label="Line style"
             value={params.lineStyle}
             options={LINE_STYLE_OPTIONS}
             onChange={(v) => updateParams({ lineStyle: v })}
           />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-            <ColorBlock label="Box Color" value={params.boxColor} onChange={(v) => updateParams({ boxColor: v })} />
+            <ColorBlock label="Box color" value={params.boxColor} onChange={(v) => updateParams({ boxColor: v })} />
           </div>
         </div>
       </ParamSection>
-      <ParamSection label="Box Filter">
+      <ParamSection label="Box filter">
         <SelectBlock
           label="Filter"
           value={params.boxFilter}
@@ -88,17 +88,17 @@ function VisionTrackingBlockExtras({
       </ParamSection>
       <ParamSection label="Global">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-          <ToggleBlock label="Lines Only" value={linesOnly} onChange={setLinesOnly} />
+          <ToggleBlock label="Lines only" value={linesOnly} onChange={setLinesOnly} />
         </div>
       </ParamSection>
-      <ParamSection label="GPU Trace">
+      <ParamSection label="GPU trace">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
             <ToggleBlock label="Trail" value={traceParams.trailEnabled} onChange={(v) => updateTraceParams({ trailEnabled: v })} />
           </div>
           {fillMode && traceParams.fillMode !== undefined && (
             <SelectBlock
-              label="Fill Mode"
+              label="Fill mode"
               value={traceParams.fillMode}
               options={fillMode.options}
               onChange={(v) => updateTraceParams({ fillMode: v })}
@@ -123,7 +123,7 @@ function TextureOverlayBlockExtras() {
   if (!tex.enabled) return null
 
   return (
-    <ParamSection label="Texture Overlay">
+    <ParamSection label="Texture overlay">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <SelectBlock
           label="Texture"
@@ -169,7 +169,7 @@ function DataOverlayBlockExtras() {
   if (!data.enabled) return null
 
   return (
-    <ParamSection label="Data Overlay">
+    <ParamSection label="Data overlay">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <SelectBlock
           label="Template"
@@ -214,7 +214,7 @@ export function BlockExtras({ effectId }: { effectId: string }) {
         return (
           <ParamSection label="Extras">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-              <ColorBlock label="Edge Color" value={glitch.edgeDetection.edgeColor} onChange={(v) => glitch.updateEdgeDetection({ edgeColor: v })} />
+              <ColorBlock label="Edge color" value={glitch.edgeDetection.edgeColor} onChange={(v) => glitch.updateEdgeDetection({ edgeColor: v })} />
             </div>
           </ParamSection>
         )
@@ -223,7 +223,7 @@ export function BlockExtras({ effectId }: { effectId: string }) {
         return (
           <ParamSection label="Extras">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-              <ColorBlock label="Tint Color" value={glitch.colorGrade.tintColor} onChange={(v) => glitch.updateColorGrade({ tintColor: v })} />
+              <ColorBlock label="Tint color" value={glitch.colorGrade.tintColor} onChange={(v) => glitch.updateColorGrade({ tintColor: v })} />
             </div>
           </ParamSection>
         )
@@ -240,7 +240,7 @@ export function BlockExtras({ effectId }: { effectId: string }) {
 
       case 'rgb_split':
         return (
-          <ParamSection label="Trace Mask">
+          <ParamSection label="Trace mask">
             <SelectBlock label="Mask" value={routing.getEffectTraceMask('rgb_split')} options={TRACE_MASK_OPTIONS} onChange={(v) => routing.setEffectTraceMask('rgb_split', v)} />
           </ParamSection>
         )
@@ -253,7 +253,7 @@ export function BlockExtras({ effectId }: { effectId: string }) {
                 <ToggleBlock label="Animated" value={glitch.blockDisplace.animated} onChange={(v) => glitch.updateBlockDisplace({ animated: v })} />
               </div>
             </ParamSection>
-            <ParamSection label="Trace Mask">
+            <ParamSection label="Trace mask">
               <SelectBlock label="Mask" value={routing.getEffectTraceMask('block_displace')} options={TRACE_MASK_OPTIONS} onChange={(v) => routing.setEffectTraceMask('block_displace', v)} />
             </ParamSection>
           </>
@@ -261,7 +261,7 @@ export function BlockExtras({ effectId }: { effectId: string }) {
 
       case 'datamosh':
         return (
-          <ParamSection label="Trace Mask">
+          <ParamSection label="Trace mask">
             <SelectBlock label="Mask" value={routing.getEffectTraceMask('datamosh')} options={TRACE_MASK_OPTIONS} onChange={(v) => routing.setEffectTraceMask('datamosh', v)} />
           </ParamSection>
         )

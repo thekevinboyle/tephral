@@ -7,6 +7,9 @@ import { SignalAnalysis } from '../ui/MicroVisuals'
 import { BandSpectrum } from './BandSpectrum'
 import { BAND_PRESETS, legacySourceToBand, type BandPresetName } from '../../utils/audioBands'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
+import { displayParamLabel } from '../../config/paramNames'
+
+const setStatus = (t: string | null) => useUIStore.getState().setStatusText(t)
 
 const ACCENT = '#FF3355'
 
@@ -29,8 +32,8 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
   if (!effectId || !track) {
     return (
       <div
-        className="flex items-center justify-center h-full text-[10px] uppercase tracking-wider"
-        style={{ color: 'var(--text-ghost)' }}
+        className="flex items-center justify-center h-full text-[11px]"
+        style={{ color: 'var(--text-secondary)' }}
       >
         Select a track to configure audio reactivity
       </div>
@@ -39,23 +42,17 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
 
   if (!config?.enabled) {
     return (
-      <div className="flex items-center justify-center h-full gap-3">
-        <span
-          className="text-[10px] uppercase tracking-wider"
-          style={{ color: 'var(--text-ghost)' }}
-        >
-          Audio reactive is off for this track
-        </span>
+      <div className="flex items-center justify-between h-full gap-3">
+        <span className="seg-insp-hint">Audio reactivity is off for this device.</span>
         <button
+          type="button"
+          data-audio-enable
           onClick={() => setTrackAudioReactiveEnabled(effectId, true)}
-          className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-sm"
-          style={{
-            backgroundColor: `${ACCENT}20`,
-            color: ACCENT,
-            border: `1px solid ${ACCENT}40`,
-          }}
+          onMouseEnter={() => setStatus('Turn on audio reactivity: the audio level in a frequency band drives this device')}
+          onMouseLeave={() => setStatus(null)}
+          className="seg-insp-btn"
         >
-          Enable
+          Turn on
         </button>
       </div>
     )
@@ -79,6 +76,8 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
                 key={name}
                 aria-pressed={on}
                 onClick={() => setTrackAudioBand(effectId, { ...p })}
+                onMouseEnter={() => setStatus(`${name} band: ${Math.round(p.lowHz)} to ${Math.round(p.highHz)} Hz. Click to listen to this band`)}
+                onMouseLeave={() => setStatus(null)}
                 className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm"
                 style={{ color: on ? ACCENT : 'var(--text-ghost)', border: `1px solid ${on ? `${ACCENT}60` : 'var(--border)'}`, backgroundColor: on ? `${ACCENT}15` : 'transparent' }}
               >
@@ -120,7 +119,8 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
       <div className="flex items-center gap-4">
       {/* Sensitivity / kick multiplier knob */}
       <Knob
-        label="SENS"
+        label="Sensitivity"
+        statusText="Sensitivity: how strongly the audio level drives this device"
         value={config.sensitivity}
         min={0.1}
         max={2}
@@ -133,8 +133,8 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
         formatValue={(v) => `${v.toFixed(1)}×`}
       />
 
-        <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>
-          MOD
+        <label className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+          Modulates
           <select
             data-track-mod-select
             value={config.mod.param ?? ''}
@@ -142,13 +142,14 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
             className="text-[10px] px-1 py-0.5 rounded-sm"
             style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
           >
-            <option value="">—</option>
-            {modParams.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+            <option value="">None</option>
+            {modParams.map((p) => <option key={p.id} value={p.id}>{displayParamLabel(effectId, p)}</option>)}
           </select>
         </label>
         {config.mod.param && (
           <Knob
-            label="AMT"
+            label="Amount"
+            statusText="Amount: how far the audio level moves the chosen parameter"
             value={config.mod.amount}
             min={-1}
             max={1}
@@ -163,14 +164,13 @@ export function TrackAudioReactivePanel({ effectId: effectIdProp }: { effectId?:
         )}
       {/* Disable button */}
       <button
+        type="button"
         onClick={() => setTrackAudioReactiveEnabled(effectId, false)}
-        className="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm flex-shrink-0"
-        style={{
-          color: 'var(--text-ghost)',
-          border: '1px solid var(--border)',
-        }}
+        onMouseEnter={() => setStatus('Turn off audio reactivity for this device')}
+        onMouseLeave={() => setStatus(null)}
+        className="seg-insp-btn"
       >
-        Off
+        Turn off
       </button>
       </div>
     </div>

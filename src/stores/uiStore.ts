@@ -17,6 +17,10 @@ export type InfoPanelSelection =
   | { type: 'preset'; presetId: string }
   | null
 
+export type PanelId = 'browser' | 'inspector' | 'bottom'
+export type DrawerPanel = 'browser' | 'inspector'
+export type BottomTab = 'devices' | 'sequencer'
+
 interface UIState {
   // Selection state for graphic panel
   selectedEffectId: string | null
@@ -31,9 +35,19 @@ interface UIState {
   // Info panel selection (unified)
   infoPanelSelection: InfoPanelSelection
 
-  // Bottom panel state
-  bottomPanelTab: string | null  // null = collapsed, string = active tab name
-  bottomPanelPage: number        // 1-indexed page within active tab
+  // Shell panels (Bitwig-style). Browser/inspector/bottom visibility, bottom tab, modulator selection.
+  showBrowser: boolean
+  showInspector: boolean
+  showBottom: boolean
+  bottomTab: BottomTab
+  selectedModulator: string | null  // 'lfo-0'..'lfo-3' | 'random' | 'step' | 'envelope' | 'sampleHold' | 'midi' | 'audio'
+  // Below 1100px the browser/inspector are drawers; at most one is open
+  drawer: DrawerPanel | null
+  togglePanel: (p: PanelId) => void
+  toggleDrawer: (p: DrawerPanel) => void
+  closeDrawer: () => void
+  setBottomTab: (t: BottomTab) => void
+  setSelectedModulator: (id: string | null) => void
 
   setSelectedEffect: (id: string | null) => void
   setSelectedParamIndex: (index: number) => void
@@ -55,12 +69,6 @@ interface UIState {
   selectPreset: (presetId: string) => void
   clearInfoPanelSelection: () => void
 
-  // Bottom panel actions
-  toggleBottomPanelTab: (tab: string) => void
-  setBottomPanelPage: (page: number) => void
-  nextBottomPanelPage: () => void
-  prevBottomPanelPage: () => void
-
   // Status bar
   statusText: string | null
   setStatusText: (text: string | null) => void
@@ -78,9 +86,29 @@ export const useUIStore = create<UIState>((set) => ({
   },
 
   infoPanelSelection: null,
-  bottomPanelTab: null,
-  bottomPanelPage: 1,
   statusText: null,
+
+  showBrowser: true,
+  showInspector: true,
+  showBottom: true,
+  bottomTab: 'devices',
+  selectedModulator: null,
+  drawer: null,
+
+  togglePanel: (p) => set((state) =>
+    p === 'browser' ? { showBrowser: !state.showBrowser }
+    : p === 'inspector' ? { showInspector: !state.showInspector }
+    : { showBottom: !state.showBottom }),
+  toggleDrawer: (p) => set((state) => ({ drawer: state.drawer === p ? null : p })),
+  closeDrawer: () => set({ drawer: null }),
+  setBottomTab: (t) => set({ bottomTab: t }),
+  setSelectedModulator: (id) => {
+    if (id == null) { set({ selectedModulator: null }); return }
+    // Clear any step selection first: UnifiedSequencerPanel re-selects a step's effect when
+    // selectedStep.effectId != selectedEffectId, which would undo this modulator selection.
+    useEffectSequencerStore.getState().clearSelection()
+    set({ selectedModulator: id, selectedEffectId: null, selectedParamIndex: 0 })
+  },
 
   setSelectedEffect: (id) => {
     // A step selection on another track would immediately re-select that
@@ -88,7 +116,7 @@ export const useUIStore = create<UIState>((set) => ({
     // selectedStep must always belong to selectedEffectId or be null.
     const { selectedStep, clearSelection } = useEffectSequencerStore.getState()
     if (selectedStep && selectedStep.effectId !== id) clearSelection()
-    set({ selectedEffectId: id, selectedParamIndex: 0 })
+    set(id != null ? { selectedEffectId: id, selectedParamIndex: 0, selectedModulator: null } : { selectedEffectId: id, selectedParamIndex: 0 })
   },
   setSelectedParamIndex: (index) => set({ selectedParamIndex: index }),
 
@@ -111,13 +139,6 @@ export const useUIStore = create<UIState>((set) => ({
   selectPreset: (presetId) => set({ infoPanelSelection: { type: 'preset', presetId } }),
   clearInfoPanelSelection: () => set({ infoPanelSelection: null }),
 
-  toggleBottomPanelTab: (tab) => set((state) => ({
-    bottomPanelTab: state.bottomPanelTab === tab ? null : tab,
-    bottomPanelPage: state.bottomPanelTab === tab ? state.bottomPanelPage : 1,
-  })),
-  setBottomPanelPage: (page) => set({ bottomPanelPage: Math.max(1, Math.min(4, page)) }),
-  nextBottomPanelPage: () => set((state) => ({ bottomPanelPage: Math.min(4, state.bottomPanelPage + 1) })),
-  prevBottomPanelPage: () => set((state) => ({ bottomPanelPage: Math.max(1, state.bottomPanelPage - 1) })),
 
   setStatusText: (text) => set({ statusText: text }),
 }))

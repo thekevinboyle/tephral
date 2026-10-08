@@ -77,17 +77,15 @@ export function CornerFrame({
 
       {/* Label — left of frame */}
       {label && (
-        <div style={{
+        <div data-corner-label style={{
           position: 'absolute',
           top: '50%',
           right: '100%',
           transform: 'translateY(-50%)',
-          fontSize: 8,
-          fontFamily: 'var(--font-mono)',
-          fontWeight: 600,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: 'var(--text-ghost)',
+          fontSize: 11,
+          fontFamily: 'var(--font-sans)',
+          fontWeight: 500,
+          color: 'var(--text-secondary)',
           lineHeight: 1,
           paddingRight: 6,
           whiteSpace: 'nowrap',

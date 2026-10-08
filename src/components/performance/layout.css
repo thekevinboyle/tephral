@@ -1,79 +1,233 @@
-/* SEG_F4ULT shell: direction A "Stage" (see docs/superpowers/specs/2026-10-06-responsive-stage-layout-design.md) */
+/* SEG_F4ULT shell: Bitwig-style device chain. Areas: header, browser, stage, inspector, bottom, footer.
+   Panels are always mounted (so the stage/canvas never remounts); hidden ones are display:none and the
+   grid template drops their track. Below 1100px the browser and inspector become drawers. */
 .seg-shell {
+  --w-browser: 250px; --w-inspector: 300px;
   height: 100vh; width: 100%; overflow: hidden;
-  display: grid; gap: 1px; background: var(--border);
-  grid-template-columns: minmax(300px, 22vw) minmax(0, 1fr) minmax(280px, 20vw);
-  grid-template-rows: 44px minmax(0, 1fr) auto 24px;
-  grid-template-areas:
-    "header  header header"
-    "effects stage  chain"
-    "dock    dock   dock"
-    "status  status status";
+  display: grid; gap: 2px; background: var(--gutter);
 }
+@media (min-width: 2200px) { .seg-shell { --w-browser: 300px; --w-inspector: 340px; } }
 .seg-shell > [data-area] { background: var(--bg-primary); min-width: 0; min-height: 0; overflow: hidden; position: relative; }
-.seg-shell > [data-area="header"]  { grid-area: header; }
-.seg-shell > [data-area="effects"] { grid-area: effects; display: flex; flex-direction: column; container-type: inline-size; overflow-y: auto; }
-.seg-shell > [data-area="stage"]   { grid-area: stage; background: var(--bg-void); }
-.seg-shell > [data-area="chain"]   { grid-area: chain; display: flex; flex-direction: column; overflow-y: auto; }
-.seg-shell > [data-area="dock"]    { grid-area: dock; max-height: 34vh; display: flex; flex-direction: column; overflow: hidden; }
-.seg-shell > [data-area="status"]  { grid-area: status; }
+.seg-shell > [data-area="header"]    { grid-area: header; border-radius: 0; }
+.seg-shell > [data-area="browser"]   { grid-area: browser; display: flex; flex-direction: column; border-radius: var(--radius-panel); }
+.seg-shell > [data-area="stage"]     { grid-area: stage; background: var(--bg-void); border-radius: var(--radius-panel); }
+.seg-shell > [data-area="inspector"] { grid-area: inspector; display: flex; flex-direction: column; border-radius: var(--radius-panel); }
+.seg-shell > [data-area="bottom"]    { grid-area: bottom; display: flex; flex-direction: column; max-height: 40vh; border-radius: var(--radius-panel); }
+.seg-shell > [data-area="footer"]    { grid-area: footer; background: var(--bg-void); }
+/* Inner wrappers carry the legacy data-area names (effects / chain / dock / status) that layout-check modes select on */
+.seg-area-fill { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.seg-area-fill[data-area="effects"] { container-type: inline-size; overflow-y: auto; }
+.seg-area-fill[data-area="chain"]   { overflow-y: auto; }
+.seg-area-fill[data-area="dock"]    { overflow: hidden; }
+.seg-area-fill[data-area="status"]  { flex: 1 1 auto; }
 
-@media (min-width: 2200px) {
-  .seg-shell {
-    grid-template-columns: minmax(340px, 16vw) minmax(0, 1fr) minmax(320px, 15vw) minmax(560px, 26vw);
-    grid-template-rows: 44px minmax(0, 1fr) 24px;
-    grid-template-areas:
-      "header  header header header"
-      "effects stage  chain  dock"
-      "status  status status status";
-  }
-  .seg-shell > [data-area="dock"] { max-height: none; }
+/* Bottom: Devices is a fixed 172px strip; Sequencer follows its content (auto row) up to 40vh */
+.seg-shell[data-bottom-tab="devices"] > [data-area="bottom"] { height: 172px; }
+.seg-shell[data-bottom-tab="sequencer"] > [data-area="bottom"] { height: auto; max-height: 40vh; }
+
+.seg-shell[data-browser="off"] > [data-area="browser"],
+.seg-shell[data-inspector="off"] > [data-area="inspector"],
+.seg-shell[data-bottom="off"] > [data-area="bottom"] { display: none; }
+
+.seg-shell[data-browser="on"][data-inspector="on"][data-bottom="on"] {
+  grid-template-columns: var(--w-browser) minmax(0, 1fr) var(--w-inspector);
+  grid-template-rows: 44px minmax(0, 1fr) auto 30px;
+  grid-template-areas:
+    "header header header"
+    "browser stage inspector"
+    "bottom bottom bottom"
+    "footer footer footer";
+}
+.seg-shell[data-browser="on"][data-inspector="on"][data-bottom="off"] {
+  grid-template-columns: var(--w-browser) minmax(0, 1fr) var(--w-inspector);
+  grid-template-rows: 44px minmax(0, 1fr) 30px;
+  grid-template-areas:
+    "header header header"
+    "browser stage inspector"
+    "footer footer footer";
+}
+.seg-shell[data-browser="on"][data-inspector="off"][data-bottom="on"] {
+  grid-template-columns: var(--w-browser) minmax(0, 1fr);
+  grid-template-rows: 44px minmax(0, 1fr) auto 30px;
+  grid-template-areas:
+    "header header"
+    "browser stage"
+    "bottom bottom"
+    "footer footer";
+}
+.seg-shell[data-browser="on"][data-inspector="off"][data-bottom="off"] {
+  grid-template-columns: var(--w-browser) minmax(0, 1fr);
+  grid-template-rows: 44px minmax(0, 1fr) 30px;
+  grid-template-areas:
+    "header header"
+    "browser stage"
+    "footer footer";
+}
+.seg-shell[data-browser="off"][data-inspector="on"][data-bottom="on"] {
+  grid-template-columns: minmax(0, 1fr) var(--w-inspector);
+  grid-template-rows: 44px minmax(0, 1fr) auto 30px;
+  grid-template-areas:
+    "header header"
+    "stage inspector"
+    "bottom bottom"
+    "footer footer";
+}
+.seg-shell[data-browser="off"][data-inspector="on"][data-bottom="off"] {
+  grid-template-columns: minmax(0, 1fr) var(--w-inspector);
+  grid-template-rows: 44px minmax(0, 1fr) 30px;
+  grid-template-areas:
+    "header header"
+    "stage inspector"
+    "footer footer";
+}
+.seg-shell[data-browser="off"][data-inspector="off"][data-bottom="on"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 44px minmax(0, 1fr) auto 30px;
+  grid-template-areas:
+    "header"
+    "stage"
+    "bottom"
+    "footer";
+}
+.seg-shell[data-browser="off"][data-inspector="off"][data-bottom="off"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 44px minmax(0, 1fr) 30px;
+  grid-template-areas:
+    "header"
+    "stage"
+    "footer";
 }
 
+/* Drawers: below 1100px the browser and inspector float over the stage; closed by default, one at a time */
+.seg-scrim { display: none; }
 @media (max-width: 1099.98px) {
-  .seg-shell {
-    height: auto; min-height: 100vh; overflow-y: auto;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: 44px 46vh auto auto 24px;
-    grid-template-areas:
-      "header  header"
-      "stage   stage"
-      "effects chain"
-      "dock    dock"
-      "status  status";
+  .seg-shell[data-browser][data-inspector][data-bottom] { grid-template-columns: minmax(0, 1fr); }
+  .seg-shell[data-browser][data-inspector][data-bottom="on"]  { grid-template-rows: 44px minmax(0, 1fr) auto 30px; grid-template-areas: "header" "stage" "bottom" "footer"; }
+  .seg-shell[data-browser][data-inspector][data-bottom="off"] { grid-template-rows: 44px minmax(0, 1fr) 30px; grid-template-areas: "header" "stage" "footer"; }
+  .seg-shell > [data-area="browser"],
+  .seg-shell > [data-area="inspector"] {
+    position: fixed; top: 44px; bottom: 30px; width: 300px; z-index: 40;
+    background: var(--bg-primary); display: none; grid-area: auto;
   }
-  .seg-shell > [data-area="dock"] { max-height: none; }
+  .seg-shell > [data-area="browser"]   { left: 0; }
+  .seg-shell > [data-area="inspector"] { right: 0; }
+  .seg-shell[data-drawer="browser"]   > [data-area="browser"],
+  .seg-shell[data-drawer="inspector"] > [data-area="inspector"] { display: flex; }
+  /* wins over the data-browser/inspector="off" hide rule above */
+  .seg-shell[data-drawer="browser"][data-browser="off"]     > [data-area="browser"],
+  .seg-shell[data-drawer="inspector"][data-inspector="off"] > [data-area="inspector"] { display: flex; }
+  .seg-shell[data-drawer="browser"] > .seg-scrim,
+  .seg-shell[data-drawer="inspector"] > .seg-scrim {
+    display: block; position: fixed; inset: 44px 0 30px 0; z-index: 39; background: rgb(0 0 0 / .5);
+  }
   .seg-hide-narrow { display: none; }
 }
 
 .seg-shell [data-area="chain"] :focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+
+/* Footer */
+.seg-footer { height: 100%; display: flex; align-items: center; gap: 6px; padding: 0 8px; }
+.seg-footer-status { flex: 1 1 auto; min-width: 0; font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-footer-toggles { flex: none; display: flex; gap: 2px; }
+.seg-toggle { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border: 0; border-radius: var(--radius-ctrl);
+  background: transparent; color: var(--text-muted); font: 500 11px/1 var(--font-sans); cursor: pointer; }
+.seg-toggle:hover { background: var(--bg-hover); color: var(--text-secondary); }
+.seg-toggle[data-on] { background: var(--bg-surface); color: var(--text-secondary); }
+.seg-toggle[data-on]:hover { background: var(--bg-hover); }
+.seg-toggle:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-toggle i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+.seg-toggle[data-on] i { background: var(--live); }
+.seg-footer-fps { flex: none; font: 400 11px/1 var(--font-mono); color: var(--text-muted); white-space: nowrap; }
 
 /* Effects column: page tabs never clip; 6 across when wide, 3x2 when narrow */
 .seg-page-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; width: 100%; }
 .seg-page-tabs > * { justify-content: center; min-width: 0; letter-spacing: .06em; }
 @container (max-width: 330px) { .seg-page-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
-/* Dock: content-sized up to the area's cap, snaps (no height transition). The track list is the only scroller. */
-.seg-dock { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
-.seg-dock-seq { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-.seg-dock-seq > div { flex: 1 1 auto; min-height: 0; }
-/* BottomPanel reads --row-bottom-expanded for its open tab; scale it down on short screens */
-.seg-dock-tabs { flex: 0 0 auto; --row-bottom-expanded: min(240px, 18vh); }
-/* Laptop band: an open modulation tab must not crush the sequencer. Keep transport + one lane
-   (~120px) and let the dock grow to 50vh while a tab is open. */
-@media (min-width: 1100px) and (max-width: 2199.98px) {
-  .seg-dock-seq:has(+ .seg-dock-tabs [data-expanded]) { min-height: 120px; }
-  .seg-shell > [data-area="dock"]:has(.seg-dock-tabs [data-expanded]) { max-height: 50vh; }
-}
 .seg-dock-empty { padding: 4px 14px; }
 .seg-dock-empty-title { display: none; margin: 0; }
 .seg-dock-empty-hint { margin: 0; font-size: 11px; color: var(--text-muted); }
-/* Ultrawide: the dock is a full-height column; the labelled hint sits centred so the column reads as deliberate */
-@media (min-width: 2200px) {
-  .seg-shell > [data-area="dock"] > .seg-dock { height: 100%; }
-  .seg-dock-seq .seg-dock-empty { margin: auto; text-align: center; max-width: 28ch; }
-  .seg-dock-seq .seg-dock-empty-title { display: block; margin-bottom: 6px; }
-}
+
+/* ─── Bottom panel (BottomPanel2): header, Devices (DeviceChain) / Sequencer bodies ─────────────────── */
+.seg-bottom { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.seg-bottom-head { flex: none; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 10px; border-bottom: 1px solid var(--border); min-width: 0; }
+.seg-bottom-title { flex: none; font: 600 12px var(--font-sans); color: var(--text-primary); }
+.seg-bottom-sub { min-width: 0; display: flex; align-items: center; gap: 8px; font: 400 11px var(--font-sans); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-bottom-cancel { flex: none; font: 500 11px var(--font-sans); padding: 1px 7px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); cursor: pointer; }
+.seg-bottom-cancel:hover { background: var(--bg-hover); color: var(--text-primary); }
+.seg-bottom-spacer { flex: 1 1 auto; }
+.seg-bottom-head .seg-seg { margin-left: 0; }
+.seg-bottom-actions { flex: none; display: flex; gap: 2px; }
+.seg-bottom-btn { font: 500 11px var(--font-sans); height: 22px; padding: 0 8px; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-secondary); cursor: pointer; }
+.seg-bottom-btn:hover:not(:disabled) { background: var(--bg-hover); }
+.seg-bottom-btn[data-on] { background: var(--bg-elevated); color: var(--text-primary); }
+.seg-bottom-btn:disabled { color: var(--text-muted); opacity: .6; cursor: default; }
+.seg-bottom :focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-bottom-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.seg-bottom-body[hidden] { display: none; }
+/* Sequencer: content-sized; the area's 40vh cap makes the track list (its only scroller) scroll */
+.seg-bottom-seq > div { flex: 1 1 auto; min-height: 0; }
+
+/* Device chain: one horizontal scroller; the page never scrolls sideways */
+.seg-chain { flex: 1 1 auto; min-height: 0; display: flex; align-items: stretch; gap: 2px; padding: 6px 8px; background: var(--bg-void); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.seg-chain-devices { display: flex; align-items: stretch; gap: 2px; flex: none; }
+.seg-chain-slot { display: flex; align-items: stretch; gap: 2px; flex: none; }
+.seg-chain-plus { flex: none; width: 18px; display: grid; place-items: center; color: var(--text-muted); font: 400 14px var(--font-sans); cursor: pointer; border-radius: var(--radius-ctrl); }
+.seg-chain-plus:hover { background: var(--bg-primary); color: var(--text-secondary); }
+.seg-chain-plus[data-drop="gap"], .seg-chain-add[data-drop="gap"] { background: var(--bg-elevated); color: var(--text-primary); box-shadow: inset 0 0 0 1px var(--text-primary); }
+.seg-chain-add { flex: none; width: 60px; display: grid; place-items: center; border: 1px dashed var(--border-emphasis); border-radius: var(--radius-panel); background: transparent; color: var(--text-muted); font: 400 16px var(--font-sans); cursor: pointer; }
+.seg-chain-add:hover { background: var(--bg-primary); color: var(--text-secondary); }
+.seg-chain-empty { align-self: center; margin: 0 0 0 10px; font: 400 12px var(--font-sans); color: var(--text-muted); white-space: nowrap; }
+
+/* Device card */
+.seg-dev { --c: var(--text-muted); position: relative; flex: none; display: flex; background: var(--bg-primary); border: 1px solid transparent; border-radius: var(--radius-panel); overflow: hidden; cursor: default; user-select: none; }
+.seg-dev[data-selected] { border-color: var(--sel); }
+.seg-dev:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-dev[data-drop="before"] { box-shadow: inset 2px 0 0 var(--text-primary); }
+.seg-dev[data-drop="after"] { box-shadow: inset -2px 0 0 var(--text-primary); }
+.seg-dev-rail { position: relative; flex: none; width: 26px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 7px 0; background: var(--bg-surface); cursor: grab; }
+.seg-dev-rail::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); }
+.seg-dev-pwr { flex: none; width: 14px; height: 14px; padding: 0; border-radius: 50%; border: 2px solid var(--c); background: var(--c); cursor: pointer; }
+.seg-dev[data-bypassed] .seg-dev-pwr { background: transparent; border-color: var(--text-muted); }
+.seg-dev-name { flex: 0 1 auto; min-height: 0; writing-mode: vertical-rl; transform: rotate(180deg); font: 600 12px var(--font-sans); letter-spacing: .02em; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.seg-dev[data-bypassed] .seg-dev-name { color: var(--text-muted); }
+.seg-dev-body { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; min-width: 0; }
+.seg-dev[data-bypassed] .seg-dev-body { opacity: .5; }
+.seg-dev-knobs { display: grid; grid-template-columns: repeat(4, 50px); gap: 4px; }
+.seg-dev-dial { width: 50px; min-width: 0; display: flex; justify-content: center; }
+/* value + label under each dial: keep within the 50px column */
+.seg-dev-dial [data-param-control] > span { max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seg-dev-noparams { width: 212px; height: 68px; display: grid; place-items: center; font: 400 11px var(--font-sans); color: var(--text-muted); }
+.seg-dev-mix { margin-top: auto; display: flex; align-items: center; gap: 6px; height: 14px; font: 400 10.5px var(--font-sans); color: var(--text-muted); cursor: ew-resize; touch-action: none; border-radius: 2px; }
+.seg-dev-mix-track { flex: 1 1 auto; position: relative; height: 4px; border-radius: 2px; background: var(--bg-elevated); }
+.seg-dev-mix-track > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; background: var(--c); }
+.seg-dev-mix-value { flex: none; width: 34px; text-align: right; font: 500 11px var(--font-mono); color: var(--text-primary); }
+.seg-dev-x { flex: none; margin-top: auto; width: 18px; height: 18px; display: grid; place-items: center; padding: 0; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 13px/1 var(--font-sans); cursor: pointer; opacity: 0; transition: opacity var(--dur-quick, 120ms) ease-out; }
+.seg-dev:hover .seg-dev-x, .seg-dev:focus-within .seg-dev-x { opacity: 1; }
+.seg-dev-x:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* Modulators card: rail like a device, then a 2-column grid of 10 slots */
+.seg-modcard { flex: none; display: flex; background: var(--bg-primary); border-radius: var(--radius-panel); overflow: hidden; }
+.seg-modcard-rail { position: relative; flex: none; width: 26px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 0; background: var(--bg-surface); }
+.seg-modcard-rail::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--mod); }
+.seg-modcard-count { font: 500 11px var(--font-mono); color: var(--text-secondary); }
+.seg-modcard-name { writing-mode: vertical-rl; transform: rotate(180deg); font: 600 12px var(--font-sans); letter-spacing: .02em; color: var(--text-primary); white-space: nowrap; }
+.seg-modcard-grid { display: grid; grid-template-columns: repeat(2, 106px); grid-auto-rows: 1fr; gap: 3px; padding: 6px; align-content: stretch; }
+.seg-mod-slot { display: flex; align-items: center; min-width: 0; border-radius: var(--radius-ctrl); background: var(--bg-surface); border: 1px solid transparent; }
+.seg-mod-slot:hover { background: var(--bg-elevated); }
+.seg-mod-slot[data-selected] { border-color: var(--sel); background: var(--bg-elevated); }
+.seg-mod-slot-body { flex: 1 1 auto; min-width: 0; height: 100%; display: flex; align-items: center; gap: 6px; padding: 0 4px 0 6px; background: transparent; color: var(--text-secondary); font: 500 11px var(--font-sans); text-align: left; cursor: pointer; }
+.seg-mod-slot[data-selected] .seg-mod-slot-body, .seg-mod-slot-body:hover { color: var(--text-primary); }
+.seg-mod-slot-body > svg { flex: none; }
+.seg-mod-slot-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seg-mod-route { flex: none; position: relative; width: 16px; height: 16px; margin-right: 4px; padding: 0; border-radius: 50%; border: 1.5px solid var(--mod); background: transparent; cursor: pointer; }
+.seg-mod-route::after { content: ''; position: absolute; inset: 0; margin: auto; width: 5px; height: 5px; border-radius: 50%; background: var(--mod); opacity: .45; }
+.seg-mod-slot[data-in-use] .seg-mod-route::after { opacity: 1; }
+.seg-mod-route:hover { background: color-mix(in oklab, var(--mod) 18%, transparent); }
+.seg-mod-slot[data-assigning] .seg-mod-route { background: var(--mod); animation: seg-assign-pulse 1s ease-in-out infinite; }
+.seg-mod-slot[data-assigning] .seg-mod-route::after { background: var(--bg-void); opacity: 1; }
+@keyframes seg-assign-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .seg-mod-slot[data-assigning] .seg-mod-route { animation: none; } }
 
 /* ParamBar */
 .param-bar { position: relative; height: 28px; display: flex; align-items: center; gap: 5px; padding: 3px 4px;
@@ -85,16 +239,121 @@
 .param-bar:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
 .param-bar[data-locked] { border-color: var(--fx, var(--text-primary)); background: color-mix(in oklab, var(--fx, var(--text-primary)) 8%, var(--bg-surface)); }
 .param-bar[data-assigning], .param-bar[data-drop] { border: 1px dashed var(--assign, var(--text-secondary)); cursor: copy; }
-.param-bar-name { flex: none; width: 58px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+.param-bar-name { flex: none; width: 96px; font: 400 11px var(--font-sans);
   color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .param-bar-segs { flex: 1; align-self: stretch; display: flex; gap: 2px; min-width: 0; }
-.param-bar-segs > i { flex: 1; background: oklch(0.245 0.007 270); }
-.param-bar-segs > i[data-lit] { background: oklch(0.56 0.008 270); }
-.param-bar-segs > i[data-zero] { background: oklch(0.48 0.008 270); }
-.param-bar-segs > i[data-mod] { background: color-mix(in oklab, var(--fx) 40%, oklch(0.245 0.007 270)); }
-.param-bar-segs > i[data-mod][data-lit] { background: color-mix(in oklab, var(--fx) 70%, oklch(0.56 0.008 270)); }
+.param-bar-segs > i { flex: 1; background: var(--bg-elevated); }
+.param-bar-segs > i[data-lit] { background: oklch(0.56 0 0); }
+.param-bar-segs > i[data-zero] { background: oklch(0.48 0 0); }
+.param-bar-segs > i[data-mod] { background: color-mix(in oklab, var(--mod) 40%, var(--bg-elevated)); }
+.param-bar-segs > i[data-mod][data-lit] { background: color-mix(in oklab, var(--mod) 75%, oklch(0.56 0 0)); }
 .param-bar-value { flex: none; width: 40px; text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-primary); overflow: hidden; text-overflow: clip; white-space: nowrap; }
 .param-bar-src { position: absolute; top: -1px; width: 6px; height: 6px; cursor: ns-resize; }
 
 /* Knobs with a paramId are keyboard-focusable */
 [data-param-control][data-param-id]:not(.param-bar):focus-visible { outline: 1px solid var(--text-primary); outline-offset: 2px; }
+
+/* ─── Effects browser (EffectBrowser / EffectBrowserList) ─────────────────────────────────────────── */
+.seg-browser { container: seg-browser / inline-size; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.seg-browser-head { flex-shrink: 0; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 8px 0 10px; border-bottom: 1px solid var(--border); }
+.seg-browser-title { font: 600 12px var(--font-sans); color: var(--text-primary); }
+.seg-browser-total { font: 400 11px var(--font-mono); color: var(--text-muted); }
+.seg-seg { margin-left: auto; display: flex; padding: 2px; gap: 2px; border-radius: var(--radius-ctrl); background: var(--bg-void); }
+.seg-seg > button { font: 500 11px var(--font-sans); padding: 2px 8px; border-radius: 3px; color: var(--text-muted); background: transparent; cursor: pointer; }
+.seg-seg > button:hover { color: var(--text-secondary); }
+.seg-seg > button[aria-pressed="true"] { background: var(--bg-elevated); color: var(--text-primary); }
+.seg-browser-search { flex-shrink: 0; position: relative; margin: 8px 8px 4px; color: var(--text-muted); }
+.seg-browser-search > svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.seg-browser-search > input { width: 100%; height: 28px; padding: 0 8px 0 26px; border-radius: var(--radius-ctrl); border: 1px solid transparent; background: var(--bg-surface); color: var(--text-primary); font: 400 12px var(--font-sans); outline: none; }
+.seg-browser-search > input::placeholder { color: var(--text-muted); }
+.seg-browser-search > input:focus-visible { border-color: var(--border-emphasis); }
+.seg-browser-search > input::-webkit-search-cancel-button { display: none; }
+.seg-browser-body { flex: 1 1 0; min-height: 0; overflow-y: auto; }
+.seg-browser[data-browser-mode="pads"] .seg-browser-body { min-height: 200px; overflow: hidden; }
+.seg-browser-foot { flex-shrink: 0; border-top: 1px solid var(--border); }
+.seg-browser-banks { height: 52px; }
+.seg-browser-xfade { border-top: 1px solid var(--border); }
+.seg-browser-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 10px; font: 400 12px var(--font-sans); color: var(--text-secondary); overflow-wrap: anywhere; }
+.seg-browser-empty > button { font: 500 11px var(--font-sans); padding: 3px 10px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); cursor: pointer; }
+.seg-browser-empty > button:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.seg-fx-list { padding: 2px 0 8px; }
+.seg-fx-cat { width: 100%; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; font: 600 12px var(--font-sans); color: var(--text-primary); background: transparent; cursor: pointer; text-align: left; }
+.seg-fx-cat:disabled { cursor: default; }
+.seg-fx-cat:not(:disabled):hover { background: var(--bg-surface); }
+.seg-fx-chevron { color: var(--text-muted); flex-shrink: 0; transition: transform var(--dur-quick) var(--ease-out-expo); }
+.seg-fx-cat[aria-expanded="true"] .seg-fx-chevron { transform: rotate(90deg); }
+.seg-fx-cat-name { flex: 1 1 auto; min-width: 0; }
+.seg-fx-count { font: 400 11px var(--font-mono); color: var(--text-muted); }
+.seg-fx-row { width: 100%; display: flex; align-items: flex-start; gap: 8px; min-height: 28px; padding: 4px 10px 4px 24px; background: transparent; text-align: left; cursor: pointer; }
+.seg-fx-row:hover, .seg-fx-row:focus-visible { background: var(--bg-surface); outline: none; }
+.seg-fx-row:focus-visible { box-shadow: inset 2px 0 0 var(--text-primary); }
+.seg-fx-dot { width: 7px; height: 7px; border-radius: 2px; margin-top: 5px; flex-shrink: 0; }
+.seg-fx-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.seg-fx-name { font: 500 12px/17px var(--font-sans); color: var(--text-secondary); overflow-wrap: anywhere; }
+.seg-fx-desc { font: 400 11px/15px var(--font-sans); color: var(--text-muted); overflow-wrap: anywhere; }
+.seg-fx-badge { flex-shrink: 0; margin-top: 2px; font: 400 10px/15px var(--font-sans); color: var(--text-muted); white-space: nowrap; }
+.seg-fx-row[data-in-chain] .seg-fx-name { color: var(--text-primary); }
+.seg-fx-row[data-in-chain] .seg-fx-desc { color: var(--text-secondary); }
+
+/* Pads: 4 x 4, or 3 columns when the browser panel is under 340px wide (at 300px, 4 columns push two-word names to 3 lines) */
+.seg-pad-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); }
+@container seg-browser (width < 340px) {
+  .seg-pad-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(6, minmax(0, 1fr)); }
+  .seg-pad-grid > [data-pad-empty] { display: none; }
+}
+
+/* ─── Inspector (Inspector.tsx): effect / modulator / empty ───────────────────────────────────────── */
+.seg-insp { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; min-width: 0; }
+.seg-insp-head { flex: none; display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 6px 0 10px; border-bottom: 1px solid var(--border); min-width: 0; }
+.seg-insp-swatch { flex: none; width: 9px; height: 9px; border-radius: 2px; }
+.seg-insp-name { flex: 0 1 auto; min-width: 0; font: 600 12px var(--font-sans); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-insp-pos { flex: none; font: 400 11px var(--font-sans); color: var(--text-muted); white-space: nowrap; }
+.seg-insp-kind { flex: none; font: 400 11px var(--font-sans); color: var(--text-muted); padding-right: 4px; }
+.seg-insp-spacer { flex: 1 1 auto; }
+.seg-insp-btn { flex: none; font: 500 11px var(--font-sans); height: 22px; padding: 0 9px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); cursor: pointer; }
+.seg-insp-btn:hover { background: var(--bg-hover); color: var(--text-secondary); }
+.seg-insp-btn[data-on] { background: var(--bg-hover); color: var(--text-primary); }
+.seg-insp-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.seg-insp :focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-insp-settings { display: flex; flex-direction: column; }
+.seg-insp-sec { padding: 8px 10px 10px; border-bottom: 1px solid var(--border); min-width: 0; }
+.seg-insp-sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; font: 500 11px var(--font-sans); color: var(--text-secondary); }
+.seg-insp-sec-note { font: 400 11px var(--font-sans); color: var(--text-muted); }
+.seg-insp-more { display: flex; flex-direction: column; gap: 8px; }
+.seg-insp-hint { margin: 0; font: 400 11px/16px var(--font-sans); color: var(--text-muted); }
+.seg-insp-empty { margin: 0; padding: 14px 10px; font: 400 12px/18px var(--font-sans); color: var(--text-secondary); }
+.seg-insp-routes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.seg-insp-route { display: flex; align-items: center; gap: 7px; height: 24px; padding: 0 2px 0 4px; border-radius: var(--radius-ctrl); }
+.seg-insp-route:hover { background: var(--bg-surface); }
+.seg-insp-route-dot { flex: none; width: 8px; height: 8px; border-radius: 2px; }
+.seg-insp-route-text { flex: 1 1 auto; min-width: 0; font: 400 12px var(--font-sans); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-insp-route-depth { flex: none; font: 500 11px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.seg-insp-route-x { flex: none; width: 20px; height: 20px; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-muted); font: 400 14px/1 var(--font-sans); cursor: pointer; }
+.seg-insp-route-x:hover { background: var(--bg-elevated); color: var(--text-secondary); }
+.seg-insp-tabs { margin: 0 0 8px; width: max-content; }
+.seg-insp-pick { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font: 500 11px var(--font-sans); color: var(--text-secondary); }
+.seg-insp-pick > select { flex: 1 1 auto; min-width: 0; height: 24px; padding: 0 6px; border-radius: var(--radius-ctrl); border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-primary); font: 400 12px var(--font-sans); }
+/* Modulator editors were laid out for a wide bottom strip: in the 300px inspector, let their rows wrap and stack */
+.seg-insp-body > .seg-insp-editor { padding: 8px 10px 12px; }
+.seg-insp-editor { min-width: 0; }
+.seg-insp-editor .flex { flex-wrap: wrap; }
+.seg-insp-editor .h-full { height: auto; }
+/* CornerFrame hangs its label left of the frame (room in the old strip, clipped here): set it inside, above the content.
+   !important because CornerFrame positions it with inline styles. */
+.seg-insp-editor [data-corner-label] { position: static !important; transform: none !important; padding: 0 0 6px !important; }
+
+/* ─── Select / toggle rows in the inspector (blocks/SelectBlock, blocks/ToggleBlock) ──────────────── */
+.seg-select { display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 4px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 2px; min-width: 0; }
+.seg-select-name { flex: none; width: 96px; font: 400 11px var(--font-sans); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-select-btn { flex: none; width: 20px; height: 20px; display: grid; place-items: center; padding: 0; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 500 14px/1 var(--font-sans); cursor: pointer; }
+.seg-select-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.seg-select-value { flex: 1 1 auto; min-width: 0; text-align: center; font: 500 12px var(--font-sans); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-select-count { flex: none; width: 26px; text-align: right; font: 400 10.5px var(--font-mono); color: var(--text-muted); }
+.seg-toggle-block { display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 28px; min-width: 0; padding: 0 8px; border-radius: var(--radius-ctrl); background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-secondary); font: 400 11px var(--font-sans); cursor: pointer; }
+.seg-toggle-block:hover { background: var(--bg-elevated); }
+.seg-toggle-block[data-on] { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-emphasis); }
+.seg-toggle-block-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-toggle-block-state { flex: none; font: 500 11px var(--font-mono); }
+/* Crossfader ends (HorizontalCrossfader): text buttons, not icons */
+.seg-xfade-end { flex: none; height: 24px; padding: 0 8px; border-radius: var(--radius-ctrl); font: 500 11px var(--font-sans); cursor: pointer; }

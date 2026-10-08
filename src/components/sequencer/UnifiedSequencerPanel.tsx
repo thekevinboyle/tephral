@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useSequencerContainerStore } from '../../stores/sequencerContainerStore'
 import { useRoutingStore } from '../../stores/routingStore'
-import { useMediaStore } from '../../stores/mediaStore'
-import { useRecordingStore } from '../../stores/recordingStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useEffectSequencerPlayback } from '../../hooks/useEffectSequencerPlayback'
 import { useWebMIDI } from '../../hooks/useWebMIDI'
@@ -18,7 +16,9 @@ import {
 } from '../../config/effects'
 import { SequencerTransport } from './SequencerTransport'
 import { EffectTrackRow } from './EffectTrackRow'
+import { getEffectInfo } from '../../config/effectNames'
 import { TrackParamPanel } from './TrackParamPanel'
+import { linkedPlay, linkedStop } from '../../utils/sequencerTransport'
 import { isInteractiveKeyTarget } from '../../utils/keyboard'
 
 const ALL_EFFECTS: EffectDefinition[] = [
@@ -44,8 +44,6 @@ export function UnifiedSequencerPanel() {
     stepPage,
     selectedStep,
     swing,
-    play,
-    stop,
     setBpm,
     setResolution,
     setStepPage,
@@ -65,7 +63,7 @@ export function UnifiedSequencerPanel() {
     [sortedEffects],
   )
 
-  // ChainPanel owns ensureTrack + auto-select for active effects (always mounted beside the dock)
+  // DeviceChain owns ensureTrack + auto-select for active effects (always mounted in the bottom panel)
 
   // Active tracks (enabled effects that also have sequencer tracks)
   const activeTrackIds = useMemo(
@@ -79,29 +77,6 @@ export function UnifiedSequencerPanel() {
       setSelectedEffect(selectedStep.effectId)
     }
   }, [selectedStep, selectedEffectId, setSelectedEffect])
-
-  // ─── Linked play/stop (also toggles video/recording playback) ─────────
-  const linkedPlay = useCallback(() => {
-    play()
-    const { source, videoElement } = useMediaStore.getState()
-    const rec = useRecordingStore.getState()
-    if (rec.duration > 0 && !rec.isRecording) {
-      rec.play()
-    } else if (source === 'file' && videoElement && videoElement.paused) {
-      videoElement.play().catch(console.error)
-    }
-  }, [play])
-
-  const linkedStop = useCallback(() => {
-    stop()
-    const { source, videoElement } = useMediaStore.getState()
-    const rec = useRecordingStore.getState()
-    if (rec.isPlaying) {
-      rec.pause()
-    } else if (source === 'file' && videoElement && !videoElement.paused) {
-      videoElement.pause()
-    }
-  }, [stop])
 
   // ─── Effect tab click → switch to effect params ────────────────────────
   const handleEffectTabSelect = useCallback(
@@ -178,11 +153,12 @@ export function UnifiedSequencerPanel() {
       switch (e.key) {
         case ' ': {
           e.preventDefault()
-          if (state.isPlaying) state.stop()
-          else state.play()
+          if (state.isPlaying) linkedStop()
+          else linkedPlay()
           break
         }
         case 'Escape': {
+          if (e.defaultPrevented) break // already handled (e.g. cancelled a routing assignment)
           state.clearSelection()
           state.clearAutomationParam()
           break
@@ -239,6 +215,7 @@ export function UnifiedSequencerPanel() {
         stepPage={stepPage}
         onPlay={linkedPlay}
         onStop={linkedStop}
+        compact
         onBpmChange={setBpm}
         onResolutionChange={setResolution}
         onSwingChange={setSwing}
@@ -295,7 +272,7 @@ export function UnifiedSequencerPanel() {
                   currentStep={currentStep}
                   selectedStep={selectedStep}
                   color={def?.color ?? 'var(--text-muted)'}
-                  label={def?.label ?? effectId}
+                  label={getEffectInfo(effectId).name}
                   isSelectedTrack={isSelectedTrack}
                   onSelectTrack={handleEffectTabSelect}
                   orderIndex={index + 1}

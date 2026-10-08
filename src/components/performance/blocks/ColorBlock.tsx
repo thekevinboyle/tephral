@@ -55,11 +55,9 @@ export function ColorBlock({ label, value, onChange }: ColorBlockProps) {
       <div
         style={{
           textAlign: 'center',
-          fontSize: 9,
-          fontFamily: 'var(--font-mono)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.12em',
-          color: BLOCK.textGhost,
+          fontSize: 11,
+          fontFamily: 'var(--font-sans)',
+          color: BLOCK.textSecondary,
         }}
       >
         {label}

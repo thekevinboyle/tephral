@@ -147,7 +147,9 @@ export function ClipDetailModal() {
   // Escape key handler - always works, cancels operation if busy
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      // The modal is always mounted; only consume Escape while a clip is open (it is then the top layer)
+      if (e.key === 'Escape' && selectedClipId && !e.defaultPrevented) {
+        e.preventDefault()
         handleClose()
       }
     }
@@ -156,7 +158,7 @@ export function ClipDetailModal() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [handleClose])
+  }, [handleClose, selectedClipId])
 
   // Don't render if no clip is selected
   if (!selectedClip) return null

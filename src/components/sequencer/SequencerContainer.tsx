@@ -5,11 +5,11 @@ import { UnifiedSequencerPanel } from './UnifiedSequencerPanel'
 import { SlicerPanel } from './SlicerPanel'
 
 const SEQUENCER_MODES = [
-  { id: 'effects', icon: '\u2B21', label: 'P-LOCK', tip: 'seqEffects' },
-  { id: 'slicer', icon: '\u2297', label: 'CHI_R0N', tip: 'seqSlicer' },
+  { id: 'effects', icon: '\u2B21', label: 'Steps', aria: 'Step sequencer', tip: 'seqEffects' },
+  { id: 'slicer', icon: '\u2297', label: 'Slicer', aria: 'Video slicer', tip: 'seqSlicer' },
 ] as const
 
-/** Docked sequencer: mode rail (P-LOCK / CHI_R0N) beside the active sequencer. */
+/** Docked sequencer: mode rail (Steps / Slicer) beside the active sequencer. */
 export function SequencerContainer() {
   const { activeSequencer, setActiveSequencer } = useSequencerContainerStore()
   const setStatusText = useUIStore((s) => s.setStatusText)
@@ -30,24 +30,34 @@ export function SequencerContainer() {
             <button
               key={mode.id}
               onClick={() => setActiveSequencer(mode.id)}
-              className="w-full flex items-center justify-center transition-colors"
+              className="w-full flex flex-col items-center justify-center gap-0.5 transition-colors"
               style={{
                 height: 44, // both rail buttons must fit the collapsed dock
                 borderBottom: '1px solid var(--border)',
                 borderLeft: isActive ? '2px solid var(--seq-accent)' : '2px solid transparent',
                 backgroundColor: 'transparent',
               }}
-              title={mode.label}
+              title={mode.aria}
+              aria-label={mode.aria}
+              aria-pressed={isActive}
               onMouseEnter={() => setStatusText(getUIStatusText(mode.tip))}
               onMouseLeave={() => setStatusText(null)}
             >
               <span
-                className="text-[18px]"
+                aria-hidden
+                className="text-[15px] leading-none"
                 style={{
-                  color: isActive ? 'var(--text-primary)' : 'var(--text-ghost)',
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
                 }}
               >
                 {mode.icon}
+              </span>
+              <span
+                aria-hidden
+                className="text-[10px] leading-none"
+                style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+              >
+                {mode.label}
               </span>
             </button>
           )

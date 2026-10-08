@@ -11,6 +11,18 @@ import { useDestructionStore } from '../../stores/destructionStore'
 import { useUIStore } from '../../stores/uiStore'
 import { Knob } from '../performance/Knob'
 import { getUIStatusText } from '../../config/statusDescriptions'
+import { routeTargetLabel } from '../../utils/routeTargetLabel'
+
+/** Text colour for a button filled with an accent colour: near-black or white, whichever reads better. */
+const onAccent = (hex: string): string => {
+  const c = hex.replace('#', '')
+  const [r, g, b] = [0, 2, 4].map((i) => {
+    const v = parseInt(c.slice(i, i + 2), 16) / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  })
+  const l = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return (l + 0.05) / 0.05 > 1.05 / (l + 0.05) ? '#111' : 'white'
+}
 
 // ════════════════════════════════════════════════════════════════════════════
 // Shared constants & helpers (also used by EffectsLane)
@@ -77,7 +89,7 @@ export function ModSlider({
       onMouseEnter={() => setStatusText(label ? `${label}: Drag to adjust` : null)}
       onMouseLeave={() => setStatusText(null)}
     >
-      <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+      <span className="text-[10.5px] w-12" style={{ color: 'var(--text-muted)' }}>
         {label}
       </span>
       <div
@@ -125,7 +137,7 @@ export function ModSelect<T extends string>({
       onMouseEnter={() => setStatusText(label ? `${label}: Click to change mode` : null)}
       onMouseLeave={() => setStatusText(null)}
     >
-      <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+      <span className="text-[10.5px] w-12" style={{ color: 'var(--text-muted)' }}>
         {label}
       </span>
       <div className="flex-1 flex gap-1">
@@ -133,12 +145,11 @@ export function ModSelect<T extends string>({
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
-            className="flex-1 text-[8px] uppercase tracking-wide py-0.5 rounded-sm transition-colors"
+            className="flex-1 text-[10px] py-0.5 rounded-sm transition-colors"
             style={{
               backgroundColor: value === opt.value ? (color || 'var(--accent)') : 'var(--bg-elevated)',
-              color: value === opt.value ? 'white' : 'var(--text-muted)',
+              color: value === opt.value ? onAccent(color || '#4a9eff') : 'var(--text-secondary)',
               border: '1px solid var(--border)',
-              opacity: value === opt.value ? 1 : 0.7,
             }}
           >
             {opt.label}
@@ -166,7 +177,7 @@ export function ModRateSelect({
 
   return (
     <div className="flex items-center gap-2 py-0.5">
-      <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+      <span className="text-[10.5px] w-12" style={{ color: 'var(--text-muted)' }}>
         {label}
       </span>
       <select
@@ -246,16 +257,16 @@ export function ModulatorSection({
           }}
         />
         <span
-          className="text-[10px] uppercase tracking-widest flex-1"
+          className="text-[10px] flex-1"
           style={{ color: enabled ? color : 'var(--text-muted)' }}
         >
           {title}
         </span>
         <span
-          className="text-[8px] uppercase"
+          className="text-[10px]"
           style={{ color: enabled ? color : 'var(--text-ghost)' }}
         >
-          {enabled ? 'ON' : 'OFF'}
+          {enabled ? 'On' : 'Off'}
         </span>
       </div>
       {isExpanded && <div className="px-2 py-1.5">{children}</div>}
@@ -270,7 +281,7 @@ export function ModulatorSection({
 function ValueBar({ value, color }: { value: number; color: string }) {
   return (
     <div className="flex items-center gap-2 mt-1">
-      <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>Value</span>
+      <span className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>Value</span>
       <div className="flex-1 h-1 rounded-sm" style={{ backgroundColor: 'var(--bg-elevated)' }}>
         <div
           className="h-full rounded-sm transition-all duration-75"
@@ -829,10 +840,10 @@ function EnvelopeContent({ mod, wrapped, selected, onSelect, routingCount }: { m
           onMouseUp={mod.releaseEnvelope}
           onMouseEnter={() => { const st = useUIStore.getState().setStatusText; st(getUIStatusText('modTrigger')) }}
           onMouseLeave={() => { mod.releaseEnvelope(); useUIStore.getState().setStatusText(null) }}
-          className="flex-1 text-[8px] uppercase py-1 rounded-sm"
+          className="flex-1 text-[10px] py-1 rounded-sm"
           style={{
             backgroundColor: mod.envelope.phase !== 'idle' ? color : 'var(--bg-elevated)',
-            color: mod.envelope.phase !== 'idle' ? 'white' : 'var(--text-muted)',
+            color: mod.envelope.phase !== 'idle' ? onAccent(color) : 'var(--text-secondary)',
             border: '1px solid var(--border)',
           }}
         >
@@ -869,18 +880,17 @@ function SampleHoldContent({ mod, bpm, wrapped, selected, onSelect, routingCount
       <ModSlider label="Input" value={mod.sampleHold.input} min={0} max={1} step={0.01} onChange={mod.setSampleHoldInput} format={(v) => `${Math.round(v * 100)}%`} color={color} />
       <ModSlider label="Smooth" value={mod.sampleHold.smoothing} min={0} max={1} step={0.01} onChange={mod.setSampleHoldSmoothing} format={(v) => `${Math.round(v * 100)}%`} color={color} />
       <div className="flex items-center gap-2 py-0.5">
-        <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Mode</span>
+        <span className="text-[10.5px] w-12" style={{ color: 'var(--text-muted)' }}>Mode</span>
         <div className="flex-1 flex gap-1">
           {(['metronomic', 'free', 'hold'] as const).map((mode) => (
             <button
               key={mode}
               onClick={() => mod.setSampleHoldRateMode(mode)}
-              className="flex-1 text-[8px] uppercase tracking-wide py-0.5 rounded-sm transition-colors"
+              className="flex-1 text-[10px] py-0.5 rounded-sm transition-colors"
               style={{
                 backgroundColor: mod.sampleHold.rateMode === mode ? color : 'var(--bg-elevated)',
-                color: mod.sampleHold.rateMode === mode ? 'white' : 'var(--text-muted)',
+                color: mod.sampleHold.rateMode === mode ? onAccent(color) : 'var(--text-secondary)',
                 border: '1px solid var(--border)',
-                opacity: mod.sampleHold.rateMode === mode ? 1 : 0.7,
               }}
             >
               {mode === 'metronomic' ? 'Sync' : mode}
@@ -898,18 +908,17 @@ function SampleHoldContent({ mod, bpm, wrapped, selected, onSelect, routingCount
         <ModSlider label="Scale" value={mod.sampleHold.rateScale} min={0.02} max={50} step={0.01} onChange={mod.setSampleHoldRateScale} format={(v) => `${(v * 100).toFixed(0)}%`} color={color} />
       )}
       <div className="flex items-center gap-2 py-0.5">
-        <span className="text-[9px] w-12 uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Clock</span>
+        <span className="text-[10.5px] w-12" style={{ color: 'var(--text-muted)' }}>Clock</span>
         <div className="flex-1 flex gap-1">
           {(['free', 'gate', 'sync'] as const).map((mode) => (
             <button
               key={mode}
               onClick={() => mod.setSampleHoldClockMode(mode)}
-              className="flex-1 text-[8px] uppercase tracking-wide py-0.5 rounded-sm transition-colors"
+              className="flex-1 text-[10px] py-0.5 rounded-sm transition-colors"
               style={{
                 backgroundColor: mod.sampleHold.clockMode === mode ? color : 'var(--bg-elevated)',
-                color: mod.sampleHold.clockMode === mode ? 'white' : 'var(--text-muted)',
+                color: mod.sampleHold.clockMode === mode ? onAccent(color) : 'var(--text-secondary)',
                 border: '1px solid var(--border)',
-                opacity: mod.sampleHold.clockMode === mode ? 1 : 0.7,
               }}
             >
               {mode}
@@ -995,7 +1004,7 @@ function MIDIModContent() {
 
   if (!isSupported) {
     return (
-      <div className="p-2 text-[9px] uppercase" style={{ color: 'var(--text-ghost)' }}>
+      <div className="p-2 text-[10.5px]" style={{ color: 'var(--text-ghost)' }}>
         Web MIDI not supported in this browser
       </div>
     )
@@ -1015,7 +1024,7 @@ function MIDIModContent() {
             boxShadow: isConnected && inputs.length > 0 ? `0 0 4px ${color}` : 'none',
           }}
         />
-        <span className="text-[9px] uppercase" style={{ color: 'var(--text-secondary)' }}>
+        <span className="text-[10.5px]" style={{ color: 'var(--text-secondary)' }}>
           {isConnected && inputs.length > 0 ? activeName ?? 'Connected' : 'No device'}
         </span>
       </div>
@@ -1072,10 +1081,10 @@ function MIDIModContent() {
           }}
           onMouseEnter={() => setStatusText(getUIStatusText('modLearnCC'))}
           onMouseLeave={() => setStatusText(null)}
-          className="text-[8px] uppercase px-2 py-1 rounded-sm"
+          className="text-[10px] px-2 py-1 rounded-sm"
           style={{
             backgroundColor: isLearning ? color : 'var(--bg-elevated)',
-            color: isLearning ? 'white' : 'var(--text-muted)',
+            color: isLearning ? onAccent(color) : 'var(--text-secondary)',
             border: '1px solid var(--border)',
           }}
         >
@@ -1096,7 +1105,7 @@ function MIDIModContent() {
             }}
             onMouseEnter={() => setStatusText(getUIStatusText('modAssignCC'))}
             onMouseLeave={() => setStatusText(null)}
-            className="text-[8px] uppercase px-2 py-1 rounded-sm"
+            className="text-[10px] px-2 py-1 rounded-sm"
             style={{
               backgroundColor: `${color}20`,
               color,
@@ -1111,7 +1120,7 @@ function MIDIModContent() {
       {/* Active routings */}
       {midiRoutings.length > 0 && (
         <div className="flex flex-col gap-1">
-          <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>
+          <span className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>
             CC Routings
           </span>
           {midiRoutings.map((routing) => {
@@ -1120,7 +1129,7 @@ function MIDIModContent() {
               <div key={`${routing.trackId}-${routing.targetParam}`} className="flex items-center gap-2">
                 <span className="text-[8px] w-8" style={{ color }}>CC{ccNum}</span>
                 <span className="text-[8px] flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>
-                  {routing.targetParam}
+                  {routeTargetLabel(routing.targetParam)}
                 </span>
                 <ModSlider
                   label=""
@@ -1148,7 +1157,7 @@ function MIDIModContent() {
 
       {/* CC monitor */}
       <div className="flex flex-col gap-0.5">
-        <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>
+        <span className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>
           CC Monitor
         </span>
         <div className="flex flex-wrap gap-1">
@@ -1365,16 +1374,16 @@ function AudioReactiveContent() {
           }}
         />
         <span
-          className="text-[10px] uppercase tracking-widest flex-1"
+          className="text-[10px] flex-1"
           style={{ color: ar.enabled ? color : 'var(--text-muted)' }}
         >
           Audio Reactive
         </span>
         <span
-          className="text-[8px] uppercase"
+          className="text-[10px]"
           style={{ color: ar.enabled ? color : 'var(--text-ghost)' }}
         >
-          {ar.enabled ? 'ON' : 'OFF'}
+          {ar.enabled ? 'On' : 'Off'}
         </span>
       </div>
 
@@ -1397,7 +1406,7 @@ function AudioReactiveContent() {
           const isAssigning = assigningBand === band.trackId
           return (
             <div key={band.key} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-[8px] uppercase tracking-wide" style={{ color: band.color }}>
+              <span className="text-[10px]" style={{ color: band.color }}>
                 {band.label}
               </span>
               <div
@@ -1422,10 +1431,10 @@ function AudioReactiveContent() {
                 onClick={() => handleAssign(band.trackId)}
                 onMouseEnter={() => setStatusText(`${band.label}: ${isAssigning ? 'Click a knob to route' : 'Click to assign to effect parameters'}`)}
                 onMouseLeave={() => setStatusText(null)}
-                className="w-full text-[7px] uppercase py-0.5 rounded-sm"
+                className="w-full text-[10px] py-0.5 rounded-sm"
                 style={{
                   backgroundColor: isAssigning ? band.color : `${band.color}15`,
-                  color: isAssigning ? 'white' : band.color,
+                  color: isAssigning ? onAccent(band.color) : band.color,
                   border: `1px solid ${band.color}40`,
                 }}
               >
@@ -1442,7 +1451,7 @@ function AudioReactiveContent() {
           onClick={handleAutoRoute}
           onMouseEnter={() => setStatusText(getUIStatusText('modAutoRoute'))}
           onMouseLeave={() => setStatusText(null)}
-          className="flex-1 text-[8px] uppercase font-semibold py-1 rounded-sm"
+          className="flex-1 text-[10px] font-semibold py-1 rounded-sm"
           style={{
             backgroundColor: `${color}20`,
             color,
@@ -1456,10 +1465,10 @@ function AudioReactiveContent() {
             onClick={handleClearAll}
             onMouseEnter={() => setStatusText(getUIStatusText('modClearRouting'))}
             onMouseLeave={() => setStatusText(null)}
-            className="text-[8px] uppercase py-1 px-2 rounded-sm"
+            className="text-[10px] py-1 px-2 rounded-sm"
             style={{
               backgroundColor: 'var(--bg-elevated)',
-              color: 'var(--text-muted)',
+              color: 'var(--text-secondary)',
               border: '1px solid var(--border)',
             }}
           >
@@ -1471,7 +1480,7 @@ function AudioReactiveContent() {
       {/* Active routings */}
       {audioRoutings.length > 0 && (
         <div className="flex flex-col gap-1">
-          <span className="text-[8px] uppercase" style={{ color: 'var(--text-ghost)' }}>
+          <span className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>
             Routings
           </span>
           {audioRoutings.map((routing) => {
@@ -1479,13 +1488,13 @@ function AudioReactiveContent() {
             return (
               <div key={routing.id} className="flex items-center gap-1">
                 <span
-                  className="text-[7px] uppercase w-6 flex-shrink-0 text-center rounded-sm py-0.5"
+                  className="text-[10px] w-6 flex-shrink-0 text-center rounded-sm py-0.5"
                   style={{ backgroundColor: `${band?.color || color}20`, color: band?.color || color }}
                 >
                   {band?.label || '?'}
                 </span>
                 <span className="text-[8px] flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>
-                  {routing.targetParam}
+                  {routeTargetLabel(routing.targetParam)}
                 </span>
                 <div className="w-16 flex-shrink-0">
                   <ModSlider
@@ -1516,7 +1525,7 @@ function AudioReactiveContent() {
         <div className="flex items-center gap-2 mb-1 px-1">
           <button
             onClick={() => ar.setAutoMode(!ar.autoMode)}
-            className="text-[8px] uppercase font-semibold py-0.5 px-2 rounded-sm"
+            className="text-[10px] font-semibold py-0.5 px-2 rounded-sm"
             style={{
               backgroundColor: ar.autoMode ? `${color}30` : 'transparent',
               color: ar.autoMode ? color : 'var(--text-ghost)',
@@ -1525,7 +1534,7 @@ function AudioReactiveContent() {
           >
             {ar.autoMode ? 'Auto' : 'Manual'}
           </button>
-          <span className="text-[7px] uppercase" style={{ color: 'var(--text-ghost)' }}>
+          <span className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>
             {ar.autoMode ? 'Adaptive gain' : 'Fixed gain'}
           </span>
         </div>
@@ -1533,7 +1542,7 @@ function AudioReactiveContent() {
         {ar.autoMode ? (
           <>
             <Knob
-              label="SENS"
+              label="Sensitivity"
               value={ar.sensitivity}
               min={0} max={1} step={0.01}
               size="xs"

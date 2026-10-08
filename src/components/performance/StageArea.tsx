@@ -1,7 +1,8 @@
-import { forwardRef, memo, useEffect, useRef, useState } from 'react'
+import { forwardRef, memo, useEffect, useState } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { ClipBin } from './ClipBin'
 import { CanvasTransportBar } from './CanvasTransportBar'
+import { useMediaTimecode, NO_TIME } from '../../hooks/useMediaTimecode'
 import { TransportBar } from './TransportBar'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -28,19 +29,10 @@ function useFps(): number {
   return fps
 }
 
-function fmtTime(sec: number): string {
-  if (!Number.isFinite(sec) || sec < 0) sec = 0
-  const m = Math.floor(sec / 60), s = Math.floor(sec % 60), cs = Math.floor((sec * 100) % 100)
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`
-}
-
-const NO_TIME = '--:--.--'
-
 const fmtHz = (hz: number) => (hz >= 1000 ? `${(hz / 1000).toFixed(hz >= 10000 ? 0 : 1)}k` : `${Math.round(hz)}`)
 
 /** HUD readouts. Owns all per-frame state so the stage and canvas never re-render for it. */
 function StageReadouts() {
-  const videoElement = useMediaStore((s) => s.videoElement)
   const selectedEffectId = useUIStore((s) => s.selectedEffectId)
   const band = useEffectSequencerStore((s) => {
     const t = selectedEffectId ? s.tracks[selectedEffectId] : undefined
@@ -53,18 +45,7 @@ function StageReadouts() {
   const presetName = usePresetLibraryStore((s) => s.activePresetName)
   const isRecording = useRecordingStore((s) => s.isRecording)
   const fps = useFps()
-  const timeRef = useRef<HTMLSpanElement>(null)
-  useEffect(() => {
-    let raf = 0
-    const tick = () => {
-      if (!document.hidden && timeRef.current) {
-        timeRef.current.textContent = videoElement ? fmtTime(videoElement.currentTime) : NO_TIME
-      }
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [videoElement])
+  const timeRef = useMediaTimecode()
 
   return (
     <>
@@ -85,7 +66,6 @@ export const StageArea = memo(forwardRef<CanvasHandle>(function StageArea(_props
   const videoAspect = useMediaStore((s) => s.videoAspect) ?? 16 / 9
   return (
     <div className="h-full flex flex-col">
-      <CanvasTransportBar />
       <div className="flex-1 min-h-0" style={{ containerType: 'size', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
         <div
           data-stage-frame
@@ -106,7 +86,10 @@ export const StageArea = memo(forwardRef<CanvasHandle>(function StageArea(_props
           <div className="stage-ruler" />
         </div>
       </div>
-      <TransportBar />
+      <div data-media-strip className="flex flex-col flex-shrink-0">
+        <CanvasTransportBar />
+        <TransportBar />
+      </div>
     </div>
   )
 }))

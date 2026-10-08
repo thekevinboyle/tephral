@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useEffectSequencerStore, type TimeScale } from '../../stores/effectSequencerStore'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
+import { displayParamLabel } from '../../config/paramNames'
 import { Knob } from '../performance/Knob'
 
 const TOOL_FG = '#BBBBBB'
@@ -161,7 +162,7 @@ export function TrackParamPanel({ effectId }: TrackParamPanelProps) {
             effectId,
             paramId: p.id,
             fullParamId: `${effectId}.${p.id}`,
-            label: p.label,
+            label: displayParamLabel(effectId, p),
             min: p.min,
             max: p.max,
             step: p.step,

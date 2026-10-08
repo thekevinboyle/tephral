@@ -6,6 +6,7 @@ import { useAudioSourceStore } from '../../stores/audioSourceStore'
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
+import { displayParamLabel } from '../../config/paramNames'
 
 const MIDI_COLOR = '#00AAFF'
 const AUDIO_COLOR = '#FF8800'
@@ -25,15 +26,17 @@ function RandomizeButton() {
       onClick={handleClick}
       onMouseEnter={() => setStatusText(getUIStatusText('randomizeSteps'))}
       onMouseLeave={() => setStatusText(null)}
-      className="w-7 h-7 flex items-center justify-center rounded-sm"
+      className="h-7 px-2 flex items-center justify-center gap-1.5 rounded-sm text-[11px]"
       style={{
         backgroundColor: 'var(--bg-elevated)',
         border: '1px solid var(--border)',
         opacity: selectedEffectId ? 1 : 0.5,
       }}
       title="Randomize steps on selected track"
+      aria-label="Randomize track steps"
     >
       <DiceIcon size={14} color={selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)'} />
+      <span aria-hidden style={{ color: selectedEffectId ? 'var(--text-secondary)' : 'var(--text-muted)' }}>Random</span>
     </button>
   )
 }
@@ -49,15 +52,17 @@ function RandomizeAllButton() {
       onClick={() => randomizeAllTracks()}
       onMouseEnter={() => setStatusText('Randomize steps on all tracks')}
       onMouseLeave={() => setStatusText(null)}
-      className="w-7 h-7 flex items-center justify-center rounded-sm"
+      className="h-7 px-2 flex items-center justify-center gap-1.5 rounded-sm text-[11px]"
       style={{
         backgroundColor: 'var(--bg-elevated)',
         border: '1px solid var(--border)',
         opacity: hasTracks ? 1 : 0.5,
       }}
       title="Randomize steps on all tracks"
+      aria-label="Randomize all tracks"
     >
       <ShuffleIcon size={14} color={hasTracks ? 'var(--text-secondary)' : 'var(--text-ghost)'} />
+      <span aria-hidden style={{ color: hasTracks ? 'var(--text-secondary)' : 'var(--text-muted)' }}>All tracks</span>
     </button>
   )
 }
@@ -88,7 +93,7 @@ function RandomizeLocksButton() {
         effectId: selectedEffectId,
         paramId: p.id,
         fullParamId: `${selectedEffectId}.${p.id}`,
-        label: p.label,
+        label: displayParamLabel(selectedEffectId, p),
         min: p.min,
         max: p.max,
         step: p.step,
@@ -101,15 +106,17 @@ function RandomizeLocksButton() {
       onClick={handleClick}
       onMouseEnter={() => setStatusText(getUIStatusText('randomizeLocks'))}
       onMouseLeave={() => setStatusText(null)}
-      className="w-7 h-7 flex items-center justify-center rounded-sm"
+      className="h-7 px-2 flex items-center justify-center gap-1.5 rounded-sm text-[11px]"
       style={{
         backgroundColor: 'var(--bg-elevated)',
         border: '1px solid var(--border)',
         opacity: selectedEffectId ? 1 : 0.5,
       }}
       title="Randomize p-locks on selected track"
+      aria-label="Randomize track p-locks"
     >
       <SlidersIcon size={14} color={selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)'} />
+      <span aria-hidden style={{ color: selectedEffectId ? 'var(--text-secondary)' : 'var(--text-muted)' }}>P-locks</span>
     </button>
   )
 }
@@ -128,15 +135,17 @@ function ClearTrackButton() {
       onClick={handleClick}
       onMouseEnter={() => setStatusText(getUIStatusText('clearTrack'))}
       onMouseLeave={() => setStatusText(null)}
-      className="w-7 h-7 flex items-center justify-center rounded-sm"
+      className="h-7 px-2 flex items-center justify-center gap-1.5 rounded-sm text-[11px]"
       style={{
         backgroundColor: 'var(--bg-elevated)',
         border: '1px solid var(--border)',
         opacity: selectedEffectId ? 1 : 0.5,
       }}
       title="Clear steps on selected track"
+      aria-label="Clear track steps"
     >
       <ClearIcon size={14} color={selectedEffectId ? 'var(--text-secondary)' : 'var(--text-ghost)'} />
+      <span aria-hidden style={{ color: selectedEffectId ? 'var(--text-secondary)' : 'var(--text-muted)' }}>Clear</span>
     </button>
   )
 }
@@ -154,6 +163,8 @@ interface SequencerTransportProps {
   onResolutionChange: (res: EffectStepResolution) => void
   onSwingChange: (swing: number) => void
   onPageChange: (page: number) => void
+  /** Inside the bottom panel: play/stop and BPM live in the header, so hide them here. */
+  compact?: boolean
 }
 
 export function SequencerTransport({
@@ -169,6 +180,7 @@ export function SequencerTransport({
   onResolutionChange: _onResolutionChange,
   onSwingChange,
   onPageChange,
+  compact = false,
 }: SequencerTransportProps) {
   void _resolution
   void _onResolutionChange
@@ -238,8 +250,11 @@ export function SequencerTransport({
     >
       {/* Group 1: Play + BPM + Sync */}
       <div className="flex items-center gap-3" style={{ marginRight: 16 }}>
+        {!compact && (
+          <>
         <button
           onClick={isPlaying ? onStop : onPlay}
+          aria-label={isPlaying ? 'Stop sequencer' : 'Play sequencer'}
           onMouseEnter={(e) => {
             setStatusText(getUIStatusText('seqPlayStop'))
             if (!isPlaying) {
@@ -285,12 +300,15 @@ export function SequencerTransport({
           <span className="text-[9px] tracking-[0.15em] uppercase" style={{ color: isMidiSynced ? MIDI_COLOR : isAudioSynced ? AUDIO_COLOR : 'var(--text-muted)' }}>BPM</span>
         </div>
 
+          </>
+        )}
+
         {isConnected && midiInputs.length > 0 && (
           <button
             onClick={() => setClockSyncEnabled(!clockSyncEnabled)}
             onMouseEnter={() => setStatusText(getUIStatusText('seqSync'))}
             onMouseLeave={() => setStatusText(null)}
-            className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-sm"
+            className="text-[11px] font-medium px-1.5 py-0.5 rounded-sm"
             style={{
               backgroundColor: clockSyncEnabled ? `${MIDI_COLOR}20` : 'transparent',
               color: clockSyncEnabled ? MIDI_COLOR : 'var(--text-ghost)',
@@ -298,7 +316,7 @@ export function SequencerTransport({
             }}
             title={clockSyncEnabled ? 'MIDI clock sync active' : 'Enable MIDI clock sync'}
           >
-            SYNC
+            MIDI sync
           </button>
         )}
 
@@ -338,7 +356,7 @@ export function SequencerTransport({
           onMouseEnter={() => setStatusText(getUIStatusText('seqSwing'))}
           onMouseLeave={() => setStatusText(null)}
         >
-          <span style={{ opacity: 0.5 }}>SWG</span>{' '}
+          <span style={{ opacity: 0.7 }}>Swing</span>{' '}
           <span>{swing}</span>
         </div>
 
@@ -391,6 +409,8 @@ export function SequencerTransport({
                 opacity: isActive ? 1 : 0.4,
               }}
               title={`Page ${pg + 1}`}
+              aria-label={`Step page ${pg + 1}`}
+              aria-pressed={isActive}
             />
           )
         })}

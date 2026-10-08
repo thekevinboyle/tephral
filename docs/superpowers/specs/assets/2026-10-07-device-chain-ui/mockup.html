@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Device Chain Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Neutral chrome, three steps; colour reserved for meaning */
+:root{
+  --gap:#0e0f10;          /* panel separators: near-black gutters */
+  --win:#18191b;          /* window / empty space */
+  --panel:#222326;        /* panel body */
+  --raised:#2c2d31;       /* headers, cards */
+  --ctrl:#37383d;         /* controls, wells */
+  --ctrl-hi:#45464c;      /* hover */
+  --line:#3a3b40;
+  --tx:#ececee;           /* primary text */
+  --tx2:#b4b6bc;          /* secondary */
+  --tx3:#8d9097;          /* muted (>=4.5:1 on panel) */
+  --sel:#f2f2f4;          /* selection outline: near-white */
+  --mod:#4fb3ff;          /* modulation (one hue) */
+  --rec:#ff5a4e;
+  --live:#b8f35a;         /* transport running / brand signal */
+  --r:4px;
+  --sans:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--gap);color:var(--tx);font:13px/1.35 var(--sans);overflow:hidden}
+.app{height:100vh;display:grid;gap:2px;background:var(--gap)}
+.p{background:var(--panel);min-width:0;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.ph{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;background:var(--raised);font-weight:600;font-size:12px;flex:none}
+.ph .sub{color:var(--tx3);font-weight:400}
+.ph .sp{flex:1}
+.ibtn{height:24px;padding:0 9px;display:inline-flex;align-items:center;gap:6px;border-radius:var(--r);background:var(--ctrl);color:var(--tx2);font:500 12px var(--sans);border:0}
+.ibtn.on{background:var(--ctrl-hi);color:var(--tx)}
+.mono{font-family:var(--mono)}
+/* ---------- header / transport ---------- */
+.hdr{display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--raised);height:44px}
+.brand{font:600 13px var(--mono);letter-spacing:.06em;color:var(--tx)}
+.brand b{color:var(--live);font-weight:600}
+.field{display:flex;flex-direction:column;gap:1px}
+.field small{font-size:10px;color:var(--tx3)}
+.sel{height:24px;display:inline-flex;align-items:center;gap:8px;padding:0 8px;border-radius:var(--r);background:var(--ctrl);font-size:12px;color:var(--tx)}
+.sel:after{content:'';width:0;height:0;border:4px solid transparent;border-top-color:var(--tx3);margin-top:4px}
+.transport{display:flex;align-items:center;gap:6px;margin:0 auto;background:var(--panel);border-radius:6px;padding:4px 6px}
+.tbtn{width:30px;height:26px;border-radius:var(--r);background:var(--ctrl);display:grid;place-items:center}
+.tbtn svg{width:12px;height:12px;fill:var(--tx2)}
+.tbtn.play svg{fill:var(--live)}
+.tdisp{font:500 15px var(--mono);padding:0 10px;color:var(--tx)}
+.tdisp small{font:400 10px var(--sans);color:var(--tx3);margin-left:4px}
+.rec{height:28px;padding:0 12px;border-radius:var(--r);background:transparent;border:1px solid var(--rec);color:var(--rec);font:600 12px var(--sans);display:inline-flex;align-items:center;gap:7px}
+.rec:before{content:'';width:8px;height:8px;border-radius:50%;background:var(--rec)}
+/* ---------- stage ---------- */
+.stage{background:var(--win);display:grid;place-items:center;position:relative}
+.frame{position:relative;aspect-ratio:16/9;width:min(100%,calc((100% ) ));max-height:100%;}
+.frame canvas{width:100%;height:100%;display:block;border-radius:2px}
+.ro{position:absolute;font:500 11px var(--mono);background:rgba(14,15,16,.72);padding:3px 7px;border-radius:3px;color:var(--tx2)}
+.ro b{color:var(--tx);font-weight:500}
+/* ---------- browser ---------- */
+.search{margin:8px;height:28px;border-radius:var(--r);background:var(--ctrl);display:flex;align-items:center;padding:0 9px;color:var(--tx3);font-size:12px;gap:7px}
+.cat{display:flex;align-items:center;gap:8px;padding:6px 10px;font-weight:600;font-size:12px;color:var(--tx2)}
+.cat .n{margin-left:auto;color:var(--tx3);font:400 11px var(--mono)}
+.cat .chev{width:0;height:0;border:4px solid transparent;border-top-color:var(--tx3);margin-top:3px}
+.fx{display:flex;align-items:center;gap:9px;min-height:28px;padding:4px 10px 4px 22px;font-size:12.5px;color:var(--tx2);position:relative}
+.fx .dot{width:8px;height:8px;border-radius:2px;flex:none}
+.fx .desc{color:var(--tx3);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx.on{color:var(--tx)}
+.fx.on:after{content:'in chain';position:absolute;right:10px;font-size:10px;color:var(--tx3)}
+.fx:hover{background:var(--raised)}
+/* ---------- device chain ---------- */
+.chain{display:flex;gap:2px;padding:6px 8px;overflow:hidden;background:var(--win);flex:1;align-items:stretch}
+.dev{display:flex;background:var(--panel);border-radius:6px;overflow:hidden;flex:none;border:1px solid transparent}
+.dev.selected{border-color:var(--sel)}
+.dev .rail{width:26px;background:var(--raised);display:flex;flex-direction:column;align-items:center;padding:7px 0;gap:8px;position:relative}
+.dev .rail:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c)}
+.pwr{width:14px;height:14px;border-radius:50%;border:2px solid var(--c);background:var(--c)}
+.dev.off .pwr{background:transparent}
+.dev .vname{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:600;font-size:12px;letter-spacing:.02em}
+.dev .body{display:flex;flex-direction:column;padding:8px 10px 8px 10px;gap:6px;min-width:0}
+.dev .knobs{display:grid;grid-template-columns:repeat(4,50px);gap:4px}
+.k{display:flex;flex-direction:column;align-items:center;gap:1px}
+.k svg{width:40px;height:40px}
+.k .v{font:500 11px var(--mono);color:var(--tx)}
+.k .l{font-size:10.5px;color:var(--tx3)}
+.mix{display:flex;align-items:center;gap:6px;margin-top:auto;font-size:10.5px;color:var(--tx3)}
+.mix .tr{flex:1;height:4px;border-radius:2px;background:var(--ctrl);position:relative}
+.mix .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--c)}
+.plus{width:18px;display:grid;place-items:center;color:var(--tx3);font-size:14px;flex:none}
+.modcard{background:var(--panel);border-radius:6px;display:flex;flex-direction:column;padding:8px;gap:5px;flex:none;width:140px}
+.modcard .t{font-weight:600;font-size:12px;display:flex;justify-content:space-between}
+.slot{display:flex;align-items:center;gap:7px;height:28px;padding:0 7px;border-radius:var(--r);background:var(--raised);font-size:12px}
+.slot svg{width:28px;height:16px}
+.arrow{margin-left:auto;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--mod);display:grid;place-items:center}
+.arrow:after{content:'';width:5px;height:5px;border-radius:50%;background:var(--mod)}
+.slot.empty{color:var(--tx3);justify-content:center;background:transparent;border:1px dashed var(--line)}
+/* ---------- inspector ---------- */
+.insp .sec{padding:10px 12px;border-bottom:2px solid var(--gap)}
+.insp h4{font-size:11px;color:var(--tx3);font-weight:500;margin-bottom:8px;display:flex;justify-content:space-between}
+.bar{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px;border-radius:var(--r);background:var(--raised);margin-bottom:3px}
+.bar .bl{width:74px;font-size:12px;color:var(--tx2)}
+.bar .bs{flex:1;display:flex;gap:2px;height:12px}
+.bar .bs i{flex:1;border-radius:1px;background:#2f3034}
+.bar .bs i.on{background:#8e9097}
+.bar .bs i.m{background:color-mix(in oklab,var(--mod) 45%,#2f3034)}
+.bar .bs i.on.m{background:color-mix(in oklab,var(--mod) 75%,#8e9097)}
+.bar .bv{width:40px;text-align:right;font:500 12px var(--mono)}
+.route{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);height:24px}
+.route .sw{width:10px;height:10px;border-radius:2px;background:var(--mod)}
+.route .amt{margin-left:auto;font:500 11px var(--mono);color:var(--tx)}
+/* ---------- footer ---------- */
+.ftr{display:flex;align-items:center;gap:6px;padding:0 8px;background:var(--raised);height:30px;font-size:12px;color:var(--tx3)}
+.ftr .sp{flex:1}
+.tog{height:22px;padding:0 9px;border-radius:var(--r);display:inline-flex;align-items:center;gap:6px;color:var(--tx3);font:500 12px var(--sans)}
+.tog.on{background:var(--ctrl);color:var(--tx)}
+.tog.on:before{content:'';width:6px;height:6px;border-radius:50%;background:var(--live)}
+/* ---------- sequencer (for C) ---------- */
+.seq{flex:1;display:flex;flex-direction:column;gap:2px;padding:8px;background:var(--win)}
+.lane{display:flex;gap:2px;height:30px}
+.lane .nm{width:120px;background:var(--raised);border-radius:var(--r);display:flex;align-items:center;gap:7px;padding:0 8px;font-size:12px}
+.lane .nm i{width:3px;height:16px;border-radius:2px;background:var(--c)}
+.st{flex:1;background:var(--panel);border-radius:3px}
+.st.on{background:var(--c);opacity:.85}
+.st.cur{outline:1px solid var(--sel);outline-offset:-1px}
+/* ---------- pads (for B/C) ---------- */
+.pads{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px}
+.pad{height:52px;border-radius:var(--r);background:var(--raised);display:flex;flex-direction:column;justify-content:space-between;padding:6px 7px;font-size:12px;font-weight:500;color:var(--tx2);position:relative}
+.pad.on{color:var(--tx);box-shadow:inset 0 0 0 1px var(--c)}
+.pad .mx{height:3px;border-radius:2px;background:var(--ctrl)}
+.pad .mx i{display:block;height:100%;border-radius:2px;background:var(--c)}
+.tabs{display:flex;gap:2px;padding:6px 8px 0}
+.tabs span{padding:4px 9px;border-radius:var(--r);font-size:12px;color:var(--tx3)}
+.tabs span.on{background:var(--ctrl);color:var(--tx)}
+/* view switch for C */
+.views{display:flex;background:var(--panel);border-radius:6px;padding:3px;gap:2px}
+.views span{padding:3px 12px;border-radius:4px;font-size:12px;color:var(--tx3)}
+.views span.on{background:var(--ctrl-hi);color:var(--tx)}
+.label-badge{position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:50;background:#fff;color:#000;font:600 11px var(--sans);padding:3px 10px;border-radius:20px;opacity:.9}
+</style></head><body>
+<div id="root"></div>
+<script>
+const D=new URLSearchParams(location.search).get('d')||'A'
+const CH=[['Stale','#9aa4b2','Freeze areas of the frame and let them decay',[['Cell','32',.3],['Thresh','.18',.18],['Refresh','.03',.05],['Burst','0',0]],.9],
+['Matter','#c86bff','Fill the person mask with solid colour fields',[['Cover','.40',.4],['Beat','4',.25],['Grad','.30',.3],['Zebra','.15',.15]],1],
+['Voxel','#ff8a3d','Rebuild the person as extruded cubes',[['Size','14',.2],['Depth','2.20',.7],['Scatter','.50',.5],['Shade','.70',.7]],1],
+['Echo 4D','#ffb347','Trail copies of the person through time',[['Copies','4',.3],['Delay','3',.25],['Fade','.60',.6],['Drift','.20',.2]],.75],
+['Torn','#8a8f99','Rip the frame into shifted paper strips',[['Depth','4',.2],['Strips','12',.4],['Jitter','.35',.35],['Fill','Black',0]],.6]]
+const SEL=2
+const knob=(v,c,mod)=>{const R=16,cx=20,cy=20,a0=135,sw=270,pt=t=>{const a=(a0+sw*t)*Math.PI/180;return[cx+R*Math.cos(a),cy+R*Math.sin(a)]},arc=(t0,t1,col,w)=>{const[x0,y0]=pt(t0),[x1,y1]=pt(t1);return`<path d="M${x0} ${y0} A${R} ${R} 0 ${(t1-t0)*sw>180?1:0} 1 ${x1} ${y1}" stroke="${col}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`},[hx,hy]=pt(v);
+return`<svg viewBox="0 0 40 40">${arc(0,1,'#37383d',3)}${mod?arc(Math.max(0,v-.2),Math.min(1,v+.2),'#4fb3ff',5):''}${v>0.005?arc(0,v,c,3):''}<circle cx="${hx}" cy="${hy}" r="2.6" fill="#ececee"/></svg>`}
+const devs=(compact)=>`<div class="modcard"><div class="t">Modulators <span style="color:var(--tx3);font-weight:400">3</span></div>
+<div class="slot"><svg viewBox="0 0 28 16"><path d="M0 8 Q 3.5 0 7 8 T 14 8 T 21 8 T 28 8" stroke="#4fb3ff" fill="none" stroke-width="1.5"/></svg>LFO 1<span class="arrow"></span></div>
+<div class="slot"><svg viewBox="0 0 28 16"><path d="M0 14 L3 14 L5 2 L14 9 L28 14" stroke="#4fb3ff" fill="none" stroke-width="1.5"/></svg>Envelope<span class="arrow"></span></div>
+<div class="slot empty">+ Add modulator</div></div>`+CH.map(([n,c,d,ks,mx],i)=>`<div class="plus">+</div><div class="dev ${i===SEL?'selected':''} ${i===4?'off':''}" style="--c:${c}"><div class="rail"><span class="pwr"></span><span class="vname">${n}</span></div><div class="body"><div class="knobs">${ks.map(([l,v,t],j)=>`<div class="k">${knob(t,c,i===2&&j===2)}<span class="v">${v}</span><span class="l">${l}</span></div>`).join('')}</div><div class="mix">Mix<span class="tr"><i style="width:${mx*100}%"></i></span><span class="mono" style="color:var(--tx)">${Math.round(mx*100)}%</span></div></div></div>`).join('')+`<div class="plus" style="width:60px;border:1px dashed var(--line);border-radius:6px">+</div>`
+const header=(extra='')=>`<div class="hdr"><span class="brand">SEG<b>_</b>F4ULT</span>
+<div class="field"><small>Video</small><span class="sel">Webcam</span></div><div class="field"><small>Audio</small><span class="sel">hats_loop.wav</span></div>
+${extra}<div class="transport"><span class="tbtn play"><svg viewBox="0 0 12 12"><path d="M2 1 L11 6 L2 11z"/></svg></span><span class="tbtn"><svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8"/></svg></span><span class="tdisp">120.0<small>BPM</small></span><span class="tdisp">00:01:24.18</span></div>
+<div class="field"><small>Preset</small><span class="sel">SEG_EXP</span></div><span class="rec">Rec</span></div>`
+const stage=`<div class="p stage"><div class="frame" style="width:min(92%, calc((100vh - 360px) * 16 / 9))"><canvas id="cv" width="960" height="540"></canvas>
+<span class="ro" style="left:8px;top:8px"><b>● Live</b> 60 fps</span><span class="ro" style="right:8px;top:8px">SEG_EXP</span><span class="ro" style="left:8px;bottom:8px">00:01:24.18</span><span class="ro" style="right:8px;bottom:8px">Band: hats 6–14 kHz</span></div></div>`
+const CATS=[['Acid',16,[['Dots','#ff6b6b','Halftone dot screen'],['Glyph','#ffd93d','Characters by brightness'],['Contour','#6bcBff','Topographic lines']]],['Vision',12],['Glitch',16],['Strand',16],['Motion',16],['Destroy',16,[['Stale','#9aa4b2','Freeze and decay areas',1],['Matter','#c86bff','Colour fields in the mask',1],['Voxel','#ff8a3d','Person as extruded cubes',1],['Echo 4D','#ffb347','Copies through time',1],['Torn','#8a8f99','Ripped paper strips',1],['Point Cloud','#ff9900','Video as 3D points']]]]
+const browser=`<div class="p"><div class="ph">Effects<span class="sp"></span><span class="sub">92</span></div><div class="search">⌕ Search effects…</div><div style="overflow:hidden">${CATS.map(([c,n,items])=>`<div class="cat"><span class="chev" style="${items?'':'transform:rotate(-90deg)'}"></span>${c}<span class="n">${n}</span></div>${(items||[]).map(([nm,col,d,on])=>`<div class="fx ${on?'on':''}"><span class="dot" style="background:${col}"></span><span>${nm}<div class="desc">${d}</div></span></div>`).join('')}`).join('')}</div></div>`
+const segs=(t,m)=>Array.from({length:24},(_,k)=>{const c=(k+.5)/24;return`<i class="${c<=t?'on':''} ${m&&c<=m?'m':''}"></i>`}).join('')
+const inspector=`<div class="p insp"><div class="ph"><span style="width:8px;height:8px;border-radius:2px;background:#ff8a3d"></span>Voxel<span class="sub">· 3 of 5 in chain</span><span class="sp"></span><span class="ibtn">Bypass</span></div>
+<div class="sec"><h4>Main <span>first 4 in the strip</span></h4>${[['Size','14',.2],['Depth','2.20',.7],['Scatter','.50',.5,.4],['Shade','.70',.7]].map(([l,v,t,m])=>`<div class="bar"><span class="bl">${l}</span><span class="bs">${segs(t,m)}</span><span class="bv">${v}</span></div>`).join('')}</div>
+<div class="sec"><h4>More</h4>${[['Mix','1.00',1],['Light angle','45°',.25],['Outline','.10',.1]].map(([l,v,t])=>`<div class="bar"><span class="bl">${l}</span><span class="bs">${segs(t)}</span><span class="bv">${v}</span></div>`).join('')}<div class="bar"><span class="bl">Target</span><span style="flex:1"></span><span class="sel" style="height:20px">Person</span></div></div>
+<div class="sec"><h4>Modulation <span>2 routes</span></h4><div class="route"><span class="sw"></span>LFO 1 → Scatter<span class="amt">+40%</span></div><div class="route"><span class="sw" style="background:#7dd3a8"></span>Audio: hats → Size<span class="amt">+25%</span></div></div>
+<div class="sec"><h4>Audio band</h4><div style="height:44px;border-radius:4px;background:repeating-linear-gradient(90deg,#2f3034 0 2px,transparent 2px 5px)"></div></div></div>`
+const footer=(tg)=>`<div class="ftr"><span>Drag a modulator's ● onto any control to route it</span><span class="sp"></span>${tg.map(([n,on])=>`<span class="tog ${on?'on':''}">${n}</span>`).join('')}<span style="margin-left:10px" class="mono">60 fps</span></div>`
+const seqLanes=CH.map(([n,c])=>`<div class="lane" style="--c:${c}"><span class="nm"><i></i>${n}</span>${Array.from({length:16},(_,k)=>`<span class="st ${(k*7+n.length)%5<2?'on':''} ${k===5?'cur':''}"></span>`).join('')}</div>`).join('')
+let html=''
+if(D==='A'){
+  html=`<div class="app" style="grid-template-rows:44px 1fr 172px 30px;grid-template-columns:250px 1fr 300px">
+  <div style="grid-column:1/-1">${header()}</div>${browser}${stage}${inspector}
+  <div class="p" style="grid-column:1/-1"><div class="ph">Chain<span class="sub">· signal flows left to right</span><span class="sp"></span><span class="ibtn on">Devices</span><span class="ibtn">Sequencer</span></div><div class="chain">${devs()}</div></div>
+  <div style="grid-column:1/-1">${footer([['Browser',1],['Inspector',1],['Devices',1],['Sequencer',0]])}</div></div>`
+}else if(D==='B'){
+  html=`<div class="app" style="grid-template-rows:44px 1fr 210px 30px;grid-template-columns:300px 1fr 300px">
+  <div style="grid-column:1/-1">${header()}</div>
+  <div class="p"><div class="ph">Effects</div><div class="tabs">${['Acid','Vision','Glitch','Strand','Motion','Destroy'].map((t,i)=>`<span class="${i===5?'on':''}">${t}</span>`).join('')}</div>
+  <div class="pads">${[['Stale','#9aa4b2',1,.9],['Matter','#c86bff',1,1],['Voxel','#ff8a3d',1,1],['Echo 4D','#ffb347',1,.75],['Torn','#8a8f99',1,.6],['Point Cloud','#ff9900',0,1],['Datamosh','#ff4d6d',0,1],['Kaleido','#ff6699',0,1],['Liquid','#4dd2ff',0,1],['Crystal','#5fe3c0',0,1],['Ripple','#a78bfa',0,1],['Fractal','#8bc34a',0,1]].map(([n,c,on,m])=>`<div class="pad ${on?'on':''}" style="--c:${c}">${n}<span class="mx"><i style="width:${m*100}%;${on?'':'background:#5a5c62'}"></i></span></div>`).join('')}</div>
+  <div style="padding:0 8px;display:grid;grid-template-columns:repeat(4,1fr) 1fr;gap:4px">${['A','B','C','D'].map((b,i)=>`<span class="ibtn ${i===0?'on':''}" style="justify-content:center">Bank ${b}</span>`).join('')}<span class="ibtn" style="justify-content:center">Undo</span></div></div>
+  ${stage}
+  <div class="p"><div class="ph">Chain<span class="sp"></span><span class="ibtn">Bypass all</span><span class="ibtn">Clear</span></div>${CH.map(([n,c,d,ks],i)=>`<div class="fx ${i===SEL?'':''}" style="padding-left:12px;${i===SEL?'background:var(--raised);box-shadow:inset 0 0 0 1px var(--sel)':''}"><span class="dot" style="background:${c}"></span>${n}<span style="margin-left:auto;font:500 11px var(--mono);color:var(--tx2)">${ks[0][0]} ${ks[0][1]}</span></div>`).join('')}
+  <div class="insp" style="border-top:2px solid var(--gap)"><div class="sec"><h4>Voxel</h4>${[['Size','14',.2],['Depth','2.20',.7],['Scatter','.50',.5,.4],['Shade','.70',.7],['Mix','1.00',1]].map(([l,v,t,m])=>`<div class="bar"><span class="bl">${l}</span><span class="bs">${segs(t,m)}</span><span class="bv">${v}</span></div>`).join('')}</div></div></div>
+  <div class="p" style="grid-column:1/-1"><div class="ph">Sequencer<span class="sp"></span><span class="ibtn on">Steps</span><span class="ibtn">LFO</span><span class="ibtn">Random</span><span class="ibtn">Envelope</span><span class="ibtn">S&amp;H</span><span class="ibtn">MIDI</span><span class="ibtn">Audio</span></div><div class="seq">${seqLanes}</div></div>
+  <div style="grid-column:1/-1">${footer([])}</div></div>`
+}else{
+  const view=new URLSearchParams(location.search).get('v')||'perform'
+  const vs=`<div class="views"><span class="${view==='perform'?'on':''}">Perform</span><span class="${view==='edit'?'on':''}">Edit</span></div>`
+  if(view==='perform'){
+  html=`<div class="app" style="grid-template-rows:44px 1fr 172px 30px;grid-template-columns:330px 1fr">
+  <div style="grid-column:1/-1">${header(vs)}</div>
+  <div class="p"><div class="ph">Pads<span class="sp"></span><span class="sub">Destroy</span></div><div class="tabs">${['Acid','Vision','Glitch','Strand','Motion','Destroy'].map((t,i)=>`<span class="${i===5?'on':''}">${t}</span>`).join('')}</div>
+  <div class="pads" style="grid-template-columns:repeat(4,1fr)">${[['Stale','#9aa4b2',1,.9],['Matter','#c86bff',1,1],['Voxel','#ff8a3d',1,1],['Echo 4D','#ffb347',1,.75],['Torn','#8a8f99',1,.6],['Point Cloud','#ff9900',0,1],['Datamosh','#ff4d6d',0,1],['Kaleido','#ff6699',0,1],['Liquid','#4dd2ff',0,1],['Crystal','#5fe3c0',0,1],['Ripple','#a78bfa',0,1],['Fractal','#8bc34a',0,1],['Thermal','#ff5252',0,1],['Halation','#ff9e80',0,1],['Y2K','#ffd166',0,1],['Dream','#b39ddb',0,1]].map(([n,c,on,m])=>`<div class="pad ${on?'on':''}" style="--c:${c};height:64px">${n}<span class="mx"><i style="width:${m*100}%;${on?'':'background:#5a5c62'}"></i></span></div>`).join('')}</div>
+  <div style="padding:0 8px;display:grid;grid-template-columns:repeat(4,1fr) 1fr;gap:4px">${['A','B','C','D'].map((b,i)=>`<span class="ibtn ${i===0?'on':''}" style="justify-content:center">${b}</span>`).join('')}<span class="ibtn" style="justify-content:center">Undo</span></div></div>
+  ${stage}
+  <div class="p" style="grid-column:1/-1"><div class="ph">Chain<span class="sub">· click a device to edit it in the Edit view</span></div><div class="chain">${devs()}</div></div>
+  <div style="grid-column:1/-1">${footer([['Pads',1],['Chain',1]])}</div></div>`
+  } else {
+  html=`<div class="app" style="grid-template-rows:44px 1fr 1fr 30px;grid-template-columns:1fr 300px">
+  <div style="grid-column:1/-1">${header(vs)}</div>
+  ${stage}${inspector.replace('class="p insp"','class="p insp" style="grid-row:2/4"')}
+  <div class="p"><div class="ph">Sequencer<span class="sp"></span><span class="ibtn on">Steps</span><span class="ibtn">LFO</span><span class="ibtn">Envelope</span><span class="ibtn">Audio</span></div><div class="seq">${seqLanes}</div></div>
+  <div style="grid-column:1/-1">${footer([['Inspector',1],['Sequencer',1]])}</div></div>`
+  }
+}
+document.getElementById('root').innerHTML=html
+// placeholder output: abstract glitch picture so the frame reads as content
+const cv=document.getElementById('cv');if(cv){const g=cv.getContext('2d');const gr=g.createLinearGradient(0,0,960,540);gr.addColorStop(0,'#1f1830');gr.addColorStop(1,'#33201a');g.fillStyle=gr;g.fillRect(0,0,960,540);
+let s=7;const r=()=>(s=(s*16807)%2147483647)/2147483647;for(let i=0;i<260;i++){const x=330+r()*300,y=120+r()*320,w=10+r()*34;g.fillStyle=`hsl(${20+r()*30},${70+r()*25}%,${45+r()*25}%)`;g.globalAlpha=.85;g.fillRect(x,y,w,w)}
+g.globalAlpha=.9;for(let i=0;i<5;i++){const y=60+r()*420,x=r()>.5?120+r()*80:700+r()*80;for(let k=0;k<14;k++){g.fillStyle=`hsl(${k*25},80%,55%)`;g.fillRect(x,y+k*5,150,4)}}}
+</script></body></html>

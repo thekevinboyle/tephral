@@ -1,5 +1,7 @@
 # Time Warp Sequencer: Design
 
+Superseded in parts by 2026-10-08-time-warp-v2-design.md
+
 **Date:** 2026-10-08
 
 **Status:** These were approved in conversation:

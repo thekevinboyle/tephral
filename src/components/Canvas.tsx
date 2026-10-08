@@ -667,6 +667,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       ;(window as unknown as { __warpTest?: unknown }).__warpTest = {
         compositor: () => warpCompositor.current, renderer, THREE, WarpCompositor,
         input: () => warpApplied.current ?? warpBase.current?.input ?? null,
+        // what the pipeline itself holds as its input, and the original (unwarped) texture
+        pipelineInput: () => (pipeline as unknown as { inputTexture: THREE.Texture | null }).inputTexture,
+        baseInput: () => warpBase.current?.input ?? null,
       }
     }
 

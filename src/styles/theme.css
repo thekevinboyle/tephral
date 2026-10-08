@@ -550,13 +550,6 @@ button:active:not(:disabled) {
    --clipbin-inset/--clipbin-w: the ClipBin's offset and max stack width (80px card + 3 x 4px offsets);
    the timecode readout starts just past it. */
 .stage-frame { position: relative; container-type: inline-size; --clipbin-inset: 12px; --clipbin-w: 92px; }
-.stage-tick { position: absolute; width: 14px; height: 14px; border-color: var(--text-secondary); border-style: solid; pointer-events: none; }
-.stage-tick.tl { left: -8px; top: -8px; border-width: 1px 0 0 1px; }
-.stage-tick.tr { right: -8px; top: -8px; border-width: 1px 1px 0 0; }
-.stage-tick.bl { left: -8px; bottom: -8px; border-width: 0 0 1px 1px; }
-.stage-tick.br { right: -8px; bottom: -8px; border-width: 0 1px 1px 0; }
-.stage-ruler { position: absolute; left: 0; right: 0; bottom: -16px; height: 6px; pointer-events: none;
-  background: repeating-linear-gradient(90deg, var(--text-ghost) 0 1px, transparent 1px 10%); }
 .stage-readout { position: absolute; z-index: 2; pointer-events: none; font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 10px; letter-spacing: .12em; color: var(--text-secondary); background: rgba(24, 25, 27, .72); padding: 3px 6px; }
 .stage-readout.tl { left: 10px; top: 10px; } .stage-readout.tr { right: 10px; top: 10px; }

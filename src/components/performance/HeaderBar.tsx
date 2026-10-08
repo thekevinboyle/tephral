@@ -1,3 +1,5 @@
+import { useAudioFileDrop } from '../../hooks/useAudioFileDrop'
+import { kindsInTransfer, pickMediaFiles } from '../../utils/mediaFiles'
 import { memo, useRef, useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useMediaSource } from '../../hooks/useMediaSource'
@@ -95,12 +97,11 @@ function StyledDropdown({
           minWidth: 80,
           backgroundColor: 'var(--bg-elevated)',
           border: '1px solid var(--border)',
-          borderRadius: 2,
+          borderRadius: 4,
           color: 'var(--text-primary)',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: '0.06em',
+          fontFamily: 'var(--font-sans)',
+          fontSize: 12,
+          fontWeight: 500,
           padding: '0 24px 0 10px',
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.5 : 1,
@@ -220,7 +221,7 @@ const RecButton = memo(function RecButton() {
         height: 28,
         gap: 8,
         padding: '0 10px',
-        borderRadius: 2,
+        borderRadius: 4,
         border: '1px solid var(--rec)',
         background: 'transparent',
         color: 'var(--rec)',
@@ -271,6 +272,8 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
   const setActiveAudioSource = useAudioSourceStore((s) => s.setActiveSource)
   const setAudioFile = useAudioSourceStore((s) => s.setAudioFile)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const loadAudio = useAudioFileDrop()
+  const [audioDropOk, setAudioDropOk] = useState<boolean | null>(null)
 
   const handleAudioSelect = useCallback(
     (id: string) => {
@@ -298,99 +301,64 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
 
   return (
     <div
-      className="flex items-center flex-shrink-0 min-w-0"
-      style={{
-        height: 'var(--row-header)',
-        overflow: 'hidden',
-        padding: '0 var(--panel-padding)',
-        gap: 'var(--gap-lg)',
-        background: 'var(--bg-void)',
-        borderBottom: '1px solid var(--border)',
-      }}
+      className="seg-header"
+      onMouseLeave={() => setStatusText(null)}
     >
-      {/* Brand */}
-      <div className="flex items-center gap-2 flex-shrink-0" onMouseEnter={() => setStatusText(getUIStatusText('brand'))} onMouseLeave={() => setStatusText(null)}>
-        <span aria-hidden className="flex"><HudGlyph glyph="crosshair" size={14} color="var(--text-ghost)" animate="spin" /></span>
-        <span
-          className="text-[13px] font-bold uppercase"
-          style={{
-            fontFamily: 'var(--font-mono)',
-            color: 'var(--text-secondary)',
-            letterSpacing: '0.16em',
+      {/* Left: brand + sources */}
+      <div className="seg-header-left">
+        <div className="flex items-center gap-2 flex-shrink-0" onMouseEnter={() => setStatusText(getUIStatusText('brand'))}>
+          <span aria-hidden className="flex"><HudGlyph glyph="crosshair" size={14} color="var(--text-ghost)" animate="spin" /></span>
+          <span
+            className="text-[13px] font-bold uppercase"
+            style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)', letterSpacing: '0.16em' }}
+          >
+            SEG_F4ULT
+          </span>
+        </div>
+
+        <div className="seg-header-field" onMouseEnter={() => setStatusText('Video: choose the video input (camera, file or screen)')}>
+          <span className="seg-header-label">Video</span>
+          <StyledDropdown value={videoValue} options={VIDEO_OPTIONS} onChange={handleVideoSelect} menuId="video" disabled={isRecording} />
+        </div>
+
+        <div
+          className="seg-header-field"
+          data-audio-drop={audioDropOk === null ? undefined : audioDropOk ? 'ok' : 'no'}
+          onMouseEnter={() => setStatusText('Audio: choose the audio input that drives audio-reactive devices, or drop an audio file here')}
+          onDragOver={(e) => {
+            if (!e.dataTransfer.types.includes('Files')) return
+            e.preventDefault()
+            const ok = kindsInTransfer(e.dataTransfer).audio
+            e.dataTransfer.dropEffect = ok ? 'copy' : 'none'
+            if (audioDropOk !== ok) setAudioDropOk(ok)
+          }}
+          onDragLeave={() => setAudioDropOk(null)}
+          onDrop={(e) => {
+            if (!e.dataTransfer.types.includes('Files')) return
+            e.preventDefault()
+            setAudioDropOk(null)
+            const { audio } = pickMediaFiles(e.dataTransfer.files)
+            if (audio) loadAudio(audio)
+            else setStatusText("Can't use this file: drop an audio file on the Audio picker")
           }}
         >
-          SEG_F4ULT
-        </span>
+          <span className="seg-header-label">Audio</span>
+          <StyledDropdown value={activeAudioSource} options={AUDIO_SOURCES} onChange={handleAudioSelect} menuId="audio" />
+          <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileImport} className="hidden" />
+        </div>
       </div>
 
-      {/* Divider */}
-      <div className="seg-hide-narrow flex-shrink-0" style={{ width: 1, height: 16, backgroundColor: 'var(--border)' }} />
-
-      {/* Video source dropdown */}
-      <div
-        className="flex flex-col justify-center flex-shrink-0"
-        onMouseEnter={() => setStatusText('Video: choose the video input (camera, file or screen)')}
-        onMouseLeave={() => setStatusText(null)}
-      >
-        <span
-          className="text-[10px]"
-          style={{ color: 'var(--text-muted)', lineHeight: '12px' }}
-        >
-          Video
-        </span>
-        <StyledDropdown
-          value={videoValue}
-          options={VIDEO_OPTIONS}
-          onChange={handleVideoSelect}
-          menuId="video"
-          disabled={isRecording}
-        />
-      </div>
-
-      {/* Divider */}
-      <div className="seg-hide-narrow flex-shrink-0" style={{ width: 1, height: 16, backgroundColor: 'var(--border)' }} />
-
-      {/* Audio source dropdown */}
-      <div
-        className="flex flex-col justify-center flex-shrink-0"
-        onMouseEnter={() => setStatusText('Audio: choose the audio input that drives audio-reactive devices')}
-        onMouseLeave={() => setStatusText(null)}
-      >
-        <span
-          className="text-[10px]"
-          style={{ color: 'var(--text-muted)', lineHeight: '12px' }}
-        >
-          Audio
-        </span>
-        <StyledDropdown
-          value={activeAudioSource}
-          options={AUDIO_SOURCES}
-          onChange={handleAudioSelect}
-          menuId="audio"
-        />
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="audio/*"
-          onChange={handleFileImport}
-          className="hidden"
-        />
-      </div>
-
-      {/* Presets */}
-      <div className="flex-1" />
-
+      {/* Centre: the one transport */}
       <HeaderTransport />
 
-      <div className="flex-1" />
-
-      <div className="flex flex-col justify-center flex-shrink-0">
-        <span className="text-[10px]" style={{ color: 'var(--text-muted)', lineHeight: '12px' }}>Preset</span>
-        <PresetDropdownBar canvasRef={canvasRef} />
+      {/* Right: presets + record */}
+      <div className="seg-header-right">
+        <div className="seg-header-field">
+          <span className="seg-header-label">Preset</span>
+          <PresetDropdownBar canvasRef={canvasRef} />
+        </div>
+        <RecButton />
       </div>
-
-      <RecButton />
-
     </div>
   )
 })

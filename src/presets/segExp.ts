@@ -28,6 +28,7 @@ const SEG_EXP_CHAIN = ['seg_stale', 'seg_matter', 'seg_voxel', 'seg_echo', 'seg_
 export function buildSegExpPreset(now: number, base: BankSnapshot): Preset {
   const effects = structuredClone(base)
   delete effects.slicer // optional in BankSnapshot; applyEffects skips it when absent
+  delete effects.warp // factory presets never carry a time warp (applyEffects resets it to off)
 
   // Turn off every *Enabled flag in every store section, then enable ours
   for (const section of Object.values(effects) as unknown[]) {

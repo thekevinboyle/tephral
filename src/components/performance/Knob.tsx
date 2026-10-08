@@ -104,7 +104,7 @@ export function Knob({
     return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`
   }
 
-  // Modulation range: first routing's depth swings the value, drawn as a 5px --mod arc
+  // Modulation range: first routing's depth swings the value, drawn as a 5px arc in the source's colour
   const modDepth = sourceInfo ? sourceInfo.depth : 0
   const modLo = Math.max(0, Math.min(1, normalized + Math.min(0, modDepth)))
   const modHi = Math.max(0, Math.min(1, normalized + Math.max(0, modDepth)))
@@ -189,7 +189,7 @@ export function Knob({
               <path
                 d={describeArc(arcCenter, arcCenter, arcRadius, startAngle + modLo * angleRange, startAngle + modHi * angleRange)}
                 fill="none"
-                stroke="var(--mod)"
+                stroke={sourceInfo?.color ?? 'var(--mod)'}
                 strokeWidth={5}
                 strokeLinecap="butt"
                 opacity={0.55}

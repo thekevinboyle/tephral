@@ -10,6 +10,7 @@ import { getEffectStatusText } from '../../config/statusDescriptions'
 import { DeviceCard } from './DeviceCard'
 import { DeviceChainContext, type DeviceChainActions } from './deviceChainContext'
 import { ModulatorsCard } from './ModulatorsCard'
+import { WarpCard } from './WarpCard'
 
 /**
  * Bottom panel, Devices tab: the modulators card, then one DeviceCard per active effect in signal order
@@ -209,7 +210,7 @@ export const DeviceChain = memo(function DeviceChain() {
       },
       hover: (id) => {
         useUIStore.getState().setStatusText(
-          id ? `${getEffectStatusText(id)}. Click to select, Shift+click to bypass, drag the side strip to reorder` : null,
+          id ? `${getEffectStatusText(id)}. Click to select, Shift+click to bypass, drag the side strip to reorder, double-click it to collapse (C)` : null,
         )
       },
     }
@@ -227,6 +228,7 @@ export const DeviceChain = memo(function DeviceChain() {
     <DeviceChainContext.Provider value={actions}>
       <div className="seg-chain" data-device-chain ref={scrollerRef} onWheel={onWheel}>
         <ModulatorsCard />
+        <WarpCard />
         <div className="seg-chain-devices" role="list" aria-label="Device chain, signal flows left to right">
           {ids.map((id, i) => (
             <div key={id} className="seg-chain-slot" role="listitem">

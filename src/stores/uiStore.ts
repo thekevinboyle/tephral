@@ -19,7 +19,7 @@ export type InfoPanelSelection =
 
 export type PanelId = 'browser' | 'inspector' | 'bottom'
 export type DrawerPanel = 'browser' | 'inspector'
-export type BottomTab = 'devices' | 'sequencer'
+export type BottomTab = 'devices' | 'warp' | 'sequencer'
 
 interface UIState {
   // Selection state for graphic panel
@@ -40,7 +40,7 @@ interface UIState {
   showInspector: boolean
   showBottom: boolean
   bottomTab: BottomTab
-  selectedModulator: string | null  // 'lfo-0'..'lfo-3' | 'random' | 'step' | 'envelope' | 'sampleHold' | 'midi' | 'audio'
+  selectedModulator: string | null  // 'lfo-0'..'lfo-3' | 'random' | 'step' | 'envelope' | 'sampleHold' | 'midi' | 'audio' | 'warp'
   // Below 1100px the browser/inspector are drawers; at most one is open
   drawer: DrawerPanel | null
   togglePanel: (p: PanelId) => void
@@ -48,6 +48,10 @@ interface UIState {
   closeDrawer: () => void
   setBottomTab: (t: BottomTab) => void
   setSelectedModulator: (id: string | null) => void
+
+  // Device cards collapsed to their side strip (session only, not persisted)
+  collapsedDevices: Record<string, true>
+  toggleDeviceCollapsed: (id: string) => void
 
   setSelectedEffect: (id: string | null) => void
   setSelectedParamIndex: (index: number) => void
@@ -93,6 +97,13 @@ export const useUIStore = create<UIState>((set) => ({
   showBottom: true,
   bottomTab: 'devices',
   selectedModulator: null,
+  collapsedDevices: {},
+  toggleDeviceCollapsed: (id) => set((st) => {
+    const next = { ...st.collapsedDevices }
+    if (next[id]) delete next[id]
+    else next[id] = true
+    return { collapsedDevices: next }
+  }),
   drawer: null,
 
   togglePanel: (p) => set((state) =>

@@ -48,6 +48,10 @@ export function useDestructionMode() {
     // Don't process activation keys if already active
     if (active) return
 
+    // Keys typed into a text field (arrows, Shift+D+M in a name) are text, not the activation sequence
+    const t = e.target as HTMLElement | null
+    if (t?.closest?.('input, textarea, select, [contenteditable=""], [contenteditable="true"]')) return
+
     // Track arrow down presses for activation sequence
     if (e.key === 'ArrowDown') {
       const now = Date.now()

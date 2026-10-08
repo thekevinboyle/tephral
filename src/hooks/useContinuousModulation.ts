@@ -15,9 +15,14 @@ import { useDestructionStore } from '../stores/destructionStore'
 import { useTrendStore } from '../stores/trendStore'
 import { useSegStore } from '../stores/segStore'
 import { stepTrackBandModulation, resetTrackBandModulation } from '../effects/trackBandModulation'
+import { useWarpStore } from '../stores/warpStore'
+import { useEffectSequencerStore } from '../stores/effectSequencerStore'
+import { warpModValue } from '../effects/warp/warpMath'
+import { getHeardWarpPhase } from '../effects/warp/warpClock'
+import { beginMixModulationFrame, noteModulatedMix } from '../effects/mixModulation'
 
 /**
- * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope)
+ * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope, warp)
  * that run independently of the main step sequencer.
  *
  * Uses getState() to always get fresh store references on each frame.
@@ -39,6 +44,19 @@ export function useContinuousModulation() {
       // Handle bypass modulation for any effect (paramName === 'bypass')
       if (paramName === 'bypass') {
         glitch.setEffectBypassed(effectId, value > 0.5)
+        return
+      }
+
+      // Dry/wet for any effect (the device card's bar): written like the bar writes it, skipped when unchanged
+      if (paramName === 'effectMix') {
+        // Audio and MIDI gates own the mix: they stay the single writer
+        const t = useEffectSequencerStore.getState().tracks[effectId]
+        if (t && (t.audioGate || t.midiGate)) return
+        // A playing sequencer gate combines with it: the modulated value is the open-step level, closed steps stay 0
+        // (mixModulation.ts). With no gate active this writes effectMix directly.
+        const cur = glitch.effectMix[effectId] ?? 1
+        const out = noteModulatedMix(effectId, value, cur)
+        if (out !== null && glitch.effectMix[effectId] !== out) glitch.setEffectMix(effectId, out)
         return
       }
 
@@ -609,6 +627,7 @@ export function useContinuousModulation() {
 
     // Continuous modulation loop - reads fresh values from stores each frame
     const modulationLoop = () => {
+      beginMixModulationFrame()
       const currentRoutings = useSequencerStore.getState().routings
       const euclideanState = useEuclideanStore.getState()
       const ricochetState = useRicochetStore.getState()
@@ -718,6 +737,23 @@ export function useContinuousModulation() {
             applyModulation(routing.targetParam, Math.max(0, Math.min(1, value * routing.depth)))
           }
         }
+      }
+
+      // Warp line routings: the line's height at the heard playhead, computed once per frame and only when a
+      // route uses it. Runs whether or not the warp effect itself is on (the line as a modulation sequencer).
+      let warpValue = -1
+      for (const routing of currentRoutings) {
+        if (routing.trackId !== 'warp') continue
+        if (warpValue < 0) {
+          const w = useWarpStore.getState()
+          warpValue = warpModValue(w.lut, getHeardWarpPhase(), w.amount, w.skew)
+          if (import.meta.env.DEV) {
+            // Test hook: the harness checks nothing is computed without a warp route. Stripped from builds.
+            const g = globalThis as { __segWarpModCount?: number }
+            g.__segWarpModCount = (g.__segWarpModCount ?? 0) + 1
+          }
+        }
+        applyModulation(routing.targetParam, Math.max(0, Math.min(1, warpValue * routing.depth)))
       }
 
       // Per-track band → param modulation (track's own frequency window)

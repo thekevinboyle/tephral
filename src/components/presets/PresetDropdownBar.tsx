@@ -7,7 +7,6 @@ import { PresetContextMenu, FolderContextMenu } from './PresetContextMenu'
 import { importFile, openImportDialog, exportPack, captureThumbnail } from '../../utils/presetIO'
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
-import { TechReadout } from '../ui/MicroVisuals'
 
 interface ContextMenuState {
   type: 'preset' | 'folder'
@@ -212,13 +211,13 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
         data-preset-dropdown
         className="flex items-center gap-1.5"
       >
-        <TechReadout value={presets.length / 50} size={18} color="var(--text-ghost)" className="opacity-20" />
         <button
           ref={triggerRef}
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-2.5 rounded-sm transition-colors"
+          className="flex items-center gap-2 px-2.5 transition-colors"
           style={{
             height: 28,
+            borderRadius: 4,
             backgroundColor: isOpen ? 'var(--bg-hover)' : 'var(--bg-elevated)',
             border: '1px solid var(--border)',
             color: 'var(--text-primary)',
@@ -226,7 +225,7 @@ export function PresetDropdownBar({ canvasRef }: PresetDropdownBarProps) {
           onMouseEnter={() => setStatusText(getUIStatusText('presets'))}
           onMouseLeave={() => setStatusText(null)}
         >
-          <span className="hud-label" style={{ color: 'inherit', fontWeight: 600 }}>Presets</span>
+          <span style={{ font: '500 12px var(--font-sans)', color: 'inherit' }}>Presets</span>
           <svg
             width="10"
             height="10"

@@ -12,6 +12,7 @@ const OTHER_SOURCES = [
   { id: 'step', label: 'Step', color: '#4ECDC4' },
   { id: 'envelope', label: 'Envelope', color: '#AA55FF' },
   { id: 'sampleHold', label: 'S&H', color: '#AAFF00' },
+  { id: 'warp', label: 'Warp', color: '#e8c35a' }, // the time warp line (--warp)
 ]
 
 

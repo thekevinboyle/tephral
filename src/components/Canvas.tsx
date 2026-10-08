@@ -22,10 +22,27 @@ import { useSlicerStore } from '../stores/slicerStore'
 import { useSlicerBufferStore } from '../stores/slicerBufferStore'
 import { SlicerCompositor } from '../effects/SlicerCompositor'
 import { OverlayContainer } from './overlays/OverlayContainer'
-import { Crosshair } from './ui/MicroVisuals'
 import { perfMonitor } from '../utils/perfMonitor'
 import { initParamSync } from '../effects/paramSync'
 import { advanceReadbackFrame } from './overlays/sharedReadback'
+import { WarpCompositor, type WarpVideoOptions } from '../effects/warp/WarpCompositor'
+import { setActiveWarpCompositor } from '../effects/warp/warpRegistry'
+import { getHeardWarpPhase, warpLoopSecondsAt, warpNow } from '../effects/warp/warpClock'
+import { delaySeconds } from '../effects/warp/warpMath'
+import { useWarpStore } from '../stores/warpStore'
+
+/**
+ * What the pipeline is fed without the warp (set by the input effect). `live` is the texture the
+ * warp captures (media texture, or the slicer output when the slicer drives the input); null with
+ * no media, so the warp is inactive on the placeholder.
+ */
+interface WarpBase {
+  input: THREE.Texture
+  source: THREE.Texture | null
+  live: THREE.Texture | null
+  aspect: () => number
+}
+
 
 export interface CanvasHandle {
   getCanvas: () => HTMLCanvasElement | null
@@ -68,6 +85,11 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
   // Slicer compositor ref
   const slicerCompositor = useRef<SlicerCompositor | null>(null)
+
+  // Video time warp: driven from the rAF loop, never from React state
+  const warpBase = useRef<WarpBase | null>(null)
+  const warpCompositor = useRef<WarpCompositor | null>(null)
+  const warpApplied = useRef<THREE.Texture | null>(null) // texture the loop last pushed; null = base in place
 
   // Expose canvas element via ref
   useImperativeHandle(ref, () => ({
@@ -495,12 +517,15 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         pipeline.setSourceVideoSize(texWidth, texHeight)
         // The slicer frame isn't the video frame — a mask of the video would be misaligned
         pipeline.segmentation.setSource(null)
+        warpBase.current = { input: slicerTexture, source: slicerTexture, live: slicerTexture, aspect: () => texWidth / texHeight }
+        warpApplied.current = null
 
         return
       }
     }
 
-    // Person segmentation follows the active source (video or still image)
+    // Person segmentation follows the active source (video or still image).
+    // Known limitation: with the video warp on, the mask still follows the live element, not the warped frame.
     pipeline.segmentation.setSource(videoElement ?? imageElement ?? null)
 
     if (mediaTexture) {
@@ -515,6 +540,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         pipeline.setVideoSize(imageElement.naturalWidth, imageElement.naturalHeight)
         pipeline.setSourceVideoSize(imageElement.naturalWidth, imageElement.naturalHeight)
       }
+      const v = videoElement, im = imageElement
+      warpBase.current = {
+        input: mediaTexture, source: mediaTexture, live: mediaTexture,
+        aspect: () => (v ? v.videoWidth / v.videoHeight : im ? im.naturalWidth / im.naturalHeight : NaN),
+      }
+      warpApplied.current = null
     } else {
       const size = 256
       const data = new Uint8Array(size * size * 4)
@@ -528,6 +559,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       placeholder.needsUpdate = true
       pipeline.setInputTexture(placeholder)
       pipeline.setVideoSize(size, size)
+      warpBase.current = { input: placeholder, source: null, live: null, aspect: () => 1 }
+      warpApplied.current = null
     }
   }, [pipeline, mediaTexture, videoElement, imageElement, slicerEnabled, slicerOutputMode, slicerOutputFrame])
 
@@ -590,11 +623,62 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     const resizeObserver = new ResizeObserver(updateSize)
     resizeObserver.observe(container)
 
+    // Video time warp, before the effect chain. When it is off nothing here allocates or draws.
+    // Reused every frame: no per-frame allocation while the warp runs.
+    const warpInit = useWarpStore.getState()
+    const warpOpts: WarpVideoOptions = { profile: 'clean', knobs: warpInit.profileParams.clean, output: warpInit.output, mix: 1, loopSeconds: 2, lut: null, amount: 1, skew: 0 }
+    const delayArgs = { phase: 0, lut: warpInit.lut, amount: 1, skew: 0, loopSeconds: 2 }
+    const warpTick = () => {
+      const w = useWarpStore.getState()
+      const base = warpBase.current
+      const live = base?.live ?? null
+      if (base && live && w.enabled && w.appliesTo !== 'audio') {
+        let comp = warpCompositor.current
+        if (!comp) { comp = new WarpCompositor(renderer); warpCompositor.current = comp; setActiveWarpCompositor(comp) }
+        const now = warpNow()
+        const loop = warpLoopSecondsAt(now)
+        const phase = getHeardWarpPhase()
+        // Store references (no copies): the compositor reads them during render only
+        warpOpts.profile = w.profile; warpOpts.knobs = w.profileParams[w.profile]; warpOpts.output = w.output
+        warpOpts.mix = w.mix; warpOpts.loopSeconds = loop
+        warpOpts.lut = w.lut; warpOpts.amount = w.amount; warpOpts.skew = w.skew
+        comp.setOptions(warpOpts)
+        comp.capture(live, now, base.aspect())
+        delayArgs.phase = phase; delayArgs.lut = w.lut; delayArgs.amount = w.amount; delayArgs.skew = w.skew; delayArgs.loopSeconds = loop
+        const out = comp.render(phase, delaySeconds(delayArgs))
+        if (out !== warpApplied.current) {
+          pipeline.setInputTexture(out)
+          pipeline.setSourceTexture(out)
+          warpApplied.current = out
+        }
+        return
+      }
+      // Off (or no source): put the base back exactly once and free the render targets (programs are kept).
+      if (warpApplied.current && base) {
+        pipeline.setInputTexture(base.input)
+        pipeline.setSourceTexture(base.source)
+      }
+      warpApplied.current = null
+      const comp = warpCompositor.current
+      if (comp && (comp.targetCount || comp.extraTargetCount)) comp.release()
+    }
+    if (import.meta.env.DEV) {
+      // Test hook (dev only; stripped from the build). Plain functions, not getters.
+      ;(window as unknown as { __warpTest?: unknown }).__warpTest = {
+        compositor: () => warpCompositor.current, renderer, THREE, WarpCompositor,
+        input: () => warpApplied.current ?? warpBase.current?.input ?? null,
+        // what the pipeline itself holds as its input, and the original (unwarped) texture
+        pipelineInput: () => (pipeline as unknown as { inputTexture: THREE.Texture | null }).inputTexture,
+        baseInput: () => warpBase.current?.input ?? null,
+      }
+    }
+
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate)
       advanceReadbackFrame()
       const start = performance.now()
       try {
+        warpTick()
         pipeline.render()
       } catch (e) {
         // Prevent render errors (e.g. tainted texture) from crashing the loop
@@ -608,12 +692,21 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       cancelAnimationFrame(frameIdRef.current)
       resizeObserver.disconnect()
       slicerCompositor.current?.dispose()
+      warpCompositor.current?.dispose()
+      warpCompositor.current = null
+      setActiveWarpCompositor(null)
+      warpApplied.current = null
     }
   }, [pipeline, renderer, frameIdRef])
 
   // Use unified source from mediaStore
   const { source } = useMediaStore()
   const hasMedia = source !== 'none'
+
+  // Source change: the warp ring must never show frames from the previous source
+  useEffect(() => {
+    warpCompositor.current?.clear()
+  }, [videoElement, imageElement, source])
 
   return (
     <div
@@ -629,9 +722,6 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         >
           {/* Ambient scanline sweep so the panel reads as live telemetry */}
           <div className="surface-scanline" style={{ opacity: 0.5 }} />
-          <div className="mb-5 opacity-40" style={{ animation: 'hud-reticle-spin 24s linear infinite' }}>
-            <Crosshair value={0.5} size={96} />
-          </div>
           <h1
             className="text-xs font-light tracking-[0.25em] select-none alive-idle"
             style={{

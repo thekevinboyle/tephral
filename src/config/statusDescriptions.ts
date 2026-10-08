@@ -391,6 +391,7 @@ export const UI_DESCRIPTIONS: Record<string, string> = {
   browserCategory: 'Click to fold or unfold this category',
   deviceBypass: 'Bypass: switch this device off without removing it from the chain',
   tabDevices: 'Devices: the effect chain and its modulators',
+  tabWarp: 'Warp: draw what happens to time over a short loop, for the video and the sound',
   tabSequencer: 'Sequencer: step lanes for the effects in the chain',
   toggleBrowser: 'Browser: show or hide the effects browser',
   toggleInspector: 'Inspector: show or hide the settings of the selected device or modulator',

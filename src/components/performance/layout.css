@@ -202,11 +202,16 @@
 .seg-dev-mix-track { flex: 1 1 auto; position: relative; height: 4px; border-radius: 2px; background: var(--bg-elevated); }
 .seg-dev-mix-track > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; background: var(--c); }
 .seg-dev-mix-value { flex: none; width: 34px; text-align: right; font: 500 11px var(--font-mono); color: var(--text-primary); }
+.seg-dev-mix { position: relative; }
+/* Dry/wet as a modulation target (spec §6): dashed outline while a modulator is armed, the routed span hatched in the source's colour */
+.seg-dev-mix[data-assigning] { outline: 1px dashed var(--assign, var(--text-secondary)); outline-offset: 2px; cursor: copy; }
+.seg-dev-mix-track > b { position: absolute; top: -2px; bottom: -2px; border-radius: 2px; opacity: .8;
+  background: repeating-linear-gradient(90deg, var(--src) 0 2px, transparent 2px 4px); box-shadow: inset 0 0 0 1px var(--src); }
 .seg-dev-x { flex: none; margin-top: auto; width: 18px; height: 18px; display: grid; place-items: center; padding: 0; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 13px/1 var(--font-sans); cursor: pointer; opacity: 0; transition: opacity var(--dur-quick, 120ms) ease-out; }
 .seg-dev:hover .seg-dev-x, .seg-dev:focus-within .seg-dev-x { opacity: 1; }
 .seg-dev-x:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-/* Modulators card: rail like a device, then a 2-column grid of 10 slots */
+/* Modulators card: rail like a device, then a 2-column grid of 11 slots */
 .seg-modcard { flex: none; display: flex; background: var(--bg-primary); border-radius: var(--radius-panel); overflow: hidden; }
 .seg-modcard-rail { position: relative; flex: none; width: 26px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 0; background: var(--bg-surface); }
 .seg-modcard-rail::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--mod); }
@@ -228,6 +233,9 @@
 .seg-mod-slot[data-assigning] .seg-mod-route::after { background: var(--bg-void); opacity: 1; }
 @keyframes seg-assign-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .seg-mod-slot[data-assigning] .seg-mod-route { animation: none; } }
+/* The Warp slot (time warp line as a modulator) is gold: its ring, its icon, and its outline while armed */
+.seg-mod-slot[data-modulator-slot="warp"] { --mod: var(--warp); }
+.seg-mod-slot[data-modulator-slot="warp"][data-assigning] { border-color: var(--warp); }
 
 /* ParamBar */
 .param-bar { position: relative; height: 28px; display: flex; align-items: center; gap: 5px; padding: 3px 4px;
@@ -337,6 +345,8 @@
 /* Modulator editors were laid out for a wide bottom strip: in the 300px inspector, let their rows wrap and stack */
 .seg-insp-body > .seg-insp-editor { padding: 8px 10px 12px; }
 .seg-insp-editor { min-width: 0; }
+.seg-insp-warp { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.seg-insp-warp-row { display: flex; align-items: center; gap: 14px; }
 .seg-insp-editor .flex { flex-wrap: wrap; }
 .seg-insp-editor .h-full { height: auto; }
 /* CornerFrame hangs its label left of the frame (room in the old strip, clipped here): set it inside, above the content.
@@ -357,3 +367,145 @@
 .seg-toggle-block-state { flex: none; font: 500 11px var(--font-mono); }
 /* Crossfader ends (HorizontalCrossfader): text buttons, not icons */
 .seg-xfade-end { flex: none; height: 24px; padding: 0 8px; border-radius: var(--radius-ctrl); font: 500 11px var(--font-sans); cursor: pointer; }
+
+/* Header: three columns so the transport sits exactly centred; every control 28px, one line, 44px bar */
+.seg-header { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; column-gap: 16px;
+  height: 100%; padding: 0 12px; background: var(--bg-void); border-bottom: 1px solid var(--border); overflow: hidden; }
+.seg-header-left, .seg-header-right { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.seg-header-right { justify-content: flex-end; }
+.seg-header-field { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.seg-header-label { font: 500 11px var(--font-sans); color: var(--text-muted); white-space: nowrap; }
+@media (max-width: 1099px) { .seg-header-label { display: none; } .seg-header-left, .seg-header-right { gap: 10px; } }
+
+/* Collapsed device: just the side strip (double-click the strip or press C to toggle) */
+.seg-dev[data-collapsed] .seg-dev-body { display: none; }
+.seg-dev[data-collapsed] .seg-dev-rail { width: 30px; }
+
+/* Time warp chain card (WarpCard): reuses the device card, coloured --warp */
+.seg-warpcard .seg-dev-body { justify-content: center; }
+.seg-warpcard-row { display: flex; align-items: center; gap: 12px; }
+.seg-warpcard-mini { flex: none; display: block; background: var(--bg-surface); border-radius: var(--radius-ctrl); }
+.seg-warp-slot { flex: none; align-self: stretch; padding: 0 14px; border: 1px dashed var(--bg-hover); border-radius: var(--radius-panel); background: transparent; color: var(--text-muted); font: 500 12px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.seg-warp-slot:hover { background: var(--bg-hover); color: var(--text-secondary); border-color: var(--text-muted); }
+.seg-warp-slot:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+
+/* Drop media onto the output: dashed outline + what the drop will do */
+.seg-stage-drop { position: absolute; inset: 8px; z-index: 30; pointer-events: none; display: grid; place-items: center;
+  border: 1.5px dashed var(--text-secondary); border-radius: var(--radius-panel); background: color-mix(in oklab, var(--bg-void) 70%, transparent); }
+.seg-stage-drop[data-ok] { border-color: var(--live); }
+.seg-stage-drop span { font: 500 13px var(--font-sans); color: var(--text-primary); background: var(--bg-surface); padding: 6px 12px; border-radius: var(--radius-ctrl); }
+.seg-stage-drop:not([data-ok]) span { color: var(--text-secondary); }
+.seg-header-field[data-audio-drop] { outline: 1.5px dashed var(--text-secondary); outline-offset: 3px; border-radius: var(--radius-ctrl); }
+.seg-header-field[data-audio-drop="ok"] { outline-color: var(--live); }
+
+/* ─── Warp tab (time warp editor): graph column + 300px side panel ─────────────────────────────────── */
+:root {
+  --warp: #e8c35a;       /* time warp accent */
+  --warp-ink: #1b1b1b;   /* text on a --warp fill */
+  --warp-grid: #2b2c30;  /* graph columns between the quarter lines */
+  --warp-identity: #6a6b70; /* the dashed "Normal" diagonal */
+  --warp-lock: #5a4d22;  /* outline of a group locked for the dice (dim --warp) */
+  --warp-note-bg: #26241c; /* behind --warp text in a lock note */
+}
+.seg-shell[data-bottom-tab="warp"] > [data-area="bottom"] { height: 300px; }
+.seg-warp { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 2px; background: var(--gutter); outline: none; }
+.seg-warp-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg-void); }
+.seg-warp-tools { flex: none; display: flex; align-items: center; gap: 4px; padding: 6px 8px; }
+.seg-warp-tool { height: 24px; padding: 0 8px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.seg-warp-tool:hover { background: var(--bg-hover); }
+.seg-warp-tool[aria-pressed="true"] { background: var(--bg-hover); color: var(--text-primary); }
+.seg-warp-tools-gap { flex: 1 1 auto; }
+.seg-warp-tools { min-width: 0; }
+.seg-warp-tool { flex: none; display: inline-flex; align-items: center; gap: 5px; }
+.seg-warp-kbd { font: 400 10.5px var(--font-mono); color: var(--text-secondary); }
+.seg-warp-sep { flex: none; width: 1px; height: 16px; margin: 0 4px; background: var(--border); }
+.seg-warp-lines { flex: 0 1 auto; min-width: 0; max-width: 220px; }
+.seg-warp-lines-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.seg-warp-save-name { flex: none; width: 140px; height: 24px; padding: 0 8px; border: 1px solid var(--text-secondary); border-radius: var(--radius-ctrl); background: var(--bg-surface); color: var(--text-primary); font: 400 11.5px var(--font-sans); outline: none; }
+.seg-warp-save-name::placeholder { color: var(--text-secondary); }
+.seg-warp-graph { flex: 1 1 auto; min-height: 0; position: relative; margin: 0 8px 6px; border: 1px solid var(--border); border-radius: var(--radius-ctrl); overflow: hidden; background: var(--bg-primary); }
+.seg-warp-graph > svg, .seg-warp-graph > canvas { position: absolute; left: 0; top: 0; width: 100%; height: calc(100% - 34px); } /* the plot; the frame strip is below */
+.seg-warp-graph > canvas[data-warp-thumbs] { top: auto; bottom: 0; height: 34px; opacity: .55; }
+.seg-warp-graph > svg[data-warp-graph] { outline: none; touch-action: none; cursor: crosshair; }
+.seg-warp-graph[data-tool="curve"] > svg[data-warp-graph] { cursor: ns-resize; }
+.seg-warp-graph[data-tool="erase"] > svg[data-warp-graph] { cursor: cell; }
+.seg-warp-graph > svg[data-warp-graph]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-warp-playhead { position: absolute; left: 0; top: 0; bottom: 0; width: 1.5px; background: var(--live); pointer-events: none; will-change: transform; }
+.seg-warp-graph[data-off] .seg-warp-playhead { opacity: .35; }
+[data-warp-point] { cursor: grab; }
+[data-warp-bend] { cursor: ns-resize; }
+.seg-warp-guide-label { font: 400 10.5px var(--font-mono); fill: var(--text-muted); pointer-events: none; paint-order: stroke; stroke: var(--bg-primary); stroke-width: 4px; stroke-linejoin: round; }
+.seg-warp-edge { position: absolute; right: 11px; padding: 0 3px; border-radius: 2px; background: var(--bg-primary); font: 400 10px/14px var(--font-mono); color: var(--text-muted); pointer-events: none; }
+.seg-warp-edge-back { right: auto; left: 11px; }
+.seg-warp-settings { flex: none; display: flex; gap: 2px; padding: 0 8px 8px; }
+.seg-warp-set { flex: 1 1 0; min-width: 0; height: 26px; border-radius: var(--radius-ctrl); background: var(--bg-surface); display: flex; align-items: center; justify-content: center; gap: 6px;
+  font: 400 11.5px var(--font-sans); color: var(--text-secondary); cursor: ns-resize; touch-action: none; user-select: none; white-space: nowrap; overflow: hidden; }
+.seg-warp-set:hover { background: var(--bg-elevated); }
+.seg-warp-set > b { font: 500 12px var(--font-mono); color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.seg-warp-set:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-warp-limit { flex: none; height: 26px; padding: 0 8px; display: flex; align-items: center; border-radius: var(--radius-ctrl); background: var(--bg-surface); font: 400 11px var(--font-sans); color: var(--warp); white-space: nowrap; }
+.seg-warp-side { min-width: 0; min-height: 0; background: var(--bg-primary); padding: 6px 10px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+.seg-warp-sect { display: flex; align-items: center; gap: 8px; font: 400 11px var(--font-sans); color: var(--text-muted); }
+.seg-warp-sect > span { flex: none; }
+.seg-warp-sect > .seg-warp-power { margin-left: auto; }
+.seg-warp-power { flex: none; height: 18px; padding: 0 8px 0 6px; display: inline-flex; align-items: center; gap: 6px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 500 11px var(--font-sans); cursor: pointer; }
+.seg-warp-power:hover { background: var(--bg-hover); }
+.seg-warp-power > i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--text-secondary); }
+.seg-warp-power[aria-pressed="true"] { color: var(--text-primary); }
+.seg-warp-power[aria-pressed="true"] > i { background: var(--warp); border-color: var(--warp); }
+.seg-warp-seg { display: flex; gap: 3px; }
+.seg-warp-seg > button { flex: 1 1 0; min-width: 0; height: 22px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-warp-seg > button:hover { background: var(--bg-hover); }
+.seg-warp-seg > button[aria-pressed="true"] { background: var(--warp); color: var(--warp-ink); font-weight: 600; }
+.seg-warp-knobs { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; border-radius: var(--radius-ctrl); }
+/* !important because Knob sets the value and label line-height inline */
+.seg-warp-knobs [role="slider"] > span { line-height: 1.05 !important; }
+.seg-warp-knobs > .seg-warp-lock { position: absolute; top: 0; right: 0; z-index: 1; }
+.seg-warp-profiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; border-radius: var(--radius-ctrl); }
+.seg-warp-profiles > button { min-width: 0; height: 20px; padding: 0 2px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.seg-warp-profiles > button:hover { background: var(--bg-hover); }
+.seg-warp-profiles > button[aria-pressed="true"] { background: var(--warp); color: var(--warp-ink); font-weight: 600; }
+.seg-warp-profiles-cap { display: flex; align-items: center; justify-content: center; text-align: center; font: 400 10px/1.05 var(--font-sans); color: var(--text-muted); }
+.seg-warp-output { display: flex; flex-direction: column; gap: 4px; border-radius: var(--radius-ctrl); }
+.seg-warp-out { display: grid; grid-template-columns: 38px minmax(0, 1fr) 48px; align-items: center; gap: 6px; font: 400 11px var(--font-sans); color: var(--text-secondary); }
+.seg-warp-out > b { font: 500 11px var(--font-mono); color: var(--text-primary); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.seg-warp-track { position: relative; height: 14px; cursor: ew-resize; touch-action: none; }
+.seg-warp-track::before { content: ''; position: absolute; left: 0; right: 0; top: 4px; height: 6px; border-radius: 3px; background: var(--bg-elevated); }
+.seg-warp-track > i { position: absolute; top: 4px; height: 6px; border-radius: 3px; background: var(--warp); }
+.seg-warp-thumb { position: absolute; top: 0; width: 4px; height: 14px; margin-left: -2px; border-radius: 2px; background: var(--text-primary); }
+.seg-warp-track[role="slider"]:focus-visible, .seg-warp-thumb:focus-visible { outline: 1px solid var(--text-primary); outline-offset: 2px; }
+.seg-warp-thumb[role="slider"] { cursor: ew-resize; }
+.seg-warp-actions { display: flex; gap: 4px; margin-top: auto; }
+.seg-warp-actions > button { flex: 1 1 0; min-width: 0; height: 22px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; }
+.seg-warp-actions > button:hover, .seg-warp-actions > button[aria-expanded="true"] { background: var(--bg-hover); color: var(--text-primary); }
+.seg-warp-actions > button[data-warp-lockmode][aria-pressed="true"] { color: var(--warp); outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
+/* dice locks (spec §5): a lock per group in lock mode; locked groups get the --warp outline */
+.seg-warp-lock { flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-secondary); cursor: pointer; }
+.seg-warp-lock:hover { background: var(--bg-hover); }
+.seg-warp-lock[aria-pressed="false"] > svg { opacity: .45; }
+.seg-warp-lock[aria-pressed="true"] { color: var(--warp); }
+.seg-warp-sect > .seg-warp-lock { margin: -3px 0; }
+.seg-warp-settings > .seg-warp-lock { height: 26px; width: 22px; background: var(--bg-surface); }
+.seg-warp-settings > .seg-warp-lock:hover { background: var(--bg-elevated); }
+.seg-warp-graph-lock[aria-pressed="true"] { color: var(--warp); outline: 1px solid var(--warp-lock); outline-offset: -1px; }
+.seg-warp-graph-lock[aria-pressed="false"] > svg { opacity: .45; }
+.seg-warp-profiles[data-locked], .seg-warp-knobs[data-locked], .seg-warp-output[data-locked] { outline: 1.5px solid var(--warp-lock); outline-offset: 2px; }
+.seg-warp-set[data-locked] { outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
+.seg-warp-graph[data-locked] { outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
+.seg-warp-locked-note { position: absolute; top: 8px; right: 10px; display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid var(--warp-lock); border-radius: var(--radius-ctrl); background: var(--warp-note-bg); color: var(--warp); font: 400 11px var(--font-sans); white-space: nowrap; pointer-events: none; }
+.seg-warpcard button.seg-dev-name { padding: 0; border: 0; background: none; }
+.seg-warp :focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+/* Presets menu: portalled (every area clips overflow), position: fixed from the trigger rect */
+.seg-warp-menu { position: fixed; z-index: 1000; min-width: 160px; padding: 4px; display: flex; flex-direction: column; gap: 1px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-ctrl); }
+.seg-warp-menu > button { height: 24px; padding: 0 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 3px; background: transparent; color: var(--text-secondary); font: 400 12px var(--font-sans); text-align: left; cursor: pointer; white-space: nowrap; }
+.seg-warp-menu > button:hover, .seg-warp-menu > button:focus-visible { background: var(--bg-hover); color: var(--text-primary); outline: none; }
+.seg-warp-menu > button[aria-checked="true"] { color: var(--text-primary); }
+.seg-warp-menu > button[aria-checked="true"]::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--warp); }
+.seg-warp-menu-row { display: flex; gap: 1px; }
+.seg-warp-menu-row > button { height: 24px; padding: 0 8px; display: flex; align-items: center; gap: 12px; border-radius: 3px; background: transparent; color: var(--text-secondary); font: 400 12px var(--font-sans); text-align: left; cursor: pointer; white-space: nowrap; }
+.seg-warp-menu-row > button:first-child { flex: 1 1 auto; min-width: 0; justify-content: space-between; overflow: hidden; text-overflow: ellipsis; }
+.seg-warp-menu-row > button:hover, .seg-warp-menu-row > button:focus-visible { background: var(--bg-hover); color: var(--text-primary); outline: none; }
+.seg-warp-menu-row > button[aria-checked="true"] { color: var(--text-primary); }
+.seg-warp-menu-row > button[aria-checked="true"]::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--warp); }
+.seg-warp-menu-del { flex: none; width: 24px; justify-content: center; padding: 0; font-size: 14px; }
+.seg-warp-menu-sep { height: 1px; margin: 3px 4px; background: var(--border); }

@@ -7,20 +7,52 @@ export interface WarpPoint { x: number; y: number; bend?: number } // bend: -1..
 
 export const LUT_SIZE = 1024
 export const MAX_DELAY_SECONDS = 8
+/** At most this many points a line (saved lines, banks, presets, imported files). */
+export const MAX_POINTS = 512
 
-const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
+/** 0..1; NaN gives 0. */
+const clamp01 = (v: number) => (v > 0 ? (v < 1 ? v : 1) : 0)
 
-/** Sort by x (stable), clamp to 0..1, and make sure points exist at x=0 and x=1. */
+/** A point with only x, y and (when finite and non-zero) bend clamped to -1..1. x and y are clamped to 0..1. */
+function cleanPoint(p: WarpPoint): WarpPoint {
+  const pt: WarpPoint = { x: clamp01(p.x), y: clamp01(p.y) }
+  const b = p.bend
+  if (typeof b === 'number' && Number.isFinite(b) && b !== 0) pt.bend = b < -1 ? -1 : b > 1 ? 1 : b
+  return pt
+}
+
+/** Sort by x (stable), clamp to 0..1, keep only x/y/bend, and make sure points exist at x=0 and x=1. */
 export function normalizePoints(pts: WarpPoint[]): WarpPoint[] {
   const out = pts
-    .map((p, i) => ({ p, i }))
-    .map(({ p, i }) => ({ pt: { ...p, x: clamp01(Number.isFinite(p.x) ? p.x : 0), y: clamp01(Number.isFinite(p.y) ? p.y : 0) }, i }))
+    .map((p, i) => ({ pt: cleanPoint(p), i }))
     .sort((a, b) => a.pt.x - b.pt.x || a.i - b.i)
     .map((e) => e.pt)
   if (out.length === 0) return [{ x: 0, y: 0 }, { x: 1, y: 0 }] // flat along the top: live
   if (out[0].x > 0) out.unshift({ x: 0, y: out[0].y })
   if (out[out.length - 1].x < 1) out.push({ x: 1, y: out[out.length - 1].y })
   return out
+}
+
+/**
+ * Untrusted points (bank, preset file, localStorage): drops entries that are not objects with finite numeric x
+ * and y, keeps only x, y and a finite bend (clamped to -1..1), reads at most MAX_POINTS entries (so a huge list
+ * stays quick) and normalises. Null when fewer than 2 usable points remain.
+ */
+export function cleanPoints(v: unknown): WarpPoint[] | null {
+  if (!Array.isArray(v)) return null
+  const pts: WarpPoint[] = []
+  const n = Math.min(v.length, MAX_POINTS)
+  for (let k = 0; k < n; k++) {
+    const q: unknown = v[k]
+    if (!q || typeof q !== 'object') continue
+    const { x, y, bend } = q as Record<string, unknown>
+    if (typeof x !== 'number' || typeof y !== 'number' || !Number.isFinite(x) || !Number.isFinite(y)) continue
+    pts.push(typeof bend === 'number' ? { x, y, bend } : { x, y })
+  }
+  if (pts.length < 2) return null
+  const out = normalizePoints(pts)
+  // the added end points can take it just over the cap: drop interior points from the end
+  return out.length <= MAX_POINTS ? out : normalizePoints(out.slice(0, MAX_POINTS - 1))
 }
 
 function curve(t: number, bend: number): number {
@@ -56,9 +88,9 @@ export function buildLut(pts: WarpPoint[]): Float32Array {
 
 /** x' = x^(2^(-1.5*skew)); endpoints fixed. */
 export function skewPhase(x: number, skew: number): number {
-  if (x <= 0) return 0
+  if (!(x > 0)) return 0 // also NaN
   if (x >= 1) return 1
-  if (!skew) return x
+  if (!skew || !Number.isFinite(skew)) return x
   return Math.pow(x, Math.pow(2, -1.5 * skew))
 }
 
@@ -74,9 +106,11 @@ export function warpedY(lut: Float32Array, x: number, amount: number): number {
   return amount * lutAt(lut, x)
 }
 
+/** Never NaN: a non-finite LUT value, amount or loop gives 0 (live). */
 export function delaySeconds(opts: { phase: number; lut: Float32Array; amount: number; skew: number; loopSeconds: number; maxSeconds?: number }): number {
-  const y = warpedY(opts.lut, skewPhase(opts.phase, opts.skew), opts.amount)
-  return Math.min(y * opts.loopSeconds, opts.maxSeconds ?? MAX_DELAY_SECONDS)
+  const d = warpedY(opts.lut, skewPhase(opts.phase, opts.skew), opts.amount) * opts.loopSeconds
+  const max = opts.maxSeconds ?? MAX_DELAY_SECONDS
+  return d > 0 ? (d < max ? d : max) : 0
 }
 
 /** The line as a modulation value (0 = top, 1 = bottom): y' at the skewed phase. */
@@ -187,9 +221,6 @@ export function randomSteps(snap: number, rand: () => number = Math.random): War
   }
   return pts
 }
-
-/** Old name for randomSteps. */
-export const randomLine = randomSteps
 
 /**
  * Slope- and curve-heavy random line on the quantize grid: 2 to 5 sloped segments, one or two of them bent.

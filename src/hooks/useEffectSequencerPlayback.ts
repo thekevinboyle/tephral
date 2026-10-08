@@ -7,6 +7,7 @@ import { useAudioReactiveStore } from '../stores/audioReactiveStore'
 import { useAudioSourceStore } from '../stores/audioSourceStore'
 import { EFFECT_PARAM_REGISTRY } from '../config/effectParams'
 import { readModBase } from '../effects/trackBandModulation'
+import { captureUserMix, clearGates, gateOpenLevel, releaseGate, setGateOpen } from '../effects/mixModulation'
 
 // Resolution to beat fraction
 const RESOLUTION_BEATS: Record<string, number> = {
@@ -26,7 +27,8 @@ export function useEffectSequencerPlayback() {
   const animationFrameId = useRef<number | null>(null)
   // Track which effects were enabled before playback (for gate mode restore)
   const prePlayEnabled = useRef<Record<string, boolean>>({})
-  // Base mix values snapshot for gate mode (gate uses mix=0 instead of setEnabled)
+  // Base mix values snapshot for gate mode (gate uses mix=0 instead of setEnabled): the user's own value, never a
+  // modulated one (mixModulation.ts), so Stop restores what the user set
   const baseMix = useRef<Record<string, number>>({})
   // Pre-lock values: captured right before a lock is applied, used to restore when lock goes away
   // { effectId: { paramId: value } }
@@ -114,9 +116,10 @@ export function useEffectSequencerPlayback() {
       const entry = EFFECT_PARAM_REGISTRY[effectId]
       if (!entry) continue
       enabledSnapshot[effectId] = entry.getEnabled()
-      mixSnapshot[effectId] = ge.getEffectMix(effectId)
+      mixSnapshot[effectId] = captureUserMix(effectId, ge.getEffectMix(effectId))
     }
 
+    clearGates()
     prePlayEnabled.current = enabledSnapshot
     baseMix.current = mixSnapshot
     preLockValues.current = {}
@@ -131,6 +134,8 @@ export function useEffectSequencerPlayback() {
   const restoreBaseValues = useCallback(() => {
     const currentTracks = useEffectSequencerStore.getState().tracks
     const ge = useGlitchEngineStore.getState()
+    // No gate drives a mix any more: Dry/wet modulation writes effectMix directly again
+    clearGates()
 
     for (const effectId of Object.keys(currentTracks)) {
       const entry = EFFECT_PARAM_REGISTRY[effectId]
@@ -190,7 +195,7 @@ export function useEffectSequencerPlayback() {
     if (!(effectId in prePlayEnabled.current)) {
       const ge = useGlitchEngineStore.getState()
       prePlayEnabled.current[effectId] = entry.getEnabled()
-      baseMix.current[effectId] = ge.getEffectMix(effectId)
+      baseMix.current[effectId] = captureUserMix(effectId, ge.getEffectMix(effectId))
     }
 
     // For audio-reactive tracks, always allow execution (effect may be "off"
@@ -217,6 +222,7 @@ export function useEffectSequencerPlayback() {
     if (step.condition === 'fill' && !fill) {
       if (track.mode === 'gate') {
         ge.setEffectMix(effectId, 0)
+        setGateOpen(effectId, false)
       }
       return
     }
@@ -277,8 +283,12 @@ export function useEffectSequencerPlayback() {
     prevLockedParams.current[effectId] = shouldFire ? currentLockedIds : new Set()
 
     // Gate mode mix handling (independent of param locks)
+    // An open step plays at the modulated Dry/wet when a route drives it, else at the user's base
     if (track.mode === 'gate' && !track.midiGate) {
-      ge.setEffectMix(effectId, shouldFire ? origMix : 0)
+      ge.setEffectMix(effectId, shouldFire ? gateOpenLevel(effectId, origMix) : 0)
+      setGateOpen(effectId, shouldFire)
+    } else {
+      releaseGate(effectId)
     }
   }, [])
 
@@ -359,7 +369,8 @@ export function useEffectSequencerPlayback() {
             // Kick detected — enable effect and advance step
             const entry = EFFECT_PARAM_REGISTRY[effectId]
             if (entry) entry.setEnabled(true)
-            useGlitchEngineStore.getState().setEffectMix(effectId, baseMix.current[effectId] ?? 1)
+            useGlitchEngineStore.getState().setEffectMix(effectId, gateOpenLevel(effectId, baseMix.current[effectId] ?? 1))
+            setGateOpen(effectId, true)
 
             const latestTrack = useEffectSequencerStore.getState().tracks[effectId]
             if (latestTrack) {
@@ -370,6 +381,7 @@ export function useEffectSequencerPlayback() {
           } else if (!isAbove && wasAbove) {
             // Kick ended — disable effect
             useGlitchEngineStore.getState().setEffectMix(effectId, 0)
+            setGateOpen(effectId, false)
           }
 
           trackWasAbove.current[effectId] = isAbove
@@ -417,7 +429,8 @@ export function useEffectSequencerPlayback() {
                 if (!latestTrack) return
                 const ge = useGlitchEngineStore.getState()
                 if (latestTrack.mode === 'gate' && !latestTrack.midiGate) {
-                  ge.setEffectMix(effectId, baseMix.current[effectId] ?? 1)
+                  ge.setEffectMix(effectId, gateOpenLevel(effectId, baseMix.current[effectId] ?? 1))
+                  setGateOpen(effectId, true)
                 }
                 // Re-apply p-locks
                 const entry = EFFECT_PARAM_REGISTRY[effectId]

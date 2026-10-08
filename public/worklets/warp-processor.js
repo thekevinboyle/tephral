@@ -59,13 +59,13 @@ function loopSeconds(lengthBeats, bpm) {
   return Number.isFinite(v) && v > 0 ? v : 2
 }
 function skewPhase(x, skew) {
-  if (x <= 0) return 0
+  if (!(x > 0)) return 0 // also NaN
   if (x >= 1) return 1
-  if (!skew) return x
+  if (!skew || !Number.isFinite(skew)) return x
   return Math.pow(x, Math.pow(2, -1.5 * skew))
 }
 function lutAt(lut, x) {
-  const f = (x < 0 ? 0 : x > 1 ? 1 : x) * (lut.length - 1)
+  const f = (x > 0 ? (x < 1 ? x : 1) : 0) * (lut.length - 1) // NaN reads x = 0
   const i = Math.floor(f)
   if (i >= lut.length - 1) return lut[lut.length - 1]
   const a = lut[i]
@@ -73,10 +73,16 @@ function lutAt(lut, x) {
   if (Math.abs(b - a) > JUMP) return f - i < 1 - 1e-9 ? a : b
   return a + (b - a) * (f - i)
 }
-/** delaySeconds: y' = amount * f(x'), delay = y' * L, clamped to 8 s. */
+/** delaySeconds: y' = amount * f(x'), delay = y' * L, clamped to 8 s. Non-finite (NaN) gives 0, never 8 s. */
 function warpDelay(lut, phase, amount, skew, L) {
   const d = amount * lutAt(lut, skewPhase(phase, skew)) * L
-  return d < MAX_DELAY_SECONDS ? d : MAX_DELAY_SECONDS
+  return d > 0 ? (d < MAX_DELAY_SECONDS ? d : MAX_DELAY_SECONDS) : 0
+}
+/** A LUT from the main thread, with non-finite cells set to 0 (live) and cells clamped to 0..1. */
+function cleanLut(src) {
+  const lut = src instanceof Float32Array ? src : Float32Array.from(src)
+  for (let i = 0; i < lut.length; i++) { const v = lut[i]; lut[i] = v > 0 ? (v < 1 ? v : 1) : 0 }
+  return lut
 }
 
 // ---------------------------------------------------------------- shared DSP helpers
@@ -664,7 +670,7 @@ class WarpProcessor extends AudioWorkletProcessor {
 
   onMsg(m) {
     if (!m || typeof m !== 'object') return
-    if (m.type === 'lut' && m.lut && m.lut.length > 1) this.lut = m.lut instanceof Float32Array ? m.lut : Float32Array.from(m.lut) // already a structured-clone copy
+    if (m.type === 'lut' && m.lut && m.lut.length > 1) this.lut = cleanLut(m.lut) // already a structured-clone copy
     else if (m.type === 'params') this.onParams(m)
     else if (m.type === 'dispose') {
       this.disposed = true

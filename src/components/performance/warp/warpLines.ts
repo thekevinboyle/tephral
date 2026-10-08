@@ -1,7 +1,7 @@
 // User warp lines, saved in localStorage under `seg.warp.lines` (spec §2). Every access is wrapped in
 // try/catch: with storage unavailable (private mode, blocked site data) the list is empty and saving
 // reports failure instead of throwing.
-import { normalizePoints, PRESETS, type WarpPoint } from '../../../effects/warp/warpMath'
+import { cleanPoints, MAX_POINTS, PRESETS, type WarpPoint } from '../../../effects/warp/warpMath'
 
 export interface WarpLine { name: string; points: WarpPoint[] }
 
@@ -9,7 +9,7 @@ const KEY = 'seg.warp.lines'
 const MAX_NAME = 40
 /** At most this many saved lines, and this many points a line, both when loading and when saving. */
 export const MAX_LINES = 100
-export const MAX_POINTS = 512
+export { MAX_POINTS }
 
 /** A built-in line's name (any case): user lines may not use one. */
 export const isBuiltInName = (name: string) => Object.keys(PRESETS).some((n) => n.toLowerCase() === name.trim().toLowerCase())
@@ -17,20 +17,10 @@ export const isBuiltInName = (name: string) => Object.keys(PRESETS).some((n) => 
 /** Trimmed, length-capped name; '' when nothing usable is left. */
 export const cleanLineName = (name: string) => name.replace(/\s+/g, ' ').trim().slice(0, MAX_NAME)
 
-function cleanPoints(v: unknown): WarpPoint[] | null {
+/** Saved lines over MAX_POINTS are refused, not cut short. */
+function cleanLinePoints(v: unknown): WarpPoint[] | null {
   if (!Array.isArray(v) || v.length > MAX_POINTS) return null
-  const pts: WarpPoint[] = []
-  for (const q of v) {
-    if (!q || typeof q !== 'object') continue
-    const { x, y, bend } = q as Record<string, unknown>
-    if (typeof x !== 'number' || typeof y !== 'number' || !Number.isFinite(x) || !Number.isFinite(y)) continue
-    const p: WarpPoint = { x, y }
-    if (typeof bend === 'number' && Number.isFinite(bend) && bend !== 0) p.bend = Math.max(-1, Math.min(1, bend))
-    pts.push(p)
-  }
-  if (pts.length < 2) return null
-  const out = normalizePoints(pts)
-  return out.length <= MAX_POINTS ? out : null
+  return cleanPoints(v)
 }
 
 /**
@@ -47,7 +37,7 @@ export function loadLines(): WarpLine[] {
     for (const e of parsed) {
       if (!e || typeof e !== 'object') continue
       const name = typeof (e as WarpLine).name === 'string' ? cleanLineName((e as WarpLine).name) : ''
-      const points = cleanPoints((e as WarpLine).points)
+      const points = cleanLinePoints((e as WarpLine).points)
       if (name && points && !isBuiltInName(name) && !out.some((l) => l.name === name)) out.push({ name, points })
       if (out.length >= MAX_LINES) break
     }
@@ -76,7 +66,7 @@ export function saveLine(name: string, points: WarpPoint[]): SaveResult {
   const n = cleanLineName(name)
   if (!n) return 'empty'
   if (isBuiltInName(n)) return 'builtin'
-  const pts = cleanPoints(points)
+  const pts = cleanLinePoints(points)
   if (!pts) return points.length > MAX_POINTS ? 'toolong' : 'empty'
   const lines = loadLines()
   const replaced = lines.some((l) => l.name === n)

@@ -19,6 +19,7 @@ import { useWarpStore } from '../stores/warpStore'
 import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 import { warpModValue } from '../effects/warp/warpMath'
 import { getHeardWarpPhase } from '../effects/warp/warpClock'
+import { beginMixModulationFrame, noteModulatedMix } from '../effects/mixModulation'
 
 /**
  * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope, warp)
@@ -48,11 +49,14 @@ export function useContinuousModulation() {
 
       // Dry/wet for any effect (the device card's bar): written like the bar writes it, skipped when unchanged
       if (paramName === 'effectMix') {
-        // A gate (sequencer gate while playing, audio gate, MIDI gate) owns the mix: it stays the single writer
-        const seq = useEffectSequencerStore.getState()
-        const t = seq.tracks[effectId]
-        if (t && ((t.mode === 'gate' && seq.isPlaying) || t.audioGate || t.midiGate)) return
-        if (glitch.effectMix[effectId] !== value) glitch.setEffectMix(effectId, value)
+        // Audio and MIDI gates own the mix: they stay the single writer
+        const t = useEffectSequencerStore.getState().tracks[effectId]
+        if (t && (t.audioGate || t.midiGate)) return
+        // A playing sequencer gate combines with it: the modulated value is the open-step level, closed steps stay 0
+        // (mixModulation.ts). With no gate active this writes effectMix directly.
+        const cur = glitch.effectMix[effectId] ?? 1
+        const out = noteModulatedMix(effectId, value, cur)
+        if (out !== null && glitch.effectMix[effectId] !== out) glitch.setEffectMix(effectId, out)
         return
       }
 
@@ -623,6 +627,7 @@ export function useContinuousModulation() {
 
     // Continuous modulation loop - reads fresh values from stores each frame
     const modulationLoop = () => {
+      beginMixModulationFrame()
       const currentRoutings = useSequencerStore.getState().routings
       const euclideanState = useEuclideanStore.getState()
       const ricochetState = useRicochetStore.getState()

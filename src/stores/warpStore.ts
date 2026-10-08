@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { buildLut, normalizePoints, PRESETS, randomCurves, randomSteps, type WarpPoint } from '../effects/warp/warpMath'
+import { buildLut, cleanPoints, normalizePoints, PRESETS, randomCurves, randomSteps, type WarpPoint } from '../effects/warp/warpMath'
 
 /** Dice lock groups (mirrors `LockGroup` in components/performance/warp/warpLocks.ts). */
 export type DiceLocks = Record<'amount' | 'profile' | 'graph' | 'settings' | 'knobs' | 'output', boolean>
@@ -177,8 +177,8 @@ function fromV1Params(params: unknown, base: Record<ProfileId, Knobs>): Record<P
 /** Validate untrusted input (bank, preset, patch, v1 snapshot). Never yields NaN, Infinity, undefined or caller references. */
 export function sanitize(s: Partial<WarpSnapshot> | undefined, base: WarpSnapshot = WARP_DEFAULTS): WarpSnapshot {
   const i = (s ?? {}) as Partial<WarpSnapshot> & { params?: unknown }
-  const rawPts = Array.isArray(i.points) ? i.points.filter((q) => q && typeof q.x === 'number' && typeof q.y === 'number' && Number.isFinite(q.x) && Number.isFinite(q.y)) : []
-  const points = normalizePoints(copyPoints(rawPts.length >= 2 ? rawPts : base.points))
+  // only x, y and a finite bend; non-finite points dropped; at most MAX_POINTS (an imported file may hold anything)
+  const points = cleanPoints(i.points) ?? normalizePoints(base.points)
   const out: Partial<WarpOutput> = isObj(i.output) ? i.output : {}
   const profileParams = i.profileParams === undefined && i.params !== undefined
     ? fromV1Params(i.params, base.profileParams)

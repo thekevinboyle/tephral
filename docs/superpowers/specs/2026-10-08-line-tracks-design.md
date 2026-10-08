@@ -97,7 +97,7 @@ The line writes `effectMix` once per animation frame while the Sequencer plays, 
   - The lane uses `LinePlot` with lane overlays.
 - **Toolbar.** When the selected track is a Line track, the Sequencer toolbar replaces the step tools (Random, All tracks, P-locks, Clear) with the line tools for that track, prefixed with `<Effect> line`:
   - Draw, Steps, Curve, Erase;
-  - Lines ▾ (built-ins, then saved lines) | Save line | Clear;
+  - Lines ▾ (saved lines first, then the built-ins: the same order as the warp's menu) | Save line | Clear;
   - Quantize, Skew (spinbuttons, as in the warp);
   - 🔒 lock mode | 🎲 Dice track | 🎲 Dice all lines.
 
@@ -119,7 +119,7 @@ The line writes `effectMix` once per animation frame while the Sequencer plays, 
 | Triangle | `{0,1} {.5,0} {1,1}` |
 | Random steps | rolled on pick: `randomSteps(snap)` |
 
-- **Saved lines.** The warp's `warpLines.ts` store (`seg.warp.lines`), shared both ways: a line saved in the warp can be loaded on a track, and the other way round. Built-in names refused when saving are the warp presets plus the lane presets.
+- **Saved lines.** The warp's `warpLines.ts` store (`seg.warp.lines`), shared both ways: a line saved in the warp can be loaded on a track, and the other way round. Built-in names refused when saving are the warp presets plus the lane presets. A line saved earlier under a name that is now a lane preset is kept, renamed "<name> (mine)" (or "(mine 2)", … when that is taken) when the list loads, so it survives the next save or delete.
 - **Dice track.** Gives the selected Line track `randomSteps(snap)` or `randomCurves(snap)` with equal chance. Snap and skew are kept.
 - **Dice all lines.** Does the same for every Line track that is not locked. It never touches Steps tracks.
 - **Locks.** One flag per effect id, saved in `localStorage` under `seg.lines.locks` (a JSON object `{ [effectId]: true }`). Every read and write is wrapped in try/catch, so a blocked page still works for the session. Locks are a UI preference, never saved in banks. Lock mode outlines locked lanes in `--warp-lock`.

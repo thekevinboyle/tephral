@@ -519,7 +519,9 @@
 .seg-line-lane { position: relative; flex: 1; min-width: 0; height: 58px; background: var(--bg-void); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; cursor: pointer; }
 .seg-line-lane[data-selected] { height: 170px; cursor: default; }
 .seg-line-lane > svg { position: absolute; inset: 0; }
-.seg-line-lane svg[data-line-graph] { outline: none; cursor: crosshair; }
+.seg-line-lane svg[data-line-graph] { outline: none; touch-action: none; cursor: crosshair; }
+.seg-line-lane[data-tool="curve"] svg[data-line-graph] { cursor: ns-resize; }
+.seg-line-lane[data-tool="erase"] svg[data-line-graph] { cursor: cell; }
 .seg-line-lane svg[data-line-graph]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
 .seg-line-edge { font: 400 10px var(--font-mono); fill: var(--text-muted); stroke: var(--bg-void); stroke-width: 3px; stroke-linejoin: round; paint-order: stroke; }
 .seg-line-playhead { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--live); pointer-events: none; }

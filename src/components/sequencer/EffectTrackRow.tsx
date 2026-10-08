@@ -7,7 +7,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { statusHover } from '../../utils/statusHover'
 import { paramDisplayName } from '../../utils/routeTargetLabel'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
-import { getUserMix } from '../../effects/mixModulation'
+import { gateOpenLevel, getUserMix } from '../../effects/mixModulation'
 import { LineLane } from './LineLane'
 import { fmtScale } from './lineFormat'
 import { useLineLockStore } from './lineLocks'
@@ -204,14 +204,15 @@ export function EffectTrackRow({
   const lineLocked = useLineLockStore((s) => !!s.locks[effectId])
   const hasAnyActiveSteps = isLine || track.steps.some((s) => s.active)
 
-  // Line info: the Dry/wet ceiling is the user's own value (the stored one while stopped, the remembered base
-  // while playing, when the line writes the stored one every frame). Subscribed only while it is shown and stopped.
+  // Line info: the Dry/wet ceiling is the user's own value while stopped (the stored one); while playing, when the
+  // line writes the stored one every frame, it is the gate's open level over the remembered base (the modulated
+  // value while a route drives Dry/wet). Subscribed only while it is shown and stopped.
   const showLineInfo = isLine && !!isSelectedTrack
   const isPlaying = useEffectSequencerStore((s) => s.isPlaying)
   const storedMix = useGlitchEngineStore((s) => (showLineInfo && !isPlaying ? s.effectMix[effectId] ?? 1 : -1))
   // (the row re-renders on every step while playing, so the non-reactive reads stay current)
   const ceiling = !showLineInfo ? 0 : storedMix >= 0 ? storedMix
-    : getUserMix(effectId) ?? useGlitchEngineStore.getState().effectMix[effectId] ?? 1
+    : gateOpenLevel(effectId, getUserMix(effectId) ?? useGlitchEngineStore.getState().effectMix[effectId] ?? 1)
 
   return (
     <div

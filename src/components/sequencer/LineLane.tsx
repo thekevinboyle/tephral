@@ -12,6 +12,8 @@ import { useLineLockStore } from './lineLocks'
 import { fmtBars, fmtScale, trackBars } from './lineFormat'
 
 const COLS = 16
+/** Keys the focused lane keeps from the Sequencer's window shortcuts, handled or not. */
+const LANE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '1', '2', '3', '4'])
 
 interface Props {
   effectId: string
@@ -130,11 +132,14 @@ export const LineLane = memo(function LineLane({ effectId, track, color, label, 
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (!selected || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return
-    handleLineKey(e, {
+    const inPlot = !!(e.target as Element).closest('[data-line-graph]')
+    const handled = handleLineKey(e, {
       points: getPoints(), snap: line.snap, selected: sel, setSelected,
-      setPoints, say, announce: setAnnounce,
-      inPlot: !!(e.target as Element).closest('[data-line-graph]'),
+      setPoints, say, announce: setAnnounce, inPlot,
     })
+    // In the focused plot the arrows and 1-4 belong to the lane even with no point selected: keep them from the
+    // Sequencer's window shortcuts (step selection, step page). Space and Escape still reach it.
+    if (!handled && inPlot && LANE_KEYS.has(e.key)) e.stopPropagation()
   }
 
   const d = w > 0 ? linePath(line.points, X, Y) : ''
@@ -149,6 +154,7 @@ export const LineLane = memo(function LineLane({ effectId, track, color, label, 
       className="seg-line-lane"
       data-line-lane={effectId}
       data-selected={selected || undefined}
+      data-tool={selected ? tool : undefined}
       data-locked={locked || undefined}
       style={{ '--lane': color } as React.CSSProperties}
       onKeyDown={onKeyDown}

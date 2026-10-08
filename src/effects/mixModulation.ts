@@ -85,6 +85,14 @@ export function getUserMix(effectId: string): number | undefined {
   return userMix.get(effectId)
 }
 
+/**
+ * The Dry/wet an audio or MIDI gate opens to, captured when the gate turns on. While the effect sequencer plays,
+ * the stored mix may be a Line track's ceiling × level (often 0), so the user's own value is used instead.
+ */
+export function externalGateBase(effectId: string, stored: number, sequencerPlaying: boolean): number {
+  return sequencerPlaying ? (userMix.get(effectId) ?? stored) : stored
+}
+
 export function setGateOpen(effectId: string, open: boolean): void {
   gateOpen.set(effectId, open)
 }

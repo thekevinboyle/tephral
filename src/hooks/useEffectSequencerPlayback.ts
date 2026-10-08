@@ -40,6 +40,7 @@ export function useEffectSequencerPlayback() {
   // Track which effects were bypassed by mute/solo (to restore on stop/unmute)
   const muteBypassed = useRef<Set<string>>(new Set())
   const lineIds = useRef<Set<string>>(new Set()) // tracks the line pass drove last frame
+  const lineIdsNext = useRef<Set<string>>(new Set()) // reused each frame and swapped with lineIds (no per-frame allocation)
 
   // Per-track audio-reactive state
   const trackWasAbove = useRef<Record<string, boolean>>({})
@@ -463,7 +464,8 @@ export function useEffectSequencerPlayback() {
       {
         const latest = useEffectSequencerStore.getState().tracks // trackStep advanced above
         const ge = useGlitchEngineStore.getState()
-        const seen = new Set<string>()
+        const seen = lineIdsNext.current
+        seen.clear()
         for (const effectId of effectOrder) {
           const track = latest[effectId]
           if (!track || track.mode !== 'line') continue
@@ -500,6 +502,7 @@ export function useEffectSequencerPlayback() {
           const gatedElsewhere = !!t && (t.mode === 'gate' || t.midiGate || t.audioGate || t.audioReactive.enabled)
           if (!gatedElsewhere && id in baseMix.current) ge.setEffectMix(id, gateOpenLevel(id, baseMix.current[id]))
         }
+        lineIdsNext.current = lineIds.current
         lineIds.current = seen
       }
 
@@ -535,7 +538,8 @@ export function useEffectSequencerPlayback() {
       restoreBaseValues()
       clearLines()
       clearLinePhases()
-      lineIds.current = new Set()
+      lineIds.current.clear()
+      lineIdsNext.current.clear()
     }
 
     return () => {

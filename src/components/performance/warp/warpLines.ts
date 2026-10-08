@@ -12,9 +12,13 @@ const MAX_NAME = 40
 export const MAX_LINES = 100
 export { MAX_POINTS }
 
-const BUILT_IN_NAMES = [...Object.keys(PRESETS), ...LANE_PRESET_NAMES].map((n) => n.toLowerCase())
+const WARP_NAMES = Object.keys(PRESETS).map((n) => n.toLowerCase())
+const LANE_NAMES = LANE_PRESET_NAMES.map((n) => n.toLowerCase())
+const BUILT_IN_NAMES = [...WARP_NAMES, ...LANE_NAMES]
 /** A built-in line's name (any case), warp or lane presets: user lines may not use one. */
 export const isBuiltInName = (name: string) => BUILT_IN_NAMES.includes(name.trim().toLowerCase())
+const isWarpPresetName = (name: string) => WARP_NAMES.includes(name.trim().toLowerCase())
+const isLanePresetName = (name: string) => LANE_NAMES.includes(name.trim().toLowerCase())
 
 /** Trimmed, length-capped name; '' when nothing usable is left. */
 export const cleanLineName = (name: string) => name.replace(/\s+/g, ' ').trim().slice(0, MAX_NAME)
@@ -26,7 +30,21 @@ function cleanLinePoints(v: unknown): WarpPoint[] | null {
 }
 
 /**
- * Saved user lines, oldest first: at most MAX_LINES, skipping built-in names and lines over MAX_POINTS points.
+ * A name for a user line saved before the lane presets existed under one of their names: "<name> (mine)", then
+ * "<name> (mine 2)", … — never a built-in name, never one in `taken`, at most MAX_NAME characters.
+ */
+function renameLaneCollision(name: string, taken: Set<string>): string {
+  for (let k = 1; ; k++) {
+    const suffix = k === 1 ? ' (mine)' : ` (mine ${k})`
+    const n = name.slice(0, MAX_NAME - suffix.length) + suffix
+    if (!taken.has(n) && !isBuiltInName(n)) return n
+  }
+}
+
+/**
+ * Saved user lines, oldest first: at most MAX_LINES, skipping warp preset names and lines over MAX_POINTS points.
+ * A line named like a lane preset (saved before those existed) is kept, renamed "<name> (mine)", so a later
+ * save or delete, which rewrites the list from this one, keeps it too.
  * Empty when storage is unavailable or the stored value is unusable.
  */
 export function loadLines(): WarpLine[] {
@@ -35,12 +53,23 @@ export function loadLines(): WarpLine[] {
     if (!raw) return []
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    const out: WarpLine[] = []
+    const valid: WarpLine[] = []
     for (const e of parsed) {
       if (!e || typeof e !== 'object') continue
       const name = typeof (e as WarpLine).name === 'string' ? cleanLineName((e as WarpLine).name) : ''
       const points = cleanLinePoints((e as WarpLine).points)
-      if (name && points && !isBuiltInName(name) && !out.some((l) => l.name === name)) out.push({ name, points })
+      if (name && points && !isWarpPresetName(name)) valid.push({ name, points })
+    }
+    // every name a user line already has, so a rename never takes one (even of a line later in the list)
+    const taken = new Set(valid.filter((l) => !isLanePresetName(l.name)).map((l) => l.name))
+    const out: WarpLine[] = []
+    const seen = new Set<string>()
+    for (const l of valid) {
+      if (seen.has(l.name)) continue // a repeated name: the first one wins
+      seen.add(l.name)
+      let name = l.name
+      if (isLanePresetName(name)) { name = renameLaneCollision(name, taken); taken.add(name) }
+      out.push({ name, points: l.points })
       if (out.length >= MAX_LINES) break
     }
     return out

@@ -9,6 +9,7 @@ import { WarpSidePanel } from './WarpSidePanel'
 import { LockIcon } from './WarpLock'
 import { useWarpLockStore } from './warpLocks'
 import { WarpLinesMenu, WarpSaveLine } from './WarpLineTools'
+import { handleLineKey } from '../lines/lineKeys'
 
 const TOOLS: { id: WarpTool; name: string; status: string }[] = [
   { id: 'draw', name: 'Draw', status: 'Draw: click to add a point, drag to paint points, drag a point to move it. Hold Shift to paint steps, Alt snaps the height' },
@@ -20,8 +21,6 @@ const TOOLS: { id: WarpTool; name: string; status: string }[] = [
 const randomSteps = () => useWarpStore.getState().randomizeSteps()
 const randomCurves = () => useWarpStore.getState().randomizeCurves()
 const clearLine = () => useWarpStore.getState().clearLine()
-
-const GRID_Y = 1 / 16
 
 /** Lock mode only: the graph's lock, at the right of the tools (spec §5, mockup view 2). */
 const GraphLock = memo(function GraphLock() {
@@ -75,44 +74,11 @@ export const WarpEditor = memo(function WarpEditor() {
       setSelected(null)
       return
     }
-    const pts = s.points
-    if ((e.key === '[' || e.key === ']') && target.closest('[data-warp-graph]')) {
-      e.preventDefault(); e.stopPropagation()
-      const n = pts.length
-      const cur = selected !== null && selected < n ? selected : e.key === ']' ? -1 : n
-      const k = (cur + (e.key === ']' ? 1 : -1) + n) % n
-      setSelected(k)
-      say(pts, k)
-      return
-    }
-    const i = selected
-    if (i === null || !pts[i]) return
-    if (e.key === 'Escape') {
-      e.preventDefault(); e.stopPropagation()
-      setSelected(null)
-      return
-    }
-    if (e.key === 'Delete' || e.key === 'Backspace') {
-      e.preventDefault(); e.stopPropagation()
-      if (pts.length > 2) editPoints(pts.filter((_, k) => k !== i))
-      setSelected(null)
-      setAnnounce('Point removed')
-      return
-    }
-    const dx = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
-    const dy = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0
-    if (!dx && !dy) return
-    e.preventDefault(); e.stopPropagation()
-    const last = pts.length - 1
-    const p = pts[i]
-    // On the grid: the next grid line. Quantize Off: exactly ±1/64, with no rounding onto a grid
-    const g = s.snap > 0 ? s.snap : 1 / 64
-    const nx = s.snap > 0 ? Math.round((p.x + dx * g) / g) * g : p.x + dx * g
-    const x = !dx || i === 0 || i === last ? p.x : Math.min(pts[i + 1].x, Math.max(pts[i - 1].x, nx))
-    const y = Math.min(1, Math.max(0, Math.round((p.y + dy * GRID_Y) / GRID_Y) * GRID_Y))
-    const next = pts.slice()
-    next[i] = { ...p, x, y: dy ? y : p.y }
-    say(editPoints(next), i)
+    handleLineKey(e, {
+      points: s.points, snap: s.snap, selected, setSelected,
+      setPoints: editPoints, say, announce: setAnnounce,
+      inPlot: !!target.closest('[data-warp-graph]'),
+    })
   }
 
   return (

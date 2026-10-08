@@ -47,7 +47,7 @@ export const WarpEditor = memo(function WarpEditor() {
     const s = useWarpStore.getState()
     if ((e.key === 'r' || e.key === 'R') && !(e.target as Element).closest('input, textarea')) {
       e.preventDefault(); e.stopPropagation()
-      s.randomize()
+      s.randomizeSteps()
       setSelected(null)
       return
     }
@@ -81,7 +81,8 @@ export const WarpEditor = memo(function WarpEditor() {
     e.preventDefault(); e.stopPropagation()
     const last = pts.length - 1
     const p = pts[i]
-    const x = !dx || i === 0 || i === last ? p.x : Math.min(pts[i + 1].x, Math.max(pts[i - 1].x, Math.round((p.x + dx * s.snap) / s.snap) * s.snap))
+    const g = s.snap > 0 ? s.snap : 1 / 64 // quantize Off nudges by 1/64
+    const x = !dx || i === 0 || i === last ? p.x : Math.min(pts[i + 1].x, Math.max(pts[i - 1].x, Math.round((p.x + dx * g) / g) * g))
     const y = Math.min(1, Math.max(0, Math.round((p.y + dy * GRID_Y) / GRID_Y) * GRID_Y))
     const next = pts.slice()
     next[i] = { ...p, x, y: dy ? y : p.y }

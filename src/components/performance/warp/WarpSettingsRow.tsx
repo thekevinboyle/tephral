@@ -109,14 +109,14 @@ export const WarpSettingsRow = memo(function WarpSettingsRow() {
   const skew = Math.round(useWarpStore((s) => s.skew) * 100)
   const bpm = useEffectSequencerStore((s) => s.bpm)
   const limited = (lengthBeats * 60) / bpm > MAX_DELAY_SECONDS
-  const snapDen = Math.round(1 / snap)
+  const snapDen = snap > 0 ? Math.round(1 / snap) : 0 // 0 = quantize Off
   return (
     <div className="seg-warp-settings">
       <Spin id="amount" label="Amount" value={`${amount}%`} now={amount} min={0} max={100} step={stepAmount} pxPerStep={2}
         status="Amount: how much of the line is used. 0% plays live, 100% follows the line. Drag or use the arrow keys" />
-      <Spin id="length" label="Length" value={`${lengthBeats} ${lengthBeats === 1 ? 'beat' : 'beats'}`} now={lengthBeats} min={1} max={16} step={stepLength} pxPerStep={14}
+      <Spin id="length" label="Length" value={`${lengthBeats === 0.5 ? '½' : lengthBeats} ${lengthBeats <= 1 ? 'beat' : 'beats'}`} now={lengthBeats} min={1} max={16} step={stepLength} pxPerStep={14}
         status="Length: how many beats the loop lasts at the current tempo. Drag or use the arrow keys" />
-      <Spin id="snap" label="Snap" value={`1/${snapDen}`} now={snapDen} min={4} max={64} step={stepSnap} pxPerStep={14}
+      <Spin id="snap" label="Snap" value={snapDen ? `1/${snapDen}` : 'Off'} now={snapDen} min={4} max={64} step={stepSnap} pxPerStep={14}
         status="Snap: the grid points and steps snap to across the loop. Drag or use the arrow keys" />
       <Spin id="skew" label="Skew" value={`${skew > 0 ? '+' : skew < 0 ? '−' : '+'}${Math.abs(skew)}%`} now={skew} min={-100} max={100} step={stepSkew} pxPerStep={2}
         status="Skew: bends time before the line is read. Positive plays the start of the loop faster. Drag or use the arrow keys" />

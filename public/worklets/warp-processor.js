@@ -1,9 +1,12 @@
 // warp-processor: the audio side of the time warp (AudioWorklet, plain JS).
 //
-// KEEP IN SYNC WITH src/effects/warp/warpMath.ts (skewPhase, lutAt, warpedY, delayFraction,
-// delaySeconds, loopSeconds) and src/effects/warp/warpClock.ts (segments). A worklet cannot import
-// TS, so the maths is ported inline below. `layout-check.mjs warpaudio` compares this port's
-// effective delay against warpMath for random lines; run it after touching either file.
+// KEEP IN SYNC WITH src/effects/warp/warpMath.ts (skewPhase, lutAt, warpedY, delaySeconds,
+// loopSeconds) and src/effects/warp/warpClock.ts (segments). A worklet cannot import TS, so the maths
+// is ported inline below (warpDelay = delaySeconds). `layout-check.mjs warpmath` compares warpDelay
+// with delaySeconds directly and `warpaudio` compares the rendered delay; run both after touching either.
+//
+// Time model (v2): y = how far back, as a fraction of the loop (0 = live). delay = amount * f(x') * L,
+// clamped to 8 s, no modulo.
 //
 // One deliberate difference: lutAt() here treats a LUT cell whose y changes by more than JUMP
 // as a vertical jump (no interpolation across it), so the read position jumps in one sample and
@@ -16,12 +19,13 @@
 //      t0 re-derived so the phase stays continuous. Without keep (sequencer play) it is a deliberate jump.
 //   {type:'dispose'}   drop the rings; process() returns false so the processor can be collected
 //   {type:'params', amount, skew, profile, smooth, grain, blend, rate, crunch, mix, active, probe?}
+//      profile is the engine: 'clean' | 'smear' | 'degrade' (audioWarp maps the 7 store profiles onto these
+//      until the v2 grain engine lands).
 // processorOptions.messages: the same messages, applied in the constructor (initial state).
 // probe: test only; channel 1 carries the loop phase instead of audio.
 // Posts 'alive' when constructed and 'disposed' after dispose (audioWarp counts live processors).
 
 const MAX_DELAY_SECONDS = 8
-const EPS = 1e-5
 const JUMP = 0.05
 
 function loopSeconds(lengthBeats, bpm) {
@@ -43,11 +47,10 @@ function lutAt(lut, x) {
   if (Math.abs(b - a) > JUMP) return f - i < 1 - 1e-9 ? a : b
   return a + (b - a) * (f - i)
 }
-function delayFraction(xs, y) {
-  let f = (xs - y) % 1
-  if (f < 0) f += 1
-  if (f < EPS || f > 1 - EPS) return 0
-  return f
+/** delaySeconds: y' = amount * f(x'), delay = y' * L, clamped to 8 s. */
+function warpDelay(lut, phase, amount, skew, L) {
+  const d = amount * lutAt(lut, skewPhase(phase, skew)) * L
+  return d < MAX_DELAY_SECONDS ? d : MAX_DELAY_SECONDS
 }
 
 class WarpProcessor extends AudioWorkletProcessor {
@@ -159,10 +162,7 @@ class WarpProcessor extends AudioWorkletProcessor {
 
       let P = n // read position (absolute frames)
       if (doWarp) {
-        const xs = skewPhase(phase, p.skew)
-        const y = xs + p.amount * (lutAt(this.lut, xs) - xs)
-        const d = Math.min(delayFraction(xs, y) * L, MAX_DELAY_SECONDS)
-        P = n - d * sr
+        P = n - warpDelay(this.lut, phase, p.amount, p.skew, L) * sr
       }
       // click guard: a jump in read position > 10 ms crossfades over smooth*30 ms.
       // Mid-fade retriggers fade from the last wet sample (held), so the output never steps.

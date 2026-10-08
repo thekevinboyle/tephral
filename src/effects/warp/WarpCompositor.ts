@@ -1,12 +1,16 @@
 import * as THREE from 'three'
-import type { WarpProfile, WarpSnapshot } from '../../stores/warpStore'
+import type { V1Engine, V1EngineParams } from '../../stores/warpStore'
 import { delaySeconds, LUT_SIZE, MAX_DELAY_SECONDS } from './warpMath'
 import { QuadPass, WarpFrameBuffer, WARP_CAPTURE_FPS, WARP_MAX_FRAMES, makeTarget } from './WarpFrameBuffer'
 import { WARP_CLEAN_FRAG, WARP_COPY_FRAG, WARP_DEGRADE_FRAG, WARP_SMEAR_FRAG, WARP_VERTEX } from './warpShaders'
 
+/**
+ * profile/params are the v1 engine (clean / smear / degrade). The caller maps the 7 store profiles onto
+ * them with v1EngineFor until Task 4 replaces the shaders.
+ */
 export interface WarpVideoOptions {
-  profile: WarpProfile
-  params: WarpSnapshot['params']
+  profile: V1Engine
+  params: V1EngineParams
   mix: number
   /** Current loop length; sizes the ring (frames needed for the longest possible delay). */
   loopSeconds: number

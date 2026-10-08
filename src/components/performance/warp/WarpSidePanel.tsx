@@ -1,28 +1,19 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useWarpStore, type WarpApplies, type WarpProfile, type WarpSnapshot } from '../../../stores/warpStore'
+import { KNOB_NAMES, PROFILE_IDS, PROFILE_NAMES, useWarpStore, type Knobs, type ProfileId, type WarpApplies } from '../../../stores/warpStore'
 import { PRESETS } from '../../../effects/warp/warpMath'
 import { statusHover } from '../../../utils/statusHover'
 import { Knob } from '../Knob'
 
-type ParamKey = keyof WarpSnapshot['params']
-
-const PROFILES: { id: WarpProfile; name: string; status: string }[] = [
-  { id: 'clean', name: 'Clean', status: 'Clean: plays the nearest stored frame and sample, with a short crossfade at jumps' },
-  { id: 'smear', name: 'Smear', status: 'Smear: blends neighbouring frames and grains into ghost trails and flanging' },
-  { id: 'degrade', name: 'Degrade', status: 'Degrade: lower frame rate, posterized and pixelated, with a bit-crushed sound' },
-]
-
-const KNOBS: Record<WarpProfile, { key: ParamKey; label: string; status: string }[]> = {
-  clean: [{ key: 'smooth', label: 'Smooth', status: 'Smooth: crossfade length at jumps, so cuts and clicks are softened' }],
-  smear: [
-    { key: 'grain', label: 'Grain', status: 'Grain: how many frames and how long a sound grain is blended' },
-    { key: 'blend', label: 'Blend', status: 'Blend: how strongly the neighbouring frames and grains are mixed in' },
-  ],
-  degrade: [
-    { key: 'rate', label: 'Rate', status: 'Rate: lowers the frame rate and the sample rate' },
-    { key: 'crunch', label: 'Crunch', status: 'Crunch: posterize and grow the pixels, and bit-crush the sound' },
-  ],
+// Temporary profile picker (7 buttons) and its 4 knobs; Task 5 redoes the side panel.
+const PROFILE_STATUS: Record<ProfileId, string> = {
+  clean: 'Clean: plays the line as it is, with vibrato, echo and circuit-bend',
+  flange: 'Flange: grains and smeared frames, from tape-like to pitch-held',
+  degrade: 'Degrade: lower sample and frame rate, filtered and crushed',
+  filterspam: 'Filter Spam: a random resonant filter on every grain and slice',
+  harmonicer: 'Harmo-nicer: octave and fifth voices layered over the line',
+  fauxcoder: 'Fauxcoder: a ringing filter bank on the harmonics of a base note',
+  lofizzly: 'Lo-fizzly: wobbling sample rate, dirt and a boxy radio band',
 }
 
 const APPLIES: { id: WarpApplies; name: string; status: string }[] = [
@@ -34,9 +25,11 @@ const APPLIES: { id: WarpApplies; name: string; status: string }[] = [
 const PRESET_NAMES = Object.keys(PRESETS)
 const fmt2 = (v: number) => (v <= 0 ? '0' : v >= 1 ? '1' : v.toFixed(2).replace(/^0/, ''))
 
-const setParam = (key: ParamKey, v: number) => {
+const setKnob = (profile: ProfileId, k: number, v: number) => {
   const s = useWarpStore.getState()
-  s.patch({ params: { ...s.params, [key]: v } })
+  const next = [...s.profileParams[profile]] as Knobs
+  next[k] = v
+  s.patch({ profileParams: { ...s.profileParams, [profile]: next } })
 }
 
 /** Preset picker. The menu is portalled with position: fixed (every layout area clips overflow). */
@@ -180,12 +173,7 @@ export const WarpSidePanel = memo(function WarpSidePanel() {
   const enabled = useWarpStore((s) => s.enabled)
   const profile = useWarpStore((s) => s.profile)
   const appliesTo = useWarpStore((s) => s.appliesTo)
-  const smooth = useWarpStore((s) => s.params.smooth)
-  const grain = useWarpStore((s) => s.params.grain)
-  const blend = useWarpStore((s) => s.params.blend)
-  const rate = useWarpStore((s) => s.params.rate)
-  const crunch = useWarpStore((s) => s.params.crunch)
-  const values: Record<ParamKey, number> = { smooth, grain, blend, rate, crunch }
+  const knobs = useWarpStore((s) => s.profileParams[s.profile])
 
   return (
     <div className="seg-warp-side">
@@ -205,27 +193,27 @@ export const WarpSidePanel = memo(function WarpSidePanel() {
         </button>
       </div>
       <div className="seg-warp-seg" role="group" aria-label="Profile">
-        {PROFILES.map((p) => (
-          <button key={p.id} type="button" data-warp-profile={p.id} aria-pressed={profile === p.id}
-            onClick={() => useWarpStore.getState().patch({ profile: p.id })} {...statusHover(p.status)}>
-            {p.name}
+        {PROFILE_IDS.map((id) => (
+          <button key={id} type="button" data-warp-profile={id} aria-pressed={profile === id}
+            onClick={() => useWarpStore.getState().patch({ profile: id })} {...statusHover(PROFILE_STATUS[id])}>
+            {PROFILE_NAMES[id]}
           </button>
         ))}
       </div>
       <div className="seg-warp-knobs" data-warp-knobs>
-        {KNOBS[profile].map((k) => (
+        {KNOB_NAMES[profile].map((name, k) => (
           <Knob
-            key={k.key}
-            label={k.label}
-            value={values[k.key]}
+            key={name}
+            label={name}
+            value={knobs[k]}
             min={0}
             max={1}
             step={0.01}
             color="var(--warp)"
             showArc
             formatValue={fmt2}
-            statusText={k.status}
-            onChange={(v) => setParam(k.key, v)}
+            statusText={`${PROFILE_NAMES[profile]} ${name}`}
+            onChange={(v) => setKnob(profile, k, v)}
           />
         ))}
       </div>
@@ -243,8 +231,8 @@ export const WarpSidePanel = memo(function WarpSidePanel() {
         <button
           type="button"
           data-warp-randomize
-          onClick={() => useWarpStore.getState().randomize()}
-          {...statusHover('Randomize: a new line from steps, holds, slopes and one curve on the snap grid (R)')}
+          onClick={() => useWarpStore.getState().randomizeSteps()}
+          {...statusHover('Randomize: a new staircase of holds and steps on the quantize grid (R)')}
         >
           <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.2">
             <rect x="1" y="1" width="10" height="10" rx="2" />

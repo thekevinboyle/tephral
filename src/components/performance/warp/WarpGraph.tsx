@@ -47,7 +47,9 @@ function withBend(p: WarpPoint, bend: number): WarpPoint {
 /** Sampled bars of a synthetic beat (16 hits a loop) read through the line: what the input would sound like warped. */
 function previewEnvelope(lut: Float32Array, amount: number, out: Float32Array) {
   for (let i = 0; i < out.length; i++) {
-    const y = warpedY(lut, (i + 0.5) / out.length, amount)
+    const x = (i + 0.5) / out.length
+    const r = x - warpedY(lut, x, amount) // read position in loops (y is how far back)
+    const y = r - Math.floor(r)
     const hit = (y * 16) % 1
     out[i] = (0.2 + 0.8 * Math.exp(-hit * 4.5)) * (0.55 + 0.45 * Math.abs(Math.sin(y * 23.7)))
   }
@@ -221,7 +223,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     const r = svgRef.current!.getBoundingClientRect()
     return { x: clamp01((e.clientX - r.left - PAD) / iw), y: clamp01((e.clientY - r.top - PAD) / ih) }
   }
-  const snapX = (x: number) => clamp01(Math.round(x / snap) * snap)
+  const snapX = (x: number) => (snap > 0 ? clamp01(Math.round(x / snap) * snap) : clamp01(x)) // 0 = quantize Off
   const snapY = (y: number, shift: boolean) => (shift ? clamp01(Math.round(y * 16) / 16) : y)
   const setPoints = editPoints
   const hitPoint = (clientX: number, clientY: number, pts: WarpPoint[]) => {
@@ -277,7 +279,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
 
   /** Steps (staircase on the snap grid) or Draw (one point per grid column) painted across a drag. */
   const paint = (e: React.PointerEvent, mode: 'steps' | 'draw', base: WarpPoint[], first?: { x: number; y: number }) => {
-    const n = Math.max(1, Math.round(1 / snap))
+    const n = Math.max(1, Math.round(1 / (snap > 0 ? snap : 1 / 16)))
     const cols = new Map<number, number>()
     let lastCol: number | null = null
     const colOf = (x: number) => (mode === 'steps' ? Math.min(n - 1, Math.floor(x * n)) : Math.round(x * n))

@@ -1,5 +1,7 @@
-// Time-warp maths. x = loop phase (0..1), y = f(x) = read position in the loop (y=0 drawn at top).
-// delay = ((x' - y') mod 1) * loopSeconds, clamped to maxSeconds (default 8).
+// Time-warp maths (v2, HyperWarp's meaning). x = loop phase (0..1), y = f(x) = how far back to read, as a
+// fraction of the loop: y = 0 (drawn at the top) is live, y = 1 (bottom) is one loop ago.
+// x' = skewPhase(x), y' = amount * f(x'), delay = y' * loopSeconds, clamped to maxSeconds (default 8). No modulo.
+// Playback speed is 1 - dy'/dx: flat = normal (delayed), along y = x = stopped, steeper = reverse, rising = faster.
 
 export interface WarpPoint { x: number; y: number; bend?: number } // bend: -1..1 curve of the segment ENDING at this point
 
@@ -67,26 +69,19 @@ function lutAt(lut: Float32Array, x: number): number {
   return lut[i] + (lut[i + 1] - lut[i]) * (f - i)
 }
 
-/** y' = x + amount * (lut(x) - x) */
+/** y' = amount * f(x): how far back, as a fraction of the loop (0 = live). */
 export function warpedY(lut: Float32Array, x: number, amount: number): number {
-  return x + amount * (lutAt(lut, x) - x)
-}
-
-const EPS = 1e-5
-
-/** ((xs - y) mod 1) in [0,1). Values within EPS of a whole loop snap to 0 so the identity stays truly live. */
-export function delayFraction(xs: number, y: number): number {
-  let f = (xs - y) % 1
-  if (f < 0) f += 1
-  if (f < EPS || f > 1 - EPS) return 0
-  return f
+  return amount * lutAt(lut, x)
 }
 
 export function delaySeconds(opts: { phase: number; lut: Float32Array; amount: number; skew: number; loopSeconds: number; maxSeconds?: number }): number {
-  const xs = skewPhase(opts.phase, opts.skew)
-  const y = warpedY(opts.lut, xs, opts.amount)
-  const d = delayFraction(xs, y) * opts.loopSeconds
-  return Math.min(d, opts.maxSeconds ?? MAX_DELAY_SECONDS)
+  const y = warpedY(opts.lut, skewPhase(opts.phase, opts.skew), opts.amount)
+  return Math.min(y * opts.loopSeconds, opts.maxSeconds ?? MAX_DELAY_SECONDS)
+}
+
+/** The line as a modulation value (0 = top, 1 = bottom): y' at the skewed phase. */
+export function warpModValue(lut: Float32Array, phase: number, amount: number, skew: number): number {
+  return clamp01(warpedY(lut, skewPhase(phase, skew), amount))
 }
 
 export function loopSeconds(lengthBeats: number, bpm: number): number {
@@ -104,81 +99,119 @@ function run(x0: number, y0: number, x1: number, y1: number, n: number): WarpPoi
 }
 
 function stutterBuild(): WarpPoint[] {
-  // Repeat the opening slice; each repeat is shorter than the last.
+  // Each slice is held at the delay of its own start, so every slice replays the loop from the top;
+  // the delay steps down at each edge, and each repeat is shorter than the last.
   const edges = [0.25, 0.5, 0.625, 0.75, 0.8125, 0.875, 0.9375, 1]
   const pts: WarpPoint[] = [{ x: 0, y: 0 }]
   let prev = 0
   edges.forEach((e, i) => {
-    pts.push({ x: e, y: e - prev })
-    if (i < edges.length - 1) pts.push({ x: e, y: 0 })
+    pts.push({ x: e, y: prev })
+    if (i < edges.length - 1) pts.push({ x: e, y: e })
     prev = e
   })
   return pts
 }
 
 function freezeHits(): WarpPoint[] {
-  // On each beat hold for 1/16 of the loop, then jump back onto the diagonal.
+  // On each beat run along the guide (stopped) for 1/16 of the loop, then jump back to live.
   const pts: WarpPoint[] = []
-  for (const q of [0, 0.25, 0.5, 0.75]) {
-    pts.push({ x: q, y: q }, { x: q + 0.0625, y: q }, { x: q + 0.0625, y: q + 0.0625 })
-  }
-  pts.push({ x: 1, y: 1 })
+  for (const q of [0, 0.25, 0.5, 0.75]) pts.push({ x: q, y: 0 }, { x: q + 0.0625, y: 0.0625 }, { x: q + 0.0625, y: 0 })
+  pts.push({ x: 1, y: 0 })
   return pts
 }
 
+/**
+ * Built-in lines. Each one (except Straight) gives the same delay over the loop as its v1 version did:
+ * y = (x - y_v1) mod 1, with a vertical step wherever that wraps.
+ */
 export const PRESETS: Record<string, WarpPoint[]> = {
-  Straight: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+  Straight: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
   'Stutter build': stutterBuild(),
-  // Half speed with a jump back to live at the half.
-  'Half time': [{ x: 0, y: 0 }, ...run(0, 0, 0.5, 0.25, 4), { x: 0.5, y: 0.5 }, ...run(0.5, 0.5, 1, 0.75, 4)],
+  // Half speed (a gentle downward slope), then back to live at the half.
+  'Half time': [{ x: 0, y: 0 }, ...run(0, 0, 0.5, 0.25, 4), { x: 0.5, y: 0 }, ...run(0.5, 0, 1, 0.25, 4)],
   'Freeze hits': freezeHits(),
-  Reverse: [{ x: 0, y: 1 }, ...run(0, 1, 1, 0, 8)],
-  // Diagonal, then a curve that decays to a flat. bend -1/3 gives start slope 1, end slope 0.
-  'Tape stop': [{ x: 0, y: 0 }, ...run(0, 0, 0.4, 0.4, 8), { x: 1, y: 0.7, bend: -1 / 3 }],
+  // Twice as steep as the guide (speed -1), jumping back to live at the half.
+  Reverse: [{ x: 0, y: 0 }, ...run(0, 0, 0.5, 1, 4), { x: 0.5, y: 0 }, ...run(0.5, 0, 1, 1, 4)],
+  // Live, then a curve that bends into the guide's slope: slows to a stop. y = .3 t^2 over [.4, 1].
+  'Tape stop': [{ x: 0, y: 0 }, ...run(0, 0, 0.4, 0, 8), { x: 1, y: 0.3, bend: 1 / 3 }],
   Scratch: [
-    { x: 0, y: 0 }, { x: 0.125, y: 0.1 }, { x: 0.2, y: 0.02 }, { x: 0.3, y: 0.25 }, { x: 0.375, y: 0.15 },
-    { x: 0.5, y: 0.45 }, { x: 0.58, y: 0.3 }, { x: 0.7, y: 0.62 }, { x: 0.78, y: 0.5 }, { x: 0.9, y: 0.85 }, { x: 1, y: 1 },
+    { x: 0, y: 0 }, { x: 0.125, y: 0.025 }, { x: 0.2, y: 0.18 }, { x: 0.3, y: 0.05 }, { x: 0.375, y: 0.225 },
+    { x: 0.5, y: 0.05 }, { x: 0.58, y: 0.28 }, { x: 0.7, y: 0.08 }, { x: 0.78, y: 0.28 }, { x: 0.9, y: 0.05 }, { x: 1, y: 0 },
   ],
   // Quarters play in the order 1, 3, 2, 4.
   Rearranger: [
-    { x: 0, y: 0 }, { x: 0.25, y: 0.25 }, { x: 0.25, y: 0.5 }, { x: 0.5, y: 0.75 },
-    { x: 0.5, y: 0.25 }, { x: 0.75, y: 0.5 }, { x: 0.75, y: 0.75 }, { x: 1, y: 1 },
+    { x: 0, y: 0 }, { x: 0.25, y: 0 }, { x: 0.25, y: 0.75 }, { x: 0.5, y: 0.75 },
+    { x: 0.5, y: 0.25 }, { x: 0.75, y: 0.25 }, { x: 0.75, y: 0 }, { x: 1, y: 0 },
   ],
 }
 
-/**
- * Random line on the snap grid: 3 to 6 segments, each a hold, slope or (exactly one) curve,
- * with optional vertical jumps between them. Deterministic when `rand` is seeded.
- */
-export function randomLine(snap: number, rand: () => number = Math.random): WarpPoint[] {
-  if (!Number.isFinite(snap) || snap <= 0) snap = 1 / 16
-  const n = Math.max(2, Math.round(1 / snap))
-  const gy = () => Math.floor(rand() * (n + 1)) / n
-  const gx = (i: number) => i / n
-  const segs = Math.min(n, 3 + Math.floor(rand() * 4))
-  // choose segs-1 distinct interior cut indices
+// ---------------------------------------------------------------- random lines
+
+/** Quantize setting -> grid columns. 0 (Off) and bad values use 1/16. */
+function gridCols(snap: number): number {
+  const g = Number.isFinite(snap) && snap > 0 ? snap : 1 / 16
+  return Math.max(2, Math.round(1 / g))
+}
+
+/** segs - 1 distinct interior cut columns in 1..n-1, plus 0 and n, sorted. */
+function cutEdges(n: number, segs: number, rand: () => number): number[] {
   const cuts = new Set<number>()
   while (cuts.size < segs - 1) cuts.add(1 + Math.floor(rand() * (n - 1)))
-  const edges = [0, ...[...cuts].sort((a, b) => a - b), n]
-  const curveSeg = Math.floor(rand() * segs)
+  return [0, ...[...cuts].sort((a, b) => a - b), n]
+}
+
+/**
+ * Staircase-heavy random line on the quantize grid: 3 to 7 holds joined by vertical steps (each hold at a
+ * different height). Deterministic when `rand` is seeded. snap 0 (Off) uses 1/16.
+ */
+export function randomSteps(snap: number, rand: () => number = Math.random): WarpPoint[] {
+  const n = gridCols(snap)
+  const m = Math.min(16, n) // height levels
+  const segs = Math.min(n, 3 + Math.floor(rand() * 5))
+  const edges = cutEdges(n, segs, rand)
+  // favour the upper half (shorter delays) a little, so the result stays musical
+  const level = () => Math.floor(Math.pow(rand(), 1.3) * (m + 1)) / m
   const pts: WarpPoint[] = []
-  let y = gy()
+  let y = level()
   pts.push({ x: 0, y })
   for (let s = 0; s < segs; s++) {
-    const xa = gx(edges[s])
-    const xb = gx(edges[s + 1])
-    if (s > 0 && rand() < 0.5) {
-      const ny = gy()
-      if (ny !== y) { pts.push({ x: xa, y: ny }); y = ny }
+    const xa = edges[s] / n
+    const xb = edges[s + 1] / n
+    if (s > 0) {
+      let ny = level()
+      if (ny === y) ny = y >= 0.5 ? y - 1 / m : y + 1 / m
+      pts.push({ x: xa, y: ny })
+      y = ny
     }
-    let ey = y
-    const isCurve = s === curveSeg
-    if (isCurve || rand() < 0.6) {
-      ey = gy()
-      if (ey === y) ey = y >= 0.5 ? y - 1 / n : y + 1 / n
-    }
-    const pt: WarpPoint = { x: xb, y: ey }
-    if (isCurve) {
+    pts.push({ x: xb, y })
+  }
+  return pts
+}
+
+/** Old name for randomSteps. */
+export const randomLine = randomSteps
+
+/**
+ * Slope- and curve-heavy random line on the quantize grid: 2 to 5 sloped segments, one or two of them bent.
+ * Deterministic when `rand` is seeded. snap 0 (Off) uses 1/16.
+ */
+export function randomCurves(snap: number, rand: () => number = Math.random): WarpPoint[] {
+  const n = gridCols(snap)
+  const m = 16
+  const segs = Math.min(n, 2 + Math.floor(rand() * 4))
+  const edges = cutEdges(n, segs, rand)
+  const level = () => Math.floor(rand() * (m + 1)) / m
+  const bendCount = segs >= 3 && rand() < 0.5 ? 2 : 1
+  const bent = new Set<number>()
+  while (bent.size < bendCount) bent.add(Math.floor(rand() * segs))
+  const pts: WarpPoint[] = []
+  let y = level()
+  pts.push({ x: 0, y })
+  for (let s = 0; s < segs; s++) {
+    let ey = level()
+    if (ey === y) ey = y >= 0.5 ? y - 4 / m : y + 4 / m
+    const pt: WarpPoint = { x: edges[s + 1] / n, y: ey }
+    if (bent.has(s)) {
       const mag = 0.3 + rand() * 0.7
       pt.bend = rand() < 0.5 ? mag : -mag
     }

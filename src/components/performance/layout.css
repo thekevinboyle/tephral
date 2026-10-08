@@ -381,7 +381,12 @@
 .seg-header-field[data-audio-drop="ok"] { outline-color: var(--live); }
 
 /* ─── Warp tab (time warp editor): graph column + 268px side panel ─────────────────────────────────── */
-:root { --warp: #e8c35a; }
+:root {
+  --warp: #e8c35a;       /* time warp accent */
+  --warp-ink: #1b1b1b;   /* text on a --warp fill */
+  --warp-grid: #2b2c30;  /* graph columns between the quarter lines */
+  --warp-identity: #6a6b70; /* the dashed "Normal" diagonal */
+}
 .seg-shell[data-bottom-tab="warp"] > [data-area="bottom"] { height: 300px; }
 .seg-warp { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 268px; gap: 2px; background: var(--gutter); outline: none; }
 .seg-warp-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg-void); }
@@ -420,7 +425,7 @@
 .seg-warp-seg { display: flex; gap: 2px; }
 .seg-warp-seg > button { flex: 1 1 0; min-width: 0; height: 24px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .seg-warp-seg > button:hover { background: var(--bg-hover); }
-.seg-warp-seg > button[aria-pressed="true"] { background: var(--warp); color: #1b1b1b; font-weight: 600; }
+.seg-warp-seg > button[aria-pressed="true"] { background: var(--warp); color: var(--warp-ink); font-weight: 600; }
 .seg-warp-knobs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; min-height: 66px; }
 .seg-warp-mix { display: flex; align-items: center; gap: 6px; font: 400 11px var(--font-sans); color: var(--text-muted); }
 .seg-warp-mix-track { flex: 1 1 auto; position: relative; height: 14px; display: flex; align-items: center; cursor: ew-resize; touch-action: none; border-radius: 2px; }

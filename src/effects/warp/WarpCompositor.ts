@@ -62,6 +62,10 @@ export class WarpCompositor {
   }
   private readonly delayArgs: { phase: number; lut: Float32Array; amount: number; skew: number; loopSeconds: number } = { phase: 0, lut: new Float32Array(LUT_SIZE), amount: 1, skew: 0, loopSeconds: 2 }
   private readonly smearW = [0, 0, 0, 0, 0, 0]
+  /** Extra history the editor's thumbnail strip asks for (seconds; 0 = ring sized for the loop only). */
+  private thumbHistory = 0
+  private thumbPx: Uint8Array<ArrayBuffer> | null = null
+  private thumbImg: ImageData | null = null
   private _jumpCount = 0
   private live: THREE.Texture | null = null
   private now = 0
@@ -119,8 +123,17 @@ export class WarpCompositor {
   /** Copies the given fields in (no allocation; callers can reuse one options object). */
   setOptions(o: Partial<WarpVideoOptions>) { Object.assign(this.opts, o) }
 
+  /**
+   * Keep at least `seconds` of history (capped at MAX_DELAY_SECONDS) so the editor strip can show
+   * the frames the last completed pass played, which can lie up to 3 loops back. 0 returns to the
+   * loop-sized ring; the extra targets are freed on the next capture.
+   */
+  setThumbnailHistory(seconds: number): void {
+    this.thumbHistory = Number.isFinite(seconds) ? Math.max(0, seconds) : 0
+  }
+
   private capacity() {
-    const longest = Math.min(MAX_DELAY_SECONDS, Math.max(0, this.opts.loopSeconds))
+    const longest = Math.min(MAX_DELAY_SECONDS, Math.max(0, this.opts.loopSeconds, this.thumbHistory))
     return Math.min(WARP_MAX_FRAMES, Math.ceil(longest * WARP_CAPTURE_FPS) + 2)
   }
 
@@ -257,17 +270,32 @@ export class WarpCompositor {
   }
 
   /**
-   * Thumbnail for the editor strip: the last loop of history (or what is stored, if less) split
-   * into `count` equal parts, index 0 oldest. A new 96 px wide canvas, or null with no frames.
-   * Synchronous GPU readback: callers must cache the result and refresh it sparingly, never per frame.
+   * The last loop of history (or what is stored, if less) split into `count` equal parts, index 0
+   * oldest. A new 96 px wide canvas, or null with no frames. The editor strip uses getThumbnailAt
+   * (the frame each column plays); this rolling view is kept for tests and diagnostics.
    */
   getThumbnail(index: number, count: number): HTMLCanvasElement | null {
     const s = this.buffer.size
     if (!s || !(count >= 1) || !(index >= 0 && index < count)) return null
     const newest = this.buffer.newestTime
     const span = Math.min(Math.max(0, this.opts.loopSeconds), newest - this.buffer.oldestTime)
-    const slot = this.buffer.closest(newest - span + ((index + 0.5) / count) * span)
-    if (!slot) return null
+    const canvas = document.createElement('canvas')
+    return Number.isNaN(this.getThumbnailAt(newest - span + ((index + 0.5) / count) * span, canvas)) ? null : canvas
+  }
+
+  /** Capture time of the stored frame closest to `t` (no GPU work), or NaN with no frames. */
+  frameTimeAt(t: number): number {
+    return this.buffer.size ? (this.buffer.closest(t)?.t ?? NaN) : NaN
+  }
+
+  /**
+   * Draw the stored frame captured closest to clock time `t` (the renderer's nearest-timestamp
+   * lookup) into `out`, resized to 96 px wide. Returns that frame's capture time, or NaN with no
+   * frames. Reuses one pixel buffer. Synchronous GPU readback: refresh sparingly, never per frame.
+   */
+  getThumbnailAt(t: number, out: HTMLCanvasElement): number {
+    const slot = this.buffer.size ? this.buffer.closest(t) : null
+    if (!slot) return NaN
     const fw = this.buffer.frameWidth, fh = this.buffer.frameHeight
     const w = THUMB_WIDTH, h = Math.max(1, Math.round((THUMB_WIDTH * fh) / fw))
     if (!this.thumbTarget) this.thumbTarget = makeTarget(w, h)
@@ -275,18 +303,17 @@ export class WarpCompositor {
     this.thumbCopy.uniforms.tSrc.value = slot.rt.texture
     this.quad.draw(this.renderer, this.thumbCopy, this.thumbTarget)
     this.thumbCopy.uniforms.tSrc.value = null
-    const px = new Uint8Array(w * h * 4)
+    if (!this.thumbPx || this.thumbPx.length !== w * h * 4) { this.thumbPx = new Uint8Array(w * h * 4); this.thumbImg = new ImageData(w, h) }
+    const px = this.thumbPx, img = this.thumbImg!
     this.renderer.readRenderTargetPixels(this.thumbTarget, 0, 0, w, h, px)
-    const canvas = document.createElement('canvas')
-    canvas.width = w
-    canvas.height = h
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-    const img = ctx.createImageData(w, h)
+    if (out.width !== w) out.width = w
+    if (out.height !== h) out.height = h
+    const ctx = out.getContext('2d')
+    if (!ctx) return NaN
     const row = w * 4
     for (let y = 0; y < h; y++) img.data.set(px.subarray((h - 1 - y) * row, (h - y) * row), y * row) // GL rows are bottom-up
     ctx.putImageData(img, 0, 0)
-    return canvas
+    return slot.t
   }
 
   /** Forget every stored frame (on source change) and any fade/hold state. */

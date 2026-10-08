@@ -2,8 +2,9 @@ import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useWarpStore } from '../../../stores/warpStore'
 import { useAudioSourceStore } from '../../../stores/audioSourceStore'
 import { useUIStore } from '../../../stores/uiStore'
-import { sampleLine, skewPhase, warpedY, type WarpPoint } from '../../../effects/warp/warpMath'
-import { getHeardWarpPhase } from '../../../effects/warp/warpClock'
+import { delaySeconds, sampleLine, skewPhase, warpedY, type WarpPoint } from '../../../effects/warp/warpMath'
+import { getHeardWarpPhase, getWarpPhase, warpLoopSecondsAt, warpNow } from '../../../effects/warp/warpClock'
+import { describePoint, editPoints } from './warpEdit'
 import { getActiveWarpCompositor } from '../../../effects/warp/warpRegistry'
 
 export type WarpTool = 'draw' | 'steps' | 'curve' | 'erase'
@@ -14,6 +15,7 @@ const BARS = 120
 const THUMBS = 16
 const THUMB_MS = 250
 const HIT_PX = 9
+const HIT_END_PX = 14 // endpoints are easy to grab even at the graph's edges
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
 const EPS = 1e-9
@@ -144,7 +146,8 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     return () => cancelAnimationFrame(raf)
   }, [visible, w, h, iw])
 
-  // ── thumbnails: cached, refreshed every 250 ms while visible (getThumbnail is a synchronous GPU readback) ──
+  // ── thumbnails: the frame each column plays in the last completed pass of the loop. Refreshed every
+  // 250 ms while visible; 16 reused canvases, and columns that play the same frame share one readback.
   useEffect(() => {
     if (!visible || w < 2) return
     const cv = thumbRef.current
@@ -154,19 +157,44 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     const th = 34
     cv.width = Math.round(w * dpr); cv.height = Math.round(th * dpr)
     const surface = getComputedStyle(cv).getPropertyValue('--bg-surface').trim() || '#2c2d31'
+    const cells = Array.from({ length: THUMBS }, () => document.createElement('canvas'))
+    const times = new Float64Array(THUMBS)
+    const src = new Int8Array(THUMBS)
+    const args = { phase: 0, lut: useWarpStore.getState().lut, amount: 1, skew: 0, loopSeconds: 2 }
     const draw = () => {
       if (document.visibilityState !== 'visible') return
       const comp = getActiveWarpCompositor()
       const s = useWarpStore.getState()
       const live = !!comp && s.enabled && s.appliesTo !== 'audio'
+      times.fill(NaN)
+      if (live) {
+        const now = warpNow()
+        const L = warpLoopSecondsAt(now)
+        // Reads of the last completed pass lie up to 3 loops back; ask the ring to keep that (capped at 8 s)
+        comp.setThumbnailHistory(3 * L + 0.25)
+        const passStart = now - getWarpPhase(now) * L - L
+        args.lut = s.lut; args.amount = s.amount; args.skew = s.skew; args.loopSeconds = L
+        for (let i = 0; i < THUMBS; i++) {
+          // column centre on the graph's axis (x′), back to the clock phase x that reads it
+          const x = skewPhase((i + 0.5) / THUMBS, -s.skew)
+          args.phase = x
+          const t = passStart + x * L - delaySeconds(args)
+          const ft = comp.frameTimeAt(t)
+          let j = -1
+          for (let k = 0; k < i; k++) if (times[k] === ft) { j = src[k]; break }
+          if (j < 0 && !Number.isNaN(ft)) { comp.getThumbnailAt(t, cells[i]); j = i }
+          times[i] = ft
+          src[i] = j
+        }
+      } else comp?.setThumbnailHistory(0)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, th)
       const cw = (w - (THUMBS - 1)) / THUMBS
       let filled = 0
       for (let i = 0; i < THUMBS; i++) {
         const x = i * (cw + 1)
-        const img = live ? comp.getThumbnail(i, THUMBS) : null
-        if (img) {
+        const img = Number.isNaN(times[i]) ? null : cells[src[i]]
+        if (img && img.width > 1) {
           // cover the cell, centred
           const sc = Math.max(cw / img.width, th / img.height)
           const sw = cw / sc, sh = th / sc
@@ -178,10 +206,14 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
         }
       }
       cv.dataset.filled = String(filled)
+      cv.dataset.frames = Array.from(times, (t) => (Number.isNaN(t) ? '' : t.toFixed(4))).join(',')
     }
     draw()
     const id = window.setInterval(draw, THUMB_MS)
-    return () => window.clearInterval(id)
+    return () => {
+      window.clearInterval(id)
+      getActiveWarpCompositor()?.setThumbnailHistory(0)
+    }
   }, [visible, w])
 
   // ── editing ──────────────────────────────────────────────────────────────────────────────────────
@@ -191,7 +223,17 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
   }
   const snapX = (x: number) => clamp01(Math.round(x / snap) * snap)
   const snapY = (y: number, shift: boolean) => (shift ? clamp01(Math.round(y * 16) / 16) : y)
-  const setPoints = (p: WarpPoint[]) => useWarpStore.getState().setPoints(p)
+  const setPoints = editPoints
+  const hitPoint = (clientX: number, clientY: number, pts: WarpPoint[]) => {
+    const r = svgRef.current!.getBoundingClientRect()
+    const px = clientX - r.left, py = clientY - r.top
+    let i = -1, best = Infinity
+    pts.forEach((p, k) => {
+      const d = Math.hypot(X(p.x) - px, Y(p.y) - py)
+      if (d <= (k === 0 || k === pts.length - 1 ? HIT_END_PX : HIT_PX) && d < best) { best = d; i = k }
+    })
+    return i
+  }
 
   /** Drag: run `move` on every pointermove until release, with pointer capture on the svg. */
   const track = (e: React.PointerEvent, move: (ev: PointerEvent) => void) => {
@@ -253,7 +295,12 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
         const pts = mode === 'steps' ? [{ x: c / n, y }, { x: (c + 1) / n, y }] : [{ x: c / n, y }]
         for (const p of pts) { const q = add[add.length - 1]; if (!q || q.x !== p.x || q.y !== p.y) add.push(p) }
       }
-      setPoints([...kept, ...add].sort((a, b) => a.x - b.x))
+      const now = setPoints([...kept, ...add].sort((a, b) => a.x - b.x))
+      if (mode === 'steps') { onSelect(null); return }
+      // keep a valid selection: the point painted last
+      const lx = lastCol === null ? NaN : lastCol / n, ly = lastCol === null ? NaN : cols.get(lastCol)
+      const k = now.findIndex((p) => Math.abs(p.x - lx) < EPS && p.y === ly)
+      onSelect(k < 0 ? null : k)
     }
     const at = (v: { x: number; y: number }) => {
       const c = colOf(v.x), y = clamp01(yOf(v.y))
@@ -286,9 +333,9 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     if (e.button !== 0) return
     svgRef.current?.focus({ preventScroll: true })
     const t = e.target as Element
-    const pt = t.closest('[data-warp-point]')
     const bh = t.closest('[data-warp-bend]')
     const cur = useWarpStore.getState().points
+    const hit = hitPoint(e.clientX, e.clientY, cur)
     if (tool === 'erase') { erase(e); return }
     if (tool === 'steps') { paint(e, 'steps', cur); return }
     if (tool === 'curve') {
@@ -298,16 +345,26 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
       bendSegment(i, e)
       return
     }
-    if (pt) {
-      const i = Number(pt.getAttribute('data-warp-point'))
-      onSelect(i)
-      movePoint(i, e)
+    if (hit >= 0) {
+      onSelect(hit)
+      movePoint(hit, e)
       return
     }
     if (bh) { bendSegment(Number(bh.getAttribute('data-warp-bend')), e); return }
     // Empty space: add a point (x on the snap grid), then a drag paints points along its path
     const v = toVal(e)
     const p = { x: snapX(v.x), y: snapY(v.y, e.shiftKey) }
+    // Snapped onto an existing point's x: move that point (the nearest in y) instead of making an accidental step
+    let same = -1
+    cur.forEach((q, k) => { if (Math.abs(q.x - p.x) < EPS && (same < 0 || Math.abs(q.y - p.y) < Math.abs(cur[same].y - p.y))) same = k })
+    if (same >= 0) {
+      const next = cur.slice()
+      next[same] = { ...cur[same], y: p.y }
+      setPoints(next)
+      onSelect(same)
+      movePoint(same, e)
+      return
+    }
     let at = cur.length
     for (let k = 0; k < cur.length; k++) if (cur[k].x > p.x) { at = k; break }
     const next = [...cur.slice(0, at), p, ...cur.slice(at)]
@@ -321,10 +378,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     if (tool !== 'draw') return
     const cur = useWarpStore.getState().points
     if (cur.length <= 2) return
-    const r = svgRef.current!.getBoundingClientRect()
-    const px = e.clientX - r.left, py = e.clientY - r.top
-    let i = -1, best = HIT_PX
-    cur.forEach((p, k) => { const dd = Math.hypot(X(p.x) - px, Y(p.y) - py); if (dd <= best) { best = dd; i = k } })
+    const i = hitPoint(e.clientX, e.clientY, cur)
     if (i < 0) return
     setPoints(cur.filter((_, k) => k !== i))
     onSelect(null)
@@ -336,7 +390,8 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     const t = e.target as Element
     let st = STATUS[tool]
     let normal = false
-    if (t.closest('[data-warp-point]')) st = STATUS_POINT
+    const hp = hitPoint(e.clientX, e.clientY, useWarpStore.getState().points)
+    if (hp >= 0) st = `${describePoint(useWarpStore.getState().points, hp)}. ${STATUS_POINT}`
     else if (t.closest('[data-warp-bend]')) st = STATUS_BEND
     else {
       const r = svgRef.current!.getBoundingClientRect()
@@ -375,10 +430,10 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
         <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true" data-warp-back>
           <g data-warp-grid>
             {Array.from({ length: COLS + 1 }, (_, i) => (
-              <line key={i} x1={X(i / COLS)} y1={0} x2={X(i / COLS)} y2={h} stroke={i % 4 === 0 ? 'var(--border)' : '#2b2c30'} strokeWidth={1} />
+              <line key={i} x1={X(i / COLS)} y1={0} x2={X(i / COLS)} y2={h} style={{ stroke: i % 4 === 0 ? 'var(--border)' : 'var(--warp-grid)' }} strokeWidth={1} />
             ))}
           </g>
-          <line data-warp-identity x1={X(0)} y1={Y(0)} x2={X(1)} y2={Y(1)} stroke="#6a6b70" strokeDasharray="6 6" />
+          <line data-warp-identity x1={X(0)} y1={Y(0)} x2={X(1)} y2={Y(1)} style={{ stroke: 'var(--warp-identity)' }} strokeDasharray="6 6" />
         </svg>
       )}
       <canvas ref={waveRef} aria-hidden="true" />
@@ -399,7 +454,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
           onPointerLeave={onPointerLeave}
         >
           {nearNormal && <text className="seg-warp-normal" x={X(0.86)} y={Y(0.86) + 14}>Normal</text>}
-          <path d={d} stroke="var(--text-primary)" strokeWidth={2} fill="none" strokeLinejoin="round" pointerEvents="none" />
+          <path d={d} style={{ stroke: 'var(--text-primary)' }} strokeWidth={2} fill="none" strokeLinejoin="round" pointerEvents="none" />
           {tool === 'draw' && points.map((b, i) => {
             if (i === 0) return null
             const a = points[i - 1]
@@ -409,14 +464,14 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
             return (
               <g key={`b${i}`} data-warp-bend={i}>
                 <circle cx={X(mx)} cy={Y(my)} r={HIT_PX} fill="transparent" />
-                <circle cx={X(mx)} cy={Y(my)} r={2.5} fill="var(--text-secondary)" />
+                <circle cx={X(mx)} cy={Y(my)} r={2.5} style={{ fill: 'var(--text-secondary)' }} />
               </g>
             )
           })}
           {points.map((p, i) => (
-            <g key={i} data-warp-point={i}>
+            <g key={i} data-warp-point={i} data-selected={selected === i || undefined}>
               <circle cx={X(p.x)} cy={Y(p.y)} r={HIT_PX} fill="transparent" />
-              <circle cx={X(p.x)} cy={Y(p.y)} r={4} fill={selected === i ? 'var(--warp)' : 'var(--bg-void)'} stroke="var(--text-primary)" strokeWidth={1.5} />
+              <circle cx={X(p.x)} cy={Y(p.y)} r={4} style={{ fill: selected === i ? 'var(--warp)' : 'var(--bg-void)', stroke: 'var(--text-primary)' }} strokeWidth={1.5} />
             </g>
           ))}
         </svg>

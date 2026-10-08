@@ -45,7 +45,48 @@ interface WarpState extends WarpSnapshot {
   getSnapshot: () => WarpSnapshot
 }
 
-const fresh = (src: WarpSnapshot): WarpSnapshot => ({ ...src, points: normalizePoints(copyPoints(src.points)), params: { ...src.params } })
+const LENGTHS = [1, 2, 4, 8, 16] as const
+const SNAPS = [1 / 4, 1 / 8, 1 / 16, 1 / 32, 1 / 64]
+const PROFILES: WarpProfile[] = ['clean', 'smear', 'degrade']
+const APPLIES: WarpApplies[] = ['both', 'video', 'audio']
+
+const num = (v: unknown, fallback: number, lo: number, hi: number) =>
+  typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback
+const nearest = <T extends number>(v: unknown, set: readonly T[], fallback: T): T => {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return fallback
+  let best = set[0]
+  for (const c of set) if (Math.abs(c - v) <= Math.abs(best - v)) best = c // ties go to the larger value
+  return best
+}
+
+/** Validate untrusted input (bank, preset, patch). Never yields NaN, Infinity, undefined or caller references. */
+export function sanitize(s: Partial<WarpSnapshot> | undefined, base: WarpSnapshot = WARP_DEFAULTS): WarpSnapshot {
+  const i = s ?? {}
+  const pr: Partial<WarpSnapshot['params']> = i.params && typeof i.params === 'object' ? i.params : {}
+  const rawPts = Array.isArray(i.points) ? i.points.filter((q) => q && typeof q.x === 'number' && typeof q.y === 'number' && Number.isFinite(q.x) && Number.isFinite(q.y)) : []
+  const points = normalizePoints(copyPoints(rawPts.length >= 2 ? rawPts : base.points))
+  return {
+    enabled: typeof i.enabled === 'boolean' ? i.enabled : base.enabled,
+    points,
+    amount: num(i.amount, base.amount, 0, 1),
+    lengthBeats: nearest(i.lengthBeats, LENGTHS, base.lengthBeats),
+    snap: nearest(i.snap, SNAPS, base.snap),
+    skew: num(i.skew, base.skew, -1, 1),
+    profile: PROFILES.includes(i.profile as WarpProfile) ? (i.profile as WarpProfile) : base.profile,
+    params: {
+      smooth: num(pr.smooth, base.params.smooth, 0, 1),
+      grain: num(pr.grain, base.params.grain, 0, 1),
+      blend: num(pr.blend, base.params.blend, 0, 1),
+      rate: num(pr.rate, base.params.rate, 0, 1),
+      crunch: num(pr.crunch, base.params.crunch, 0, 1),
+    },
+    appliesTo: APPLIES.includes(i.appliesTo as WarpApplies) ? (i.appliesTo as WarpApplies) : base.appliesTo,
+    mix: num(i.mix, base.mix, 0, 1),
+    presetName: typeof i.presetName === 'string' ? i.presetName : i.presetName === null ? null : base.presetName,
+  }
+}
+
+const fresh = (src: WarpSnapshot): WarpSnapshot => sanitize(src, WARP_DEFAULTS)
 
 export const useWarpStore = create<WarpState>((set, get) => {
   const init = fresh(WARP_DEFAULTS)
@@ -58,14 +99,16 @@ export const useWarpStore = create<WarpState>((set, get) => {
       set({ points, lut: buildLut(points), presetName: null })
     },
     patch: (p) => {
-      if (p.points) {
-        const points = normalizePoints(p.points)
-        set({ ...p, points, lut: buildLut(points) })
-      } else set(p)
+      const defined = Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined)) as Partial<WarpSnapshot>
+      const cur = get().getSnapshot()
+      const merged: Partial<WarpSnapshot> = { ...cur, ...defined }
+      if (defined.points) merged.presetName = p.presetName ?? null
+      const next = sanitize(merged, cur)
+      set({ ...next, lut: buildLut(next.points) })
     },
     loadPreset: (name) => {
+      if (!Object.hasOwn(PRESETS, name)) return
       const src = PRESETS[name]
-      if (!src) return
       const points = normalizePoints(copyPoints(src))
       set({ points, lut: buildLut(points), presetName: name })
     },
@@ -74,7 +117,7 @@ export const useWarpStore = create<WarpState>((set, get) => {
       set({ points, lut: buildLut(points), presetName: null })
     },
     applySnapshot: (s) => {
-      const next = fresh(s ? { ...WARP_DEFAULTS, ...s, params: { ...WARP_DEFAULTS.params, ...s.params } } : WARP_DEFAULTS)
+      const next = sanitize(s, WARP_DEFAULTS)
       set({ ...next, lut: buildLut(next.points) })
     },
     getSnapshot: () => {

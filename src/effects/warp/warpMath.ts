@@ -90,7 +90,8 @@ export function delaySeconds(opts: { phase: number; lut: Float32Array; amount: n
 }
 
 export function loopSeconds(lengthBeats: number, bpm: number): number {
-  return (lengthBeats * 60) / bpm
+  const v = (lengthBeats * 60) / bpm
+  return Number.isFinite(v) && v > 0 ? v : 2 // 4 beats at 120 BPM if input is unusable
 }
 
 // ---------------------------------------------------------------- presets
@@ -150,6 +151,7 @@ export const PRESETS: Record<string, WarpPoint[]> = {
  * with optional vertical jumps between them. Deterministic when `rand` is seeded.
  */
 export function randomLine(snap: number, rand: () => number = Math.random): WarpPoint[] {
+  if (!Number.isFinite(snap) || snap <= 0) snap = 1 / 16
   const n = Math.max(2, Math.round(1 / snap))
   const gy = () => Math.floor(rand() * (n + 1)) / n
   const gx = (i: number) => i / n

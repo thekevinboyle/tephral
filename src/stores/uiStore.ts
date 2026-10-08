@@ -40,7 +40,7 @@ interface UIState {
   showInspector: boolean
   showBottom: boolean
   bottomTab: BottomTab
-  selectedModulator: string | null  // 'lfo-0'..'lfo-3' | 'random' | 'step' | 'envelope' | 'sampleHold' | 'midi' | 'audio'
+  selectedModulator: string | null  // 'lfo-0'..'lfo-3' | 'random' | 'step' | 'envelope' | 'sampleHold' | 'midi' | 'audio' | 'warp'
   // Below 1100px the browser/inspector are drawers; at most one is open
   drawer: DrawerPanel | null
   togglePanel: (p: PanelId) => void

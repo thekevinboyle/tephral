@@ -211,7 +211,7 @@
 .seg-dev:hover .seg-dev-x, .seg-dev:focus-within .seg-dev-x { opacity: 1; }
 .seg-dev-x:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-/* Modulators card: rail like a device, then a 2-column grid of 10 slots */
+/* Modulators card: rail like a device, then a 2-column grid of 11 slots */
 .seg-modcard { flex: none; display: flex; background: var(--bg-primary); border-radius: var(--radius-panel); overflow: hidden; }
 .seg-modcard-rail { position: relative; flex: none; width: 26px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 0; background: var(--bg-surface); }
 .seg-modcard-rail::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--mod); }

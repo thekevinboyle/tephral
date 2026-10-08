@@ -107,7 +107,7 @@ Bottom panel with Devices, Warp and Sequencer tabs (all stay mounted; the title 
 
 ### Time warp (`src/effects/warp/*`, `public/worklets/warp-processor.js`, `src/stores/warpStore.ts`, `src/components/performance/warp/*`, `WarpCard`)
 Files: `src/effects/warp/` holds warpMath, warpClock, audioWarp, WarpFrameBuffer, WarpCompositor, warpShaders and warpRegistry; the worklet is `public/worklets/warp-processor.js`; state is `warpStore`; the editor is the Warp tab (`components/performance/warp/*`); the chain card is `WarpCard`.
-- **Time model**: the line y = f(x) is the read position within a loop; the delay is `delay = ((x′ − y′) mod 1)·L` (x′ is the skewed phase); delay is capped at 8 s.
+- **Time model**: the line y = f(x) gives, at loop phase x, how far back to read: `delay = amount·f(x′)·L` (x′ is the skewed phase), with the top = live, lower = further back and y = x = stopped (steeper reads backwards); delay is capped at 8 s.
 - **Position**: the warp sits on the source BEFORE the effect chain, so chain effects process the warped picture.
 - **Audio**: warped through an AudioWorklet; the analysers (and so the audio bands) sit after it.
 - **Clock**: video and audio read one shared clock (`warpClock`), so they report the same phase.

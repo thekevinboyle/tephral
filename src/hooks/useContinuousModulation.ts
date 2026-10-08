@@ -16,6 +16,7 @@ import { useTrendStore } from '../stores/trendStore'
 import { useSegStore } from '../stores/segStore'
 import { stepTrackBandModulation, resetTrackBandModulation } from '../effects/trackBandModulation'
 import { useWarpStore } from '../stores/warpStore'
+import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 import { warpModValue } from '../effects/warp/warpMath'
 import { getHeardWarpPhase } from '../effects/warp/warpClock'
 
@@ -47,6 +48,10 @@ export function useContinuousModulation() {
 
       // Dry/wet for any effect (the device card's bar): written like the bar writes it, skipped when unchanged
       if (paramName === 'effectMix') {
+        // A gate (sequencer gate while playing, audio gate, MIDI gate) owns the mix: it stays the single writer
+        const seq = useEffectSequencerStore.getState()
+        const t = seq.tracks[effectId]
+        if (t && ((t.mode === 'gate' && seq.isPlaying) || t.audioGate || t.midiGate)) return
         if (glitch.effectMix[effectId] !== value) glitch.setEffectMix(effectId, value)
         return
       }

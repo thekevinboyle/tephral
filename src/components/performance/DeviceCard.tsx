@@ -66,6 +66,7 @@ const MixBar = memo(function MixBar({ effectId, name }: { effectId: string; name
     paramId, label: 'Dry/wet', value: mix, min: 0, max: 1, step: 0.01, onChange: set, axis: 'x',
     statusText: `Dry/wet: how much of ${name} is blended over the original`,
   })
+  const setStatusText = useUIStore((s) => s.setStatusText)
   const { isInAssignmentMode, isDropTarget, assigningColor, isDepthDragging, depthDragDisplay, depthSourceName, routings, dotDragging } = ctl
   const fromX = (clientX: number) => {
     const r = trackRef.current?.getBoundingClientRect()
@@ -77,7 +78,12 @@ const MixBar = memo(function MixBar({ effectId, name }: { effectId: string; name
   const modLo = route ? clamp01(mix + Math.min(0, route.depth)) : 0
   const modHi = route ? clamp01(mix + Math.max(0, route.depth)) : 0
   const depthPct = route ? Math.round(Math.abs(route.depth) * 100) : 0
+  const status = route
+    ? `Dry/wet follows ${route.name} at ${depthPct}%. How much of ${name} is blended over the original`
+    : `Dry/wet: how much of ${name} is blended over the original`
+  // The context menu is a sibling, not inside the slider: its clicks must not reach the bar's pointer handlers
   return (
+    <>
     <div
       data-device-mix
       data-param-id={paramId}
@@ -94,6 +100,7 @@ const MixBar = memo(function MixBar({ effectId, name }: { effectId: string; name
       style={assigningColor ? { ['--assign' as string]: assigningColor } : undefined}
       title={route ? `Dry/wet follows ${route.name} at ${depthPct}%` : undefined}
       {...ctl.wrapperProps}
+      onMouseEnter={() => { ctl.wrapperProps.onMouseEnter(); setStatusText(status) }}
       onPointerDown={(e) => {
         if (e.button !== 0) return
         // Armed: press routes the modulator (and up/down sets the depth), exactly like a dial
@@ -137,8 +144,9 @@ const MixBar = memo(function MixBar({ effectId, name }: { effectId: string; name
         )}
       </span>
       <span className="seg-dev-mix-value">{pct}%</span>
-      {ctl.contextMenu}
     </div>
+    {ctl.contextMenu}
+    </>
   )
 })
 

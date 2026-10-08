@@ -49,6 +49,10 @@ interface UIState {
   setBottomTab: (t: BottomTab) => void
   setSelectedModulator: (id: string | null) => void
 
+  // Device cards collapsed to their side strip (session only, not persisted)
+  collapsedDevices: Record<string, true>
+  toggleDeviceCollapsed: (id: string) => void
+
   setSelectedEffect: (id: string | null) => void
   setSelectedParamIndex: (index: number) => void
 
@@ -93,6 +97,13 @@ export const useUIStore = create<UIState>((set) => ({
   showBottom: true,
   bottomTab: 'devices',
   selectedModulator: null,
+  collapsedDevices: {},
+  toggleDeviceCollapsed: (id) => set((st) => {
+    const next = { ...st.collapsedDevices }
+    if (next[id]) delete next[id]
+    else next[id] = true
+    return { collapsedDevices: next }
+  }),
   drawer: null,
 
   togglePanel: (p) => set((state) =>

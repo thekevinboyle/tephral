@@ -366,3 +366,16 @@
 .seg-header-field { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .seg-header-label { font: 500 11px var(--font-sans); color: var(--text-muted); white-space: nowrap; }
 @media (max-width: 1099px) { .seg-header-label { display: none; } .seg-header-left, .seg-header-right { gap: 10px; } }
+
+/* Collapsed device: just the side strip (double-click the strip or press C to toggle) */
+.seg-dev[data-collapsed] .seg-dev-body { display: none; }
+.seg-dev[data-collapsed] .seg-dev-rail { width: 30px; }
+
+/* Drop media onto the output: dashed outline + what the drop will do */
+.seg-stage-drop { position: absolute; inset: 8px; z-index: 30; pointer-events: none; display: grid; place-items: center;
+  border: 1.5px dashed var(--text-secondary); border-radius: var(--radius-panel); background: color-mix(in oklab, var(--bg-void) 70%, transparent); }
+.seg-stage-drop[data-ok] { border-color: var(--live); }
+.seg-stage-drop span { font: 500 13px var(--font-sans); color: var(--text-primary); background: var(--bg-surface); padding: 6px 12px; border-radius: var(--radius-ctrl); }
+.seg-stage-drop:not([data-ok]) span { color: var(--text-secondary); }
+.seg-header-field[data-audio-drop] { outline: 1.5px dashed var(--text-secondary); outline-offset: 3px; border-radius: var(--radius-ctrl); }
+.seg-header-field[data-audio-drop="ok"] { outline-color: var(--live); }

@@ -1,3 +1,5 @@
+import { useAudioFileDrop } from '../../hooks/useAudioFileDrop'
+import { kindsInTransfer, pickMediaFiles } from '../../utils/mediaFiles'
 import { memo, useRef, useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useMediaSource } from '../../hooks/useMediaSource'
@@ -270,6 +272,8 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
   const setActiveAudioSource = useAudioSourceStore((s) => s.setActiveSource)
   const setAudioFile = useAudioSourceStore((s) => s.setAudioFile)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const loadAudio = useAudioFileDrop()
+  const [audioDropOk, setAudioDropOk] = useState<boolean | null>(null)
 
   const handleAudioSelect = useCallback(
     (id: string) => {
@@ -317,7 +321,27 @@ export const HeaderBar = memo(function HeaderBar({ canvasRef }: { canvasRef?: Re
           <StyledDropdown value={videoValue} options={VIDEO_OPTIONS} onChange={handleVideoSelect} menuId="video" disabled={isRecording} />
         </div>
 
-        <div className="seg-header-field" onMouseEnter={() => setStatusText('Audio: choose the audio input that drives audio-reactive devices')}>
+        <div
+          className="seg-header-field"
+          data-audio-drop={audioDropOk === null ? undefined : audioDropOk ? 'ok' : 'no'}
+          onMouseEnter={() => setStatusText('Audio: choose the audio input that drives audio-reactive devices, or drop an audio file here')}
+          onDragOver={(e) => {
+            if (!e.dataTransfer.types.includes('Files')) return
+            e.preventDefault()
+            const ok = kindsInTransfer(e.dataTransfer).audio
+            e.dataTransfer.dropEffect = ok ? 'copy' : 'none'
+            if (audioDropOk !== ok) setAudioDropOk(ok)
+          }}
+          onDragLeave={() => setAudioDropOk(null)}
+          onDrop={(e) => {
+            if (!e.dataTransfer.types.includes('Files')) return
+            e.preventDefault()
+            setAudioDropOk(null)
+            const { audio } = pickMediaFiles(e.dataTransfer.files)
+            if (audio) loadAudio(audio)
+            else setStatusText("Can't use this file: drop an audio file on the Audio picker")
+          }}
+        >
           <span className="seg-header-label">Audio</span>
           <StyledDropdown value={activeAudioSource} options={AUDIO_SOURCES} onChange={handleAudioSelect} menuId="audio" />
           <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileImport} className="hidden" />

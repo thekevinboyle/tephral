@@ -1,3 +1,4 @@
+import { StageDropZone } from './StageDropZone'
 import { forwardRef, memo, useEffect, useState } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { ClipBin } from './ClipBin'
@@ -66,7 +67,7 @@ export const StageArea = memo(forwardRef<CanvasHandle>(function StageArea(_props
   const videoAspect = useMediaStore((s) => s.videoAspect) ?? 16 / 9
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 min-h-0" style={{ containerType: 'size', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
+      <StageDropZone className="flex-1 min-h-0" style={{ containerType: 'size', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
         <div
           data-stage-frame
           className="stage-frame"
@@ -83,7 +84,7 @@ export const StageArea = memo(forwardRef<CanvasHandle>(function StageArea(_props
           </div>
           <StageReadouts />
         </div>
-      </div>
+      </StageDropZone>
       <div data-media-strip className="flex flex-col flex-shrink-0">
         <CanvasTransportBar />
         <TransportBar />

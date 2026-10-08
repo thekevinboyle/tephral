@@ -110,6 +110,8 @@ export interface DeviceCardProps { effectId: string; index: number; selected: bo
 export const DeviceCard = memo(function DeviceCard({ effectId, index, selected, bypassed }: DeviceCardProps) {
   const a = useContext(DeviceChainContext)
   const { name, color } = getEffectInfo(effectId)
+  const collapsed = useUIStore((s) => !!s.collapsedDevices[effectId])
+  const toggleCollapsed = useUIStore((s) => s.toggleDeviceCollapsed)
   return (
     <div
       role="group"
@@ -121,6 +123,8 @@ export const DeviceCard = memo(function DeviceCard({ effectId, index, selected, 
       data-device-card={effectId}
       data-selected={selected || undefined}
       data-bypassed={bypassed || undefined}
+      data-collapsed={collapsed || undefined}
+      aria-expanded={!collapsed}
       className="seg-dev"
       style={{ ['--c' as string]: color }}
       onClick={(ev) => {
@@ -138,6 +142,7 @@ export const DeviceCard = memo(function DeviceCard({ effectId, index, selected, 
         if (ev.key === 'Enter' && ev.shiftKey) a.toggleBypass(effectId)
         else if (ev.key === 'Enter' || ev.key === ' ') a.select(effectId)
         else if (ev.key === 'Delete' || ev.key === 'Backspace') a.remove(effectId)
+        else if (ev.key === 'c' || ev.key === 'C') toggleCollapsed(effectId)
         else if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') {
           const dir = ev.key === 'ArrowLeft' ? -1 : 1
           if (ev.altKey) a.move(effectId, dir)
@@ -151,7 +156,8 @@ export const DeviceCard = memo(function DeviceCard({ effectId, index, selected, 
         className="seg-dev-rail"
         data-device-grip
         draggable
-        title="Drag to reorder"
+        title={collapsed ? 'Double-click to expand, drag to reorder' : 'Double-click to collapse, drag to reorder'}
+        onDoubleClick={(ev) => { ev.stopPropagation(); toggleCollapsed(effectId) }}
         onDragStart={(ev) => a.dragStart(effectId, ev)}
         onDragEnd={a.dragEnd}
       >
@@ -178,7 +184,7 @@ export const DeviceCard = memo(function DeviceCard({ effectId, index, selected, 
           {'×'}
         </button>
       </div>
-      <div className="seg-dev-body">
+      <div className="seg-dev-body" hidden={collapsed}>
         <DeviceDials effectId={effectId} />
         <MixBar effectId={effectId} name={name} />
       </div>

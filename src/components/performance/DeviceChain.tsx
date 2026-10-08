@@ -209,7 +209,7 @@ export const DeviceChain = memo(function DeviceChain() {
       },
       hover: (id) => {
         useUIStore.getState().setStatusText(
-          id ? `${getEffectStatusText(id)}. Click to select, Shift+click to bypass, drag the side strip to reorder` : null,
+          id ? `${getEffectStatusText(id)}. Click to select, Shift+click to bypass, drag the side strip to reorder, double-click it to collapse (C)` : null,
         )
       },
     }

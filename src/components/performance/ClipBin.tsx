@@ -103,17 +103,25 @@ export function ClipBin() {
     e.preventDefault()
     // Check if it's a file (not a clip from the bin)
     if (e.dataTransfer.types.includes('Files')) {
+      e.stopPropagation() // the stage's own drop zone must not also take this file
       e.dataTransfer.dropEffect = 'copy'
       setIsFileDragOver(true)
     }
   }, [])
 
-  const handleFileDragLeave = useCallback(() => {
+  const handleFileDragLeave = useCallback((e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('Files')) e.stopPropagation()
     setIsFileDragOver(false)
+  }, [])
+
+  // Entering the bin hides the stage's "Drop to load video" hint: the bin adds clips instead
+  const handleFileDragEnter = useCallback((e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('Files')) e.stopPropagation()
   }, [])
 
   const handleFileDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
+    if (e.dataTransfer.types.includes('Files')) e.stopPropagation()
     setIsFileDragOver(false)
 
     const files = e.dataTransfer.files
@@ -164,6 +172,8 @@ export function ClipBin() {
           maxWidth: 'var(--clipbin-w)', // shared with the timecode readout offset (theme.css .stage-frame)
           zIndex: 20,
         }}
+        data-clipbin
+        onDragEnter={handleFileDragEnter}
         onDragOver={handleFileDragOver}
         onDragLeave={handleFileDragLeave}
         onDrop={handleFileDrop}

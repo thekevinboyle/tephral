@@ -111,7 +111,7 @@ Files: `src/effects/warp/` holds warpMath, warpClock, audioWarp, WarpFrameBuffer
 - **Position**: the warp sits on the source BEFORE the effect chain, so chain effects process the warped picture.
 - **Audio**: warped through an AudioWorklet; the analysers (and so the audio bands) sit after it.
 - **Clock**: video and audio read one shared clock (`warpClock`), so they report the same phase.
-- **Bypass guarantee**: off means no frame capture, no GPU pass and no worklet node; output is bit-identical to no warp.
+- **Bypass guarantee**: off means no frame capture, no GPU pass and no worklet node; output is bit-identical to no warp. Switching off on a live graph fades the warped sound out over about 20 ms, then restores the direct audio connections.
 - **Saved as** `warp` in `BankSnapshot` and in presets; `applySnapshot(undefined)` resets to defaults (off), and factory presets such as SEG_EXP leave it off.
 
 Effect params flow through `src/effects/paramSync.ts` (zustand subscribe → uniform writes); Canvas.tsx's structural effect only rebuilds the pass chain on enable/disable/reorder.

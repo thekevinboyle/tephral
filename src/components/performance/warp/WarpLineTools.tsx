@@ -4,7 +4,7 @@ import { useUIStore } from '../../../stores/uiStore'
 import { useWarpStore } from '../../../stores/warpStore'
 import { PRESETS } from '../../../effects/warp/warpMath'
 import { statusHover } from '../../../utils/statusHover'
-import { cleanLineName, deleteLine, loadLines, saveLine, type WarpLine } from './warpLines'
+import { cleanLineName, deleteLine, loadLines, MAX_LINES, MAX_POINTS, saveLine, type WarpLine } from './warpLines'
 
 const BUILT_INS = Object.keys(PRESETS)
 const ROW_H = 25
@@ -166,11 +166,18 @@ export const WarpSaveLine = memo(function WarpSaveLine({ onAnnounce }: SaveProps
     const name = cleanLineName(value)
     if (!name) { say('Type a name to save the line'); return }
     const s = useWarpStore.getState()
-    if (saveLine(name, s.points)) {
+    const r = saveLine(name, s.points)
+    if (r === 'saved' || r === 'replaced') {
       // Name the loaded line without touching the points (a patch would re-set them and drop the point selection)
       useWarpStore.setState({ presetName: name })
-      say(`Saved line ${name}`)
-    } else say('Could not save the line: storage is unavailable in this browser')
+      say(`${r === 'replaced' ? 'Replaced' : 'Saved'} line ${name}`)
+    } else if (r === 'builtin') {
+      say(`${name} is a built-in line name. Choose another name`)
+      return // keep the field open so the name can be changed
+    } else if (r === 'full') say(`You have ${MAX_LINES} saved lines. Delete one in Lines to save another`)
+    else if (r === 'toolong') say(`The line has more than ${MAX_POINTS} points, too many to save`)
+    else if (r === 'empty') { say('Type a name to save the line'); return }
+    else say('Could not save the line: storage is unavailable in this browser')
     refocus.current = true
     setEditing(false)
   }

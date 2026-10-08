@@ -388,15 +388,17 @@
 .seg-header-field[data-audio-drop] { outline: 1.5px dashed var(--text-secondary); outline-offset: 3px; border-radius: var(--radius-ctrl); }
 .seg-header-field[data-audio-drop="ok"] { outline-color: var(--live); }
 
-/* ─── Warp tab (time warp editor): graph column + 268px side panel ─────────────────────────────────── */
+/* ─── Warp tab (time warp editor): graph column + 300px side panel ─────────────────────────────────── */
 :root {
   --warp: #e8c35a;       /* time warp accent */
   --warp-ink: #1b1b1b;   /* text on a --warp fill */
   --warp-grid: #2b2c30;  /* graph columns between the quarter lines */
   --warp-identity: #6a6b70; /* the dashed "Normal" diagonal */
+  --warp-lock: #5a4d22;  /* outline of a group locked for the dice (dim --warp) */
+  --warp-note-bg: #26241c; /* behind --warp text in a lock note */
 }
 .seg-shell[data-bottom-tab="warp"] > [data-area="bottom"] { height: 300px; }
-.seg-warp { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 268px; gap: 2px; background: var(--gutter); outline: none; }
+.seg-warp { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 2px; background: var(--gutter); outline: none; }
 .seg-warp-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg-void); }
 .seg-warp-tools { flex: none; display: flex; align-items: center; gap: 4px; padding: 6px 8px; }
 .seg-warp-tool { height: 24px; padding: 0 8px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; white-space: nowrap; }
@@ -422,8 +424,8 @@
 .seg-warp-graph[data-off] .seg-warp-playhead { opacity: .35; }
 [data-warp-point] { cursor: grab; }
 [data-warp-bend] { cursor: ns-resize; }
-.seg-warp-guide-label { font: 400 10.5px var(--font-mono); fill: var(--text-muted); pointer-events: none; }
-.seg-warp-edge { position: absolute; right: 14px; font: 400 10px/14px var(--font-mono); color: var(--text-muted); pointer-events: none; }
+.seg-warp-guide-label { font: 400 10.5px var(--font-mono); fill: var(--text-muted); pointer-events: none; paint-order: stroke; stroke: var(--bg-primary); stroke-width: 4px; stroke-linejoin: round; }
+.seg-warp-edge { position: absolute; right: 11px; padding: 0 3px; border-radius: 2px; background: var(--bg-primary); font: 400 10px/14px var(--font-mono); color: var(--text-muted); pointer-events: none; }
 .seg-warp-settings { flex: none; display: flex; gap: 2px; padding: 0 8px 8px; }
 .seg-warp-set { flex: 1 1 0; min-width: 0; height: 26px; border-radius: var(--radius-ctrl); background: var(--bg-surface); display: flex; align-items: center; justify-content: center; gap: 6px;
   font: 400 11.5px var(--font-sans); color: var(--text-secondary); cursor: ns-resize; touch-action: none; user-select: none; white-space: nowrap; overflow: hidden; }
@@ -431,28 +433,56 @@
 .seg-warp-set > b { font: 500 12px var(--font-mono); color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .seg-warp-set:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
 .seg-warp-limit { flex: none; height: 26px; padding: 0 8px; display: flex; align-items: center; border-radius: var(--radius-ctrl); background: var(--bg-surface); font: 400 11px var(--font-sans); color: var(--warp); white-space: nowrap; }
-.seg-warp-side { min-width: 0; min-height: 0; background: var(--bg-primary); padding: 8px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+.seg-warp-side { min-width: 0; min-height: 0; background: var(--bg-primary); padding: 6px 10px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
 .seg-warp-sect { display: flex; align-items: center; gap: 8px; font: 400 11px var(--font-sans); color: var(--text-muted); }
-.seg-warp-sect > span { flex: 1 1 auto; }
-.seg-warp-power { flex: none; height: 20px; padding: 0 8px 0 6px; display: inline-flex; align-items: center; gap: 6px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 500 11px var(--font-sans); cursor: pointer; }
+.seg-warp-sect > span { flex: none; }
+.seg-warp-sect > .seg-warp-power { margin-left: auto; }
+.seg-warp-power { flex: none; height: 18px; padding: 0 8px 0 6px; display: inline-flex; align-items: center; gap: 6px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 500 11px var(--font-sans); cursor: pointer; }
 .seg-warp-power:hover { background: var(--bg-hover); }
 .seg-warp-power > i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--text-secondary); }
 .seg-warp-power[aria-pressed="true"] { color: var(--text-primary); }
 .seg-warp-power[aria-pressed="true"] > i { background: var(--warp); border-color: var(--warp); }
-.seg-warp-seg { display: flex; gap: 2px; }
-.seg-warp-seg > button { flex: 1 1 0; min-width: 0; height: 24px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-warp-seg { display: flex; gap: 3px; }
+.seg-warp-seg > button { flex: 1 1 0; min-width: 0; height: 22px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .seg-warp-seg > button:hover { background: var(--bg-hover); }
 .seg-warp-seg > button[aria-pressed="true"] { background: var(--warp); color: var(--warp-ink); font-weight: 600; }
-.seg-warp-knobs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; min-height: 66px; }
-.seg-warp-mix { display: flex; align-items: center; gap: 6px; font: 400 11px var(--font-sans); color: var(--text-muted); }
-.seg-warp-mix-track { flex: 1 1 auto; position: relative; height: 14px; display: flex; align-items: center; cursor: ew-resize; touch-action: none; border-radius: 2px; }
-.seg-warp-mix-track::before { content: ''; position: absolute; left: 0; right: 0; height: 4px; border-radius: 2px; background: var(--bg-elevated); }
-.seg-warp-mix-track > i { position: absolute; left: 0; height: 4px; border-radius: 2px; background: var(--warp); }
-.seg-warp-mix-track:focus-visible { outline: 1px solid var(--text-primary); outline-offset: 1px; }
-.seg-warp-mix > b { flex: none; width: 36px; text-align: right; font: 500 11px var(--font-mono); color: var(--text-primary); }
-.seg-warp-actions { display: flex; gap: 2px; margin-top: auto; }
-.seg-warp-actions > button { flex: 1 1 0; min-width: 0; height: 24px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; }
+.seg-warp-knobs { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; border-radius: var(--radius-ctrl); }
+/* !important because Knob sets the value and label line-height inline */
+.seg-warp-knobs [role="slider"] > span { line-height: 1.05 !important; }
+.seg-warp-knobs > .seg-warp-lock { position: absolute; top: 0; right: 0; z-index: 1; }
+.seg-warp-profiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; border-radius: var(--radius-ctrl); }
+.seg-warp-profiles > button { min-width: 0; height: 20px; padding: 0 2px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.seg-warp-profiles > button:hover { background: var(--bg-hover); }
+.seg-warp-profiles > button[aria-pressed="true"] { background: var(--warp); color: var(--warp-ink); font-weight: 600; }
+.seg-warp-profiles-cap { display: flex; align-items: center; justify-content: center; text-align: center; font: 400 10px/1.05 var(--font-sans); color: var(--text-muted); }
+.seg-warp-output { display: flex; flex-direction: column; gap: 4px; border-radius: var(--radius-ctrl); }
+.seg-warp-out { display: grid; grid-template-columns: 38px minmax(0, 1fr) 48px; align-items: center; gap: 6px; font: 400 11px var(--font-sans); color: var(--text-secondary); }
+.seg-warp-out > b { font: 500 11px var(--font-mono); color: var(--text-primary); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.seg-warp-track { position: relative; height: 14px; cursor: ew-resize; touch-action: none; }
+.seg-warp-track::before { content: ''; position: absolute; left: 0; right: 0; top: 4px; height: 6px; border-radius: 3px; background: var(--bg-elevated); }
+.seg-warp-track > i { position: absolute; top: 4px; height: 6px; border-radius: 3px; background: var(--warp); }
+.seg-warp-thumb { position: absolute; top: 0; width: 4px; height: 14px; margin-left: -2px; border-radius: 2px; background: var(--text-primary); }
+.seg-warp-track[role="slider"]:focus-visible, .seg-warp-thumb:focus-visible { outline: 1px solid var(--text-primary); outline-offset: 2px; }
+.seg-warp-thumb[role="slider"] { cursor: ew-resize; }
+.seg-warp-actions { display: flex; gap: 4px; margin-top: auto; }
+.seg-warp-actions > button { flex: 1 1 0; min-width: 0; height: 22px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; }
 .seg-warp-actions > button:hover, .seg-warp-actions > button[aria-expanded="true"] { background: var(--bg-hover); color: var(--text-primary); }
+.seg-warp-actions > button[data-warp-lockmode][aria-pressed="true"] { color: var(--warp); outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
+/* dice locks (spec §5): a lock per group in lock mode; locked groups get the --warp outline */
+.seg-warp-lock { flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-secondary); cursor: pointer; }
+.seg-warp-lock:hover { background: var(--bg-hover); }
+.seg-warp-lock[aria-pressed="false"] > svg { opacity: .45; }
+.seg-warp-lock[aria-pressed="true"] { color: var(--warp); }
+.seg-warp-sect > .seg-warp-lock { margin: -3px 0; }
+.seg-warp-settings > .seg-warp-lock { height: 26px; width: 22px; background: var(--bg-surface); }
+.seg-warp-settings > .seg-warp-lock:hover { background: var(--bg-elevated); }
+.seg-warp-graph-lock[aria-pressed="true"] { color: var(--warp); outline: 1px solid var(--warp-lock); outline-offset: -1px; }
+.seg-warp-graph-lock[aria-pressed="false"] > svg { opacity: .45; }
+.seg-warp-profiles[data-locked], .seg-warp-knobs[data-locked], .seg-warp-output[data-locked] { outline: 1.5px solid var(--warp-lock); outline-offset: 2px; }
+.seg-warp-set[data-locked] { outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
+.seg-warp-graph[data-locked] { outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
+.seg-warp-locked-note { position: absolute; top: 8px; right: 10px; display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid var(--warp-lock); border-radius: var(--radius-ctrl); background: var(--warp-note-bg); color: var(--warp); font: 400 11px var(--font-sans); white-space: nowrap; pointer-events: none; }
+.seg-warpcard button.seg-dev-name { padding: 0; border: 0; background: none; }
 .seg-warp :focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
 /* Presets menu: portalled (every area clips overflow), position: fixed from the trigger rect */
 .seg-warp-menu { position: fixed; z-index: 1000; min-width: 160px; padding: 4px; display: flex; flex-direction: column; gap: 1px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-ctrl); }

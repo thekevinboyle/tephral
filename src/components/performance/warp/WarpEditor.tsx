@@ -5,7 +5,8 @@ import { statusHover } from '../../../utils/statusHover'
 import { WarpGraph, type WarpTool } from './WarpGraph'
 import { describePoint, editPoints, isOwnEdit } from './warpEdit'
 import { WarpSettingsRow } from './WarpSettingsRow'
-import { WarpSidePanel } from './WarpSidePanel'
+import { LockIcon, WarpSidePanel } from './WarpSidePanel'
+import { useWarpLockStore } from './warpLocks'
 import { WarpLinesMenu, WarpSaveLine } from './WarpLineTools'
 
 const TOOLS: { id: WarpTool; name: string; status: string }[] = [
@@ -20,6 +21,21 @@ const randomCurves = () => useWarpStore.getState().randomizeCurves()
 const clearLine = () => useWarpStore.getState().clearLine()
 
 const GRID_Y = 1 / 16
+
+/** Lock mode only: the graph's lock, at the right of the tools (spec §5, mockup view 2). */
+const GraphLock = memo(function GraphLock() {
+  const show = useWarpLockStore((s) => s.lockMode)
+  const locked = useWarpLockStore((s) => s.locks.graph)
+  if (!show) return null
+  return (
+    <button type="button" className="seg-warp-tool seg-warp-graph-lock" data-warp-lock="graph" aria-pressed={locked} aria-label="Lock Graph"
+      onClick={() => useWarpLockStore.getState().toggleLock('graph')}
+      {...statusHover(locked ? 'Graph locked: Dice keeps this line. Click to unlock' : 'Graph unlocked: Dice draws a new line. Click to lock')}>
+      <LockIcon open={!locked} />
+      {locked ? 'Graph locked' : 'Graph unlocked'}
+    </button>
+  )
+})
 
 /**
  * The Warp tab (v1 spec §4, v2 spec §2): tools, line actions, Lines / Save line, the graph, the settings row
@@ -88,8 +104,10 @@ export const WarpEditor = memo(function WarpEditor() {
     e.preventDefault(); e.stopPropagation()
     const last = pts.length - 1
     const p = pts[i]
-    const g = s.snap > 0 ? s.snap : 1 / 64 // quantize Off nudges by 1/64
-    const x = !dx || i === 0 || i === last ? p.x : Math.min(pts[i + 1].x, Math.max(pts[i - 1].x, Math.round((p.x + dx * g) / g) * g))
+    // On the grid: the next grid line. Quantize Off: exactly ±1/64, with no rounding onto a grid
+    const g = s.snap > 0 ? s.snap : 1 / 64
+    const nx = s.snap > 0 ? Math.round((p.x + dx * g) / g) * g : p.x + dx * g
+    const x = !dx || i === 0 || i === last ? p.x : Math.min(pts[i + 1].x, Math.max(pts[i - 1].x, nx))
     const y = Math.min(1, Math.max(0, Math.round((p.y + dy * GRID_Y) / GRID_Y) * GRID_Y))
     const next = pts.slice()
     next[i] = { ...p, x, y: dy ? y : p.y }
@@ -122,6 +140,7 @@ export const WarpEditor = memo(function WarpEditor() {
           </button>
           <span className="seg-warp-sep" aria-hidden="true" />
           <span className="seg-warp-tools-gap" />
+          <GraphLock />
           <WarpLinesMenu />
           <WarpSaveLine onAnnounce={setAnnounce} />
         </div>

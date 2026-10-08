@@ -6,6 +6,8 @@ import { delaySeconds, sampleLine, skewPhase, warpedY, type WarpPoint } from '..
 import { getHeardWarpPhase, getWarpPhase, warpLoopSecondsAt, warpNow } from '../../../effects/warp/warpClock'
 import { describePoint, editPoints } from './warpEdit'
 import { getActiveWarpCompositor } from '../../../effects/warp/warpRegistry'
+import { useLockOutline } from './warpLocks'
+import { LockIcon } from './WarpSidePanel'
 
 export type WarpTool = 'draw' | 'steps' | 'curve' | 'erase'
 
@@ -69,6 +71,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
   const points = useWarpStore((s) => s.points)
   const snap = useWarpStore((s) => s.snap)
   const enabled = useWarpStore((s) => s.enabled)
+  const locked = useLockOutline('graph')
   const boxRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const waveRef = useRef<HTMLCanvasElement>(null)
@@ -345,8 +348,9 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     const cur = useWarpStore.getState().points
     const hit = hitPoint(e.clientX, e.clientY, cur)
     if (tool === 'erase') { erase(e); return }
-    // Holding Shift in Draw switches to step drawing for this drag (spec §2)
-    if (tool === 'steps' || (tool === 'draw' && e.shiftKey)) { paint(e, 'steps', cur); return }
+    // Holding Shift in Draw switches to step drawing for this drag (spec §2), except on an existing point or
+    // bend handle, which Shift still moves or bends
+    if (tool === 'steps' || (tool === 'draw' && e.shiftKey && hit < 0 && !bh)) { paint(e, 'steps', cur); return }
     if (tool === 'curve') {
       const v = toVal(e)
       let i = cur.findIndex((p, k) => k > 0 && cur[k - 1].x <= v.x && v.x < p.x)
@@ -430,7 +434,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
   })
 
   return (
-    <div className="seg-warp-graph" ref={boxRef} data-tool={tool} data-off={enabled ? undefined : ''}>
+    <div className="seg-warp-graph" ref={boxRef} data-tool={tool} data-off={enabled ? undefined : ''} data-warp-graph-box data-locked={locked || undefined}>
       <canvas ref={thumbRef} data-warp-thumbs aria-hidden="true" />
       {w > 0 && (
         <svg width={w} height={gh} viewBox={`0 0 ${w} ${gh}`} aria-hidden="true" data-warp-back>
@@ -443,11 +447,8 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
             ))}
           </g>
           <line data-warp-guide x1={X(0)} y1={Y(0)} x2={X(1)} y2={Y(1)} style={{ stroke: 'var(--warp-identity)' }} strokeDasharray="6 6" />
-          <text className="seg-warp-guide-label" data-warp-guide-label x={X(0.62) + 8} y={Y(0.62) - 6}>stopped</text>
         </svg>
       )}
-      {w > 0 && <span className="seg-warp-edge" data-warp-edge="live" aria-hidden="true" style={{ top: PAD + 6 }}>live</span>}
-      {w > 0 && <span className="seg-warp-edge" data-warp-edge="back" aria-hidden="true" style={{ top: gh - PAD - 20 }}>1 loop back</span>}
       <canvas ref={waveRef} aria-hidden="true" />
       <div ref={headRef} className="seg-warp-playhead" data-warp-playhead aria-hidden="true" />
       {w > 0 && (
@@ -466,6 +467,8 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
           onPointerLeave={onPointerLeave}
         >
           <path d={d} style={{ stroke: 'var(--text-primary)' }} strokeWidth={2} fill="none" strokeLinejoin="round" pointerEvents="none" />
+          {/* above the line, with a halo in the graph colour, so the line can cross it and it stays readable */}
+          <text className="seg-warp-guide-label" data-warp-guide-label x={X(0.62) + 8} y={Y(0.62) - 6} pointerEvents="none">stopped</text>
           {tool === 'draw' && points.map((b, i) => {
             if (i === 0) return null
             const a = points[i - 1]
@@ -486,6 +489,13 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
             </g>
           ))}
         </svg>
+      )}
+      {w > 0 && <span className="seg-warp-edge" data-warp-edge="live" aria-hidden="true" style={{ top: PAD + 6 }}>live</span>}
+      {w > 0 && <span className="seg-warp-edge" data-warp-edge="back" aria-hidden="true" style={{ top: gh - PAD - 20 }}>1 loop back</span>}
+      {locked && (
+        <span className="seg-warp-locked-note" data-warp-locked-note>
+          <LockIcon /> Graph locked: dice keeps this line
+        </span>
       )}
     </div>
   )

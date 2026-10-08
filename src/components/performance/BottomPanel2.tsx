@@ -9,6 +9,7 @@ import { getUIStatusText } from '../../config/statusDescriptions'
 import { SequencerContainer } from '../sequencer/SequencerContainer'
 import { DeviceChain } from './DeviceChain'
 import { WarpEditor } from './warp/WarpEditor'
+import { useWarpLockStore } from './warp/warpLocks'
 import { modulatorName } from './modulatorSlots'
 import { statusHover } from '../../utils/statusHover'
 
@@ -21,6 +22,7 @@ import { statusHover } from '../../utils/statusHover'
 const HeaderNote = memo(function HeaderNote() {
   const assigning = useModulationStore((s) => s.assigningModulator)
   const tab = useUIStore((s) => s.bottomTab)
+  const warpLockMode = useWarpLockStore((s) => s.lockMode)
 
   // Escape cancels routing assignment (nothing else clears assigningModulator). Capture phase + preventDefault,
   // so the same keypress does not also close a drawer or a dropdown (those skip defaultPrevented events).
@@ -47,7 +49,7 @@ const HeaderNote = memo(function HeaderNote() {
     )
   }
   const sub = tab === 'devices' ? '· signal flows left to right'
-    : tab === 'warp' ? 'Top = live · lower = further back · flat = normal · along the dashed line = stopped · steeper = reverse'
+    : tab === 'warp' ? (warpLockMode ? 'Lock mode: locked parts keep their values when you roll the dice' : 'Top = live · lower = further back · flat = normal · along the dashed line = stopped · steeper = reverse')
     : '· one lane per device'
   return <span className="seg-bottom-sub">{sub}</span>
 })

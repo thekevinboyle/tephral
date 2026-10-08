@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { buildLut, normalizePoints, PRESETS, randomCurves, randomSteps, type WarpPoint } from '../effects/warp/warpMath'
 
+/** Dice lock groups (mirrors `LockGroup` in components/performance/warp/warpLocks.ts). */
+export type DiceLocks = Record<'amount' | 'profile' | 'graph' | 'settings' | 'knobs' | 'output', boolean>
+
 export type ProfileId = 'clean' | 'flange' | 'degrade' | 'filterspam' | 'harmonicer' | 'fauxcoder' | 'lofizzly'
 export type WarpApplies = 'both' | 'video' | 'audio'
 export type Knobs = [number, number, number, number]
@@ -115,6 +118,11 @@ interface WarpState extends WarpSnapshot {
   randomizeCurves: () => void
   /** Flat along the top: live. */
   clearLine: () => void
+  /**
+   * Dice (spec §5): randomize every unlocked group. Never touches enabled or appliesTo. `rand` is for
+   * seeded tests.
+   */
+  dice: (locks: DiceLocks, rand?: () => number) => void
   applySnapshot: (s: WarpSnapshot | undefined) => void
   getSnapshot: () => WarpSnapshot
 }
@@ -179,7 +187,7 @@ export function sanitize(s: Partial<WarpSnapshot> | undefined, base: WarpSnapsho
   const high = num(out.high, base.output.high, 500, 20000)
   const levelDb = num(out.levelDb, base.output.levelDb, -24, 6)
   // An inverted band (low at or above high) would silence the wet signal: keep the base band instead
-  const output: WarpOutput = low >= high ? { ...base.output } : { low, high, levelDb }
+  const output: WarpOutput = low >= high ? { ...base.output, levelDb } : { low, high, levelDb }
   return {
     enabled: typeof i.enabled === 'boolean' ? i.enabled : base.enabled,
     points,
@@ -233,6 +241,36 @@ export const useWarpStore = create<WarpState>((set, get) => {
     clearLine: () => {
       const points = normalizePoints(copyPoints(PRESETS.Straight))
       set({ points, lut: buildLut(points), presetName: 'Straight' })
+    },
+    dice: (locks, rand = Math.random) => {
+      const s = get()
+      const r2 = (v: number) => Math.round(v * 100) / 100
+      const pick = <T,>(list: readonly T[]) => list[Math.min(list.length - 1, Math.floor(rand() * list.length))]
+      // log-uniform frequency, whole Hz
+      const hz = (lo: number, hi: number) => Math.round(lo * Math.pow(hi / lo, rand()))
+      const p: Partial<WarpSnapshot> = {}
+      if (!locks.amount) p.amount = r2(0.3 + 0.7 * rand())
+      if (!locks.profile) p.profile = pick(PROFILE_IDS)
+      if (!locks.settings) {
+        p.lengthBeats = pick(LENGTHS)
+        p.snap = pick(SNAPS)
+        p.skew = r2(-0.75 + 1.5 * rand())
+      }
+      if (!locks.graph) {
+        const snap = p.snap ?? s.snap
+        p.points = rand() < 0.5 ? randomSteps(snap, rand) : randomCurves(snap, rand)
+        p.presetName = null
+      }
+      if (!locks.knobs) {
+        const profile = p.profile ?? s.profile
+        p.profileParams = { ...s.profileParams, [profile]: [r2(rand()), r2(rand()), r2(rand()), r2(rand())] as Knobs }
+      }
+      if (!locks.output) {
+        // a band that stays musical (low cut up to 400 Hz, high cut from 2 kHz), Level -6..+3 dB, Mix 0.5..1
+        p.output = { low: hz(20, 400), high: hz(2000, 20000), levelDb: Math.round((-6 + 9 * rand()) * 2) / 2 }
+        p.mix = r2(0.5 + 0.5 * rand())
+      }
+      get().patch(p)
     },
     applySnapshot: (s) => {
       const next = sanitize(s, WARP_DEFAULTS)

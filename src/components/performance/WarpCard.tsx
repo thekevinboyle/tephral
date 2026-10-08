@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { useWarpStore } from '../../stores/warpStore'
 import { useUIStore } from '../../stores/uiStore'
 import { statusHover } from '../../utils/statusHover'
@@ -58,10 +58,19 @@ export const WarpCard = memo(function WarpCard() {
   const enabled = useWarpStore((s) => s.enabled)
   const collapsed = useUIStore((s) => !!s.collapsedDevices[ID])
   const toggleCollapsed = useUIStore((s) => s.toggleDeviceCollapsed)
+  const slotRef = useRef<HTMLButtonElement>(null)
+  // Power off swaps the card for the slot: keep the keyboard focus there instead of losing it to <body>
+  const refocusSlot = useRef(false)
+  useLayoutEffect(() => {
+    if (enabled || !refocusSlot.current) return
+    refocusSlot.current = false
+    slotRef.current?.focus({ preventScroll: true })
+  }, [enabled])
 
   if (!enabled) {
     return (
       <button
+        ref={slotRef}
         type="button"
         className="seg-warp-slot"
         data-warp-card
@@ -81,7 +90,6 @@ export const WarpCard = memo(function WarpCard() {
       role="group"
       tabIndex={0}
       aria-label="Time warp"
-      aria-expanded={!collapsed}
       className="seg-dev seg-warpcard"
       data-warp-card
       data-collapsed={collapsed || undefined}
@@ -113,9 +121,25 @@ export const WarpCard = memo(function WarpCard() {
           aria-pressed
           aria-label="Turn time warp off"
           title="Turn off"
-          onClick={(ev) => { ev.stopPropagation(); useWarpStore.getState().setEnabled(false) }}
+          onClick={(ev) => { ev.stopPropagation(); refocusSlot.current = true; useWarpStore.getState().setEnabled(false) }}
         />
-        <span className="seg-dev-name">Time warp</span>
+        {/* The collapse control: a disclosure for assistive tech and the keyboard (detail 0). A mouse click
+            opens the Warp tab like the rest of the card; double-clicking the rail collapses. */}
+        <button
+          type="button"
+          className="seg-dev-name"
+          data-warp-card-collapse
+          tabIndex={-1}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? 'Expand time warp' : 'Collapse time warp'}
+          onClick={(ev) => {
+            ev.stopPropagation()
+            if (ev.detail === 0) toggleCollapsed(ID)
+            else if (ev.detail === 1) openWarpTab()
+          }}
+        >
+          Time warp
+        </button>
       </div>
       <div className="seg-dev-body" hidden={collapsed}>
         <div className="seg-warpcard-row">

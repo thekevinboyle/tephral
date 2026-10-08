@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import type { WarpProfile, WarpSnapshot } from '../../stores/warpStore'
-import { MAX_DELAY_SECONDS } from './warpMath'
+import { delaySeconds, LUT_SIZE, MAX_DELAY_SECONDS } from './warpMath'
 import { QuadPass, WarpFrameBuffer, WARP_CAPTURE_FPS, WARP_MAX_FRAMES, makeTarget } from './WarpFrameBuffer'
 import { WARP_CLEAN_FRAG, WARP_COPY_FRAG, WARP_DEGRADE_FRAG, WARP_SMEAR_FRAG, WARP_VERTEX } from './warpShaders'
 
@@ -10,14 +10,21 @@ export interface WarpVideoOptions {
   mix: number
   /** Current loop length; sizes the ring (frames needed for the longest possible delay). */
   loopSeconds: number
+  /** The line, as used for the delay (jump detection walks it between ticks). Null: drift-only fallback. */
+  lut: Float32Array | null
+  amount: number
+  skew: number
 }
 
 const FRAME = 1 / WARP_CAPTURE_FPS
-/** Read positions further apart than this from the expected continuation count as a jump. */
-const JUMP_THRESHOLD = 1.5 * FRAME
+/** Delay change not explained by the line's continuous part that counts as a jump. */
+const JUMP_MARGIN = 0.5 * FRAME
+/** Ticks covering more than this much phase are treated as a jump outright (stall, re-anchor). */
+const MAX_WALK_PHASE = 0.5
 /** Output target long side cap (the pipeline resamples it to the canvas anyway). */
 const OUTPUT_MAX_LONG_SIDE = 1920
 const THUMB_WIDTH = 96
+const SMEAR_SLOTS = ['tF0', 'tF1', 'tF2', 'tF3', 'tF4', 'tF5'] as const
 
 const material = (frag: string, uniforms: Record<string, THREE.IUniform>) => new THREE.ShaderMaterial({
   uniforms, vertexShader: WARP_VERTEX, fragmentShader: frag, depthTest: false, depthWrite: false,
@@ -31,8 +38,15 @@ const material = (frag: string, uniforms: Record<string, THREE.IUniform>) => new
  * returns `live` itself (full resolution, no extra pass), except while a clean-profile crossfade
  * out of a delayed read is still running (at most smooth*4 frames).
  *
- * Everything is allocated lazily; dispose() frees all GPU resources and the instance can be used
- * again afterwards (it reallocates on the next capture).
+ * Render targets are allocated lazily. release() frees them (warp turned off) and keeps the
+ * compiled programs, so re-enabling costs no shader compile; dispose() is the full teardown
+ * (targets, materials, geometry) for unmount.
+ *
+ * Jumps (clean crossfade start, degrade re-hold) are discontinuities in the delay: the line is
+ * walked one LUT cell at a time between the previous and current phase, and a cell whose delay
+ * change exceeds max(1.5 frames, 8 cells of loop time) is a step or a mod-wrap. Delay change
+ * the walk does not explain (line edited, re-anchor) is a jump too. Continuous slopes, however
+ * steep the drift per tick (reverse = 2x), are not.
  */
 export class WarpCompositor {
   private readonly geometry = new THREE.PlaneGeometry(2, 2)
@@ -42,15 +56,21 @@ export class WarpCompositor {
   private thumbTarget: THREE.WebGLRenderTarget | null = null
   private readonly size = new THREE.Vector2()
 
-  private opts: WarpVideoOptions = {
+  private readonly opts: WarpVideoOptions = {
     profile: 'clean', params: { smooth: 0.3, grain: 0.4, blend: 0.5, rate: 0.5, crunch: 0.3 }, mix: 1, loopSeconds: 2,
+    lut: null, amount: 1, skew: 0,
   }
+  private readonly delayArgs: { phase: number; lut: Float32Array; amount: number; skew: number; loopSeconds: number } = { phase: 0, lut: new Float32Array(LUT_SIZE), amount: 1, skew: 0, loopSeconds: 2 }
+  private readonly smearW = [0, 0, 0, 0, 0, 0]
+  private _jumpCount = 0
   private live: THREE.Texture | null = null
   private now = 0
 
-  // clean: jump detection and crossfade from the previous read
+  // jump detection; clean crossfade from the previous read
   private prevRead = NaN
   private prevNow = NaN
+  private prevPhase = NaN
+  private prevDelay = NaN
   private fadeFrom = NaN // read time of the old path when the fade started
   private fadeStart = NaN
   private fadeDur = 0
@@ -63,7 +83,7 @@ export class WarpCompositor {
   })
   private readonly smear = material(WARP_SMEAR_FRAG, {
     tLive: { value: null }, tF0: { value: null }, tF1: { value: null }, tF2: { value: null }, tF3: { value: null },
-    tF4: { value: null }, tF5: { value: null }, uW: { value: [0, 0, 0, 0, 0, 0] }, uMix: { value: 1 },
+    tF4: { value: null }, tF5: { value: null }, uW: { value: null }, uMix: { value: 1 },
   })
   private readonly degrade = material(WARP_DEGRADE_FRAG, {
     tLive: { value: null }, tA: { value: null }, uFrameSize: { value: new THREE.Vector2(1, 1) },
@@ -75,6 +95,7 @@ export class WarpCompositor {
 
   constructor(renderer: THREE.WebGLRenderer) {
     this.renderer = renderer
+    this.smear.uniforms.uW.value = this.smearW
   }
 
   /** Frames currently stored. */
@@ -83,6 +104,8 @@ export class WarpCompositor {
   get targetCount() { return this.buffer.targetCount }
   /** Output + thumbnail targets currently allocated (0 to 2). */
   get extraTargetCount() { return (this.output ? 1 : 0) + (this.thumbTarget ? 1 : 0) }
+  /** Jumps detected since construction (for tests). */
+  get jumpCount() { return this._jumpCount }
   /** The output render target (for tests: readRenderTargetPixels). */
   get outputTarget() { return this.output }
   /** Approximate GPU bytes held by all targets (RGBA8). */
@@ -93,7 +116,8 @@ export class WarpCompositor {
     return ring + out + th
   }
 
-  setOptions(o: Partial<WarpVideoOptions>) { this.opts = { ...this.opts, ...o } }
+  /** Copies the given fields in (no allocation; callers can reuse one options object). */
+  setOptions(o: Partial<WarpVideoOptions>) { Object.assign(this.opts, o) }
 
   private capacity() {
     const longest = Math.min(MAX_DELAY_SECONDS, Math.max(0, this.opts.loopSeconds))
@@ -108,12 +132,44 @@ export class WarpCompositor {
     this.buffer.capture(this.renderer, live, t, aspect, this.capacity())
   }
 
+  private delayAt(phase: number): number {
+    const a = this.delayArgs
+    a.phase = phase - Math.floor(phase)
+    return delaySeconds(a)
+  }
+
+  /** Was there a discontinuity in the delay between the previous tick and this one? */
+  private detectJump(phase: number, delay: number, now: number): boolean {
+    if (!Number.isFinite(this.prevPhase) || !Number.isFinite(this.prevDelay)) return false
+    const o = this.opts
+    if (!o.lut) return Math.abs(delay - this.prevDelay) > 2 * Math.max(0, now - this.prevNow) + JUMP_MARGIN // reverse drift allowed
+    const a = this.delayArgs
+    a.lut = o.lut; a.amount = o.amount; a.skew = o.skew; a.loopSeconds = o.loopSeconds
+    let dphi = phase - this.prevPhase
+    if (dphi < 0) dphi += 1
+    if (dphi > MAX_WALK_PHASE) return true
+    const cells = Math.ceil(dphi * LUT_SIZE)
+    const cellLimit = Math.max(1.5 * FRAME, (8 * o.loopSeconds) / LUT_SIZE)
+    let d0 = this.delayAt(this.prevPhase), explained = 0
+    for (let i = 1; i <= cells; i++) {
+      const d = this.delayAt(this.prevPhase + (dphi * i) / cells)
+      if (Math.abs(d - d0) > cellLimit) return true
+      explained += d - d0
+      d0 = d
+    }
+    return Math.abs(delay - this.prevDelay - explained) > JUMP_MARGIN
+  }
+
+  private frameAt(t: number, live: THREE.Texture): THREE.Texture {
+    if (t >= this.now - 1e-3) return live
+    return this.buffer.closest(t)?.rt.texture ?? live
+  }
+
   /**
-   * The texture to feed the pipeline. `phase` is the loop phase the delay was computed for
-   * (accepted for symmetry with the audio side; the read time is `now - delaySec`).
+   * The texture to feed the pipeline. `phase` is the loop phase the delay was computed for (used
+   * with the line for jump detection); the read time is `now - delaySec`.
    */
   render(phase: number, delaySec: number): THREE.Texture {
-    void phase
     const live = this.live
     if (!live) throw new Error('WarpCompositor.render before capture')
     const now = this.now
@@ -122,15 +178,19 @@ export class WarpCompositor {
     const { profile, params, mix } = this.opts
 
     // Jump tracking runs for every profile so switching profile mid-run behaves.
-    const expected = this.prevRead + (now - this.prevNow)
-    const jumped = Number.isFinite(expected) && Math.abs(read - expected) > JUMP_THRESHOLD
-    if (jumped && profile === 'clean' && params.smooth > 0) {
-      this.fadeFrom = expected
-      this.fadeStart = now
-      this.fadeDur = params.smooth * 4 * FRAME
+    const jumped = this.detectJump(phase, delay, now)
+    if (jumped) {
+      this._jumpCount++
+      if (profile === 'clean' && params.smooth > 0) {
+        this.fadeFrom = this.prevRead + (now - this.prevNow) // the old path, continuing
+        this.fadeStart = now
+        this.fadeDur = params.smooth * 4 * FRAME
+      }
     }
     this.prevRead = read
     this.prevNow = now
+    this.prevPhase = phase
+    this.prevDelay = delay
     let fade = 0
     if (profile === 'clean' && this.fadeDur > 0 && now - this.fadeStart < this.fadeDur) fade = 1 - (now - this.fadeStart) / this.fadeDur
     else this.fadeDur = 0
@@ -140,13 +200,12 @@ export class WarpCompositor {
     if ((delay <= 0 && fade <= 0) || mix <= 0 || this.buffer.size === 0) return live
 
     const out = this.ensureOutput()
-    const at = (t: number) => (t >= now - 1e-3 ? live : this.buffer.closest(t)?.rt.texture ?? live)
 
     if (profile === 'clean') {
       const u = this.clean.uniforms
       u.tLive.value = live
-      u.tA.value = delay <= 0 ? live : at(read)
-      u.tB.value = fade > 0 ? at(this.fadeFrom + (now - this.fadeStart)) : u.tA.value
+      u.tA.value = delay <= 0 ? live : this.frameAt(read, live)
+      u.tB.value = fade > 0 ? this.frameAt(this.fadeFrom + (now - this.fadeStart), live) : u.tA.value
       u.uFade.value = fade
       u.uMix.value = mix
       this.quad.draw(this.renderer, this.clean, out)
@@ -155,16 +214,18 @@ export class WarpCompositor {
       const sigma = 0.5 + params.blend * 2.5 // frames: blend 0 = centre-heavy, 1 = near-even
       const pos = this.buffer.indexOf(read)
       const first = Math.round(pos - (n - 1) / 2)
-      const w: number[] = [0, 0, 0, 0, 0, 0]
-      let sum = 0
+      const w = this.smearW
+      let sum = 0, lastK = -1
       const u = this.smear.uniforms
       for (let i = 0; i < 6; i++) {
         const k = Math.min(this.buffer.size - 1, Math.max(0, first + i))
-        u[`tF${i}`].value = this.buffer.at(k).rt.texture
-        if (i < n) { const d = first + i - pos; w[i] = Math.exp(-(d * d) / (2 * sigma * sigma)); sum += w[i] }
+        u[SMEAR_SLOTS[i]].value = this.buffer.at(k).rt.texture
+        w[i] = 0
+        // Near the ring edges several slots clamp to the same frame: weight it once, at its real distance.
+        if (i < n && k !== lastK) { const d = k - pos; w[i] = Math.exp(-(d * d) / (2 * sigma * sigma)); sum += w[i] }
+        lastK = k
       }
       for (let i = 0; i < 6; i++) w[i] /= sum
-      u.uW.value = w
       u.tLive.value = live
       u.uMix.value = mix
       this.quad.draw(this.renderer, this.smear, out)
@@ -175,7 +236,7 @@ export class WarpCompositor {
       if (tick !== this.holdTick || jumped) { this.holdTick = tick; this.holdRead = read }
       const u = this.degrade.uniforms
       u.tLive.value = live
-      u.tA.value = at(this.holdRead)
+      u.tA.value = this.frameAt(this.holdRead, live)
       ;(u.uFrameSize.value as THREE.Vector2).set(this.buffer.frameWidth, this.buffer.frameHeight)
       u.uPixel.value = 1 + Math.floor(params.crunch * 15)
       u.uLevels.value = Math.max(3, Math.round(256 * Math.pow(3 / 256, params.crunch)))
@@ -198,6 +259,7 @@ export class WarpCompositor {
   /**
    * Thumbnail for the editor strip: the last loop of history (or what is stored, if less) split
    * into `count` equal parts, index 0 oldest. A new 96 px wide canvas, or null with no frames.
+   * Synchronous GPU readback: callers must cache the result and refresh it sparingly, never per frame.
    */
   getThumbnail(index: number, count: number): HTMLCanvasElement | null {
     const s = this.buffer.size
@@ -230,22 +292,33 @@ export class WarpCompositor {
   /** Forget every stored frame (on source change) and any fade/hold state. */
   clear(): void {
     this.buffer.clear()
-    this.prevRead = this.prevNow = this.fadeFrom = this.fadeStart = this.holdTick = this.holdRead = NaN
+    this.prevRead = this.prevNow = this.prevPhase = this.prevDelay = NaN
+    this.fadeFrom = this.fadeStart = this.holdTick = this.holdRead = NaN
     this.fadeDur = 0
   }
 
-  /** Free every render target and GPU program. The instance stays usable and reallocates lazily. */
-  dispose(): void {
+  /**
+   * Free every render target (warp turned off). Materials and their programs are kept, so turning
+   * the warp back on does not recompile; the instance reallocates targets lazily.
+   */
+  release(): void {
     this.buffer.release()
     this.output?.dispose()
     this.output = null
     this.thumbTarget?.dispose()
     this.thumbTarget = null
+    this.live = null
+    this.clear()
+  }
+
+  /** Full teardown (unmount): render targets, materials, programs and geometry. Do not use afterwards. */
+  dispose(): void {
+    this.release()
+    this.buffer.dispose()
     this.clean.dispose()
     this.smear.dispose()
     this.degrade.dispose()
     this.thumbCopy.dispose()
-    this.live = null
-    this.clear()
+    this.geometry.dispose()
   }
 }

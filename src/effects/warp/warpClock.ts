@@ -79,6 +79,12 @@ export function setWarpAnchor(ctxTime: number, phase = 0, keep = false): void {
   emit({ reset: false, segment: { ...seg } })
 }
 
+/** Loop length in seconds of the segment in force at `ctxTime` (no allocation; for per-frame use). */
+export function warpLoopSecondsAt(ctxTime: number): number {
+  const s = segAt(ctxTime)
+  return loopSeconds(s.lengthBeats, s.bpm)
+}
+
 /** The segment in force latest (posted to the worklet). */
 export function warpClockSnapshot(): { t0: number; bpm: number; lengthBeats: number; at: number } {
   return { ...segs[segs.length - 1] }

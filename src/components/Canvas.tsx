@@ -25,9 +25,9 @@ import { OverlayContainer } from './overlays/OverlayContainer'
 import { perfMonitor } from '../utils/perfMonitor'
 import { initParamSync } from '../effects/paramSync'
 import { advanceReadbackFrame } from './overlays/sharedReadback'
-import { WarpCompositor } from '../effects/warp/WarpCompositor'
-import { getHeardWarpPhase, warpClockSegments, warpNow } from '../effects/warp/warpClock'
-import { delaySeconds, loopSeconds } from '../effects/warp/warpMath'
+import { WarpCompositor, type WarpVideoOptions } from '../effects/warp/WarpCompositor'
+import { getHeardWarpPhase, warpLoopSecondsAt, warpNow } from '../effects/warp/warpClock'
+import { delaySeconds } from '../effects/warp/warpMath'
 import { useWarpStore } from '../stores/warpStore'
 
 /**
@@ -42,13 +42,6 @@ interface WarpBase {
   aspect: () => number
 }
 
-/** Loop length of the clock segment in force at `t` (matches getWarpPhase). */
-function loopSecondsAt(t: number): number {
-  const segs = warpClockSegments()
-  let s = segs[0]
-  for (let i = 1; i < segs.length; i++) if (segs[i].at <= t) s = segs[i]; else break
-  return loopSeconds(s.lengthBeats, s.bpm)
-}
 
 export interface CanvasHandle {
   getCanvas: () => HTMLCanvasElement | null
@@ -630,18 +623,25 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     resizeObserver.observe(container)
 
     // Video time warp, before the effect chain. When it is off nothing here allocates or draws.
+    // Reused every frame: no per-frame allocation while the warp runs.
+    const warpOpts: WarpVideoOptions = { profile: 'clean', params: useWarpStore.getState().params, mix: 1, loopSeconds: 2, lut: null, amount: 1, skew: 0 }
+    const delayArgs = { phase: 0, lut: useWarpStore.getState().lut, amount: 1, skew: 0, loopSeconds: 2 }
     const warpTick = () => {
       const w = useWarpStore.getState()
       const base = warpBase.current
       const live = base?.live ?? null
       if (base && live && w.enabled && w.appliesTo !== 'audio') {
-        const comp = (warpCompositor.current ??= new WarpCompositor(renderer))
+        let comp = warpCompositor.current
+        if (!comp) { comp = new WarpCompositor(renderer); warpCompositor.current = comp }
         const now = warpNow()
-        const loop = loopSecondsAt(now)
+        const loop = warpLoopSecondsAt(now)
         const phase = getHeardWarpPhase()
-        comp.setOptions({ profile: w.profile, params: w.params, mix: w.mix, loopSeconds: loop })
+        warpOpts.profile = w.profile; warpOpts.params = w.params; warpOpts.mix = w.mix; warpOpts.loopSeconds = loop
+        warpOpts.lut = w.lut; warpOpts.amount = w.amount; warpOpts.skew = w.skew
+        comp.setOptions(warpOpts)
         comp.capture(live, now, base.aspect())
-        const out = comp.render(phase, delaySeconds({ phase, lut: w.lut, amount: w.amount, skew: w.skew, loopSeconds: loop }))
+        delayArgs.phase = phase; delayArgs.lut = w.lut; delayArgs.amount = w.amount; delayArgs.skew = w.skew; delayArgs.loopSeconds = loop
+        const out = comp.render(phase, delaySeconds(delayArgs))
         if (out !== warpApplied.current) {
           pipeline.setInputTexture(out)
           pipeline.setSourceTexture(out)
@@ -649,19 +649,20 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         }
         return
       }
-      // Off (or no source): put the base back exactly once and free the ring.
+      // Off (or no source): put the base back exactly once and free the render targets (programs are kept).
       if (warpApplied.current && base) {
         pipeline.setInputTexture(base.input)
         pipeline.setSourceTexture(base.source)
       }
       warpApplied.current = null
       const comp = warpCompositor.current
-      if (comp && (comp.targetCount || comp.extraTargetCount)) comp.dispose()
+      if (comp && (comp.targetCount || comp.extraTargetCount)) comp.release()
     }
     if (import.meta.env.DEV) {
+      // Test hook (dev only; stripped from the build). Plain functions, not getters.
       ;(window as unknown as { __warpTest?: unknown }).__warpTest = {
-        get compositor() { return warpCompositor.current }, renderer, THREE, WarpCompositor,
-        get input() { return warpApplied.current ?? warpBase.current?.input ?? null },
+        compositor: () => warpCompositor.current, renderer, THREE, WarpCompositor,
+        input: () => warpApplied.current ?? warpBase.current?.input ?? null,
       }
     }
 

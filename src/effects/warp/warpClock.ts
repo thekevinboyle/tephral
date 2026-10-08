@@ -16,8 +16,11 @@ import { useAudioSourceStore } from '../../stores/audioSourceStore'
 
 /** keep: a phase-preserving change (tempo/length); a late arrival is applied keeping the phase. */
 export interface WarpClockSegment { at: number; t0: number; bpm: number; lengthBeats: number; keep?: boolean }
-/** Sent to listeners. `reset` replaces the whole list (time base changed); otherwise it is one new segment. */
-export type WarpClockEvent = { reset: true; segments: WarpClockSegment[] } | { reset: false; segment: WarpClockSegment }
+/**
+ * Sent to listeners. `reset` replaces the whole list (time base changed; `delta` is how far warpNow() jumped,
+ * so stored timestamps can be shifted by it); otherwise it is one new segment.
+ */
+export type WarpClockEvent = { reset: true; segments: WarpClockSegment[]; delta: number } | { reset: false; segment: WarpClockSegment }
 
 /** Tempo/length changes take effect this far ahead so the worklet can switch on the same sample. */
 export const WARP_CLOCK_LOOKAHEAD = 0.1
@@ -112,7 +115,7 @@ export function setWarpTimeBase(ctx: BaseAudioContext | null): void {
   }
   const delta = ctx.currentTime - before
   segs = segs.map((s) => ({ ...s, at: s.at + delta, t0: s.t0 + delta }))
-  emit({ reset: true, segments: warpClockSegments() })
+  emit({ reset: true, segments: warpClockSegments(), delta })
 }
 
 /** Re-anchor on BPM/length changes (x preserved) and on sequencer play (x = 0 at step 0). */

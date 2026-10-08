@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { isOutputOpen, isProfileNeutral, type Knobs, type ProfileId, type WarpOutput } from '../../stores/warpStore'
 import { delaySeconds, LUT_SIZE, MAX_DELAY_SECONDS } from './warpMath'
+import { onWarpClockChange } from './warpClock'
 import { QuadPass, WarpFrameBuffer, WARP_CAPTURE_FPS, WARP_MAX_FRAMES, makeTarget } from './WarpFrameBuffer'
 import {
   bandLuma, WARP_CLEAN_FRAG, WARP_COPY_FRAG, WARP_DEGRADE_FRAG, WARP_FAUXCODER_FRAG, WARP_FILTERSPAM_FRAG, WARP_FLANGE_FRAG,
@@ -57,7 +58,8 @@ const material = (frag: string, uniforms: Record<string, THREE.IUniform>) => new
  *
  * Render targets are allocated lazily. release() frees them (warp turned off) and keeps the
  * compiled programs, so re-enabling costs no shader compile; dispose() is the full teardown
- * (targets, materials, geometry) for unmount. Each profile's program is compiled once, on first use.
+ * (targets, materials, geometry) for unmount. Every profile's program is compiled once, at construction
+ * (warmPrograms), so a first profile switch never compiles on the frame it happens.
  * Clean's echo feedback target exists only while Clean has Echo > 0.
  *
  * Jumps (degrade re-hold) are discontinuities in the delay: the line is walked one LUT cell at a
@@ -137,8 +139,49 @@ export class WarpCompositor {
 
   private readonly renderer: THREE.WebGLRenderer
 
+  private readonly unsubClock: () => void
+
   constructor(renderer: THREE.WebGLRenderer) {
     this.renderer = renderer
+    this.warmPrograms()
+    // An audio-source switch moves the clock's time base: shift the stored history with it instead of losing it
+    this.unsubClock = onWarpClockChange((e) => { if (e.reset) this.shiftTime(e.delta) })
+  }
+
+  /**
+   * Compile every profile's program (and the copy program) now, into a render target like the one they draw
+   * into, so the program keys match.
+   */
+  private warmPrograms() {
+    const r = this.renderer
+    const scene = new THREE.Scene()
+    for (const m of [...Object.values(this.materials), this.thumbCopy]) {
+      const mesh = new THREE.Mesh(this.geometry, m)
+      mesh.frustumCulled = false
+      scene.add(mesh)
+    }
+    const rt = makeTarget(1, 1)
+    const prev = r.getRenderTarget()
+    r.setRenderTarget(rt)
+    try {
+      // compile() issues the compile and link without waiting on their status (that is checked on first use), so
+      // with KHR_parallel_shader_compile the driver finishes them in the background. Not compileAsync: its
+      // readiness polling throws if the compositor is disposed before the programs are ready.
+      r.compile(scene, this.quad.camera)
+    } finally {
+      r.setRenderTarget(prev)
+      rt.dispose()
+    }
+  }
+
+  /** The clock moved by `delta` s: shift the ring and every stored time so history and hold state survive. */
+  private shiftTime(delta: number) {
+    if (!Number.isFinite(delta) || delta === 0) return
+    this.buffer.shiftTime(delta)
+    this.now += delta
+    this.prevNow += delta
+    this.holdRead += delta
+    this._readTime += delta
   }
 
   /** Frames currently stored. */
@@ -173,7 +216,11 @@ export class WarpCompositor {
   }
 
   private capacity() {
-    const longest = Math.min(MAX_DELAY_SECONDS, Math.max(0, this.opts.loopSeconds, this.thumbHistory))
+    const L = Math.max(0, this.opts.loopSeconds)
+    // Reads past the loop: Filter Spam's Octaves start up to a slice (L/16) further back, Degrade's Chaos up to 0.3 s
+    const p = this.opts.profile
+    const margin = p === 'filterspam' ? L / 16 : p === 'degrade' ? 0.3 : 0
+    const longest = Math.min(MAX_DELAY_SECONDS, Math.max(L + margin, this.thumbHistory))
     return Math.min(WARP_MAX_FRAMES, Math.ceil(longest * WARP_CAPTURE_FPS) + 2)
   }
 
@@ -243,6 +290,7 @@ export class WarpCompositor {
 
     if (mix <= 0 || this.buffer.size === 0 || (delay <= 0 && isOutputOpen(output) && isProfileNeutral(profile, k))) {
       this._readTime = now
+      this.echoValid = false // the echo target was not updated this frame: never fade a stale one back in
       return live
     }
 
@@ -471,6 +519,7 @@ export class WarpCompositor {
 
   /** Full teardown (unmount): render targets, materials, programs and geometry. Do not use afterwards. */
   dispose(): void {
+    this.unsubClock()
     this.release()
     this.buffer.dispose()
     for (const m of Object.values(this.materials)) m.dispose()

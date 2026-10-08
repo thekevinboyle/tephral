@@ -159,6 +159,14 @@ export class WarpFrameBuffer {
     return Number.isNaN(f) ? null : this.at(Math.round(f))
   }
 
+  /** The clock's time base moved by `delta` s (audio source switch): shift every timestamp so history survives. */
+  shiftTime(delta: number) {
+    if (!Number.isFinite(delta) || delta === 0) return
+    for (const s of this.slots) s.t += delta
+    this.nextDue += delta
+    this.lastT += delta
+  }
+
   /** Forget every stored frame (targets are kept for reuse). Nothing captured before this is returned again. */
   clear() {
     this._size = 0

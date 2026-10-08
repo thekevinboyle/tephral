@@ -117,10 +117,16 @@ function setBP(c, o, f, q) {
   const w = (TAU * bqFreq(f)) / sampleRate, cs = Math.cos(w), al = Math.sin(w) / (2 * q), a0 = 1 + al
   c[o] = al / a0; c[o + 1] = 0; c[o + 2] = -al / a0; c[o + 3] = (-2 * cs) / a0; c[o + 4] = (1 - al) / a0
 }
+const DENORMAL = 1e-20
 function bq(c, o, z, zo, x) {
   const y = c[o] * x + z[zo]
-  z[zo] = c[o + 1] * x - c[o + 3] * y + z[zo + 1]
-  z[zo + 1] = c[o + 2] * x - c[o + 4] * y
+  let z0 = c[o + 1] * x - c[o + 3] * y + z[zo + 1]
+  let z1 = c[o + 2] * x - c[o + 4] * y
+  // flush tiny states to 0 so a decaying filter never runs on denormals
+  if (z0 < DENORMAL && z0 > -DENORMAL) z0 = 0
+  if (z1 < DENORMAL && z1 > -DENORMAL) z1 = 0
+  z[zo] = z0
+  z[zo + 1] = z1
   return y
 }
 
@@ -215,7 +221,9 @@ class Grains {
       sw += w
       this.age[g] = a + 1
     }
-    if (sw > 1e-9) { this.L = sL / sw; this.R = sR / sw }
+    // normalise by the window sum, floored so a dip in the overlap never boosts the level
+    const d = sw > 0.5 ? sw : 0.5
+    this.L = sL / d; this.R = sR / d
   }
 }
 
@@ -234,6 +242,8 @@ class Clean {
     this.ph = 0
     this.echo[0].fill(0); this.echo[1].fill(0)
     this.ew = 0
+    // echo tap (samples, fractional while ramping): a BPM change moves it over RAMP_SECONDS, not in one sample
+    this.eTap = -1; this.eTgt = -1; this.eStep = 0; this.eLeft = 0
     this.chunkLeft = 0; this.chunkLen = 0; this.bendOn = false; this.bendOff = 0
   }
   render(pr, P) {
@@ -272,9 +282,13 @@ class Clean {
     const e0 = this.echo[0], e1 = this.echo[1], es = e0.length
     let E = Math.round((60 / pr.bpm / 8) * sr)
     if (E < 1) E = 1; else if (E > es - 1) E = es - 1
-    const ri = (this.ew - E + es) % es
-    const yL = fb === 0 ? L : L + fb * e0[ri]
-    const yR = fb === 0 ? R : R + fb * e1[ri]
+    if (this.eTap < 0) { this.eTap = this.eTgt = E; this.eLeft = 0 }
+    else if (E !== this.eTgt) { this.eTgt = E; this.eLeft = Math.max(1, Math.round(RAMP_SECONDS * sr)); this.eStep = (E - this.eTap) / this.eLeft }
+    if (this.eLeft > 0) { if (--this.eLeft === 0) this.eTap = this.eTgt; else this.eTap += this.eStep }
+    const tp = this.eTap, ti = Math.floor(tp), tf = tp - ti
+    const ra = (this.ew - ti + es) % es, rb = (ra - 1 + es) % es // rb is one sample further back
+    const yL = fb === 0 ? L : L + fb * (e0[ra] + (e0[rb] - e0[ra]) * tf)
+    const yR = fb === 0 ? R : R + fb * (e1[ra] + (e1[rb] - e1[ra]) * tf)
     e0[this.ew] = yL; e1[this.ew] = yR
     this.ew = (this.ew + 1) % es
     pr.oL = yL; pr.oR = yR
@@ -344,6 +358,8 @@ class Degrade {
       if (cut > 0.95) a += (1 - a) * ((cut - 0.95) / 0.05)
       this.lpL += (L - this.lpL) * a
       this.lpR += (R - this.lpR) * a
+      if (this.lpL < DENORMAL && this.lpL > -DENORMAL) this.lpL = 0
+      if (this.lpR < DENORMAL && this.lpR > -DENORMAL) this.lpR = 0
       L = this.lpL; R = this.lpR
     } else { this.lpL = L; this.lpR = R }
     const deg = pr.kv(this.id, 0)
@@ -460,8 +476,13 @@ class Harmonicer {
 
 /** Fauxcoder (neutral 0,0,any,0): 8 band-passes on the harmonics of 80..800 Hz; Squelch 4..40 Hz; Magic random-walks it. */
 class Fauxcoder {
-  constructor() { this.id = 5; this.cf = new Float64Array(8 * 5); this.z = new Float64Array(8 * 4); this.live = new Uint8Array(8); this.reset() }
-  reset() { this.z.fill(0); this.ph = 0; this.rw = 0; this.ctr = 0; this.on = false }
+  constructor() {
+    this.id = 5; this.cf = new Float64Array(8 * 5); this.z = new Float64Array(8 * 4); this.live = new Uint8Array(8)
+    this.gt = new Float64Array(8) // per-band gain target: fades to 0 as the band nears 0.45 sr
+    this.gc = new Float64Array(8) // per-band gain, smoothed per sample
+    this.reset()
+  }
+  reset() { this.z.fill(0); this.gt.fill(0); this.gc.fill(0); this.live.fill(0); this.ph = 0; this.rw = 0; this.ctr = 0; this.on = false }
   post(pr, L, R) {
     const id = this.id
     const amt = pr.kv(id, 0)
@@ -475,17 +496,23 @@ class Fauxcoder {
       this.rw = this.rw * 0.995 + (pr.rand() - 0.5) * magic * 0.15
       const octs = sq * (0.6 * Math.sin(TAU * this.ph) + 0.8 * magic * this.rw)
       const base = 80 * Math.pow(10, pr.kv(id, 2)) * Math.pow(2, octs)
+      const top = 0.45 * pr.sr, fade = 0.1 * pr.sr
       for (let k = 0; k < 8; k++) {
         const f = base * (k + 1)
-        this.live[k] = f < 0.45 * pr.sr ? 1 : 0
-        if (this.live[k]) setBP(this.cf, k * 5, f, 6)
+        const on = f < top ? 1 : 0
+        if (on && !this.live[k]) { const z = this.z, o = k * 4; z[o] = z[o + 1] = z[o + 2] = z[o + 3] = 0; this.gc[k] = 0 } // re-entering: start clean
+        this.live[k] = on
+        this.gt[k] = on ? Math.min(1, (top - f) / fade) : 0
+        if (on) setBP(this.cf, k * 5, f, 6)
       }
     }
     let bL = 0, bR = 0
+    const gk = 1 / CTRL
     for (let k = 0; k < 8; k++) {
       if (!this.live[k]) continue
-      bL += bq(this.cf, k * 5, this.z, k * 4, L)
-      bR += bq(this.cf, k * 5, this.z, k * 4 + 2, R)
+      const g = (this.gc[k] += (this.gt[k] - this.gc[k]) * gk)
+      bL += g * bq(this.cf, k * 5, this.z, k * 4, L)
+      bR += g * bq(this.cf, k * 5, this.z, k * 4 + 2, R)
     }
     pr.oL = L + (3 * bL - L) * amt
     pr.oR = R + (3 * bR - R) * amt
@@ -636,6 +663,7 @@ class WarpProcessor extends AudioWorkletProcessor {
   onParams(m) {
     const p = this.p
     for (const k of ['amount', 'skew', 'mix', 'smooth']) if (typeof m[k] === 'number' && Number.isFinite(m[k])) p[k] = m[k]
+    p.smooth = clamp01(p.smooth) // test-only click-guard fade: 0..1 of 30 ms
     if (typeof m.active === 'boolean') p.active = m.active
     if (typeof m.probe === 'boolean') p.probe = m.probe
     let id = this.cur

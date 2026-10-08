@@ -115,8 +115,15 @@ export async function insertAudioWarp(
     clearTimeout(timer)
     try { input.disconnect(node) } catch { /* already gone */ }
     try { node.disconnect() } catch { /* already gone */ }
-    if (ctx.state === 'closed') { procs.delete(rec); node.port.close() }
-    else node.port.postMessage({ type: 'dispose' }) // the processor replies 'disposed'; the port closes then
+    if (ctx.state !== 'closed') node.port.postMessage({ type: 'dispose' }) // the processor stops itself
+    if (reconnect && ctx.state !== 'closed') {
+      // the port closes when the processor replies 'disposed'
+    } else {
+      // Graph torn down (or context closed): a 'disposed' reply may never come, so drop the port and record now
+      node.port.onmessage = null
+      node.port.close()
+      procs.delete(rec)
+    }
     // Same task as the disconnect, so the swap lands on one render quantum.
     if (reconnect && ctx.state !== 'closed') for (const o of outputs) { try { input.connect(o) } catch { /* context gone */ } }
   }
@@ -197,6 +204,11 @@ export function liveWarpProcessorCount(): number {
     else if (r.alive) n++
   }
   return n
+}
+
+/** Processor records still held (alive or not yet replied 'disposed') - tests, for leak checks. */
+export function warpProcessorRecordCount(): number {
+  return procs.size
 }
 
 /** The inserted warp nodes (tests). */

@@ -81,9 +81,7 @@ export const StageArea = memo(forwardRef<CanvasHandle>(function StageArea(_props
             <Canvas ref={canvasRef} />
             <ClipBin />
           </div>
-          <span className="stage-tick tl" /><span className="stage-tick tr" /><span className="stage-tick bl" /><span className="stage-tick br" />
           <StageReadouts />
-          <div className="stage-ruler" />
         </div>
       </div>
       <div data-media-strip className="flex flex-col flex-shrink-0">

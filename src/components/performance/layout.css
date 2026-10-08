@@ -357,3 +357,12 @@
 .seg-toggle-block-state { flex: none; font: 500 11px var(--font-mono); }
 /* Crossfader ends (HorizontalCrossfader): text buttons, not icons */
 .seg-xfade-end { flex: none; height: 24px; padding: 0 8px; border-radius: var(--radius-ctrl); font: 500 11px var(--font-sans); cursor: pointer; }
+
+/* Header: three columns so the transport sits exactly centred; every control 28px, one line, 44px bar */
+.seg-header { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; column-gap: 16px;
+  height: 100%; padding: 0 12px; background: var(--bg-void); border-bottom: 1px solid var(--border); overflow: hidden; }
+.seg-header-left, .seg-header-right { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.seg-header-right { justify-content: flex-end; }
+.seg-header-field { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.seg-header-label { font: 500 11px var(--font-sans); color: var(--text-muted); white-space: nowrap; }
+@media (max-width: 1099px) { .seg-header-label { display: none; } .seg-header-left, .seg-header-right { gap: 10px; } }

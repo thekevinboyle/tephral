@@ -22,7 +22,6 @@ import { useSlicerStore } from '../stores/slicerStore'
 import { useSlicerBufferStore } from '../stores/slicerBufferStore'
 import { SlicerCompositor } from '../effects/SlicerCompositor'
 import { OverlayContainer } from './overlays/OverlayContainer'
-import { Crosshair } from './ui/MicroVisuals'
 import { perfMonitor } from '../utils/perfMonitor'
 import { initParamSync } from '../effects/paramSync'
 import { advanceReadbackFrame } from './overlays/sharedReadback'
@@ -629,9 +628,6 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         >
           {/* Ambient scanline sweep so the panel reads as live telemetry */}
           <div className="surface-scanline" style={{ opacity: 0.5 }} />
-          <div className="mb-5 opacity-40" style={{ animation: 'hud-reticle-spin 24s linear infinite' }}>
-            <Crosshair value={0.5} size={96} />
-          </div>
           <h1
             className="text-xs font-light tracking-[0.25em] select-none alive-idle"
             style={{

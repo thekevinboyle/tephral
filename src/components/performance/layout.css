@@ -371,6 +371,14 @@
 .seg-dev[data-collapsed] .seg-dev-body { display: none; }
 .seg-dev[data-collapsed] .seg-dev-rail { width: 30px; }
 
+/* Time warp chain card (WarpCard): reuses the device card, coloured --warp */
+.seg-warpcard .seg-dev-body { justify-content: center; }
+.seg-warpcard-row { display: flex; align-items: center; gap: 12px; }
+.seg-warpcard-mini { flex: none; display: block; background: var(--bg-surface); border-radius: var(--radius-ctrl); }
+.seg-warp-slot { flex: none; align-self: stretch; padding: 0 14px; border: 1px dashed var(--bg-hover); border-radius: var(--radius-panel); background: transparent; color: var(--text-muted); font: 500 12px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.seg-warp-slot:hover { background: var(--bg-hover); color: var(--text-secondary); border-color: var(--text-muted); }
+.seg-warp-slot:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+
 /* Drop media onto the output: dashed outline + what the drop will do */
 .seg-stage-drop { position: absolute; inset: 8px; z-index: 30; pointer-events: none; display: grid; place-items: center;
   border: 1.5px dashed var(--text-secondary); border-radius: var(--radius-panel); background: color-mix(in oklab, var(--bg-void) 70%, transparent); }

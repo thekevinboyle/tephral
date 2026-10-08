@@ -102,8 +102,17 @@ Right panel, contextual on `uiStore`. Its root carries `data-inspector-mode`:
 - `modulator` (a slot in the Modulators card is selected): that modulator's editor. LFO slots open `ModulationAssignPanel` on that LFO (`selectedLFOIndex`); Random/Step/Envelope/S&H/MIDI use `ModulationContent` (`sampleHold` maps to `sh`); Audio shows `TrackAudioReactivePanel` with a device picker.
 - `empty`: "Select a device or modulator to edit it."
 
-### Device chain (`src/components/performance/BottomPanel2.tsx`, `DeviceChain.tsx`, `DeviceCard.tsx`, `ModulatorsCard.tsx`)
-Bottom panel with Devices and Sequencer tabs (both stay mounted; the title reads "Chain" or "Sequencer"). Devices: the Modulators card (● arms routing, then click or drag any control), then one card per active effect in signal order with 4 dials and a Dry/wet bar (`effectMix`). `DeviceChain` owns `ensureTrack`, drag/keyboard reorder, bypass, remove, and selection: it auto-selects a device unless a modulator is selected, and when the selected device is removed it selects the next device (else the previous, else none). Sequencer: `SequencerContainer` > `UnifiedSequencerPanel`.
+### Device chain (`src/components/performance/BottomPanel2.tsx`, `DeviceChain.tsx`, `DeviceCard.tsx`, `ModulatorsCard.tsx`, `WarpCard.tsx`)
+Bottom panel with Devices, Warp and Sequencer tabs (all stay mounted; the title reads "Chain", "Warp" or "Sequencer"). Devices: the Modulators card (● arms routing, then click or drag any control), then the Time warp card (`WarpCard`: dimmed "+ Time warp" slot when off; power, mini line and Amount when on; clicking it opens the Warp tab without changing the device selection; it is not an effect, so it is outside `EFFECT_ENTRIES`, reorder and drag), then one card per active effect in signal order with 4 dials and a Dry/wet bar (`effectMix`). `DeviceChain` owns `ensureTrack`, drag/keyboard reorder, bypass, remove, and selection: it auto-selects a device unless a modulator is selected, and when the selected device is removed it selects the next device (else the previous, else none). Sequencer: `SequencerContainer` > `UnifiedSequencerPanel`.
+
+### Time warp (`src/effects/warp/*`, `public/worklets/warp-processor.js`, `src/stores/warpStore.ts`, `src/components/performance/warp/*`, `WarpCard`)
+Files: `src/effects/warp/` holds warpMath, warpClock, audioWarp, WarpFrameBuffer, WarpCompositor, warpShaders and warpRegistry; the worklet is `public/worklets/warp-processor.js`; state is `warpStore`; the editor is the Warp tab (`components/performance/warp/*`); the chain card is `WarpCard`.
+- **Time model**: the line y = f(x) is the read position within a loop; the delay is `delay = ((x′ − y′) mod 1)·L` (x′ is the skewed phase); delay is capped at 8 s.
+- **Position**: the warp sits on the source BEFORE the effect chain, so chain effects process the warped picture.
+- **Audio**: warped through an AudioWorklet; the analysers (and so the audio bands) sit after it.
+- **Clock**: video and audio read one shared clock (`warpClock`), so they report the same phase.
+- **Bypass guarantee**: off means no frame capture, no GPU pass and no worklet node; output is bit-identical to no warp.
+- **Saved as** `warp` in `BankSnapshot` and in presets; `applySnapshot(undefined)` resets to defaults (off), and factory presets such as SEG_EXP leave it off.
 
 Effect params flow through `src/effects/paramSync.ts` (zustand subscribe → uniform writes); Canvas.tsx's structural effect only rebuilds the pass chain on enable/disable/reorder.
 

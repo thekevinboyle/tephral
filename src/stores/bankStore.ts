@@ -29,6 +29,7 @@ import { useRoutingStore, unionWithDefaultEffectOrder } from './routingStore'
 import { useSlicerStore, type SlicerSnapshot } from './slicerStore'
 import { useTrendStore, type TrendSnapshot } from './trendStore'
 import { useSegStore, type SegSnapshot } from './segStore'
+import { useWarpStore, type WarpSnapshot } from './warpStore'
 import { usePresetLibraryStore } from './presetLibraryStore'
 
 /**
@@ -79,6 +80,8 @@ export interface BankSnapshot {
   trend?: TrendSnapshot
   // SEG_EXP effects — optional for backward compat with older presets
   seg?: SegSnapshot
+  // Time warp — optional for backward compat; undefined resets to defaults (warp off)
+  warp?: WarpSnapshot
   // Metadata
   savedAt: number
 }
@@ -160,6 +163,7 @@ export const useBankStore = create<BankState>((set, get) => ({
       slicer: useSlicerStore.getState().getSnapshot(),
       trend: useTrendStore.getState().getSnapshot(),
       seg: useSegStore.getState().getSnapshot(),
+      warp: useWarpStore.getState().getSnapshot(),
       savedAt: Date.now(),
     }
 
@@ -261,6 +265,9 @@ export const useBankStore = create<BankState>((set, get) => ({
 
     // Older banks predate SEG_EXP: applySnapshot(undefined) resets seg to defaults (all off)
     useSegStore.getState().applySnapshot(snapshot.seg)
+
+    // Older banks predate the time warp: undefined resets it to defaults (off)
+    useWarpStore.getState().applySnapshot(snapshot.warp)
 
     // Set activeBank to index; the stage readout shows the bank again, not the last preset
     set({ activeBank: index })

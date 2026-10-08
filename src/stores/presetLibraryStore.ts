@@ -9,6 +9,7 @@ import { useRoutingStore, unionWithDefaultEffectOrder } from './routingStore'
 import { useSlicerStore } from './slicerStore'
 import { useTrendStore } from './trendStore'
 import { useSegStore } from './segStore'
+import { useWarpStore } from './warpStore'
 import { buildSegExpPreset, FACTORY_FOLDER_ID, SEG_EXP_SEEDED_KEY } from '../presets/segExp'
 
 // Database constants
@@ -228,6 +229,7 @@ export function captureCurrentEffects(): BankSnapshot {
     slicer: useSlicerStore.getState().getSnapshot(),
     trend: useTrendStore.getState().getSnapshot(),
     seg: useSegStore.getState().getSnapshot(),
+    warp: useWarpStore.getState().getSnapshot(),
     savedAt: Date.now(),
   }
 }
@@ -302,6 +304,9 @@ export function applyEffects(effects: BankSnapshot): void {
 
   // Older presets predate SEG_EXP: applySnapshot(undefined) resets seg to defaults (all off)
   useSegStore.getState().applySnapshot(effects.seg)
+
+  // Older presets predate the time warp: undefined resets it to defaults (off)
+  useWarpStore.getState().applySnapshot(effects.warp)
 }
 
 // Create default folders

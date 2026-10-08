@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { useEffectSequencerStore, type EffectTrack, type TrackAudioReactiveConfig } from '../stores/effectSequencerStore'
+import { useEffectSequencerStore, defaultTrackLine, type EffectTrack, type TrackAudioReactiveConfig } from '../stores/effectSequencerStore'
 import { useSequencerStore } from '../stores/sequencerStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
@@ -7,7 +7,9 @@ import { useAudioReactiveStore } from '../stores/audioReactiveStore'
 import { useAudioSourceStore } from '../stores/audioSourceStore'
 import { EFFECT_PARAM_REGISTRY } from '../config/effectParams'
 import { readModBase } from '../effects/trackBandModulation'
-import { captureUserMix, clearGates, gateOpenLevel, releaseGate, setGateOpen } from '../effects/mixModulation'
+import { captureUserMix, clearGates, clearLines, gateOpenLevel, isLineActive, releaseGate, releaseLine, setGateOpen, setLineLevel } from '../effects/mixModulation'
+import { lineLevel } from '../effects/lines/lineLevel'
+import { clearLinePhases, deleteLinePhase, noteLinePass, setLinePhase } from '../effects/lines/linePhase'
 
 // Resolution to beat fraction
 const RESOLUTION_BEATS: Record<string, number> = {
@@ -37,6 +39,7 @@ export function useEffectSequencerPlayback() {
   const prevLockedParams = useRef<Record<string, Set<string>>>({})
   // Track which effects were bypassed by mute/solo (to restore on stop/unmute)
   const muteBypassed = useRef<Set<string>>(new Set())
+  const lineIds = useRef<Set<string>>(new Set()) // tracks the line pass drove last frame
 
   // Per-track audio-reactive state
   const trackWasAbove = useRef<Record<string, boolean>>({})
@@ -214,6 +217,9 @@ export function useEffectSequencerPlayback() {
       useGlitchEngineStore.getState().setEffectBypassed(effectId, false)
       muteBypassed.current.delete(effectId)
     }
+
+    // Line mode (spec §2): the step data (locks, gates, probability, fill) does not run; the line pass owns the mix
+    if (track.mode === 'line') { releaseGate(effectId); return }
 
     const step = track.steps[stepIndex]
     const ge = useGlitchEngineStore.getState()
@@ -421,7 +427,7 @@ export function useEffectSequencerPlayback() {
 
           // Schedule retrigs within this step
           const step = track.steps[stepIndex]
-          if (step && step.retrig > 0) {
+          if (track.mode !== 'line' && step && step.retrig > 0) {
             const subInterval = trackMsPerStep / step.retrig
             for (let r = 1; r < step.retrig; r++) {
               const timerId = window.setTimeout(() => {
@@ -451,6 +457,50 @@ export function useEffectSequencerPlayback() {
 
           useEffectSequencerStore.getState().advanceTrackStep(effectId)
         }
+      }
+
+      // === Line tracks (spec §2–§3): Dry/wet = ceiling × the line's level at the track's phase, every frame ===
+      {
+        const latest = useEffectSequencerStore.getState().tracks // trackStep advanced above
+        const ge = useGlitchEngineStore.getState()
+        const seen = new Set<string>()
+        for (const effectId of effectOrder) {
+          const track = latest[effectId]
+          if (!track || track.mode !== 'line') continue
+          if (import.meta.env.DEV) noteLinePass()
+          const entry = EFFECT_PARAM_REGISTRY[effectId]
+          if (!entry) continue
+          if (!(effectId in prePlayEnabled.current)) {
+            prePlayEnabled.current[effectId] = entry.getEnabled()
+            baseMix.current[effectId] = captureUserMix(effectId, ge.getEffectMix(effectId))
+          }
+          if (!prePlayEnabled.current[effectId]) continue
+          if (track.muted || (hasSolo && !track.soloed)) continue // executeTrackAtStep bypasses it
+          if (track.midiGate || track.audioGate || track.audioReactive.enabled) continue // those gates own the mix
+          seen.add(effectId)
+          const ms = baseMsPerStep / (track.timeScale ?? 1)
+          const last = trackLastStepTime.current[effectId] ?? timestamp
+          const f = Math.min(1, Math.max(0, (timestamp - last) / ms))
+          const len = Math.max(1, track.length)
+          const phase = (((track.trackStep + f) % len) + len) % len / len
+          const line = track.line ?? defaultTrackLine()
+          const level = lineLevel(line.points, phase, line.skew)
+          setLinePhase(effectId, phase)
+          setLineLevel(effectId, level)
+          const mix = gateOpenLevel(effectId, baseMix.current[effectId] ?? 1) * level
+          if (Math.abs((ge.effectMix[effectId] ?? 1) - mix) > 1e-4) ge.setEffectMix(effectId, mix)
+        }
+        // Tracks the line drove last frame but not now: left Line mode, removed, muted or gated. Hand the mix back.
+        for (const id of lineIds.current) {
+          if (seen.has(id)) continue
+          deleteLinePhase(id)
+          if (!isLineActive(id)) continue
+          releaseLine(id)
+          const t = latest[id]
+          const gatedElsewhere = !!t && (t.mode === 'gate' || t.midiGate || t.audioGate || t.audioReactive.enabled)
+          if (!gatedElsewhere && id in baseMix.current) ge.setEffectMix(id, gateOpenLevel(id, baseMix.current[id]))
+        }
+        lineIds.current = seen
       }
 
       animationFrameId.current = requestAnimationFrame(playbackLoop)
@@ -483,6 +533,9 @@ export function useEffectSequencerPlayback() {
       retrigTimers.current = []
       trackLastStepTime.current = {}
       restoreBaseValues()
+      clearLines()
+      clearLinePhases()
+      lineIds.current = new Set()
     }
 
     return () => {

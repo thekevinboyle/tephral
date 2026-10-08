@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware'
 import { bjorklundPattern } from '../utils/bjorklund'
 import { BAND_PRESETS, clampBand, type AudioBand } from '../utils/audioBands'
 import { useAudioReactiveStore } from './audioReactiveStore'
+import { cleanPoints, type WarpPoint } from '../effects/warp/warpMath'
+import { SNAPS } from './warpStore'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -51,9 +53,18 @@ export interface EffectStep {
   retrig: number                           // 0 = off, 2-8 = sub-step repeats
 }
 
+/** A Line track's line (spec §1): warp-format points (y 0 = full, 1 = dry), quantize grid and skew. */
+export interface TrackLine {
+  points: WarpPoint[]
+  snap: number
+  skew: number
+}
+
+export const defaultTrackLine = (): TrackLine => ({ points: [{ x: 0, y: 0 }, { x: 1, y: 0 }], snap: 1 / 16, skew: 0 })
+
 export interface EffectTrack {
   effectId: string
-  mode: 'gate' | 'param'
+  mode: 'gate' | 'param' | 'line'
   steps: EffectStep[]            // always 64 entries
   length: number                 // active step count (default 16)
   muted: boolean
@@ -64,6 +75,7 @@ export interface EffectTrack {
   trackStep: number              // independent step position
   timeScale: TimeScale           // clock multiplier (default 1)
   euclidean: EuclideanConfig | null  // last euclidean config applied (null = manual)
+  line: TrackLine
 }
 
 export interface AutomationParam {
@@ -110,7 +122,8 @@ interface EffectSequencerState {
   // Track management
   ensureTrack: (effectId: string) => void
   removeTrack: (effectId: string) => void
-  setTrackMode: (effectId: string, mode: 'gate' | 'param') => void
+  setTrackMode: (effectId: string, mode: 'gate' | 'param' | 'line') => void
+  setTrackLine: (effectId: string, patch: Partial<TrackLine>) => void
   setTrackMuted: (effectId: string, muted: boolean) => void
   setTrackSoloed: (effectId: string, soloed: boolean) => void
   setTrackMidiGate: (effectId: string, enabled: boolean) => void
@@ -177,6 +190,7 @@ const createDefaultTrack = (effectId: string): EffectTrack => ({
   trackStep: 0,
   timeScale: 1,
   euclidean: null,
+  line: defaultTrackLine(),
 })
 
 // Immutable step update helper
@@ -265,6 +279,19 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
       const track = state.tracks[effectId]
       if (!track) return state
       return { tracks: { ...state.tracks, [effectId]: { ...track, mode } } }
+    })
+  },
+
+  setTrackLine: (effectId, patch) => {
+    set((state) => {
+      const track = state.tracks[effectId]
+      if (!track) return state
+      const cur = track.line ?? defaultTrackLine()
+      const next: TrackLine = { ...cur }
+      if (patch.points !== undefined) { const p = cleanPoints(patch.points); if (p) next.points = p }
+      if (patch.snap !== undefined && SNAPS.includes(patch.snap)) next.snap = patch.snap
+      if (patch.skew !== undefined && Number.isFinite(patch.skew)) next.skew = Math.max(-1, Math.min(1, patch.skew))
+      return { tracks: { ...state.tracks, [effectId]: { ...track, line: next } } }
     })
   },
 

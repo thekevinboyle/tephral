@@ -6,6 +6,7 @@
  * Rule: while a gate-mode track plays, a modulated Dry/wet becomes the gate's open-step level. Closed steps stay
  * at 0; open steps play at the modulated level (the modulation keeps writing while the step is open). With no
  * gate active for an effect, modulation writes `effectMix` directly. Audio and MIDI gates still own the mix.
+ * While a Line track plays, the line scales the modulated (or user) Dry/wet: mix = ceiling × level.
  */
 
 // Modulation side: the latest modulated level per effect and the frame it was written in
@@ -16,6 +17,26 @@ const modFrame = new Map<string, number>()
 const userMix = new Map<string, number>()
 // Gate side: present while the sequencer gate drives the effect's mix; true = the current step is open
 const gateOpen = new Map<string, boolean>()
+// Line side (Line tracks, spec §3): present while a Line track drives the effect's mix; the line's level 0..1
+const lineLevels = new Map<string, number>()
+
+export function setLineLevel(effectId: string, level: number): void {
+  lineLevels.set(effectId, level)
+}
+
+/** The track left Line mode, was removed, or an audio/MIDI gate took the mix. */
+export function releaseLine(effectId: string): void {
+  lineLevels.delete(effectId)
+}
+
+/** Sequencer stopped: no line drives any mix. */
+export function clearLines(): void {
+  lineLevels.clear()
+}
+
+export function isLineActive(effectId: string): boolean {
+  return lineLevels.has(effectId)
+}
 
 /** Called once at the start of each modulation frame. */
 export function beginMixModulationFrame(): void {
@@ -35,11 +56,12 @@ export function isMixModulated(effectId: string): boolean {
  */
 export function noteModulatedMix(effectId: string, value: number, current: number): number | null {
   const gate = gateOpen.get(effectId)
-  if (!isMixModulated(effectId) && gate === undefined) userMix.set(effectId, current)
+  const line = lineLevels.get(effectId)
+  if (!isMixModulated(effectId) && gate === undefined && line === undefined) userMix.set(effectId, current)
   modLevel.set(effectId, value)
   modFrame.set(effectId, frame)
   if (gate === false) return null
-  return value
+  return line === undefined ? value : value * line
 }
 
 /** The gate's open-step level: the modulated level while modulation runs, else the user's base. */

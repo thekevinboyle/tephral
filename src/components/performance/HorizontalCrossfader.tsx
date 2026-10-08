@@ -54,7 +54,8 @@ export function HorizontalCrossfader() {
 
   return (
     <div className="px-2 py-3">
-      <div className="flex items-center gap-2">
+      {/* overflow-x: clip. The thumb rail is a full-width layer moved with translateX, so at full Wet it poked past the panel and made the whole Effects panel scroll sideways. clip (not hidden) keeps the readout above the thumb visible. */}
+      <div className="flex items-center gap-2" style={{ overflowX: 'clip' }}>
         {/* Source icon (film frame) */}
         <button
           onClick={snapToSource}

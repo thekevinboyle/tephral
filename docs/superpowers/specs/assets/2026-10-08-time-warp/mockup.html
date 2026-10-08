@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Time Warp Placement</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--gap:#0e0f10;--win:#18191b;--panel:#222326;--raised:#2c2d31;--ctrl:#37383d;--hover:#45464c;--line:#3a3b40;--tx:#ececee;--tx2:#b4b6bc;--tx3:#9699a0;--mod:#4fb3ff;--live:#b8f35a;--rec:#ff5a4e;--warp:#e8c35a;--sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',monospace}
+*{box-sizing:border-box;margin:0}html,body{height:100%;background:var(--gap);color:var(--tx);font:13px/1.35 var(--sans);overflow:hidden}
+.app{height:100vh;display:grid;gap:2px;grid-template-rows:44px 1fr 300px 30px;grid-template-columns:250px 1fr 300px}
+.p{background:var(--panel);overflow:hidden;display:flex;flex-direction:column;min-width:0;min-height:0}
+.hdr{grid-column:1/-1;background:var(--win);display:flex;align-items:center;padding:0 12px;gap:16px;border-bottom:1px solid var(--line)}
+.brand{font:600 13px var(--mono);letter-spacing:.14em;color:var(--tx2)}.lab{font-size:11px;color:var(--tx3)}.sel{height:28px;padding:0 10px;border-radius:4px;background:var(--ctrl);display:inline-flex;align-items:center;font-size:12px}
+.tr{margin:0 auto;display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font:500 15px var(--mono)}
+.tb{width:28px;height:28px;border-radius:4px;background:var(--ctrl);display:grid;place-items:center;color:var(--live);font-size:11px}
+.rec{height:28px;padding:0 10px;border:1px solid var(--rec);color:var(--rec);border-radius:4px;display:inline-flex;align-items:center;font:600 11px var(--sans)}
+.stage{background:var(--win);display:grid;place-items:center}
+.frame{width:84%;aspect-ratio:16/9;border:1px solid var(--line);border-radius:2px;background:linear-gradient(135deg,#2a2030,#3a2a1e);position:relative;overflow:hidden}
+.frame:after{content:'';position:absolute;inset:30% 35%;background:repeating-linear-gradient(90deg,#e0a050 0 14px,#c27a3a 14px 22px);opacity:.75;filter:blur(1px)}
+.ro{position:absolute;font:500 10px var(--mono);letter-spacing:.1em;background:rgba(24,25,27,.72);color:var(--tx2);padding:3px 6px;z-index:2}
+.ph{height:30px;padding:0 10px;display:flex;align-items:center;gap:8px;background:var(--raised);font-weight:600;font-size:12px;flex:none}.ph .sub{color:var(--tx3);font-weight:400}.sp{flex:1}
+.tab{height:22px;padding:0 9px;border-radius:4px;display:inline-flex;align-items:center;font:500 12px var(--sans);color:var(--tx3)}.tab.on{background:var(--ctrl);color:var(--tx)}
+.ftr{grid-column:1/-1;background:var(--raised);display:flex;align-items:center;padding:0 8px;font-size:12px;color:var(--tx3)}
+.fx{padding:6px 12px;font-size:12.5px;color:var(--tx2)}.fx small{display:block;color:var(--tx3);font-size:11px}
+/* warp editor */
+.wed{flex:1;display:grid;grid-template-columns:1fr 268px;gap:2px;background:var(--gap);min-height:0}
+.graphwrap{background:var(--win);display:flex;flex-direction:column;min-width:0}
+.tools{display:flex;gap:4px;padding:6px 8px;align-items:center}.tool{height:24px;padding:0 8px;border-radius:4px;background:var(--ctrl);color:var(--tx2);font-size:11.5px;display:inline-flex;align-items:center}.tool.on{background:var(--hover);color:var(--tx)}
+.graph{flex:1;position:relative;margin:0 8px 6px;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--panel)}
+.graph svg{position:absolute;inset:0;width:100%;height:100%}
+.thumbs{position:absolute;left:0;right:0;bottom:0;height:34px;display:flex;gap:1px;opacity:.55}.thumbs i{flex:1;background:linear-gradient(135deg,#3a2a40,#5a3a22)}
+.settings{display:flex;gap:2px;padding:0 8px 8px}.set{flex:1;height:26px;border-radius:4px;background:var(--raised);display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;color:var(--tx2)}.set b{font:500 12px var(--mono);color:var(--tx)}
+.side{background:var(--panel);padding:8px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.prof{display:flex;gap:2px}.prof span{flex:1;height:24px;border-radius:4px;background:var(--ctrl);display:grid;place-items:center;font-size:11.5px;color:var(--tx2)}.prof span.on{background:var(--warp);color:#1b1b1b;font-weight:600}
+.kn{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.k{display:flex;flex-direction:column;align-items:center;gap:1px}.k svg{width:40px;height:40px}.k .v{font:500 11px var(--mono)}.k .l{font-size:10.5px;color:var(--tx3)}
+.sect{font-size:11px;color:var(--tx3)}
+.mix{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx3)}.mix i{flex:1;height:4px;border-radius:2px;background:var(--ctrl);position:relative}.mix i:after{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--w);background:var(--warp);border-radius:2px}
+/* chain */
+.chain{flex:1;display:flex;gap:2px;padding:6px 8px;background:var(--win);align-items:stretch;overflow:hidden}
+.card{background:var(--panel);border-radius:6px;display:flex;flex:none;overflow:hidden;border:1px solid transparent}.card.sel{border-color:#f2f2f4}
+.rail{width:26px;background:var(--raised);position:relative;display:flex;flex-direction:column;align-items:center;padding:7px 0;gap:8px}.rail:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c)}
+.pwr{width:14px;height:14px;border-radius:50%;background:var(--c)}.vn{writing-mode:vertical-rl;transform:rotate(180deg);font:600 12px var(--sans)}
+.cbody{padding:8px 10px;display:flex;flex-direction:column;gap:6px;width:200px}
+.mini{height:62px;border-radius:4px;background:var(--win);position:relative;overflow:hidden}.mini svg{position:absolute;inset:0;width:100%;height:100%}
+.note{position:fixed;right:12px;top:52px;z-index:9;background:#fff;color:#000;font:600 11px var(--sans);padding:4px 10px;border-radius:20px}
+</style></head><body><div id="root"></div>
+<script>
+const D=new URLSearchParams(location.search).get('d')||'A'
+const knob=(t,c)=>{const R=16,cx=20,cy=20,a0=135,sw=270,pt=x=>{const a=(a0+sw*x)*Math.PI/180;return[cx+R*Math.cos(a),cy+R*Math.sin(a)]},arc=(x0,x1,col,w)=>{const[p0,q0]=pt(x0),[p1,q1]=pt(x1);return`<path d="M${p0} ${q0} A${R} ${R} 0 ${(x1-x0)*sw>180?1:0} 1 ${p1} ${q1}" stroke="${col}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`},[hx,hy]=pt(t);return`<svg viewBox="0 0 40 40">${arc(0,1,'#37383d',3)}${t>0.01?arc(0,t,c,3):''}<circle cx="${hx}" cy="${hy}" r="2.6" fill="#ececee"/></svg>`}
+// Warp line: x = position in loop (0..1), y = how far back in time (0 = now at top)
+const PTS=[[0,0],[.12,0],[.12,.18],[.25,.18],[.25,.36],[.37,.36],[.5,.5,'curve'],[.5,0],[.62,0],[.75,.25],[.75,0],[.86,.12],[1,0]]
+function path(w,h,pad=6){let d='';PTS.forEach(([x,y,c],i)=>{const X=pad+x*(w-2*pad),Y=pad+y*(h-2*pad);if(i===0)d+=`M${X} ${Y}`;else if(c){const [px,py]=PTS[i-1];const PX=pad+px*(w-2*pad),PY=pad+py*(h-2*pad);d+=` Q${(PX+X)/2} ${PY} ${X} ${Y}`}else d+=` L${X} ${Y}`});return d}
+function graphSVG(w,h,big){const grid=Array.from({length:17},(_,i)=>`<line x1="${6+i*(w-12)/16}" y1="0" x2="${6+i*(w-12)/16}" y2="${h}" stroke="${i%4===0?'#3a3b40':'#2b2c30'}" stroke-width="1"/>`).join('')
+ const wave=Array.from({length:120},(_,i)=>{const x=6+i*(w-12)/119,a=(Math.sin(i*.7)*.5+.5)*(.3+.7*Math.abs(Math.sin(i*.13)))*h*.22;return`<line x1="${x}" y1="${h*.6-a}" x2="${x}" y2="${h*.6+a}" stroke="${i/119<.31?'#e8c35a':'#5a5040'}" stroke-width="${big?2:1}"/>`}).join('')
+ const dots=big?PTS.map(([x,y])=>`<circle cx="${6+x*(w-12)}" cy="${6+y*(h-12)}" r="4" fill="#18191b" stroke="#ececee" stroke-width="1.5"/>`).join(''):''
+ return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${grid}<line x1="6" y1="6" x2="${w-6}" y2="${h-6}" stroke="#6a6b70" stroke-dasharray="6 6"/>${wave}<line x1="${6+.31*(w-12)}" y1="0" x2="${6+.31*(w-12)}" y2="${h}" stroke="#b8f35a" stroke-width="1.5"/><path d="${path(w,h)}" stroke="#ececee" stroke-width="${big?2:1.5}" fill="none"/>${dots}</svg>`}
+const hdr=`<div class="hdr"><span class="brand">SEG_F4ULT</span><span class="lab">Video</span><span class="sel">File ▾</span><span class="lab">Audio</span><span class="sel">Video ▾</span><div class="tr"><span class="tb">▶</span><span class="tb" style="color:#b4b6bc">■</span>&nbsp;120.0 <small style="font:11px var(--sans);color:var(--tx3)">BPM</small>&nbsp; 00:12.40</div><span class="lab">Preset</span><span class="sel">Presets ▾</span><span class="rec">● REC</span></div>`
+const stage=`<div class="p stage"><div class="frame"><span class="ro" style="left:10px;top:10px">● LIVE 60 FPS</span><span class="ro" style="right:10px;top:10px">WARP · STUTTER BUILD</span></div></div>`
+const browser=`<div class="p"><div class="ph">Effects <span class="sub">84</span></div>${['Dots','Glyph','Icons','Contour','Decomposition','Mirror','Slice','Threshold Grid'].map(n=>`<div class="fx">${n}<small>effect description</small></div>`).join('')}</div>`
+const warpSide=`<div class="side"><div class="sect">Profile</div><div class="prof"><span>Clean</span><span class="on">Smear</span><span>Degrade</span></div>
+<div class="kn">${[['Grain','.40',.4],['Blend','.65',.65],['Pitch','0',.5],['Scatter','.20',.2]].map(([l,v,t])=>`<div class="k">${knob(t,'#e8c35a')}<span class="v">${v}</span><span class="l">${l}</span></div>`).join('')}</div>
+<div class="sect">Applies to</div><div class="prof"><span class="on">Video + audio</span><span>Video</span><span>Audio</span></div>
+<div class="mix" style="--w:100%">Mix<i></i><b style="font:500 11px var(--mono);color:var(--tx)">100%</b></div>
+<div class="prof"><span>🎲 Randomize</span><span>Presets ▾</span></div></div>`
+const editor=`<div class="wed"><div class="graphwrap"><div class="tools"><span class="tool on">Draw</span><span class="tool">Steps</span><span class="tool">Curve</span><span class="tool">Erase</span><span class="sp"></span><span class="tool">Stutter build ▾</span></div>
+<div class="graph" id="g"></div>
+<div class="settings"><span class="set">Amount <b>100%</b></span><span class="set">Length <b>4 beats</b></span><span class="set">Snap <b>1/16</b></span><span class="set">Skew <b>+0%</b></span></div></div>${warpSide}</div>`
+const warpCard=(sel)=>`<div class="card ${sel?'sel':''}" style="--c:#e8c35a"><div class="rail"><span class="pwr"></span><span class="vn">Time warp</span></div><div class="cbody"><div class="mini" id="mini"></div><div class="mix" style="--w:100%">Amount<i></i><b style="font:500 11px var(--mono);color:var(--tx)">100%</b></div></div></div>`
+const devs=['#9aa4b2:Stale','#c86bff:Matter','#ff8a3d:Voxel','#ffb347:Echo 4D'].map(s=>{const [c,n]=s.split(':');return`<div class="card" style="--c:${c}"><div class="rail"><span class="pwr"></span><span class="vn">${n}</span></div><div class="cbody" style="width:180px"><div class="kn">${[.3,.6,.4,.7].map(t=>`<div class="k">${knob(t,c)}</div>`).join('')}</div><div class="mix" style="--w:90%">Dry/wet<i></i></div></div></div>`}).join('')
+let html
+if(D==='A'){
+ html=`<div class="app">${hdr}${browser}${stage}<div class="p"><div class="ph">Time warp <span class="sub">· Smear profile</span></div><div style="padding:10px;color:var(--tx3);font-size:12px">Inspector shows the selected device. The warp editor lives in the bottom Warp tab.</div></div>
+ <div class="p" style="grid-column:1/-1"><div class="ph">Warp <span class="sub">· draw what happens to time: flat = normal, steps = repeats, slope = slow, diagonal = freeze, rising = reverse</span><span class="sp"></span><span class="tab">Devices</span><span class="tab on">Warp</span><span class="tab">Sequencer</span></div>${editor}</div>
+ <div class="ftr">Click to add a point, drag to move, drag a segment's middle to bend it<span class="sp"></span>Browser · Inspector · Bottom</div></div><span class="note">A · Warp tab (plus a Time warp card first in the chain)</span>`
+}else{
+ html=`<div class="app" style="grid-template-rows:44px 1fr 172px 30px">${hdr}${browser}${stage}
+ <div class="p"><div class="ph">Time warp <span class="sub">· first in chain</span><span class="sp"></span><span class="tab on">Bypass</span></div><div style="padding:8px;display:flex;flex-direction:column;gap:6px;flex:1;min-height:0"><div style="flex:1;min-height:150px;position:relative;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--panel)" id="g"></div><div class="settings" style="padding:0;flex-wrap:wrap"><span class="set">Amount <b>100%</b></span><span class="set">Length <b>4</b></span><span class="set">Snap <b>1/16</b></span></div>${warpSide.replace('class="side"','class="side" style="padding:0"')}</div></div>
+ <div class="p" style="grid-column:1/-1"><div class="ph">Chain<span class="sp"></span><span class="tab on">Devices</span><span class="tab">Sequencer</span></div><div class="chain">${warpCard(true)}${devs}</div></div>
+ <div class="ftr">Time warp card selected: its editor opens in the inspector<span class="sp"></span>Browser · Inspector · Bottom</div></div><span class="note">B · Card in the chain, editor in the narrow inspector</span>`
+}
+document.getElementById('root').innerHTML=html
+const g=document.getElementById('g');if(g){const r=g.getBoundingClientRect();g.innerHTML=graphSVG(Math.round(r.width),Math.round(r.height),true)+(D==='A'?'<div class="thumbs">'+'<i></i>'.repeat(16)+'</div>':'')}
+const m=document.getElementById('mini');if(m){const r=m.getBoundingClientRect();m.innerHTML=graphSVG(Math.round(r.width),Math.round(r.height),false)}
+</script></body></html>

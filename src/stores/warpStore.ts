@@ -52,6 +52,24 @@ export const PROFILE_DEFAULTS: Record<ProfileId, Knobs> = {
 export interface WarpOutput { low: number; high: number; levelDb: number }
 export const OUTPUT_DEFAULTS: WarpOutput = { low: 20, high: 20000, levelDb: 0 }
 
+/**
+ * Are these knobs the profile's neutral (spec §3)? null ("any") knobs do not count, and Clean's Vib
+ * speed does not count while Vibrato is 0 (it only sets the wobble rate), so Clean's defaults are
+ * neutral (ruling R2).
+ */
+export function isProfileNeutral(profile: ProfileId, knobs: readonly number[]): boolean {
+  const n = PROFILE_NEUTRAL[profile]
+  for (let i = 0; i < 4; i++) {
+    if (n[i] === null) continue
+    if (profile === 'clean' && i === 1 && knobs[0] === 0) continue
+    if (knobs[i] !== n[i]) return false
+  }
+  return true
+}
+
+/** Output leaves the signal untouched: Band fully open and Level 0 dB (spec §4). */
+export const isOutputOpen = (o: WarpOutput) => o.low <= 20 && o.high >= 20000 && o.levelDb === 0
+
 export interface WarpSnapshot {
   enabled: boolean
   points: WarpPoint[]
@@ -85,28 +103,6 @@ export const WARP_DEFAULTS: WarpSnapshot = {
   appliesTo: 'both',
   mix: 1,
   presetName: 'Straight',
-}
-
-/**
- * Video only: the v1 three-engine model the video compositor still runs (Task 4 replaces it). The audio
- * worklet runs the 7 profiles itself and no longer uses this bridge.
- * clean -> clean, flange -> smear, every other profile -> degrade. Knobs come from profileParams.
- */
-export type V1Engine = 'clean' | 'smear' | 'degrade'
-export interface V1EngineParams { smooth: number; grain: number; blend: number; rate: number; crunch: number }
-let v1Cache: { profile: ProfileId; pp: Record<ProfileId, Knobs>; out: { engine: V1Engine; params: V1EngineParams } } | null = null
-/** Cached on (profile, profileParams) identity, so per-frame callers do not allocate. */
-export function v1EngineFor(profile: ProfileId, pp: Record<ProfileId, Knobs>): { engine: V1Engine; params: V1EngineParams } {
-  if (v1Cache && v1Cache.profile === profile && v1Cache.pp === pp) return v1Cache.out
-  const k = pp[profile]
-  const engine: V1Engine = profile === 'clean' ? 'clean' : profile === 'flange' ? 'smear' : 'degrade'
-  // smooth: the click-guard / crossfade length; 0.5 = 15 ms (spec §3 Clean)
-  const params: V1EngineParams = { smooth: 0.5, grain: 0.4, blend: 0.5, rate: 0, crunch: 0 }
-  if (engine === 'smear') { params.grain = k[2]; params.blend = 1 - k[1] } // Grain size; Physics 1 = the single read
-  else if (engine === 'degrade') { params.rate = k[0]; params.crunch = k[0] } // Degrade (or the profile's first knob)
-  const out = { engine, params }
-  v1Cache = { profile, pp, out }
-  return out
 }
 
 interface WarpState extends WarpSnapshot {

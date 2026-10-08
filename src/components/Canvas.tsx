@@ -29,7 +29,7 @@ import { WarpCompositor, type WarpVideoOptions } from '../effects/warp/WarpCompo
 import { setActiveWarpCompositor } from '../effects/warp/warpRegistry'
 import { getHeardWarpPhase, warpLoopSecondsAt, warpNow } from '../effects/warp/warpClock'
 import { delaySeconds } from '../effects/warp/warpMath'
-import { useWarpStore, v1EngineFor } from '../stores/warpStore'
+import { useWarpStore } from '../stores/warpStore'
 
 /**
  * What the pipeline is fed without the warp (set by the input effect). `live` is the texture the
@@ -625,8 +625,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
     // Video time warp, before the effect chain. When it is off nothing here allocates or draws.
     // Reused every frame: no per-frame allocation while the warp runs.
-    const warpOpts: WarpVideoOptions = { profile: 'clean', params: v1EngineFor('clean', useWarpStore.getState().profileParams).params, mix: 1, loopSeconds: 2, lut: null, amount: 1, skew: 0 }
-    const delayArgs = { phase: 0, lut: useWarpStore.getState().lut, amount: 1, skew: 0, loopSeconds: 2 }
+    const warpInit = useWarpStore.getState()
+    const warpOpts: WarpVideoOptions = { profile: 'clean', knobs: warpInit.profileParams.clean, output: warpInit.output, mix: 1, loopSeconds: 2, lut: null, amount: 1, skew: 0 }
+    const delayArgs = { phase: 0, lut: warpInit.lut, amount: 1, skew: 0, loopSeconds: 2 }
     const warpTick = () => {
       const w = useWarpStore.getState()
       const base = warpBase.current
@@ -637,8 +638,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         const now = warpNow()
         const loop = warpLoopSecondsAt(now)
         const phase = getHeardWarpPhase()
-        const eng = v1EngineFor(w.profile, w.profileParams) // cached: no allocation unless the knobs changed
-        warpOpts.profile = eng.engine; warpOpts.params = eng.params; warpOpts.mix = w.mix; warpOpts.loopSeconds = loop
+        // Store references (no copies): the compositor reads them during render only
+        warpOpts.profile = w.profile; warpOpts.knobs = w.profileParams[w.profile]; warpOpts.output = w.output
+        warpOpts.mix = w.mix; warpOpts.loopSeconds = loop
         warpOpts.lut = w.lut; warpOpts.amount = w.amount; warpOpts.skew = w.skew
         comp.setOptions(warpOpts)
         comp.capture(live, now, base.aspect())

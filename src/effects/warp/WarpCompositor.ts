@@ -1,16 +1,18 @@
 import * as THREE from 'three'
-import type { V1Engine, V1EngineParams } from '../../stores/warpStore'
+import { isOutputOpen, isProfileNeutral, type Knobs, type ProfileId, type WarpOutput } from '../../stores/warpStore'
 import { delaySeconds, LUT_SIZE, MAX_DELAY_SECONDS } from './warpMath'
 import { QuadPass, WarpFrameBuffer, WARP_CAPTURE_FPS, WARP_MAX_FRAMES, makeTarget } from './WarpFrameBuffer'
-import { WARP_CLEAN_FRAG, WARP_COPY_FRAG, WARP_DEGRADE_FRAG, WARP_SMEAR_FRAG, WARP_VERTEX } from './warpShaders'
+import {
+  bandLuma, WARP_CLEAN_FRAG, WARP_COPY_FRAG, WARP_DEGRADE_FRAG, WARP_FAUXCODER_FRAG, WARP_FILTERSPAM_FRAG, WARP_FLANGE_FRAG,
+  WARP_HARMONICER_FRAG, WARP_LOFIZZLY_FRAG, WARP_VERTEX,
+} from './warpShaders'
 
-/**
- * profile/params are the v1 engine (clean / smear / degrade). The caller maps the 7 store profiles onto
- * them with v1EngineFor until Task 4 replaces the shaders.
- */
 export interface WarpVideoOptions {
-  profile: V1Engine
-  params: V1EngineParams
+  profile: ProfileId
+  /** The active profile's 4 knobs, 0..1 (the store's profileParams[profile]; read, never kept). */
+  knobs: Readonly<Knobs>
+  /** Output section: wet luminance band (Hz, mapped by bandLuma) and wet level in dB. */
+  output: Readonly<WarpOutput>
   mix: number
   /** Current loop length; sizes the ring (frames needed for the longest possible delay). */
   loopSeconds: number
@@ -28,7 +30,17 @@ const MAX_WALK_PHASE = 0.5
 /** Output target long side cap (the pipeline resamples it to the canvas anyway). */
 const OUTPUT_MAX_LONG_SIDE = 1920
 const THUMB_WIDTH = 96
-const SMEAR_SLOTS = ['tF0', 'tF1', 'tF2', 'tF3', 'tF4', 'tF5'] as const
+const FLANGE_SLOTS = ['tF0', 'tF1', 'tF2', 'tF3', 'tF4', 'tF5'] as const
+const TAU = Math.PI * 2
+
+/** Deterministic 0..1 from two numbers (CPU side of the per-slice / per-tick randomness). */
+const rnd = (a: number, b: number) => { const x = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return x - Math.floor(x) }
+
+/** Uniforms every profile shader shares (warpShaders COMMON). Fresh objects per material. */
+const common = (): Record<string, THREE.IUniform> => ({
+  tLive: { value: null }, tA: { value: null }, uMix: { value: 1 }, uBand: { value: new THREE.Vector2(-1, 2) },
+  uGain: { value: 1 }, uFrameSize: { value: new THREE.Vector2(1, 1) }, uSeed: { value: 0 },
+})
 
 const material = (frag: string, uniforms: Record<string, THREE.IUniform>) => new THREE.ShaderMaterial({
   uniforms, vertexShader: WARP_VERTEX, fragmentShader: frag, depthTest: false, depthWrite: false,
@@ -36,21 +48,23 @@ const material = (frag: string, uniforms: Record<string, THREE.IUniform>) => new
 
 /**
  * Video side of the time warp. Owns the frame ring and renders the frame(s) at `now - delay`
- * through the active profile into one output target, mixed against the live texture.
+ * through the active profile's shader (spec §3 "Picture") and the Output stage (spec §4) into one
+ * output target, mixed against the live texture.
  *
- * Per animation frame: capture(live, t, aspect) then render(phase, delay). At delay 0 render
- * returns `live` itself (full resolution, no extra pass), except while a clean-profile crossfade
- * out of a delayed read is still running (at most smooth*4 frames).
+ * Per animation frame: capture(live, t, aspect) then render(phase, delay). render returns `live`
+ * itself (full resolution, no pass) when nothing would change it: Mix 0, or delay 0 with the
+ * profile at its neutral knobs and Output open. Otherwise it renders, even at delay 0, so the look applies.
  *
  * Render targets are allocated lazily. release() frees them (warp turned off) and keeps the
  * compiled programs, so re-enabling costs no shader compile; dispose() is the full teardown
- * (targets, materials, geometry) for unmount.
+ * (targets, materials, geometry) for unmount. Each profile's program is compiled once, on first use.
+ * Clean's echo feedback target exists only while Clean has Echo > 0.
  *
- * Jumps (clean crossfade start, degrade re-hold) are discontinuities in the delay: the line is
- * walked one LUT cell at a time between the previous and current phase, and a cell whose delay
- * change exceeds max(1.5 frames, 8 cells of loop time) is a step or the loop boundary. Delay change
- * the walk does not explain (line edited, re-anchor) is a jump too. Continuous slopes, however
- * steep the drift per tick (reverse = 2x), are not.
+ * Jumps (degrade re-hold) are discontinuities in the delay: the line is walked one LUT cell at a
+ * time between the previous and current phase, and a cell whose delay change exceeds max(1.5
+ * frames, 8 cells of loop time) is a step or the loop boundary. Delay change the walk does not
+ * explain (line edited, re-anchor) is a jump too. Continuous slopes, however steep the drift per
+ * tick (reverse = 2x), are not.
  */
 export class WarpCompositor {
   private readonly geometry = new THREE.PlaneGeometry(2, 2)
@@ -58,14 +72,17 @@ export class WarpCompositor {
   private readonly buffer = new WarpFrameBuffer(this.quad)
   private output: THREE.WebGLRenderTarget | null = null
   private thumbTarget: THREE.WebGLRenderTarget | null = null
+  private echoTarget: THREE.WebGLRenderTarget | null = null
+  private echoValid = false
   private readonly size = new THREE.Vector2()
 
   private readonly opts: WarpVideoOptions = {
-    profile: 'clean', params: { smooth: 0.3, grain: 0.4, blend: 0.5, rate: 0.5, crunch: 0.3 }, mix: 1, loopSeconds: 2,
+    profile: 'clean', knobs: [0, 0, 0, 0], output: { low: 20, high: 20000, levelDb: 0 }, mix: 1, loopSeconds: 2,
     lut: null, amount: 1, skew: 0,
   }
   private readonly delayArgs: { phase: number; lut: Float32Array; amount: number; skew: number; loopSeconds: number } = { phase: 0, lut: new Float32Array(LUT_SIZE), amount: 1, skew: 0, loopSeconds: 2 }
-  private readonly smearW = [0, 0, 0, 0, 0, 0]
+  private readonly flangeW = [0, 0, 0, 0, 0, 0]
+  private readonly flangeOff = Array.from({ length: 6 }, () => new THREE.Vector2())
   /** Extra history the editor's thumbnail strip asks for (seconds; 0 = ring sized for the loop only). */
   private thumbHistory = 0
   private thumbPx: Uint8Array<ArrayBuffer> | null = null
@@ -73,55 +90,74 @@ export class WarpCompositor {
   private _jumpCount = 0
   private live: THREE.Texture | null = null
   private now = 0
+  private _readTime = NaN
 
-  // jump detection; clean crossfade from the previous read
-  private prevRead = NaN
+  // jump detection
   private prevNow = NaN
   private prevPhase = NaN
   private prevDelay = NaN
-  private fadeFrom = NaN // read time of the old path when the fade started
-  private fadeStart = NaN
-  private fadeDur = 0
   // degrade: frame hold
   private holdTick = NaN
   private holdRead = NaN
+  // free-running oscillators (integrated so a rate change never jumps the phase)
+  private wobPhase = 0 // clean vibrato
+  private lfoPhase = 0 // lo-fizzly rate
+  private arpPhase = 0 // harmo-nicer speed
+  private sqPhase = 0 // fauxcoder squelch
 
   private readonly clean = material(WARP_CLEAN_FRAG, {
-    tLive: { value: null }, tA: { value: null }, tB: { value: null }, uFade: { value: 0 }, uMix: { value: 1 },
+    ...common(), tN1: { value: null }, tN2: { value: null }, tEcho: { value: null }, uWobble: { value: 0 }, uWobPhase: { value: 0 },
+    uBend: { value: 0 }, uBlock: { value: 32 }, uEcho: { value: 0 },
   })
-  private readonly smear = material(WARP_SMEAR_FRAG, {
-    tLive: { value: null }, tF0: { value: null }, tF1: { value: null }, tF2: { value: null }, tF3: { value: null },
-    tF4: { value: null }, tF5: { value: null }, uW: { value: null }, uMix: { value: 1 },
+  private readonly flange = material(WARP_FLANGE_FRAG, {
+    ...common(), tF0: { value: null }, tF1: { value: null }, tF2: { value: null }, tF3: { value: null }, tF4: { value: null },
+    tF5: { value: null }, uW: { value: this.flangeW }, uOff: { value: this.flangeOff }, uPhys: { value: 1 },
+    tR: { value: null }, tB: { value: null }, uWidth: { value: 0 },
   })
   private readonly degrade = material(WARP_DEGRADE_FRAG, {
-    tLive: { value: null }, tA: { value: null }, uFrameSize: { value: new THREE.Vector2(1, 1) },
-    uPixel: { value: 1 }, uLevels: { value: 256 }, uMix: { value: 1 },
+    ...common(), uPixel: { value: 1 }, uLevels: { value: 256 }, uBlur: { value: 0 }, uJit: { value: new THREE.Vector2() },
   })
+  private readonly filterspam = material(WARP_FILTERSPAM_FRAG, {
+    ...common(), uBlur: { value: 0 }, uTint: { value: new THREE.Vector3(1, 1, 1) }, uTintAmt: { value: 0 }, uRes: { value: 0 },
+  })
+  private readonly harmonicer = material(WARP_HARMONICER_FRAG, {
+    ...common(), uA: { value: 0 }, uB: { value: 0 }, uRot: { value: 0 }, uShift: { value: 0 }, uMirror: { value: new THREE.Vector2() },
+  })
+  private readonly fauxcoder = material(WARP_FAUXCODER_FRAG, {
+    ...common(), uAmt: { value: 0 }, uCentre: { value: 0.5 }, uWidth: { value: 0.18 }, uRing: { value: 0 },
+  })
+  private readonly lofizzly = material(WARP_LOFIZZLY_FRAG, {
+    ...common(), uCols: { value: 0 }, uDirt: { value: 0 }, uRadio: { value: 0 }, uLevel: { value: 1 },
+  })
+  private readonly materials: Record<ProfileId, THREE.ShaderMaterial> = {
+    clean: this.clean, flange: this.flange, degrade: this.degrade, filterspam: this.filterspam,
+    harmonicer: this.harmonicer, fauxcoder: this.fauxcoder, lofizzly: this.lofizzly,
+  }
   private readonly thumbCopy = material(WARP_COPY_FRAG, { tSrc: { value: null } })
 
   private readonly renderer: THREE.WebGLRenderer
 
   constructor(renderer: THREE.WebGLRenderer) {
     this.renderer = renderer
-    this.smear.uniforms.uW.value = this.smearW
   }
 
   /** Frames currently stored. */
   get frameCount() { return this.buffer.size }
-  /** Ring render targets currently allocated (the output and thumbnail targets are not counted; see extraTargetCount). */
+  /** Ring render targets currently allocated (the output, thumbnail and echo targets are not counted; see extraTargetCount). */
   get targetCount() { return this.buffer.targetCount }
-  /** Output + thumbnail targets currently allocated (0 to 2). */
-  get extraTargetCount() { return (this.output ? 1 : 0) + (this.thumbTarget ? 1 : 0) }
+  /** Output + thumbnail + echo targets currently allocated (0 to 3). */
+  get extraTargetCount() { return (this.output ? 1 : 0) + (this.thumbTarget ? 1 : 0) + (this.echoTarget ? 1 : 0) }
   /** Jumps detected since construction (for tests). */
   get jumpCount() { return this._jumpCount }
+  /** Clock time of the main frame the last render read (after hold, chaos and octave changes; for tests). */
+  get readTime() { return this._readTime }
   /** The output render target (for tests: readRenderTargetPixels). */
   get outputTarget() { return this.output }
   /** Approximate GPU bytes held by all targets (RGBA8). */
   get gpuBytes() {
+    const px = (rt: THREE.WebGLRenderTarget | null) => (rt ? rt.width * rt.height * 4 : 0)
     const ring = this.buffer.targetCount * this.buffer.frameWidth * this.buffer.frameHeight * 4
-    const out = this.output ? this.output.width * this.output.height * 4 : 0
-    const th = this.thumbTarget ? this.thumbTarget.width * this.thumbTarget.height * 4 : 0
-    return ring + out + th
+    return ring + px(this.output) + px(this.thumbTarget) + px(this.echoTarget)
   }
 
   /** Copies the given fields in (no allocation; callers can reuse one options object). */
@@ -184,81 +220,156 @@ export class WarpCompositor {
 
   /**
    * The texture to feed the pipeline. `phase` is the loop phase the delay was computed for (used
-   * with the line for jump detection); the read time is `now - delaySec`.
+   * with the line for jump detection and by Filter Spam's slices); the read time is `now - delaySec`.
    */
   render(phase: number, delaySec: number): THREE.Texture {
     const live = this.live
     if (!live) throw new Error('WarpCompositor.render before capture')
     const now = this.now
     const delay = Number.isFinite(delaySec) ? Math.max(0, Math.min(MAX_DELAY_SECONDS, delaySec)) : 0
-    const read = now - delay
-    const { profile, params, mix } = this.opts
+    const ph = Number.isFinite(phase) ? phase - Math.floor(phase) : 0
+    let read = now - delay
+    const { profile, knobs: k, output, mix } = this.opts
 
     // Jump tracking runs for every profile so switching profile mid-run behaves.
-    const jumped = this.detectJump(phase, delay, now)
-    if (jumped) {
-      this._jumpCount++
-      if (profile === 'clean' && params.smooth > 0) {
-        this.fadeFrom = this.prevRead + (now - this.prevNow) // the old path, continuing
-        this.fadeStart = now
-        this.fadeDur = params.smooth * 4 * FRAME
-      }
-    }
-    this.prevRead = read
+    const jumped = this.detectJump(ph, delay, now)
+    if (jumped) this._jumpCount++
+    const dt = Number.isFinite(this.prevNow) ? Math.min(0.1, Math.max(0, now - this.prevNow)) : 0
     this.prevNow = now
-    this.prevPhase = phase
+    this.prevPhase = ph
     this.prevDelay = delay
-    let fade = 0
-    if (profile === 'clean' && this.fadeDur > 0 && now - this.fadeStart < this.fadeDur) fade = 1 - (now - this.fadeStart) / this.fadeDur
-    else this.fadeDur = 0
-
     if (profile !== 'degrade') this.holdTick = NaN
+    if ((profile !== 'clean' || !(k[2] > 0)) && this.echoTarget) this.freeEcho()
 
-    if ((delay <= 0 && fade <= 0) || mix <= 0 || this.buffer.size === 0) return live
+    if (mix <= 0 || this.buffer.size === 0 || (delay <= 0 && isOutputOpen(output) && isProfileNeutral(profile, k))) {
+      this._readTime = now
+      return live
+    }
 
     const out = this.ensureOutput()
+    const mat = this.materials[profile]
+    const u = mat.uniforms
+    const fw = this.buffer.frameWidth, fh = this.buffer.frameHeight
+    const seedTick = Math.floor(now * WARP_CAPTURE_FPS)
+    u.tLive.value = live
+    u.uMix.value = mix
+    ;(u.uBand.value as THREE.Vector2).set(output.low <= 20 ? -1 : bandLuma(output.low), output.high >= 20000 ? 2 : bandLuma(output.high))
+    u.uGain.value = Math.pow(10, output.levelDb / 20)
+    ;(u.uFrameSize.value as THREE.Vector2).set(fw, fh)
+    u.uSeed.value = seedTick % 997
 
-    if (profile === 'clean') {
-      const u = this.clean.uniforms
-      u.tLive.value = live
-      u.tA.value = delay <= 0 ? live : this.frameAt(read, live)
-      u.tB.value = fade > 0 ? this.frameAt(this.fadeFrom + (now - this.fadeStart), live) : u.tA.value
-      u.uFade.value = fade
-      u.uMix.value = mix
-      this.quad.draw(this.renderer, this.clean, out)
-    } else if (profile === 'smear') {
-      const n = 2 + Math.round(params.grain * 4) // 2..6 frames
-      const sigma = 0.5 + params.blend * 2.5 // frames: blend 0 = centre-heavy, 1 = near-even
-      const pos = this.buffer.indexOf(read)
-      const first = Math.round(pos - (n - 1) / 2)
-      const w = this.smearW
-      let sum = 0, lastK = -1
-      const u = this.smear.uniforms
-      for (let i = 0; i < 6; i++) {
-        const k = Math.min(this.buffer.size - 1, Math.max(0, first + i))
-        u[SMEAR_SLOTS[i]].value = this.buffer.at(k).rt.texture
-        w[i] = 0
-        // Near the ring edges several slots clamp to the same frame: weight it once, at its real distance.
-        if (i < n && k !== lastK) { const d = k - pos; w[i] = Math.exp(-(d * d) / (2 * sigma * sigma)); sum += w[i] }
-        lastK = k
+    switch (profile) {
+      case 'clean': {
+        // Vibrato: up to 4% of the width; Vib speed 0.5..12 Hz
+        this.wobPhase = (this.wobPhase + TAU * 0.5 * Math.pow(24, k[1]) * dt) % TAU
+        u.uWobble.value = k[0] * 0.04
+        u.uWobPhase.value = this.wobPhase
+        // Circuit-bend: up to 40% of blocks, 16..64 px blocks re-rolled ~10 times a second
+        const bendTick = Math.floor(now * 10)
+        u.uBend.value = k[3] * 0.4
+        u.uBlock.value = 16 + Math.floor(rnd(bendTick, 3) * 49)
+        u.uSeed.value = bendTick % 997
+        u.tN1.value = this.frameAt(read - 4 * FRAME, live)
+        u.tN2.value = this.frameAt(read - 10 * FRAME, live)
+        // Echo: feedback 0..0.9 of the previous output
+        const echo = k[2] > 0 ? 0.9 * Math.sqrt(k[2]) : 0
+        u.uEcho.value = echo > 0 && this.echoValid ? echo : 0
+        u.tEcho.value = this.echoTarget?.texture ?? live
+        break
       }
-      for (let i = 0; i < 6; i++) w[i] /= sum
-      u.tLive.value = live
-      u.uMix.value = mix
-      this.quad.draw(this.renderer, this.smear, out)
-    } else {
-      // Hold: the read position only updates 4 + (1 - rate) * 26 times a second.
-      const fps = 4 + (1 - params.rate) * 26
-      const tick = Math.floor(now * fps)
-      if (tick !== this.holdTick || jumped) { this.holdTick = tick; this.holdRead = read }
-      const u = this.degrade.uniforms
-      u.tLive.value = live
-      u.tA.value = this.frameAt(this.holdRead, live)
-      ;(u.uFrameSize.value as THREE.Vector2).set(this.buffer.frameWidth, this.buffer.frameHeight)
-      u.uPixel.value = 1 + Math.floor(params.crunch * 15)
-      u.uLevels.value = Math.max(3, Math.round(256 * Math.pow(3 / 256, params.crunch)))
-      u.uMix.value = mix
-      this.quad.draw(this.renderer, this.degrade, out)
+      case 'flange': {
+        // Grain size: 2..6 taps, 2 frames apart; Modulation jitters each tap up to ±3 frames and ±0.6% in space
+        const n = 2 + Math.round(k[2] * 4)
+        const pos = this.buffer.indexOf(read)
+        const last = this.buffer.size - 1
+        const w = this.flangeW
+        for (let i = 0; i < 6; i++) {
+          const off = (i - (n - 1) / 2) * 2 + (rnd(seedTick, i) - 0.5) * 6 * k[0]
+          const idx = Math.min(last, Math.max(0, Math.round(pos + off)))
+          u[FLANGE_SLOTS[i]].value = this.buffer.at(idx).rt.texture
+          w[i] = i < n ? 1 / n : 0
+          this.flangeOff[i].set((rnd(seedTick, i + 10) - 0.5) * 0.012 * k[0], (rnd(seedTick, i + 20) - 0.5) * 0.012 * k[0])
+        }
+        u.uPhys.value = k[1]
+        // Width: R from 2..8 frames back, B from twice that
+        const wf = (2 + k[3] * 6) * FRAME
+        u.tR.value = this.frameAt(read - wf, live)
+        u.tB.value = this.frameAt(read - 2 * wf, live)
+        u.uWidth.value = k[3]
+        break
+      }
+      case 'degrade': {
+        // Degrade: hold at 30 down to 4 fps and posterize; Grain size: blocks up to 16 px (scaled in
+        // by Degrade, since Grain size is "any" at neutral); Cutoff: blur up to 8 px; Chaos: jitter
+        const deg = k[0]
+        const tick = Math.floor(now * (deg > 0 ? 30 - 26 * deg : WARP_CAPTURE_FPS))
+        if (deg <= 0) { this.holdTick = tick; this.holdRead = read }
+        else if (tick !== this.holdTick || jumped || !Number.isFinite(this.holdRead)) { this.holdTick = tick; this.holdRead = read }
+        const chaos = k[3]
+        read = Math.min(now, this.holdRead + (chaos > 0 ? (rnd(tick, 1) - 0.5) * 0.6 * chaos : 0))
+        ;(u.uJit.value as THREE.Vector2).set(chaos > 0 ? (rnd(tick, 2) - 0.5) * 0.04 * chaos : 0, chaos > 0 ? (rnd(tick, 3) - 0.5) * 0.04 * chaos : 0)
+        u.uPixel.value = 1 + Math.floor(k[2] * 15 * Math.min(1, deg * 3))
+        u.uLevels.value = deg > 0 ? Math.max(3, Math.round(256 * Math.pow(3 / 256, Math.sqrt(deg)))) : 256
+        u.uBlur.value = (1 - k[1]) * 8
+        break
+      }
+      case 'filterspam': {
+        // One seed per 1/16 slice of the loop: blur, tint and the octave chance
+        const slice = Math.floor(ph * 16)
+        const r1 = rnd(slice, 1), r2 = rnd(slice, 2)
+        u.uBlur.value = (1 - k[0]) * 6 + k[1] * r1 * 10
+        u.uTintAmt.value = k[1] * (0.3 + 0.7 * r2) * 0.85
+        const h = rnd(slice, 5)
+        ;(u.uTint.value as THREE.Vector3).set(0.6 + 0.9 * Math.max(0, Math.cos(TAU * h)), 0.6 + 0.9 * Math.max(0, Math.cos(TAU * (h - 1 / 3))), 0.6 + 0.9 * Math.max(0, Math.cos(TAU * (h - 2 / 3))))
+        u.uRes.value = k[2] * 3
+        // Octaves: this slice plays at double speed (starts a slice further back and catches up)
+        if (rnd(slice, 4) < k[3]) read -= (1 - (ph * 16 - slice)) * (this.opts.loopSeconds / 16)
+        break
+      }
+      case 'harmonicer': {
+        // Harmonize: copy opacity up to .9; Speed: emphasis cycles at 0.5..8 Hz; Detune: ±20° and ±4%
+        this.arpPhase = (this.arpPhase + TAU * 0.5 * Math.pow(16, k[2]) * dt) % TAU
+        const e = 0.5 + 0.5 * Math.sin(this.arpPhase)
+        u.uA.value = k[0] * 0.9 * (0.35 + 0.65 * e)
+        u.uB.value = k[0] * 0.9 * (0.35 + 0.65 * (1 - e))
+        u.uRot.value = k[1] * 0.35
+        u.uShift.value = k[1] * 0.04
+        // Reverse: each copy mirrored with that probability, re-rolled every half second
+        const slot = Math.floor(now * 2)
+        ;(u.uMirror.value as THREE.Vector2).set(rnd(slot, 7) < k[3] ? 1 : 0, rnd(slot, 8) < k[3] ? 1 : 0)
+        break
+      }
+      case 'fauxcoder': {
+        // Cutoff: band centre 0.1..0.9; Squelch: flicker at 4..40 Hz; Magic: random jumps of centre and strength
+        this.sqPhase = (this.sqPhase + TAU * 4 * Math.pow(10, k[1]) * dt) % TAU
+        const s = Math.sin(this.sqPhase), r = rnd(seedTick, 9) - 0.5
+        u.uCentre.value = 0.1 + 0.8 * k[2] + 0.15 * k[1] * s + 0.3 * k[3] * r
+        u.uAmt.value = Math.min(1, Math.pow(k[0], 0.7) * (1 - 0.5 * k[1] * (0.5 + 0.5 * s)) * (1 - 0.5 * k[3] * (r + 0.5)))
+        u.uRing.value = 0.25 * k[1] * s + k[3] * r
+        break
+      }
+      case 'lofizzly': {
+        // Degrade: down to fw / 24 columns, wobbled by the Rate LFO (0.2..30 Hz)
+        this.lfoPhase = (this.lfoPhase + TAU * 0.2 * Math.pow(150, k[3]) * dt) % TAU
+        u.uCols.value = k[0] > 0 ? fw / (1 + k[0] * 23 * (0.6 + 0.4 * Math.sin(this.lfoPhase))) : 0
+        u.uDirt.value = k[1]
+        u.uLevel.value = 1 - 0.35 * k[1] * rnd(seedTick, 11)
+        u.uRadio.value = k[2]
+        break
+      }
+    }
+
+    u.tA.value = this.frameAt(read, live)
+    this._readTime = Math.min(now, read)
+    this.quad.draw(this.renderer, mat, out)
+
+    if (profile === 'clean' && k[2] > 0) {
+      // Echo: keep this output for the next frame (frame-sized; the target exists only while Echo > 0)
+      const et = this.ensureEcho(fw, fh)
+      this.thumbCopy.uniforms.tSrc.value = out.texture
+      this.quad.draw(this.renderer, this.thumbCopy, et)
+      this.thumbCopy.uniforms.tSrc.value = null
+      this.echoValid = true
     }
     return out.texture
   }
@@ -271,6 +382,20 @@ export class WarpCompositor {
     if (!this.output) this.output = makeTarget(w, h)
     else if (this.output.width !== w || this.output.height !== h) this.output.setSize(w, h)
     return this.output
+  }
+
+  private ensureEcho(w: number, h: number): THREE.WebGLRenderTarget {
+    w = Math.max(1, w); h = Math.max(1, h)
+    if (!this.echoTarget) { this.echoTarget = makeTarget(w, h); this.echoValid = false }
+    else if (this.echoTarget.width !== w || this.echoTarget.height !== h) { this.echoTarget.setSize(w, h); this.echoValid = false }
+    return this.echoTarget
+  }
+
+  private freeEcho() {
+    this.echoTarget?.dispose()
+    this.echoTarget = null
+    this.echoValid = false
+    this.clean.uniforms.tEcho.value = null
   }
 
   /**
@@ -320,12 +445,13 @@ export class WarpCompositor {
     return slot.t
   }
 
-  /** Forget every stored frame (on source change) and any fade/hold state. */
+  /** Forget every stored frame (on source change) and any hold / echo state. */
   clear(): void {
     this.buffer.clear()
-    this.prevRead = this.prevNow = this.prevPhase = this.prevDelay = NaN
-    this.fadeFrom = this.fadeStart = this.holdTick = this.holdRead = NaN
-    this.fadeDur = 0
+    this.prevNow = this.prevPhase = this.prevDelay = NaN
+    this.holdTick = this.holdRead = NaN
+    this._readTime = NaN
+    this.echoValid = false // the echo target holds the old source's picture: never fade it in
   }
 
   /**
@@ -338,6 +464,7 @@ export class WarpCompositor {
     this.output = null
     this.thumbTarget?.dispose()
     this.thumbTarget = null
+    this.freeEcho()
     this.live = null
     this.clear()
   }
@@ -346,9 +473,7 @@ export class WarpCompositor {
   dispose(): void {
     this.release()
     this.buffer.dispose()
-    this.clean.dispose()
-    this.smear.dispose()
-    this.degrade.dispose()
+    for (const m of Object.values(this.materials)) m.dispose()
     this.thumbCopy.dispose()
     this.geometry.dispose()
   }

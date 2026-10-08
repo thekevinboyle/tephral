@@ -9,7 +9,9 @@ import { paramDisplayName } from '../../utils/routeTargetLabel'
 import { useGlitchEngineStore } from '../../stores/glitchEngineStore'
 import { getUserMix } from '../../effects/mixModulation'
 import { LineLane } from './LineLane'
-import { fmtScale } from './lineSelection'
+import { fmtScale } from './lineFormat'
+import { useLineLockStore } from './lineLocks'
+import { LockIcon } from '../performance/warp/WarpLock'
 
 const SEQ = '#9580FF'
 const MIDI_COLOR = '#00AAFF'
@@ -198,6 +200,8 @@ export function EffectTrackRow({
 
   // Dim tracks where no steps are active (a Line track always counts as active)
   const isLine = track.mode === 'line'
+  const showLock = useLineLockStore((s) => s.lockMode) && isLine
+  const lineLocked = useLineLockStore((s) => !!s.locks[effectId])
   const hasAnyActiveSteps = isLine || track.steps.some((s) => s.active)
 
   // Line info: the Dry/wet ceiling is the user's own value (the stored one while stopped, the remembered base
@@ -279,6 +283,13 @@ export function EffectTrackRow({
             >
               {fmtScale(track.timeScale)}
             </span>
+          )}
+          {showLock && (
+            <button type="button" className="seg-line-lock" data-line-lock={effectId} aria-pressed={lineLocked} aria-label={`Lock ${label} line`}
+              onClick={(e) => { e.stopPropagation(); useLineLockStore.getState().toggleLock(effectId) }}
+              {...statusHover(lineLocked ? `${label} line locked: Dice all lines keeps it. Click to unlock` : `${label} line unlocked: Dice all lines changes it. Click to lock`)}>
+              <LockIcon open={!lineLocked} />
+            </button>
           )}
         </div>
 

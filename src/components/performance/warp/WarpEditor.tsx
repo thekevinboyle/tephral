@@ -10,13 +10,7 @@ import { LockIcon } from './WarpLock'
 import { useWarpLockStore } from './warpLocks'
 import { WarpLinesMenu, WarpSaveLine } from './WarpLineTools'
 import { handleLineKey } from '../lines/lineKeys'
-
-const TOOLS: { id: WarpTool; name: string; status: string }[] = [
-  { id: 'draw', name: 'Draw', status: 'Draw: click to add a point, drag to paint points, drag a point to move it. Hold Shift to paint steps, Alt snaps the height' },
-  { id: 'steps', name: 'Steps', status: 'Steps: drag to paint a staircase on the quantize grid (repeats). Shift while drawing does the same' },
-  { id: 'curve', name: 'Curve', status: 'Curve: drag up or down over a segment to bend it' },
-  { id: 'erase', name: 'Erase', status: 'Erase: drag over points to remove them' },
-]
+import { LINE_TOOLS } from '../lines/lineTools'
 
 const randomSteps = () => useWarpStore.getState().randomizeSteps()
 const randomCurves = () => useWarpStore.getState().randomizeCurves()
@@ -85,7 +79,7 @@ export const WarpEditor = memo(function WarpEditor() {
     <div className="seg-warp" data-warp-editor onKeyDown={onKeyDown}>
       <div className="seg-warp-main">
         <div className="seg-warp-tools" role="toolbar" aria-label="Warp tools">
-          {TOOLS.map((t) => (
+          {LINE_TOOLS.map((t) => (
             <button key={t.id} type="button" className="seg-warp-tool" data-warp-tool={t.id} aria-pressed={tool === t.id}
               onClick={() => setTool(t.id)} {...statusHover(t.status)}>
               {t.name}

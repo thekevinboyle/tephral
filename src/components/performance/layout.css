@@ -526,3 +526,17 @@
 .seg-line-owner { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid var(--border); border-radius: var(--radius-ctrl); background: var(--bg-primary); color: var(--text-secondary); font: 400 11px var(--font-sans); white-space: nowrap; pointer-events: none; }
 .seg-line-info { margin-top: 4px; font: 400 11px/1.35 var(--font-sans); color: var(--text-muted); }
 .seg-line-info b { font-weight: 500; color: var(--text-primary); }
+.seg-line-lane[data-locked] { outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
+/* the Sequencer toolbar's line tools (spec §4): one row, wrapping under 1100 px; never scrolls sideways */
+.seg-line-tools-slot { flex: 1 1 0; min-width: 0; margin-right: 16px; }
+.seg-line-tools { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0 }
+.seg-line-ctx { color: var(--text-muted); font-size: 11.5px; margin-right: 4px }
+.seg-line-tools > .seg-warp-set { flex: none; height: 24px; padding: 0 8px; background: var(--bg-elevated); }
+.seg-line-tools > .seg-warp-set:hover { background: var(--bg-hover); }
+.seg-line-tools > .seg-warp-set:focus-visible, .seg-line-tools .seg-warp-tool:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-line-dice { flex: none; margin-left: auto; display: flex; gap: 4px; align-items: center; }
+.seg-line-dice > .seg-line-lockmode[aria-pressed="true"] { color: var(--warp); outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
+.seg-line-lock { flex: none; width: 18px; height: 18px; margin-left: auto; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-secondary); cursor: pointer; }
+.seg-line-lock:hover { background: var(--bg-hover); }
+.seg-line-lock[aria-pressed="false"] > svg { opacity: .45; }
+.seg-line-lock[aria-pressed="true"] { color: var(--warp); }

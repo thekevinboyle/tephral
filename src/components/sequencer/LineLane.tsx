@@ -7,7 +7,9 @@ import { LinePlot, PAD } from '../performance/lines/LinePlot'
 import { linePath } from '../performance/lines/linePath'
 import { handleLineKey } from '../performance/lines/lineKeys'
 import { describePoint } from '../performance/warp/warpEdit'
-import { fmtBars, fmtScale, trackBars, useLineEditStore } from './lineSelection'
+import { useLineEditStore } from './lineSelection'
+import { useLineLockStore } from './lineLocks'
+import { fmtBars, fmtScale, trackBars } from './lineFormat'
 
 const COLS = 16
 
@@ -20,13 +22,6 @@ interface Props {
   onSelect: () => void
 }
 
-/**
- * A Line track's lane (spec §4): the 16-column grid, the filled area under the line in the effect's colour, the
- * line and a --live playhead (rAF from getLinePhase, only while the Sequencer tab shows and the sequencer plays).
- * Unselected it is a 58 px preview and a click only selects the track; selected it is a 170 px LinePlot editor
- * (tool and point selection in useLineEditStore). Handled keys stop propagating, so they never reach the
- * sequencer's own shortcuts.
- */
 /**
  * The track row is draggable (reorder). A native drag starting inside the lane would cancel the pointer gesture
  * (pointercancel), so the row is not draggable from a pointer press in the lane until it is released.
@@ -44,6 +39,13 @@ function holdRowDrag(e: React.PointerEvent) {
   window.addEventListener('pointercancel', release, true)
 }
 
+/**
+ * A Line track's lane (spec §4): the 16-column grid, the filled area under the line in the effect's colour, the
+ * line and a --live playhead (rAF from getLinePhase, only while the Sequencer tab shows and the sequencer plays).
+ * Unselected it is a 58 px preview and a click only selects the track; selected it is a 170 px LinePlot editor
+ * (tool and point selection in useLineEditStore). Handled keys stop propagating, so they never reach the
+ * sequencer's own shortcuts.
+ */
 export const LineLane = memo(function LineLane({ effectId, track, color, label, selected, onSelect }: Props) {
   const line = track.line ?? defaultTrackLine()
   const tool = useLineEditStore((s) => s.tool)
@@ -53,6 +55,7 @@ export const LineLane = memo(function LineLane({ effectId, track, color, label, 
   const isPlaying = useEffectSequencerStore((s) => s.isPlaying)
   const visible = useUIStore((s) => s.bottomTab === 'sequencer' && s.showBottom)
   const [announce, setAnnounce] = useState('')
+  const locked = useLineLockStore((s) => s.lockMode && !!s.locks[effectId])
 
   const boxRef = useRef<HTMLDivElement>(null)
   const headRef = useRef<HTMLDivElement>(null)
@@ -75,6 +78,13 @@ export const LineLane = memo(function LineLane({ effectId, track, color, label, 
   const iw = Math.max(1, w - 2 * PAD), ih = Math.max(1, h - 2 * PAD)
   const X = (x: number) => PAD + x * iw
   const Y = (y: number) => PAD + y * ih
+
+  // A lane that becomes the selected one is scrolled into view in the track list: at 170 px it can sit below the fold
+  useEffect(() => {
+    if (!selected) return
+    const el = boxRef.current
+    ;(el?.closest('[data-track-row]') ?? el)?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [selected])
 
   // A lane that becomes the edited one starts with no point selected; while edited, a change to its points that
   // the lane did not make (preset, dice, bank) drops the selection, whose index may no longer mean anything
@@ -139,6 +149,7 @@ export const LineLane = memo(function LineLane({ effectId, track, color, label, 
       className="seg-line-lane"
       data-line-lane={effectId}
       data-selected={selected || undefined}
+      data-locked={locked || undefined}
       style={{ '--lane': color } as React.CSSProperties}
       onKeyDown={onKeyDown}
       onPointerDownCapture={holdRowDrag}

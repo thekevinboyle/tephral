@@ -2,6 +2,7 @@
 // try/catch: with storage unavailable (private mode, blocked site data) the list is empty and saving
 // reports failure instead of throwing.
 import { cleanPoints, MAX_POINTS, PRESETS, type WarpPoint } from '../../../effects/warp/warpMath'
+import { LANE_PRESET_NAMES } from '../../../effects/lines/lanePresets'
 
 export interface WarpLine { name: string; points: WarpPoint[] }
 
@@ -11,8 +12,9 @@ const MAX_NAME = 40
 export const MAX_LINES = 100
 export { MAX_POINTS }
 
-/** A built-in line's name (any case): user lines may not use one. */
-export const isBuiltInName = (name: string) => Object.keys(PRESETS).some((n) => n.toLowerCase() === name.trim().toLowerCase())
+const BUILT_IN_NAMES = [...Object.keys(PRESETS), ...LANE_PRESET_NAMES].map((n) => n.toLowerCase())
+/** A built-in line's name (any case), warp or lane presets: user lines may not use one. */
+export const isBuiltInName = (name: string) => BUILT_IN_NAMES.includes(name.trim().toLowerCase())
 
 /** Trimmed, length-capped name; '' when nothing usable is left. */
 export const cleanLineName = (name: string) => name.replace(/\s+/g, ' ').trim().slice(0, MAX_NAME)

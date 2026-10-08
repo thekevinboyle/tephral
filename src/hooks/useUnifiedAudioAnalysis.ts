@@ -2,14 +2,51 @@ import { useEffect, useRef } from 'react'
 import { useMediaStore } from '../stores/mediaStore'
 import { useAudioSourceStore, type AudioSourceType } from '../stores/audioSourceStore'
 import { useEffectSequencerStore } from '../stores/effectSequencerStore'
+import { useWarpStore } from '../stores/warpStore'
+import { createAudioWarpSlot } from '../effects/warp/audioWarp'
 import { detectBpmFromUrl } from '../utils/detectBpm'
 
 const WAVEFORM_SIZE = 128
+
+// A video file's soundtrack is played through Web Audio (and the warp) when Audio = Video.
+// createMediaElementSource can be called only once per element and binds the element to that
+// context for good, so the context and source node are cached per element and only disconnected
+// (never re-created) when the routing changes. The context is closed once the element is dropped.
+const videoGraphs = new WeakMap<HTMLMediaElement, { ctx: AudioContext; source: MediaElementAudioSourceNode }>()
+
+function videoGraphFor(el: HTMLMediaElement) {
+  let g = videoGraphs.get(el)
+  if (!g || g.ctx.state === 'closed') {
+    const ctx = new AudioContext()
+    g = { ctx, source: ctx.createMediaElementSource(el) }
+    videoGraphs.set(el, g)
+  }
+  return g
+}
+
+/** Close the cached context of an element that is neither the current nor the stashed video. */
+function releaseVideoGraph(el: HTMLMediaElement) {
+  const m = useMediaStore.getState()
+  if (m.videoElement === el || m.stashedVideoElement === el) return
+  const g = videoGraphs.get(el)
+  if (!g) return
+  videoGraphs.delete(el)
+  g.ctx.close().catch(() => {})
+}
+
+// One warp slot for the app's single audible graph (this hook is mounted once, in PerformanceLayout).
+const warpSlot = createAudioWarpSlot()
+
+/** Unmuted only when its sound is routed through Web Audio; a muted element feeds silence to its source node. */
+function setVideoMuted(el: HTMLMediaElement, muted: boolean) {
+  el.muted = muted
+}
 
 export function useUnifiedAudioAnalysis() {
   const videoElement = useMediaStore((s) => s.videoElement)
   const activeSource = useAudioSourceStore((s) => s.activeSource)
   const audioFileUrl = useAudioSourceStore((s) => s.audioFileUrl)
+  const mediaSource = useMediaStore((s) => s.source)
 
   const audioCtxRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
@@ -18,10 +55,20 @@ export function useUnifiedAudioAnalysis() {
   const rafRef = useRef<number | null>(null)
   const currentSourceRef = useRef<{ type: AudioSourceType; key: string } | null>(null)
   const fileElementRef = useRef<HTMLAudioElement | null>(null)
+  const ownsCtxRef = useRef(true) // false for a cached video-element context (disconnect, don't close)
+  const videoGraphElRef = useRef<HTMLMediaElement | null>(null)
+
+  // Audible video soundtrack: only a video FILE with Audio = Video. Webcam/screen stay analysis-only.
+  const videoAudible = activeSource === 'video' && mediaSource === 'file' && !!videoElement
+
+  // Re-check warp insertion when it is switched on/off or limited to video.
+  useEffect(() => useWarpStore.subscribe((s, prev) => {
+    if (s.enabled !== prev.enabled || s.appliesTo !== prev.appliesTo) warpSlot.sync()
+  }), [])
 
   // Build a key that changes when we need to reconnect
   const sourceKey = activeSource === 'video'
-    ? `video-${videoElement ? 'ok' : 'none'}`
+    ? `video-${videoAudible ? 'element' : 'stream'}-${videoElement ? 'ok' : 'none'}`
     : activeSource === 'file'
       ? `file-${audioFileUrl ?? 'none'}`
       : activeSource === 'system'
@@ -36,6 +83,9 @@ export function useUnifiedAudioAnalysis() {
     activeSource === 'system'
 
   useEffect(() => {
+    // The video element is heard only through Web Audio (videoAudible); otherwise it stays muted
+    if (videoElement) setVideoMuted(videoElement, !videoAudible)
+
     if (!hasValidSource) {
       // No valid source — reset display and tear down
       useAudioSourceStore.getState().setAmplitude(0)
@@ -50,10 +100,6 @@ export function useUnifiedAudioAnalysis() {
       return
     }
 
-    // Mute video when another source is active so only one plays at a time
-    if (videoElement) {
-      (videoElement as HTMLVideoElement).muted = activeSource !== 'video'
-    }
 
     let cancelled = false
 
@@ -71,7 +117,43 @@ export function useUnifiedAudioAnalysis() {
 
         let stream: MediaStream | null = null
 
-        if (activeSource === 'video') {
+        if (activeSource === 'video' && videoAudible && videoElement) {
+          // Video file soundtrack: element -> (warp) -> analysers + speakers. No captureStream.
+          let g: ReturnType<typeof videoGraphFor>
+          try {
+            g = videoGraphFor(videoElement)
+          } catch (err) {
+            console.warn('[UnifiedAudio] createMediaElementSource failed:', err)
+            return
+          }
+          const ctx = g.ctx
+          if (ctx.state === 'suspended') await ctx.resume()
+          if (cancelled) return
+          const source = g.source
+          const analyser = ctx.createAnalyser()
+          analyser.fftSize = 256
+          analyser.smoothingTimeConstant = 0.8
+          const reactiveAnalyser = ctx.createAnalyser()
+          reactiveAnalyser.fftSize = 2048
+          reactiveAnalyser.smoothingTimeConstant = 0.4
+          const bandAnalyser = ctx.createAnalyser()
+          bandAnalyser.fftSize = 4096
+          bandAnalyser.smoothingTimeConstant = 0.4
+          const outputs = [analyser, ctx.destination, reactiveAnalyser, bandAnalyser]
+          outputs.forEach((o) => source.connect(o))
+          useAudioSourceStore.getState().setReactiveAnalyser(reactiveAnalyser)
+          useAudioSourceStore.getState().setBandAnalyser(bandAnalyser)
+          useAudioSourceStore.getState().setAudioContext(ctx)
+
+          ownsCtxRef.current = false
+          videoGraphElRef.current = videoElement
+          audioCtxRef.current = ctx
+          analyserRef.current = analyser
+          sourceNodeRef.current = source
+          currentSourceRef.current = { type: activeSource, key: sourceKey }
+          warpSlot.setGraph({ ctx, input: source, outputs })
+          console.log('[UnifiedAudio] video soundtrack connected: element → analysers + destination')
+        } else if (activeSource === 'video') {
           if (!videoElement) return
           stream = (videoElement as HTMLVideoElement & { captureStream(): MediaStream }).captureStream()
           const audioTracks = stream.getAudioTracks()
@@ -110,6 +192,7 @@ export function useUnifiedAudioAnalysis() {
           const source = ctx.createMediaElementSource(audio)
           source.connect(analyser)
           source.connect(ctx.destination) // so audio still plays through speakers
+          const outputs: AudioNode[] = [analyser, ctx.destination]
 
           // Reactive analyser for FFT band splitting
           const reactiveAnalyser = ctx.createAnalyser()
@@ -125,6 +208,7 @@ export function useUnifiedAudioAnalysis() {
           bandAnalyser.fftSize = 4096
           bandAnalyser.smoothingTimeConstant = 0.4
           source.connect(bandAnalyser)
+          outputs.push(reactiveAnalyser, bandAnalyser)
           useAudioSourceStore.getState().setBandAnalyser(bandAnalyser)
           useAudioSourceStore.getState().setAudioContext(ctx)
 
@@ -147,6 +231,8 @@ export function useUnifiedAudioAnalysis() {
           analyserRef.current = analyser
           sourceNodeRef.current = source
           currentSourceRef.current = { type: activeSource, key: sourceKey }
+          // Analysers listen after the warp (when it is on), so reactive effects follow what you hear
+          warpSlot.setGraph({ ctx, input: source, outputs })
           // Skip the shared stream→source path below
           stream = null
         } else if (activeSource === 'mic') {
@@ -288,15 +374,13 @@ export function useUnifiedAudioAnalysis() {
         cancelAnimationFrame(rafRef.current)
         rafRef.current = null
       }
-      // Unmute video on cleanup so it's ready when switching back
-      if (videoElement) {
-        (videoElement as HTMLVideoElement).muted = false
-      }
       teardown()
     }
-  }, [hasValidSource, activeSource, sourceKey, videoElement, audioFileUrl])
+  }, [hasValidSource, activeSource, sourceKey, videoElement, videoAudible, audioFileUrl])
 
   function teardown() {
+    // Take the warp out first (restores source -> outputs), then drop the graph
+    warpSlot.setGraph(null)
     if (sourceNodeRef.current) {
       sourceNodeRef.current.disconnect()
       sourceNodeRef.current = null
@@ -306,13 +390,19 @@ export function useUnifiedAudioAnalysis() {
       streamRef.current = null
     }
     if (audioCtxRef.current) {
-      audioCtxRef.current.close()
+      // A cached video-element context is kept (its source node cannot be re-created) until the element is dropped
+      if (ownsCtxRef.current) audioCtxRef.current.close()
       audioCtxRef.current = null
       analyserRef.current = null
     }
     useAudioSourceStore.getState().setReactiveAnalyser(null)
     useAudioSourceStore.getState().setBandAnalyser(null)
     useAudioSourceStore.getState().setAudioContext(null)
+    if (videoGraphElRef.current) {
+      releaseVideoGraph(videoGraphElRef.current)
+      videoGraphElRef.current = null
+    }
+    ownsCtxRef.current = true
     useAudioSourceStore.getState().setAudioBpm(null)
     // Clean up system audio capture stream
     const systemStream = useAudioSourceStore.getState().systemStream

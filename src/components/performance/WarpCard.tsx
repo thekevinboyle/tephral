@@ -21,26 +21,26 @@ const openWarpTab = () => {
   ui.setBottomTab('warp')
 }
 
-/** lut is y = f(x) with y = 0 drawn at the TOP, like the editor. */
-function MiniLine() {
+/** lut is y = f(x) with y = 0 drawn at the TOP, like the editor. Also the Warp modulator's inspector line. */
+export const WarpMiniLine = memo(function WarpMiniLine({ width = W, height = H }: { width?: number; height?: number }) {
   const lut = useWarpStore((s) => s.lut)
   const d = useMemo(() => {
     let out = ''
     for (let i = 0; i < PTS; i++) {
       const v = lut[Math.round((i / (PTS - 1)) * (lut.length - 1))]
-      out += `${i === 0 ? 'M' : 'L'}${((i / (PTS - 1)) * W).toFixed(1)} ${(1 + v * (H - 2)).toFixed(1)}`
+      out += `${i === 0 ? 'M' : 'L'}${((i / (PTS - 1)) * width).toFixed(1)} ${(1 + v * (height - 2)).toFixed(1)}`
     }
     return out
-  }, [lut])
+  }, [lut, width, height])
   return (
-    <svg className="seg-warpcard-mini" data-warp-mini viewBox={`0 0 ${W} ${H}`} width={W} height={H} aria-hidden>
-      <line x1="0" y1="1" x2={W} y2={H - 1} stroke="var(--warp-identity)" strokeWidth="1" strokeDasharray="3 3" />
+    <svg className="seg-warpcard-mini" data-warp-mini viewBox={`0 0 ${width} ${height}`} width={width} height={height} aria-hidden>
+      <line x1="0" y1="1" x2={width} y2={height - 1} stroke="var(--warp-identity)" strokeWidth="1" strokeDasharray="3 3" />
       <path d={d} fill="none" stroke="var(--warp)" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   )
-}
+})
 
-const AmountKnob = memo(function AmountKnob() {
+export const WarpAmountKnob = memo(function WarpAmountKnob() {
   const amount = useWarpStore((s) => s.amount)
   const onChange = useCallback((v: number) => useWarpStore.getState().patch({ amount: v }), [])
   return (
@@ -143,8 +143,8 @@ export const WarpCard = memo(function WarpCard() {
       </div>
       <div className="seg-dev-body" hidden={collapsed}>
         <div className="seg-warpcard-row">
-          <MiniLine />
-          <AmountKnob />
+          <WarpMiniLine />
+          <WarpAmountKnob />
         </div>
       </div>
     </div>

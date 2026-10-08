@@ -9,7 +9,7 @@ import { getUIStatusText } from '../../config/statusDescriptions'
 /**
  * First card in the device chain: every modulator as a slot. The body selects it (the inspector edits it);
  * the ● arms routing (then click or drag any control). MIDI and Audio are select-only: they route from
- * their own editors. Shapes are static, coloured --mod.
+ * their own editors. Shapes are static, coloured --mod (the Warp slot sets --mod to --warp in layout.css).
  */
 
 const SHAPES: Record<ModulatorSlot['shape'], string> = {
@@ -20,6 +20,8 @@ const SHAPES: Record<ModulatorSlot['shape'], string> = {
   sh: 'M0 7 L5 7 L5 3 L10 3 L10 9 L15 9 L15 5 L20 5',
   midi: 'M1 2 V10 M5 2 V10 M9 2 V10 M13 2 V10 M17 2 V10 M3 2 V7 M11 2 V7 M15 2 V7',
   audio: 'M1 6 V6 M4 3 V9 M7 1 V11 M10 4 V8 M13 2 V10 M16 5 V7 M19 4 V8',
+  // the warp line: flat, step down, slope, back to the top
+  warp: 'M0 2 H5 V6 H8 L13 9 L15 11 V2 H20',
 }
 
 const Slot = memo(function Slot({ slot, selected, assigning, inUse }: { slot: ModulatorSlot; selected: boolean; assigning: boolean; inUse: boolean }) {

@@ -202,6 +202,11 @@
 .seg-dev-mix-track { flex: 1 1 auto; position: relative; height: 4px; border-radius: 2px; background: var(--bg-elevated); }
 .seg-dev-mix-track > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; background: var(--c); }
 .seg-dev-mix-value { flex: none; width: 34px; text-align: right; font: 500 11px var(--font-mono); color: var(--text-primary); }
+.seg-dev-mix { position: relative; }
+/* Dry/wet as a modulation target (spec §6): dashed outline while a modulator is armed, the routed span hatched in the source's colour */
+.seg-dev-mix[data-assigning] { outline: 1px dashed var(--assign, var(--text-secondary)); outline-offset: 2px; cursor: copy; }
+.seg-dev-mix-track > b { position: absolute; top: -2px; bottom: -2px; border-radius: 2px; opacity: .8;
+  background: repeating-linear-gradient(90deg, var(--src) 0 2px, transparent 2px 4px); box-shadow: inset 0 0 0 1px var(--src); }
 .seg-dev-x { flex: none; margin-top: auto; width: 18px; height: 18px; display: grid; place-items: center; padding: 0; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 13px/1 var(--font-sans); cursor: pointer; opacity: 0; transition: opacity var(--dur-quick, 120ms) ease-out; }
 .seg-dev:hover .seg-dev-x, .seg-dev:focus-within .seg-dev-x { opacity: 1; }
 .seg-dev-x:hover { background: var(--bg-hover); color: var(--text-primary); }
@@ -228,6 +233,9 @@
 .seg-mod-slot[data-assigning] .seg-mod-route::after { background: var(--bg-void); opacity: 1; }
 @keyframes seg-assign-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .seg-mod-slot[data-assigning] .seg-mod-route { animation: none; } }
+/* The Warp slot (time warp line as a modulator) is gold: its ring, its icon, and its outline while armed */
+.seg-mod-slot[data-modulator-slot="warp"] { --mod: var(--warp); }
+.seg-mod-slot[data-modulator-slot="warp"][data-assigning] { border-color: var(--warp); }
 
 /* ParamBar */
 .param-bar { position: relative; height: 28px; display: flex; align-items: center; gap: 5px; padding: 3px 4px;
@@ -337,6 +345,8 @@
 /* Modulator editors were laid out for a wide bottom strip: in the 300px inspector, let their rows wrap and stack */
 .seg-insp-body > .seg-insp-editor { padding: 8px 10px 12px; }
 .seg-insp-editor { min-width: 0; }
+.seg-insp-warp { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.seg-insp-warp-row { display: flex; align-items: center; gap: 14px; }
 .seg-insp-editor .flex { flex-wrap: wrap; }
 .seg-insp-editor .h-full { height: auto; }
 /* CornerFrame hangs its label left of the frame (room in the old strip, clipped here): set it inside, above the content.

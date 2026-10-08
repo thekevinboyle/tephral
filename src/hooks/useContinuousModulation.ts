@@ -15,9 +15,12 @@ import { useDestructionStore } from '../stores/destructionStore'
 import { useTrendStore } from '../stores/trendStore'
 import { useSegStore } from '../stores/segStore'
 import { stepTrackBandModulation, resetTrackBandModulation } from '../effects/trackBandModulation'
+import { useWarpStore } from '../stores/warpStore'
+import { warpModValue } from '../effects/warp/warpMath'
+import { getHeardWarpPhase } from '../effects/warp/warpClock'
 
 /**
- * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope)
+ * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope, warp)
  * that run independently of the main step sequencer.
  *
  * Uses getState() to always get fresh store references on each frame.
@@ -39,6 +42,12 @@ export function useContinuousModulation() {
       // Handle bypass modulation for any effect (paramName === 'bypass')
       if (paramName === 'bypass') {
         glitch.setEffectBypassed(effectId, value > 0.5)
+        return
+      }
+
+      // Dry/wet for any effect (the device card's bar): written like the bar writes it, skipped when unchanged
+      if (paramName === 'effectMix') {
+        if (glitch.effectMix[effectId] !== value) glitch.setEffectMix(effectId, value)
         return
       }
 
@@ -718,6 +727,23 @@ export function useContinuousModulation() {
             applyModulation(routing.targetParam, Math.max(0, Math.min(1, value * routing.depth)))
           }
         }
+      }
+
+      // Warp line routings: the line's height at the heard playhead, computed once per frame and only when a
+      // route uses it. Runs whether or not the warp effect itself is on (the line as a modulation sequencer).
+      let warpValue = -1
+      for (const routing of currentRoutings) {
+        if (routing.trackId !== 'warp') continue
+        if (warpValue < 0) {
+          const w = useWarpStore.getState()
+          warpValue = warpModValue(w.lut, getHeardWarpPhase(), w.amount, w.skew)
+          if (import.meta.env.DEV) {
+            // Test hook: the harness checks nothing is computed without a warp route. Stripped from builds.
+            const g = globalThis as { __segWarpModCount?: number }
+            g.__segWarpModCount = (g.__segWarpModCount ?? 0) + 1
+          }
+        }
+        applyModulation(routing.targetParam, Math.max(0, Math.min(1, warpValue * routing.depth)))
       }
 
       // Per-track band → param modulation (track's own frequency window)

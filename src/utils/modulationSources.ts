@@ -6,6 +6,8 @@ export const SPECIAL_SOURCES: Record<string, { name: string; color: string }> = 
   step: { name: 'Step', color: '#4ECDC4' },
   envelope: { name: 'Envelope', color: '#AA55FF' },
   sampleHold: { name: 'S&H', color: '#AAFF00' },
+  // The --warp token's value: canvas consumers need a literal colour
+  warp: { name: 'Warp', color: '#e8c35a' },
 }
 
 /** MIDI blue, as the sequencer transport and track rows use it */

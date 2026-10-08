@@ -7,6 +7,8 @@ import { useParamValue } from '../../hooks/useParamValue'
 import { formatParamValue } from '../../utils/paramBar'
 import { useUIStore } from '../../stores/uiStore'
 import { Knob } from './Knob'
+import { ModReadout } from './ModReadout'
+import { useParamControl } from '../../hooks/useParamControl'
 import { DeviceChainContext } from './deviceChainContext'
 
 /**
@@ -48,20 +50,39 @@ const DeviceDials = memo(function DeviceDials({ effectId }: { effectId: string }
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
 
-/** Mix bar: drag (or click) along the track to set effectMix, the same 0-1 value the pad mix-drag writes. */
+/**
+ * Mix bar: drag (or click) along the track to set effectMix, the same 0-1 value the pad mix-drag writes.
+ * It is also a modulation target (`<effectId>.effectMix`, spec §6): while a modulator is armed, pressing it
+ * routes that modulator and dragging up or down sets the depth (useParamControl, as the dials do); a dropped
+ * modulator routes it too. With nothing armed its own drag still sets the value.
+ */
 const MixBar = memo(function MixBar({ effectId, name }: { effectId: string; name: string }) {
   const mix = useGlitchEngineStore((s) => s.effectMix[effectId] ?? 1)
   const trackRef = useRef<HTMLSpanElement>(null)
   const dragging = useRef(false)
-  const set = (v: number) => useGlitchEngineStore.getState().setEffectMix(effectId, Math.round(clamp01(v) * 100) / 100)
+  const set = useCallback((v: number) => useGlitchEngineStore.getState().setEffectMix(effectId, Math.round(clamp01(v) * 100) / 100), [effectId])
+  const paramId = `${effectId}.effectMix`
+  const ctl = useParamControl({
+    paramId, label: 'Dry/wet', value: mix, min: 0, max: 1, step: 0.01, onChange: set, axis: 'x',
+    statusText: `Dry/wet: how much of ${name} is blended over the original`,
+  })
+  const { isInAssignmentMode, isDropTarget, assigningColor, isDepthDragging, depthDragDisplay, depthSourceName, routings, dotDragging } = ctl
   const fromX = (clientX: number) => {
     const r = trackRef.current?.getBoundingClientRect()
     if (r && r.width > 0) set((clientX - r.left) / r.width)
   }
   const pct = Math.round(mix * 100)
+  // Mod overlay like the dials' arc: the first route's depth swings the value over this span of the track
+  const route = routings[0]
+  const modLo = route ? clamp01(mix + Math.min(0, route.depth)) : 0
+  const modHi = route ? clamp01(mix + Math.max(0, route.depth)) : 0
+  const depthPct = route ? Math.round(Math.abs(route.depth) * 100) : 0
   return (
     <div
       data-device-mix
+      data-param-id={paramId}
+      data-assigning={isInAssignmentMode || isDropTarget ? '' : undefined}
+      data-routed={route ? '' : undefined}
       className="seg-dev-mix"
       role="slider"
       tabIndex={0}
@@ -70,23 +91,32 @@ const MixBar = memo(function MixBar({ effectId, name }: { effectId: string; name
       aria-valuemax={100}
       aria-valuenow={pct}
       aria-valuetext={`${pct}%`}
-      onMouseEnter={() => useUIStore.getState().setStatusText(`Dry/wet: how much of ${name} is blended over the original`)}
-      onMouseLeave={() => useUIStore.getState().setStatusText(null)}
+      style={assigningColor ? { ['--assign' as string]: assigningColor } : undefined}
+      title={route ? `Dry/wet follows ${route.name} at ${depthPct}%` : undefined}
+      {...ctl.wrapperProps}
       onPointerDown={(e) => {
         if (e.button !== 0) return
+        // Armed: press routes the modulator (and up/down sets the depth), exactly like a dial
+        if (isInAssignmentMode) { ctl.rootProps.onPointerDown(e); return }
         e.preventDefault()
+        e.stopPropagation()
         dragging.current = true
         e.currentTarget.setPointerCapture(e.pointerId)
         fromX(e.clientX)
       }}
-      onPointerMove={(e) => { if (dragging.current) fromX(e.clientX) }}
+      onPointerMove={(e) => {
+        ctl.rootProps.onPointerMove(e)
+        if (dragging.current) fromX(e.clientX)
+      }}
       onPointerUp={(e) => {
+        ctl.rootProps.onPointerUp(e)
+        if (!dragging.current) return
         dragging.current = false
         try { e.currentTarget.releasePointerCapture(e.pointerId) } catch { /* not captured */ }
       }}
-      onPointerCancel={() => { dragging.current = false }}
-      onLostPointerCapture={() => { dragging.current = false }}
-      onDoubleClick={() => set(1)}
+      onPointerCancel={(e) => { ctl.rootProps.onPointerCancel(e); dragging.current = false }}
+      onLostPointerCapture={() => { ctl.rootProps.onLostPointerCapture(); dragging.current = false }}
+      onDoubleClick={() => { if (!isInAssignmentMode) set(1) }}
       onKeyDown={(e) => {
         const step = e.shiftKey ? 0.01 : 0.05
         if (e.key === 'ArrowRight' || e.key === 'ArrowUp') set(mix + step)
@@ -98,9 +128,16 @@ const MixBar = memo(function MixBar({ effectId, name }: { effectId: string; name
         e.stopPropagation()
       }}
     >
+      <ModReadout depth={isDepthDragging ? { name: depthSourceName, value: depthDragDisplay, color: assigningColor } : null} dot={dotDragging} />
       <span className="seg-dev-mix-label">Dry/wet</span>
-      <span ref={trackRef} className="seg-dev-mix-track"><i style={{ width: `${pct}%` }} /></span>
+      <span ref={trackRef} className="seg-dev-mix-track">
+        <i style={{ width: `${pct}%` }} />
+        {route && modHi - modLo > 0.005 && (
+          <b data-mix-mod aria-hidden style={{ left: `${modLo * 100}%`, width: `${(modHi - modLo) * 100}%`, ['--src' as string]: route.color }} />
+        )}
+      </span>
       <span className="seg-dev-mix-value">{pct}%</span>
+      {ctl.contextMenu}
     </div>
   )
 })

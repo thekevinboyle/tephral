@@ -15,6 +15,7 @@ import { ModulationAssignPanel } from './ModulationAssignPanel'
 import { ModulationContent, type ModulatorId } from '../sequencer/ModulationContent'
 import { TrackAudioReactivePanel } from '../sequencer/TrackAudioReactivePanel'
 import { modulatorName } from './modulatorSlots'
+import { WarpAmountKnob, WarpMiniLine } from './WarpCard'
 import { statusHover } from '../../utils/statusHover'
 import { getUIStatusText } from '../../config/statusDescriptions'
 
@@ -75,6 +76,9 @@ const InspectorRoutes = memo(function InspectorRoutes({ effectId }: { effectId: 
     const m = new Map<string, string>()
     for (const p of entry?.getParams() ?? []) m.set(p.id, displayParamLabel(effectId, p))
     for (const p of entry?.getSelectParams?.() ?? []) m.set(p.id, displayParamLabel(effectId, p))
+    // Device-card targets that are not registry params
+    m.set('effectMix', 'Dry/wet')
+    m.set('bypass', 'Bypass')
     return m
   }, [effectId])
   return (
@@ -184,12 +188,39 @@ const AudioEditor = memo(function AudioEditor() {
   )
 })
 
+/** Warp: the time warp line as a modulator (spec §6). Its value is the line's height at the heard playhead. */
+const WarpModEditor = memo(function WarpModEditor() {
+  return (
+    <div className="seg-insp-editor seg-insp-warp" data-inspector-editor="warp">
+      <div className="seg-insp-warp-row">
+        <WarpMiniLine width={150} height={56} />
+        <WarpAmountKnob />
+      </div>
+      <button
+        type="button"
+        className="seg-insp-btn"
+        data-warp-open-tab
+        onClick={() => {
+          const ui = useUIStore.getState()
+          if (!ui.showBottom) useUIStore.setState({ showBottom: true })
+          ui.setBottomTab('warp')
+        }}
+        {...statusHover('Open the Warp tab to draw the line')}
+      >
+        Open Warp tab
+      </button>
+      <p className="seg-insp-hint">Modulation follows the line even when the warp effect is off.</p>
+    </div>
+  )
+})
+
 const CONTENT_IDS: Record<string, ModulatorId> = { random: 'random', step: 'step', envelope: 'envelope', sampleHold: 'sh', midi: 'midi' }
 
 const ModulatorInspector = memo(function ModulatorInspector({ id }: { id: string }) {
   let editor: React.ReactNode = null
   if (id.startsWith('lfo-')) editor = <LfoEditor index={Number(id.slice(4)) || 0} />
   else if (id === 'audio') editor = <AudioEditor />
+  else if (id === 'warp') editor = <WarpModEditor />
   else if (CONTENT_IDS[id]) {
     editor = (
       <div className="seg-insp-editor" data-inspector-editor={CONTENT_IDS[id]}>

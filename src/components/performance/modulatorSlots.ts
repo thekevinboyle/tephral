@@ -4,7 +4,7 @@ export interface ModulatorSlot {
   /** Routing id (sequencerStore routing trackId) and uiStore.selectedModulator value */
   id: string
   name: string
-  shape: 'sine' | 'random' | 'step' | 'envelope' | 'sh' | 'midi' | 'audio'
+  shape: 'sine' | 'random' | 'step' | 'envelope' | 'sh' | 'midi' | 'audio' | 'warp'
   /** MIDI and Audio route from their own editors (MIDI learn, audio bands) */
   routable: boolean
 }
@@ -20,6 +20,8 @@ export const MODULATOR_SLOTS: ModulatorSlot[] = [
   { id: 'sampleHold', name: 'S&H', shape: 'sh', routable: true },
   { id: 'midi', name: 'MIDI', shape: 'midi', routable: false },
   { id: 'audio', name: 'Audio', shape: 'audio', routable: false },
+  /** The time warp line: its height at the heard playhead (spec §6) */
+  { id: 'warp', name: 'Warp', shape: 'warp', routable: true },
 ]
 
 /** Display name for a routing source id while assigning ("LFO 1", "Envelope", ...) */

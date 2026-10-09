@@ -322,7 +322,7 @@ export function useEffectSequencerPlayback() {
       const dt = (timestamp - lastFrameTime.current) / 1000 // seconds
       lastFrameTime.current = timestamp
       // The store's bpm (not the closure's), so a mid-play BPM change bends the beat count without a jump
-      beats.current += (dt * 1000 * useEffectSequencerStore.getState().bpm) / 60000
+      beats.current += (Math.max(0, dt) * 1000 * useEffectSequencerStore.getState().bpm) / 60000 // first frame can be < 0
 
       // Auto-enable audio reactive analysis when any track uses it
       const anyAudioReactive = trackList.some((t) => t.audioReactive.enabled)
@@ -385,7 +385,7 @@ export function useEffectSequencerPlayback() {
             // Kick detected — enable effect and advance step
             const entry = EFFECT_PARAM_REGISTRY[effectId]
             if (entry) entry.setEnabled(true)
-            useGlitchEngineStore.getState().setEffectMix(effectId, gateOpenLevel(effectId, baseMix.current[effectId] ?? 1) * getMasterLevel())
+            useGlitchEngineStore.getState().setEffectMix(effectId, gateOpenLevel(effectId, baseMix.current[effectId] ?? 1)) // audio gates ignore the master
             setGateOpen(effectId, true)
 
             const latestTrack = useEffectSequencerStore.getState().tracks[effectId]

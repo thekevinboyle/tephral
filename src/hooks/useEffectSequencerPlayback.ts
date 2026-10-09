@@ -299,7 +299,7 @@ export function useEffectSequencerPlayback() {
     // Gate mode mix handling (independent of param locks)
     // An open step plays at the modulated Dry/wet when a route drives it, else at the user's base
     if (track.mode === 'gate' && !track.midiGate) {
-      ge.setEffectMix(effectId, shouldFire ? gateOpenLevel(effectId, origMix) * getMasterLevel() : 0)
+      ge.setEffectMix(effectId, shouldFire ? gateOpenLevel(effectId, origMix) * (track.audioReactive.enabled ? 1 : getMasterLevel()) : 0) // audio gates ignore the master
       setGateOpen(effectId, shouldFire)
     } else {
       releaseGate(effectId)
@@ -445,7 +445,7 @@ export function useEffectSequencerPlayback() {
                 if (!latestTrack) return
                 const ge = useGlitchEngineStore.getState()
                 if (latestTrack.mode === 'gate' && !latestTrack.midiGate) {
-                  ge.setEffectMix(effectId, gateOpenLevel(effectId, baseMix.current[effectId] ?? 1) * getMasterLevel())
+                  ge.setEffectMix(effectId, gateOpenLevel(effectId, baseMix.current[effectId] ?? 1) * (latestTrack.audioReactive.enabled ? 1 : getMasterLevel()))
                   setGateOpen(effectId, true)
                 }
                 // Re-apply p-locks

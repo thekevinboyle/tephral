@@ -83,7 +83,7 @@ Enabled flags/order and per-frame params are split across two files:
 
 ### Layout Shell (`src/components/performance/PerformanceLayout.tsx` + `layout.css`)
 `.seg-shell` is a CSS grid whose children carry `data-area`: `header`, `browser`, `stage`, `inspector`, `bottom`, `footer`. Footer toggles show or hide the browser, inspector and bottom panel (hidden by CSS, never unmounted, so the canvas is never remounted).
-- **Sizes**: header 44px, footer 30px. Browser 250px / inspector 300px, and 300px / 340px at ≥2200px. Bottom panel 172px on Devices; on Sequencer it follows the content up to 40vh.
+- **Sizes**: header 44px, footer 30px. Browser 250px / inspector 300px, and 300px / 340px at ≥2200px. Bottom panel 172px on Devices; on Sequencer it fills 40vh while the Lines view shows, otherwise it follows the content up to 40vh.
 - **Narrow (< 1100px)**: the browser and inspector become drawers over the stage (one at a time).
 - `PerformanceLayout` re-renders every engine tick, so `HeaderBar`, `EffectBrowser`, `StageArea`, `Inspector` and `BottomPanel2` are `React.memo`. Keep their props stable and their store selectors narrow.
 
@@ -128,16 +128,23 @@ Files: `src/effects/warp/` holds warpMath, warpClock, audioWarp, WarpFrameBuffer
 - **Dry/wet modulation and gates** (`src/effects/mixModulation.ts`): while a gate-mode sequencer track plays, a modulated Dry/wet becomes the gate's open-step level: closed steps stay at 0, open steps play at the modulated value (modulation keeps writing it while the step is open). With no gate active, modulation writes `effectMix` directly. Audio gates and MIDI gates own the mix, and modulation does not write it while one is on. The sequencer's pre-play snapshot is the user's own value (`captureUserMix`), never a modulated one, so Stop restores what the user set.
 - **Saved as** `warp` in `BankSnapshot` and in presets (enabled, line, amount, length, quantize, skew, profile, `profileParams`, output, applies-to, mix); `applySnapshot(undefined)` resets to defaults (off), and factory presets such as SEG_EXP leave it off. `sanitize` migrates v1 saves: profile `smear` becomes `flange`, and the single `params` object maps onto the first knobs of Clean, Flange and Degrade. Points are not converted, only cleaned (`cleanPoints` in `warpMath.ts`: x, y and a finite bend clamped to -1..1, non-finite points dropped, at most 512), so an imported preset file can never produce a NaN delay. Missing v2 fields take the defaults.
 
-### Line tracks (`src/effects/lines/*`, `src/components/sequencer/LineLane.tsx`, `LineToolbar.tsx`, `lineSelection.ts`, `lineLocks.ts`)
+### Line tracks (`src/effects/lines/*`, `src/components/sequencer/LinesView.tsx`, `LineTabs.tsx`, `LineSidePanel.tsx`, `LineLane.tsx`, `lineDice.ts`, `lineSelection.ts`, `lineLocks.ts`)
 A sequencer track's Steps / Line switch (`[data-track-mode-switch]`) sets `mode: 'line'`; the track then draws a lane instead of step cells.
-- **Model**: `track.line = { points, snap, skew }` in `effectSequencerStore` (`setTrackLine` cleans points with `cleanPoints`, snap must be in `SNAPS`, skew is clamped). y follows the warp (0 = top), so the level is `1 − y` at the skewed phase (`lineLevel.ts`).
-- **Clock**: the phase comes from the track's own step timer and `timeScale` (`useEffectSequencerPlayback`'s line pass), so Steps and Line tracks stay locked together; it is published per track for the lanes' playheads with `getLinePhase` (null when stopped). Swing, Fill, probability, retrigs and p-locks do not apply.
-- **Mix**: while playing, Dry/wet = ceiling (the card's or the modulated value) × level, through `mixModulation` (`setLineLevel`). Audio and MIDI gates win over the line; Stop restores the user's own value.
-- **Editor**: the warp's editing core is shared: `LinePlot` and `handleLineKey` (`components/performance/lines/`), `LINE_TOOLS` (`lineTools.ts`), and from the warp `LinesMenu`, `SaveLine` (`WarpLineTools.tsx`) and `Spin` (`WarpSettingsRow.tsx`), each with an `attr` so the warp keeps its `data-warp-*` names. The selected Line track's lane is 170 px and edits (tool and point in `useLineEditStore`); others are 58 px previews, and selecting one scrolls it into view.
-- **Toolbar**: with a Line track selected, `SequencerTransport` shows `LineToolbar` (`[data-line-tools]`) in place of Random / All tracks / P-locks / Clear: "<Effect> line", Draw/Steps/Curve/Erase, Lines ▾, Save line, Clear, Quantize, Skew, lock mode, Dice track, Dice all lines. It wraps under 1100 px.
+- **View**: the Sequencer's Steps | Lines switch (`[data-seq-view]`, `uiStore.sequencerView`). Steps is the step grid; a Line track's row there is a read-only preview (`LineLane`), and clicking it opens Lines on that tab. Lines is `LinesView`: tabs (`LineTabs`: Master, then the chain; `uiStore.lineTab`), the shared `LinePlot` editor, the bar (Amount, Length, Quantize, Grid Y, Skew) and `LineSidePanel`. Under 1100 px the side panel wraps under the editor.
+- **Model**: `track.line = { points, snap, skew, amount, beats, gridY }` (`mergeLine` validates; `LINE_BEATS`, `GRID_Y`), plus `master: { line, enabled }`. The level is `1 − amount × y` at the skewed phase.
+- **Clock**: one transport beat counter in `useEffectSequencerPlayback` (0 on Play, `+= dt × bpm / 60000`). Each line's phase is `(beats mod line.beats) / line.beats`. `getLinePhase(id)` and `getMasterPhase()` return the phase, or null when stopped.
+- **Mix**: Line track = ceiling × line × master. An open Steps step = `gateOpenLevel` × master, rewritten every frame while the master is not 1. Closed steps stay 0. Audio and MIDI gates win. Stop restores the user's value and the master level (`mixModulation`: `setMasterLevel`, `getMasterLevel`, `clearMaster`).
+- **Editor**: the warp's editing core is shared: `LinePlot` and `handleLineKey` (`components/performance/lines/`), `LINE_TOOLS` (`lineTools.ts`), and from the warp `LinesMenu`, `SaveLine` (`WarpLineTools.tsx`) and `Spin` (`WarpSettingsRow.tsx`), each with an `attr` so the warp keeps its `data-warp-*` names. Tool and point live in `useLineEditStore`.
+- **Shortcuts** (in `LinePlot`, so the Warp has them too):
+  - Shift paints steps;
+  - Alt snaps to the grids (X = Quantize or 1/16, Y = `gridY` or 16);
+  - Alt + Shift paints steps on both grids;
+  - Alt-dragging a curve handle moves every curve;
+  - double-click adds or removes a point;
+  - Alt-dragging a tab onto another tab copies the line and its settings (a locked target refuses). This one lives in `LineTabs`: pointer events with a ghost tab, the target outlined; it copies points, amount, beats, snap, gridY and skew, never mode, steps, Dry/wet or locks, and a drop anywhere else does nothing.
 - **Presets and saved lines**: the 8 lane presets are in `lanePresets.ts` (Random steps rolls on pick). Saved lines share the warp's `seg.warp.lines` both ways; warp and lane preset names are refused (`isBuiltInName`); a line saved earlier under a lane preset name loads renamed "<name> (mine)".
-- **Dice and locks**: Dice track gives the selected Line track random steps or curves (snap and skew kept); Dice all lines does it for every unlocked Line track and never touches Steps tracks. Locks are one flag per effect id in `localStorage` `seg.lines.locks` (`lineLocks.ts`, wrapped in try/catch); lock mode shows a lock in each Line track's header and outlines locked lanes in `--warp-lock`.
-- **Not saved** in banks or presets (sequencer tracks are not saved there today).
+- **Dice and locks** (`lineDice.ts`, `lineLocks.ts`): Dice all lines rolls every unlocked Line track and the master (lock key `__master`). Locks are one flag per id in `localStorage` `seg.lines.locks` (wrapped in try/catch); a locked tab shows a 🔒.
+- **Not saved** in banks or presets.
 
 Effect params flow through `src/effects/paramSync.ts` (zustand subscribe → uniform writes); Canvas.tsx's structural effect only rebuilds the pass chain on enable/disable/reorder.
 

@@ -257,7 +257,8 @@ export function EffectTrackRow({
           >
             {label}
           </span>
-          {(track.timeScale ?? 1) !== 1 && (
+          {/* Lines ignore step length and time scale, so a Line track shows no badge */}
+          {!isLine && (track.timeScale ?? 1) !== 1 && (
             <span
               className="text-[8px] font-bold px-1 rounded-sm flex-shrink-0"
               style={{

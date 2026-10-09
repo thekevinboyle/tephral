@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useEffectSequencerStore, defaultTrackLine, GRID_Y, LINE_BEATS, type TrackLine } from '../../stores/effectSequencerStore'
 import { SNAPS } from '../../stores/warpStore'
@@ -29,6 +29,40 @@ const NONE: (string | WarpPoint[])[] = []
 const LANE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '1', '2', '3', '4'])
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
+/** The inverse of skewPhase: the loop phase whose skewed phase is `x` (the graph's x axis is the skewed phase). */
+const unskew = (x: number, skew: number) => (x > 0 ? (x < 1 ? (skew ? Math.pow(x, Math.pow(2, 1.5 * skew)) : x) : 1) : 0)
+
+/**
+ * The track tab's overlays in the line's point space (graph x = skewed phase): the "what you hear" fill (track ×
+ * master) and the dashed master line, both from one resampling. `cycle` is which track loop within a longer master
+ * loop is shown. Paths use the graph's PAD and inner size.
+ */
+function hearPaths(line: TrackLine, master: { line: TrackLine; enabled: boolean }, cycle: number, iw: number, ih: number) {
+  const m = master.line
+  const tb = line.beats || 4, mb = m.beats || 4, amount = line.amount ?? 1 // an older line lacks beats and amount
+  const X = (x: number) => (PAD + x * iw).toFixed(1)
+  const Y = (y: number) => (PAD + y * ih).toFixed(1)
+  let fill = `M${X(0)} ${Y(1)}`
+  let dash = ''
+  for (let i = 0; i <= SAMPLES; i++) {
+    const x = i / SAMPLES
+    const v = lineLevel(line.points, x, 0, amount)
+    let mv = 1
+    if (master.enabled) {
+      const p = unskew(x, line.skew)
+      // the master's phase at this point of the track's loop; the loop's end keeps the end value (no wrap to 0)
+      const t = ((cycle + p) * tb) / mb
+      let mp = t - Math.floor(t)
+      if (mp === 0 && p > 0) mp = 1
+      mv = lineLevel(m.points, mp, m.skew ?? 0, m.amount ?? 1)
+      dash += `${i ? ' L' : 'M'}${X(x)} ${Y(1 - mv)}`
+    }
+    fill += ` L${X(x)} ${Y(1 - v * mv)}`
+  }
+  fill += ` L${X(1)} ${Y(1)} Z`
+  return { fill, dash }
+}
+
 const nearestIdx = (list: readonly number[], v: number) => {
   let best = 0
   list.forEach((c, i) => { if (Math.abs(c - v) < Math.abs(list[best] - v)) best = i })
@@ -115,6 +149,25 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
     return () => cancelAnimationFrame(raf)
   }, [visible, isPlaying, tab, w, iw])
 
+  // Which track loop within a longer master loop the overlays show: 0 when stopped, else the one playing. Polled
+  // while visible and playing; state is set only when the index changes.
+  const ratio = isMaster ? 1 : (master.line.beats || 4) / (line.beats || 4)
+  const [cycleNow, setCycleNow] = useState(0)
+  useEffect(() => {
+    if (!visible || !isPlaying || ratio <= 1 || !master.enabled) return
+    let raf = 0, last = -1
+    const frame = () => {
+      raf = requestAnimationFrame(frame)
+      const mp = getMasterPhase()
+      const c = mp === null ? 0 : Math.min(Math.ceil(ratio) - 1, Math.floor(mp * ratio))
+      if (c !== last) { last = c; setCycleNow(c) }
+    }
+    frame()
+    return () => cancelAnimationFrame(raf)
+  }, [visible, isPlaying, ratio, master.enabled])
+  const cycle = visible && isPlaying && ratio > 1 && master.enabled ? cycleNow : 0
+  const hear = useMemo(() => (isMaster || w <= 0 ? null : hearPaths(line, master, cycle, iw, ih)), [isMaster, w, line, master, cycle, iw, ih])
+
   const getPoints = () => readLine(tab).points
   const setPoints = (p: WarpPoint[]) => {
     editing.current = true
@@ -156,20 +209,11 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
 
   // ── overlays ──
   let back: React.ReactNode = null
-  if (w > 0 && !isMaster) {
-    const m = master.line
-    let d = `M${X(0).toFixed(1)} ${Y(1).toFixed(1)}`
-    for (let i = 0; i <= SAMPLES; i++) {
-      const x = i / SAMPLES
-      // Not phase-aligned when the track's and the master's lengths differ: a visual aid only
-      const v = lineLevel(line.points, x, line.skew, line.amount) * (master.enabled ? lineLevel(m.points, x, m.skew, m.amount) : 1)
-      d += ` L${X(x).toFixed(1)} ${Y(1 - v).toFixed(1)}`
-    }
-    d += ` L${X(1).toFixed(1)} ${Y(1).toFixed(1)} Z`
+  if (hear) {
     back = (
       <>
-        <path d={d} style={{ fill: color, fillOpacity: 0.22 }} pointerEvents="none" data-line-hear />
-        {master.enabled && <path d={linePath(m.points, X, Y)} style={{ stroke: 'var(--warp)' }} strokeDasharray="5 4" strokeWidth={1.4} fill="none" pointerEvents="none" data-line-master-dash />}
+        <path d={hear.fill} style={{ fill: color, fillOpacity: 0.22 }} pointerEvents="none" data-line-hear />
+        {master.enabled && <path d={hear.dash} style={{ stroke: 'var(--warp)' }} strokeDasharray="5 4" strokeWidth={1.4} fill="none" pointerEvents="none" data-line-master-dash />}
       </>
     )
   } else if (w > 0) {

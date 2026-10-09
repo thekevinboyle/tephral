@@ -84,6 +84,8 @@ export const LinePlot = memo(function LinePlot({
   // The point a click on empty space just added (or moved, in an occupied column), with the click's screen
   // position, so the double-click that click starts keeps it instead of deleting it (spec §5)
   const added = useRef<{ x: number; y: number; t: number; cx: number; cy: number } | null>(null)
+  // The last press that bent a segment or painted steps: a double-click on it adds no point
+  const noAdd = useRef<{ t: number; cx: number; cy: number } | null>(null)
   const gridY = Math.max(1, gridYProp)
   // The optional outer ref sees the front (interactive) svg; it only exists while the width is non-zero
   useImperativeHandle(outerRef, () => svgRef.current as SVGSVGElement)
@@ -177,13 +179,16 @@ export const LinePlot = memo(function LinePlot({
 
   /**
    * Steps (staircase on the quantize grid) or Draw (one point per grid column) painted across a drag. With
-   * quantize Off, steps use 1/16 and Draw paints on a fine 1/64 grid.
+   * quantize Off, steps use 1/16 and Draw paints on a fine 1/64 grid; Alt (read per move) snaps Draw to 1/16 there.
    */
   const paint = (e: React.PointerEvent, mode: 'steps' | 'draw', base: WarpPoint[], first?: { x: number; y: number }) => {
     const n = Math.max(1, Math.round(1 / (snap > 0 ? snap : mode === 'steps' ? 1 / 16 : 1 / 64)))
     const cols = new Map<number, number>()
     let lastCol: number | null = null
-    const colOf = (x: number) => (mode === 'steps' ? Math.min(n - 1, Math.floor(x * n)) : Math.round(x * n))
+    // Draw with quantize Off: columns stay on the 1/64 grid, and Alt uses only every 4th (1/16)
+    const altEvery = mode === 'draw' && !(snap > 0) ? Math.round(n / 16) : 1
+    const colOf = (x: number, alt: boolean) => (mode === 'steps' ? Math.min(n - 1, Math.floor(x * n))
+      : alt && altEvery > 1 ? Math.round((x * n) / altEvery) * altEvery : Math.round(x * n))
     const yOf = (y: number, alt: boolean) => snapY(y, alt) // heights are free; Alt snaps them to the Y grid
     const apply = () => {
       const ks = [...cols.keys()]
@@ -206,17 +211,17 @@ export const LinePlot = memo(function LinePlot({
       onSelect(k < 0 ? null : k)
     }
     const at = (v: { x: number; y: number }, alt: boolean) => {
-      const c = colOf(v.x), y = clamp01(yOf(v.y, alt))
+      const c = colOf(v.x, alt), y = clamp01(yOf(v.y, alt))
       if (lastCol !== null && lastCol !== c) {
-        // fill the columns skipped by a fast drag
+        // fill the columns skipped by a fast drag (with Alt, only the 1/16 ones)
         const dir = Math.sign(c - lastCol)
-        for (let k = lastCol + dir; k !== c; k += dir) cols.set(k, y)
+        for (let k = lastCol + dir; k !== c; k += dir) if (!alt || k % altEvery === 0) cols.set(k, y)
       }
       cols.set(c, y)
       lastCol = c
       apply()
     }
-    if (first) { cols.set(colOf(first.x), first.y); lastCol = colOf(first.x) } else at(toVal(e), e.altKey)
+    if (first) { lastCol = colOf(first.x, false); cols.set(lastCol, first.y) } else at(toVal(e), e.altKey)
     track(e, (ev) => at(toVal(ev), ev.altKey))
   }
 
@@ -243,9 +248,11 @@ export const LinePlot = memo(function LinePlot({
     const cur = getPoints()
     const hit = hitPoint(e.clientX, e.clientY, cur)
     if (tool === 'erase') { erase(e); return }
+    const stepPaint = tool === 'steps' || (tool === 'draw' && e.shiftKey && hit < 0 && !bh)
+    noAdd.current = stepPaint || (hit < 0 && !!bh) ? { t: performance.now(), cx: e.clientX, cy: e.clientY } : null
     // Holding Shift in Draw switches to step drawing for this drag (spec §2), except on an existing point or
     // bend handle, which Shift still moves or bends
-    if (tool === 'steps' || (tool === 'draw' && e.shiftKey && hit < 0 && !bh)) { paint(e, 'steps', cur); return }
+    if (stepPaint) { paint(e, 'steps', cur); return }
     if (tool === 'curve') {
       const v = toVal(e)
       let i = cur.findIndex((p, k) => k > 0 && cur[k - 1].x <= v.x && v.x < p.x)
@@ -286,6 +293,11 @@ export const LinePlot = memo(function LinePlot({
   // Hit-tested by position: pointer capture from the first click retargets dblclick to the svg itself
   const onDoubleClick = (e: React.MouseEvent) => {
     if (tool !== 'draw') return
+    // A double-click on a bend handle, or one whose press painted steps (Shift), adds no point
+    const na = noAdd.current
+    noAdd.current = null
+    if ((e.target as Element).closest(`[data-${attr}-bend]`)
+      || (na && performance.now() - na.t < 600 && Math.hypot(e.clientX - na.cx, e.clientY - na.cy) < 6)) { added.current = null; return }
     const cur = getPoints()
     const i = hitPoint(e.clientX, e.clientY, cur)
     const a = added.current

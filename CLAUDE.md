@@ -130,20 +130,20 @@ Files: `src/effects/warp/` holds warpMath, warpClock, audioWarp, WarpFrameBuffer
 
 ### Line tracks (`src/effects/lines/*`, `src/components/sequencer/LinesView.tsx`, `LineTabs.tsx`, `LineSidePanel.tsx`, `LineLane.tsx`, `lineDice.ts`, `lineSelection.ts`, `lineLocks.ts`)
 A sequencer track's Steps / Line switch (`[data-track-mode-switch]`) sets `mode: 'line'`; the track then draws a lane instead of step cells.
-- **View**: the Sequencer's Steps | Lines switch (`[data-seq-view]`, `uiStore.sequencerView`). Steps is the step grid; a Line track's row there is a read-only preview (`LineLane`), and clicking it opens Lines on that tab. Lines is `LinesView`: tabs (`LineTabs`: Master, then the chain; `uiStore.lineTab`), the shared `LinePlot` editor, the bar (Amount, Length, Quantize, Grid Y, Skew) and `LineSidePanel`. Under 1100 px the side panel wraps under the editor.
+- **View**: the Sequencer's Steps | Lines switch (`[data-seq-view]`, `uiStore.sequencerView`). Steps is the step grid; a Line track's row there is a read-only preview (`LineLane`), and clicking it opens Lines on that tab. Lines is `LinesView`: tabs (`LineTabs`: Master, then the chain; `uiStore.lineTab`), the shared `LinePlot` editor, the bar (Amount, Length, Quantize, Grid Y, Skew) and `LineSidePanel`. A track tab's graph shows, in the line's point space (x = skewed phase), a "what you hear" fill (track × master) and the master dashed, both from one resampling; when the master is longer than the track it shows the master cycle the track is in (the first when stopped). Under 1100 px the side panel wraps under the editor.
 - **Model**: `track.line = { points, snap, skew, amount, beats, gridY }` (`mergeLine` validates; `LINE_BEATS`, `GRID_Y`), plus `master: { line, enabled }`. The level is `1 − amount × y` at the skewed phase.
 - **Clock**: one transport beat counter in `useEffectSequencerPlayback` (0 on Play, `+= dt × bpm / 60000`). Each line's phase is `(beats mod line.beats) / line.beats`. `getLinePhase(id)` and `getMasterPhase()` return the phase, or null when stopped.
-- **Mix**: Line track = ceiling × line × master. An open Steps step = `gateOpenLevel` × master, rewritten every frame while the master is not 1. Closed steps stay 0. Audio and MIDI gates win. Stop restores the user's value and the master level (`mixModulation`: `setMasterLevel`, `getMasterLevel`, `clearMaster`).
+- **Mix**: Line track = ceiling × line × master. An open Steps step = `gateOpenLevel` × master, rewritten every frame while the master is not 1. Closed steps stay 0. Audio and MIDI gates win. Audio-reactive tracks ignore the master, also on a modulated Dry/wet (`noteModulatedMix(..., noMaster)`). Stop restores the user's value and the master level (`mixModulation`: `setMasterLevel`, `getMasterLevel`, `clearMaster`).
 - **Editor**: the warp's editing core is shared: `LinePlot` and `handleLineKey` (`components/performance/lines/`), `LINE_TOOLS` (`lineTools.ts`), and from the warp `LinesMenu`, `SaveLine` (`WarpLineTools.tsx`) and `Spin` (`WarpSettingsRow.tsx`), each with an `attr` so the warp keeps its `data-warp-*` names. Tool and point live in `useLineEditStore`.
 - **Shortcuts** (in `LinePlot`, so the Warp has them too):
   - Shift paints steps;
   - Alt snaps to the grids (X = Quantize or 1/16, Y = `gridY` or 16);
   - Alt + Shift paints steps on both grids;
   - Alt-dragging a curve handle moves every curve;
-  - double-click adds or removes a point;
+  - double-click adds or removes a point (not on a curve handle or a Shift step paint);
   - Alt-dragging a tab onto another tab copies the line and its settings (a locked target refuses). This one lives in `LineTabs`: pointer events with a ghost tab, the target outlined; it copies points, amount, beats, snap, gridY and skew, never mode, steps, Dry/wet or locks, and a drop anywhere else does nothing.
 - **Presets and saved lines**: the 8 lane presets are in `lanePresets.ts` (Random steps rolls on pick). Saved lines share the warp's `seg.warp.lines` both ways; warp and lane preset names are refused (`isBuiltInName`); a line saved earlier under a lane preset name loads renamed "<name> (mine)".
-- **Dice and locks** (`lineDice.ts`, `lineLocks.ts`): Dice all lines rolls every unlocked Line track and the master (lock key `__master`). Locks are one flag per id in `localStorage` `seg.lines.locks` (wrapped in try/catch); a locked tab shows a 🔒.
+- **Dice and locks** (`lineDice.ts`, `lineLocks.ts`): The side panel's Dice rolls the open tab's line whatever the track's mode; Dice all lines rolls every unlocked Line track (never Steps tracks) and the master (lock key `__master`). Locks are one flag per id in `localStorage` `seg.lines.locks` (wrapped in try/catch); a locked tab shows a 🔒.
 - **Not saved** in banks or presets.
 
 Effect params flow through `src/effects/paramSync.ts` (zustand subscribe → uniform writes); Canvas.tsx's structural effect only rebuilds the pass chain on enable/disable/reorder.

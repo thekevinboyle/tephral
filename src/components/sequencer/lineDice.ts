@@ -22,10 +22,13 @@ export function writeLine(tab: string, patch: Partial<TrackLine>): void {
   else s.setTrackLine(tab, patch)
 }
 
-/** Dice one Line track: random steps or curves, equal chance; snap, skew, amount, beats and gridY are kept. */
+/**
+ * Dice one track's line, whatever its mode (the side panel rolls the open line): random steps or curves, equal
+ * chance; snap, skew, amount, beats and gridY are kept. Dice all lines picks only Line tracks.
+ */
 export function diceLine(id: string): void {
   const t = useEffectSequencerStore.getState().tracks[id]
-  if (!t || t.mode !== 'line') return
+  if (!t) return
   useEffectSequencerStore.getState().setTrackLine(id, { points: roll((t.line ?? defaultTrackLine()).snap) })
 }
 

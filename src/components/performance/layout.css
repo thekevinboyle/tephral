@@ -508,6 +508,7 @@
 .seg-lines-side { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 9px 10px; background: var(--bg-surface); overflow-y: auto; }
 .seg-lines-side-head { display: flex; align-items: center; gap: 7px; font: 500 12px var(--font-sans); color: var(--text-primary); }
 .seg-lines-side-head > i { flex: none; width: 8px; height: 8px; border-radius: 2px; }
+.seg-lines-side > .seg-lines-mode { flex: none; }
 .seg-lines-side .seg-lines-mode > button { height: 22px; font-size: 11.5px; }
 .seg-lines-side .seg-lines-mode > button[aria-pressed="true"] { background: var(--warp); color: var(--warp-ink); font-weight: 600; }
 .seg-lines-msan { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; }

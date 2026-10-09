@@ -1,0 +1,131 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Line Editor Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#141517;--panel:#1b1c1f;--raised:#232428;--ctrl:#2a2b30;--hover:#313238;--border:#2c2d31;--text:#ececee;--sec:#a4a7ad;--muted:#8d9097;--warp:#e8c35a;--live:#b8f35a;--lock:#5a4d22}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:13px/1.4 'IBM Plex Sans',system-ui,sans-serif;padding:24px 0}
+.mono{font-family:'IBM Plex Mono',monospace}
+.cap{max-width:1440px;margin:0 auto 10px;padding:0 20px;color:var(--sec);font-size:13px}.cap b{color:var(--text);font-weight:600}
+.frame{width:1440px;margin:0 auto 34px;background:var(--panel);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.bar{height:30px;display:flex;align-items:center;gap:10px;padding:0 10px;border-bottom:1px solid var(--border)}
+.bar .t{font-weight:600}.bar .h{color:var(--muted);font-size:12px}
+.tabs{margin-left:auto;display:flex;gap:2px}.tab{padding:3px 9px;border-radius:4px;color:var(--sec);font-size:12px}.tab.on{background:var(--ctrl);color:var(--text)}
+.btn{height:24px;padding:0 9px;border-radius:4px;background:var(--ctrl);color:var(--sec);font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid transparent;white-space:nowrap}
+.btn.on{background:var(--hover);color:var(--text);border-color:#3a3b41}
+.btn.gold{background:var(--warp);color:#1b1c1f;font-weight:600}
+.btn b{color:var(--text);font-family:'IBM Plex Mono',monospace;font-weight:500}
+.sep{width:1px;height:16px;background:var(--border);margin:0 4px}
+.view{display:flex;background:var(--ctrl);border-radius:4px;padding:2px;margin-left:8px}
+.view span{font-size:11.5px;padding:1px 9px;border-radius:3px;color:var(--muted)}.view span.on{background:var(--hover);color:var(--text)}
+.trow{display:flex;gap:4px;padding:7px 10px 0;align-items:stretch}
+.tt{display:flex;align-items:center;gap:7px;padding:4px 8px 4px 7px;border-radius:5px 5px 0 0;background:#1e1f23;border:1px solid var(--border);border-bottom:none;font-size:12px;color:var(--sec);min-width:130px}
+.tt.on{background:#16171a;color:var(--text);border-color:#3a3b41}
+.tt.master{min-width:150px}
+.tt .sw{width:8px;height:8px;border-radius:2px;flex:none}
+.tt svg{width:54px;height:18px;margin-left:auto;flex:none}
+.tt .md{font-size:9.5px;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:0 3px}
+.tt .lk{font-size:10px}
+.body{display:grid;grid-template-columns:1fr 290px;border-top:1px solid #3a3b41}
+.main{padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px}
+.tools{display:flex;gap:4px;align-items:center}
+.graph{position:relative;height:190px;background:#16171a;border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.graph svg{position:absolute;inset:0;width:100%;height:100%}
+.edge{position:absolute;font-size:10.5px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.cells{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.cell{height:28px;border-radius:4px;background:var(--ctrl);display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:var(--sec)}
+.cell b{color:var(--text);font-family:'IBM Plex Mono',monospace;font-weight:500}
+.side{border-left:1px solid var(--border);padding:9px 10px;display:flex;flex-direction:column;gap:8px;background:#1d1e21}
+.side h4{margin:0;font-size:11.5px;color:var(--muted);font-weight:500;display:flex;align-items:center}
+.row{display:flex;gap:4px}.row>*{flex:1}
+.seg{display:flex;background:var(--ctrl);border-radius:4px;padding:2px}.seg span{flex:1;text-align:center;font-size:12px;padding:3px 0;border-radius:3px;color:var(--muted)}.seg span.on{background:var(--warp);color:#1b1c1f;font-weight:600}
+.slider{display:grid;grid-template-columns:62px 1fr 46px;align-items:center;gap:8px;font-size:12px;color:var(--sec)}
+.slider .tr{height:4px;border-radius:2px;background:#34353b;position:relative}.slider .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--warp)}
+.slider .tr em{position:absolute;top:-4px;width:4px;height:12px;border-radius:2px;background:#ececee}
+.slider .v{text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+.readout{font-size:11.5px;color:var(--muted);line-height:1.6}.readout b{color:var(--text);font-family:'IBM Plex Mono',monospace;font-weight:500}
+.foot{margin-top:auto;display:flex;flex-direction:column;gap:4px}
+.note{font-size:11px;color:var(--muted)}
+</style></head><body>
+
+<p class="cap"><b>1 · Lines view, a track tab open.</b> The Sequencer gets a <b>Steps | Lines</b> switch. Lines is one big editor, laid out like the Warp tab, with a tab per track: <b>Master</b> first, then one tab per effect in chain order. Each tab shows a mini line, says Line or Steps (whichever plays), and a 🔒 when locked. The graph is the open track's line (white) over the master line (dashed gold). The tinted fill is what you actually get: line × master × the card's Dry/wet. The bar underneath is the warp's: <b>Amount</b> (how deep the line cuts), <b>Length</b> (½ to 16 beats, its own loop), Quantize, Skew.</p>
+<div class="frame" id="f1"></div>
+
+<p class="cap"><b>2 · The Master tab.</b> The master line multiplies every track, Steps tracks included: an open step plays at its Dry/wet × master. A flat master at the top changes nothing. The graph shows every track's line faintly in its colour, so you can see what the master is shaping. The side panel swaps the track controls for an On/Off switch and the multiplier the master is applying right now.</p>
+<div class="frame" id="f2"></div>
+
+<script>
+const L={
+ swell:[[0,1],[.3,.85],[.55,.4],[.75,.05],[.82,1],[1,1]],
+ stutter:[[0,0],[.125,0],[.125,1],[.25,1],[.25,0],[.375,0],[.375,1],[.5,1],[.5,0],[.625,0],[.625,1],[.75,1],[.75,0],[.875,0],[.875,1],[1,1]],
+ pump:[[0,1],[.06,1],[.2,.15],[.25,1],[.31,1],[.45,.15],[.5,1],[.56,1],[.7,.15],[.75,1],[.81,1],[.95,.15],[1,1]],
+ tri:[[0,.9],[.5,0],[1,.9]],
+ half:[[0,0],[.5,0],[.5,.6],[1,.6]],
+ flat:[[0,0],[1,0]],
+ rnd:[[0,.6],[.125,.6],[.125,.1],[.25,.1],[.25,.9],[.375,.9],[.375,.3],[.5,.3],[.5,1],[.625,1],[.625,.45],[.75,.45],[.75,.05],[.875,.05],[.875,.7],[1,.7]],
+};
+// y: 0 = top (full), 1 = bottom (dry)
+function yAt(pts,x){for(let i=1;i<pts.length;i++){const[a,b]=pts[i-1],[c,d]=pts[i];if(x<=c){if(c===a)return d;return b+(d-b)*(x-a)/(c-a)}}return pts[pts.length-1][1]}
+function mini(pts,color){const w=54,h=18;return `<svg viewBox="0 0 ${w} ${h}"><polyline points="${pts.map(([x,y])=>`${x*w},${2+y*(h-4)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="1.3"/></svg>`}
+const TR=[
+ {name:'Stale',color:'#a78bfa',mode:'Line',line:'stutter'},
+ {name:'Matter',color:'#4fb3ff',mode:'Steps',line:'flat'},
+ {name:'Voxel',color:'#f59e66',mode:'Line',line:'swell'},
+ {name:'Echo 4D',color:'#5eead4',mode:'Line',line:'pump',lock:true},
+];
+function tabs(open){
+ return `<div class="trow">
+  <div class="tt master ${open==='master'?'on':''}"><span class="sw" style="background:var(--warp)"></span>Master${mini(L.tri,'#e8c35a')}</div>
+  ${TR.map(t=>`<div class="tt ${open===t.name?'on':''}"><span class="sw" style="background:${t.color}"></span>${t.name}<span class="md">${t.mode}</span>${t.lock?'<span class="lk">🔒</span>':''}${mini(L[t.line],t.color)}</div>`).join('')}
+  <span style="margin-left:auto;align-self:center" class="note">tabs follow the chain</span>
+ </div>`
+}
+function graph(id,{line,color,master,ghosts,ph,label}){
+ return `<div class="graph" id="${id}" data-line="${line||''}" data-color="${color||''}" data-master="${master?1:0}" data-ghosts="${ghosts?1:0}" data-ph="${ph}"><span class="edge" style="right:8px;top:6px">wet (card's Dry/wet)</span><span class="edge" style="right:8px;bottom:6px">dry</span><span class="edge" style="left:8px;top:6px">${label}</span></div>`
+}
+function drawGraph(el){
+ const w=el.clientWidth,h=el.clientHeight,pad=12,ph=+el.dataset.ph;
+ const Y=y=>pad+y*(h-2*pad);
+ let s=`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`;
+ for(let i=0;i<=16;i++){const x=i/16*w;s+=`<line x1="${x}" y1="0" x2="${x}" y2="${h}" stroke="${i%4?'#1f2024':'#2b2c31'}"/>`}
+ for(let j=1;j<4;j++){s+=`<line x1="0" y1="${j/4*h}" x2="${w}" y2="${j/4*h}" stroke="#1f2024"/>`}
+ if(el.dataset.ghosts==='1') TR.filter(t=>t.mode==='Line').forEach(t=>{s+=`<polyline points="${L[t.line].map(([x,y])=>`${x*w},${Y(y)}`).join(' ')}" fill="none" stroke="${t.color}" stroke-opacity=".45" stroke-width="1.2"/>`});
+ const line=el.dataset.line?L[el.dataset.line]:null;
+ if(line){
+  // effective = (1-y_line)*(1-y_master), drawn as fill
+  const N=200, eff=[];for(let i=0;i<=N;i++){const x=i/N;const lv=(1-yAt(line,x))*(el.dataset.master==='1'?(1-yAt(L.tri,x)):1);eff.push([x*w,Y(1-lv)])}
+  s+=`<polygon points="0,${h} ${eff.map(p=>p.join(',')).join(' ')} ${w},${h}" fill="${el.dataset.color}" fill-opacity=".22"/>`;
+ }
+ if(el.dataset.master==='1') s+=`<polyline points="${L.tri.map(([x,y])=>`${x*w},${Y(y)}`).join(' ')}" fill="none" stroke="#e8c35a" stroke-dasharray="5 4" stroke-width="${line?1.4:2}"/>`;
+ const P=(line||L.tri).map(([x,y])=>[Math.min(w-5,Math.max(5,x*w)),Y(y)]);
+ if(line||el.dataset.ghosts==='1'){
+  s+=`<polyline points="${P.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#ececee" stroke-width="2"/>`;
+  P.forEach(([x,y],i)=>{s+=`<circle cx="${x}" cy="${y}" r="5" fill="#16171a" stroke="#ececee" stroke-width="1.5"/>`;if(i>0){const[px,py]=P[i-1];if(Math.abs(px-x)>4)s+=`<circle cx="${(px+x)/2}" cy="${(py+y)/2}" r="2.6" fill="#8d9097"/>`}});
+ }
+ s+=`<line x1="${ph*w}" x2="${ph*w}" y1="0" y2="${h}" stroke="#b8f35a" stroke-width="2"/></svg>`;
+ el.insertAdjacentHTML('afterbegin',s);
+}
+const slider=(n,v,f)=>`<div class="slider"><span>${n}</span><span class="tr"><i style="width:${f*100}%"></i><em style="left:calc(${f*100}% - 2px)"></em></span><span class="v">${v}</span></div>`;
+function frame(id,open){
+ const isM=open==='master', t=TR.find(x=>x.name===open);
+ const tools=`<div class="tools"><span class="btn on">Draw</span><span class="btn">Steps ↕</span><span class="btn">Curve</span><span class="btn">Erase</span><span class="sep"></span><span class="btn">Random steps</span><span class="btn">Random curves</span><span class="btn">Clear</span><span style="margin-left:auto"></span><span class="btn">Lines: ${isM?'Triangle':'Swell'} ▾</span><span class="btn">Save line</span></div>`;
+ const g=isM?graph(id+'g',{ghosts:1,master:1,ph:.31,label:'master · 4 bars'}):graph(id+'g',{line:t.line,color:t.color,master:1,ph:.62,label:'1 bar loop · master dashed'});
+ const cells=`<div class="cells"><div class="cell">Amount <b>${isM?'100%':'80%'}</b></div><div class="cell">Length <b>${isM?'16 beats':'4 beats'}</b></div><div class="cell">Quantize <b>1/16</b></div><div class="cell">Skew <b>${isM?'+0%':'+20%'}</b></div></div>`;
+ const side=isM?`
+  <h4>Master line</h4>
+  <div class="seg"><span class="on">On</span><span>Off</span></div>
+  <div class="readout">Multiplies every track's Dry/wet,<br>Steps tracks included.<br>Now: <b>×0.62</b></div>
+  <div class="foot"><div class="row"><span class="btn">🔒</span><span class="btn">🎲 Dice</span><span class="btn">Presets ▾</span></div><span class="btn">🎲 Dice all lines</span></div>`:`
+  <h4><span class="sw" style="width:8px;height:8px;border-radius:2px;background:${t.color};margin-right:7px"></span>${t.name}</h4>
+  <div class="seg"><span>Steps</span><span class="on">Line</span></div>
+  <div class="row"><span class="btn">M</span><span class="btn">S</span><span class="btn">A</span><span class="btn">N</span></div>
+  ${slider('Dry/wet','80%',.8)}
+  <div class="readout">Line <b>0.71</b> × master <b>0.62</b> × <b>80%</b><br>Now playing at <b>35%</b></div>
+  <div class="foot"><div class="row"><span class="btn">🔒</span><span class="btn">🎲 Dice</span><span class="btn">Presets ▾</span></div><span class="btn">🎲 Dice all lines</span></div>`;
+ document.getElementById(id).innerHTML=`
+  <div class="bar"><span class="t">Sequencer</span><span class="view"><span>Steps</span><span class="on">Lines</span></span><span class="h" style="margin-left:6px">▶ 120 BPM</span>
+   <div class="tabs"><span class="tab">Devices</span><span class="tab">Warp</span><span class="tab on">Sequencer</span></div></div>
+  ${tabs(open)}
+  <div class="body"><div class="main">${tools}${g}${cells}</div><div class="side">${side}</div></div>`;
+ drawGraph(document.getElementById(id+'g'));
+}
+frame('f1','Voxel'); frame('f2','master');
+</script></body></html>

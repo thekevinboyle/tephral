@@ -9,7 +9,7 @@ interface LineEditState {
   setSelected: (i: number | null) => void
 }
 
-/** The lane editor's tool and selected point. One lane (the selected track's) is edited at a time. */
+/** The Lines view editor's tool and selected point (the open tab's line). */
 export const useLineEditStore = create<LineEditState>((set) => ({
   tool: 'draw',
   selected: null,
@@ -28,3 +28,8 @@ export const useLinePickStore = create<LinePickState>((set) => ({
   pick: null,
   setPick: (pick) => set({ pick }),
 }))
+
+// Dev only: LinesView renders, so the harness can check it does not re-render on every sequencer step
+let linesViewRenders = 0
+export const noteLinesViewRender = (): void => { linesViewRenders++ }
+export const getLinesViewRenders = (): number => linesViewRenders

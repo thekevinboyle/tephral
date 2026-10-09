@@ -15,7 +15,7 @@ import { LINE_TOOLS } from '../performance/lines/lineTools'
 import { describePoint } from '../performance/warp/warpEdit'
 import { SaveLine } from '../performance/warp/WarpLineTools'
 import { Spin } from '../performance/warp/WarpSettingsRow'
-import { useLineEditStore, useLinePickStore } from './lineSelection'
+import { noteLinesViewRender, useLineEditStore, useLinePickStore } from './lineSelection'
 import { readLine, writeLine } from './lineDice'
 import { fmtBeats, fmtLoop } from './lineFormat'
 import { LineTabs } from './LineTabs'
@@ -41,10 +41,13 @@ const nearestIdx = (list: readonly number[], v: number) => {
  * falls back to Master.
  */
 export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[]; colors: Record<string, string> }) {
+  if (import.meta.env.DEV) noteLinesViewRender()
   const lineTab = useUIStore((s) => s.lineTab)
+  // A tab whose effect is not in the chain renders as Master; the stored tab is only dropped when the chain is
+  // non-empty and really lacks it (a bank load can pass through an empty chain)
   const tab = lineTab !== 'master' && !ids.includes(lineTab) ? 'master' : lineTab
   const isMaster = tab === 'master'
-  useEffect(() => { if (tab !== lineTab) useUIStore.getState().setLineTab('master') }, [tab, lineTab])
+  useEffect(() => { if (tab !== lineTab && ids.length > 0) useUIStore.getState().setLineTab('master') }, [tab, lineTab, ids])
 
   const line = useEffectSequencerStore((s) => (isMaster ? s.master.line : s.tracks[tab]?.line)) ?? DEFAULT_LINE
   const master = useEffectSequencerStore((s) => s.master)
@@ -131,14 +134,17 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
     // the save name field keeps its keys to itself; the menu's arrows (handled there) stop here too
     if (target.closest('input') || (e.defaultPrevented && (e.key === 'ArrowUp' || e.key === 'ArrowDown'))) { e.stopPropagation(); return }
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || target.closest('[data-line-lines-menu]')) return
+    // Point keys (Delete, nudges, [ ]) only from the focused graph: toolbar buttons, Spins and the side panel
+    // keep their own keys and never edit the selected point
     const inPlot = !!target.closest('[data-line-graph]')
+    if (!inPlot) return
     const handled = handleLineKey(e, {
       points: getPoints(), snap: line.snap, selected: sel, setSelected,
       setPoints, say, announce: setAnnounce, inPlot,
     })
     // In the focused graph the arrows and 1-4 belong to the editor even with no point selected: keep them from the
     // Sequencer's window shortcuts (step selection, step page). Space and Escape still reach it.
-    if (!handled && inPlot && LANE_KEYS.has(e.key)) e.stopPropagation()
+    if (!handled && LANE_KEYS.has(e.key)) e.stopPropagation()
   }
 
   // ── bar steps ──

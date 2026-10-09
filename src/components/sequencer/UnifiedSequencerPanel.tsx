@@ -67,10 +67,10 @@ export function UnifiedSequencerPanel() {
   // DeviceChain owns ensureTrack + auto-select for active effects (always mounted in the bottom panel)
 
   // Active tracks (enabled effects that also have sequencer tracks)
-  const activeTrackIds = useMemo(
-    () => activeEffectIds.filter((id) => !!tracks[id]),
-    [activeEffectIds, tracks],
-  )
+  const activeTrackKey = activeEffectIds.filter((id) => !!tracks[id]).join('|')
+  // Keyed on the joined ids: `tracks` is replaced on every step, but the list only changes with the chain, so
+  // LinesView's props stay referentially stable while playing
+  const activeTrackIds = useMemo(() => (activeTrackKey ? activeTrackKey.split('|') : []), [activeTrackKey])
 
   // Steps | Lines (lines editor spec §4.1): the Lines view replaces the param panel and the track list
   const sequencerView = useUIStore((s) => s.sequencerView)

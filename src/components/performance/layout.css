@@ -514,6 +514,7 @@
 .seg-lines-msan > button { height: 22px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 500 11px var(--font-sans); cursor: pointer; }
 .seg-lines-msan > button:hover { background: var(--bg-hover); }
 .seg-lines-msan > button[aria-pressed="true"] { background: var(--bg-hover); color: var(--text-primary); }
+.seg-lines-msan > button[aria-disabled="true"] { opacity: .45; cursor: default; }
 .seg-lines-side > .seg-warp-set { flex: none; justify-content: space-between; padding: 0 8px; }
 .seg-lines-readout { font: 400 11px/1.5 var(--font-sans); color: var(--text-muted); white-space: pre-line; }
 .seg-lines-onoff { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 0; background: transparent; cursor: pointer; }

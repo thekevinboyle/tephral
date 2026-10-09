@@ -91,6 +91,7 @@ const TrackSide = memo(function TrackSide({ id }: { id: string }) {
   const soloed = useEffectSequencerStore((s) => !!s.tracks[id]?.soloed)
   const audio = useEffectSequencerStore((s) => !!s.tracks[id]?.audioReactive?.enabled)
   const midi = useEffectSequencerStore((s) => !!s.tracks[id]?.midiGate)
+  const hasNote = useMIDIStore((s) => s.trackNoteMap[id] !== undefined)
   const mix = useGlitchEngineStore((s) => s.effectMix[id] ?? 1)
   const roRef = useRef<HTMLDivElement>(null)
   const pct = Math.round(mix * 100)
@@ -131,12 +132,13 @@ const TrackSide = memo(function TrackSide({ id }: { id: string }) {
           {...statusHover(`Solo: play only the ${name} track`)}>S</button>
         <button type="button" aria-pressed={audio} aria-label={`Audio reactive ${name}`} onClick={() => seq().setTrackAudioReactiveEnabled(id, !audio)}
           {...statusHover(`Audio: let the audio level drive the ${name} track. Its Dry/wet follows the audio gate`)}>A</button>
-        <button type="button" aria-pressed={midi} aria-label={`MIDI note gate ${name}`}
+        <button type="button" aria-pressed={midi} aria-label={`MIDI note gate ${name}`} aria-disabled={!hasNote || undefined}
           onClick={() => {
+            if (!hasNote) return // with no mapped note the gate would hold Dry/wet at 0
             if (midi) { useMIDIStore.getState().removeNoteMapping(id); seq().setTrackMidiGate(id, false) }
             else seq().setTrackMidiGate(id, true)
           }}
-          {...statusHover(`Note gate: trigger ${name} from a MIDI note. Pick the note from the track header in Steps`)}>N</button>
+          {...statusHover(hasNote ? `Note gate: trigger ${name} from its MIDI note` : 'Set a MIDI note on this track in Steps first')}>N</button>
       </div>
       <Spin attr="line-setting" id="mix" label="Dry/wet" value={`${pct}%`} now={pct} min={0} max={100} step={stepMix} pxPerStep={2}
         status={`Dry/wet: the ${name} card's mix, the top of the line. Drag or use the arrow keys`} />

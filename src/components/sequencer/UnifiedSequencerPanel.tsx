@@ -18,6 +18,7 @@ import { SequencerTransport } from './SequencerTransport'
 import { EffectTrackRow } from './EffectTrackRow'
 import { getEffectInfo } from '../../config/effectNames'
 import { TrackParamPanel } from './TrackParamPanel'
+import { LinesView } from './LinesView'
 import { linkedPlay, linkedStop } from '../../utils/sequencerTransport'
 import { isInteractiveKeyTarget } from '../../utils/keyboard'
 
@@ -70,6 +71,14 @@ export function UnifiedSequencerPanel() {
     () => activeEffectIds.filter((id) => !!tracks[id]),
     [activeEffectIds, tracks],
   )
+
+  // Steps | Lines (lines editor spec §4.1): the Lines view replaces the param panel and the track list
+  const sequencerView = useUIStore((s) => s.sequencerView)
+  const trackColors = useMemo(() => {
+    const out: Record<string, string> = {}
+    for (const id of activeTrackIds) out[id] = EFFECT_MAP.get(id)?.color ?? 'var(--text-muted)'
+    return out
+  }, [activeTrackIds])
 
   // ─── Auto-switch effect tab when step is selected on a track ──────────
   useEffect(() => {
@@ -222,7 +231,10 @@ export function UnifiedSequencerPanel() {
         onPageChange={setStepPage}
       />
 
-      {/* ─── Track list + param panel ───────────────────────── */}
+      {sequencerView === 'lines' && activeTrackIds.length > 0 ? (
+        <LinesView ids={activeTrackIds} colors={trackColors} />
+      ) : (
+      /* ─── Track list + param panel ───────────────────────── */
       <div className="flex-1 min-h-0 flex">
         {/* Param panel column (full height, left side) */}
         {trackParamPanelOpen && tracks[trackParamPanelOpen] && (
@@ -283,6 +295,7 @@ export function UnifiedSequencerPanel() {
         )}
         </div>
       </div>
+      )}
     </div>
   )
 }

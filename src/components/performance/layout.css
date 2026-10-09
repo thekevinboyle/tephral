@@ -24,6 +24,8 @@
 /* Bottom: Devices is a fixed 172px strip; Sequencer follows its content (auto row) up to 40vh */
 .seg-shell[data-bottom-tab="devices"] > [data-area="bottom"] { height: 172px; }
 .seg-shell[data-bottom-tab="sequencer"] > [data-area="bottom"] { height: auto; max-height: 40vh; }
+/* the Lines view takes the whole Sequencer cap, so its graph is never squeezed by a short track list */
+.seg-shell[data-bottom-tab="sequencer"] > [data-area="bottom"]:has([data-lines-view]) { height: 40vh; }
 
 .seg-shell[data-browser="off"] > [data-area="browser"],
 .seg-shell[data-inspector="off"] > [data-area="inspector"],
@@ -483,6 +485,48 @@
 .seg-warp-lock { flex: none; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-secondary); cursor: pointer; }
 .seg-warp-lock:hover { background: var(--bg-hover); }
 .seg-warp-lock[aria-pressed="false"] > svg { opacity: .45; }
+
+/* Lines view (lines editor spec §4.2): tabs, the Warp-style editor and the side panel */
+.seg-lines { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; background: var(--gutter); }
+.seg-line-tabs { position: relative; flex: none; display: flex; gap: 4px; padding: 6px 8px 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; background: var(--bg-surface); }
+.seg-line-tabs [data-line-tab] { flex: none; display: flex; align-items: center; gap: 7px; min-width: 130px; padding: 4px 8px; border: 1px solid var(--border); border-bottom: none; border-radius: var(--radius-ctrl) var(--radius-ctrl) 0 0; background: var(--bg-elevated); color: var(--text-secondary); font: 400 12px var(--font-sans); cursor: pointer; }
+.seg-line-tabs [data-line-tab][aria-selected="true"] { background: var(--bg-void); color: var(--text-primary); border-color: var(--bg-hover); }
+.seg-line-tabs [data-line-tab]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-line-tab-dot { flex: none; width: 8px; height: 8px; border-radius: 2px; }
+.seg-line-tab-name { white-space: nowrap; }
+.seg-line-tab-badge { font-size: 9.5px; color: var(--text-muted); border: 1px solid var(--border); border-radius: 3px; padding: 0 3px; }
+.seg-line-tab-lock { font-size: 10px; }
+.seg-line-tab-mini { flex: none; margin-left: auto; }
+.seg-lines-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 2px; }
+.seg-lines-graph { position: relative; flex: 1 1 190px; min-height: 110px; margin: 0 8px; border: 1px solid var(--border); border-radius: var(--radius-ctrl); overflow: hidden; background: var(--bg-primary); }
+.seg-lines-graph > svg { position: absolute; inset: 0; }
+.seg-lines-graph > svg[data-line-graph] { outline: none; touch-action: none; cursor: crosshair; }
+.seg-lines-graph[data-tool="curve"] > svg[data-line-graph] { cursor: ns-resize; }
+.seg-lines-graph[data-tool="erase"] > svg[data-line-graph] { cursor: cell; }
+.seg-lines-graph > svg[data-line-graph]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-lines-settings { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 6px 8px 8px; }
+.seg-lines-side { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 9px 10px; background: var(--bg-surface); overflow-y: auto; }
+.seg-lines-side-head { display: flex; align-items: center; gap: 7px; font: 500 12px var(--font-sans); color: var(--text-primary); }
+.seg-lines-side-head > i { flex: none; width: 8px; height: 8px; border-radius: 2px; }
+.seg-lines-side .seg-lines-mode > button { height: 22px; font-size: 11.5px; }
+.seg-lines-side .seg-lines-mode > button[aria-pressed="true"] { background: var(--warp); color: var(--warp-ink); font-weight: 600; }
+.seg-lines-msan { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; }
+.seg-lines-msan > button { height: 22px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 500 11px var(--font-sans); cursor: pointer; }
+.seg-lines-msan > button:hover { background: var(--bg-hover); }
+.seg-lines-msan > button[aria-pressed="true"] { background: var(--bg-hover); color: var(--text-primary); }
+.seg-lines-side > .seg-warp-set { flex: none; justify-content: space-between; padding: 0 8px; }
+.seg-lines-readout { font: 400 11px/1.5 var(--font-sans); color: var(--text-muted); white-space: pre-line; }
+.seg-lines-onoff { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 0; background: transparent; cursor: pointer; }
+.seg-lines-onoff > span { height: 22px; display: grid; place-items: center; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); }
+.seg-lines-onoff > span[data-on] { background: var(--warp); color: var(--warp-ink); font-weight: 600; }
+.seg-lines-onoff:focus-visible { outline: 1px solid var(--text-primary); outline-offset: 1px; }
+.seg-lines-side-foot { margin-top: auto; display: grid; grid-template-columns: auto 1fr 1fr; gap: 4px; }
+.seg-lines-side-foot > .seg-line-lock { margin-left: 0; width: 32px; height: 22px; background: var(--bg-elevated); }
+.seg-lines-side-foot [data-line-dice="all"] { grid-column: 1 / -1; }
+.seg-seq-view { display: flex; padding: 2px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); }
+.seg-seq-view button { padding: 1px 9px; border-radius: 3px; color: var(--text-muted); font: 400 11.5px var(--font-sans); }
+.seg-seq-view button[aria-pressed="true"] { background: var(--bg-hover); color: var(--text-primary); }
+.seg-seq-view button:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
 .seg-warp-lock[aria-pressed="true"] { color: var(--warp); }
 .seg-warp-sect > .seg-warp-lock { margin: -3px 0; }
 .seg-warp-settings > .seg-warp-lock { height: 26px; width: 22px; background: var(--bg-surface); }
@@ -510,34 +554,18 @@
 .seg-warp-menu-del { flex: none; width: 24px; justify-content: center; padding: 0; font-size: 14px; }
 .seg-warp-menu-sep { height: 1px; margin: 3px 4px; background: var(--border); }
 
-/* ─── Line tracks (Sequencer): Steps / Line switch, lanes, header info ───────────────────────────── */
+/* ─── Line tracks (Sequencer): Steps / Line switch, lane previews ───────────────────────────── */
 .seg-mode-switch { flex: 0 0 100%; display: flex; gap: 2px; }
 .seg-mode-switch > button { flex: 1 1 0; min-width: 0; height: 18px; padding: 0 5px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-muted); font: 400 10.5px var(--font-sans); cursor: pointer; white-space: nowrap; }
 .seg-mode-switch > button:hover { color: var(--text-secondary); }
 .seg-mode-switch > button[aria-pressed="true"] { background: var(--bg-hover); color: var(--text-primary); }
 .seg-mode-switch > button:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
 .seg-line-lane { position: relative; flex: 1; min-width: 0; height: 58px; background: var(--bg-void); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; cursor: pointer; }
-.seg-line-lane[data-selected] { height: 170px; cursor: default; }
 .seg-line-lane > svg { position: absolute; inset: 0; }
-.seg-line-lane svg[data-line-graph] { outline: none; touch-action: none; cursor: crosshair; }
-.seg-line-lane[data-tool="curve"] svg[data-line-graph] { cursor: ns-resize; }
-.seg-line-lane[data-tool="erase"] svg[data-line-graph] { cursor: cell; }
-.seg-line-lane svg[data-line-graph]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
 .seg-line-edge { font: 400 10px var(--font-mono); fill: var(--text-muted); stroke: var(--bg-void); stroke-width: 3px; stroke-linejoin: round; paint-order: stroke; }
 .seg-line-playhead { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--live); pointer-events: none; }
 .seg-line-owner { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid var(--border); border-radius: var(--radius-ctrl); background: var(--bg-primary); color: var(--text-secondary); font: 400 11px var(--font-sans); white-space: nowrap; pointer-events: none; }
-.seg-line-info { margin-top: 4px; font: 400 11px/1.35 var(--font-sans); color: var(--text-muted); }
-.seg-line-info b { font-weight: 500; color: var(--text-primary); }
-.seg-line-lane[data-locked] { outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
-/* the Sequencer toolbar's line tools (spec §4): one row, wrapping under 1100 px; never scrolls sideways */
-.seg-line-tools-slot { flex: 1 1 0; min-width: 0; margin-right: 16px; }
-.seg-line-tools { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0 }
-.seg-line-ctx { color: var(--text-muted); font-size: 11.5px; margin-right: 4px }
-.seg-line-tools > .seg-warp-set { flex: none; height: 24px; padding: 0 8px; background: var(--bg-elevated); }
-.seg-line-tools > .seg-warp-set:hover { background: var(--bg-hover); }
-.seg-line-tools > .seg-warp-set:focus-visible, .seg-line-tools .seg-warp-tool:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
-.seg-line-dice { flex: none; margin-left: auto; display: flex; gap: 4px; align-items: center; }
-.seg-line-dice > .seg-line-lockmode[aria-pressed="true"] { color: var(--warp); outline: 1.5px solid var(--warp-lock); outline-offset: -1.5px; }
+/* a line's lock (the Lines side panel) */
 .seg-line-lock { flex: none; width: 18px; height: 18px; margin-left: auto; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-secondary); cursor: pointer; }
 .seg-line-lock:hover { background: var(--bg-hover); }
 .seg-line-lock[aria-pressed="false"] > svg { opacity: .45; }

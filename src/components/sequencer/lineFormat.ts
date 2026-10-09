@@ -15,3 +15,9 @@ export function trackBars(length: number, resolution: EffectStepResolution, time
 
 /** Bars formatted for the lane's span label: whole numbers plain, otherwise up to two decimals. */
 export const fmtBars = (b: number): string => (Number.isInteger(b) ? String(b) : String(Math.round(b * 100) / 100))
+
+const BEAT_NAMES: Record<string, string> = { '0.5': '½ beat', '1': '1 beat' }
+/** A line's loop length as the bar shows it: ½ beat, 1 beat, 2 beats … 16 beats. */
+export const fmtBeats = (b: number): string => BEAT_NAMES[String(b)] ?? `${b} beats`
+/** The graph's top-left label: "1 bar loop" for 4 beats, "2 bars loop", "½ beat loop" … */
+export const fmtLoop = (b: number): string => (b >= 4 ? `${b / 4} ${b === 4 ? 'bar' : 'bars'} loop` : `${fmtBeats(b)} loop`)

@@ -53,14 +53,32 @@ export interface EffectStep {
   retrig: number                           // 0 = off, 2-8 = sub-step repeats
 }
 
-/** A Line track's line (spec §1): warp-format points (y 0 = full, 1 = dry), quantize grid and skew. */
+export const LINE_BEATS = [0.5, 1, 2, 4, 8, 16] as const
+export const GRID_Y = [2, 3, 4, 6, 8, 12, 16] as const
+
+/** A line (spec §1): warp-format points (y 0 = full, 1 = dry), quantize grid, skew, depth, loop length and Y grid. */
 export interface TrackLine {
   points: WarpPoint[]
   snap: number
   skew: number
+  amount: number // 0..1: how deep the line cuts
+  beats: number  // one of LINE_BEATS: the line's own loop
+  gridY: number  // one of GRID_Y: the vertical snap grid
 }
 
-export const defaultTrackLine = (): TrackLine => ({ points: [{ x: 0, y: 0 }, { x: 1, y: 0 }], snap: 1 / 16, skew: 0 })
+export const defaultTrackLine = (): TrackLine => ({ points: [{ x: 0, y: 0 }, { x: 1, y: 0 }], snap: 1 / 16, skew: 0, amount: 1, beats: 4, gridY: 8 })
+
+/** `cur` (or the default, filling fields an older line lacks) with the valid parts of `patch`. */
+export function mergeLine(cur: TrackLine | undefined, patch: Partial<TrackLine>): TrackLine {
+  const next: TrackLine = { ...defaultTrackLine(), ...cur }
+  if (patch.points !== undefined) { const p = cleanPoints(patch.points); if (p) next.points = p }
+  if (patch.snap !== undefined && SNAPS.includes(patch.snap)) next.snap = patch.snap
+  if (patch.skew !== undefined && Number.isFinite(patch.skew)) next.skew = Math.max(-1, Math.min(1, patch.skew))
+  if (patch.amount !== undefined && Number.isFinite(patch.amount)) next.amount = Math.max(0, Math.min(1, patch.amount))
+  if (patch.beats !== undefined && (LINE_BEATS as readonly number[]).includes(patch.beats)) next.beats = patch.beats
+  if (patch.gridY !== undefined && (GRID_Y as readonly number[]).includes(patch.gridY)) next.gridY = patch.gridY
+  return next
+}
 
 export interface EffectTrack {
   effectId: string
@@ -105,6 +123,7 @@ interface EffectSequencerState {
   trackAutoThresholds: Record<string, number>  // per-track auto-computed threshold for UI display
   audioGateLevel: number                     // current audio gate amplitude (0-1)
   trackParamPanelOpen: string | null         // effectId of track with open param panel
+  master: { line: TrackLine; enabled: boolean } // the master line (lines editor spec §3)
 
   // Automation
   setAutomationParam: (param: AutomationParam) => void
@@ -124,6 +143,8 @@ interface EffectSequencerState {
   removeTrack: (effectId: string) => void
   setTrackMode: (effectId: string, mode: 'gate' | 'param' | 'line') => void
   setTrackLine: (effectId: string, patch: Partial<TrackLine>) => void
+  setMasterLine: (patch: Partial<TrackLine>) => void
+  setMasterEnabled: (on: boolean) => void
   setTrackMuted: (effectId: string, muted: boolean) => void
   setTrackSoloed: (effectId: string, soloed: boolean) => void
   setTrackMidiGate: (effectId: string, enabled: boolean) => void
@@ -228,6 +249,7 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
   trackAutoThresholds: {},
   audioGateLevel: 0,
   trackParamPanelOpen: null,
+  master: { line: defaultTrackLine(), enabled: true },
 
   // ─── Transport ─────────────────────────────────────────────────────────
 
@@ -286,14 +308,13 @@ export const useEffectSequencerStore = create<EffectSequencerState>()(persist((s
     set((state) => {
       const track = state.tracks[effectId]
       if (!track) return state
-      const cur = track.line ?? defaultTrackLine()
-      const next: TrackLine = { ...cur }
-      if (patch.points !== undefined) { const p = cleanPoints(patch.points); if (p) next.points = p }
-      if (patch.snap !== undefined && SNAPS.includes(patch.snap)) next.snap = patch.snap
-      if (patch.skew !== undefined && Number.isFinite(patch.skew)) next.skew = Math.max(-1, Math.min(1, patch.skew))
-      return { tracks: { ...state.tracks, [effectId]: { ...track, line: next } } }
+      return { tracks: { ...state.tracks, [effectId]: { ...track, line: mergeLine(track.line, patch) } } }
     })
   },
+
+  setMasterLine: (patch) => set((s) => ({ master: { ...s.master, line: mergeLine(s.master.line, patch) } })),
+
+  setMasterEnabled: (on) => set((s) => ({ master: { ...s.master, enabled: !!on } })),
 
   setTrackMuted: (effectId, muted) => {
     set((state) => {

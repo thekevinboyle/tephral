@@ -7,7 +7,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { EFFECT_PARAM_REGISTRY } from '../../config/effectParams'
 import { displayParamLabel } from '../../config/paramNames'
-import { LineToolbar } from './LineToolbar'
+import { statusHover } from '../../utils/statusHover'
 
 const MIDI_COLOR = '#00AAFF'
 const AUDIO_COLOR = '#FF8800'
@@ -191,9 +191,8 @@ export function SequencerTransport({
   const isConnected = useMIDIStore((s) => s.isConnected)
   const midiInputs = useMIDIStore((s) => s.inputs)
   const setClockSyncEnabled = useMIDIStore((s) => s.setClockSyncEnabled)
-  // A selected Line track swaps the step tools for its line tools (spec §4)
-  const selectedEffectId = useUIStore((s) => s.selectedEffectId)
-  const lineSelected = useEffectSequencerStore((s) => !!selectedEffectId && s.tracks[selectedEffectId]?.mode === 'line')
+  // Steps | Lines (lines editor spec §4.1): the Lines view hides the step tools and the page dots
+  const view = useUIStore((s) => s.sequencerView)
 
   const audioBpm = useAudioSourceStore((s) => s.audioBpm)
   const audioBpmSyncEnabled = useAudioSourceStore((s) => s.audioBpmSyncEnabled)
@@ -245,9 +244,9 @@ export function SequencerTransport({
     <div
       className="flex-shrink-0 flex items-center"
       style={{
-        padding: lineSelected ? '6px var(--panel-padding)' : '0 var(--panel-padding)',
+        padding: '0 var(--panel-padding)',
         gap: 0,
-        minHeight: 64,
+        minHeight: view === 'lines' ? 40 : 64, // the Lines view gives the height to its graph
         backgroundColor: 'var(--bg-void)',
         borderBottom: '1px solid var(--border-light)',
       }}
@@ -348,6 +347,16 @@ export function SequencerTransport({
         )}
       </div>
 
+      {/* Steps | Lines */}
+      <div className="seg-seq-view" role="group" aria-label="Sequencer view" style={{ marginRight: 16 }}>
+        {(['steps', 'lines'] as const).map((v) => (
+          <button key={v} type="button" data-seq-view={v} aria-pressed={view === v} onClick={() => useUIStore.getState().setSequencerView(v)}
+            {...statusHover(v === 'lines' ? 'Lines: draw each effect\'s Dry/wet, and a master line over all of them' : 'Steps: the step grid')}>
+            {v === 'lines' ? 'Lines' : 'Steps'}
+          </button>
+        ))}
+      </div>
+
       {/* Divider */}
       <div className="w-px h-6" style={{ backgroundColor: 'var(--border)', marginRight: 16 }} />
 
@@ -375,26 +384,21 @@ export function SequencerTransport({
       {/* Divider */}
       <div className="w-px h-6" style={{ backgroundColor: 'var(--border)', marginRight: 16 }} />
 
-      {/* Group 3: Track tools (a Line track's line tools fill the free space and wrap when narrow) */}
-      {lineSelected && selectedEffectId ? (
-        <div className="seg-line-tools-slot">
-          <LineToolbar effectId={selectedEffectId} />
+      {/* Group 3: Track tools (Steps view only) */}
+      {view === 'steps' && (
+        <div className="flex items-center gap-1.5">
+          <RandomizeButton />
+          <RandomizeAllButton />
+          <RandomizeLocksButton />
+          <ClearTrackButton />
         </div>
-      ) : (
-        <>
-          <div className="flex items-center gap-1.5">
-            <RandomizeButton />
-            <RandomizeAllButton />
-            <RandomizeLocksButton />
-            <ClearTrackButton />
-          </div>
-
-          {/* Spacer */}
-          <div className="flex-1" />
-        </>
       )}
 
-      {/* Group 4: Page dots */}
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Group 4: Page dots (Steps view only) */}
+      {view === 'steps' && (
       <div className="flex items-center gap-1.5">
         {[0, 1, 2, 3].map((pg) => {
           const isActive = pg === stepPage
@@ -427,6 +431,7 @@ export function SequencerTransport({
           )
         })}
       </div>
+      )}
     </div>
   )
 }

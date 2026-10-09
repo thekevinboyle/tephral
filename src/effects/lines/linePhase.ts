@@ -6,7 +6,12 @@ let passes = 0
 export const getLinePhase = (id: string): number | null => phases.get(id) ?? null
 export const setLinePhase = (id: string, p: number): void => { phases.set(id, p) }
 export const deleteLinePhase = (id: string): void => { phases.delete(id) }
-export const clearLinePhases = (): void => { phases.clear() }
+export const clearLinePhases = (): void => { phases.clear(); masterPhase = null }
+
+// The master line's phase while the sequencer plays (lines editor spec §3); null when stopped
+let masterPhase: number | null = null
+export const getMasterPhase = (): number | null => masterPhase
+export const setMasterPhase = (p: number | null): void => { masterPhase = p }
 
 /** Dev only: counts Line tracks processed by the line pass (the harness checks it stays put with none). */
 export const noteLinePass = (): void => { passes++ }

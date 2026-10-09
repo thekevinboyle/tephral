@@ -7,6 +7,8 @@
  * at 0; open steps play at the modulated level (the modulation keeps writing while the step is open). With no
  * gate active for an effect, modulation writes `effectMix` directly. Audio and MIDI gates still own the mix.
  * While a Line track plays, the line scales the modulated (or user) Dry/wet: mix = ceiling × level.
+ * While the sequencer drives an effect (gate or line), the master line multiplies the result, except on
+ * audio-reactive tracks, which ignore the master everywhere.
  */
 
 // Modulation side: the latest modulated level per effect and the frame it was written in
@@ -19,6 +21,14 @@ const userMix = new Map<string, number>()
 const gateOpen = new Map<string, boolean>()
 // Line side (Line tracks, spec §3): present while a Line track drives the effect's mix; the line's level 0..1
 const lineLevels = new Map<string, number>()
+
+// Master line (lines editor spec §3): one multiplier on every sequencer-driven mix; 1 = no effect
+let masterLevel = 1
+export function setMasterLevel(level: number): void { masterLevel = level > 0 ? (level < 1 ? level : 1) : 0 }
+export function getMasterLevel(): number { return masterLevel }
+export function clearMaster(): void { masterLevel = 1 }
+/** True while the sequencer gate drives this effect and its current step is open. */
+export function isGateOpen(effectId: string): boolean { return gateOpen.get(effectId) === true }
 
 export function setLineLevel(effectId: string, level: number): void {
   lineLevels.set(effectId, level)
@@ -52,16 +62,17 @@ export function isMixModulated(effectId: string): boolean {
 /**
  * Modulation reports a Dry/wet value. Returns what to write to `effectMix`: the value itself, or null when the
  * gate is active and closed (stays 0 until the next open step, which then uses this level).
- * `current` is the stored effectMix (the user's own value when modulation starts without a gate).
+ * `current` is the stored effectMix (the user's own value when modulation starts without a gate). `noMaster`: the
+ * track is audio reactive, so the master line does not scale it.
  */
-export function noteModulatedMix(effectId: string, value: number, current: number): number | null {
+export function noteModulatedMix(effectId: string, value: number, current: number, noMaster = false): number | null {
   const gate = gateOpen.get(effectId)
   const line = lineLevels.get(effectId)
   if (!isMixModulated(effectId) && gate === undefined && line === undefined) userMix.set(effectId, current)
   modLevel.set(effectId, value)
   modFrame.set(effectId, frame)
   if (gate === false) return null
-  return line === undefined ? value : value * line
+  return (line === undefined ? value : value * line) * (!noMaster && (gate !== undefined || line !== undefined) ? masterLevel : 1)
 }
 
 /** The gate's open-step level: the modulated level while modulation runs, else the user's base. */

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { useEffectSequencerStore, defaultTrackLine, type EffectTrack, type TrackAudioReactiveConfig } from '../stores/effectSequencerStore'
+import { useEffectSequencerStore, defaultTrackLine, type EffectTrack, type TrackAudioReactiveConfig, type TrackLine } from '../stores/effectSequencerStore'
 import { useSequencerStore } from '../stores/sequencerStore'
 import { useRoutingStore } from '../stores/routingStore'
 import { useGlitchEngineStore } from '../stores/glitchEngineStore'
@@ -7,9 +7,13 @@ import { useAudioReactiveStore } from '../stores/audioReactiveStore'
 import { useAudioSourceStore } from '../stores/audioSourceStore'
 import { EFFECT_PARAM_REGISTRY } from '../config/effectParams'
 import { readModBase } from '../effects/trackBandModulation'
-import { captureUserMix, clearGates, clearLines, gateOpenLevel, isLineActive, releaseGate, releaseLine, setGateOpen, setLineLevel } from '../effects/mixModulation'
+import { captureUserMix, clearGates, clearLines, clearMaster, gateOpenLevel, getMasterLevel, isGateOpen, isLineActive, releaseGate, releaseLine, setGateOpen, setLineLevel, setMasterLevel } from '../effects/mixModulation'
 import { lineLevel } from '../effects/lines/lineLevel'
-import { clearLinePhases, deleteLinePhase, noteLinePass, setLinePhase } from '../effects/lines/linePhase'
+import { clearLinePhases, deleteLinePhase, noteLinePass, setLinePhase, setMasterPhase } from '../effects/lines/linePhase'
+
+// A line with every field (an older line lacks amount, beats and gridY); the phase of a `len`-beat loop at beat `b`
+const lineOf = (l: TrackLine | undefined): TrackLine => (l && l.amount !== undefined && l.beats !== undefined && l.gridY !== undefined ? l : { ...defaultTrackLine(), ...l })
+const phaseOf = (b: number, len: number) => (((b % len) + len) % len) / len
 
 // Resolution to beat fraction
 const RESOLUTION_BEATS: Record<string, number> = {
@@ -41,6 +45,9 @@ export function useEffectSequencerPlayback() {
   const muteBypassed = useRef<Set<string>>(new Set())
   const lineIds = useRef<Set<string>>(new Set()) // tracks the line pass drove last frame
   const lineIdsNext = useRef<Set<string>>(new Set()) // reused each frame and swapped with lineIds (no per-frame allocation)
+  const beats = useRef(0) // transport beats since Play: every line's (and the master's) phase comes from it
+  const masterWasActive = useRef(false) // the master scaled the open Steps tracks last frame
+  const started = useRef(false) // Play's start work ran (a BPM change re-runs the effect below mid-play)
 
   // Per-track audio-reactive state
   const trackWasAbove = useRef<Record<string, boolean>>({})
@@ -292,7 +299,7 @@ export function useEffectSequencerPlayback() {
     // Gate mode mix handling (independent of param locks)
     // An open step plays at the modulated Dry/wet when a route drives it, else at the user's base
     if (track.mode === 'gate' && !track.midiGate) {
-      ge.setEffectMix(effectId, shouldFire ? gateOpenLevel(effectId, origMix) : 0)
+      ge.setEffectMix(effectId, shouldFire ? gateOpenLevel(effectId, origMix) * (track.audioReactive.enabled ? 1 : getMasterLevel()) : 0) // audio gates ignore the master
       setGateOpen(effectId, shouldFire)
     } else {
       releaseGate(effectId)
@@ -314,6 +321,8 @@ export function useEffectSequencerPlayback() {
 
       const dt = (timestamp - lastFrameTime.current) / 1000 // seconds
       lastFrameTime.current = timestamp
+      // The store's bpm (not the closure's), so a mid-play BPM change bends the beat count without a jump
+      beats.current += (Math.max(0, dt) * 1000 * useEffectSequencerStore.getState().bpm) / 60000 // first frame can be < 0
 
       // Auto-enable audio reactive analysis when any track uses it
       const anyAudioReactive = trackList.some((t) => t.audioReactive.enabled)
@@ -376,7 +385,7 @@ export function useEffectSequencerPlayback() {
             // Kick detected — enable effect and advance step
             const entry = EFFECT_PARAM_REGISTRY[effectId]
             if (entry) entry.setEnabled(true)
-            useGlitchEngineStore.getState().setEffectMix(effectId, gateOpenLevel(effectId, baseMix.current[effectId] ?? 1))
+            useGlitchEngineStore.getState().setEffectMix(effectId, gateOpenLevel(effectId, baseMix.current[effectId] ?? 1)) // audio gates ignore the master
             setGateOpen(effectId, true)
 
             const latestTrack = useEffectSequencerStore.getState().tracks[effectId]
@@ -436,7 +445,7 @@ export function useEffectSequencerPlayback() {
                 if (!latestTrack) return
                 const ge = useGlitchEngineStore.getState()
                 if (latestTrack.mode === 'gate' && !latestTrack.midiGate) {
-                  ge.setEffectMix(effectId, gateOpenLevel(effectId, baseMix.current[effectId] ?? 1))
+                  ge.setEffectMix(effectId, gateOpenLevel(effectId, baseMix.current[effectId] ?? 1) * (latestTrack.audioReactive.enabled ? 1 : getMasterLevel()))
                   setGateOpen(effectId, true)
                 }
                 // Re-apply p-locks
@@ -460,10 +469,15 @@ export function useEffectSequencerPlayback() {
         }
       }
 
-      // === Line tracks (spec §2–§3): Dry/wet = ceiling × the line's level at the track's phase, every frame ===
+      // === Lines (lines editor spec §2–§3): every line's phase comes from the beat counter; Dry/wet = ceiling × line × master ===
       {
-        const latest = useEffectSequencerStore.getState().tracks // trackStep advanced above
+        const { tracks: latest, master } = useEffectSequencerStore.getState() // trackStep advanced above
         const ge = useGlitchEngineStore.getState()
+        const ml = lineOf(master.line)
+        const mPhase = phaseOf(beats.current, ml.beats)
+        setMasterPhase(mPhase)
+        const mLevel = master.enabled ? lineLevel(ml.points, mPhase, ml.skew, ml.amount) : 1
+        setMasterLevel(mLevel)
         const seen = lineIdsNext.current
         seen.clear()
         for (const effectId of effectOrder) {
@@ -480,16 +494,12 @@ export function useEffectSequencerPlayback() {
           if (track.muted || (hasSolo && !track.soloed)) continue // executeTrackAtStep bypasses it
           if (track.midiGate || track.audioGate || track.audioReactive.enabled) continue // those gates own the mix
           seen.add(effectId)
-          const ms = baseMsPerStep / (track.timeScale ?? 1)
-          const last = trackLastStepTime.current[effectId] ?? timestamp
-          const f = Math.min(1, Math.max(0, (timestamp - last) / ms))
-          const len = Math.max(1, track.length)
-          const phase = (((track.trackStep + f) % len) + len) % len / len
-          const line = track.line ?? defaultTrackLine()
-          const level = lineLevel(line.points, phase, line.skew)
+          const line = lineOf(track.line)
+          const phase = phaseOf(beats.current, line.beats)
+          const level = lineLevel(line.points, phase, line.skew, line.amount)
           setLinePhase(effectId, phase)
           setLineLevel(effectId, level)
-          const mix = gateOpenLevel(effectId, baseMix.current[effectId] ?? 1) * level
+          const mix = gateOpenLevel(effectId, baseMix.current[effectId] ?? 1) * level * mLevel
           if (Math.abs((ge.effectMix[effectId] ?? 1) - mix) > 1e-4) ge.setEffectMix(effectId, mix)
         }
         // Tracks the line drove last frame but not now: left Line mode, removed, muted or gated. Hand the mix back.
@@ -504,6 +514,19 @@ export function useEffectSequencerPlayback() {
         }
         lineIdsNext.current = lineIds.current
         lineIds.current = seen
+        // Open Steps tracks follow the master every frame while it is active, plus one frame after it returns to 1
+        const masterActive = mLevel !== 1
+        if (masterActive || masterWasActive.current) {
+          for (const effectId of effectOrder) {
+            const track = latest[effectId]
+            if (!track || track.mode !== 'gate' || !isGateOpen(effectId)) continue
+            if (track.muted || (hasSolo && !track.soloed)) continue
+            if (track.midiGate || track.audioGate || track.audioReactive.enabled) continue
+            const mix = gateOpenLevel(effectId, baseMix.current[effectId] ?? 1) * mLevel
+            if (Math.abs((ge.effectMix[effectId] ?? 1) - mix) > 1e-4) ge.setEffectMix(effectId, mix)
+          }
+        }
+        masterWasActive.current = masterActive
       }
 
       animationFrameId.current = requestAnimationFrame(playbackLoop)
@@ -515,18 +538,25 @@ export function useEffectSequencerPlayback() {
 
   useEffect(() => {
     if (isPlaying) {
-      // Mutual exclusion: stop the old step sequencer
-      const oldSeq = useSequencerStore.getState()
-      if (oldSeq.isPlaying) oldSeq.stop()
+      // Start work only on Play: a BPM change mid-play re-runs this effect (new playbackLoop) and must keep the
+      // beat count, the step timers and the pre-play mix snapshot
+      if (!started.current) {
+        started.current = true
+        // Mutual exclusion: stop the old step sequencer
+        const oldSeq = useSequencerStore.getState()
+        if (oldSeq.isPlaying) oldSeq.stop()
 
-      captureBaseValues()
-      lastStepTime.current = performance.now()
-      lastFrameTime.current = performance.now()
-      trackLastStepTime.current = {}
-      retrigTimers.current.forEach(clearTimeout)
-      retrigTimers.current = []
+        captureBaseValues()
+        lastStepTime.current = performance.now()
+        lastFrameTime.current = performance.now()
+        trackLastStepTime.current = {}
+        retrigTimers.current.forEach(clearTimeout)
+        retrigTimers.current = []
+        beats.current = 0
+      }
       animationFrameId.current = requestAnimationFrame(playbackLoop)
     } else {
+      started.current = false
       if (animationFrameId.current !== null) {
         cancelAnimationFrame(animationFrameId.current)
         animationFrameId.current = null
@@ -537,7 +567,9 @@ export function useEffectSequencerPlayback() {
       trackLastStepTime.current = {}
       restoreBaseValues()
       clearLines()
-      clearLinePhases()
+      clearLinePhases() // also nulls the master phase
+      clearMaster()
+      masterWasActive.current = false
       lineIds.current.clear()
       lineIdsNext.current.clear()
     }

@@ -47,6 +47,10 @@ interface UIState {
   toggleDrawer: (p: DrawerPanel) => void
   closeDrawer: () => void
   setBottomTab: (t: BottomTab) => void
+  sequencerView: 'steps' | 'lines'
+  setSequencerView: (v: 'steps' | 'lines') => void
+  lineTab: string // 'master' or an effect id (lines editor spec §4.2)
+  setLineTab: (t: string) => void
   setSelectedModulator: (id: string | null) => void
 
   // Device cards collapsed to their side strip (session only, not persisted)
@@ -113,6 +117,10 @@ export const useUIStore = create<UIState>((set) => ({
   toggleDrawer: (p) => set((state) => ({ drawer: state.drawer === p ? null : p })),
   closeDrawer: () => set({ drawer: null }),
   setBottomTab: (t) => set({ bottomTab: t }),
+  sequencerView: 'steps',
+  setSequencerView: (v) => set({ sequencerView: v }),
+  lineTab: 'master',
+  setLineTab: (t) => set({ lineTab: t }),
   setSelectedModulator: (id) => {
     if (id == null) { set({ selectedModulator: null }); return }
     // Clear any step selection first: UnifiedSequencerPanel re-selects a step's effect when

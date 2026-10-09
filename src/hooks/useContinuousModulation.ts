@@ -55,7 +55,7 @@ export function useContinuousModulation() {
         // A playing sequencer gate combines with it: the modulated value is the open-step level, closed steps stay 0
         // (mixModulation.ts). With no gate active this writes effectMix directly.
         const cur = glitch.effectMix[effectId] ?? 1
-        const out = noteModulatedMix(effectId, value, cur)
+        const out = noteModulatedMix(effectId, value, cur, !!t?.audioReactive?.enabled) // audio-reactive tracks ignore the master
         if (out !== null && glitch.effectMix[effectId] !== out) glitch.setEffectMix(effectId, out)
         return
       }

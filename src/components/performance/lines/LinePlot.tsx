@@ -15,13 +15,13 @@ const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
 const EPS = 1e-9
 
 const STATUS: Record<WarpTool, string> = {
-  draw: "Click to add a point, drag to move, drag a segment's middle to bend it. Hold Shift to paint steps, Alt snaps the height",
+  draw: 'Click or double-click to add a point, drag to move, double-click a point to delete. Shift paints steps, Alt snaps to the grid, Alt-drag a curve handle moves every curve.',
   steps: 'Steps: drag across the graph to paint a staircase on the quantize grid',
   curve: 'Curve: drag up or down over a segment to bend it',
   erase: 'Erase: drag over points to remove them',
 }
-const STATUS_POINT = 'Drag to move this point (Alt snaps the height). Double-click to delete it. Arrows nudge, Delete removes'
-const STATUS_BEND = 'Drag up or down to bend this segment into a curve'
+const STATUS_POINT = 'Drag to move this point (Alt snaps it to the grid). Double-click to delete it. Arrows nudge, Delete removes'
+const STATUS_BEND = "Drag up or down to bend this segment. Alt bends every segment, Alt and Shift snap the curve's middle to the grid"
 
 /** Bend (-1..1) that puts the segment's midpoint at fraction `f` of the way from a.y to b.y (inverse of warpMath's curve at t = 0.5). */
 function bendForMid(f: number): number {
@@ -44,6 +44,8 @@ export interface LinePlotProps {
   /** Write points; returns the normalised points now stored. */
   setPoints: (p: WarpPoint[]) => WarpPoint[]
   snap: number // 0 = quantize Off
+  /** Vertical snap grid: divisions from top to bottom. Default 16 (the Warp). */
+  gridY?: number
   tool: WarpTool
   selected: number | null
   onSelect: (i: number | null) => void
@@ -68,16 +70,19 @@ export interface LinePlotProps {
 /**
  * The point-editing core of a line graph (shared by the warp graph and the line tracks): a back SVG (grid,
  * `backChildren`), then `between`, then the interactive front SVG (the line, bend handles, points,
- * `children`). Tools: Draw (click adds, drag paints, Shift paints steps, drag a point to move, a bend
- * handle to curve, double-click deletes), Steps, Curve, Erase. Gestures read the latest points through
+ * `children`). Tools: Draw (click or double-click adds, drag paints, Shift paints steps, drag a point to
+ * move, a bend handle to curve, double-click a point deletes; Alt snaps to the X and Y grids, Alt on a bend
+ * handle bends every segment), Steps, Curve, Erase. Gestures read the latest points through
  * `getPoints` and write through `setPoints`.
  */
 export const LinePlot = memo(function LinePlot({
-  points, getPoints, setPoints, snap, tool, selected, onSelect, width: w, height: gh, attr, ariaLabel,
+  points, getPoints, setPoints, snap, gridY = 16, tool, selected, onSelect, width: w, height: gh, attr, ariaLabel,
   hoverStatus, statusPoint = STATUS_POINT, backChildren, between, children, stroke = 'var(--text-primary)', svgRef: outerRef,
 }: LinePlotProps & { svgRef?: React.Ref<SVGSVGElement> }) {
   const svgRef = useRef<SVGSVGElement | null>(null)
   const lastStatus = useRef<string | null>(null)
+  // The point a click on empty space just added, so the double-click that click starts keeps it (spec §5)
+  const added = useRef<{ x: number; y: number; t: number } | null>(null)
   // The optional outer ref sees the front (interactive) svg; it only exists while the width is non-zero
   useImperativeHandle(outerRef, () => svgRef.current as SVGSVGElement)
 
@@ -93,7 +98,10 @@ export const LinePlot = memo(function LinePlot({
     return { x: clamp01((e.clientX - r.left - PAD) / iw), y: clamp01((e.clientY - r.top - PAD) / ih) }
   }
   const snapX = (x: number) => (snap > 0 ? clamp01(Math.round(x / snap) * snap) : clamp01(x)) // 0 = quantize Off
-  const snapY = (y: number, alt: boolean) => (alt ? clamp01(Math.round(y * 16) / 16) : y) // Alt snaps the height
+  const gridX = snap > 0 ? snap : 1 / 16
+  const snapGridX = (x: number) => clamp01(Math.round(x / gridX) * gridX)
+  const snapGridY = (y: number) => clamp01(Math.round(y * gridY) / gridY)
+  const snapY = (y: number, alt: boolean) => (alt ? snapGridY(y) : y) // Alt snaps the height to the Y grid
   const hitPoint = (clientX: number, clientY: number, pts: WarpPoint[]) => {
     const r = svgRef.current!.getBoundingClientRect()
     const px = clientX - r.left, py = clientY - r.top
@@ -126,21 +134,41 @@ export const LinePlot = memo(function LinePlot({
       const v = toVal(ev)
       const last = cur.length - 1
       // Endpoints keep x = 0 / 1; inner points stay between their neighbours (equal x allowed: a step)
-      const x = i === 0 ? 0 : i === last ? 1 : Math.min(cur[i + 1].x, Math.max(cur[i - 1].x, snapX(v.x)))
+      // Keys are read on every move: Alt snaps both axes to the grid, and releasing it mid-drag frees them again
+      const sx = ev.altKey ? snapGridX(v.x) : snapX(v.x)
+      const x = i === 0 ? 0 : i === last ? 1 : Math.min(cur[i + 1].x, Math.max(cur[i - 1].x, sx))
       const next = cur.slice()
       next[i] = { ...cur[i], x, y: snapY(v.y, ev.altKey) }
       setPoints(next)
     })
   }
 
+  /**
+   * Bend segment i. Alt moves every bend by the change made to this one (flat segments are skipped); Alt and
+   * Shift snap this segment's midpoint height to the Y grid.
+   */
   const bendSegment = (i: number, e: React.PointerEvent) => {
+    const startBends = getPoints().map((p) => p.bend ?? 0)
     track(e, (ev) => {
       const cur = getPoints()
       const a = cur[i - 1], b = cur[i]
       if (!a || !b || Math.abs(b.y - a.y) < EPS || b.x - a.x < EPS) return
-      const f = (toVal(ev).y - a.y) / (b.y - a.y)
       const next = cur.slice()
-      next[i] = withBend(b, bendForMid(f))
+      if (ev.altKey && ev.shiftKey) {
+        const my = snapGridY(toVal(ev).y)
+        next[i] = withBend(b, bendForMid((my - a.y) / (b.y - a.y)))
+      } else if (ev.altKey) {
+        const f = (toVal(ev).y - a.y) / (b.y - a.y)
+        const delta = bendForMid(f) - (startBends[i] ?? 0)
+        for (let k = 1; k < cur.length; k++) {
+          const pa = cur[k - 1], pb = cur[k]
+          if (Math.abs(pb.y - pa.y) < EPS || pb.x - pa.x < EPS) continue
+          next[k] = withBend(pb, Math.max(-1, Math.min(1, (startBends[k] ?? 0) + delta)))
+        }
+      } else {
+        const f = (toVal(ev).y - a.y) / (b.y - a.y)
+        next[i] = withBend(b, bendForMid(f))
+      }
       setPoints(next)
     })
   }
@@ -154,7 +182,7 @@ export const LinePlot = memo(function LinePlot({
     const cols = new Map<number, number>()
     let lastCol: number | null = null
     const colOf = (x: number) => (mode === 'steps' ? Math.min(n - 1, Math.floor(x * n)) : Math.round(x * n))
-    const yOf = (y: number, alt: boolean) => (mode === 'steps' ? Math.round(y * n) / n : snapY(y, alt))
+    const yOf = (y: number, alt: boolean) => snapY(y, alt) // heights are free; Alt snaps them to the Y grid
     const apply = () => {
       const ks = [...cols.keys()]
       const lo = Math.min(...ks), hi = Math.max(...ks)
@@ -228,7 +256,7 @@ export const LinePlot = memo(function LinePlot({
     if (bh) { bendSegment(Number(bh.getAttribute(`data-${attr}-bend`)), e); return }
     // Empty space: add a point (x on the snap grid), then a drag paints points along its path
     const v = toVal(e)
-    const p = { x: snapX(v.x), y: snapY(v.y, e.altKey) }
+    const p = { x: e.altKey ? snapGridX(v.x) : snapX(v.x), y: snapY(v.y, e.altKey) }
     // Snapped onto an existing point's x: move that point (the nearest in y) instead of making an accidental step
     let same = -1
     cur.forEach((q, k) => { if (Math.abs(q.x - p.x) < EPS && (same < 0 || Math.abs(q.y - p.y) < Math.abs(cur[same].y - p.y))) same = k })
@@ -245,6 +273,7 @@ export const LinePlot = memo(function LinePlot({
     const next = [...cur.slice(0, at), p, ...cur.slice(at)]
     setPoints(next)
     onSelect(at)
+    added.current = { x: p.x, y: p.y, t: performance.now() }
     paint(e, 'draw', cur, p)
   }
 
@@ -252,11 +281,25 @@ export const LinePlot = memo(function LinePlot({
   const onDoubleClick = (e: React.MouseEvent) => {
     if (tool !== 'draw') return
     const cur = getPoints()
-    if (cur.length <= 2) return
     const i = hitPoint(e.clientX, e.clientY, cur)
-    if (i < 0) return
-    setPoints(cur.filter((_, k) => k !== i))
-    onSelect(null)
+    const a = added.current
+    added.current = null
+    const fresh = !!a && performance.now() - a.t < 600
+    // the double-click's first click already added this point: keep it (spec §5)
+    if (i >= 0 && fresh && Math.abs(cur[i].x - a!.x) < EPS && Math.abs(cur[i].y - a!.y) < EPS) return
+    if (i >= 0) {
+      // endpoints, and lines with 2 points, are kept
+      if (cur.length > 2 && i > 0 && i < cur.length - 1) { setPoints(cur.filter((_, k) => k !== i)); onSelect(null) }
+      return
+    }
+    // the first click already added a point that snapped away from the cursor: a double-click adds exactly one
+    if (fresh) return
+    // empty space (e.g. the first click landed on an existing x): add one point
+    const v = toVal(e), p = { x: snapX(v.x), y: v.y }
+    let at = cur.length
+    for (let k = 0; k < cur.length; k++) if (cur[k].x > p.x) { at = k; break }
+    setPoints([...cur.slice(0, at), p, ...cur.slice(at)])
+    onSelect(at)
   }
 
   // Hover: status text (only written when it changes)
@@ -290,8 +333,8 @@ export const LinePlot = memo(function LinePlot({
             {Array.from({ length: COLS + 1 }, (_, i) => (
               <line key={i} x1={X(i / COLS)} y1={0} x2={X(i / COLS)} y2={gh} style={{ stroke: i % 4 === 0 ? 'var(--border)' : 'var(--warp-grid)' }} strokeWidth={1} />
             ))}
-            {[0.25, 0.5, 0.75].map((y) => (
-              <line key={`h${y}`} x1={0} y1={Y(y)} x2={w} y2={Y(y)} style={{ stroke: 'var(--warp-grid)' }} strokeWidth={1} />
+            {Array.from({ length: Math.max(0, gridY - 1) }, (_, k) => (k + 1) / gridY).map((y) => (
+              <line key={`h${y}`} x1={0} y1={Y(y)} x2={w} y2={Y(y)} style={{ stroke: Math.abs(y - 0.5) < EPS ? 'var(--border)' : 'var(--warp-grid)' }} strokeWidth={1} />
             ))}
           </g>
           {backChildren}

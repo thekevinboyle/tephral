@@ -80,7 +80,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     if (!cv || !ctx || !head) return
     const dpr = window.devicePixelRatio || 1
     cv.width = Math.round(w * dpr); cv.height = Math.round(gh * dpr)
-    const warp = getComputedStyle(cv).getPropertyValue('--warp').trim() || '#e8c35a'
+    const warp = getComputedStyle(cv).getPropertyValue('--warp').trim() || '#FFF618'
     const env = new Float32Array(BARS) // measured output, filled as the playhead passes
     const preview = new Float32Array(BARS)
     let previewKey: Float32Array | null = null, previewAmount = NaN

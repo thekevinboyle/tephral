@@ -76,13 +76,15 @@ export interface LinePlotProps {
  * `getPoints` and write through `setPoints`.
  */
 export const LinePlot = memo(function LinePlot({
-  points, getPoints, setPoints, snap, gridY = 16, tool, selected, onSelect, width: w, height: gh, attr, ariaLabel,
+  points, getPoints, setPoints, snap, gridY: gridYProp = 16, tool, selected, onSelect, width: w, height: gh, attr, ariaLabel,
   hoverStatus, statusPoint = STATUS_POINT, backChildren, between, children, stroke = 'var(--text-primary)', svgRef: outerRef,
 }: LinePlotProps & { svgRef?: React.Ref<SVGSVGElement> }) {
   const svgRef = useRef<SVGSVGElement | null>(null)
   const lastStatus = useRef<string | null>(null)
-  // The point a click on empty space just added, so the double-click that click starts keeps it (spec §5)
-  const added = useRef<{ x: number; y: number; t: number } | null>(null)
+  // The point a click on empty space just added (or moved, in an occupied column), with the click's screen
+  // position, so the double-click that click starts keeps it instead of deleting it (spec §5)
+  const added = useRef<{ x: number; y: number; t: number; cx: number; cy: number } | null>(null)
+  const gridY = Math.max(1, gridYProp)
   // The optional outer ref sees the front (interactive) svg; it only exists while the width is non-zero
   useImperativeHandle(outerRef, () => svgRef.current as SVGSVGElement)
 
@@ -232,6 +234,9 @@ export const LinePlot = memo(function LinePlot({
 
   const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     if (e.button !== 0) return
+    // `added` belongs to this gesture: keep it only for the second press of the same double-click
+    const prev = added.current
+    added.current = prev && performance.now() - prev.t < 600 && Math.hypot(e.clientX - prev.cx, e.clientY - prev.cy) < 6 ? prev : null
     svgRef.current?.focus({ preventScroll: true })
     const t = e.target as Element
     const bh = t.closest(`[data-${attr}-bend]`)
@@ -265,6 +270,7 @@ export const LinePlot = memo(function LinePlot({
       next[same] = { ...cur[same], y: p.y }
       setPoints(next)
       onSelect(same)
+      added.current = { x: cur[same].x, y: p.y, t: performance.now(), cx: e.clientX, cy: e.clientY }
       movePoint(same, e)
       return
     }
@@ -273,7 +279,7 @@ export const LinePlot = memo(function LinePlot({
     const next = [...cur.slice(0, at), p, ...cur.slice(at)]
     setPoints(next)
     onSelect(at)
-    added.current = { x: p.x, y: p.y, t: performance.now() }
+    added.current = { x: p.x, y: p.y, t: performance.now(), cx: e.clientX, cy: e.clientY }
     paint(e, 'draw', cur, p)
   }
 
@@ -284,18 +290,23 @@ export const LinePlot = memo(function LinePlot({
     const i = hitPoint(e.clientX, e.clientY, cur)
     const a = added.current
     added.current = null
-    const fresh = !!a && performance.now() - a.t < 600
-    // the double-click's first click already added this point: keep it (spec §5)
-    if (i >= 0 && fresh && Math.abs(cur[i].x - a!.x) < EPS && Math.abs(cur[i].y - a!.y) < EPS) return
+    if (a && performance.now() - a.t < 600) {
+      // The double-click's first click already added (or moved) a point: keep it, with x on the X grid (spec §5)
+      const k = cur.findIndex((q) => Math.abs(q.x - a.x) < EPS && Math.abs(q.y - a.y) < EPS)
+      if (k > 0 && k < cur.length - 1) {
+        const x = Math.min(cur[k + 1].x, Math.max(cur[k - 1].x, snapGridX(cur[k].x)))
+        if (x !== cur[k].x) { const next = cur.slice(); next[k] = { ...cur[k], x }; setPoints(next) }
+        onSelect(k)
+      }
+      return
+    }
     if (i >= 0) {
       // endpoints, and lines with 2 points, are kept
       if (cur.length > 2 && i > 0 && i < cur.length - 1) { setPoints(cur.filter((_, k) => k !== i)); onSelect(null) }
       return
     }
-    // the first click already added a point that snapped away from the cursor: a double-click adds exactly one
-    if (fresh) return
-    // empty space (e.g. the first click landed on an existing x): add one point
-    const v = toVal(e), p = { x: snapX(v.x), y: v.y }
+    // empty space the first click did not add to: add one point, x on the X grid
+    const v = toVal(e), p = { x: snapGridX(v.x), y: v.y }
     let at = cur.length
     for (let k = 0; k < cur.length; k++) if (cur[k].x > p.x) { at = k; break }
     setPoints([...cur.slice(0, at), p, ...cur.slice(at)])

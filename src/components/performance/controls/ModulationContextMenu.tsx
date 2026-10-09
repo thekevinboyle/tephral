@@ -4,7 +4,7 @@ import { useModulationStore, LFO_COUNT } from '../../../stores/modulationStore'
 const LFO_SOURCES = Array.from({ length: LFO_COUNT }, (_, i) => ({
   id: `lfo-${i}`,
   label: `LFO ${i + 1}`,
-  color: '#4fb3ff', // --mod (literal: alpha suffixes are appended below)
+  color: '#13FADE', // --mod (literal: alpha suffixes are appended below)
 }))
 
 const OTHER_SOURCES = [
@@ -12,7 +12,7 @@ const OTHER_SOURCES = [
   { id: 'step', label: 'Step', color: '#4ECDC4' },
   { id: 'envelope', label: 'Envelope', color: '#AA55FF' },
   { id: 'sampleHold', label: 'S&H', color: '#AAFF00' },
-  { id: 'warp', label: 'Warp', color: '#e8c35a' }, // the time warp line (--warp)
+  { id: 'warp', label: 'Warp', color: '#FFF618' }, // the time warp line (--warp)
 ]
 
 

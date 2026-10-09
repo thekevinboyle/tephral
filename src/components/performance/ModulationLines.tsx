@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useModulationStore } from '../../stores/modulationStore'
 
 const SOURCE_COLORS: Record<string, string> = {
-  lfo: '#4fb3ff', // --mod
+  lfo: '#13FADE', // --mod
   random: '#FF6B6B',
   step: '#4ECDC4',
   envelope: '#AA55FF',

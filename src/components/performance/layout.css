@@ -402,12 +402,12 @@
 
 /* ─── Warp tab (time warp editor): graph column + 300px side panel ─────────────────────────────────── */
 :root {
-  --warp: #e8c35a;       /* time warp accent */
-  --warp-ink: #1b1b1b;   /* text on a --warp fill */
-  --warp-grid: #2b2c30;  /* graph columns between the quarter lines */
-  --warp-identity: #6a6b70; /* the dashed "Normal" diagonal */
-  --warp-lock: #5a4d22;  /* outline of a group locked for the dice (dim --warp) */
-  --warp-note-bg: #26241c; /* behind --warp text in a lock note */
+  --warp: #FFF618;       /* time warp and master line accent (Bergamot) */
+  --warp-ink: #222222;   /* text on a --warp fill */
+  --warp-grid: #2e2e2e;  /* graph columns between the quarter lines */
+  --warp-identity: #707070; /* the dashed "Normal" diagonal */
+  --warp-lock: #5c5a1a;  /* outline of a group locked for the dice (dim --warp) */
+  --warp-note-bg: #262612; /* behind --warp text in a lock note */
 }
 .seg-shell[data-bottom-tab="warp"] > [data-area="bottom"] { height: 300px; }
 .seg-warp { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 2px; background: var(--gutter); outline: none; }

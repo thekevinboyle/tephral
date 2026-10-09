@@ -5,12 +5,12 @@
 
 :root {
   /* Backgrounds — charcoal, readable contrast */
-  --gutter: #0e0f10;
-  --bg-void: #18191b;
-  --bg-primary: #222326;
-  --bg-surface: #2c2d31;
-  --bg-elevated: #37383d;
-  --bg-hover: #45464c;
+  --gutter: #0f0f0f;
+  --bg-void: #171717;
+  --bg-primary: #222222;
+  --bg-surface: #2e2e2e;
+  --bg-elevated: #3b3b3b;
+  --bg-hover: #4a4a4a;
 
   /* Layout grid */
   --col-left: 320px;
@@ -51,26 +51,26 @@
   --gap-lg: var(--space-4);
 
   /* Line grid — replaces dot matrix */
-  --grid-dot: #2c2d31;
+  --grid-dot: #2e2e2e;
   --grid-size: 20px;
   --dot-size: 1px;
 
   /* Borders — visible edges for panel separation */
-  --border: #3a3b40;
-  --border-emphasis: #4a4b51;
-  --border-light: #45464c;
+  --border: #444444;
+  --border-emphasis: #575757;
+  --border-light: #4a4a4a;
 
   /* Text — high contrast on charcoal */
-  --text-primary: #ececee;
-  --text-secondary: #b4b6bc;
-  --text-muted: #9699a0;
-  --text-ghost: #9699a0;
+  --text-primary: #F4F4F4;
+  --text-secondary: #d6d4cf;
+  --text-muted: #aeaca7;
+  --text-ghost: #aeaca7;
 
-  /* Recording: the one non-effect colour (REC stays red). >= 4.5:1 on --bg-void and --bg-primary */
-  --rec: #ff5a4e;
-  --mod: #4fb3ff;
-  --live: #b8f35a;
-  --sel: #f2f2f4;
+  /* Global Colors palette: Ripe (REC only), Ozone (modulation), Wretched (live, playheads), Albino (selection) */
+  --rec: #FF175D;
+  --mod: #13FADE;
+  --live: #C4FA13;
+  --sel: #F4F4F4;
 
   /* Accent — white base (effect colors provide the only color) */
   --accent: #FFFFFF;
@@ -106,10 +106,10 @@
   --shadow-inset: none;
 
   /* Knob surface */
-  --knob-body: #2c2d31;
-  --knob-body-highlight: #37383d;
-  --knob-rim: #37383d;
-  --knob-rim-highlight: #45464c;
+  --knob-body: #2e2e2e;
+  --knob-body-highlight: #3b3b3b;
+  --knob-rim: #3b3b3b;
+  --knob-rim-highlight: #4a4a4a;
 
   /* Surface highlights — removed */
   --border-top-highlight: none;

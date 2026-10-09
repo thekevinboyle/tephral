@@ -17,7 +17,7 @@ const PROFILE_STATUS: Record<ProfileId, string> = {
 }
 
 const APPLIES: { id: WarpApplies; name: string; status: string }[] = [
-  { id: 'both', name: 'Video + audio', status: 'Applies to: warp the video and the sound together' },
+  { id: 'both', name: 'Both', status: 'Applies to: warp the video and the sound together' },
   { id: 'video', name: 'Video', status: 'Applies to: warp only the video; the sound plays live' },
   { id: 'audio', name: 'Audio', status: 'Applies to: warp only the sound; the video plays live' },
 ]
@@ -305,14 +305,39 @@ const OutputSection = memo(function OutputSection() {
 const AppliesSection = memo(function AppliesSection() {
   const appliesTo = useWarpStore((s) => s.appliesTo)
   return (
-    <div className="seg-warp-seg" role="group" aria-label="Applies to">
-      {APPLIES.map((a) => (
-        <button key={a.id} type="button" data-warp-applies={a.id} aria-pressed={appliesTo === a.id}
-          onClick={() => useWarpStore.getState().patch({ appliesTo: a.id })} {...statusHover(a.status)}>
-          {a.name}
-        </button>
-      ))}
+    <div className="seg-warp-route">
+      <div className="seg-warp-seg" role="group" aria-label="Applies to">
+        {APPLIES.map((a) => (
+          <button key={a.id} type="button" data-warp-applies={a.id} aria-pressed={appliesTo === a.id}
+            onClick={() => useWarpStore.getState().patch({ appliesTo: a.id })} {...statusHover(a.status)}>
+            {a.name}
+          </button>
+        ))}
+      </div>
+      <PlacementToggle />
     </div>
+  )
+})
+
+const PLACEMENT_STATUS = {
+  before: 'After FX is off: the warp works on the source, then the effects run on the warped picture',
+  after: 'After FX is on: the effects run first, then the warp works on the finished picture',
+}
+
+/**
+ * Where the picture is warped: a toggle beside Applies to (on = after the effect chain). The sound has no
+ * effect chain, so it is disabled with Applies to = Audio.
+ */
+const PlacementToggle = memo(function PlacementToggle() {
+  const placement = useWarpStore((s) => s.placement)
+  const audioOnly = useWarpStore((s) => s.appliesTo === 'audio')
+  return (
+    <button type="button" className="seg-warp-placement" data-warp-placement aria-pressed={placement === 'after'} disabled={audioOnly}
+      aria-label="Warp after the effects"
+      onClick={() => useWarpStore.getState().patch({ placement: placement === 'after' ? 'before' : 'after' })}
+      {...statusHover(PLACEMENT_STATUS[placement])}>
+      After FX
+    </button>
   )
 })
 
@@ -353,7 +378,7 @@ const Footer = memo(function Footer() {
   )
 })
 
-/** Right of the graph (spec §3 to §5): on/off and profile, its 4 knobs, Output, Applies to, then lock mode, Dice and Presets. */
+/** Right of the graph (spec §3 to §5): on/off and profile, its 4 knobs, Output, Applies to and After FX, then lock mode, Dice and Presets. */
 export const WarpSidePanel = memo(function WarpSidePanel() {
   return (
     <div className="seg-warp-side">

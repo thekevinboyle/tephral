@@ -11,6 +11,7 @@ import { DeviceCard } from './DeviceCard'
 import { DeviceChainContext, type DeviceChainActions } from './deviceChainContext'
 import { ModulatorsCard } from './ModulatorsCard'
 import { WarpCard } from './WarpCard'
+import { useWarpStore } from '../../stores/warpStore'
 
 /**
  * Bottom panel, Devices tab: the modulators card, then one DeviceCard per active effect in signal order
@@ -222,13 +223,16 @@ export const DeviceChain = memo(function DeviceChain() {
     ev.currentTarget.scrollLeft += ev.deltaY
   }
 
+  // The Time warp card sits where the picture is warped: before the devices, or after them
+  const warpAfter = useWarpStore((s) => s.placement === 'after' && s.appliesTo !== 'audio')
+
   const selected = selectedEffectId && ids.includes(selectedEffectId) ? selectedEffectId : null
 
   return (
     <DeviceChainContext.Provider value={actions}>
       <div className="seg-chain" data-device-chain ref={scrollerRef} onWheel={onWheel}>
         <ModulatorsCard />
-        <WarpCard />
+        {!warpAfter && <WarpCard />}
         <div className="seg-chain-devices" role="list" aria-label="Device chain, signal flows left to right">
           {ids.map((id, i) => (
             <div key={id} className="seg-chain-slot" role="listitem">
@@ -238,6 +242,7 @@ export const DeviceChain = memo(function DeviceChain() {
           ))}
         </div>
         <AddGap beforeId={null} />
+        {warpAfter && <WarpCard />}
         <button
           type="button"
           data-device-add

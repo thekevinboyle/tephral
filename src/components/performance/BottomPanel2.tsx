@@ -14,7 +14,7 @@ import { modulatorName } from './modulatorSlots'
 import { statusHover } from '../../utils/statusHover'
 
 /**
- * Bottom panel: header ("Chain · signal flows left to right", Devices/Warp/Sequencer tabs, Bypass all, Clear)
+ * Bottom panel: header (Devices/Warp/Sequencer tabs on the left, the view's note, Bypass all, Clear)
  * over three bodies. All bodies stay mounted and the inactive ones are hidden, so switching tabs never
  * remounts the sequencer (which owns the Space/arrow shortcuts) or touches the stage.
  */
@@ -48,19 +48,26 @@ const HeaderNote = memo(function HeaderNote() {
       </span>
     )
   }
-  const sub = tab === 'devices' ? '· signal flows left to right'
+  const sub = tab === 'devices' ? 'Signal flows left to right'
     : tab === 'warp' ? (warpLockMode ? 'Lock mode: locked parts keep their values when you roll the dice' : 'Top = live · lower = further back · flat = normal · along the dashed line = stopped · steeper = reverse')
-    : '· one lane per device'
+    : 'One lane per device'
   return <span className="seg-bottom-sub">{sub}</span>
 })
 
 const TABS = [['devices', 'Devices', 'tabDevices'], ['warp', 'Warp', 'tabWarp'], ['sequencer', 'Sequencer', 'tabSequencer']] as const
-const TITLES = { devices: 'Chain', warp: 'Warp', sequencer: 'Sequencer' } as const
 
+/** 14px line icons for the three views: a device rack, a warped time line, step lanes. */
+const ICONS = {
+  devices: <><rect x="1.5" y="3" width="3.2" height="8" rx=".6" /><rect x="5.4" y="3" width="3.2" height="8" rx=".6" /><rect x="9.3" y="3" width="3.2" height="8" rx=".6" /></>,
+  warp: <path d="M1.5 11.5C4 11.5 4.5 2.5 7 2.5s3 6 5.5 6" />,
+  sequencer: <><path d="M1.5 3.5h11M1.5 7h11M1.5 10.5h11" opacity=".45" /><rect x="2.5" y="2.5" width="2" height="2" /><rect x="7" y="6" width="2" height="2" /><rect x="4.5" y="9.5" width="2" height="2" /><rect x="10" y="9.5" width="2" height="2" /></>,
+} as const
+
+/** The panel's main navigation: big tabs at the left of the header; the active one joins the body below. */
 const Tabs = memo(function Tabs() {
   const tab = useUIStore((s) => s.bottomTab)
   return (
-    <div className="seg-seg" role="tablist" aria-label="Bottom panel">
+    <div className="seg-nav" role="tablist" aria-label="Bottom panel views">
       {TABS.map(([t, name, status]) => (
         <button
           key={t}
@@ -69,11 +76,21 @@ const Tabs = memo(function Tabs() {
           id={`seg-bottom-tab-${t}`}
           aria-controls={`seg-bottom-body-${t}`}
           aria-selected={tab === t}
-          aria-pressed={tab === t}
+          tabIndex={tab === t ? 0 : -1}
           data-bottom-tab-btn={t}
+          className="seg-nav-tab"
           onClick={() => useUIStore.getState().setBottomTab(t)}
+          onKeyDown={(e) => {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+            e.preventDefault()
+            const i = TABS.findIndex(([k]) => k === t)
+            const next = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length][0]
+            useUIStore.getState().setBottomTab(next)
+            document.getElementById(`seg-bottom-tab-${next}`)?.focus()
+          }}
           {...statusHover(getUIStatusText(status))}
         >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden>{ICONS[t]}</svg>
           {name}
         </button>
       ))}
@@ -127,11 +144,10 @@ export const BottomPanel2 = memo(function BottomPanel2() {
   return (
     <div className="seg-bottom" data-bottom-panel data-tab={tab}>
       <div className="seg-bottom-head">
-        <span className="seg-bottom-title">{TITLES[tab]}</span>
+        <Tabs />
         <HeaderNote />
         <span className="seg-bottom-spacer" />
         {tab !== 'warp' && <ChainActions />}
-        <Tabs />
       </div>
       <div
         className="seg-bottom-body"

@@ -24,7 +24,7 @@ const COPY_HINT = 'Click to open. Alt-drag onto another tab to copy this line an
 const tabName = (id: string) => (id === 'master' ? 'Master' : getEffectInfo(id).name)
 
 /**
- * Alt-drag tab copy (lines editor spec §5): copies points, amount, beats, snap, gridY and skew from `src` onto
+ * Alt-drag tab copy (lines editor spec §5): copies points, amount, beats, snap, gridY, skew, direction, loop region and scatter from `src` onto
  * `dst` (never mode, steps, Dry/wet or locks). Returns false when the target is locked.
  */
 function copyLine(src: string, dst: string): boolean {
@@ -36,7 +36,8 @@ function copyLine(src: string, dst: string): boolean {
     ui.setStatusText('That line is locked, so the copy was refused')
     return false
   }
-  const copy = { points: from.points, amount: from.amount, beats: from.beats, snap: from.snap, gridY: from.gridY, skew: from.skew }
+  const copy = { points: from.points, amount: from.amount, beats: from.beats, snap: from.snap, gridY: from.gridY, skew: from.skew,
+    direction: from.direction, loopStart: from.loopStart, loopEnd: from.loopEnd, scatter: from.scatter }
   if (dst === 'master') s.setMasterLine(copy)
   else s.setTrackLine(dst, copy)
   ui.setStatusText(`Copied ${tabName(src)} line to ${tabName(dst)}`)

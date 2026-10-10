@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { buildLut, cleanPoints, normalizePoints, PRESETS, randomCurves, randomSteps, type WarpPoint } from '../effects/warp/warpMath'
+import { cleanPlayFields, PLAY_FIELD_DEFAULTS, type PlayFields } from '../effects/playhead'
 
 /** Dice lock groups: which parts Dice leaves alone (the lock store lives in components/performance/warp/warpLocks.ts). */
 export type LockGroup = 'amount' | 'profile' | 'graph' | 'settings' | 'knobs' | 'output'
@@ -76,7 +77,7 @@ export function isProfileNeutral(profile: ProfileId, knobs: readonly number[]): 
 /** Output leaves the signal untouched: Band fully open and Level 0 dB (spec §4). */
 export const isOutputOpen = (o: WarpOutput) => o.low <= 20 && o.high >= 20000 && o.levelDb === 0
 
-export interface WarpSnapshot {
+export interface WarpSnapshot extends PlayFields {
   enabled: boolean
   points: WarpPoint[]
   amount: number
@@ -109,6 +110,7 @@ export const WARP_DEFAULTS: WarpSnapshot = {
   output: { ...OUTPUT_DEFAULTS },
   appliesTo: 'both',
   placement: 'before',
+  ...PLAY_FIELD_DEFAULTS,
   mix: 1,
   presetName: 'Straight',
 }
@@ -124,7 +126,7 @@ interface WarpState extends WarpSnapshot {
   /** Flat along the top: live. */
   clearLine: () => void
   /**
-   * Dice (spec §5): randomize every unlocked group. Never touches enabled, appliesTo or placement. `rand` is for
+   * Dice (spec §5): randomize every unlocked group. Never touches enabled, appliesTo, placement or the playback fields (direction, loop region, scatter). `rand` is for
    * seeded tests.
    */
   dice: (locks: Readonly<WarpLocks>, rand?: () => number) => void
@@ -205,6 +207,7 @@ export function sanitize(s: Partial<WarpSnapshot> | undefined, base: WarpSnapsho
     profileParams,
     output,
     appliesTo: APPLIES.includes(i.appliesTo as WarpApplies) ? (i.appliesTo as WarpApplies) : base.appliesTo,
+    ...cleanPlayFields(i, base),
     placement: PLACEMENTS.includes(i.placement as WarpPlacement) ? (i.placement as WarpPlacement) : base.placement,
     mix: num(i.mix, base.mix, 0, 1),
     presetName: typeof i.presetName === 'string' ? i.presetName : i.presetName === null ? null : base.presetName,
@@ -288,6 +291,7 @@ export const useWarpStore = create<WarpState>((set, get) => {
       return fresh({
         enabled: s.enabled, points: s.points, amount: s.amount, lengthBeats: s.lengthBeats, snap: s.snap, skew: s.skew,
         profile: s.profile, profileParams: s.profileParams, output: s.output, appliesTo: s.appliesTo, placement: s.placement, mix: s.mix, presetName: s.presetName,
+        direction: s.direction, loopStart: s.loopStart, loopEnd: s.loopEnd, scatter: s.scatter,
       })
     },
   }

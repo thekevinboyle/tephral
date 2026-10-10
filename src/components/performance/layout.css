@@ -432,6 +432,14 @@
 .seg-warp-graph[data-tool="curve"] > svg[data-warp-graph] { cursor: ns-resize; }
 .seg-warp-graph[data-tool="erase"] > svg[data-warp-graph] { cursor: cell; }
 .seg-warp-graph > svg[data-warp-graph]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-loop-strip { position: relative; flex: none; height: 12px; margin: 0 9px; } /* 8px panel margin + the graph's 1px border: x lines up with the plot */
+.seg-loop-range { position: absolute; top: 5px; height: 2px; background: var(--warp); opacity: .55; pointer-events: none; }
+.seg-loop-handle { position: absolute; top: 0; width: 10px; height: 12px; margin-left: -5px; cursor: ew-resize; }
+.seg-loop-handle::before { content: ''; position: absolute; left: 4px; top: 0; width: 2px; height: 12px; background: var(--warp); }
+.seg-loop-handle[data-edge="start"]::after, .seg-loop-handle[data-edge="end"]::after { content: ''; position: absolute; top: 0; width: 5px; height: 5px; background: var(--warp); }
+.seg-loop-handle[data-edge="start"]::after { left: 6px; }
+.seg-loop-handle[data-edge="end"]::after { left: -1px; }
+.seg-loop-handle:hover::before { width: 3px; }
 .seg-warp-playhead { position: absolute; left: 0; top: 0; bottom: 0; width: 1.5px; background: var(--live); pointer-events: none; will-change: transform; }
 .seg-warp-graph[data-off] .seg-warp-playhead { opacity: .35; }
 [data-warp-point] { cursor: grab; }
@@ -458,6 +466,12 @@
 .seg-warp-seg { display: flex; gap: 3px; }
 .seg-warp-seg > button { flex: 1 1 0; min-width: 0; height: 22px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .seg-warp-seg > button:hover { background: var(--bg-hover); }
+.seg-warp-route { display: flex; gap: 6px; }
+.seg-warp-route > .seg-warp-seg { flex: 1 1 0; min-width: 0; }
+.seg-warp-placement { flex: none; height: 22px; padding: 0 8px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); font: 400 11.5px var(--font-sans); cursor: pointer; white-space: nowrap; }
+.seg-warp-placement:hover { background: var(--bg-hover); }
+.seg-warp-placement[aria-pressed="true"] { background: var(--warp); color: var(--warp-ink); font-weight: 600; }
+.seg-warp-placement:disabled { opacity: .45; cursor: default; background: var(--bg-elevated); }
 .seg-warp-seg > button[aria-pressed="true"] { background: var(--warp); color: var(--warp-ink); font-weight: 600; }
 .seg-warp-knobs { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; border-radius: var(--radius-ctrl); }
 /* !important because Knob sets the value and label line-height inline */
@@ -504,7 +518,7 @@
 .seg-lines-graph[data-tool="curve"] > svg[data-line-graph] { cursor: ns-resize; }
 .seg-lines-graph[data-tool="erase"] > svg[data-line-graph] { cursor: cell; }
 .seg-lines-graph > svg[data-line-graph]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
-.seg-lines-settings { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 6px 8px 8px; }
+.seg-lines-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 4px; padding: 6px 8px 8px; }
 .seg-lines-side { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 9px 10px; background: var(--bg-surface); overflow-y: auto; }
 .seg-lines-side-head { display: flex; align-items: center; gap: 7px; font: 500 12px var(--font-sans); color: var(--text-primary); }
 .seg-lines-side-head > i { flex: none; width: 8px; height: 8px; border-radius: 2px; }

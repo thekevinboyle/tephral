@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { buildLut, cleanPoints, normalizePoints, PRESETS, randomCurves, randomSteps, type WarpPoint } from '../effects/warp/warpMath'
+import { cleanPlayFields, PLAY_FIELD_DEFAULTS, type PlayFields } from '../effects/playhead'
 
 /** Dice lock groups: which parts Dice leaves alone (the lock store lives in components/performance/warp/warpLocks.ts). */
 export type LockGroup = 'amount' | 'profile' | 'graph' | 'settings' | 'knobs' | 'output'
@@ -7,6 +8,8 @@ export type WarpLocks = Record<LockGroup, boolean>
 
 export type ProfileId = 'clean' | 'flange' | 'degrade' | 'filterspam' | 'harmonicer' | 'fauxcoder' | 'lofizzly'
 export type WarpApplies = 'both' | 'video' | 'audio'
+/** Where the picture is warped: on the source before the effect chain, or on the finished picture after it. */
+export type WarpPlacement = 'before' | 'after'
 export type Knobs = [number, number, number, number]
 export type LengthBeats = 0.5 | 1 | 2 | 4 | 8 | 16
 
@@ -74,7 +77,7 @@ export function isProfileNeutral(profile: ProfileId, knobs: readonly number[]): 
 /** Output leaves the signal untouched: Band fully open and Level 0 dB (spec §4). */
 export const isOutputOpen = (o: WarpOutput) => o.low <= 20 && o.high >= 20000 && o.levelDb === 0
 
-export interface WarpSnapshot {
+export interface WarpSnapshot extends PlayFields {
   enabled: boolean
   points: WarpPoint[]
   amount: number
@@ -86,6 +89,7 @@ export interface WarpSnapshot {
   profileParams: Record<ProfileId, Knobs>
   output: WarpOutput
   appliesTo: WarpApplies
+  placement: WarpPlacement
   mix: number
   presetName: string | null
 }
@@ -105,6 +109,8 @@ export const WARP_DEFAULTS: WarpSnapshot = {
   profileParams: copyProfileParams(PROFILE_DEFAULTS),
   output: { ...OUTPUT_DEFAULTS },
   appliesTo: 'both',
+  placement: 'before',
+  ...PLAY_FIELD_DEFAULTS,
   mix: 1,
   presetName: 'Straight',
 }
@@ -120,7 +126,7 @@ interface WarpState extends WarpSnapshot {
   /** Flat along the top: live. */
   clearLine: () => void
   /**
-   * Dice (spec §5): randomize every unlocked group. Never touches enabled or appliesTo. `rand` is for
+   * Dice (spec §5): randomize every unlocked group. Never touches enabled, appliesTo, placement or the playback fields (direction, loop region, scatter). `rand` is for
    * seeded tests.
    */
   dice: (locks: Readonly<WarpLocks>, rand?: () => number) => void
@@ -133,6 +139,7 @@ export const LENGTHS: readonly LengthBeats[] = [0.5, 1, 2, 4, 8, 16]
 /** Quantize settings, Off (0) first, then coarse to fine. */
 export const SNAPS: readonly number[] = [0, 1 / 4, 1 / 8, 1 / 16, 1 / 32, 1 / 64]
 const APPLIES: WarpApplies[] = ['both', 'video', 'audio']
+const PLACEMENTS: WarpPlacement[] = ['before', 'after']
 
 const num = (v: unknown, fallback: number, lo: number, hi: number) =>
   typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback
@@ -200,6 +207,8 @@ export function sanitize(s: Partial<WarpSnapshot> | undefined, base: WarpSnapsho
     profileParams,
     output,
     appliesTo: APPLIES.includes(i.appliesTo as WarpApplies) ? (i.appliesTo as WarpApplies) : base.appliesTo,
+    ...cleanPlayFields(i, base),
+    placement: PLACEMENTS.includes(i.placement as WarpPlacement) ? (i.placement as WarpPlacement) : base.placement,
     mix: num(i.mix, base.mix, 0, 1),
     presetName: typeof i.presetName === 'string' ? i.presetName : i.presetName === null ? null : base.presetName,
   }
@@ -281,7 +290,8 @@ export const useWarpStore = create<WarpState>((set, get) => {
       const s = get()
       return fresh({
         enabled: s.enabled, points: s.points, amount: s.amount, lengthBeats: s.lengthBeats, snap: s.snap, skew: s.skew,
-        profile: s.profile, profileParams: s.profileParams, output: s.output, appliesTo: s.appliesTo, mix: s.mix, presetName: s.presetName,
+        profile: s.profile, profileParams: s.profileParams, output: s.output, appliesTo: s.appliesTo, placement: s.placement, mix: s.mix, presetName: s.presetName,
+        direction: s.direction, loopStart: s.loopStart, loopEnd: s.loopEnd, scatter: s.scatter,
       })
     },
   }

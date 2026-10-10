@@ -5,7 +5,7 @@ import { useMIDIStore } from '../../stores/midiStore'
 import { useUIStore } from '../../stores/uiStore'
 import { getEffectInfo } from '../../config/effectNames'
 import { gateOpenLevel, getMasterLevel, getUserMix } from '../../effects/mixModulation'
-import { getLinePhase } from '../../effects/lines/linePhase'
+import { getLineHead } from '../../effects/lines/linePhase'
 import { lineLevel } from '../../effects/lines/lineLevel'
 import { LANE_PRESET_NAMES, lanePresetPoints } from '../../effects/lines/lanePresets'
 import type { WarpPoint } from '../../effects/warp/warpMath'
@@ -99,8 +99,8 @@ const TrackSide = memo(function TrackSide({ id }: { id: string }) {
   useReadout(roRef, () => {
     const s = useEffectSequencerStore.getState()
     const line = s.tracks[id]?.line ?? DEFAULT_LINE
-    const ph = getLinePhase(id)
-    const l = ph === null ? 1 : lineLevel(line.points, ph, line.skew, line.amount)
+    const hx = getLineHead(id)
+    const l = hx === null ? 1 : lineLevel(line.points, hx, line.amount)
     const m = getMasterLevel()
     const stored = useGlitchEngineStore.getState().effectMix[id] ?? 1
     const ceil = gateOpenLevel(id, getUserMix(id) ?? stored)

@@ -17,8 +17,9 @@ import { useSegStore } from '../stores/segStore'
 import { stepTrackBandModulation, resetTrackBandModulation } from '../effects/trackBandModulation'
 import { useWarpStore } from '../stores/warpStore'
 import { useEffectSequencerStore } from '../stores/effectSequencerStore'
-import { warpModValue } from '../effects/warp/warpMath'
-import { getHeardWarpPhase } from '../effects/warp/warpClock'
+import { warpModValueAt } from '../effects/warp/warpMath'
+import { getHeardWarpPosition } from '../effects/warp/warpClock'
+import { playPosition, warpPlay } from '../effects/playhead'
 import { beginMixModulationFrame, noteModulatedMix } from '../effects/mixModulation'
 
 /**
@@ -746,7 +747,7 @@ export function useContinuousModulation() {
         if (routing.trackId !== 'warp') continue
         if (warpValue < 0) {
           const w = useWarpStore.getState()
-          warpValue = warpModValue(w.lut, getHeardWarpPhase(), w.amount, w.skew)
+          warpValue = warpModValueAt(w.lut, playPosition(getHeardWarpPosition(), warpPlay(w)), w.amount)
           if (import.meta.env.DEV) {
             // Test hook: the harness checks nothing is computed without a warp route. Stripped from builds.
             const g = globalThis as { __segWarpModCount?: number }

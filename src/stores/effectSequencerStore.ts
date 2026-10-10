@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { bjorklundPattern } from '../utils/bjorklund'
+import { cleanPlayFields, PLAY_FIELD_DEFAULTS, type PlayFields } from '../effects/playhead'
 import { BAND_PRESETS, clampBand, type AudioBand } from '../utils/audioBands'
 import { useAudioReactiveStore } from './audioReactiveStore'
 import { cleanPoints, type WarpPoint } from '../effects/warp/warpMath'
@@ -56,8 +57,8 @@ export interface EffectStep {
 export const LINE_BEATS = [0.5, 1, 2, 4, 8, 16] as const
 export const GRID_Y = [2, 3, 4, 6, 8, 12, 16] as const
 
-/** A line (spec §1): warp-format points (y 0 = full, 1 = dry), quantize grid, skew, depth, loop length and Y grid. */
-export interface TrackLine {
+/** A line (spec §1): warp-format points (y 0 = full, 1 = dry), quantize grid, skew, depth, loop length and Y grid, plus its playback (playback spec §1): direction, loop region, scatter. */
+export interface TrackLine extends PlayFields {
   points: WarpPoint[]
   snap: number
   skew: number
@@ -66,7 +67,16 @@ export interface TrackLine {
   gridY: number  // one of GRID_Y: the vertical snap grid
 }
 
-export const defaultTrackLine = (): TrackLine => ({ points: [{ x: 0, y: 0 }, { x: 1, y: 0 }], snap: 1 / 16, skew: 0, amount: 1, beats: 4, gridY: 8 })
+export const defaultTrackLine = (): TrackLine => ({ points: [{ x: 0, y: 0 }, { x: 1, y: 0 }], snap: 1 / 16, skew: 0, amount: 1, beats: 4, gridY: 8, ...PLAY_FIELD_DEFAULTS })
+
+const pickPlay = (l: Partial<TrackLine>): Partial<PlayFields> => {
+  const o: Partial<PlayFields> = {}
+  if (l.direction !== undefined) o.direction = l.direction
+  if (l.loopStart !== undefined) o.loopStart = l.loopStart
+  if (l.loopEnd !== undefined) o.loopEnd = l.loopEnd
+  if (l.scatter !== undefined) o.scatter = l.scatter
+  return o
+}
 
 /** `cur` (or the default, filling fields an older line lacks) with the valid parts of `patch`. */
 export function mergeLine(cur: TrackLine | undefined, patch: Partial<TrackLine>): TrackLine {
@@ -77,6 +87,8 @@ export function mergeLine(cur: TrackLine | undefined, patch: Partial<TrackLine>)
   if (patch.amount !== undefined && Number.isFinite(patch.amount)) next.amount = Math.max(0, Math.min(1, patch.amount))
   if (patch.beats !== undefined && (LINE_BEATS as readonly number[]).includes(patch.beats)) next.beats = patch.beats
   if (patch.gridY !== undefined && (GRID_Y as readonly number[]).includes(patch.gridY)) next.gridY = patch.gridY
+  const cur0 = pickPlay(next) as PlayFields
+  Object.assign(next, cleanPlayFields({ ...cur0, ...pickPlay(patch) }, cur0))
   return next
 }
 

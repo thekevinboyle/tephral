@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { EffectComposer, RenderPass, EffectPass, Effect } from 'postprocessing'
+import { EffectComposer, RenderPass, EffectPass, Effect, type Pass } from 'postprocessing'
 import {
   RGBSplitEffect,
   BlockDisplaceEffect,
@@ -210,6 +210,11 @@ export class EffectPipeline {
   // in dispose().
   private passCache = new Map<Effect, EffectPass>()
   private lastChainKey = '#UNINITIALIZED#'
+  private lastActiveIds: string[] = []
+  private lastBypass = false
+  // The time warp's pass when it is placed after the chain (owned by Canvas, never disposed here)
+  private warpPostPass: Pass | null = null
+  private composedWarpPass: Pass | null = null
   // Tracks which temporal (frame-capturing) effects were enabled as of the
   // last updateEffects() call. Read by render() to gate captureFrame() calls
   // and updated/reconciled every call — including calls where the active
@@ -728,8 +733,26 @@ export class EffectPipeline {
     // collide on chainKey === '', so toggling bypass while no effects are
     // enabled would short-circuit and never add/remove the crossfader pass.
     const chainKey = config.bypassActive ? '#BYPASS#' : activeIds.join('|')
+    this.lastActiveIds = activeIds
+    this.lastBypass = config.bypassActive
     if (chainKey === this.lastChainKey) return
     this.lastChainKey = chainKey
+    this.rebuildPasses()
+  }
+
+  /**
+   * The time warp placed after the chain: its pass goes last, after the crossfader (null takes it
+   * out). The chain is rebuilt only when this changes.
+   */
+  setWarpPostPass(pass: Pass | null) {
+    if (pass === this.warpPostPass) return
+    this.warpPostPass = pass
+    this.rebuildPasses()
+  }
+
+  /** Put the passes for the last updateEffects() chain (plus crossfader and warp) into the composer. */
+  private rebuildPasses() {
+    const activeIds = this.lastActiveIds
 
     // Remove all current effect passes from the composer (they stay cached
     // for the pipeline's lifetime — see the passCache field comment).
@@ -740,9 +763,16 @@ export class EffectPipeline {
     if (this.crossfaderPass) {
       this.composer.removePass(this.crossfaderPass)
     }
+    if (this.composedWarpPass) {
+      this.composer.removePass(this.composedWarpPass)
+      this.composedWarpPass = null
+    }
 
-    // If bypass is active, don't add any effect passes - just render the input
-    if (config.bypassActive) return
+    // If bypass is active, don't add any effect passes - just render the input (the warp still runs on it)
+    if (this.lastBypass) {
+      this.addWarpPostPass()
+      return
+    }
 
     // Add effect passes in order, reusing cached passes (guitar-pedal chain)
     for (const effectId of activeIds) {
@@ -766,6 +796,13 @@ export class EffectPipeline {
       }
       this.composer.addPass(this.crossfaderPass)
     }
+    this.addWarpPostPass()
+  }
+
+  private addWarpPostPass() {
+    if (!this.warpPostPass) return
+    this.composer.addPass(this.warpPostPass)
+    this.composedWarpPass = this.warpPostPass
   }
 
   setInputTexture(texture: THREE.Texture) {
@@ -931,6 +968,10 @@ export class EffectPipeline {
       this.crossfaderPass.dispose()
       this.crossfaderPass = null
     }
+    // The warp's pass belongs to Canvas: take it out so composer.dispose() leaves it alone
+    if (this.composedWarpPass) this.composer.removePass(this.composedWarpPass)
+    this.composedWarpPass = null
+    this.warpPostPass = null
     this.composer.dispose()
     this.quad.geometry.dispose()
     ;(this.quad.material as THREE.Material).dispose()

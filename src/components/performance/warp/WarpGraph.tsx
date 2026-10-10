@@ -1,19 +1,24 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useWarpStore } from '../../../stores/warpStore'
 import { useAudioSourceStore } from '../../../stores/audioSourceStore'
-import { delaySeconds, skewPhase, warpedY } from '../../../effects/warp/warpMath'
-import { getHeardWarpPhase, getWarpPhase, warpLoopSecondsAt, warpNow } from '../../../effects/warp/warpClock'
+import { delayAtX, warpedY } from '../../../effects/warp/warpMath'
+import { getHeardWarpPosition, getWarpPosition, warpLoopSecondsAt, warpNow } from '../../../effects/warp/warpClock'
+import { playPosition, warpPlay } from '../../../effects/playhead'
 import { editPoints } from './warpEdit'
 import { getActiveWarpCompositor } from '../../../effects/warp/warpRegistry'
 import { useLockOutline } from './warpLocks'
 import { LockIcon } from './WarpLock'
 import { LinePlot, PAD, type WarpTool } from '../lines/LinePlot'
+import { LoopStrip } from '../lines/LoopStrip'
 
 export type { WarpTool } from '../lines/LinePlot'
 
 const THUMB_H = 34 // the frame strip under the plot
 const BARS = 120
 const THUMBS = 16
+const setLoop = (loopStart: number, loopEnd: number) => useWarpStore.getState().patch({ loopStart, loopEnd })
+/** Moments sampled over a pass to find which column each one read. */
+const READ_STEPS = THUMBS * 16
 const THUMB_MS = 250
 
 const STATUS_GUIDE = 'Stopped: along the dashed line time stands still. Steeper than it plays in reverse'
@@ -47,6 +52,8 @@ interface Props { tool: WarpTool; visible: boolean; selected: number | null; onS
 export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSelect }: Props) {
   const points = useWarpStore((s) => s.points)
   const snap = useWarpStore((s) => s.snap)
+  const loopStart = useWarpStore((s) => s.loopStart)
+  const loopEnd = useWarpStore((s) => s.loopEnd)
   const enabled = useWarpStore((s) => s.enabled)
   const locked = useLockOutline('graph')
   const boxRef = useRef<HTMLDivElement>(null)
@@ -90,7 +97,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     const frame = () => {
       raf = requestAnimationFrame(frame)
       const s = useWarpStore.getState()
-      const xs = skewPhase(getHeardWarpPhase(), s.skew)
+      const xs = playPosition(getHeardWarpPosition(), warpPlay(s))
       head.style.transform = `translateX(${(PAD + xs * iw).toFixed(1)}px)`
       // Output level from the post-warp analyser, written into the bar under the playhead
       const an = useAudioSourceStore.getState().reactiveAnalyser
@@ -143,7 +150,8 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     const cells = Array.from({ length: THUMBS }, () => document.createElement('canvas'))
     const times = new Float64Array(THUMBS)
     const src = new Int8Array(THUMBS)
-    const args = { phase: 0, lut: useWarpStore.getState().lut, amount: 1, skew: 0, loopSeconds: 2 }
+    const readAt = new Float64Array(THUMBS)
+    const readDist = new Float64Array(THUMBS)
     const draw = () => {
       if (document.visibilityState !== 'visible') return
       const comp = getActiveWarpCompositor()
@@ -155,13 +163,23 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
         const L = warpLoopSecondsAt(now)
         // Reads of the last completed pass lie up to 3 loops back; ask the ring to keep that (capped at 8 s)
         comp.setThumbnailHistory(3 * L + 0.25)
-        const passStart = now - getWarpPhase(now) * L - L
-        args.lut = s.lut; args.amount = s.amount; args.skew = s.skew; args.loopSeconds = L
+        // The last completed pass, in loops; per column, the time that pass read it (playback spec §4). A column the
+        // pass never read (Random, Scatter, a region) stays empty.
+        const pos0 = getWarpPosition(now)
+        const passStart = Math.floor(pos0) - 1
+        const play = warpPlay(s)
+        readAt.fill(NaN); readDist.fill(Infinity)
+        for (let k = 0; k < READ_STEPS; k++) {
+          const pos = passStart + (k + 0.5) / READ_STEPS
+          const x = playPosition(pos, play)
+          const col = Math.min(THUMBS - 1, Math.floor(x * THUMBS))
+          // keep the moment nearest the column's centre (plain playback: the centre itself, as before)
+          const d = Math.abs(x * THUMBS - (col + 0.5))
+          if (d < readDist[col]) { readDist[col] = d; readAt[col] = now - (pos0 - pos) * L - delayAtX(s.lut, x, s.amount, L) }
+        }
         for (let i = 0; i < THUMBS; i++) {
-          // column centre on the graph's axis (x′), back to the clock phase x that reads it
-          const x = skewPhase((i + 0.5) / THUMBS, -s.skew)
-          args.phase = x
-          const t = passStart + x * L - delaySeconds(args)
+          const t = readAt[i]
+          if (Number.isNaN(t)) { times[i] = NaN; src[i] = -1; continue }
           const ft = comp.frameTimeAt(t)
           let j = -1
           for (let k = 0; k < i; k++) if (times[k] === ft) { j = src[k]; break }
@@ -176,7 +194,7 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
       let filled = 0
       for (let i = 0; i < THUMBS; i++) {
         const x = i * (cw + 1)
-        const img = Number.isNaN(times[i]) ? null : cells[src[i]]
+        const img = Number.isNaN(times[i]) || src[i] < 0 ? null : cells[src[i]]
         if (img && img.width > 1) {
           // cover the cell, centred
           const sc = Math.max(cw / img.width, th / img.height)
@@ -199,7 +217,10 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     }
   }, [visible, w])
 
+  const dim = (x0: number, x1: number) => <rect data-warp-loop-dim x={x0} y={0} width={Math.max(0, x1 - x0)} height={gh} style={{ fill: 'var(--bg-void)', fillOpacity: 0.55 }} pointerEvents="none" />
   return (
+    <>
+    <LoopStrip start={loopStart} end={loopEnd} snap={snap} width={w} attr="warp" onChange={setLoop} />
     <div className="seg-warp-graph" ref={boxRef} data-tool={tool} data-off={enabled ? undefined : ''} data-warp-graph-box data-locked={locked || undefined}>
       <canvas ref={thumbRef} data-warp-thumbs aria-hidden="true" />
       <LinePlot
@@ -215,12 +236,17 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
         attr="warp"
         ariaLabel={ARIA_LABEL}
         hoverStatus={guideStatus}
-        backChildren={<line data-warp-guide x1={X(0)} y1={Y(0)} x2={X(1)} y2={Y(1)} style={{ stroke: 'var(--warp-identity)' }} strokeDasharray="6 6" />}
+        backChildren={<>
+          <line data-warp-guide x1={X(0)} y1={Y(0)} x2={X(1)} y2={Y(1)} style={{ stroke: 'var(--warp-identity)' }} strokeDasharray="6 6" />
+        </>}
         between={<>
           <canvas ref={waveRef} aria-hidden="true" />
           <div ref={headRef} className="seg-warp-playhead" data-warp-playhead aria-hidden="true" />
         </>}
       >
+        {/* outside the loop region, dimmed over the waveform and the line (no pointer events: points stay editable) */}
+        {loopStart > 0 && dim(0, X(loopStart))}
+        {loopEnd < 1 && dim(X(loopEnd), w)}
         {/* above the line, with a halo in the graph colour, so the line can cross it and it stays readable */}
         <text className="seg-warp-guide-label" data-warp-guide-label x={X(0.62) + 8} y={Y(0.62) - 6} pointerEvents="none">stopped</text>
       </LinePlot>
@@ -233,5 +259,6 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
         </span>
       )}
     </div>
+    </>
   )
 })

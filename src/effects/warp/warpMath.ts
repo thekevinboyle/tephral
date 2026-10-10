@@ -113,6 +113,15 @@ export function delaySeconds(opts: { phase: number; lut: Float32Array; amount: n
   return d > 0 ? (d < max ? d : max) : 0
 }
 
+/** delaySeconds for an x already through the playhead (playback spec §2). Same clamping, never NaN. */
+export function delayAtX(lut: Float32Array, x: number, amount: number, loopSeconds: number, maxSeconds = MAX_DELAY_SECONDS): number {
+  const d = warpedY(lut, x, amount) * loopSeconds
+  return d > 0 ? (d < maxSeconds ? d : maxSeconds) : 0
+}
+
+/** warpModValue at an x already through the playhead. */
+export const warpModValueAt = (lut: Float32Array, x: number, amount: number) => clamp01(warpedY(lut, x, amount))
+
 /** The line as a modulation value (0 = top, 1 = bottom): y' at the skewed phase. */
 export function warpModValue(lut: Float32Array, phase: number, amount: number, skew: number): number {
   return clamp01(warpedY(lut, skewPhase(phase, skew), amount))

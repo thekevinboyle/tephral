@@ -47,26 +47,40 @@ function segAt(time: number): WarpClockSegment {
   return s
 }
 
+/**
+ * Loops since the anchor of the segment in force at `ctxTime`, unwrapped (playback spec §2: Scatter and Ping-pong read
+ * the whole part). getWarpPhase is its fractional part.
+ */
+export function getWarpPosition(ctxTime: number): number {
+  const s = segAt(ctxTime)
+  return (ctxTime - s.t0) / loopSeconds(s.lengthBeats, s.bpm)
+}
+
 /** 0..1 loop phase at `ctxTime` (a time on the shared base, normally warpNow()). */
 export function getWarpPhase(ctxTime: number): number {
-  const s = segAt(ctxTime)
-  return frac((ctxTime - s.t0) / loopSeconds(s.lengthBeats, s.bpm))
+  return frac(getWarpPosition(ctxTime))
 }
 
 /**
- * Phase of what is being heard right now: the context's time minus its output and base latency
+ * getWarpPosition of what is being heard right now: the context's time minus its output and base latency
  * (0 on the performance.now fallback). For the video side, so pictures line up with the sound.
  */
-export function getHeardWarpPhase(): number {
+export function getHeardWarpPosition(): number {
   const ac = timeBase instanceof AudioContext ? timeBase : null
   const lat = ac ? (ac.outputLatency || 0) + (ac.baseLatency || 0) : 0
-  return getWarpPhase(warpNow() - lat)
+  return getWarpPosition(warpNow() - lat)
+}
+
+/** Phase of what is being heard right now (frac of getHeardWarpPosition). */
+export function getHeardWarpPhase(): number {
+  return frac(getHeardWarpPosition())
 }
 
 function emit(e: WarpClockEvent) { listeners.forEach((fn) => fn(e)) }
 
 /**
- * Anchor the loop so the phase at `ctxTime` is `phase` (default 0), using the current BPM and length.
+ * Anchor the loop so the position at `ctxTime` is `phase` (default 0; loops, may include whole passes), using the
+ * current BPM and length.
  * Passing the phase the clock already has at `ctxTime` keeps x continuous (tempo/length changes);
  * `keep` marks such a change so a worklet that receives it late still keeps its phase.
  */
@@ -121,7 +135,8 @@ export function setWarpTimeBase(ctx: BaseAudioContext | null): void {
 /** Re-anchor on BPM/length changes (x preserved) and on sequencer play (x = 0 at step 0). */
 function reanchorKeepingPhase() {
   const at = warpNow() + WARP_CLOCK_LOOKAHEAD
-  setWarpAnchor(at, getWarpPhase(at), true)
+  // the whole position, not only the phase: Ping-pong's direction and the Scatter order belong to the pass
+  setWarpAnchor(at, getWarpPosition(at), true)
 }
 
 let wired = false

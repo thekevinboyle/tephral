@@ -2,6 +2,7 @@ import { memo } from 'react'
 import { LENGTHS, SNAPS, useWarpStore, type WarpSnapshot } from '../../../stores/warpStore'
 import { useEffectSequencerStore } from '../../../stores/effectSequencerStore'
 import { MAX_DELAY_SECONDS } from '../../../effects/warp/warpMath'
+import { PLAY_DIRECTION_NAMES, PLAY_DIRECTIONS } from '../../../effects/playhead'
 import { statusHover } from '../../../utils/statusHover'
 import { useLockOutline } from './warpLocks'
 import { LockButton } from './WarpLock'
@@ -105,8 +106,18 @@ const stepSnap = (dir: number) => {
   patch({ snap: SNAPS[i] })
 }
 
+const stepDirection = (dir: number) => {
+  const i = clamp(PLAY_DIRECTIONS.indexOf(useWarpStore.getState().direction) + dir, 0, PLAY_DIRECTIONS.length - 1)
+  patch({ direction: PLAY_DIRECTIONS[i] })
+}
+const stepScatter = (dir: number, big: boolean) => {
+  const v = Math.round(useWarpStore.getState().scatter * 100) + dir * (big ? 10 : 1)
+  patch({ scatter: clamp(v, 0, 100) / 100 })
+}
+export const DIRECTION_STATUS = 'Direction: Fwd plays the line left to right, Rev right to left, Ping-pong alternates each pass, Random plays a random slice at each grid step. Drag or use the arrow keys'
+
 /**
- * Amount, Length, Quantize and Skew, plus a note when the loop is longer than the 8 s history. In lock mode a lock
+ * Amount, Length, Quantize, Skew, Direction and Scatter (playback spec §4; outside the lock groups, Dice leaves them), plus a note when the loop is longer than the 8 s history. In lock mode a lock
  * sits before Amount and another before Length (it covers Length, Quantize and Skew).
  */
 export const WarpSettingsRow = memo(function WarpSettingsRow() {
@@ -114,6 +125,8 @@ export const WarpSettingsRow = memo(function WarpSettingsRow() {
   const lengthBeats = useWarpStore((s) => s.lengthBeats)
   const snap = useWarpStore((s) => s.snap)
   const skew = Math.round(useWarpStore((s) => s.skew) * 100)
+  const direction = useWarpStore((s) => s.direction)
+  const scatter = Math.round(useWarpStore((s) => s.scatter) * 100)
   const bpm = useEffectSequencerStore((s) => s.bpm)
   const limited = (lengthBeats * 60) / bpm > MAX_DELAY_SECONDS
   const snapDen = snap > 0 ? Math.round(1 / snap) : 0 // 0 = quantize Off
@@ -131,6 +144,10 @@ export const WarpSettingsRow = memo(function WarpSettingsRow() {
         status="Quantize: the grid points and steps land on across the loop. Off places points freely. Drag or use the arrow keys" />
       <Spin id="skew" locked={settingsLocked} label="Skew" value={`${skew > 0 ? '+' : skew < 0 ? '−' : '+'}${Math.abs(skew)}%`} now={skew} min={-100} max={100} step={stepSkew} pxPerStep={2}
         status="Skew: bends time before the line is read. Positive plays the start of the loop faster. Drag or use the arrow keys" />
+      <Spin id="direction" label="Direction" value={PLAY_DIRECTION_NAMES[direction]} now={PLAY_DIRECTIONS.indexOf(direction)} min={0} max={PLAY_DIRECTIONS.length - 1}
+        step={stepDirection} pxPerStep={14} status={DIRECTION_STATUS} />
+      <Spin id="scatter" label="Scatter" value={`${scatter}%`} now={scatter} min={0} max={100} step={stepScatter} pxPerStep={2}
+        status="Scatter: shuffles the loop's slices (one per Quantize step) each pass. 0% plays in order, 100% fully shuffled. Drag or use the arrow keys" />
       {limited && (
         <span className="seg-warp-limit" data-warp-limit {...statusHover('History is 8 seconds, so longer delays are held at 8 s')}>
           Length limited to 8 s at this tempo

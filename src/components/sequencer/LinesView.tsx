@@ -4,17 +4,19 @@ import { useEffectSequencerStore, defaultTrackLine, GRID_Y, LINE_BEATS, type Tra
 import { SNAPS } from '../../stores/warpStore'
 import { useUIStore } from '../../stores/uiStore'
 import { getEffectInfo } from '../../config/effectNames'
-import { getLinePhase, getMasterPhase } from '../../effects/lines/linePhase'
-import { lineLevel } from '../../effects/lines/lineLevel'
-import { randomCurves, randomSteps, skewPhase, type WarpPoint } from '../../effects/warp/warpMath'
+import { getLineHead, getMasterHead, getMasterPos } from '../../effects/lines/linePhase'
+import { lineLevel, linePlay, lineSeed } from '../../effects/lines/lineLevel'
+import { MASTER_SEED, PLAY_DIRECTION_NAMES, PLAY_DIRECTIONS, playPosition } from '../../effects/playhead'
+import { randomCurves, randomSteps, type WarpPoint } from '../../effects/warp/warpMath'
 import { statusHover } from '../../utils/statusHover'
 import { LinePlot, PAD } from '../performance/lines/LinePlot'
+import { LoopStrip } from '../performance/lines/LoopStrip'
 import { linePath } from '../performance/lines/linePath'
 import { handleLineKey } from '../performance/lines/lineKeys'
 import { LINE_TOOLS } from '../performance/lines/lineTools'
 import { describePoint } from '../performance/warp/warpEdit'
 import { SaveLine } from '../performance/warp/WarpLineTools'
-import { Spin } from '../performance/warp/WarpSettingsRow'
+import { DIRECTION_STATUS, Spin } from '../performance/warp/WarpSettingsRow'
 import { noteLinesViewRender, useLineEditStore, useLinePickStore } from './lineSelection'
 import { readLine, writeLine } from './lineDice'
 import { fmtBeats, fmtLoop } from './lineFormat'
@@ -29,38 +31,41 @@ const NONE: (string | WarpPoint[])[] = []
 const LANE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '1', '2', '3', '4'])
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
-/** The inverse of skewPhase: the loop phase whose skewed phase is `x` (the graph's x axis is the skewed phase). */
-const unskew = (x: number, skew: number) => (x > 0 ? (x < 1 ? (skew ? Math.pow(x, Math.pow(2, 1.5 * skew)) : x) : 1) : 0)
+const COLS_HEAR = SAMPLES // one column per sample step of the old resampling
 
 /**
- * The track tab's overlays in the line's point space (graph x = skewed phase): the "what you hear" fill (track ×
- * master) and the dashed master line, both from one resampling. `cycle` is which track loop within a longer master
- * loop is shown. Paths use the graph's PAD and inner size.
+ * The track tab's overlays in the line's point space (playback spec §4): over the track's pass `pass`, each moment's
+ * x (playPosition) gets track level × master level at that moment; the dashed master is the master level at the same
+ * moments. Columns no moment reads (Random, Scatter, a region) show the track level alone and no dash. Paths use the
+ * graph's PAD and inner size.
  */
-function hearPaths(line: TrackLine, master: { line: TrackLine; enabled: boolean }, cycle: number, iw: number, ih: number) {
+function hearPaths(line: TrackLine, master: { line: TrackLine; enabled: boolean }, id: string, pass: number, iw: number, ih: number) {
   const m = master.line
   const tb = line.beats || 4, mb = m.beats || 4, amount = line.amount ?? 1 // an older line lacks beats and amount
+  const tp = linePlay({ ...defaultTrackLine(), ...line }, lineSeed(id)), mp = linePlay({ ...defaultTrackLine(), ...m }, MASTER_SEED)
+  const val = new Float32Array(COLS_HEAR + 1).fill(NaN), mval = new Float32Array(COLS_HEAR + 1).fill(NaN)
+  const steps = COLS_HEAR * 8
+  for (let i = 0; i < steps; i++) {
+    const p = (i + 0.5) / steps
+    const x = playPosition(pass + p, tp)
+    const col = Math.round(x * COLS_HEAR)
+    const v = lineLevel(line.points, x, amount)
+    let mv = 1
+    if (master.enabled) mv = lineLevel(m.points, playPosition(((pass + p) * tb) / mb, mp), m.amount ?? 1)
+    val[col] = v * mv
+    mval[col] = mv
+  }
   const X = (x: number) => (PAD + x * iw).toFixed(1)
   const Y = (y: number) => (PAD + y * ih).toFixed(1)
-  let fill = `M${X(0)} ${Y(1)}`
-  let dash = ''
-  for (let i = 0; i <= SAMPLES; i++) {
-    const x = i / SAMPLES
-    const v = lineLevel(line.points, x, 0, amount)
-    let mv = 1
-    if (master.enabled) {
-      const p = unskew(x, line.skew)
-      // the master's phase at this point of the track's loop; the loop's end keeps the end value (no wrap to 0)
-      const t = ((cycle + p) * tb) / mb
-      let mp = t - Math.floor(t)
-      if (mp === 0 && p > 0) mp = 1
-      mv = lineLevel(m.points, mp, m.skew ?? 0, m.amount ?? 1)
-      dash += `${i ? ' L' : 'M'}${X(x)} ${Y(1 - mv)}`
-    }
-    fill += ` L${X(x)} ${Y(1 - v * mv)}`
+  let fill = `M${X(0)} ${Y(1)}`, dash = '', pen = false
+  for (let i = 0; i <= COLS_HEAR; i++) {
+    const x = i / COLS_HEAR
+    const v = Number.isNaN(val[i]) ? lineLevel(line.points, x, amount) : val[i]
+    fill += ` L${X(x)} ${Y(1 - v)}`
+    if (master.enabled && !Number.isNaN(mval[i])) { dash += `${pen ? ' L' : ' M'}${X(x)} ${Y(1 - mval[i])}`; pen = true } else pen = false
   }
   fill += ` L${X(1)} ${Y(1)} Z`
-  return { fill, dash }
+  return { fill, dash: dash.trim() }
 }
 
 const nearestIdx = (list: readonly number[], v: number) => {
@@ -138,35 +143,34 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
     let raf = 0
     const frame = () => {
       raf = requestAnimationFrame(frame)
-      const ph = tab === 'master' ? getMasterPhase() : getLinePhase(tab)
-      if (ph === null) { if (!head.hidden) head.hidden = true; return }
+      const hx = tab === 'master' ? getMasterHead() : getLineHead(tab)
+      if (hx === null) { if (!head.hidden) head.hidden = true; return }
       if (head.hidden) head.hidden = false
-      const s = useEffectSequencerStore.getState()
-      const skew = (tab === 'master' ? s.master.line.skew : s.tracks[tab]?.line?.skew) ?? 0
-      head.style.transform = `translateX(${(PAD + skewPhase(ph, skew) * iw).toFixed(1)}px)`
+      head.style.transform = `translateX(${(PAD + hx * iw).toFixed(1)}px)`
     }
     frame()
     return () => cancelAnimationFrame(raf)
   }, [visible, isPlaying, tab, w, iw])
 
-  // Which track loop within a longer master loop the overlays show: 0 when stopped, else the one playing. Polled
-  // while visible and playing; state is set only when the index changes.
-  const ratio = isMaster ? 1 : (master.line.beats || 4) / (line.beats || 4)
-  const [cycleNow, setCycleNow] = useState(0)
+  // The track's pass the overlays show (playback spec §4): 0 when stopped, else the one playing (scatter and ping-pong
+  // differ per pass). Polled while visible and playing; state is set only when the pass changes.
+  const [passNow, setPassNow] = useState(0)
+  // From the master's position (always set while playing, even for a track whose effect is off): beats = pos · beats.
+  const beatRatio = (master.line.beats || 4) / (line.beats || 4)
   useEffect(() => {
-    if (!visible || !isPlaying || ratio <= 1 || !master.enabled) return
+    if (!visible || !isPlaying || isMaster) return
     let raf = 0, last = -1
     const frame = () => {
       raf = requestAnimationFrame(frame)
-      const mp = getMasterPhase()
-      const c = mp === null ? 0 : Math.min(Math.ceil(ratio) - 1, Math.floor(mp * ratio))
-      if (c !== last) { last = c; setCycleNow(c) }
+      const mp = getMasterPos()
+      const c = mp === null ? 0 : Math.floor(mp * beatRatio + 1e-9)
+      if (c !== last) { last = c; setPassNow(c) }
     }
     frame()
     return () => cancelAnimationFrame(raf)
-  }, [visible, isPlaying, ratio, master.enabled])
-  const cycle = visible && isPlaying && ratio > 1 && master.enabled ? cycleNow : 0
-  const hear = useMemo(() => (isMaster || w <= 0 ? null : hearPaths(line, master, cycle, iw, ih)), [isMaster, w, line, master, cycle, iw, ih])
+  }, [visible, isPlaying, isMaster, beatRatio])
+  const pass = visible && isPlaying && !isMaster ? passNow : 0
+  const hear = useMemo(() => (isMaster || w <= 0 ? null : hearPaths(line, master, tab, pass, iw, ih)), [isMaster, w, line, master, tab, pass, iw, ih])
 
   const getPoints = () => readLine(tab).points
   const setPoints = (p: WarpPoint[]) => {
@@ -206,6 +210,8 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
   const stepSnap = (dir: number) => write({ snap: SNAPS[clamp(nearestIdx(SNAPS, readLine(tab).snap) + dir, 0, SNAPS.length - 1)] })
   const stepGridY = (dir: number) => write({ gridY: GRID_Y[clamp(nearestIdx(GRID_Y, readLine(tab).gridY) + dir, 0, GRID_Y.length - 1)] })
   const stepSkew = (dir: number, big: boolean) => write({ skew: clamp(Math.round(readLine(tab).skew * 100) + dir * (big ? 10 : 1), -100, 100) / 100 })
+  const stepDirection = (dir: number) => write({ direction: PLAY_DIRECTIONS[clamp(PLAY_DIRECTIONS.indexOf(readLine(tab).direction ?? 'fwd') + dir, 0, PLAY_DIRECTIONS.length - 1)] })
+  const stepScatter = (dir: number, big: boolean) => write({ scatter: clamp(Math.round((readLine(tab).scatter ?? 0) * 100) + dir * (big ? 10 : 1), 0, 100) / 100 })
 
   // ── overlays ──
   let back: React.ReactNode = null
@@ -228,6 +234,8 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
 
   const snapDen = line.snap > 0 ? Math.round(1 / line.snap) : 0
   const skew = Math.round(line.skew * 100)
+  const direction = line.direction ?? 'fwd'
+  const scatter = Math.round((line.scatter ?? 0) * 100)
   const amount = Math.round(line.amount * 100)
   const pick = useLinePickStore.getState().setPick
 
@@ -262,6 +270,8 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
             <LineLinesMenu tab={tab} title={title} />
             <SaveLine attr="line" getPoints={getPoints} onSaved={(n) => pick({ tab, name: n, points: readLine(tab).points })} onAnnounce={setAnnounce} />
           </div>
+          <LoopStrip start={line.loopStart ?? 0} end={line.loopEnd ?? 1} snap={line.snap} width={w} attr="line"
+            onChange={(loopStart, loopEnd) => write({ loopStart, loopEnd })} />
           <div className="seg-lines-graph" ref={boxRef} data-tool={tool}>
             {w > 0 && (
               <LinePlot
@@ -279,6 +289,8 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
                 ariaLabel={`${title} line: height is how much ${isMaster ? 'of every track' : 'of the effect'} plays. Top is the card's Dry/wet, bottom is dry`}
                 backChildren={back}
               >
+                {(line.loopStart ?? 0) > 0 && <rect data-line-loop-dim x={0} y={0} width={X(line.loopStart)} height={h} style={{ fill: 'var(--bg-void)', fillOpacity: 0.55 }} pointerEvents="none" />}
+                {(line.loopEnd ?? 1) < 1 && <rect data-line-loop-dim x={X(line.loopEnd)} y={0} width={Math.max(0, w - X(line.loopEnd))} height={h} style={{ fill: 'var(--bg-void)', fillOpacity: 0.55 }} pointerEvents="none" />}
                 <text className="seg-line-edge" x={PAD + 4} y={PAD + 10} pointerEvents="none">{fmtLoop(line.beats)}{isMaster ? '' : master.enabled ? ' · master dashed' : ''}</text>
                 <text className="seg-line-edge" x={w - PAD - 4} y={PAD + 10} textAnchor="end" pointerEvents="none">wet (card&apos;s Dry/wet)</text>
                 <text className="seg-line-edge" x={w - PAD - 4} y={h - PAD - 5} textAnchor="end" pointerEvents="none">dry</text>
@@ -302,6 +314,10 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
             <Spin attr="line-setting" id="skew" label="Skew" value={`${skew > 0 ? '+' : skew < 0 ? '−' : '+'}${Math.abs(skew)}%`} now={skew}
               min={-100} max={100} step={stepSkew} pxPerStep={2}
               status="Skew: bends time before the line is read. Positive plays the start of the loop faster. Drag or use the arrow keys" />
+            <Spin attr="line-setting" id="direction" label="Direction" value={PLAY_DIRECTION_NAMES[direction]} now={PLAY_DIRECTIONS.indexOf(direction)} min={0}
+              max={PLAY_DIRECTIONS.length - 1} step={stepDirection} pxPerStep={14} status={DIRECTION_STATUS} />
+            <Spin attr="line-setting" id="scatter" label="Scatter" value={`${scatter}%`} now={scatter} min={0} max={100} step={stepScatter} pxPerStep={2}
+              status="Scatter: shuffles the line's slices (one per Quantize step) each pass. 0% plays in order, 100% fully shuffled. Drag or use the arrow keys" />
           </div>
         </div>
         <LineSidePanel tab={tab} />

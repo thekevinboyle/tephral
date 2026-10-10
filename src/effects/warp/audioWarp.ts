@@ -1,5 +1,6 @@
 // Inserts the warp worklet between an audio source and its outputs, and takes it out again.
 import { useWarpStore } from '../../stores/warpStore'
+import { warpPlay } from '../playhead'
 import { onWarpClockChange, warpClockSegments, type WarpClockSegment } from './warpClock'
 
 export const WARP_WORKLET_URL = '/worklets/warp-processor.js'
@@ -36,6 +37,7 @@ export function warpParamsMessage(s: WarpState = useWarpStore.getState()) {
     output: { low: s.output.low, high: s.output.high, levelDb: s.output.levelDb },
     amount: s.amount, skew: s.skew, lengthBeats: s.lengthBeats,
     mix: s.mix, active: true,
+    play: warpPlay(s),
   }
 }
 
@@ -52,7 +54,8 @@ export function warpInitMessages() {
 }
 
 const sameParams = (a: WarpState, b: WarpState) =>
-  a.amount === b.amount && a.skew === b.skew && a.profile === b.profile && a.profileParams === b.profileParams && a.output.low === b.output.low && a.output.high === b.output.high && a.output.levelDb === b.output.levelDb && a.mix === b.mix
+  a.amount === b.amount && a.skew === b.skew && a.profile === b.profile && a.profileParams === b.profileParams && a.output.low === b.output.low && a.output.high === b.output.high && a.output.levelDb === b.output.levelDb && a.mix === b.mix &&
+  a.direction === b.direction && a.loopStart === b.loopStart && a.loopEnd === b.loopEnd && a.scatter === b.scatter && a.snap === b.snap
 
 /**
  * input -> outputs becomes input -> warp -> outputs. Resolves to restore(), which puts the original

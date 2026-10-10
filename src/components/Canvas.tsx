@@ -26,9 +26,11 @@ import { perfMonitor } from '../utils/perfMonitor'
 import { initParamSync } from '../effects/paramSync'
 import { advanceReadbackFrame } from './overlays/sharedReadback'
 import { WarpCompositor, type WarpVideoOptions } from '../effects/warp/WarpCompositor'
+import { WarpPostPass } from '../effects/warp/WarpPostPass'
 import { setActiveWarpCompositor } from '../effects/warp/warpRegistry'
-import { getHeardWarpPhase, warpLoopSecondsAt, warpNow } from '../effects/warp/warpClock'
-import { delaySeconds } from '../effects/warp/warpMath'
+import { getHeardWarpPosition, warpLoopSecondsAt, warpNow } from '../effects/warp/warpClock'
+import { delayAtX } from '../effects/warp/warpMath'
+import { playPosition, slicesFor, WARP_SEED, type PlayParams } from '../effects/playhead'
 import { useWarpStore } from '../stores/warpStore'
 
 /**
@@ -623,29 +625,47 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     const resizeObserver = new ResizeObserver(updateSize)
     resizeObserver.observe(container)
 
-    // Video time warp, before the effect chain. When it is off nothing here allocates or draws.
+    // Video time warp, on the source before the effect chain or (placement 'after') on the finished picture
+    // as the chain's last pass. When it is off nothing here allocates or draws.
     // Reused every frame: no per-frame allocation while the warp runs.
     const warpInit = useWarpStore.getState()
-    const warpOpts: WarpVideoOptions = { profile: 'clean', knobs: warpInit.profileParams.clean, output: warpInit.output, mix: 1, loopSeconds: 2, lut: null, amount: 1, skew: 0 }
-    const delayArgs = { phase: 0, lut: warpInit.lut, amount: 1, skew: 0, loopSeconds: 2 }
+    // One playhead object, refilled each frame (no per-frame allocation)
+    const play: PlayParams = { direction: 'fwd', start: 0, end: 1, scatter: 0, skew: 0, slices: 16, seed: WARP_SEED }
+    const warpOpts: WarpVideoOptions = { profile: 'clean', knobs: warpInit.profileParams.clean, output: warpInit.output, mix: 1, loopSeconds: 2, lut: null, amount: 1, skew: 0, play }
+    /** Capture `live` into the ring and return the warped picture (or `live` itself when nothing would change it). */
+    const runWarp = (live: THREE.Texture, aspect: number): THREE.Texture => {
+      const w = useWarpStore.getState()
+      let comp = warpCompositor.current
+      if (!comp) { comp = new WarpCompositor(renderer); warpCompositor.current = comp; setActiveWarpCompositor(comp) }
+      const now = warpNow()
+      const loop = warpLoopSecondsAt(now)
+      const pos = getHeardWarpPosition()
+      play.direction = w.direction; play.start = w.loopStart; play.end = w.loopEnd; play.scatter = w.scatter
+      play.skew = w.skew; play.slices = slicesFor(w.snap)
+      // Store references (no copies): the compositor reads them during render only
+      warpOpts.profile = w.profile; warpOpts.knobs = w.profileParams[w.profile]; warpOpts.output = w.output
+      warpOpts.mix = w.mix; warpOpts.loopSeconds = loop
+      warpOpts.lut = w.lut; warpOpts.amount = w.amount; warpOpts.skew = w.skew
+      comp.setOptions(warpOpts)
+      comp.capture(live, now, aspect)
+      return comp.render(pos, delayAtX(w.lut, playPosition(pos, play), w.amount, loop))
+    }
+    const canvasAspect = () => {
+      const c = renderer.domElement
+      return c.height > 0 ? c.width / c.height : 16 / 9
+    }
+    const postPass = new WarpPostPass((live) => runWarp(live, canvasAspect()))
     const warpTick = () => {
       const w = useWarpStore.getState()
       const base = warpBase.current
       const live = base?.live ?? null
-      if (base && live && w.enabled && w.appliesTo !== 'audio') {
-        let comp = warpCompositor.current
-        if (!comp) { comp = new WarpCompositor(renderer); warpCompositor.current = comp; setActiveWarpCompositor(comp) }
-        const now = warpNow()
-        const loop = warpLoopSecondsAt(now)
-        const phase = getHeardWarpPhase()
-        // Store references (no copies): the compositor reads them during render only
-        warpOpts.profile = w.profile; warpOpts.knobs = w.profileParams[w.profile]; warpOpts.output = w.output
-        warpOpts.mix = w.mix; warpOpts.loopSeconds = loop
-        warpOpts.lut = w.lut; warpOpts.amount = w.amount; warpOpts.skew = w.skew
-        comp.setOptions(warpOpts)
-        comp.capture(live, now, base.aspect())
-        delayArgs.phase = phase; delayArgs.lut = w.lut; delayArgs.amount = w.amount; delayArgs.skew = w.skew; delayArgs.loopSeconds = loop
-        const out = comp.render(phase, delaySeconds(delayArgs))
+      const on = !!(base && live && w.enabled && w.appliesTo !== 'audio')
+      const after = on && w.placement === 'after'
+      // The end-of-chain pass is in the chain only while the warp runs after it
+      pipeline.setWarpPostPass(after ? postPass : null)
+      if (!after) postPass.release()
+      if (on && !after && base && live) {
+        const out = runWarp(live, base.aspect())
         if (out !== warpApplied.current) {
           pipeline.setInputTexture(out)
           pipeline.setSourceTexture(out)
@@ -653,12 +673,14 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         }
         return
       }
-      // Off (or no source): put the base back exactly once and free the render targets (programs are kept).
+      // Off, after the chain, or no source: put the base back exactly once
       if (warpApplied.current && base) {
         pipeline.setInputTexture(base.input)
         pipeline.setSourceTexture(base.source)
       }
       warpApplied.current = null
+      if (after) return
+      // Off: free the render targets (programs are kept)
       const comp = warpCompositor.current
       if (comp && (comp.targetCount || comp.extraTargetCount)) comp.release()
     }
@@ -670,6 +692,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         // what the pipeline itself holds as its input, and the original (unwarped) texture
         pipelineInput: () => (pipeline as unknown as { inputTexture: THREE.Texture | null }).inputTexture,
         baseInput: () => warpBase.current?.input ?? null,
+        postPass: () => postPass,
+        // the passes the composer runs (the warp's end pass is last while placement is 'after')
+        composerPasses: () => (pipeline as unknown as { composer: { passes: unknown[] } }).composer.passes,
       }
     }
 
@@ -692,6 +717,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       cancelAnimationFrame(frameIdRef.current)
       resizeObserver.disconnect()
       slicerCompositor.current?.dispose()
+      pipeline.setWarpPostPass(null)
+      postPass.dispose()
       warpCompositor.current?.dispose()
       warpCompositor.current = null
       setActiveWarpCompositor(null)

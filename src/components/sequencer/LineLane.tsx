@@ -1,8 +1,7 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useEffectSequencerStore, defaultTrackLine, type EffectTrack } from '../../stores/effectSequencerStore'
 import { useUIStore } from '../../stores/uiStore'
-import { skewPhase } from '../../effects/warp/warpMath'
-import { getLinePhase } from '../../effects/lines/linePhase'
+import { getLineHead } from '../../effects/lines/linePhase'
 import { PAD } from '../performance/lines/LinePlot'
 import { linePath } from '../performance/lines/linePath'
 
@@ -35,7 +34,7 @@ function holdRowDrag(e: React.PointerEvent) {
 
 /**
  * A Line track's preview in the Steps view (lines editor spec §4.1): the 16-column grid, the filled area under the
- * line in the effect's colour, the line and a --live playhead (rAF from getLinePhase, only while the Sequencer tab
+ * line in the effect's colour, the line and a --live playhead (rAF from getLineHead, only while the Sequencer tab
  * shows and the sequencer plays). A press selects the track and opens the Lines view on its tab.
  */
 export const LineLane = memo(function LineLane({ effectId, track, color, label, onSelect }: Props) {
@@ -71,11 +70,10 @@ export const LineLane = memo(function LineLane({ effectId, track, color, label, 
     let raf = 0
     const frame = () => {
       raf = requestAnimationFrame(frame)
-      const ph = getLinePhase(effectId)
-      if (ph === null) { if (!head.hidden) head.hidden = true; return }
+      const hx = getLineHead(effectId)
+      if (hx === null) { if (!head.hidden) head.hidden = true; return }
       if (head.hidden) head.hidden = false
-      const skew = useEffectSequencerStore.getState().tracks[effectId]?.line?.skew ?? 0
-      head.style.transform = `translateX(${(PAD + skewPhase(ph, skew) * iw).toFixed(1)}px)`
+      head.style.transform = `translateX(${(PAD + hx * iw).toFixed(1)}px)`
     }
     frame()
     return () => cancelAnimationFrame(raf)

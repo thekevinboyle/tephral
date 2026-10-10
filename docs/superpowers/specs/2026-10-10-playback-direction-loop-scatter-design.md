@@ -40,7 +40,7 @@ playPosition(loopPos, play) -> x
 - Scatter 0 is in order, 1 is fully shuffled, in between moves that share of slices on average.
 - **Edges**: u is clamped to 0..1; rev at u = 1 gives 0 (a jump the warp already handles as a step).
 - **Warp time model** is unchanged in form: `delay = amount · f(x) · L`. Rev runs the line backwards, so a line
-  that held the picture still now plays it reversed at double speed. Documented, not special-cased.
+  that held the picture still (y = x) now plays it forward at double speed. Documented, not special-cased.
 
 ### Clock positions
 

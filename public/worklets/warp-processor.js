@@ -780,8 +780,9 @@ class WarpProcessor extends AudioWorkletProcessor {
       if (m.reset) { this.segs = [seg]; return }
       const now = currentTime
       if (m.keep && seg.at < now) {
-        // Arrived late: switch now, keeping the phase this processor is already at.
-        const ph = this.phaseAt(now)
+        // Arrived late: switch now, keeping the position (pass and phase) this processor is already at, so the
+        // pass count stays the main thread's (Ping-pong direction, Scatter order).
+        const ph = this.posAt(now)
         seg.at = now
         seg.t0 = now - ph * loopSeconds(seg.lengthBeats, seg.bpm)
       }

@@ -79,7 +79,8 @@ export function getHeardWarpPhase(): number {
 function emit(e: WarpClockEvent) { listeners.forEach((fn) => fn(e)) }
 
 /**
- * Anchor the loop so the phase at `ctxTime` is `phase` (default 0), using the current BPM and length.
+ * Anchor the loop so the position at `ctxTime` is `phase` (default 0; loops, may include whole passes), using the
+ * current BPM and length.
  * Passing the phase the clock already has at `ctxTime` keeps x continuous (tempo/length changes);
  * `keep` marks such a change so a worklet that receives it late still keeps its phase.
  */
@@ -134,7 +135,8 @@ export function setWarpTimeBase(ctx: BaseAudioContext | null): void {
 /** Re-anchor on BPM/length changes (x preserved) and on sequencer play (x = 0 at step 0). */
 function reanchorKeepingPhase() {
   const at = warpNow() + WARP_CLOCK_LOOKAHEAD
-  setWarpAnchor(at, getWarpPhase(at), true)
+  // the whole position, not only the phase: Ping-pong's direction and the Scatter order belong to the pass
+  setWarpAnchor(at, getWarpPosition(at), true)
 }
 
 let wired = false

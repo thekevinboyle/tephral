@@ -10,6 +10,7 @@ import { MASTER_SEED, PLAY_DIRECTION_NAMES, PLAY_DIRECTIONS, playPosition } from
 import { randomCurves, randomSteps, type WarpPoint } from '../../effects/warp/warpMath'
 import { statusHover } from '../../utils/statusHover'
 import { LinePlot, PAD } from '../performance/lines/LinePlot'
+import { LoopStrip } from '../performance/lines/LoopStrip'
 import { linePath } from '../performance/lines/linePath'
 import { handleLineKey } from '../performance/lines/lineKeys'
 import { LINE_TOOLS } from '../performance/lines/lineTools'
@@ -269,6 +270,8 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
             <LineLinesMenu tab={tab} title={title} />
             <SaveLine attr="line" getPoints={getPoints} onSaved={(n) => pick({ tab, name: n, points: readLine(tab).points })} onAnnounce={setAnnounce} />
           </div>
+          <LoopStrip start={line.loopStart ?? 0} end={line.loopEnd ?? 1} snap={line.snap} width={w} attr="line"
+            onChange={(loopStart, loopEnd) => write({ loopStart, loopEnd })} />
           <div className="seg-lines-graph" ref={boxRef} data-tool={tool}>
             {w > 0 && (
               <LinePlot
@@ -286,6 +289,8 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
                 ariaLabel={`${title} line: height is how much ${isMaster ? 'of every track' : 'of the effect'} plays. Top is the card's Dry/wet, bottom is dry`}
                 backChildren={back}
               >
+                {(line.loopStart ?? 0) > 0 && <rect data-line-loop-dim x={0} y={0} width={X(line.loopStart)} height={h} style={{ fill: 'var(--bg-void)', fillOpacity: 0.55 }} pointerEvents="none" />}
+                {(line.loopEnd ?? 1) < 1 && <rect data-line-loop-dim x={X(line.loopEnd)} y={0} width={Math.max(0, w - X(line.loopEnd))} height={h} style={{ fill: 'var(--bg-void)', fillOpacity: 0.55 }} pointerEvents="none" />}
                 <text className="seg-line-edge" x={PAD + 4} y={PAD + 10} pointerEvents="none">{fmtLoop(line.beats)}{isMaster ? '' : master.enabled ? ' · master dashed' : ''}</text>
                 <text className="seg-line-edge" x={w - PAD - 4} y={PAD + 10} textAnchor="end" pointerEvents="none">wet (card&apos;s Dry/wet)</text>
                 <text className="seg-line-edge" x={w - PAD - 4} y={h - PAD - 5} textAnchor="end" pointerEvents="none">dry</text>

@@ -432,6 +432,14 @@
 .seg-warp-graph[data-tool="curve"] > svg[data-warp-graph] { cursor: ns-resize; }
 .seg-warp-graph[data-tool="erase"] > svg[data-warp-graph] { cursor: cell; }
 .seg-warp-graph > svg[data-warp-graph]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
+.seg-loop-strip { position: relative; flex: none; height: 12px; margin: 0 9px; } /* 8px panel margin + the graph's 1px border: x lines up with the plot */
+.seg-loop-range { position: absolute; top: 5px; height: 2px; background: var(--warp); opacity: .55; pointer-events: none; }
+.seg-loop-handle { position: absolute; top: 0; width: 10px; height: 12px; margin-left: -5px; cursor: ew-resize; }
+.seg-loop-handle::before { content: ''; position: absolute; left: 4px; top: 0; width: 2px; height: 12px; background: var(--warp); }
+.seg-loop-handle[data-edge="start"]::after, .seg-loop-handle[data-edge="end"]::after { content: ''; position: absolute; top: 0; width: 5px; height: 5px; background: var(--warp); }
+.seg-loop-handle[data-edge="start"]::after { left: 6px; }
+.seg-loop-handle[data-edge="end"]::after { left: -1px; }
+.seg-loop-handle:hover::before { width: 3px; }
 .seg-warp-playhead { position: absolute; left: 0; top: 0; bottom: 0; width: 1.5px; background: var(--live); pointer-events: none; will-change: transform; }
 .seg-warp-graph[data-off] .seg-warp-playhead { opacity: .35; }
 [data-warp-point] { cursor: grab; }

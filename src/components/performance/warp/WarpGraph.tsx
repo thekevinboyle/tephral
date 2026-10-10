@@ -9,12 +9,14 @@ import { getActiveWarpCompositor } from '../../../effects/warp/warpRegistry'
 import { useLockOutline } from './warpLocks'
 import { LockIcon } from './WarpLock'
 import { LinePlot, PAD, type WarpTool } from '../lines/LinePlot'
+import { LoopStrip } from '../lines/LoopStrip'
 
 export type { WarpTool } from '../lines/LinePlot'
 
 const THUMB_H = 34 // the frame strip under the plot
 const BARS = 120
 const THUMBS = 16
+const setLoop = (loopStart: number, loopEnd: number) => useWarpStore.getState().patch({ loopStart, loopEnd })
 /** Moments sampled over a pass to find which column each one read. */
 const READ_STEPS = THUMBS * 16
 const THUMB_MS = 250
@@ -50,6 +52,8 @@ interface Props { tool: WarpTool; visible: boolean; selected: number | null; onS
 export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSelect }: Props) {
   const points = useWarpStore((s) => s.points)
   const snap = useWarpStore((s) => s.snap)
+  const loopStart = useWarpStore((s) => s.loopStart)
+  const loopEnd = useWarpStore((s) => s.loopEnd)
   const enabled = useWarpStore((s) => s.enabled)
   const locked = useLockOutline('graph')
   const boxRef = useRef<HTMLDivElement>(null)
@@ -213,7 +217,10 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
     }
   }, [visible, w])
 
+  const dim = (x0: number, x1: number) => <rect data-warp-loop-dim x={x0} y={0} width={Math.max(0, x1 - x0)} height={gh} style={{ fill: 'var(--bg-void)', fillOpacity: 0.55 }} pointerEvents="none" />
   return (
+    <>
+    <LoopStrip start={loopStart} end={loopEnd} snap={snap} width={w} attr="warp" onChange={setLoop} />
     <div className="seg-warp-graph" ref={boxRef} data-tool={tool} data-off={enabled ? undefined : ''} data-warp-graph-box data-locked={locked || undefined}>
       <canvas ref={thumbRef} data-warp-thumbs aria-hidden="true" />
       <LinePlot
@@ -229,12 +236,17 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
         attr="warp"
         ariaLabel={ARIA_LABEL}
         hoverStatus={guideStatus}
-        backChildren={<line data-warp-guide x1={X(0)} y1={Y(0)} x2={X(1)} y2={Y(1)} style={{ stroke: 'var(--warp-identity)' }} strokeDasharray="6 6" />}
+        backChildren={<>
+          <line data-warp-guide x1={X(0)} y1={Y(0)} x2={X(1)} y2={Y(1)} style={{ stroke: 'var(--warp-identity)' }} strokeDasharray="6 6" />
+        </>}
         between={<>
           <canvas ref={waveRef} aria-hidden="true" />
           <div ref={headRef} className="seg-warp-playhead" data-warp-playhead aria-hidden="true" />
         </>}
       >
+        {/* outside the loop region, dimmed over the waveform and the line (no pointer events: points stay editable) */}
+        {loopStart > 0 && dim(0, X(loopStart))}
+        {loopEnd < 1 && dim(X(loopEnd), w)}
         {/* above the line, with a halo in the graph colour, so the line can cross it and it stays readable */}
         <text className="seg-warp-guide-label" data-warp-guide-label x={X(0.62) + 8} y={Y(0.62) - 6} pointerEvents="none">stopped</text>
       </LinePlot>
@@ -247,5 +259,6 @@ export const WarpGraph = memo(function WarpGraph({ tool, visible, selected, onSe
         </span>
       )}
     </div>
+    </>
   )
 })

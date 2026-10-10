@@ -6,7 +6,7 @@ import { useUIStore } from '../../stores/uiStore'
 import { getEffectInfo } from '../../config/effectNames'
 import { getLineHead, getMasterHead, getMasterPos } from '../../effects/lines/linePhase'
 import { lineLevel, linePlay, lineSeed } from '../../effects/lines/lineLevel'
-import { MASTER_SEED, playPosition } from '../../effects/playhead'
+import { MASTER_SEED, PLAY_DIRECTION_NAMES, PLAY_DIRECTIONS, playPosition } from '../../effects/playhead'
 import { randomCurves, randomSteps, type WarpPoint } from '../../effects/warp/warpMath'
 import { statusHover } from '../../utils/statusHover'
 import { LinePlot, PAD } from '../performance/lines/LinePlot'
@@ -15,7 +15,7 @@ import { handleLineKey } from '../performance/lines/lineKeys'
 import { LINE_TOOLS } from '../performance/lines/lineTools'
 import { describePoint } from '../performance/warp/warpEdit'
 import { SaveLine } from '../performance/warp/WarpLineTools'
-import { Spin } from '../performance/warp/WarpSettingsRow'
+import { DIRECTION_STATUS, Spin } from '../performance/warp/WarpSettingsRow'
 import { noteLinesViewRender, useLineEditStore, useLinePickStore } from './lineSelection'
 import { readLine, writeLine } from './lineDice'
 import { fmtBeats, fmtLoop } from './lineFormat'
@@ -209,6 +209,8 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
   const stepSnap = (dir: number) => write({ snap: SNAPS[clamp(nearestIdx(SNAPS, readLine(tab).snap) + dir, 0, SNAPS.length - 1)] })
   const stepGridY = (dir: number) => write({ gridY: GRID_Y[clamp(nearestIdx(GRID_Y, readLine(tab).gridY) + dir, 0, GRID_Y.length - 1)] })
   const stepSkew = (dir: number, big: boolean) => write({ skew: clamp(Math.round(readLine(tab).skew * 100) + dir * (big ? 10 : 1), -100, 100) / 100 })
+  const stepDirection = (dir: number) => write({ direction: PLAY_DIRECTIONS[clamp(PLAY_DIRECTIONS.indexOf(readLine(tab).direction ?? 'fwd') + dir, 0, PLAY_DIRECTIONS.length - 1)] })
+  const stepScatter = (dir: number, big: boolean) => write({ scatter: clamp(Math.round((readLine(tab).scatter ?? 0) * 100) + dir * (big ? 10 : 1), 0, 100) / 100 })
 
   // ── overlays ──
   let back: React.ReactNode = null
@@ -231,6 +233,8 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
 
   const snapDen = line.snap > 0 ? Math.round(1 / line.snap) : 0
   const skew = Math.round(line.skew * 100)
+  const direction = line.direction ?? 'fwd'
+  const scatter = Math.round((line.scatter ?? 0) * 100)
   const amount = Math.round(line.amount * 100)
   const pick = useLinePickStore.getState().setPick
 
@@ -305,6 +309,10 @@ export const LinesView = memo(function LinesView({ ids, colors }: { ids: string[
             <Spin attr="line-setting" id="skew" label="Skew" value={`${skew > 0 ? '+' : skew < 0 ? '−' : '+'}${Math.abs(skew)}%`} now={skew}
               min={-100} max={100} step={stepSkew} pxPerStep={2}
               status="Skew: bends time before the line is read. Positive plays the start of the loop faster. Drag or use the arrow keys" />
+            <Spin attr="line-setting" id="direction" label="Direction" value={PLAY_DIRECTION_NAMES[direction]} now={PLAY_DIRECTIONS.indexOf(direction)} min={0}
+              max={PLAY_DIRECTIONS.length - 1} step={stepDirection} pxPerStep={14} status={DIRECTION_STATUS} />
+            <Spin attr="line-setting" id="scatter" label="Scatter" value={`${scatter}%`} now={scatter} min={0} max={100} step={stepScatter} pxPerStep={2}
+              status="Scatter: shuffles the line's slices (one per Quantize step) each pass. 0% plays in order, 100% fully shuffled. Drag or use the arrow keys" />
           </div>
         </div>
         <LineSidePanel tab={tab} />

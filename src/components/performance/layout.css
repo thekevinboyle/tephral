@@ -510,7 +510,7 @@
 .seg-lines-graph[data-tool="curve"] > svg[data-line-graph] { cursor: ns-resize; }
 .seg-lines-graph[data-tool="erase"] > svg[data-line-graph] { cursor: cell; }
 .seg-lines-graph > svg[data-line-graph]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
-.seg-lines-settings { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 6px 8px 8px; }
+.seg-lines-settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 4px; padding: 6px 8px 8px; }
 .seg-lines-side { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 9px 10px; background: var(--bg-surface); overflow-y: auto; }
 .seg-lines-side-head { display: flex; align-items: center; gap: 7px; font: 500 12px var(--font-sans); color: var(--text-primary); }
 .seg-lines-side-head > i { flex: none; width: 8px; height: 8px; border-radius: 2px; }

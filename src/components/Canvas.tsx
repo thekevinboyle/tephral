@@ -28,8 +28,9 @@ import { advanceReadbackFrame } from './overlays/sharedReadback'
 import { WarpCompositor, type WarpVideoOptions } from '../effects/warp/WarpCompositor'
 import { WarpPostPass } from '../effects/warp/WarpPostPass'
 import { setActiveWarpCompositor } from '../effects/warp/warpRegistry'
-import { getHeardWarpPhase, warpLoopSecondsAt, warpNow } from '../effects/warp/warpClock'
-import { delaySeconds } from '../effects/warp/warpMath'
+import { getHeardWarpPosition, warpLoopSecondsAt, warpNow } from '../effects/warp/warpClock'
+import { delayAtX } from '../effects/warp/warpMath'
+import { playPosition, slicesFor, WARP_SEED, type PlayParams } from '../effects/playhead'
 import { useWarpStore } from '../stores/warpStore'
 
 /**
@@ -628,8 +629,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     // as the chain's last pass. When it is off nothing here allocates or draws.
     // Reused every frame: no per-frame allocation while the warp runs.
     const warpInit = useWarpStore.getState()
-    const warpOpts: WarpVideoOptions = { profile: 'clean', knobs: warpInit.profileParams.clean, output: warpInit.output, mix: 1, loopSeconds: 2, lut: null, amount: 1, skew: 0 }
-    const delayArgs = { phase: 0, lut: warpInit.lut, amount: 1, skew: 0, loopSeconds: 2 }
+    // One playhead object, refilled each frame (no per-frame allocation)
+    const play: PlayParams = { direction: 'fwd', start: 0, end: 1, scatter: 0, skew: 0, slices: 16, seed: WARP_SEED }
+    const warpOpts: WarpVideoOptions = { profile: 'clean', knobs: warpInit.profileParams.clean, output: warpInit.output, mix: 1, loopSeconds: 2, lut: null, amount: 1, skew: 0, play }
     /** Capture `live` into the ring and return the warped picture (or `live` itself when nothing would change it). */
     const runWarp = (live: THREE.Texture, aspect: number): THREE.Texture => {
       const w = useWarpStore.getState()
@@ -637,15 +639,16 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       if (!comp) { comp = new WarpCompositor(renderer); warpCompositor.current = comp; setActiveWarpCompositor(comp) }
       const now = warpNow()
       const loop = warpLoopSecondsAt(now)
-      const phase = getHeardWarpPhase()
+      const pos = getHeardWarpPosition()
+      play.direction = w.direction; play.start = w.loopStart; play.end = w.loopEnd; play.scatter = w.scatter
+      play.skew = w.skew; play.slices = slicesFor(w.snap)
       // Store references (no copies): the compositor reads them during render only
       warpOpts.profile = w.profile; warpOpts.knobs = w.profileParams[w.profile]; warpOpts.output = w.output
       warpOpts.mix = w.mix; warpOpts.loopSeconds = loop
       warpOpts.lut = w.lut; warpOpts.amount = w.amount; warpOpts.skew = w.skew
       comp.setOptions(warpOpts)
       comp.capture(live, now, aspect)
-      delayArgs.phase = phase; delayArgs.lut = w.lut; delayArgs.amount = w.amount; delayArgs.skew = w.skew; delayArgs.loopSeconds = loop
-      return comp.render(phase, delaySeconds(delayArgs))
+      return comp.render(pos, delayAtX(w.lut, playPosition(pos, play), w.amount, loop))
     }
     const canvasAspect = () => {
       const c = renderer.domElement

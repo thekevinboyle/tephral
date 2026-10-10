@@ -103,3 +103,6 @@ export const isPlainPlay = (f: PlayFields) => f.direction === 'fwd' && f.loopSta
 export const playParams = (f: PlayFields, skew: number, snap: number, seed: number): PlayParams => ({
   direction: f.direction, start: f.loopStart, end: f.loopEnd, scatter: f.scatter, skew, slices: slicesFor(snap), seed,
 })
+
+/** The warp's PlayParams from its store state (seed WARP_SEED). */
+export const warpPlay = (s: PlayFields & { skew: number; snap: number }): PlayParams => playParams(s, s.skew, s.snap, WARP_SEED)

@@ -1,7 +1,8 @@
 // warp-processor: the audio side of the time warp (AudioWorklet, plain JS).
 //
 // KEEP IN SYNC WITH src/effects/warp/warpMath.ts (skewPhase, lutAt, warpedY, delaySeconds,
-// loopSeconds) and src/effects/warp/warpClock.ts (segments). A worklet cannot import TS, so the maths
+// loopSeconds), src/effects/warp/warpClock.ts (segments) and src/effects/playhead.ts (hash32, shuffle, playPosition;
+// `layout-check.mjs playmath` compares playPosition on 10 000 inputs). A worklet cannot import TS, so the maths
 // is ported inline below (warpDelay = delaySeconds). `layout-check.mjs warpmath` compares warpDelay
 // with delaySeconds directly and `warpaudio` compares the rendered delay; run both after touching either.
 //
@@ -25,7 +26,9 @@
 //      lengthBeats is informational: the clock messages are authoritative for the loop.
 //      smooth: click-guard fade, 0..1 of 30 ms (default .5 = 15 ms). Not sent by the app; tests use it.
 // processorOptions.messages: the same messages, applied in the constructor (initial state, no ramps).
-// probe: test only; channel 1 carries the loop phase instead of audio.
+//      play: {direction, start, end, scatter, skew, slices, seed} (playback spec §2): the playhead. x = playPosition(
+//      position, play) per sample, delay = amount * f(x) * L. A top-level `skew` also sets play.skew (play wins when both).
+// probe: test only; channel 1 carries x (the read position on the line) instead of audio.
 // Posts 'alive' when constructed and 'disposed' after dispose (audioWarp counts live processors).
 //
 // Signal path per sample:
@@ -561,6 +564,56 @@ class Lofizzly {
   }
 }
 
+// ---------------------------------------------------------------- playhead (KEEP IN SYNC WITH src/effects/playhead.ts)
+function hash32(a, b, c) {
+  let h = (Math.imul(a | 0, 0x9e3779b1) ^ Math.imul((b | 0) + 0x632be59b, 0x85ebca6b) ^ Math.imul((c | 0) + 0x27d4eb2f, 0xc2b2ae35)) | 0
+  h ^= h >>> 16; h = Math.imul(h, 0x7feb352d)
+  h ^= h >>> 15; h = Math.imul(h, 0x846ca68b)
+  h ^= h >>> 16
+  return h >>> 0
+}
+const perm = new Uint8Array(64)
+let pSeed = NaN, pCycle = NaN, pN = 0
+function shuffleAt(seed, cycle, n) {
+  if (seed === pSeed && cycle === pCycle && n === pN) return perm
+  for (let i = 0; i < n; i++) perm[i] = i
+  let s = hash32(seed, cycle, 0x5ca77e5)
+  for (let i = n - 1; i > 0; i--) {
+    s = (s + 0x6d2b79f5) >>> 0
+    let t = s
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    const r = ((t ^ (t >>> 14)) >>> 0) / 4294967296
+    const j = Math.floor(r * (i + 1))
+    const tmp = perm[i]; perm[i] = perm[j]; perm[j] = tmp
+  }
+  pSeed = seed; pCycle = cycle; pN = n
+  return perm
+}
+function playPosition(loopPos, p) {
+  const pos = Number.isFinite(loopPos) ? loopPos : 0
+  const cycle = Math.floor(pos)
+  let u = skewPhase(pos - cycle, p.skew)
+  const n = p.slices
+  if (p.direction === 'rev') u = 1 - u
+  else if (p.direction === 'pingpong') { if (cycle & 1) u = 1 - u }
+  else if (p.direction === 'random') {
+    const k = Math.min(n - 1, Math.floor(u * n))
+    u = ((hash32(p.seed, cycle, k) % n) + (u * n - k)) / n
+  }
+  if (p.scatter > 0) {
+    const k = Math.min(n - 1, Math.floor(u * n))
+    if (hash32(p.seed ^ 0x51ced, cycle, k) / 4294967296 < p.scatter) u = (shuffleAt(p.seed, cycle, n)[k] + (u * n - k)) / n
+  }
+  if (p.start === 0 && p.end === 1) return u
+  return p.start + u * (p.end - p.start)
+}
+/** delay for an x already through the playhead (same as warpDelay with the skew applied by playPosition). */
+function warpDelayX(lut, x, amount, L) {
+  const d = amount * lutAt(lut, x) * L
+  return d > 0 ? (d < MAX_DELAY_SECONDS ? d : MAX_DELAY_SECONDS) : 0
+}
+
 // ---------------------------------------------------------------- processor
 
 class WarpProcessor extends AudioWorkletProcessor {
@@ -575,6 +628,8 @@ class WarpProcessor extends AudioWorkletProcessor {
     this.lut = null
     this.segs = [{ at: -Infinity, t0: 0, bpm: 120, lengthBeats: 4 }]
     this.p = { amount: 1, skew: 0, mix: 1, active: true, probe: false, smooth: 0.5 }
+    // the playhead (playback spec §2): skew, direction, region, scatter; applied by playPosition per sample
+    this.play = { direction: 'fwd', start: 0, end: 1, scatter: 0, skew: 0, slices: 16, seed: 0 }
     this.mixS = 0 // smoothed effective mix; starts dry so an inserted warp fades in
     this.prevP = null // previous read position (may be negative early on: before the first sample)
     // click guard: old voice is a read head (xfOld) or, when retriggered mid-fade, a held value (xfHold)
@@ -652,12 +707,15 @@ class WarpProcessor extends AudioWorkletProcessor {
     this.rs[i] = (v - this.rc[i]) / this.rampN
   }
 
-  phaseAt(t) {
+  posAt(t) {
     while (this.segs.length > 1 && this.segs[1].at <= t) this.segs.shift()
     const s = this.segs[0]
-    const L = loopSeconds(s.lengthBeats, s.bpm)
-    const ph = (t - s.t0) / L
-    return ph - Math.floor(ph)
+    return (t - s.t0) / loopSeconds(s.lengthBeats, s.bpm)
+  }
+
+  phaseAt(t) {
+    const v = this.posAt(t)
+    return v - Math.floor(v)
   }
 
   onParams(m) {
@@ -666,6 +724,18 @@ class WarpProcessor extends AudioWorkletProcessor {
     p.smooth = clamp01(p.smooth) // test-only click-guard fade: 0..1 of 30 ms
     if (typeof m.active === 'boolean') p.active = m.active
     if (typeof m.probe === 'boolean') p.probe = m.probe
+    // a sender without `play` (older code, tests) still sets the skew it sends
+    if (typeof m.skew === 'number' && Number.isFinite(m.skew)) this.play.skew = m.skew
+    const q = m.play
+    if (q && typeof q === 'object') {
+      const pl = this.play
+      if (['fwd', 'rev', 'pingpong', 'random'].includes(q.direction)) pl.direction = q.direction
+      for (const k of ['start', 'end', 'scatter', 'skew']) if (typeof q[k] === 'number' && Number.isFinite(q[k])) pl[k] = q[k]
+      if (typeof q.slices === 'number' && q.slices >= 1 && q.slices <= 64) pl.slices = Math.round(q.slices)
+      if (typeof q.seed === 'number') pl.seed = q.seed >>> 0
+      pl.start = clamp01(pl.start); pl.end = clamp01(pl.end); pl.scatter = clamp01(pl.scatter)
+      if (pl.end - pl.start < 1 / 64) { pl.start = 0; pl.end = 1 }
+    }
     let id = this.cur
     if (typeof m.profile === 'string') {
       const i = PROFILES.indexOf(m.profile === 'smear' ? 'flange' : m.profile)
@@ -771,14 +841,15 @@ class WarpProcessor extends AudioWorkletProcessor {
 
       // phase from the shared clock, per sample
       const t = currentTime + i / sr
-      const phase = this.phaseAt(t)
+      const pos = this.posAt(t)
       const s = this.segs[0]
       const L = loopSeconds(s.lengthBeats, s.bpm)
       this.bpm = s.bpm > 0 ? s.bpm : 120
 
       let P = n // read position (absolute frames)
+      const x = playPosition(pos, this.play)
       if (doWarp) {
-        P = n - warpDelay(this.lut, phase, p.amount, p.skew, L) * sr
+        P = n - warpDelayX(this.lut, x, p.amount, L) * sr
       }
       this.P = P
       // click guard: a jump in read position > 10 ms crossfades over smooth*30 ms.
@@ -849,7 +920,7 @@ class WarpProcessor extends AudioWorkletProcessor {
       if (m === 0) { out[0][i] = xL; if (out[1]) out[1][i] = xR }
       else if (m === 1) { out[0][i] = yL; if (out[1]) out[1][i] = yR }
       else { out[0][i] = xL + (yL - xL) * m; if (out[1]) out[1][i] = xR + (yR - xR) * m }
-      if (p.probe && out[1]) out[1][i] = phase
+      if (p.probe && out[1]) out[1][i] = x
       this.n++
     }
     return true

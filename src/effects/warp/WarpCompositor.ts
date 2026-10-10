@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { isOutputOpen, isProfileNeutral, type Knobs, type ProfileId, type WarpOutput } from '../../stores/warpStore'
-import { delaySeconds, LUT_SIZE, MAX_DELAY_SECONDS } from './warpMath'
+import { delayAtX, LUT_SIZE, MAX_DELAY_SECONDS } from './warpMath'
+import { playPosition, type PlayParams } from '../playhead'
 import { onWarpClockChange } from './warpClock'
 import { QuadPass, WarpFrameBuffer, WARP_CAPTURE_FPS, WARP_MAX_FRAMES, makeTarget } from './WarpFrameBuffer'
 import {
@@ -21,9 +22,13 @@ export interface WarpVideoOptions {
   lut: Float32Array | null
   amount: number
   skew: number
+  /** The playhead (playback spec §2): skew, direction, region, scatter. Read, never kept. */
+  play: PlayParams
 }
 
 const FRAME = 1 / WARP_CAPTURE_FPS
+/** Read when there is no line yet (all live). */
+const NO_LINE = new Float32Array(LUT_SIZE)
 /** Delay change not explained by the line's continuous part that counts as a jump. */
 const JUMP_MARGIN = 0.5 * FRAME
 /** Ticks covering more than this much phase are treated as a jump outright (stall, re-anchor). */
@@ -52,7 +57,7 @@ const material = (frag: string, uniforms: Record<string, THREE.IUniform>) => new
  * through the active profile's shader (spec §3 "Picture") and the Output stage (spec §4) into one
  * output target, mixed against the live texture.
  *
- * Per animation frame: capture(live, t, aspect) then render(phase, delay). render returns `live`
+ * Per animation frame: capture(live, t, aspect) then render(pos, delay) (pos = absolute loop position). render returns `live`
  * itself (full resolution, no pass) when nothing would change it: Mix 0, or delay 0 with the
  * profile at its neutral knobs and Output open. Otherwise it renders, even at delay 0, so the look applies.
  *
@@ -81,8 +86,8 @@ export class WarpCompositor {
   private readonly opts: WarpVideoOptions = {
     profile: 'clean', knobs: [0, 0, 0, 0], output: { low: 20, high: 20000, levelDb: 0 }, mix: 1, loopSeconds: 2,
     lut: null, amount: 1, skew: 0,
+    play: { direction: 'fwd', start: 0, end: 1, scatter: 0, skew: 0, slices: 16, seed: 0 },
   }
-  private readonly delayArgs: { phase: number; lut: Float32Array; amount: number; skew: number; loopSeconds: number } = { phase: 0, lut: new Float32Array(LUT_SIZE), amount: 1, skew: 0, loopSeconds: 2 }
   private readonly flangeW = [0, 0, 0, 0, 0, 0]
   private readonly flangeOff = Array.from({ length: 6 }, () => new THREE.Vector2())
   /** Extra history the editor's thumbnail strip asks for (seconds; 0 = ring sized for the loop only). */
@@ -96,7 +101,7 @@ export class WarpCompositor {
 
   // jump detection
   private prevNow = NaN
-  private prevPhase = NaN
+  private prevPos = NaN
   private prevDelay = NaN
   // degrade: frame hold
   private holdTick = NaN
@@ -232,27 +237,27 @@ export class WarpCompositor {
     this.buffer.capture(this.renderer, live, t, aspect, this.capacity())
   }
 
-  private delayAt(phase: number): number {
-    const a = this.delayArgs
-    a.phase = phase - Math.floor(phase)
-    return delaySeconds(a)
+  /** The delay at absolute loop position `pos`, through the playhead (playback spec §2). */
+  private delayAt(pos: number): number {
+    const o = this.opts
+    return delayAtX(o.lut ?? NO_LINE, playPosition(pos, o.play), o.amount, o.loopSeconds)
   }
 
-  /** Was there a discontinuity in the delay between the previous tick and this one? */
-  private detectJump(phase: number, delay: number, now: number): boolean {
-    if (!Number.isFinite(this.prevPhase) || !Number.isFinite(this.prevDelay)) return false
+  /**
+   * Was there a discontinuity in the delay between the previous tick and this one? Walks the absolute position
+   * (so a slice jump from Scatter or Random, or Rev's seam, counts as a jump), one LUT cell at a time.
+   */
+  private detectJump(pos: number, delay: number, now: number): boolean {
+    if (!Number.isFinite(this.prevPos) || !Number.isFinite(this.prevDelay)) return false
     const o = this.opts
     if (!o.lut) return Math.abs(delay - this.prevDelay) > 2 * Math.max(0, now - this.prevNow) + JUMP_MARGIN // reverse drift allowed
-    const a = this.delayArgs
-    a.lut = o.lut; a.amount = o.amount; a.skew = o.skew; a.loopSeconds = o.loopSeconds
-    let dphi = phase - this.prevPhase
-    if (dphi < 0) dphi += 1
-    if (dphi > MAX_WALK_PHASE) return true
-    const cells = Math.ceil(dphi * LUT_SIZE)
+    const dpos = pos - this.prevPos
+    if (!(dpos >= 0) || dpos > MAX_WALK_PHASE) return true
+    const cells = Math.max(1, Math.ceil(dpos * LUT_SIZE))
     const cellLimit = Math.max(1.5 * FRAME, (8 * o.loopSeconds) / LUT_SIZE)
-    let d0 = this.delayAt(this.prevPhase), explained = 0
+    let d0 = this.delayAt(this.prevPos), explained = 0
     for (let i = 1; i <= cells; i++) {
-      const d = this.delayAt(this.prevPhase + (dphi * i) / cells)
+      const d = this.delayAt(this.prevPos + (dpos * i) / cells)
       if (Math.abs(d - d0) > cellLimit) return true
       explained += d - d0
       d0 = d
@@ -269,21 +274,22 @@ export class WarpCompositor {
    * The texture to feed the pipeline. `phase` is the loop phase the delay was computed for (used
    * with the line for jump detection and by Filter Spam's slices); the read time is `now - delaySec`.
    */
-  render(phase: number, delaySec: number): THREE.Texture {
+  render(pos: number, delaySec: number): THREE.Texture {
     const live = this.live
     if (!live) throw new Error('WarpCompositor.render before capture')
     const now = this.now
     const delay = Number.isFinite(delaySec) ? Math.max(0, Math.min(MAX_DELAY_SECONDS, delaySec)) : 0
-    const ph = Number.isFinite(phase) ? phase - Math.floor(phase) : 0
+    const p = Number.isFinite(pos) ? pos : 0
+    const ph = p - Math.floor(p)
     let read = now - delay
     const { profile, knobs: k, output, mix } = this.opts
 
     // Jump tracking runs for every profile so switching profile mid-run behaves.
-    const jumped = this.detectJump(ph, delay, now)
+    const jumped = this.detectJump(p, delay, now)
     if (jumped) this._jumpCount++
     const dt = Number.isFinite(this.prevNow) ? Math.min(0.1, Math.max(0, now - this.prevNow)) : 0
     this.prevNow = now
-    this.prevPhase = ph
+    this.prevPos = p
     this.prevDelay = delay
     if (profile !== 'degrade') this.holdTick = NaN
     if ((profile !== 'clean' || !(k[2] > 0)) && this.echoTarget) this.freeEcho()
@@ -496,7 +502,7 @@ export class WarpCompositor {
   /** Forget every stored frame (on source change) and any hold / echo state. */
   clear(): void {
     this.buffer.clear()
-    this.prevNow = this.prevPhase = this.prevDelay = NaN
+    this.prevNow = this.prevPos = this.prevDelay = NaN
     this.holdTick = this.holdRead = NaN
     this._readTime = NaN
     this.echoValid = false // the echo target holds the old source's picture: never fade it in

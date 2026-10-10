@@ -47,20 +47,33 @@ function segAt(time: number): WarpClockSegment {
   return s
 }
 
+/**
+ * Loops since the anchor of the segment in force at `ctxTime`, unwrapped (playback spec §2: Scatter and Ping-pong read
+ * the whole part). getWarpPhase is its fractional part.
+ */
+export function getWarpPosition(ctxTime: number): number {
+  const s = segAt(ctxTime)
+  return (ctxTime - s.t0) / loopSeconds(s.lengthBeats, s.bpm)
+}
+
 /** 0..1 loop phase at `ctxTime` (a time on the shared base, normally warpNow()). */
 export function getWarpPhase(ctxTime: number): number {
-  const s = segAt(ctxTime)
-  return frac((ctxTime - s.t0) / loopSeconds(s.lengthBeats, s.bpm))
+  return frac(getWarpPosition(ctxTime))
 }
 
 /**
- * Phase of what is being heard right now: the context's time minus its output and base latency
+ * getWarpPosition of what is being heard right now: the context's time minus its output and base latency
  * (0 on the performance.now fallback). For the video side, so pictures line up with the sound.
  */
-export function getHeardWarpPhase(): number {
+export function getHeardWarpPosition(): number {
   const ac = timeBase instanceof AudioContext ? timeBase : null
   const lat = ac ? (ac.outputLatency || 0) + (ac.baseLatency || 0) : 0
-  return getWarpPhase(warpNow() - lat)
+  return getWarpPosition(warpNow() - lat)
+}
+
+/** Phase of what is being heard right now (frac of getHeardWarpPosition). */
+export function getHeardWarpPhase(): number {
+  return frac(getHeardWarpPosition())
 }
 
 function emit(e: WarpClockEvent) { listeners.forEach((fn) => fn(e)) }

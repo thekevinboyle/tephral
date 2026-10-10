@@ -8,12 +8,12 @@ import { useAudioSourceStore } from '../stores/audioSourceStore'
 import { EFFECT_PARAM_REGISTRY } from '../config/effectParams'
 import { readModBase } from '../effects/trackBandModulation'
 import { captureUserMix, clearGates, clearLines, clearMaster, gateOpenLevel, getMasterLevel, isGateOpen, isLineActive, releaseGate, releaseLine, setGateOpen, setLineLevel, setMasterLevel } from '../effects/mixModulation'
-import { lineLevel } from '../effects/lines/lineLevel'
-import { clearLinePhases, deleteLinePhase, noteLinePass, setLinePhase, setMasterPhase } from '../effects/lines/linePhase'
+import { lineLevel, linePlay, lineSeed } from '../effects/lines/lineLevel'
+import { MASTER_SEED, playPosition } from '../effects/playhead'
+import { clearLinePhases, deleteLinePhase, noteLinePass, setLinePos, setMasterPos } from '../effects/lines/linePhase'
 
 // A line with every field (an older line lacks amount, beats and gridY); the phase of a `len`-beat loop at beat `b`
 const lineOf = (l: TrackLine | undefined): TrackLine => (l && l.amount !== undefined && l.beats !== undefined && l.gridY !== undefined ? l : { ...defaultTrackLine(), ...l })
-const phaseOf = (b: number, len: number) => (((b % len) + len) % len) / len
 
 // Resolution to beat fraction
 const RESOLUTION_BEATS: Record<string, number> = {
@@ -474,9 +474,10 @@ export function useEffectSequencerPlayback() {
         const { tracks: latest, master } = useEffectSequencerStore.getState() // trackStep advanced above
         const ge = useGlitchEngineStore.getState()
         const ml = lineOf(master.line)
-        const mPhase = phaseOf(beats.current, ml.beats)
-        setMasterPhase(mPhase)
-        const mLevel = master.enabled ? lineLevel(ml.points, mPhase, ml.skew, ml.amount) : 1
+        const mPos = beats.current / ml.beats
+        const mx = playPosition(mPos, linePlay(ml, MASTER_SEED))
+        setMasterPos(mPos, mx)
+        const mLevel = master.enabled ? lineLevel(ml.points, mx, ml.amount) : 1
         setMasterLevel(mLevel)
         const seen = lineIdsNext.current
         seen.clear()
@@ -495,9 +496,10 @@ export function useEffectSequencerPlayback() {
           if (track.midiGate || track.audioGate || track.audioReactive.enabled) continue // those gates own the mix
           seen.add(effectId)
           const line = lineOf(track.line)
-          const phase = phaseOf(beats.current, line.beats)
-          const level = lineLevel(line.points, phase, line.skew, line.amount)
-          setLinePhase(effectId, phase)
+          const pos = beats.current / line.beats
+          const x = playPosition(pos, linePlay(line, lineSeed(effectId)))
+          const level = lineLevel(line.points, x, line.amount)
+          setLinePos(effectId, pos, x)
           setLineLevel(effectId, level)
           const mix = gateOpenLevel(effectId, baseMix.current[effectId] ?? 1) * level * mLevel
           if (Math.abs((ge.effectMix[effectId] ?? 1) - mix) > 1e-4) ge.setEffectMix(effectId, mix)

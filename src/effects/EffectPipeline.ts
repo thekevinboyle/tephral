@@ -656,6 +656,7 @@ export class EffectPipeline {
       'reaction_diffusion', 'rutt_etra', 'physarum',
       'strand_tar', 'strand_extinction', 'strand_path',
       'seg_echo', 'seg_stale', 'strand_web', 'strand_chiralium',
+      'strand_dooms',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
@@ -683,8 +684,9 @@ export class EffectPipeline {
       seg_stale: this.segStale,
       // Transmittance target + instanced quads (no captureFrame)
       strand_web: this.strandWeb,
-      // Seed table (no captureFrame)
+      // Helper tables / pre-passes (no captureFrame)
       strand_chiralium: this.strandChiralium,
+      strand_dooms: this.strandDooms,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]

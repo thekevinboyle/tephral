@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
 import { COLOR_UTILS_GLSL } from './glsl-utils'
+import { HelperPass } from './HelperPass'
 
 // GPU port of src/components/overlays/strand/doomsEffect.ts (CPU ground
 // truth, effect id 'strand_dooms'). No persistent state on the CPU side —
@@ -42,6 +43,11 @@ import { COLOR_UTILS_GLSL } from './glsl-utils'
 // across candidates, matching the CPU's screen-composite behavior when
 // multiple bright cells' halos overlap.
 //
+// Every pixel would re-measure the same 25 neighbouring cells (125 taps), so
+// each cell's brightness and pulse are a pre-pass (CELL_SHADER, the same GLSL
+// at the same UVs) into a one-texel-per-cell float texture, and the main pass
+// reads one texel per candidate cell.
+//
 // COLORSPACE WARNING compliance: every brightness sample goes through
 // linearToSRGB before use; the composited result goes through
 // sRGBToLinear immediately before outputColor.
@@ -49,15 +55,12 @@ import { COLOR_UTILS_GLSL } from './glsl-utils'
 // No preserveVideo uniform: same contract as every other STRAND port —
 // effectMix is the only blend control (the CPU overlay canvas has no
 // "renders on black" mode; unlit pixels are simply transparent).
-const fragmentShader = COLOR_UTILS_GLSL + /* glsl */ `
-uniform float haloSize;
-uniform float pulseSpeed;
-uniform float sensitivity;
-uniform float time;
-uniform vec2 resolution;
-uniform float effectMix;
+const DOOMS_GRID = 20
 
-const float DOOMS_GRID = 20.0;
+const CELL_GLSL = COLOR_UTILS_GLSL + /* glsl */ `
+uniform vec2 resolution;
+
+const float DOOMS_GRID = ${DOOMS_GRID.toFixed(1)};
 
 vec3 doomsSampleSRGB(vec2 px) {
   vec2 uv = clamp(px / resolution, 0.0, 1.0);
@@ -85,6 +88,26 @@ float doomsCellBrightness(vec2 centerPx) {
   }
   return sum / count;
 }
+`
+
+// One texel per grid cell: r = that cell's brightness, g = its pulse
+const CELL_SHADER = 'uniform sampler2D inputBuffer;\n' + CELL_GLSL + /* glsl */ `
+uniform float time;
+uniform float pulseSpeed;
+
+void main() {
+  vec2 spot = (floor(gl_FragCoord.xy) + 0.5) * DOOMS_GRID;
+  float pulse = 0.7 + 0.3 * sin(time * pulseSpeed * 2.0 + spot.x * 0.01 + spot.y * 0.01);
+  gl_FragColor = vec4(doomsCellBrightness(spot), pulse, 0.0, 1.0);
+}
+`
+
+const fragmentShader = CELL_GLSL + /* glsl */ `
+uniform float haloSize;
+uniform float sensitivity;
+uniform float effectMix;
+uniform sampler2D cellBrightness; // per cell: r = brightness, g = pulse
+uniform vec2 cellCount;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   vec2 pixelCoord = uv * resolution;
@@ -101,10 +124,11 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
       vec2 spot = (cell + 0.5) * DOOMS_GRID;
       if (spot.x < 0.0 || spot.x > resolution.x || spot.y < 0.0 || spot.y > resolution.y) continue;
 
-      float brightness = doomsCellBrightness(spot);
+      vec2 cellData = texture2D(cellBrightness, (cell + 0.5) / cellCount).rg;
+      float brightness = cellData.r;
       if (brightness <= (1.0 - sensitivity)) continue;
 
-      float pulse = 0.7 + 0.3 * sin(time * pulseSpeed * 2.0 + spot.x * 0.01 + spot.y * 0.01);
+      float pulse = cellData.g;
       float radius = haloSize * 100.0 * brightness * pulse;
       if (radius <= 0.001) continue;
 
@@ -162,12 +186,47 @@ export class StrandDoomsEffect extends Effect {
         ['time', new THREE.Uniform(0)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['effectMix', new THREE.Uniform(p.mix)],
+        ['cellBrightness', new THREE.Uniform(null)],
+        ['cellCount', new THREE.Uniform(new THREE.Vector2(1, 1))],
       ]),
     })
   }
 
-  update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
+  // Per-cell brightness pre-pass (allocated on first update, freed on disable)
+  private cells: HelperPass | null = null
+
+  update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
     this.uniforms.get('time')!.value = performance.now() / 1000
+
+    const res = this.uniforms.get('resolution')!.value as THREE.Vector2
+    // Every cell whose centre can lie inside the frame, plus one spare
+    const cols = Math.ceil(res.x / DOOMS_GRID) + 1
+    const rows = Math.ceil(res.y / DOOMS_GRID) + 1
+    if (!this.cells) {
+      this.cells = new HelperPass(CELL_SHADER, {
+        resolution: this.uniforms.get('resolution')!,
+        time: this.uniforms.get('time')!,
+        pulseSpeed: this.uniforms.get('pulseSpeed')!,
+        inputBuffer: { value: null },
+      }, cols, rows)
+      this.uniforms.get('cellBrightness')!.value = this.cells.texture
+    }
+    this.cells.setSize(cols, rows)
+    ;(this.uniforms.get('cellCount')!.value as THREE.Vector2).set(cols, rows)
+    this.cells.material.uniforms.inputBuffer.value = inputBuffer.texture
+    this.cells.render(renderer)
+  }
+
+  // Free the pre-pass when the effect is disabled.
+  releaseTargets() {
+    this.cells?.dispose()
+    this.cells = null
+    this.uniforms.get('cellBrightness')!.value = null
+  }
+
+  dispose() {
+    this.releaseTargets()
+    super.dispose()
   }
 
   setResolution(width: number, height: number) {

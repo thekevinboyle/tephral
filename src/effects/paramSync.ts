@@ -151,7 +151,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     thermal: () => { const s = useTrendStore.getState(); pipeline.thermal?.updateParams({ ...s.thermalParams, mix: getMix('thermal') }) },
     y2k_digicam: () => { const s = useTrendStore.getState(); pipeline.y2kDigicam?.updateParams({ ...s.y2kParams, mix: getMix('y2k_digicam') }) },
     halation: () => { const s = useTrendStore.getState(); pipeline.halation?.updateParams({ ...s.halationParams, fast: s.halationParams.fast ?? 0, mix: getMix('halation') }) },
-    anamorphic: () => { const s = useTrendStore.getState(); pipeline.anamorphic?.updateParams({ ...s.anamorphicParams, mix: getMix('anamorphic') }) },
+    anamorphic: () => { const s = useTrendStore.getState(); pipeline.anamorphic?.updateParams({ ...s.anamorphicParams, fast: s.anamorphicParams.fast ?? 0, mix: getMix('anamorphic') }) },
     dreamcore: () => { const s = useTrendStore.getState(); pipeline.dreamcore?.updateParams({ ...s.dreamcoreParams, mix: getMix('dreamcore') }) },
     liquid_morph: () => { const s = useTrendStore.getState(); pipeline.liquidMorph?.updateParams({ ...s.liquidMorphParams, fast: s.liquidMorphParams.fast ?? 0, mix: getMix('liquid_morph') }) },
     crystallize: () => { const s = useTrendStore.getState(); pipeline.crystallize?.updateParams({ ...s.crystallizeParams, mix: getMix('crystallize') }) },

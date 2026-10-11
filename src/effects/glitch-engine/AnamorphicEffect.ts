@@ -1,9 +1,28 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
 import { COLOR_UTILS_GLSL } from './glsl-utils'
+import { HelperPass } from './HelperPass'
 
-const fragmentShader = COLOR_UTILS_GLSL + /* glsl */ `
+const BRIGHT_GLSL = COLOR_UTILS_GLSL + /* glsl */ `
 uniform float threshold;
+
+vec3 brightPassColor(vec3 c) {
+  float lum = luminance(c);
+  float mask = smoothstep(threshold, threshold + 0.15, lum);
+  return c * mask;
+}
+`
+
+// Fast mode: the bright-pass at half resolution, read with linear filtering
+const BRIGHT_SHADER = 'uniform sampler2D inputBuffer;\nuniform vec2 passSize;\n' + BRIGHT_GLSL + /* glsl */ `
+void main() {
+  gl_FragColor = vec4(brightPassColor(texture2D(inputBuffer, gl_FragCoord.xy / passSize).rgb), 1.0);
+}
+`
+
+const fragmentShader = BRIGHT_GLSL + /* glsl */ `
+uniform bool fastMode;
+uniform sampler2D brightTexture;
 uniform float streak;
 uniform float tint;
 uniform float squeeze;
@@ -11,10 +30,8 @@ uniform vec2 resolution;
 uniform float effectMix;
 
 vec3 anamorphicBrightPass(vec2 uv) {
-  vec3 c = texture2D(inputBuffer, clamp(uv, 0.0, 1.0)).rgb;
-  float lum = luminance(c);
-  float mask = smoothstep(threshold, threshold + 0.15, lum);
-  return c * mask;
+  if (fastMode) return texture2D(brightTexture, clamp(uv, 0.0, 1.0)).rgb;
+  return brightPassColor(texture2D(inputBuffer, clamp(uv, 0.0, 1.0)).rgb);
 }
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
@@ -35,7 +52,9 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
   for (int i = 1; i <= TAPS; i++) {
     float fi = float(i);
-    float w = 1.0 - fi / float(TAPS + 1);
+    // Fast: every other tap of the half-resolution bright-pass, weighted for two
+    if (fastMode && mod(fi, 2.0) > 0.5) continue;
+    float w = (1.0 - fi / float(TAPS + 1)) * (fastMode ? 2.0 : 1.0);
     vec2 offset = vec2(fi * stride * texel.x, 0.0);
     streakSum += anamorphicBrightPass(suv + offset) * w;
     streakSum += anamorphicBrightPass(suv - offset) * w;
@@ -62,6 +81,7 @@ export interface AnamorphicParams {
   tint: number          // 0-1
   squeeze: number        // 0-0.3
   mix: number
+  fast?: number          // 1 = bright-pass at half resolution (cheaper, slightly softer)
 }
 
 export const DEFAULT_ANAMORPHIC_PARAMS: AnamorphicParams = {
@@ -85,8 +105,46 @@ export class AnamorphicEffect extends Effect {
         ['squeeze', new THREE.Uniform(p.squeeze)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['effectMix', new THREE.Uniform(p.mix)],
+        ['fastMode', new THREE.Uniform(!!p.fast)],
+        ['brightTexture', new THREE.Uniform(null)],
       ]),
     })
+  }
+
+  // Fast mode's half-resolution bright-pass (allocated while fast, freed otherwise)
+  private brightPass: HelperPass | null = null
+
+  update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget) {
+    if (!this.uniforms.get('fastMode')!.value) {
+      this.releaseTargets()
+      return
+    }
+    const w = Math.ceil(inputBuffer.width / 2)
+    const h = Math.ceil(inputBuffer.height / 2)
+    if (!this.brightPass) {
+      this.brightPass = new HelperPass(BRIGHT_SHADER, {
+        inputBuffer: { value: null },
+        passSize: { value: new THREE.Vector2(w, h) },
+        threshold: this.uniforms.get('threshold')!,
+      }, w, h, THREE.HalfFloatType, THREE.LinearFilter)
+      this.uniforms.get('brightTexture')!.value = this.brightPass.texture
+    }
+    this.brightPass.setSize(w, h)
+    ;(this.brightPass.material.uniforms.passSize.value as THREE.Vector2).set(w, h)
+    this.brightPass.material.uniforms.inputBuffer.value = inputBuffer.texture
+    this.brightPass.render(renderer)
+  }
+
+  releaseTargets() {
+    if (!this.brightPass) return
+    this.brightPass.dispose()
+    this.brightPass = null
+    this.uniforms.get('brightTexture')!.value = null
+  }
+
+  dispose() {
+    this.releaseTargets()
+    super.dispose()
   }
 
   setResolution(width: number, height: number) {
@@ -100,5 +158,6 @@ export class AnamorphicEffect extends Effect {
     if (params.tint !== undefined) this.uniforms.get('tint')!.value = params.tint
     if (params.squeeze !== undefined) this.uniforms.get('squeeze')!.value = params.squeeze
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
+    if (params.fast !== undefined) this.uniforms.get('fastMode')!.value = params.fast >= 0.5
   }
 }

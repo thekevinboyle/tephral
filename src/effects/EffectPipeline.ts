@@ -658,6 +658,7 @@ export class EffectPipeline {
       'seg_echo', 'seg_stale', 'strand_web', 'strand_chiralium',
       'strand_dooms', 'acid_contour', 'edges',
       'pixelSort', 'liquid_morph', 'halation',
+      'anamorphic',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
@@ -694,6 +695,7 @@ export class EffectPipeline {
       pixelSort: this.pixelSort,
       liquid_morph: this.liquidMorph,
       halation: this.halation,
+      anamorphic: this.anamorphic,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]

@@ -1318,6 +1318,8 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
         apply: (v) => trd().updateAnamorphicParams({ squeeze: v }), read: () => trd().anamorphicParams.squeeze },
       { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
         apply: (v) => trd().updateAnamorphicParams({ mix: v }), read: () => trd().anamorphicParams.mix },
+      { id: 'fast', label: 'FAST', min: 0, max: 1, step: 1,
+        apply: (v) => trd().updateAnamorphicParams({ fast: v }), read: () => trd().anamorphicParams.fast ?? 0 },
     ],
     setEnabled: (v) => trd().setAnamorphicEnabled(v),
     getEnabled: () => trd().anamorphicEnabled,

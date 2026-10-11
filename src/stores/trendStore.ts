@@ -88,6 +88,7 @@ export interface AnamorphicParams {
   tint: number          // 0-1
   squeeze: number       // 0-0.3
   mix: number            // 0-1, dry/wet
+  fast?: number          // 1 = bright-pass at half resolution (opt-in, absent = off)
 }
 
 export const DEFAULT_ANAMORPHIC_PARAMS: AnamorphicParams = {

@@ -20,37 +20,40 @@ import { useEffectSequencerStore } from '../stores/effectSequencerStore'
  */
 export function initParamSync(pipeline: EffectPipeline): () => void {
   const getMix = (id: string) => useGlitchEngineStore.getState().effectMix[id] ?? 1
-
-  const pushGlitch = () => {
-    const s = useGlitchEngineStore.getState()
-    pipeline.rgbSplit?.updateParams({ ...s.rgbSplit, mix: getMix('rgb_split') })
-    pipeline.chromaticAberration?.updateParams({ ...s.chromaticAberration, mix: getMix('chromatic') })
-    pipeline.posterize?.updateParams({ ...s.posterize, mix: getMix('posterize') })
-    pipeline.colorGrade?.updateParams({ ...s.colorGrade, mix: getMix('color_grade') })
-    pipeline.blockDisplace?.updateParams({ ...s.blockDisplace, mix: getMix('block_displace') })
-    pipeline.staticDisplacement?.updateParams({ ...s.staticDisplacement, mix: getMix('static_displace') })
-    pipeline.pixelate?.updateParams({ ...s.pixelate, mix: getMix('pixelate') })
-    pipeline.lensDistortion?.updateParams({ ...s.lensDistortion, mix: getMix('lens') })
-    pipeline.scanLines?.updateParams({ ...s.scanLines, mix: getMix('scan_lines') })
-    pipeline.vhsTracking?.updateParams({ ...s.vhsTracking, mix: getMix('vhs') })
-    pipeline.noise?.updateParams({ ...s.noise, mix: getMix('noise') })
-    pipeline.dither?.updateParams({ ...s.dither, mix: getMix('dither') })
-    pipeline.edgeDetection?.updateParams({ ...s.edgeDetection, mix: getMix('edges') })
-    pipeline.feedbackLoop?.updateParams({ ...s.feedbackLoop, mix: getMix('feedback') })
+  const runAll = (pushers: Record<string, () => void>) => {
+    for (const push of Object.values(pushers)) push()
   }
 
-  const pushMotion = () => {
-    const s = useMotionStore.getState()
-    pipeline.motionExtract?.updateParams({ ...s.motionExtract, mix: getMix('motion_extract') })
-    pipeline.echoTrail?.updateParams({ ...s.echoTrail, mix: getMix('echo_trail') })
-    pipeline.timeSmear?.updateParams({ ...s.timeSmear, mix: getMix('time_smear') })
-    pipeline.freezeMask?.updateParams({ ...s.freezeMask, mix: getMix('freeze_mask') })
+  const glitchPushers: Record<string, () => void> = {
+    rgb_split: () => { const s = useGlitchEngineStore.getState(); pipeline.rgbSplit?.updateParams({ ...s.rgbSplit, mix: getMix('rgb_split') }) },
+    chromatic: () => { const s = useGlitchEngineStore.getState(); pipeline.chromaticAberration?.updateParams({ ...s.chromaticAberration, mix: getMix('chromatic') }) },
+    posterize: () => { const s = useGlitchEngineStore.getState(); pipeline.posterize?.updateParams({ ...s.posterize, mix: getMix('posterize') }) },
+    color_grade: () => { const s = useGlitchEngineStore.getState(); pipeline.colorGrade?.updateParams({ ...s.colorGrade, mix: getMix('color_grade') }) },
+    block_displace: () => { const s = useGlitchEngineStore.getState(); pipeline.blockDisplace?.updateParams({ ...s.blockDisplace, mix: getMix('block_displace') }) },
+    static_displace: () => { const s = useGlitchEngineStore.getState(); pipeline.staticDisplacement?.updateParams({ ...s.staticDisplacement, mix: getMix('static_displace') }) },
+    pixelate: () => { const s = useGlitchEngineStore.getState(); pipeline.pixelate?.updateParams({ ...s.pixelate, mix: getMix('pixelate') }) },
+    lens: () => { const s = useGlitchEngineStore.getState(); pipeline.lensDistortion?.updateParams({ ...s.lensDistortion, mix: getMix('lens') }) },
+    scan_lines: () => { const s = useGlitchEngineStore.getState(); pipeline.scanLines?.updateParams({ ...s.scanLines, mix: getMix('scan_lines') }) },
+    vhs: () => { const s = useGlitchEngineStore.getState(); pipeline.vhsTracking?.updateParams({ ...s.vhsTracking, mix: getMix('vhs') }) },
+    noise: () => { const s = useGlitchEngineStore.getState(); pipeline.noise?.updateParams({ ...s.noise, mix: getMix('noise') }) },
+    dither: () => { const s = useGlitchEngineStore.getState(); pipeline.dither?.updateParams({ ...s.dither, mix: getMix('dither') }) },
+    edges: () => { const s = useGlitchEngineStore.getState(); pipeline.edgeDetection?.updateParams({ ...s.edgeDetection, mix: getMix('edges') }) },
+    feedback: () => { const s = useGlitchEngineStore.getState(); pipeline.feedbackLoop?.updateParams({ ...s.feedbackLoop, mix: getMix('feedback') }) },
   }
+  const pushGlitch = () => runAll(glitchPushers)
 
-  const pushDots = () => {
-    const s = useAcidStore.getState()
-    pipeline.dotsEffect?.updateParams({ ...s.dotsParams, mix: getMix('acid_dots') })
+  const motionPushers: Record<string, () => void> = {
+    motion_extract: () => { const s = useMotionStore.getState(); pipeline.motionExtract?.updateParams({ ...s.motionExtract, mix: getMix('motion_extract') }) },
+    echo_trail: () => { const s = useMotionStore.getState(); pipeline.echoTrail?.updateParams({ ...s.echoTrail, mix: getMix('echo_trail') }) },
+    time_smear: () => { const s = useMotionStore.getState(); pipeline.timeSmear?.updateParams({ ...s.timeSmear, mix: getMix('time_smear') }) },
+    freeze_mask: () => { const s = useMotionStore.getState(); pipeline.freezeMask?.updateParams({ ...s.freezeMask, mix: getMix('freeze_mask') }) },
   }
+  const pushMotion = () => runAll(motionPushers)
+
+  const dotsPushers: Record<string, () => void> = {
+    acid_dots: () => { const s = useAcidStore.getState(); pipeline.dotsEffect?.updateParams({ ...s.dotsParams, mix: getMix('acid_dots') }) },
+  }
+  const pushDots = () => runAll(dotsPushers)
 
   const pushAscii = () => {
     const p = useAsciiRenderStore.getState().params
@@ -66,27 +69,27 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     })
   }
 
-  const pushDestruction = () => {
-    const s = useDestructionStore.getState()
-    // Note: destruction-mode override (max datamosh) stays in Canvas.tsx's
-    // structural effect — it depends on destructionActive, not these params.
-    // While destruction mode is active, the structural effect owns the
+  const destructionPushers: Record<string, () => void> = {
+    // While destruction mode is active, Canvas.tsx's structural effect owns the
     // datamosh uniforms (max override), so skip pushing store params here —
-    // otherwise this would clobber the MAX override on every effectMix
-    // change or per-frame modulation write (useContinuousModulation calls
+    // otherwise this would clobber the MAX override on every effectMix change
+    // or per-frame modulation write (useContinuousModulation calls
     // updateDatamoshParams every frame).
-    if (!useDestructionModeStore.getState().active) {
+    datamosh: () => {
+      if (useDestructionModeStore.getState().active) return
+      const s = useDestructionStore.getState()
       pipeline.datamosh?.updateParams({ ...s.datamoshParams, mix: getMix('datamosh') })
-    }
-    pipeline.pixelSort?.updateParams({ ...s.pixelSortParams, mix: getMix('pixelSort') })
-    pipeline.sonify?.updateParams({ ...s.sonifyParams, mix: getMix('sonify') })
-    pipeline.pointCloud?.updateParams({ ...s.pointCloudParams, mix: getMix('point_cloud') })
+    },
+    pixelSort: () => { const s = useDestructionStore.getState(); pipeline.pixelSort?.updateParams({ ...s.pixelSortParams, mix: getMix('pixelSort') }) },
+    sonify: () => { const s = useDestructionStore.getState(); pipeline.sonify?.updateParams({ ...s.sonifyParams, mix: getMix('sonify') }) },
+    point_cloud: () => { const s = useDestructionStore.getState(); pipeline.pointCloud?.updateParams({ ...s.pointCloudParams, mix: getMix('point_cloud') }) },
   }
+  const pushDestruction = () => runAll(destructionPushers)
 
-  const pushMorph = () => {
-    const s = useMorphStore.getState()
-    pipeline.faceHud?.updateParams({ ...s.faceHudParams, mix: getMix('face_hud') })
+  const morphPushers: Record<string, () => void> = {
+    face_hud: () => { const s = useMorphStore.getState(); pipeline.faceHud?.updateParams({ ...s.faceHudParams, mix: getMix('face_hud') }) },
   }
+  const pushMorph = () => runAll(morphPushers)
 
   const pushTrace = () => {
     const s = useVisionTrackingStore.getState()
@@ -141,35 +144,35 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
 
   // Trend effects (Phase 2) — pushes params for all 16 trend effects to their
   // pipeline instances, with per-effect mix driven by the routing crossfader.
-  const pushTrend = () => {
-    const s = useTrendStore.getState()
-    pipeline.kaleidoscope?.updateParams({ ...s.kaleidoscopeParams, mix: getMix('kaleidoscope') })
-    pipeline.rippleWarp?.updateParams({ ...s.rippleWarpParams, mix: getMix('ripple_warp') })
-    pipeline.fractalDomain?.updateParams({ ...s.fractalDomainParams, mix: getMix('fractal_domain') })
-    pipeline.thermal?.updateParams({ ...s.thermalParams, mix: getMix('thermal') })
-    pipeline.y2kDigicam?.updateParams({ ...s.y2kParams, mix: getMix('y2k_digicam') })
-    pipeline.halation?.updateParams({ ...s.halationParams, mix: getMix('halation') })
-    pipeline.anamorphic?.updateParams({ ...s.anamorphicParams, mix: getMix('anamorphic') })
-    pipeline.dreamcore?.updateParams({ ...s.dreamcoreParams, mix: getMix('dreamcore') })
-    pipeline.liquidMorph?.updateParams({ ...s.liquidMorphParams, mix: getMix('liquid_morph') })
-    pipeline.crystallize?.updateParams({ ...s.crystallizeParams, mix: getMix('crystallize') })
-    pipeline.feedbackTunnel?.updateParams({ ...s.feedbackTunnelParams, mix: getMix('feedback_tunnel') })
-    pipeline.opiumTrails?.updateParams({ ...s.opiumTrailsParams, mix: getMix('opium_trails') })
-    pipeline.flowSmear?.updateParams({ ...s.flowSmearParams, mix: getMix('flow_smear') })
-    pipeline.reactionDiffusion?.updateParams({ ...s.reactionDiffusionParams, mix: getMix('reaction_diffusion') })
-    pipeline.ruttEtra?.updateParams({ ...s.ruttEtraParams, mix: getMix('rutt_etra') })
-    pipeline.physarum?.updateParams({ ...s.physarumParams, mix: getMix('physarum') })
+  const trendPushers: Record<string, () => void> = {
+    kaleidoscope: () => { const s = useTrendStore.getState(); pipeline.kaleidoscope?.updateParams({ ...s.kaleidoscopeParams, mix: getMix('kaleidoscope') }) },
+    ripple_warp: () => { const s = useTrendStore.getState(); pipeline.rippleWarp?.updateParams({ ...s.rippleWarpParams, mix: getMix('ripple_warp') }) },
+    fractal_domain: () => { const s = useTrendStore.getState(); pipeline.fractalDomain?.updateParams({ ...s.fractalDomainParams, mix: getMix('fractal_domain') }) },
+    thermal: () => { const s = useTrendStore.getState(); pipeline.thermal?.updateParams({ ...s.thermalParams, mix: getMix('thermal') }) },
+    y2k_digicam: () => { const s = useTrendStore.getState(); pipeline.y2kDigicam?.updateParams({ ...s.y2kParams, mix: getMix('y2k_digicam') }) },
+    halation: () => { const s = useTrendStore.getState(); pipeline.halation?.updateParams({ ...s.halationParams, mix: getMix('halation') }) },
+    anamorphic: () => { const s = useTrendStore.getState(); pipeline.anamorphic?.updateParams({ ...s.anamorphicParams, mix: getMix('anamorphic') }) },
+    dreamcore: () => { const s = useTrendStore.getState(); pipeline.dreamcore?.updateParams({ ...s.dreamcoreParams, mix: getMix('dreamcore') }) },
+    liquid_morph: () => { const s = useTrendStore.getState(); pipeline.liquidMorph?.updateParams({ ...s.liquidMorphParams, mix: getMix('liquid_morph') }) },
+    crystallize: () => { const s = useTrendStore.getState(); pipeline.crystallize?.updateParams({ ...s.crystallizeParams, mix: getMix('crystallize') }) },
+    feedback_tunnel: () => { const s = useTrendStore.getState(); pipeline.feedbackTunnel?.updateParams({ ...s.feedbackTunnelParams, mix: getMix('feedback_tunnel') }) },
+    opium_trails: () => { const s = useTrendStore.getState(); pipeline.opiumTrails?.updateParams({ ...s.opiumTrailsParams, mix: getMix('opium_trails') }) },
+    flow_smear: () => { const s = useTrendStore.getState(); pipeline.flowSmear?.updateParams({ ...s.flowSmearParams, mix: getMix('flow_smear') }) },
+    reaction_diffusion: () => { const s = useTrendStore.getState(); pipeline.reactionDiffusion?.updateParams({ ...s.reactionDiffusionParams, mix: getMix('reaction_diffusion') }) },
+    rutt_etra: () => { const s = useTrendStore.getState(); pipeline.ruttEtra?.updateParams({ ...s.ruttEtraParams, mix: getMix('rutt_etra') }) },
+    physarum: () => { const s = useTrendStore.getState(); pipeline.physarum?.updateParams({ ...s.physarumParams, mix: getMix('physarum') }) },
   }
+  const pushTrend = () => runAll(trendPushers)
 
   // SEG_EXP effects
-  const pushSeg = () => {
-    const s = useSegStore.getState()
-    pipeline.segVoxel?.updateParams({ ...s.voxelParams, mix: s.voxelParams.mix * getMix('seg_voxel') })
-    pipeline.segEcho?.updateParams({ ...s.echoParams, mix: s.echoParams.mix * getMix('seg_echo') })
-    pipeline.segMatter?.updateParams({ ...s.matterParams, mix: s.matterParams.mix * getMix('seg_matter') })
-    pipeline.segStale?.updateParams({ ...s.staleParams, mix: s.staleParams.mix * getMix('seg_stale') })
-    pipeline.segTorn?.updateParams({ ...s.tornParams, mix: s.tornParams.mix * getMix('seg_torn') })
+  const segPushers: Record<string, () => void> = {
+    seg_voxel: () => { const s = useSegStore.getState(); pipeline.segVoxel?.updateParams({ ...s.voxelParams, mix: s.voxelParams.mix * getMix('seg_voxel') }) },
+    seg_echo: () => { const s = useSegStore.getState(); pipeline.segEcho?.updateParams({ ...s.echoParams, mix: s.echoParams.mix * getMix('seg_echo') }) },
+    seg_matter: () => { const s = useSegStore.getState(); pipeline.segMatter?.updateParams({ ...s.matterParams, mix: s.matterParams.mix * getMix('seg_matter') }) },
+    seg_stale: () => { const s = useSegStore.getState(); pipeline.segStale?.updateParams({ ...s.staleParams, mix: s.staleParams.mix * getMix('seg_stale') }) },
+    seg_torn: () => { const s = useSegStore.getState(); pipeline.segTorn?.updateParams({ ...s.tornParams, mix: s.tornParams.mix * getMix('seg_torn') }) },
   }
+  const pushSeg = () => runAll(segPushers)
   const pushBpm = () => {
     const bpm = useEffectSequencerStore.getState().bpm
     pipeline.segMatter?.setBpm(bpm)
@@ -181,42 +184,42 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
   // getMix('acid_<id>') })` line here (the optional-chain no-ops until that
   // effect's pipeline property exists, matching the null-filtered
   // enabledMap pattern in EffectPipeline).
-  const pushAcidPorts = () => {
-    const s = useAcidStore.getState()
-    pipeline.acidMirror?.updateParams({ ...s.mirrorParams, preserveVideo: s.preserveVideo, mix: getMix('acid_mirror') })
-    pipeline.acidRipple?.updateParams({ ...s.rippleParams, preserveVideo: s.preserveVideo, mix: getMix('acid_ripple') })
-    pipeline.acidScan?.updateParams({ ...s.scanParams, preserveVideo: s.preserveVideo, mix: getMix('acid_scan') })
-    pipeline.acidSlice?.updateParams({ ...s.sliceParams, preserveVideo: s.preserveVideo, mix: getMix('acid_slice') })
-    pipeline.acidThgrid?.updateParams({ ...s.thGridParams, preserveVideo: s.preserveVideo, mix: getMix('acid_thgrid') })
-    pipeline.acidHalftone?.updateParams({ ...s.halftoneParams, preserveVideo: s.preserveVideo, mix: getMix('acid_halftone') })
-    pipeline.acidLed?.updateParams({ ...s.ledParams, preserveVideo: s.preserveVideo, mix: getMix('acid_led') })
-    pipeline.acidHex?.updateParams({ ...s.hexParams, preserveVideo: s.preserveVideo, mix: getMix('acid_hex') })
-    pipeline.acidGlyph?.updateParams({ ...s.glyphParams, preserveVideo: s.preserveVideo, mix: getMix('acid_glyph') })
-    pipeline.acidIcons?.updateParams({ ...s.iconsParams, preserveVideo: s.preserveVideo, mix: getMix('acid_icons') })
-    pipeline.acidContour?.updateParams({ ...s.contourParams, preserveVideo: s.preserveVideo, mix: getMix('acid_contour') })
+  const acidPortsPushers: Record<string, () => void> = {
+    acid_mirror: () => { const s = useAcidStore.getState(); pipeline.acidMirror?.updateParams({ ...s.mirrorParams, preserveVideo: s.preserveVideo, mix: getMix('acid_mirror') }) },
+    acid_ripple: () => { const s = useAcidStore.getState(); pipeline.acidRipple?.updateParams({ ...s.rippleParams, preserveVideo: s.preserveVideo, mix: getMix('acid_ripple') }) },
+    acid_scan: () => { const s = useAcidStore.getState(); pipeline.acidScan?.updateParams({ ...s.scanParams, preserveVideo: s.preserveVideo, mix: getMix('acid_scan') }) },
+    acid_slice: () => { const s = useAcidStore.getState(); pipeline.acidSlice?.updateParams({ ...s.sliceParams, preserveVideo: s.preserveVideo, mix: getMix('acid_slice') }) },
+    acid_thgrid: () => { const s = useAcidStore.getState(); pipeline.acidThgrid?.updateParams({ ...s.thGridParams, preserveVideo: s.preserveVideo, mix: getMix('acid_thgrid') }) },
+    acid_halftone: () => { const s = useAcidStore.getState(); pipeline.acidHalftone?.updateParams({ ...s.halftoneParams, preserveVideo: s.preserveVideo, mix: getMix('acid_halftone') }) },
+    acid_led: () => { const s = useAcidStore.getState(); pipeline.acidLed?.updateParams({ ...s.ledParams, preserveVideo: s.preserveVideo, mix: getMix('acid_led') }) },
+    acid_hex: () => { const s = useAcidStore.getState(); pipeline.acidHex?.updateParams({ ...s.hexParams, preserveVideo: s.preserveVideo, mix: getMix('acid_hex') }) },
+    acid_glyph: () => { const s = useAcidStore.getState(); pipeline.acidGlyph?.updateParams({ ...s.glyphParams, preserveVideo: s.preserveVideo, mix: getMix('acid_glyph') }) },
+    acid_icons: () => { const s = useAcidStore.getState(); pipeline.acidIcons?.updateParams({ ...s.iconsParams, preserveVideo: s.preserveVideo, mix: getMix('acid_icons') }) },
+    acid_contour: () => { const s = useAcidStore.getState(); pipeline.acidContour?.updateParams({ ...s.contourParams, preserveVideo: s.preserveVideo, mix: getMix('acid_contour') }) },
   }
+  const pushAcidPorts = () => runAll(acidPortsPushers)
 
   // STRAND overlay effects (Phase 3 GPU port) — same empty scaffold as
   // pushAcidPorts(); each port task adds its own push line.
-  const pushStrandPorts = () => {
-    const s = useStrandStore.getState()
-    pipeline.strandBeach?.updateParams({ ...s.beachStaticParams, mix: getMix('strand_beach') })
-    pipeline.strandVoidout?.updateParams({ ...s.voidOutParams, mix: getMix('strand_voidout') })
-    pipeline.strandSeam?.updateParams({ ...s.seamParams, mix: getMix('strand_seam') })
-    pipeline.strandCloud?.updateParams({ ...s.chiralCloudParams, mix: getMix('strand_cloud') })
-    pipeline.strandDooms?.updateParams({ ...s.doomsParams, mix: getMix('strand_dooms') })
-    pipeline.strandBridge?.updateParams({ ...s.bridgeLinkParams, mix: getMix('strand_bridge') })
-    pipeline.strandWeb?.updateParams({ ...s.strandWebParams, mix: getMix('strand_web') })
-    pipeline.strandTimefall?.updateParams({ ...s.timefallParams, mix: getMix('strand_timefall') })
-    pipeline.strandUmbilical?.updateParams({ ...s.umbilicalParams, mix: getMix('strand_umbilical') })
-    pipeline.strandHandprints?.updateParams({ ...s.handprintsParams, mix: getMix('strand_handprints') })
-    pipeline.strandBbpod?.updateParams({ ...s.bbPodParams, mix: getMix('strand_bbpod') })
-    pipeline.strandChiralium?.updateParams({ ...s.chiraliumParams, mix: getMix('strand_chiralium') })
-    pipeline.strandOdradek?.updateParams({ ...s.odradekParams, mix: getMix('strand_odradek') })
-    pipeline.strandTar?.updateParams({ ...s.tarSpreadParams, mix: getMix('strand_tar') })
-    pipeline.strandExtinction?.updateParams({ ...s.extinctionParams, mix: getMix('strand_extinction') })
-    pipeline.strandChiralPath?.updateParams({ ...s.chiralPathParams, mix: getMix('strand_path') })
+  const strandPortsPushers: Record<string, () => void> = {
+    strand_beach: () => { const s = useStrandStore.getState(); pipeline.strandBeach?.updateParams({ ...s.beachStaticParams, mix: getMix('strand_beach') }) },
+    strand_voidout: () => { const s = useStrandStore.getState(); pipeline.strandVoidout?.updateParams({ ...s.voidOutParams, mix: getMix('strand_voidout') }) },
+    strand_seam: () => { const s = useStrandStore.getState(); pipeline.strandSeam?.updateParams({ ...s.seamParams, mix: getMix('strand_seam') }) },
+    strand_cloud: () => { const s = useStrandStore.getState(); pipeline.strandCloud?.updateParams({ ...s.chiralCloudParams, mix: getMix('strand_cloud') }) },
+    strand_dooms: () => { const s = useStrandStore.getState(); pipeline.strandDooms?.updateParams({ ...s.doomsParams, mix: getMix('strand_dooms') }) },
+    strand_bridge: () => { const s = useStrandStore.getState(); pipeline.strandBridge?.updateParams({ ...s.bridgeLinkParams, mix: getMix('strand_bridge') }) },
+    strand_web: () => { const s = useStrandStore.getState(); pipeline.strandWeb?.updateParams({ ...s.strandWebParams, mix: getMix('strand_web') }) },
+    strand_timefall: () => { const s = useStrandStore.getState(); pipeline.strandTimefall?.updateParams({ ...s.timefallParams, mix: getMix('strand_timefall') }) },
+    strand_umbilical: () => { const s = useStrandStore.getState(); pipeline.strandUmbilical?.updateParams({ ...s.umbilicalParams, mix: getMix('strand_umbilical') }) },
+    strand_handprints: () => { const s = useStrandStore.getState(); pipeline.strandHandprints?.updateParams({ ...s.handprintsParams, mix: getMix('strand_handprints') }) },
+    strand_bbpod: () => { const s = useStrandStore.getState(); pipeline.strandBbpod?.updateParams({ ...s.bbPodParams, mix: getMix('strand_bbpod') }) },
+    strand_chiralium: () => { const s = useStrandStore.getState(); pipeline.strandChiralium?.updateParams({ ...s.chiraliumParams, mix: getMix('strand_chiralium') }) },
+    strand_odradek: () => { const s = useStrandStore.getState(); pipeline.strandOdradek?.updateParams({ ...s.odradekParams, mix: getMix('strand_odradek') }) },
+    strand_tar: () => { const s = useStrandStore.getState(); pipeline.strandTar?.updateParams({ ...s.tarSpreadParams, mix: getMix('strand_tar') }) },
+    strand_extinction: () => { const s = useStrandStore.getState(); pipeline.strandExtinction?.updateParams({ ...s.extinctionParams, mix: getMix('strand_extinction') }) },
+    strand_path: () => { const s = useStrandStore.getState(); pipeline.strandChiralPath?.updateParams({ ...s.chiralPathParams, mix: getMix('strand_path') }) },
   }
+  const pushStrandPorts = () => runAll(strandPortsPushers)
 
   // Initial push so a fresh pipeline gets current values immediately
   pushGlitch(); pushMotion(); pushDots(); pushAscii()
@@ -224,15 +227,25 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
   pushAcidPorts(); pushStrandPorts()
   pushSeg(); pushBpm()
 
+  // One pusher per effect id, for dry/wet changes. Strand ports come after
+  // destruction so the strand store's params win for the effects both push
+  // (odradek, tar, extinction, path), as when every group was re-pushed.
+  const mixPushers: Record<string, () => void> = {
+    ...glitchPushers, ...motionPushers, ...dotsPushers, ascii: pushAscii,
+    ...destructionPushers, ...morphPushers, ...trendPushers,
+    ...acidPortsPushers, ...strandPortsPushers, ...segPushers,
+  }
+
   // Subscribe with reference-equality slice checks (zustand v5 vanilla
   // subscribe gives (state, prevState)). effectMix lives in the glitch
-  // store and feeds every group's mix, so a mix change re-pushes all.
+  // store; a change re-pushes only the effects whose mix changed (a
+  // modulated dry/wet writes it every frame).
   const unsubs = [
     useGlitchEngineStore.subscribe((s, prev) => {
       if (s.effectMix !== prev.effectMix) {
-        pushGlitch(); pushMotion(); pushDots(); pushAscii()
-        pushDestruction(); pushMorph(); pushTrend()
-        pushAcidPorts(); pushStrandPorts(); pushSeg()
+        for (const id of new Set([...Object.keys(s.effectMix), ...Object.keys(prev.effectMix)])) {
+          if (s.effectMix[id] !== prev.effectMix[id]) mixPushers[id]?.()
+        }
         return
       }
       if (

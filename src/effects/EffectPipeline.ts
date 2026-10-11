@@ -657,6 +657,7 @@ export class EffectPipeline {
       'strand_tar', 'strand_extinction', 'strand_path',
       'seg_echo', 'seg_stale', 'strand_web', 'strand_chiralium',
       'strand_dooms', 'acid_contour', 'edges',
+      'pixelSort',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
@@ -690,6 +691,7 @@ export class EffectPipeline {
       acid_contour: this.acidContour,
       // Fast-mode helper passes
       edges: this.edgeDetection,
+      pixelSort: this.pixelSort,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]

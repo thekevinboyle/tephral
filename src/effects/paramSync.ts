@@ -80,7 +80,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
       const s = useDestructionStore.getState()
       pipeline.datamosh?.updateParams({ ...s.datamoshParams, mix: getMix('datamosh') })
     },
-    pixelSort: () => { const s = useDestructionStore.getState(); pipeline.pixelSort?.updateParams({ ...s.pixelSortParams, mix: getMix('pixelSort') }) },
+    pixelSort: () => { const s = useDestructionStore.getState(); pipeline.pixelSort?.updateParams({ ...s.pixelSortParams, fast: s.pixelSortParams.fast ?? 0, mix: getMix('pixelSort') }) },
     sonify: () => { const s = useDestructionStore.getState(); pipeline.sonify?.updateParams({ ...s.sonifyParams, mix: getMix('sonify') }) },
     point_cloud: () => { const s = useDestructionStore.getState(); pipeline.pointCloud?.updateParams({ ...s.pointCloudParams, mix: getMix('point_cloud') }) },
   }

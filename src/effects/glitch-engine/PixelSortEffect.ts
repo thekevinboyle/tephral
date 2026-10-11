@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
+import { HelperPass } from './HelperPass'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PIXEL SORT EFFECT - Glitch art classic
@@ -12,22 +13,7 @@ import { Effect, BlendFunction } from 'postprocessing'
 // 2. Displacing them along the sort direction based on their sort value
 // 3. Creating streak-like artifacts that mimic sorted pixel runs
 //
-const fragmentShader = `
-uniform float threshold;
-uniform float streakLength;
-uniform float intensity;
-uniform float randomness;
-uniform int direction;      // 0 = horizontal, 1 = vertical
-uniform int sortMode;       // 0 = brightness, 1 = saturation, 2 = hue
-uniform bool reverse;
-uniform float time;
-uniform vec2 resolution;
-uniform float effectMix;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// COLOR SPACE UTILITIES
-// ═══════════════════════════════════════════════════════════════════════════
-
+const NOISE_GLSL = /* glsl */ `
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
@@ -42,6 +28,37 @@ float noise(vec2 p) {
   float d = hash(i + vec2(1.0, 1.0));
   return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
+`
+
+// Fast mode: noise(uv * 100 + time) over the frame, 4 texels per noise cell,
+// read with linear filtering instead of evaluating 4 hashes per streak sample
+const NOISE_FIELD_SIZE = 400
+const NOISE_FIELD_SHADER = NOISE_GLSL + /* glsl */ `
+uniform float time;
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / ${NOISE_FIELD_SIZE}.0;
+  gl_FragColor = vec4(noise(uv * 100.0 + time), 0.0, 0.0, 1.0);
+}
+`
+
+const fragmentShader = NOISE_GLSL + `
+uniform bool fastMode;
+uniform sampler2D noiseField;
+uniform float threshold;
+uniform float streakLength;
+uniform float intensity;
+uniform float randomness;
+uniform int direction;      // 0 = horizontal, 1 = vertical
+uniform int sortMode;       // 0 = brightness, 1 = saturation, 2 = hue
+uniform bool reverse;
+uniform float time;
+uniform vec2 resolution;
+uniform float effectMix;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COLOR SPACE UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════
 
 float getLuminance(vec3 c) {
   return dot(c, vec3(0.299, 0.587, 0.114));
@@ -117,7 +134,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     // Match the original shader's implicit search-range clamp (its 64-iter
     // cap doubled as a 64-texel range limit); stride only within that range.
     float searchRange1 = min(streakLength * 0.5, 64.0);
-    float stride1 = max(1.0, searchRange1 / 48.0);
+    float stride1 = max(1.0, searchRange1 / 48.0) * (fastMode ? 2.0 : 1.0);
     for (float i = 1.0; i <= 48.0; i++) {
       float d = i * stride1;
       if (d > searchRange1) break;
@@ -171,7 +188,7 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   // beyond it, long streaks fall through to the smooth displacement fallback.
   // Preserve that range and stride only within it (max stride 1.33).
   float searchRange2 = min(streakLength, 128.0);
-  float stride2 = max(1.0, searchRange2 / 96.0);
+  float stride2 = max(1.0, searchRange2 / 96.0) * (fastMode ? 2.0 : 1.0);
   float ladderJitter = (hash(uv * 731.3) - 0.5) * (stride2 - 1.0);
   for (float i = 0.0; i <= 96.0; i++) {
     float d = max(i * stride2 + ladderJitter, 0.0);
@@ -190,7 +207,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
     // Check if this sample should end up at our position
     float sampleDisplacement = sampleStrength * streakLength * texel.x * intensity;
-    sampleDisplacement *= 1.0 + (noise(sampleUV * 100.0 + time) - 0.5) * randomness;
+    float sampleNoise = fastMode ? texture2D(noiseField, sampleUV).r : noise(sampleUV * 100.0 + time);
+    sampleDisplacement *= 1.0 + (sampleNoise - 0.5) * randomness;
 
     if (abs(sampleDisplacement - d * texel.x) <= stride2 * texel.x * 0.75 + texel.x) {
       if (sampleStrength > bestMatch) {
@@ -238,6 +256,7 @@ export interface PixelSortParams {
   randomness: number      // 0-1: variation in sorting
   reverse: boolean        // sort direction
   mix: number            // 0-1: wet/dry
+  fast?: number          // 1 = streak noise from a precomputed field (cheaper, slightly different streaks)
 }
 
 export const DEFAULT_PIXEL_SORT_PARAMS: PixelSortParams = {
@@ -273,13 +292,41 @@ export class PixelSortEffect extends Effect {
         ['time', new THREE.Uniform(0)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1, 1))],
         ['effectMix', new THREE.Uniform(p.mix)],
+        ['fastMode', new THREE.Uniform(!!p.fast)],
+        ['noiseField', new THREE.Uniform(null)],
       ]),
     })
   }
 
-  update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
+  // Fast mode's noise field (allocated while fast, freed otherwise)
+  private noisePass: HelperPass | null = null
+
+  update(renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
     this.time += deltaTime || 0.016
     this.uniforms.get('time')!.value = this.time
+
+    if (!this.uniforms.get('fastMode')!.value) {
+      this.releaseTargets()
+      return
+    }
+    if (!this.noisePass) {
+      this.noisePass = new HelperPass(NOISE_FIELD_SHADER, { time: this.uniforms.get('time')! },
+        NOISE_FIELD_SIZE, NOISE_FIELD_SIZE, THREE.HalfFloatType, THREE.LinearFilter)
+      this.uniforms.get('noiseField')!.value = this.noisePass.texture
+    }
+    this.noisePass.render(renderer)
+  }
+
+  releaseTargets() {
+    if (!this.noisePass) return
+    this.noisePass.dispose()
+    this.noisePass = null
+    this.uniforms.get('noiseField')!.value = null
+  }
+
+  dispose() {
+    this.releaseTargets()
+    super.dispose()
   }
 
   setSize(width: number, height: number) {
@@ -300,5 +347,6 @@ export class PixelSortEffect extends Effect {
     }
     if (params.reverse !== undefined) this.uniforms.get('reverse')!.value = params.reverse
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
+    if (params.fast !== undefined) this.uniforms.get('fastMode')!.value = params.fast >= 0.5
   }
 }

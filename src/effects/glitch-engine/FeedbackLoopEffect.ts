@@ -146,7 +146,6 @@ export const DEFAULT_FEEDBACK_LOOP_PARAMS: FeedbackLoopParams = {
 
 export class FeedbackLoopEffect extends Effect {
   private feedbackTarget: THREE.WebGLRenderTarget | null = null
-  private tempTarget: THREE.WebGLRenderTarget | null = null
   private copyMaterial: THREE.ShaderMaterial | null = null
   private copyGeometry: THREE.PlaneGeometry | null = null
   private copyScene: THREE.Scene | null = null
@@ -197,13 +196,6 @@ export class FeedbackLoopEffect extends Effect {
       type: THREE.HalfFloatType,
     })
 
-    this.tempTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-      format: THREE.RGBAFormat,
-      type: THREE.HalfFloatType,
-    })
-
     this.uniforms.get('resolution')!.value.set(size.x, size.y)
 
     // Setup copy material for ping-pong
@@ -221,7 +213,7 @@ export class FeedbackLoopEffect extends Effect {
   }
 
   update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
-    if (!this.feedbackTarget || !this.tempTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) {
+    if (!this.feedbackTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) {
       return
     }
 
@@ -235,7 +227,7 @@ export class FeedbackLoopEffect extends Effect {
 
   // Call this after the main render pass
   captureFrame(renderer: THREE.WebGLRenderer, outputBuffer: THREE.WebGLRenderTarget) {
-    if (!this.feedbackTarget || !this.tempTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) {
+    if (!this.feedbackTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) {
       return
     }
 
@@ -251,7 +243,6 @@ export class FeedbackLoopEffect extends Effect {
   setSize(width: number, height: number) {
     super.setSize?.(width, height)
     this.feedbackTarget?.setSize(width, height)
-    this.tempTarget?.setSize(width, height)
     this.uniforms.get('resolution')!.value.set(width, height)
   }
 
@@ -277,7 +268,6 @@ export class FeedbackLoopEffect extends Effect {
   // recreates them) leaks GPU resources on every disable/enable cycle.
   releaseTargets() {
     this.feedbackTarget?.dispose(); this.feedbackTarget = null
-    this.tempTarget?.dispose(); this.tempTarget = null
     this.copyMaterial?.dispose(); this.copyMaterial = null
     this.copyGeometry?.dispose(); this.copyGeometry = null
     this.copyScene = null
@@ -289,7 +279,6 @@ export class FeedbackLoopEffect extends Effect {
   dispose() {
     super.dispose()
     this.feedbackTarget?.dispose()
-    this.tempTarget?.dispose()
     this.copyMaterial?.dispose()
     this.copyGeometry?.dispose()
   }

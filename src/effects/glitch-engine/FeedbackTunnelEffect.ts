@@ -76,7 +76,6 @@ export const DEFAULT_FEEDBACK_TUNNEL_PARAMS: FeedbackTunnelParams = {
 
 export class FeedbackTunnelEffect extends Effect {
   private trailTarget: THREE.WebGLRenderTarget | null = null
-  private tempTarget: THREE.WebGLRenderTarget | null = null
   private copyMaterial: THREE.ShaderMaterial | null = null
   private copyGeometry: THREE.PlaneGeometry | null = null
   private copyScene: THREE.Scene | null = null
@@ -111,13 +110,6 @@ export class FeedbackTunnelEffect extends Effect {
     const size = renderer.getSize(new THREE.Vector2())
 
     this.trailTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-      format: THREE.RGBAFormat,
-      type: THREE.HalfFloatType,
-    })
-
-    this.tempTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
@@ -161,7 +153,6 @@ export class FeedbackTunnelEffect extends Effect {
   setSize(width: number, height: number) {
     super.setSize?.(width, height)
     this.trailTarget?.setSize(width, height)
-    this.tempTarget?.setSize(width, height)
   }
 
   updateParams(params: Partial<FeedbackTunnelParams>) {
@@ -179,7 +170,6 @@ export class FeedbackTunnelEffect extends Effect {
   // recreates them) leaks GPU resources on every disable/enable cycle.
   releaseTargets() {
     this.trailTarget?.dispose(); this.trailTarget = null
-    this.tempTarget?.dispose(); this.tempTarget = null
     this.copyMaterial?.dispose(); this.copyMaterial = null
     this.copyGeometry?.dispose(); this.copyGeometry = null
     this.copyScene = null
@@ -191,7 +181,6 @@ export class FeedbackTunnelEffect extends Effect {
   dispose() {
     super.dispose()
     this.trailTarget?.dispose()
-    this.tempTarget?.dispose()
     this.copyMaterial?.dispose()
     this.copyGeometry?.dispose()
   }

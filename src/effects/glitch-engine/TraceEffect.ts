@@ -176,10 +176,6 @@ void main() {
     this.copyScene.add(quad)
   }
 
-  update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
-    // Subclasses prepare their inputs here (face/hand geometry, motion history)
-  }
-
   /** Draw `material` over the whole of `target` with the copy quad. */
   protected drawQuad(renderer: THREE.WebGLRenderer, material: THREE.Material, target: THREE.WebGLRenderTarget) {
     if (!this.copyScene || !this.copyCamera) return
@@ -199,6 +195,7 @@ void main() {
       return
     }
 
+    // Subclasses prepare their inputs in update() (face/hand geometry, motion history)
     this.update(renderer, inputBuffer, deltaTime)
 
     this.maskMaterial.uniforms.inputBuffer.value = inputBuffer.texture
@@ -215,11 +212,11 @@ void main() {
       this.trailSwap = !this.trailSwap
     }
 
-    this.afterMask(renderer, inputBuffer)
+    this.afterMask?.(renderer, inputBuffer)
   }
 
   /** Hook after the mask is drawn (motion trace stores the frame as next frame's history). */
-  protected afterMask(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget) {}
+  protected afterMask?(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget): void
 
   /**
    * Get the trace mask texture (with trails if enabled).

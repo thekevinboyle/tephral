@@ -37,7 +37,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     vhs: () => { const s = useGlitchEngineStore.getState(); pipeline.vhsTracking?.updateParams({ ...s.vhsTracking, mix: getMix('vhs') }) },
     noise: () => { const s = useGlitchEngineStore.getState(); pipeline.noise?.updateParams({ ...s.noise, mix: getMix('noise') }) },
     dither: () => { const s = useGlitchEngineStore.getState(); pipeline.dither?.updateParams({ ...s.dither, mix: getMix('dither') }) },
-    edges: () => { const s = useGlitchEngineStore.getState(); pipeline.edgeDetection?.updateParams({ ...s.edgeDetection, mix: getMix('edges') }) },
+    edges: () => { const s = useGlitchEngineStore.getState(); pipeline.edgeDetection?.updateParams({ ...s.edgeDetection, fast: s.edgeDetection.fast ?? 0, mix: getMix('edges') }) },
     feedback: () => { const s = useGlitchEngineStore.getState(); pipeline.feedbackLoop?.updateParams({ ...s.feedbackLoop, mix: getMix('feedback') }) },
   }
   const pushGlitch = () => runAll(glitchPushers)

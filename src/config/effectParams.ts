@@ -154,6 +154,8 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
         apply: (v) => g().updateEdgeDetection({ glowSize: v }), read: () => g().edgeDetection.glowSize },
       { id: 'mixAmount', label: 'MIX', min: 0, max: 1, step: 0.01,
         apply: (v) => g().updateEdgeDetection({ mixAmount: v }), read: () => g().edgeDetection.mixAmount },
+      { id: 'fast', label: 'FAST', min: 0, max: 1, step: 1,
+        apply: (v) => g().updateEdgeDetection({ fast: v }), read: () => g().edgeDetection.fast ?? 0 },
     ],
     setEnabled: (v) => g().setEdgeDetectionEnabled(v),
     getEnabled: () => g().edgeDetectionEnabled,

@@ -20,11 +20,12 @@ export class HelperPass {
     uniforms: Record<string, THREE.IUniform>,
     width: number,
     height: number,
-    type: THREE.TextureDataType = THREE.FloatType
+    type: THREE.TextureDataType = THREE.FloatType,
+    filter: THREE.MagnificationTextureFilter = THREE.NearestFilter
   ) {
     this.target = new THREE.WebGLRenderTarget(Math.max(1, width), Math.max(1, height), {
-      minFilter: THREE.NearestFilter,
-      magFilter: THREE.NearestFilter,
+      minFilter: filter,
+      magFilter: filter,
       format: THREE.RGBAFormat,
       type,
       depthBuffer: false,

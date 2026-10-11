@@ -29,3 +29,16 @@ export function getSharedFrame(source: HTMLCanvasElement): HTMLCanvasElement | n
   }
   return canvas
 }
+
+let dataStamp = -1
+let data: ImageData | null = null
+
+/** The shared snapshot's pixels, read at most once per frame. */
+export function getSharedFrameData(source: HTMLCanvasElement): ImageData | null {
+  if (!getSharedFrame(source) || !ctx) return null
+  if (dataStamp !== stamp) {
+    data = ctx.getImageData(0, 0, WIDTH, HEIGHT)
+    dataStamp = stamp
+  }
+  return data
+}

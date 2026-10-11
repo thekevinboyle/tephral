@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
 import { COLOR_UTILS_GLSL } from './glsl-utils'
-import { getSharedFrame } from '../../components/overlays/sharedReadback'
+import { getSharedFrameData } from '../../components/overlays/sharedReadback'
 
 // GPU port of src/components/overlays/strand/strandWebEffect.ts (CPU ground
 // truth, effect id 'strand_web') — HYBRID CPU-points / GPU-lines design.
@@ -15,15 +15,13 @@ import { getSharedFrame } from '../../components/overlays/sharedReadback'
 // segments to the GPU as a uniform list to rasterise.
 //
 // PER-FRAME CPU STEP (update()):
-//   1. Read the Phase-1 shared readback canvas via getSharedFrame(
+//   1. Read the Phase-1 shared readback's pixels via getSharedFrameData(
 //      renderer.domElement) — the already-paid-for 960x540 CPU copy of the
-//      composited WebGL output. getImageData is called at most ONCE per frame
-//      (getSharedFrame's stamp gate collapses repeat reads to a single
-//      drawImage; we call getImageData once inside this method), and update()
-//      itself is only invoked while the effect's EffectPass is in the active
-//      chain — i.e. only while strand_web is ENABLED. On disable the pass is
-//      removed from the composer, update() stops being called, no CPU work
-//      runs, and no timers are left behind (clean drop).
+//      composited WebGL output, whose getImageData runs at most ONCE per frame
+//      for every reader. update() itself is only invoked while the effect's
+//      EffectPass is in the active chain — i.e. only while strand_web is
+//      ENABLED. On disable the pass is removed from the composer, update()
+//      stops being called, no CPU work runs, and no timers are left behind.
 //   2. Replicate the CPU algorithm EXACTLY, but in the 960x540 sample space:
 //      a fixed 20px grid, keep the single brightest pixel above `threshold`
 //      per cell (brightness = (r+g+b)/(3*255) on raw sRGB bytes, matching the
@@ -216,8 +214,9 @@ export class StrandWebEffect extends Effect {
   private points: Float32Array
 
   // Scratch canvas for the single per-frame pixel read (allocated lazily).
-  private scratchCanvas: HTMLCanvasElement | null = null
-  private scratchCtx: CanvasRenderingContext2D | null = null
+  // Reused per-point neighbour scratch (indices within MAX_DIST and their distances)
+  private nearIdx: number[] = []
+  private nearDist = new Float64Array(0)
 
   constructor(params: Partial<StrandWebGpuParams> = {}, renderer?: THREE.WebGLRenderer) {
     const p = { ...DEFAULT_STRAND_WEB_GPU_PARAMS, ...params }
@@ -266,29 +265,12 @@ export class StrandWebEffect extends Effect {
   // Runs the CPU point-find + connectivity for this frame and fills the
   // uniform arrays. Skips (clears counts) if the shared frame is unavailable.
   private computeWeb(source: HTMLCanvasElement) {
-    const shared = getSharedFrame(source)
-    if (!shared) {
+    const img = getSharedFrameData(source)
+    if (!img) {
       this.uniforms.get('uSegCount')!.value = 0
       this.uniforms.get('uPointCount')!.value = 0
       return
     }
-
-    // Copy the shared 960x540 frame once and read its pixels a single time
-    // this frame.
-    if (!this.scratchCanvas) {
-      this.scratchCanvas = document.createElement('canvas')
-      this.scratchCanvas.width = SAMPLE_W
-      this.scratchCanvas.height = SAMPLE_H
-      this.scratchCtx = this.scratchCanvas.getContext('2d', { willReadFrequently: true })
-    }
-    const ctx = this.scratchCtx
-    if (!ctx) {
-      this.uniforms.get('uSegCount')!.value = 0
-      this.uniforms.get('uPointCount')!.value = 0
-      return
-    }
-    ctx.drawImage(shared, 0, 0, SAMPLE_W, SAMPLE_H)
-    const img = ctx.getImageData(0, 0, SAMPLE_W, SAMPLE_H)
     const src = img.data
 
     // The grid stride, cell scan and connection distances all run in the
@@ -315,11 +297,20 @@ export class StrandWebEffect extends Effect {
         let maxB = 0
         let mx = gx
         let my = gy
+        // Neighbouring display rows/columns that map to the same sample
+        // row/column hold the same values, so only the first can be a new
+        // (strict) maximum: skip the repeats. Same point as a full scan.
+        let lastBy = -1
         for (let y = gy; y < yEnd; y++) {
           const by = Math.min(SAMPLE_H - 1, (y * sy) | 0)
+          if (by === lastBy) continue
+          lastBy = by
           const rowBase = by * SAMPLE_W
+          let lastBx = -1
           for (let x = gx; x < xEnd; x++) {
             const bx = Math.min(SAMPLE_W - 1, (x * sx) | 0)
+            if (bx === lastBx) continue
+            lastBx = bx
             const i = (rowBase + bx) * 4
             const b = (src[i] + src[i + 1] + src[i + 2]) / (3 * 255)
             if (b > maxB) {
@@ -360,23 +351,29 @@ export class StrandWebEffect extends Effect {
     // (overlapping) strokes; storing each undirected pair once lets the bounded
     // SEG_CAP budget cover twice as much of the mesh.
     const seen = new Set<number>()
+    if (this.nearDist.length < n) this.nearDist = new Float64Array(n)
+    const dist = this.nearDist
+    const near = this.nearIdx
     for (let i = 0; i < n; i++) {
       const p1 = pts[i]
-      // Build (index, dist) for every other point, sort ascending.
-      const near: { j: number; d: number }[] = []
+      // Every other point within MAX_DIST, nearest first (ties by index, as a
+      // stable sort of all points would give). Points beyond MAX_DIST never
+      // connect, so they are left out before sorting.
+      near.length = 0
       for (let j = 0; j < n; j++) {
         if (j === i) continue
         const p2 = pts[j]
-        const dx = p2.px - p1.px
-        const dy = p2.py - p1.py
-        near.push({ j, d: Math.hypot(dx, dy) })
+        const d = Math.hypot(p2.px - p1.px, p2.py - p1.py)
+        if (d > MAX_DIST) continue
+        dist[j] = d
+        near.push(j)
       }
-      near.sort((a, b) => a.d - b.d)
+      near.sort((a, b) => dist[a] - dist[b] || a - b)
       let connections = 0
       const seed = (i * 0.5) % 1
-      for (const { j, d } of near) {
+      for (const j of near) {
+        const d = dist[j]
         if (connections >= maxConn) break
-        if (d > MAX_DIST) break
         connections++ // counts against i's budget even if the pair is a dupe (CPU parity)
         const lo = i < j ? i : j
         const hi = i < j ? j : i

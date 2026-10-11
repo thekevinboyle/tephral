@@ -89,6 +89,9 @@ export class FaceHudEffect extends Effect {
   private rawLandmarks: FaceLandmark[] = []
   private smoothedLandmarks: FaceLandmark[] = []
   private videoElement: HTMLVideoElement | null = null
+  // The HUD canvas is redrawn and re-uploaded (8 MB at 1080p) only when what it
+  // shows changes: new or still-moving landmarks, a param, or the size.
+  private hudDirty = true
   params: FaceHudParams
 
   constructor(params: Partial<FaceHudParams> = {}) {
@@ -177,13 +180,18 @@ export class FaceHudEffect extends Effect {
     if (this.smoothedLandmarks.length !== this.rawLandmarks.length) {
       // First frame or landmark count changed — snap to raw
       this.smoothedLandmarks = this.rawLandmarks.map(p => ({ x: p.x, y: p.y }))
+      this.hudDirty = true
       return
     }
 
     // Exponential moving average
     for (let i = 0; i < this.rawLandmarks.length; i++) {
-      this.smoothedLandmarks[i].x += (this.rawLandmarks[i].x - this.smoothedLandmarks[i].x) * alpha
-      this.smoothedLandmarks[i].y += (this.rawLandmarks[i].y - this.smoothedLandmarks[i].y) * alpha
+      const p = this.smoothedLandmarks[i]
+      const x = p.x + (this.rawLandmarks[i].x - p.x) * alpha
+      const y = p.y + (this.rawLandmarks[i].y - p.y) * alpha
+      if (x !== p.x || y !== p.y) this.hudDirty = true
+      p.x = x
+      p.y = y
     }
   }
 
@@ -306,10 +314,13 @@ export class FaceHudEffect extends Effect {
     // Run detection and rendering in the render loop, not React effects
     this.detectFaces()
     this.smoothLandmarks()
+    if (!this.hudDirty) return
+    this.hudDirty = false
     this.renderHud()
   }
 
   updateParams(params: Partial<FaceHudParams>) {
+    this.hudDirty = true
     if (params.wireframeOpacity !== undefined) this.params.wireframeOpacity = params.wireframeOpacity
     if (params.hudColor !== undefined) this.params.hudColor = params.hudColor
     if (params.emotionDisplay !== undefined) this.params.emotionDisplay = params.emotionDisplay
@@ -325,6 +336,7 @@ export class FaceHudEffect extends Effect {
   setResolution(width: number, height: number) {
     this.hudCanvas.width = width
     this.hudCanvas.height = height
+    this.hudDirty = true
     this.uniforms.get('resolution')!.value.set(width, height)
   }
 

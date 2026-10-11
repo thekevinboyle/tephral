@@ -16,9 +16,6 @@ export type { PixelateParams } from './PixelateEffect'
 export { EdgeDetectionEffect, DEFAULT_EDGE_DETECTION_PARAMS } from './EdgeDetectionEffect'
 export type { EdgeDetectionParams } from './EdgeDetectionEffect'
 
-export { MixEffect, DEFAULT_MIX_PARAMS } from './MixEffect'
-export type { MixEffectParams } from './MixEffect'
-
 export { CrossfaderEffect } from './CrossfaderEffect'
 
 export { ChromaticAberrationEffect, DEFAULT_CHROMATIC_ABERRATION_PARAMS } from './ChromaticAberrationEffect'

@@ -59,7 +59,43 @@ import { COLOR_UTILS_GLSL } from './glsl-utils'
 // `sin(time*5.0 + ...)` — is a fixed-rate oscillation where shimmer only
 // scales amplitude, not the time multiplier, so it keeps using raw `time`
 // unchanged (no snap possible there).
-const fragmentShader = COLOR_UTILS_GLSL + /* glsl */ `
+//
+// SEED TABLE: each seed's cell position, angle and size depend only on its
+// index and the resolution, so they are computed once (per resolution) into a
+// 100x1 float texture by SEED_TABLE_SHADER — the same GLSL hashes on the same
+// GPU — and the main pass reads one texel per seed instead of re-running three
+// sin() hashes per seed for every pixel.
+const SEED_HASH_GLSL = /* glsl */ `
+const int MAX_SEEDS = 100;
+const float CHIRAL_GRID = 40.0;
+
+float chHash(float n) {
+  return fract(sin(n * 127.1) * 43758.5453);
+}
+`
+
+const SEED_TABLE_SHADER = SEED_HASH_GLSL + /* glsl */ `
+uniform vec2 resolution;
+
+void main() {
+  float fi = floor(gl_FragCoord.x);
+  float cols = max(floor(resolution.x / CHIRAL_GRID), 1.0);
+  float rows = max(floor(resolution.y / CHIRAL_GRID), 1.0);
+  float totalCells = cols * rows;
+
+  float cellIdx = floor(chHash(fi * 3.7 + 1.0) * totalCells);
+  float cellX = mod(cellIdx, cols);
+  float cellY = floor(cellIdx / cols);
+  vec2 seedPx = (vec2(cellX, cellY) + 0.5) * CHIRAL_GRID;
+
+  float seedAngle = chHash(fi * 5.9 + 2.0) * 6.28318530718;
+  float seedSize = mix(10.0, 40.0, chHash(fi * 7.1 + 3.0));
+  gl_FragColor = vec4(seedPx, seedAngle, seedSize);
+}
+`
+
+const fragmentShader = COLOR_UTILS_GLSL + SEED_HASH_GLSL + /* glsl */ `
+uniform sampler2D seedTable; // per seed: xy = cell centre (px), z = angle, w = size
 uniform float threshold;
 uniform float density;
 uniform float shimmer;
@@ -68,33 +104,20 @@ uniform float rotationPhase;
 uniform vec2 resolution;
 uniform float effectMix;
 
-const int MAX_SEEDS = 100;
-const float CHIRAL_GRID = 40.0;
-
-float chHash(float n) {
-  return fract(sin(n * 127.1) * 43758.5453);
-}
-
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   vec2 pixelCoord = uv * resolution;
   vec3 colorSRGB = linearToSRGB(clamp(inputColor.rgb, 0.0, 1.0));
 
-  float cols = max(floor(resolution.x / CHIRAL_GRID), 1.0);
-  float rows = max(floor(resolution.y / CHIRAL_GRID), 1.0);
-  float totalCells = cols * rows;
   float seedCount = floor(density * 100.0);
 
   for (int i = 0; i < MAX_SEEDS; i++) {
     if (float(i) >= seedCount) break;
     float fi = float(i);
 
-    float cellIdx = floor(chHash(fi * 3.7 + 1.0) * totalCells);
-    float cellX = mod(cellIdx, cols);
-    float cellY = floor(cellIdx / cols);
-    vec2 seedPx = (vec2(cellX, cellY) + 0.5) * CHIRAL_GRID;
-
-    float seedAngle = chHash(fi * 5.9 + 2.0) * 6.28318530718;
-    float seedSize = mix(10.0, 40.0, chHash(fi * 7.1 + 3.0));
+    vec4 seed = texture2D(seedTable, vec2((fi + 0.5) / float(MAX_SEEDS), 0.5));
+    vec2 seedPx = seed.xy;
+    float seedAngle = seed.z;
+    float seedSize = seed.w;
 
     vec2 rel = pixelCoord - seedPx;
     float maxReach = seedSize + 2.0;
@@ -236,14 +259,72 @@ export class StrandChiraliumEffect extends Effect {
         ['rotationPhase', new THREE.Uniform(0)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['effectMix', new THREE.Uniform(p.mix)],
+        ['seedTable', new THREE.Uniform(null)],
       ]),
     })
+  }
+
+  // Seed table (see SEED TABLE above), redrawn when the resolution changes
+  private seedTarget: THREE.WebGLRenderTarget | null = null
+  private seedMaterial: THREE.ShaderMaterial | null = null
+  private seedScene: THREE.Scene | null = null
+  private seedCamera: THREE.OrthographicCamera | null = null
+  private seedGeometry: THREE.PlaneGeometry | null = null
+  private seedTableResolution = new THREE.Vector2(-1, -1)
+
+  initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
+    super.initialize?.(renderer, alpha, frameBufferType)
+    if (this.seedTarget) return
+    this.seedTarget = new THREE.WebGLRenderTarget(100, 1, {
+      minFilter: THREE.NearestFilter,
+      magFilter: THREE.NearestFilter,
+      format: THREE.RGBAFormat,
+      type: THREE.FloatType,
+      depthBuffer: false,
+    })
+    this.seedMaterial = new THREE.ShaderMaterial({
+      uniforms: { resolution: this.uniforms.get('resolution')! },
+      vertexShader: `void main() { gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+      fragmentShader: SEED_TABLE_SHADER,
+      depthTest: false,
+      depthWrite: false,
+    })
+    this.seedGeometry = new THREE.PlaneGeometry(2, 2)
+    this.seedScene = new THREE.Scene()
+    this.seedScene.add(new THREE.Mesh(this.seedGeometry, this.seedMaterial))
+    this.seedCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+    this.seedTableResolution.set(-1, -1)
+    this.uniforms.get('seedTable')!.value = this.seedTarget.texture
+  }
+
+  // Free the seed table when the effect is disabled.
+  releaseTargets() {
+    this.seedTarget?.dispose(); this.seedTarget = null
+    this.seedMaterial?.dispose(); this.seedMaterial = null
+    this.seedGeometry?.dispose(); this.seedGeometry = null
+    this.seedScene = null
+    this.seedCamera = null
+    this.uniforms.get('seedTable')!.value = null
+  }
+
+  dispose() {
+    this.releaseTargets()
+    super.dispose()
+  }
+
+  private drawSeedTable(renderer: THREE.WebGLRenderer) {
+    const res = this.uniforms.get('resolution')!.value as THREE.Vector2
+    if (!this.seedTarget || !this.seedScene || !this.seedCamera || res.equals(this.seedTableResolution)) return
+    this.seedTableResolution.copy(res)
+    renderer.setRenderTarget(this.seedTarget)
+    renderer.render(this.seedScene, this.seedCamera)
   }
 
   // CPU-side phase accumulator (Task 15 ledger fix) — see header comment.
   private lastUpdateMs: number | null = null
 
-  update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
+  update(renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
+    this.drawSeedTable(renderer)
     const now = performance.now()
     const dt = this.lastUpdateMs === null ? 0 : Math.min((now - this.lastUpdateMs) / 1000, 0.1)
     this.lastUpdateMs = now

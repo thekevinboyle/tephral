@@ -108,11 +108,9 @@ export const DEFAULT_FLOW_SMEAR_PARAMS: FlowSmearParams = {
 }
 
 export class FlowSmearEffect extends Effect {
-  // Two live targets: last frame (motion reference) and the smear
-  // accumulation buffer. No dead `tempTarget` — this effect never needs a
-  // ping-pong swap target, only these two.
+  // One target: last frame's output, which is both the motion reference
+  // (prevFrameTexture) and the smear accumulation state (accumTexture).
   private prevFrameTarget: THREE.WebGLRenderTarget | null = null
-  private accumTarget: THREE.WebGLRenderTarget | null = null
   private copyMaterial: THREE.ShaderMaterial | null = null
   private copyGeometry: THREE.PlaneGeometry | null = null
   private copyScene: THREE.Scene | null = null
@@ -155,7 +153,6 @@ export class FlowSmearEffect extends Effect {
     }
 
     this.prevFrameTarget = new THREE.WebGLRenderTarget(size.x, size.y, options)
-    this.accumTarget = new THREE.WebGLRenderTarget(size.x, size.y, options)
 
     this.uniforms.get('resolution')!.value.set(size.x, size.y)
 
@@ -173,27 +170,23 @@ export class FlowSmearEffect extends Effect {
   }
 
   update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
-    if (!this.prevFrameTarget || !this.accumTarget) return
+    if (!this.prevFrameTarget) return
 
     this.uniforms.get('prevFrameTexture')!.value = this.prevFrameTarget.texture
-    this.uniforms.get('accumTexture')!.value = this.accumTarget.texture
+    this.uniforms.get('accumTexture')!.value = this.prevFrameTarget.texture
     this.uniforms.get('hasCapturedFrame')!.value = this.hasCapturedFrame
   }
 
-  // Call this after the main render pass. Two copy passes: the composited
-  // output becomes both next frame's motion reference (prevFrameTarget) and
-  // the new accumulation state (accumTarget) — since this frame's output
-  // already carries the displaced+decayed paint blended in, capturing it
-  // into accumTarget is what makes the smear recurse/decay across frames.
+  // Call this after the main render pass. The composited output becomes both
+  // next frame's motion reference and the new accumulation state — since this
+  // frame's output already carries the displaced+decayed paint blended in,
+  // capturing it is what makes the smear recurse/decay across frames.
   captureFrame(renderer: THREE.WebGLRenderer, outputBuffer: THREE.WebGLRenderTarget) {
-    if (!this.prevFrameTarget || !this.accumTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) return
+    if (!this.prevFrameTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) return
 
     this.copyMaterial.uniforms.tDiffuse.value = outputBuffer.texture
 
     renderer.setRenderTarget(this.prevFrameTarget)
-    renderer.render(this.copyScene, this.copyCamera)
-
-    renderer.setRenderTarget(this.accumTarget)
     renderer.render(this.copyScene, this.copyCamera)
 
     renderer.setRenderTarget(null)
@@ -204,7 +197,6 @@ export class FlowSmearEffect extends Effect {
   setSize(width: number, height: number) {
     super.setSize?.(width, height)
     this.prevFrameTarget?.setSize(width, height)
-    this.accumTarget?.setSize(width, height)
     this.uniforms.get('resolution')!.value.set(width, height)
   }
 
@@ -223,7 +215,6 @@ export class FlowSmearEffect extends Effect {
   // recreates them) leaks GPU resources on every disable/enable cycle.
   releaseTargets() {
     this.prevFrameTarget?.dispose(); this.prevFrameTarget = null
-    this.accumTarget?.dispose(); this.accumTarget = null
     this.copyMaterial?.dispose(); this.copyMaterial = null
     this.copyGeometry?.dispose(); this.copyGeometry = null
     this.copyScene = null
@@ -235,7 +226,6 @@ export class FlowSmearEffect extends Effect {
   dispose() {
     super.dispose()
     this.prevFrameTarget?.dispose()
-    this.accumTarget?.dispose()
     this.copyMaterial?.dispose()
     this.copyGeometry?.dispose()
   }

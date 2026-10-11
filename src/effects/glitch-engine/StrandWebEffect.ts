@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
 import { COLOR_UTILS_GLSL } from './glsl-utils'
-import { getSharedFrame } from '../../components/overlays/sharedReadback'
+import { getSharedFrameData } from '../../components/overlays/sharedReadback'
 
 // GPU port of src/components/overlays/strand/strandWebEffect.ts (CPU ground
 // truth, effect id 'strand_web') — HYBRID CPU-points / GPU-lines design.
@@ -15,15 +15,13 @@ import { getSharedFrame } from '../../components/overlays/sharedReadback'
 // segments to the GPU as a uniform list to rasterise.
 //
 // PER-FRAME CPU STEP (update()):
-//   1. Read the Phase-1 shared readback canvas via getSharedFrame(
+//   1. Read the Phase-1 shared readback's pixels via getSharedFrameData(
 //      renderer.domElement) — the already-paid-for 960x540 CPU copy of the
-//      composited WebGL output. getImageData is called at most ONCE per frame
-//      (getSharedFrame's stamp gate collapses repeat reads to a single
-//      drawImage; we call getImageData once inside this method), and update()
-//      itself is only invoked while the effect's EffectPass is in the active
-//      chain — i.e. only while strand_web is ENABLED. On disable the pass is
-//      removed from the composer, update() stops being called, no CPU work
-//      runs, and no timers are left behind (clean drop).
+//      composited WebGL output, whose getImageData runs at most ONCE per frame
+//      for every reader. update() itself is only invoked while the effect's
+//      EffectPass is in the active chain — i.e. only while strand_web is
+//      ENABLED. On disable the pass is removed from the composer, update()
+//      stops being called, no CPU work runs, and no timers are left behind.
 //   2. Replicate the CPU algorithm EXACTLY, but in the 960x540 sample space:
 //      a fixed 20px grid, keep the single brightest pixel above `threshold`
 //      per cell (brightness = (r+g+b)/(3*255) on raw sRGB bytes, matching the
@@ -40,30 +38,27 @@ import { getSharedFrame } from '../../components/overlays/sharedReadback'
 //      These bound the uniform arrays; the CPU's practical counts in the
 //      sparse/mid cases sit well under the caps, so parity there is faithful.
 //
-// GPU STEP (fragment shader): rasterise the uniform segment list via
-// distance-to-segment glow (bounded ≤SEG_CAP iterations, runtime uSegCount)
-// plus a dot glow at each bright point (≤POINT_CAP), matching the CPU's line
-// width (1+glowIntensity), cyan→hot traveling particle, screen blend and
-// per-point dot radius/alpha. Compositing is done in sRGB (linearToSRGB in,
-// blendScreen the sRGB cyan/hot colours, sRGBToLinear out) so the screen
-// blend matches the CPU's canvas-space blend.
+// GPU STEP: each segment and each bright point is an instanced quad around
+// its glow, drawn into a half-float "transmittance" target. Its fragment
+// computes the CPU's line width (1+glowIntensity), cyan→hot traveling
+// particle and per-point dot radius/alpha. In sRGB, one screen blend
+// c' = mix(c, screen(c, L), a) is (1 - c') = (1 - c)·(1 - a·L), so the target
+// multiply-blends (1 - a·L) per draw and the effect pass applies the whole
+// product once: c = 1 - (1 - c0)·T. That is the same result as looping every
+// segment and point per pixel, but each draw only touches its own pixels.
+// Compositing is done in sRGB (linearToSRGB in, sRGBToLinear out) so the
+// screen blend matches the CPU's canvas-space blend.
 //
 // No preserveVideo uniform: same contract as every other STRAND port —
 // effectMix is the only blend control.
 
-// Caps bound the uniform arrays AND the per-pixel shader loop. The CPU's
-// practical point count is far higher than the task brief's "e.g. 48" estimate
-// (324 bright points at threshold 0.85, 1058 at 0.3 on the reference frame), so
-// these are sized generously — the GPU reports 1024 fragment uniform vectors,
-// and 256/320 keeps the per-pixel loop affordable while giving a web dense
-// enough to read as the CPU's organic mesh rather than a sparse constellation.
-const POINT_CAP_FULL = 256
-const SEG_CAP_FULL = 512
-
-// Fallback caps for GPUs with a low `GL_MAX_FRAGMENT_UNIFORM_VECTORS` budget
-// (see chooseCaps() below) — half of each, keeping the 4:1 seg:point ratio.
-const POINT_CAP_HALF = 128
-const SEG_CAP_HALF = 256
+// Caps bound the per-frame point and segment counts. The CPU's practical
+// point count is far higher than the task brief's "e.g. 48" estimate (324
+// bright points at threshold 0.85, 1058 at 0.3 on the reference frame), so
+// these are sized generously, giving a web dense enough to read as the CPU's
+// organic mesh rather than a sparse constellation.
+const POINT_CAP = 256
+const SEG_CAP = 512
 
 // Pixel source for the CPU point-find — the shared readback canvas size.
 const SAMPLE_W = 960
@@ -72,54 +67,45 @@ const SAMPLE_H = 540
 const GRID = 20 // 20px grid cell (CPU)
 const MAX_DIST = 200 // 200px max connection distance (CPU)
 
-// Total uniform vec4 budget this shader needs: uSegs (segCap) + uSegSeed
-// (segCap/4, 4 seeds packed per vec4) + uPoints (pointCap), plus a small
-// reserve for resolution/counts/scalars and postprocessing's own per-pass
-// uniforms (inputBuffer sampler, texel size, etc. — a handful of slots).
-// At FULL caps that's 512 + 128 + 256 + 100 = 996 vec4 slots. Desktop GPUs
-// commonly report 1024 GL_MAX_FRAGMENT_UNIFORM_VECTORS (the WebGL1 default)
-// or far more under WebGL2, so FULL fits with ~28 slots of headroom there.
-// Low-end/integrated GPUs can report far less (some report as low as 256),
-// where even the HALF caps (256/64/128 = 448 + 100 = 548) would still
-// exceed budget and risk a shader compile failure that WebGL surfaces as a
-// silent black/broken pass rather than a JS exception — worth guarding
-// against explicitly rather than hoping it never ships to such hardware.
-const UNIFORM_RESERVE = 100
-
-function segCapNeeded(segCap: number, pointCap: number): number {
-  return segCap + segCap / 4 + pointCap + UNIFORM_RESERVE
-}
-
-// Chosen at construction time (compile-time for the shader string), NOT in
-// Effect.initialize() as the task brief's literal wording suggested: the
-// postprocessing Effect base class bakes its fragment shader source into
-// the WebGL program via the super() call in the constructor, before
-// initialize() ever runs — there is no supported way to swap the compiled
-// array-size literals afterward without re-constructing the Effect. Since
-// EffectPipeline already holds the THREE.WebGLRenderer at the point it
-// constructs every effect instance (its own constructor parameter), passing
-// it through here lets the choice happen before super() — the same
-// information initialize() would have had, just available earlier. This is
-// the documented "simplest correct alternative" the task brief allows for.
-function chooseCaps(renderer?: THREE.WebGLRenderer): { segCap: number; pointCap: number } {
-  const maxUniforms = renderer?.capabilities?.maxFragmentUniforms ?? Number.POSITIVE_INFINITY
-  if (maxUniforms >= segCapNeeded(SEG_CAP_FULL, POINT_CAP_FULL)) {
-    return { segCap: SEG_CAP_FULL, pointCap: POINT_CAP_FULL }
-  }
-  return { segCap: SEG_CAP_HALF, pointCap: POINT_CAP_HALF }
-}
-
-function buildFragmentShader(segCap: number, pointCap: number, seedSlots: number): string {
-  return COLOR_UTILS_GLSL + /* glsl */ `
-uniform float glowIntensity;
-uniform float effectMix;
-uniform float uTime;
+// Instanced quads for the transmittance target. Corner attribute: x runs along
+// the segment (0 = A, 1 = B), y across it (-1..1); a point uses both as -1..1.
+// Every quad reaches 1px past the furthest pixel its fragment can cover.
+const WEB_VERTEX_SHADER = /* glsl */ `
 uniform vec2 resolution;
-uniform int uSegCount;
-uniform int uPointCount;
-uniform vec4 uSegs[${segCap}];       // xy = endpoint A (uv), zw = endpoint B (uv)
-uniform vec4 uSegSeed[${seedSlots}]; // 4 per-segment phase seeds packed per vec4
-uniform vec4 uPoints[${pointCap}];   // xy = point (uv), z = brightness
+uniform float glowIntensity;
+uniform float uKind; // 0 = segments, 1 = points
+attribute vec4 aShape; // segment: A.xy, B.zw (uv); point: xy (uv), z = brightness
+attribute float aSeed;
+varying vec4 vShape;
+varying float vSeed;
+void main() {
+  vShape = aShape;
+  vSeed = aSeed;
+  vec2 p;
+  if (uKind < 0.5) {
+    vec2 a = aShape.xy * resolution;
+    vec2 b = aShape.zw * resolution;
+    float len = length(b - a);
+    vec2 dir = len > 1e-4 ? (b - a) / len : vec2(1.0, 0.0);
+    float r = (1.0 + glowIntensity) * 0.5 + 1.25 + 1.0;
+    p = a + dir * mix(-r, len + r, position.x) + vec2(-dir.y, dir.x) * position.y * r;
+  } else {
+    float r = 3.0 + glowIntensity * 2.0 + 2.0;
+    p = aShape.xy * resolution + position.xy * r;
+  }
+  gl_Position = vec4(p / resolution * 2.0 - 1.0, 0.0, 1.0);
+}
+`
+
+// Writes (1 - a·L) for one segment or point; the target multiplies them.
+const WEB_FRAGMENT_SHADER = /* glsl */ `
+uniform vec2 resolution;
+uniform vec2 targetSize;
+uniform float glowIntensity;
+uniform float uTime;
+uniform float uKind;
+varying vec4 vShape;
+varying float vSeed;
 
 float webSegDist(vec2 p, vec2 a, vec2 b) {
   vec2 pa = p - a;
@@ -128,55 +114,52 @@ float webSegDist(vec2 p, vec2 a, vec2 b) {
   return length(pa - ba * h);
 }
 
-void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+void main() {
   vec3 cyan = vec3(0.0, 212.0, 255.0) / 255.0;
   vec3 hot = vec3(200.0, 255.0, 255.0) / 255.0;
-  vec2 px = uv * resolution;
-  vec3 c = linearToSRGB(clamp(inputColor.rgb, 0.0, 1.0));
+  // Same pixel position the full-screen pass sees (uv at the pixel centre)
+  vec2 px = gl_FragCoord.xy / targetSize * resolution;
 
-  for (int i = 0; i < ${segCap}; i++) {
-    if (i >= uSegCount) break;
-    vec4 s = uSegs[i];
-    vec2 a = s.xy * resolution;
-    vec2 b = s.zw * resolution;
+  if (uKind < 0.5) {
+    vec2 a = vShape.xy * resolution;
+    vec2 b = vShape.zw * resolution;
     float d = webSegDist(px, a, b);
     float halfW = (1.0 + glowIntensity) * 0.5;
     float cov = 1.0 - smoothstep(halfW, halfW + 1.25, d);
-    if (cov <= 0.0) continue;
+    if (cov <= 0.0) discard;
 
     float segLen2 = dot(b - a, b - a);
     float t = clamp(dot(px - a, b - a) / max(segLen2, 1e-5), 0.0, 1.0);
-
-    int slot = i / 4;
-    int comp = i - slot * 4;
-    vec4 sv = uSegSeed[slot];
-    float seed = comp == 0 ? sv.x : (comp == 1 ? sv.y : (comp == 2 ? sv.z : sv.w));
-    float pulse = fract(uTime * 2.0 + seed);
+    float pulse = fract(uTime * 2.0 + vSeed);
     float travel = 1.0 - smoothstep(0.0, 0.1, abs(t - pulse));
 
     vec3 lineColor = mix(cyan, hot, travel);
     float baseA = glowIntensity * 0.3;
     float alpha = mix(baseA, glowIntensity * 0.8, travel) * cov;
-    c = mix(c, blendScreen(c, lineColor), alpha);
-  }
-
-  for (int i = 0; i < ${pointCap}; i++) {
-    if (i >= uPointCount) break;
-    vec4 pt = uPoints[i];
-    vec2 pp = pt.xy * resolution;
+    gl_FragColor = vec4(1.0 - alpha * lineColor, 1.0);
+  } else {
+    vec2 pp = vShape.xy * resolution;
     float pr = 3.0 + glowIntensity * 2.0;
     float pd = distance(px, pp);
     float pcov = 1.0 - smoothstep(pr - 1.0, pr + 1.0, pd);
-    if (pcov <= 0.0) continue;
-    float a = glowIntensity * pt.z * pcov;
-    c = mix(c, blendScreen(c, cyan), a);
+    if (pcov <= 0.0) discard;
+    float a = glowIntensity * vShape.z * pcov;
+    gl_FragColor = vec4(1.0 - a * cyan, 1.0);
   }
+}
+`
 
+const fragmentShader = COLOR_UTILS_GLSL + /* glsl */ `
+uniform float effectMix;
+uniform sampler2D tWeb; // product of (1 - a·L) over every segment and point
+
+void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+  vec3 c = linearToSRGB(clamp(inputColor.rgb, 0.0, 1.0));
+  c = 1.0 - (1.0 - c) * texture2D(tWeb, uv).rgb;
   vec3 outc = sRGBToLinear(c);
   outputColor = mix(inputColor, vec4(outc, 1.0), effectMix);
 }
 `
-}
 
 export interface StrandWebGpuParams {
   threshold: number
@@ -205,53 +188,112 @@ export class StrandWebEffect extends Effect {
   private threshold = DEFAULT_STRAND_WEB_GPU_PARAMS.threshold
   private maxConnections = DEFAULT_STRAND_WEB_GPU_PARAMS.maxConnections
 
-  // Resolved once at construction (see chooseCaps() above) — FULL unless
-  // the renderer reports a low fragment-uniform budget.
-  private readonly segCap: number
-  private readonly pointCap: number
+  private readonly segCap = SEG_CAP
+  private readonly pointCap = POINT_CAP
 
-  // Pre-allocated flat uniform arrays (mutated in place each frame — no GC).
-  private segs: Float32Array
-  private segSeed: Float32Array
-  private points: Float32Array
+  // Per-instance data (mutated in place each frame — no GC): segment
+  // endpoints, segment phase seeds, and point position + brightness.
+  private segs = new Float32Array(SEG_CAP * 4)
+  private segSeed = new Float32Array(SEG_CAP)
+  private points = new Float32Array(POINT_CAP * 4)
+  private segCount = 0
+  private pointCount = 0
 
-  // Scratch canvas for the single per-frame pixel read (allocated lazily).
-  private scratchCanvas: HTMLCanvasElement | null = null
-  private scratchCtx: CanvasRenderingContext2D | null = null
+  // Transmittance target and the instanced quads drawn into it (allocated
+  // in initialize(), freed by releaseTargets()).
+  private webTarget: THREE.WebGLRenderTarget | null = null
+  private webScene: THREE.Scene | null = null
+  private webCamera: THREE.OrthographicCamera | null = null
+  private segGeometry: THREE.InstancedBufferGeometry | null = null
+  private pointGeometry: THREE.InstancedBufferGeometry | null = null
+  private segMaterial: THREE.ShaderMaterial | null = null
+  private pointMaterial: THREE.ShaderMaterial | null = null
+  private readonly clearColor = new THREE.Color()
 
-  constructor(params: Partial<StrandWebGpuParams> = {}, renderer?: THREE.WebGLRenderer) {
+  // Reused per-point neighbour scratch (indices within MAX_DIST and their distances)
+  private nearIdx: number[] = []
+  private nearDist = new Float64Array(0)
+
+  constructor(params: Partial<StrandWebGpuParams> = {}) {
     const p = { ...DEFAULT_STRAND_WEB_GPU_PARAMS, ...params }
-    const { segCap, pointCap } = chooseCaps(renderer)
-    const seedSlots = segCap / 4
 
-    super('StrandWebEffect', buildFragmentShader(segCap, pointCap, seedSlots), {
+    super('StrandWebEffect', fragmentShader, {
       blendFunction: BlendFunction.NORMAL,
       uniforms: new Map<string, THREE.Uniform>([
         ['glowIntensity', new THREE.Uniform(p.glowIntensity)],
         ['effectMix', new THREE.Uniform(p.mix)],
         ['uTime', new THREE.Uniform(0)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
-        ['uSegCount', new THREE.Uniform(0)],
-        ['uPointCount', new THREE.Uniform(0)],
-        ['uSegs', new THREE.Uniform(new Float32Array(segCap * 4))],
-        ['uSegSeed', new THREE.Uniform(new Float32Array(seedSlots * 4))],
-        ['uPoints', new THREE.Uniform(new Float32Array(pointCap * 4))],
+        ['targetSize', new THREE.Uniform(new THREE.Vector2(1, 1))],
+        ['tWeb', new THREE.Uniform(null)],
       ]),
     })
 
-    this.segCap = segCap
-    this.pointCap = pointCap
-    this.segs = new Float32Array(segCap * 4)
-    this.segSeed = new Float32Array(seedSlots * 4)
-    this.points = new Float32Array(pointCap * 4)
-
     this.threshold = p.threshold
     this.maxConnections = p.maxConnections
-    // Point the uniform arrays at our owned buffers so in-place mutation
-    // re-uploads without reallocation.
-    this.uniforms.get('uSegs')!.value = this.segs
-    this.uniforms.get('uSegSeed')!.value = this.segSeed
-    this.uniforms.get('uPoints')!.value = this.points
+  }
+
+  initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
+    super.initialize?.(renderer, alpha, frameBufferType)
+    if (this.webTarget) return
+
+    const size = renderer.getDrawingBufferSize(new THREE.Vector2())
+    this.webTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
+      minFilter: THREE.NearestFilter,
+      magFilter: THREE.NearestFilter,
+      format: THREE.RGBAFormat,
+      type: THREE.HalfFloatType,
+      depthBuffer: false,
+    })
+    ;(this.uniforms.get('targetSize')!.value as THREE.Vector2).set(size.x, size.y)
+    this.uniforms.get('tWeb')!.value = this.webTarget.texture
+
+    // The effect's own Uniform objects, so param changes reach the quads too
+    const shared = (kind: number) => ({
+      resolution: this.uniforms.get('resolution')!,
+      targetSize: this.uniforms.get('targetSize')!,
+      glowIntensity: this.uniforms.get('glowIntensity')!,
+      uTime: this.uniforms.get('uTime')!,
+      uKind: { value: kind },
+    })
+    // dst = dst · src: each draw multiplies the transmittance by (1 - a·L)
+    const material = (kind: number) => new THREE.ShaderMaterial({
+      uniforms: shared(kind),
+      vertexShader: WEB_VERTEX_SHADER,
+      fragmentShader: WEB_FRAGMENT_SHADER,
+      blending: THREE.CustomBlending,
+      blendEquation: THREE.AddEquation,
+      blendSrc: THREE.ZeroFactor,
+      blendDst: THREE.SrcColorFactor,
+      depthTest: false,
+      depthWrite: false,
+    })
+    this.segMaterial = material(0)
+    this.pointMaterial = material(1)
+
+    const quad = (corners: number[]) => {
+      const g = new THREE.InstancedBufferGeometry()
+      g.setAttribute('position', new THREE.Float32BufferAttribute(corners, 3))
+      g.setIndex([0, 1, 2, 0, 2, 3])
+      g.instanceCount = 0
+      return g
+    }
+    this.segGeometry = quad([0, -1, 0, 1, -1, 0, 1, 1, 0, 0, 1, 0])
+    this.segGeometry.setAttribute('aShape', new THREE.InstancedBufferAttribute(this.segs, 4).setUsage(THREE.DynamicDrawUsage))
+    this.segGeometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(this.segSeed, 1).setUsage(THREE.DynamicDrawUsage))
+    this.pointGeometry = quad([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0])
+    this.pointGeometry.setAttribute('aShape', new THREE.InstancedBufferAttribute(this.points, 4).setUsage(THREE.DynamicDrawUsage))
+    this.pointGeometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(new Float32Array(POINT_CAP), 1))
+
+    this.webScene = new THREE.Scene()
+    for (const mesh of [
+      new THREE.Mesh(this.segGeometry, this.segMaterial),
+      new THREE.Mesh(this.pointGeometry, this.pointMaterial),
+    ]) {
+      mesh.frustumCulled = false
+      this.webScene.add(mesh)
+    }
+    this.webCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
   }
 
   update(renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
@@ -261,34 +303,59 @@ export class StrandWebEffect extends Effect {
 
     const source = renderer.domElement as HTMLCanvasElement
     this.computeWeb(source)
+    this.renderWeb(renderer)
+  }
+
+  // Draw this frame's segments and points into the transmittance target.
+  private renderWeb(renderer: THREE.WebGLRenderer) {
+    if (!this.webTarget || !this.webScene || !this.webCamera || !this.segGeometry || !this.pointGeometry) return
+    this.segGeometry.instanceCount = this.segCount
+    this.pointGeometry.instanceCount = this.pointCount
+    this.segGeometry.getAttribute('aShape').needsUpdate = true
+    this.segGeometry.getAttribute('aSeed').needsUpdate = true
+    this.pointGeometry.getAttribute('aShape').needsUpdate = true
+
+    renderer.getClearColor(this.clearColor)
+    const clearAlpha = renderer.getClearAlpha()
+    renderer.setRenderTarget(this.webTarget)
+    renderer.setClearColor(0xffffff, 1)
+    renderer.clear(true, false, false)
+    renderer.render(this.webScene, this.webCamera)
+    renderer.setClearColor(this.clearColor, clearAlpha)
+  }
+
+  setSize(width: number, height: number) {
+    super.setSize?.(width, height)
+    this.webTarget?.setSize(width, height)
+    ;(this.uniforms.get('targetSize')!.value as THREE.Vector2).set(width, height)
+  }
+
+  // Free the GPU resources from initialize() when the effect is disabled.
+  releaseTargets() {
+    this.webTarget?.dispose(); this.webTarget = null
+    this.uniforms.get('tWeb')!.value = null
+    this.segGeometry?.dispose(); this.segGeometry = null
+    this.pointGeometry?.dispose(); this.pointGeometry = null
+    this.segMaterial?.dispose(); this.segMaterial = null
+    this.pointMaterial?.dispose(); this.pointMaterial = null
+    this.webScene = null
+    this.webCamera = null
+  }
+
+  dispose() {
+    this.releaseTargets()
+    super.dispose()
   }
 
   // Runs the CPU point-find + connectivity for this frame and fills the
-  // uniform arrays. Skips (clears counts) if the shared frame is unavailable.
+  // instance arrays. Skips (clears counts) if the shared frame is unavailable.
   private computeWeb(source: HTMLCanvasElement) {
-    const shared = getSharedFrame(source)
-    if (!shared) {
-      this.uniforms.get('uSegCount')!.value = 0
-      this.uniforms.get('uPointCount')!.value = 0
+    const img = getSharedFrameData(source)
+    if (!img) {
+      this.segCount = 0
+      this.pointCount = 0
       return
     }
-
-    // Copy the shared 960x540 frame once and read its pixels a single time
-    // this frame.
-    if (!this.scratchCanvas) {
-      this.scratchCanvas = document.createElement('canvas')
-      this.scratchCanvas.width = SAMPLE_W
-      this.scratchCanvas.height = SAMPLE_H
-      this.scratchCtx = this.scratchCanvas.getContext('2d', { willReadFrequently: true })
-    }
-    const ctx = this.scratchCtx
-    if (!ctx) {
-      this.uniforms.get('uSegCount')!.value = 0
-      this.uniforms.get('uPointCount')!.value = 0
-      return
-    }
-    ctx.drawImage(shared, 0, 0, SAMPLE_W, SAMPLE_H)
-    const img = ctx.getImageData(0, 0, SAMPLE_W, SAMPLE_H)
     const src = img.data
 
     // The grid stride, cell scan and connection distances all run in the
@@ -315,11 +382,20 @@ export class StrandWebEffect extends Effect {
         let maxB = 0
         let mx = gx
         let my = gy
+        // Neighbouring display rows/columns that map to the same sample
+        // row/column hold the same values, so only the first can be a new
+        // (strict) maximum: skip the repeats. Same point as a full scan.
+        let lastBy = -1
         for (let y = gy; y < yEnd; y++) {
           const by = Math.min(SAMPLE_H - 1, (y * sy) | 0)
+          if (by === lastBy) continue
+          lastBy = by
           const rowBase = by * SAMPLE_W
+          let lastBx = -1
           for (let x = gx; x < xEnd; x++) {
             const bx = Math.min(SAMPLE_W - 1, (x * sx) | 0)
+            if (bx === lastBx) continue
+            lastBx = bx
             const i = (rowBase + bx) * 4
             const b = (src[i] + src[i + 1] + src[i + 2]) / (3 * 255)
             if (b > maxB) {
@@ -360,23 +436,29 @@ export class StrandWebEffect extends Effect {
     // (overlapping) strokes; storing each undirected pair once lets the bounded
     // SEG_CAP budget cover twice as much of the mesh.
     const seen = new Set<number>()
+    if (this.nearDist.length < n) this.nearDist = new Float64Array(n)
+    const dist = this.nearDist
+    const near = this.nearIdx
     for (let i = 0; i < n; i++) {
       const p1 = pts[i]
-      // Build (index, dist) for every other point, sort ascending.
-      const near: { j: number; d: number }[] = []
+      // Every other point within MAX_DIST, nearest first (ties by index, as a
+      // stable sort of all points would give). Points beyond MAX_DIST never
+      // connect, so they are left out before sorting.
+      near.length = 0
       for (let j = 0; j < n; j++) {
         if (j === i) continue
         const p2 = pts[j]
-        const dx = p2.px - p1.px
-        const dy = p2.py - p1.py
-        near.push({ j, d: Math.hypot(dx, dy) })
+        const d = Math.hypot(p2.px - p1.px, p2.py - p1.py)
+        if (d > MAX_DIST) continue
+        dist[j] = d
+        near.push(j)
       }
-      near.sort((a, b) => a.d - b.d)
+      near.sort((a, b) => dist[a] - dist[b] || a - b)
       let connections = 0
       const seed = (i * 0.5) % 1
-      for (const { j, d } of near) {
+      for (const j of near) {
+        const d = dist[j]
         if (connections >= maxConn) break
-        if (d > MAX_DIST) break
         connections++ // counts against i's budget even if the pair is a dupe (CPU parity)
         const lo = i < j ? i : j
         const hi = i < j ? j : i
@@ -396,7 +478,6 @@ export class StrandWebEffect extends Effect {
 
     // --- Fill uniform arrays.
     const segCount = segList.length
-    this.segSeed.fill(0)
     for (let i = 0; i < segCount; i++) {
       const s = segList[i]
       const o = i * 4
@@ -404,7 +485,7 @@ export class StrandWebEffect extends Effect {
       this.segs[o + 1] = s.ay
       this.segs[o + 2] = s.bx
       this.segs[o + 3] = s.by
-      this.segSeed[i] = s.seed // 4 packed per vec4 → flat index i lands correctly
+      this.segSeed[i] = s.seed
     }
     const pointCount = pts.length
     for (let i = 0; i < pointCount; i++) {
@@ -416,8 +497,8 @@ export class StrandWebEffect extends Effect {
       this.points[o + 3] = 0
     }
 
-    this.uniforms.get('uSegCount')!.value = segCount
-    this.uniforms.get('uPointCount')!.value = pointCount
+    this.segCount = segCount
+    this.pointCount = pointCount
   }
 
   setResolution(width: number, height: number) {

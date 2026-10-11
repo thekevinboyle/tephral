@@ -9,6 +9,7 @@ export interface HalationParams {
   redBias: number     // 0-1
   amount: number       // 0-1
   mix: number          // 0-1, dry/wet
+  fast?: number        // 1 = bright-pass at half resolution (opt-in, absent = off)
 }
 
 export const DEFAULT_HALATION_PARAMS: HalationParams = {
@@ -87,6 +88,7 @@ export interface AnamorphicParams {
   tint: number          // 0-1
   squeeze: number       // 0-0.3
   mix: number            // 0-1, dry/wet
+  fast?: number          // 1 = bright-pass at half resolution (opt-in, absent = off)
 }
 
 export const DEFAULT_ANAMORPHIC_PARAMS: AnamorphicParams = {
@@ -241,6 +243,7 @@ export interface LiquidMorphParams {
   intensity: number         // 0-1
   chromeAmount: number      // 0-1
   mix: number                  // 0-1, dry/wet
+  fast?: number                // 1 = flow field at quarter resolution (opt-in, absent = off)
 }
 
 export const DEFAULT_LIQUID_MORPH_PARAMS: LiquidMorphParams = {

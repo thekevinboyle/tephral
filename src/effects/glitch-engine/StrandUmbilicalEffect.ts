@@ -128,6 +128,14 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
     vec2 dir = vec2(cos(angle), sin(angle));
     vec2 perp = vec2(cos(perpAngle), sin(perpAngle));
 
+    // Every polyline point is a baseline point (start + dir * curLen * t)
+    // pushed at most 15px sideways, so the tendril lies inside a 15px capsule
+    // around the baseline, and it only reaches pixels within halfW + 1.25
+    // (<= 3.25px) of itself. Pixels outside that skip the 20-segment walk.
+    float baseT;
+    vec2 baseC = umbClosestOnSeg(px, start, start + dir * curLen, baseT);
+    if (distance(px, baseC) > 15.0 + 3.25 + 1.0) continue;
+
     float bestD = 1.0e9;
     float bestT = 0.0;
     vec2 prevP = start;

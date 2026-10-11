@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
 import { COLOR_UTILS_GLSL } from './glsl-utils'
+import { HelperPass } from './HelperPass'
 
 // GPU port of src/components/overlays/acid/contourEffect.ts (CPU ground
 // truth). The CPU version rasterizes marching-squares iso-lines: it builds a
@@ -41,17 +42,14 @@ import { COLOR_UTILS_GLSL } from './glsl-utils'
 // linearToSRGB before use (matching the CPU's byte-space luminance math on
 // the composited canvas read), and the final composited result goes through
 // sRGBToLinear immediately before outputColor.
-const fragmentShader = COLOR_UTILS_GLSL + /* glsl */ `
+// Each grid corner's (blurred) brightness is shared by the four cells around
+// it and every pixel in them, so CORNER_SHADER computes it once per corner
+// (the same GLSL at the same UVs) into a one-texel-per-corner float texture,
+// and the main pass reads four texels instead of up to 20 taps.
+const CORNER_GLSL = COLOR_UTILS_GLSL + /* glsl */ `
 uniform vec2 resolution;
-uniform float levels;
-uniform float lineWidthPx;
 uniform float cellSize;
 uniform float blurEnabled;
-uniform float animate;
-uniform float time;
-uniform float preserveVideo;
-uniform float isFirstAcidPass;
-uniform float effectMix;
 
 float cornerBrightness(vec2 gridIdx) {
   vec2 px = clamp(gridIdx * cellSize, vec2(0.0), resolution - 1.0);
@@ -73,16 +71,38 @@ float cornerBrightnessBlurred(vec2 gridIdx) {
   float right = cornerBrightness(gridIdx + vec2(1.0, 0.0));
   return (up + down + left + right + c * 4.0) / 8.0;
 }
+`
+
+const CORNER_SHADER = 'uniform sampler2D inputBuffer;\n' + CORNER_GLSL + /* glsl */ `
+void main() {
+  gl_FragColor = vec4(cornerBrightnessBlurred(floor(gl_FragCoord.xy)), 0.0, 0.0, 1.0);
+}
+`
+
+const fragmentShader = CORNER_GLSL + /* glsl */ `
+uniform float levels;
+uniform float lineWidthPx;
+uniform float animate;
+uniform float time;
+uniform float preserveVideo;
+uniform float isFirstAcidPass;
+uniform float effectMix;
+uniform sampler2D corners;
+uniform vec2 cornerCount;
+
+float cornerAt(vec2 gridIdx) {
+  return texture2D(corners, (gridIdx + 0.5) / cornerCount).r;
+}
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   vec2 pixelCoord = uv * resolution;
   vec2 cellIdx = floor(pixelCoord / cellSize);
   vec2 t = fract(pixelCoord / cellSize);
 
-  float tl = cornerBrightnessBlurred(cellIdx);
-  float tr = cornerBrightnessBlurred(cellIdx + vec2(1.0, 0.0));
-  float bl = cornerBrightnessBlurred(cellIdx + vec2(0.0, 1.0));
-  float br = cornerBrightnessBlurred(cellIdx + vec2(1.0, 1.0));
+  float tl = cornerAt(cellIdx);
+  float tr = cornerAt(cellIdx + vec2(1.0, 0.0));
+  float bl = cornerAt(cellIdx + vec2(0.0, 1.0));
+  float br = cornerAt(cellIdx + vec2(1.0, 1.0));
 
   float top = mix(tl, tr, t.x);
   float bottom = mix(bl, br, t.x);
@@ -147,12 +167,48 @@ export class AcidContourEffect extends Effect {
         ['preserveVideo', new THREE.Uniform(p.preserveVideo ? 1 : 0)],
         ['isFirstAcidPass', new THREE.Uniform(1)],
         ['effectMix', new THREE.Uniform(p.mix)],
+        ['corners', new THREE.Uniform(null)],
+        ['cornerCount', new THREE.Uniform(new THREE.Vector2(1, 1))],
       ]),
     })
   }
 
-  update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
+  // Per-corner brightness pre-pass (allocated on first update, freed on disable)
+  private cornerPass: HelperPass | null = null
+
+  update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
     this.uniforms.get('time')!.value = performance.now() / 1000
+
+    const res = this.uniforms.get('resolution')!.value as THREE.Vector2
+    const cellSize = this.uniforms.get('cellSize')!.value as number
+    // Corners 0..cells (a pixel's cell plus one), plus one spare
+    const cols = Math.ceil(res.x / cellSize) + 2
+    const rows = Math.ceil(res.y / cellSize) + 2
+    if (!this.cornerPass) {
+      this.cornerPass = new HelperPass(CORNER_SHADER, {
+        resolution: this.uniforms.get('resolution')!,
+        cellSize: this.uniforms.get('cellSize')!,
+        blurEnabled: this.uniforms.get('blurEnabled')!,
+        inputBuffer: { value: null },
+      }, cols, rows)
+      this.uniforms.get('corners')!.value = this.cornerPass.texture
+    }
+    this.cornerPass.setSize(cols, rows)
+    ;(this.uniforms.get('cornerCount')!.value as THREE.Vector2).set(cols, rows)
+    this.cornerPass.material.uniforms.inputBuffer.value = inputBuffer.texture
+    this.cornerPass.render(renderer)
+  }
+
+  // Free the pre-pass when the effect is disabled.
+  releaseTargets() {
+    this.cornerPass?.dispose()
+    this.cornerPass = null
+    this.uniforms.get('corners')!.value = null
+  }
+
+  dispose() {
+    this.releaseTargets()
+    super.dispose()
   }
 
   setResolution(width: number, height: number) {

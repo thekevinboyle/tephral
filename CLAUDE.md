@@ -150,7 +150,13 @@ A sequencer track's Steps / Line switch (`[data-track-mode-switch]`) sets `mode:
 - **Dice and locks** (`lineDice.ts`, `lineLocks.ts`): Dice never changes direction, loop region or scatter. The side panel's Dice rolls the open tab's line whatever the track's mode; Dice all lines rolls every unlocked Line track (never Steps tracks) and the master (lock key `__master`). Locks are one flag per id in `localStorage` `seg.lines.locks` (wrapped in try/catch); a locked tab shows a 🔒.
 - **Not saved** in banks or presets.
 
-Effect params flow through `src/effects/paramSync.ts` (zustand subscribe → uniform writes); Canvas.tsx's structural effect only rebuilds the pass chain on enable/disable/reorder.
+Effect params flow through `src/effects/paramSync.ts` (zustand subscribe → uniform writes; one pusher per effect id, so a Dry/wet change re-pushes only that effect); Canvas.tsx's structural effect only rebuilds the pass chain on enable/disable/reorder.
+
+### Fast mode (opt-in, per effect)
+Edges, PixelSort, Datamosh, LiquidMorph, Halation, Anamorphic and Feedback have a `fast` param (0/1, a "Fast" toggle in the inspector's More section): the heavy part runs as a lower-resolution `HelperPass` (`glitch-engine/HelperPass.ts`) or a precomputed texture. Off is the original look. `fast` is optional on the params type (absent = off) and the effect's `paramSync` pusher always sends `fast: … ?? 0`, so a preset saved before it existed loads with Fast off. Effects with helper passes are in `EffectPipeline`'s release list so their targets are freed on disable.
+
+### Trace masks (`TraceEffect`, `TraceMaskPass`)
+The trackers (`track_bright`, `track_motion`, `track_edge`, `track_color`, `track_face`, `track_hands`) are never chain passes. The Mask dropdown on RGB Split, Block Displace and Datamosh (`routingStore.effectTraceMask` → `pipeline.setTraceMaskSource`) decides which masks exist: `TraceMaskPass` runs right after the input is drawn and, for each tracker in use by an active effect, renders its `mainImage()` at half resolution (8-bit) plus the decaying trail, then hands the current texture to those effects every frame. Unused trackers hold no targets.
 
 ## Common Issues
 

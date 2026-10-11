@@ -234,8 +234,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
     const newPipeline = new EffectPipeline(renderer)
     setPipeline(newPipeline)
+    // Dev only: the timing harness (.superpowers/sdd/fx-timing.mjs) renders it directly
+    const devWindow = window as unknown as { __pipeline?: EffectPipeline }
+    if (import.meta.env.DEV) devWindow.__pipeline = newPipeline
 
     return () => {
+      if (devWindow.__pipeline === newPipeline) delete devWindow.__pipeline
       newPipeline.dispose()
     }
   }, [renderer])
@@ -418,27 +422,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       pipeline.faceHud.setVideoElement(faceHudEnabled ? videoElement : null)
     }
 
-    // Apply trace masks to glitch effects
-    const applyTraceMask = (effectId: string) => {
-      const maskSource = effectTraceMask[effectId]
-      if (!maskSource || maskSource === 'none') return null
-      return pipeline.getTraceMask(maskSource)
-    }
-
-    // Apply masks to supported effects
-    const rgbMask = applyTraceMask('rgb_split')
-    if (pipeline.rgbSplit) {
-      pipeline.rgbSplit.setTraceMask(rgbMask)
-    }
-
-    const blockMask = applyTraceMask('block_displace')
-    if (pipeline.blockDisplace) {
-      pipeline.blockDisplace.setTraceMask(blockMask)
-    }
-
-    const datamoshMask = applyTraceMask('datamosh')
-    if (pipeline.datamosh) {
-      pipeline.datamosh.setTraceMask(datamoshMask)
+    // Mask dropdowns: the pipeline renders the masks they use and feeds them in every frame
+    for (const effectId of ['rgb_split', 'block_displace', 'datamosh']) {
+      pipeline.setTraceMaskSource(effectId, effectTraceMask[effectId] ?? 'none')
     }
   }, [
     pipeline,
@@ -606,23 +592,39 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
     const container = containerRef.current
 
+    // Resizing reallocates every render target and wipes the trails of temporal
+    // effects, so a drag resizes once it settles; meanwhile the canvas is
+    // stretched to the container.
+    let sizeW = 0
+    let sizeH = 0
+    let resizeTimer = 0
     const updateSize = () => {
-      pipeline.setSize(container.clientWidth, container.clientHeight)
-      renderer.setSize(container.clientWidth, container.clientHeight)
+      const w = container.clientWidth
+      const h = container.clientHeight
+      if (w === sizeW && h === sizeH) return
+      sizeW = w
+      sizeH = h
+      pipeline.setSize(w, h) // also sizes the renderer
       // Update resolution for GPU effects that need it
-      pipeline.dotsEffect?.setResolution(container.clientWidth, container.clientHeight)
-      pipeline.asciiEffect?.setResolution(container.clientWidth, container.clientHeight)
-      pipeline.edgeDetection?.setResolution(container.clientWidth, container.clientHeight)
-      pipeline.pixelate?.setResolution(container.clientWidth, container.clientHeight)
-      pipeline.edgeTrace?.setResolution(container.clientWidth, container.clientHeight)
-      pipeline.halation?.setResolution(container.clientWidth, container.clientHeight)
-      pipeline.anamorphic?.setResolution(container.clientWidth, container.clientHeight)
-      pipeline.dreamcore?.setResolution(container.clientWidth, container.clientHeight)
+      pipeline.dotsEffect?.setResolution(w, h)
+      pipeline.asciiEffect?.setResolution(w, h)
+      pipeline.edgeDetection?.setResolution(w, h)
+      pipeline.pixelate?.setResolution(w, h)
+      pipeline.edgeTrace?.setResolution(w, h)
+      pipeline.halation?.setResolution(w, h)
+      pipeline.anamorphic?.setResolution(w, h)
+      pipeline.dreamcore?.setResolution(w, h)
     }
 
     updateSize()
 
-    const resizeObserver = new ResizeObserver(updateSize)
+    const resizeObserver = new ResizeObserver(() => {
+      if (container.clientWidth === sizeW && container.clientHeight === sizeH) return
+      renderer.domElement.style.width = '100%'
+      renderer.domElement.style.height = '100%'
+      window.clearTimeout(resizeTimer)
+      resizeTimer = window.setTimeout(updateSize, 150)
+    })
     resizeObserver.observe(container)
 
     // Video time warp, on the source before the effect chain or (placement 'after') on the finished picture
@@ -716,6 +718,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     return () => {
       cancelAnimationFrame(frameIdRef.current)
       resizeObserver.disconnect()
+      window.clearTimeout(resizeTimer)
       slicerCompositor.current?.dispose()
       pipeline.setWarpPostPass(null)
       postPass.dispose()

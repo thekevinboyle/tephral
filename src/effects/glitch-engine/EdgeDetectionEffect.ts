@@ -1,13 +1,14 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
 import { COLOR_UTILS_GLSL } from './glsl-utils'
+import { HelperPass } from './HelperPass'
 
-const fragmentShader = COLOR_UTILS_GLSL + /* glsl */ `
+const SOBEL_GLSL = COLOR_UTILS_GLSL + /* glsl */ `
 uniform float threshold;
 uniform float softness;
 uniform float thickness;
 uniform vec2 resolution;
-uniform vec3 edgeColor;
+
 uniform bool colorMapEnabled;
 uniform int backgroundMode;
 uniform float glowAmount;
@@ -30,6 +31,27 @@ float sobelAt(vec2 uv, float scale) {
   float gy = -tl - 2.0*t - tr + bl + 2.0*b + br;
   return sqrt(gx*gx + gy*gy);
 }
+
+float glowMaskAt(vec2 uv) {
+  float sampleEdge = sobelAt(uv, max(1.0, thickness * 0.5));
+  if (softness > 0.0) {
+    return smoothstep(threshold - softness, threshold + softness, sampleEdge);
+  }
+  return step(threshold, sampleEdge);
+}
+`
+
+// Fast mode: the glow's edge mask at half resolution, computed once per texel
+const GLOW_MASK_SHADER = 'uniform sampler2D inputBuffer;\nuniform vec2 maskSize;\n' + SOBEL_GLSL + /* glsl */ `
+void main() {
+  gl_FragColor = vec4(glowMaskAt(gl_FragCoord.xy / maskSize), 0.0, 0.0, 1.0);
+}
+`
+
+const fragmentShader = SOBEL_GLSL + /* glsl */ `
+uniform vec3 edgeColor;
+uniform bool fastMode;
+uniform sampler2D glowMask;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
   // ─── Multi-scale edge detection for adjustable thickness ─────
@@ -66,13 +88,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
         if (dist > 4.0) continue;
         float weight = exp(-dist * dist / (glowSize * glowSize * 0.5));
         vec2 sampleUV = uv + vec2(i, j) * texel * glowSize;
-        float sampleEdge = sobelAt(sampleUV, max(1.0, thickness * 0.5));
-        float sampleMask;
-        if (softness > 0.0) {
-          sampleMask = smoothstep(threshold - softness, threshold + softness, sampleEdge);
-        } else {
-          sampleMask = step(threshold, sampleEdge);
-        }
+        // Fast: one read of the half-resolution mask instead of an 8-tap Sobel
+        float sampleMask = fastMode ? texture2D(glowMask, sampleUV).r : glowMaskAt(sampleUV);
         glow += sampleMask * weight;
         totalWeight += weight;
       }
@@ -142,6 +159,7 @@ export interface EdgeDetectionParams {
   glowSize: number        // 1-8
   mixAmount: number
   mix: number
+  fast?: number           // 1 = glow from a half-resolution edge mask (cheaper, slightly softer)
 }
 
 export const DEFAULT_EDGE_DETECTION_PARAMS: EdgeDetectionParams = {
@@ -183,8 +201,50 @@ export class EdgeDetectionEffect extends Effect {
         ['glowSize', new THREE.Uniform(p.glowSize)],
         ['mixAmount', new THREE.Uniform(p.mixAmount)],
         ['effectMix', new THREE.Uniform(p.mix)],
+        ['fastMode', new THREE.Uniform(!!p.fast)],
+        ['glowMask', new THREE.Uniform(null)],
       ]),
     })
+  }
+
+  // Fast mode's half-resolution glow mask (allocated while fast and glowing, freed otherwise)
+  private glowMaskPass: HelperPass | null = null
+
+  update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget) {
+    const glowing = (this.uniforms.get('glowAmount')!.value as number) > 0 && (this.uniforms.get('glowSize')!.value as number) > 0
+    if (!this.uniforms.get('fastMode')!.value || !glowing) {
+      this.releaseTargets()
+      return
+    }
+    const w = Math.ceil(inputBuffer.width / 2)
+    const h = Math.ceil(inputBuffer.height / 2)
+    if (!this.glowMaskPass) {
+      this.glowMaskPass = new HelperPass(GLOW_MASK_SHADER, {
+        inputBuffer: { value: null },
+        maskSize: { value: new THREE.Vector2(w, h) },
+        threshold: this.uniforms.get('threshold')!,
+        softness: this.uniforms.get('softness')!,
+        thickness: this.uniforms.get('thickness')!,
+        resolution: this.uniforms.get('resolution')!,
+      }, w, h, THREE.HalfFloatType, THREE.LinearFilter)
+      this.uniforms.get('glowMask')!.value = this.glowMaskPass.texture
+    }
+    this.glowMaskPass.setSize(w, h)
+    ;(this.glowMaskPass.material.uniforms.maskSize.value as THREE.Vector2).set(w, h)
+    this.glowMaskPass.material.uniforms.inputBuffer.value = inputBuffer.texture
+    this.glowMaskPass.render(renderer)
+  }
+
+  releaseTargets() {
+    if (!this.glowMaskPass) return
+    this.glowMaskPass.dispose()
+    this.glowMaskPass = null
+    this.uniforms.get('glowMask')!.value = null
+  }
+
+  dispose() {
+    this.releaseTargets()
+    super.dispose()
   }
 
   setResolution(width: number, height: number) {
@@ -207,5 +267,6 @@ export class EdgeDetectionEffect extends Effect {
     if (params.glowSize !== undefined) this.uniforms.get('glowSize')!.value = params.glowSize
     if (params.mixAmount !== undefined) this.uniforms.get('mixAmount')!.value = params.mixAmount
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
+    if (params.fast !== undefined) this.uniforms.get('fastMode')!.value = params.fast >= 0.5
   }
 }

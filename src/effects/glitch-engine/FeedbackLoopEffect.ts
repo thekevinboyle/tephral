@@ -1,8 +1,23 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
 import { NOISE_GLSL, COLOR_UTILS_GLSL } from './glsl-utils'
+import { HelperPass } from './HelperPass'
+
+// Fast mode: the warp's curl-noise field over feedback-UV space at quarter
+// resolution, read with linear filtering instead of evaluated per pixel
+const WARP_SHADER = NOISE_GLSL + /* glsl */ `
+uniform float time;
+uniform vec2 fieldSize;
+
+void main() {
+  vec2 q = gl_FragCoord.xy / fieldSize;
+  gl_FragColor = vec4(curlNoise(q * 3.0 + time * 0.2), 0.0, 1.0);
+}
+`
 
 const fragmentShader = NOISE_GLSL + COLOR_UTILS_GLSL + /* glsl */ `
+uniform bool fastMode;
+uniform sampler2D warpField;
 uniform sampler2D feedbackTexture;
 uniform float decay;
 uniform float decayCurve;
@@ -44,7 +59,8 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
 
   // ─── Organic warp distortion on feedback UV ────────────────────
   if (warpAmount > 0.0) {
-    vec2 warp = curlNoise(feedbackUV * 3.0 + time * 0.2) * warpAmount;
+    vec2 field = fastMode ? texture2D(warpField, feedbackUV).xy : curlNoise(feedbackUV * 3.0 + time * 0.2);
+    vec2 warp = field * warpAmount;
     feedbackUV += warp;
   }
 
@@ -127,6 +143,7 @@ export interface FeedbackLoopParams {
   warpAmount: number   // 0-0.05 — organic UV distortion
   edgeGlow: number     // 0-1 — edge enhancement on feedback
   mix: number
+  fast?: number        // 1 = warp field at quarter resolution (cheaper, slightly smoother warp)
 }
 
 export const DEFAULT_FEEDBACK_LOOP_PARAMS: FeedbackLoopParams = {
@@ -146,7 +163,6 @@ export const DEFAULT_FEEDBACK_LOOP_PARAMS: FeedbackLoopParams = {
 
 export class FeedbackLoopEffect extends Effect {
   private feedbackTarget: THREE.WebGLRenderTarget | null = null
-  private tempTarget: THREE.WebGLRenderTarget | null = null
   private copyMaterial: THREE.ShaderMaterial | null = null
   private copyGeometry: THREE.PlaneGeometry | null = null
   private copyScene: THREE.Scene | null = null
@@ -180,8 +196,39 @@ export class FeedbackLoopEffect extends Effect {
         ['effectMix', new THREE.Uniform(p.mix)],
         ['resolution', new THREE.Uniform(new THREE.Vector2(1920, 1080))],
         ['time', new THREE.Uniform(0)],
+        ['fastMode', new THREE.Uniform(!!p.fast)],
+        ['warpField', new THREE.Uniform(null)],
       ]),
     })
+  }
+
+  // Fast mode's warp field (allocated while fast and warping, freed otherwise)
+  private warpPass: HelperPass | null = null
+
+  private drawWarpField(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget) {
+    if (!this.uniforms.get('fastMode')!.value || !((this.uniforms.get('warpAmount')!.value as number) > 0)) {
+      this.releaseWarpField()
+      return
+    }
+    const w = Math.ceil(inputBuffer.width / 4)
+    const h = Math.ceil(inputBuffer.height / 4)
+    if (!this.warpPass) {
+      this.warpPass = new HelperPass(WARP_SHADER, {
+        time: this.uniforms.get('time')!,
+        fieldSize: { value: new THREE.Vector2(w, h) },
+      }, w, h, THREE.HalfFloatType, THREE.LinearFilter)
+      this.uniforms.get('warpField')!.value = this.warpPass.texture
+    }
+    this.warpPass.setSize(w, h)
+    ;(this.warpPass.material.uniforms.fieldSize.value as THREE.Vector2).set(w, h)
+    this.warpPass.render(renderer)
+  }
+
+  private releaseWarpField() {
+    if (!this.warpPass) return
+    this.warpPass.dispose()
+    this.warpPass = null
+    this.uniforms.get('warpField')!.value = null
   }
 
   initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
@@ -191,13 +238,6 @@ export class FeedbackLoopEffect extends Effect {
     const size = renderer.getSize(new THREE.Vector2())
 
     this.feedbackTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-      format: THREE.RGBAFormat,
-      type: THREE.HalfFloatType,
-    })
-
-    this.tempTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
@@ -220,13 +260,14 @@ export class FeedbackLoopEffect extends Effect {
     this.copyScene.add(quad)
   }
 
-  update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
-    if (!this.feedbackTarget || !this.tempTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) {
+  update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
+    if (!this.feedbackTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) {
       return
     }
 
     this.time += deltaTime || 0.016
     this.uniforms.get('time')!.value = this.time
+    this.drawWarpField(renderer, inputBuffer)
 
     // Set feedback texture for next frame
     this.uniforms.get('feedbackTexture')!.value = this.feedbackTarget.texture
@@ -235,7 +276,7 @@ export class FeedbackLoopEffect extends Effect {
 
   // Call this after the main render pass
   captureFrame(renderer: THREE.WebGLRenderer, outputBuffer: THREE.WebGLRenderTarget) {
-    if (!this.feedbackTarget || !this.tempTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) {
+    if (!this.feedbackTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) {
       return
     }
 
@@ -251,7 +292,6 @@ export class FeedbackLoopEffect extends Effect {
   setSize(width: number, height: number) {
     super.setSize?.(width, height)
     this.feedbackTarget?.setSize(width, height)
-    this.tempTarget?.setSize(width, height)
     this.uniforms.get('resolution')!.value.set(width, height)
   }
 
@@ -268,6 +308,7 @@ export class FeedbackLoopEffect extends Effect {
     if (params.warpAmount !== undefined) this.uniforms.get('warpAmount')!.value = params.warpAmount
     if (params.edgeGlow !== undefined) this.uniforms.get('edgeGlow')!.value = params.edgeGlow
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
+    if (params.fast !== undefined) this.uniforms.get('fastMode')!.value = params.fast >= 0.5
   }
 
   // Release ALL GPU resources allocated in initialize() when the effect is
@@ -276,8 +317,8 @@ export class FeedbackLoopEffect extends Effect {
   // these orphaned while a guarded initialize() re-runs (and unconditionally
   // recreates them) leaks GPU resources on every disable/enable cycle.
   releaseTargets() {
+    this.releaseWarpField()
     this.feedbackTarget?.dispose(); this.feedbackTarget = null
-    this.tempTarget?.dispose(); this.tempTarget = null
     this.copyMaterial?.dispose(); this.copyMaterial = null
     this.copyGeometry?.dispose(); this.copyGeometry = null
     this.copyScene = null
@@ -287,9 +328,9 @@ export class FeedbackLoopEffect extends Effect {
   }
 
   dispose() {
+    this.releaseWarpField()
     super.dispose()
     this.feedbackTarget?.dispose()
-    this.tempTarget?.dispose()
     this.copyMaterial?.dispose()
     this.copyGeometry?.dispose()
   }

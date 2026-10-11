@@ -317,7 +317,17 @@ export const PARAM_NAME_OVERRIDES: Record<string, string> = {
  * shared code's PARAM_DESCRIPTIONS text (that text was written for another effect); without an entry here it shows
  * its name alone.
  */
+// The opt-in Fast toggle some heavy effects have (off keeps the original look)
+const FAST_DESCRIPTION = 'Cheaper version: parts of the effect render at lower resolution; looks slightly softer'
+
 export const PARAM_DESCRIPTION_OVERRIDES: Record<string, string> = {
+  'feedback.fast': FAST_DESCRIPTION,
+  'anamorphic.fast': FAST_DESCRIPTION,
+  'halation.fast': FAST_DESCRIPTION,
+  'liquid_morph.fast': FAST_DESCRIPTION,
+  'datamosh.fast': FAST_DESCRIPTION,
+  'pixelSort.fast': FAST_DESCRIPTION,
+  'edges.fast': FAST_DESCRIPTION,
   'chromatic.radialAmount': 'Radial vs linear aberration',
   'lens.curvature': 'Lens curvature distortion',
   'dither.colorDepth': 'Number of color levels per channel',

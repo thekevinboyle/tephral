@@ -1,10 +1,29 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
+import { HelperPass } from './HelperPass'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ORGANIC DATAMOSH - Messy, destroyed, irregular like real codec corruption
 // ═══════════════════════════════════════════════════════════════════════════
+
+// Fast mode: hash() at every integer lattice point of a 256x256 tile, drawn
+// once by the same GLSL. Reading it at i + smoothstep(f) with linear filtering
+// is the same value noise with one texture read instead of four sin() hashes
+// (the pattern repeats every 256 units instead of never).
+const LATTICE_SIZE = 256
+const LATTICE_SHADER = /* glsl */ `
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+void main() {
+  gl_FragColor = vec4(hash(floor(gl_FragCoord.xy)), 0.0, 0.0, 1.0);
+}
+`
+
 const fragmentShader = `
+uniform bool fastMode;
+uniform sampler2D hashLattice;
 uniform sampler2D prevFrameTexture;
 uniform sampler2D feedbackTexture;
 uniform sampler2D freezeFrameTexture;
@@ -42,6 +61,7 @@ float noise(vec2 p) {
   vec2 i = floor(p);
   vec2 f = fract(p);
   f = f * f * (3.0 - 2.0 * f); // smoothstep
+  if (fastMode) return texture2D(hashLattice, (i + f + 0.5) / ${LATTICE_SIZE}.0).r;
 
   float a = hash(i);
   float b = hash(i + vec2(1.0, 0.0));
@@ -522,6 +542,7 @@ export interface DatamoshParams {
   motionSmooth: number    // 0-1: motion vector smoothing
   colorCorrupt: number    // 0-1: YCbCr color corruption amount
   mix: number             // 0-1: wet/dry mix
+  fast?: number           // 1 = noise read from a lattice texture (cheaper; pattern repeats every 256 units)
 }
 
 export const DEFAULT_DATAMOSH_PARAMS: DatamoshParams = {
@@ -539,8 +560,6 @@ export const DEFAULT_DATAMOSH_PARAMS: DatamoshParams = {
 export class DatamoshEffect extends Effect {
   // Frame buffers
   private prevFrameTarget: THREE.WebGLRenderTarget | null = null
-  private feedbackTarget1: THREE.WebGLRenderTarget | null = null
-  private feedbackTarget2: THREE.WebGLRenderTarget | null = null
   private freezeFrameTarget: THREE.WebGLRenderTarget | null = null
   private copyMaterial: THREE.ShaderMaterial | null = null
   private copyGeometry: THREE.PlaneGeometry | null = null
@@ -548,14 +567,15 @@ export class DatamoshEffect extends Effect {
   private copyCamera: THREE.OrthographicCamera | null = null
   private time: number = 0
   private frameCount: number = 0
-  private feedbackSwap: boolean = false
   private hasCapturedFreezeFrame: boolean = false
-  // True once captureFrame() has actually populated prevFrameTarget /
-  // feedbackTarget1 / feedbackTarget2 with real content. Gates hasPrevFrame
+  // True once captureFrame() has actually populated prevFrameTarget with
+  // real content. Gates hasPrevFrame
   // so the shader never samples a freshly (re-)initialized target before it
   // has data — matters most after releaseTargets() + re-enable, since a new
   // WebGLRenderTarget's content is otherwise sampled one frame early.
   private hasCapturedFrame: boolean = false
+  // Fast mode's hash lattice (drawn once when Fast is first on, freed on disable)
+  private lattice: HelperPass | null = null
 
   constructor(params: Partial<DatamoshParams> = {}) {
     const p = { ...DEFAULT_DATAMOSH_PARAMS, ...params }
@@ -582,6 +602,8 @@ export class DatamoshEffect extends Effect {
         ['traceMask', new THREE.Uniform(null)],
         ['useTraceMask', new THREE.Uniform(false)],
         ['invertTraceMask', new THREE.Uniform(false)],
+        ['fastMode', new THREE.Uniform(!!p.fast)],
+        ['hashLattice', new THREE.Uniform(null)],
       ]),
     })
   }
@@ -598,12 +620,10 @@ export class DatamoshEffect extends Effect {
       type: THREE.HalfFloatType,
     }
 
-    // Previous clean frame (for optical flow calculation)
+    // Previous output frame: both the optical-flow reference and the
+    // recursive feedback source (the shader's prevFrameTexture and
+    // feedbackTexture are the same frame)
     this.prevFrameTarget = new THREE.WebGLRenderTarget(size.x, size.y, options)
-
-    // Double-buffered feedback (ping-pong for recursive corruption)
-    this.feedbackTarget1 = new THREE.WebGLRenderTarget(size.x, size.y, options)
-    this.feedbackTarget2 = new THREE.WebGLRenderTarget(size.x, size.y, options)
 
     // Freeze frame (the "stuck" reference)
     this.freezeFrameTarget = new THREE.WebGLRenderTarget(size.x, size.y, options)
@@ -624,8 +644,16 @@ export class DatamoshEffect extends Effect {
     this.copyScene.add(quad)
   }
 
-  update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
+  update(renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
     if (!this.prevFrameTarget) return
+
+    if (this.uniforms.get('fastMode')!.value && !this.lattice) {
+      this.lattice = new HelperPass(LATTICE_SHADER, {}, LATTICE_SIZE, LATTICE_SIZE, THREE.HalfFloatType, THREE.LinearFilter)
+      this.lattice.texture.wrapS = THREE.RepeatWrapping
+      this.lattice.texture.wrapT = THREE.RepeatWrapping
+      this.lattice.render(renderer)
+      this.uniforms.get('hashLattice')!.value = this.lattice.texture
+    }
 
     this.time += deltaTime || 0.016
     this.uniforms.get('time')!.value = this.time
@@ -633,9 +661,7 @@ export class DatamoshEffect extends Effect {
     // Set textures for shader
     this.uniforms.get('prevFrameTexture')!.value = this.prevFrameTarget.texture
 
-    // Feedback uses ping-pong buffers
-    const readFeedback = this.feedbackSwap ? this.feedbackTarget2 : this.feedbackTarget1
-    this.uniforms.get('feedbackTexture')!.value = readFeedback?.texture
+    this.uniforms.get('feedbackTexture')!.value = this.prevFrameTarget.texture
 
     this.uniforms.get('freezeFrameTexture')!.value = this.freezeFrameTarget?.texture
     this.uniforms.get('hasPrevFrame')!.value = this.hasCapturedFrame
@@ -643,7 +669,7 @@ export class DatamoshEffect extends Effect {
   }
 
   captureFrame(renderer: THREE.WebGLRenderer, outputBuffer: THREE.WebGLRenderTarget) {
-    if (!this.prevFrameTarget || !this.feedbackTarget1 || !this.feedbackTarget2 ||
+    if (!this.prevFrameTarget ||
         !this.freezeFrameTarget || !this.copyMaterial || !this.copyScene || !this.copyCamera) {
       return
     }
@@ -658,16 +684,9 @@ export class DatamoshEffect extends Effect {
       this.hasCapturedFreezeFrame = true
     }
 
-    // Store current output as feedback for next frame (ping-pong)
-    const writeFeedback = this.feedbackSwap ? this.feedbackTarget1 : this.feedbackTarget2
-    this.copyMaterial.uniforms.tDiffuse.value = outputBuffer.texture
-    renderer.setRenderTarget(writeFeedback)
-    renderer.render(this.copyScene, this.copyCamera)
-    this.feedbackSwap = !this.feedbackSwap
-
-    // Update previous clean frame (for optical flow - use input, not corrupted output)
-    // We need to capture from inputBuffer ideally, but we'll use output for now
-    // This creates recursive corruption which is actually desired for datamosh
+    // Store current output as next frame's previous frame and feedback.
+    // Using the corrupted output (not the clean input) for optical flow
+    // creates recursive corruption, which is desired for datamosh.
     this.copyMaterial.uniforms.tDiffuse.value = outputBuffer.texture
     renderer.setRenderTarget(this.prevFrameTarget)
     renderer.render(this.copyScene, this.copyCamera)
@@ -680,8 +699,6 @@ export class DatamoshEffect extends Effect {
   setSize(width: number, height: number) {
     super.setSize?.(width, height)
     this.prevFrameTarget?.setSize(width, height)
-    this.feedbackTarget1?.setSize(width, height)
-    this.feedbackTarget2?.setSize(width, height)
     this.freezeFrameTarget?.setSize(width, height)
     this.uniforms.get('resolution')!.value.set(width, height)
   }
@@ -696,6 +713,7 @@ export class DatamoshEffect extends Effect {
     if (params.motionSmooth !== undefined) this.uniforms.get('motionSmooth')!.value = params.motionSmooth
     if (params.colorCorrupt !== undefined) this.uniforms.get('colorCorrupt')!.value = params.colorCorrupt
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
+    if (params.fast !== undefined) this.uniforms.get('fastMode')!.value = params.fast >= 0.5
   }
 
   // Reset freeze frame - call this to capture new reference
@@ -718,9 +736,9 @@ export class DatamoshEffect extends Effect {
   // these orphaned while a guarded initialize() re-runs (and unconditionally
   // recreates them) leaks GPU resources on every disable/enable cycle.
   releaseTargets() {
+    this.lattice?.dispose(); this.lattice = null
+    this.uniforms.get('hashLattice')!.value = null
     this.prevFrameTarget?.dispose(); this.prevFrameTarget = null
-    this.feedbackTarget1?.dispose(); this.feedbackTarget1 = null
-    this.feedbackTarget2?.dispose(); this.feedbackTarget2 = null
     this.freezeFrameTarget?.dispose(); this.freezeFrameTarget = null
     this.copyMaterial?.dispose(); this.copyMaterial = null
     this.copyGeometry?.dispose(); this.copyGeometry = null
@@ -729,16 +747,14 @@ export class DatamoshEffect extends Effect {
     this.hasCapturedFreezeFrame = false
     this.hasCapturedFrame = false
     this.frameCount = 0
-    this.feedbackSwap = false
   }
 
   dispose() {
     super.dispose()
     this.prevFrameTarget?.dispose()
-    this.feedbackTarget1?.dispose()
-    this.feedbackTarget2?.dispose()
     this.freezeFrameTarget?.dispose()
     this.copyMaterial?.dispose()
     this.copyGeometry?.dispose()
+    this.lattice?.dispose()
   }
 }

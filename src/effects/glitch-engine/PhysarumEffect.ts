@@ -458,6 +458,9 @@ export class PhysarumEffect extends Effect {
       reference[i * 2] = (col + 0.5) / side
       reference[i * 2 + 1] = (row + 0.5) / side
     }
+    // Free the old attributes' GL buffers (replacing an attribute does not);
+    // the geometry re-uploads on its next render.
+    this.pointsGeometry.dispose()
     this.pointsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
     this.pointsGeometry.setAttribute('reference', new THREE.BufferAttribute(reference, 2))
     this.pointsGeometry.setDrawRange(0, count)

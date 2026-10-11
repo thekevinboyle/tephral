@@ -234,8 +234,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
     const newPipeline = new EffectPipeline(renderer)
     setPipeline(newPipeline)
+    // Dev only: the timing harness (.superpowers/sdd/fx-timing.mjs) renders it directly
+    const devWindow = window as unknown as { __pipeline?: EffectPipeline }
+    if (import.meta.env.DEV) devWindow.__pipeline = newPipeline
 
     return () => {
+      if (devWindow.__pipeline === newPipeline) delete devWindow.__pipeline
       newPipeline.dispose()
     }
   }, [renderer])

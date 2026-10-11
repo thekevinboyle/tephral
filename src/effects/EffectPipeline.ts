@@ -351,7 +351,7 @@ export class EffectPipeline {
     this.strandCloud = new StrandCloudEffect()
     this.strandDooms = new StrandDoomsEffect()
     this.strandBridge = new StrandBridgeEffect()
-    this.strandWeb = new StrandWebEffect({}, renderer)
+    this.strandWeb = new StrandWebEffect()
     this.strandTimefall = new StrandTimefallEffect()
     this.strandUmbilical = new StrandUmbilicalEffect()
     this.strandHandprints = new StrandHandprintsEffect()
@@ -655,7 +655,7 @@ export class EffectPipeline {
       'feedback_tunnel', 'opium_trails', 'flow_smear',
       'reaction_diffusion', 'rutt_etra', 'physarum',
       'strand_tar', 'strand_extinction', 'strand_path',
-      'seg_echo', 'seg_stale',
+      'seg_echo', 'seg_stale', 'strand_web',
     ] as const
     const temporalEffects: Record<string, { releaseTargets(): void } | null> = {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
@@ -681,6 +681,8 @@ export class EffectPipeline {
       // captureFrame), but ring/held targets must be freed on disable.
       seg_echo: this.segEcho,
       seg_stale: this.segStale,
+      // Transmittance target + instanced quads (no captureFrame)
+      strand_web: this.strandWeb,
     }
     for (const id of temporalIds) {
       const nowEnabled = !config.bypassActive && enabledMap[id]

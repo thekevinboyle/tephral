@@ -23,17 +23,9 @@ export function useThree(containerRef: React.RefObject<HTMLDivElement | null>) {
     container.appendChild(newRenderer.domElement)
 
     setRenderer(newRenderer)
-
-    const handleResize = () => {
-      const w = container.clientWidth
-      const h = container.clientHeight
-      newRenderer.setSize(w, h)
-    }
-
-    window.addEventListener('resize', handleResize)
+    // Resizes go through Canvas.tsx (pipeline.setSize sizes the renderer and the composer together)
 
     return () => {
-      window.removeEventListener('resize', handleResize)
       cancelAnimationFrame(frameIdRef.current)
       newRenderer.dispose()
       container.removeChild(newRenderer.domElement)

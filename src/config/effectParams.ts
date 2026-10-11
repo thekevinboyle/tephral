@@ -1246,6 +1246,8 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
         apply: (v) => trd().updateHalationParams({ amount: v }), read: () => trd().halationParams.amount },
       { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
         apply: (v) => trd().updateHalationParams({ mix: v }), read: () => trd().halationParams.mix },
+      { id: 'fast', label: 'FAST', min: 0, max: 1, step: 1,
+        apply: (v) => trd().updateHalationParams({ fast: v }), read: () => trd().halationParams.fast ?? 0 },
     ],
     setEnabled: (v) => trd().setHalationEnabled(v),
     getEnabled: () => trd().halationEnabled,

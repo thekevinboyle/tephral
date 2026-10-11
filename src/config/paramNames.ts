@@ -321,6 +321,7 @@ export const PARAM_NAME_OVERRIDES: Record<string, string> = {
 const FAST_DESCRIPTION = 'Cheaper version: parts of the effect render at lower resolution; looks slightly softer'
 
 export const PARAM_DESCRIPTION_OVERRIDES: Record<string, string> = {
+  'halation.fast': FAST_DESCRIPTION,
   'liquid_morph.fast': FAST_DESCRIPTION,
   'datamosh.fast': FAST_DESCRIPTION,
   'pixelSort.fast': FAST_DESCRIPTION,

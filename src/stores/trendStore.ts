@@ -9,6 +9,7 @@ export interface HalationParams {
   redBias: number     // 0-1
   amount: number       // 0-1
   mix: number          // 0-1, dry/wet
+  fast?: number        // 1 = bright-pass at half resolution (opt-in, absent = off)
 }
 
 export const DEFAULT_HALATION_PARAMS: HalationParams = {

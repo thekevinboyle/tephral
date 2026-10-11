@@ -153,7 +153,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     halation: () => { const s = useTrendStore.getState(); pipeline.halation?.updateParams({ ...s.halationParams, mix: getMix('halation') }) },
     anamorphic: () => { const s = useTrendStore.getState(); pipeline.anamorphic?.updateParams({ ...s.anamorphicParams, mix: getMix('anamorphic') }) },
     dreamcore: () => { const s = useTrendStore.getState(); pipeline.dreamcore?.updateParams({ ...s.dreamcoreParams, mix: getMix('dreamcore') }) },
-    liquid_morph: () => { const s = useTrendStore.getState(); pipeline.liquidMorph?.updateParams({ ...s.liquidMorphParams, mix: getMix('liquid_morph') }) },
+    liquid_morph: () => { const s = useTrendStore.getState(); pipeline.liquidMorph?.updateParams({ ...s.liquidMorphParams, fast: s.liquidMorphParams.fast ?? 0, mix: getMix('liquid_morph') }) },
     crystallize: () => { const s = useTrendStore.getState(); pipeline.crystallize?.updateParams({ ...s.crystallizeParams, mix: getMix('crystallize') }) },
     feedback_tunnel: () => { const s = useTrendStore.getState(); pipeline.feedbackTunnel?.updateParams({ ...s.feedbackTunnelParams, mix: getMix('feedback_tunnel') }) },
     opium_trails: () => { const s = useTrendStore.getState(); pipeline.opiumTrails?.updateParams({ ...s.opiumTrailsParams, mix: getMix('opium_trails') }) },

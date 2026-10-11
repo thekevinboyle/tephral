@@ -241,6 +241,7 @@ export interface LiquidMorphParams {
   intensity: number         // 0-1
   chromeAmount: number      // 0-1
   mix: number                  // 0-1, dry/wet
+  fast?: number                // 1 = flow field at quarter resolution (opt-in, absent = off)
 }
 
 export const DEFAULT_LIQUID_MORPH_PARAMS: LiquidMorphParams = {

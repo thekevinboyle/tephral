@@ -1454,6 +1454,8 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
         apply: (v) => trd().updateLiquidMorphParams({ chromeAmount: v }), read: () => trd().liquidMorphParams.chromeAmount },
       { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
         apply: (v) => trd().updateLiquidMorphParams({ mix: v }), read: () => trd().liquidMorphParams.mix },
+      { id: 'fast', label: 'FAST', min: 0, max: 1, step: 1,
+        apply: (v) => trd().updateLiquidMorphParams({ fast: v }), read: () => trd().liquidMorphParams.fast ?? 0 },
     ],
     setEnabled: (v) => trd().setLiquidMorphEnabled(v),
     getEnabled: () => trd().liquidMorphEnabled,

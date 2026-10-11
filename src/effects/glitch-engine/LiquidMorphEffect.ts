@@ -1,15 +1,13 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
 import { COLOR_UTILS_GLSL, NOISE_GLSL } from './glsl-utils'
+import { HelperPass } from './HelperPass'
 
-const fragmentShader = COLOR_UTILS_GLSL + NOISE_GLSL + /* glsl */ `
+const FIELD_GLSL = NOISE_GLSL + /* glsl */ `
 uniform float flowSpeed;
 uniform float scale;
-uniform float intensity;
-uniform float chromeAmount;
 uniform float time;
 uniform float aspect;
-uniform float effectMix;
 
 // Base spatial frequency of the flow field at scale = 1. Dividing by the
 // scale param (rather than multiplying) matches its UX contract —
@@ -34,23 +32,14 @@ vec2 flowField(vec2 p, float t) {
   return flow;
 }
 
-void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+// xy = the flow at uv, z = the specular glint (see below)
+vec3 flowAndSpecular(vec2 uv) {
   vec2 p = uv;
   p.x *= aspect;
   p *= BASE_FREQ / max(scale, 0.5);
 
   float t = time * flowSpeed;
-
-  // Displacement scale constant keeps intensity in a UV-space-sane range
-  // (max ~6% of the frame at intensity = 1) so the source stays legible
-  // through the flow instead of averaging out to a wash of edge pixels.
-  const float DISPLACE_SCALE = 0.055;
   vec2 flow = flowField(p, t);
-  vec2 offset = flow * intensity * DISPLACE_SCALE;
-  offset.x /= aspect;
-
-  vec2 uv2 = clamp(uv + offset, 0.001, 0.999);
-  vec4 warped = texture2D(inputBuffer, uv2);
 
   // Fake specular from the displacement-field gradient magnitude: sample
   // the flow at two small offsets (in the same noise-frequency space the
@@ -63,6 +52,40 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   vec2 flowY = flowField(p + vec2(0.0, eps), t);
   float gradMag = (length(flowX - flow) + length(flowY - flow)) / eps;
   float specular = pow(clamp(gradMag * 0.09, 0.0, 1.0), 3.0);
+  return vec3(flow, specular);
+}
+`
+
+// Fast mode: flow + specular at quarter resolution, read with linear filtering
+const FIELD_SHADER = FIELD_GLSL + /* glsl */ `
+uniform vec2 fieldSize;
+
+void main() {
+  gl_FragColor = vec4(flowAndSpecular(gl_FragCoord.xy / fieldSize), 1.0);
+}
+`
+
+const fragmentShader = COLOR_UTILS_GLSL + FIELD_GLSL + /* glsl */ `
+uniform float intensity;
+uniform float chromeAmount;
+uniform float effectMix;
+uniform bool fastMode;
+uniform sampler2D flowTexture;
+
+void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+  vec3 field = fastMode ? texture2D(flowTexture, uv).xyz : flowAndSpecular(uv);
+  vec2 flow = field.xy;
+  float specular = field.z;
+
+  // Displacement scale constant keeps intensity in a UV-space-sane range
+  // (max ~6% of the frame at intensity = 1) so the source stays legible
+  // through the flow instead of averaging out to a wash of edge pixels.
+  const float DISPLACE_SCALE = 0.055;
+  vec2 offset = flow * intensity * DISPLACE_SCALE;
+  offset.x /= aspect;
+
+  vec2 uv2 = clamp(uv + offset, 0.001, 0.999);
+  vec4 warped = texture2D(inputBuffer, uv2);
 
   vec3 color = warped.rgb;
 
@@ -100,6 +123,7 @@ export interface LiquidMorphParams {
   intensity: number       // 0-1
   chromeAmount: number     // 0-1
   mix: number                // 0-1, dry/wet
+  fast?: number              // 1 = flow field at quarter resolution (cheaper, slightly softer glints)
 }
 
 export const DEFAULT_LIQUID_MORPH_PARAMS: LiquidMorphParams = {
@@ -124,12 +148,49 @@ export class LiquidMorphEffect extends Effect {
         ['time', new THREE.Uniform(0)],
         ['aspect', new THREE.Uniform(1)],
         ['effectMix', new THREE.Uniform(p.mix)],
+        ['fastMode', new THREE.Uniform(!!p.fast)],
+        ['flowTexture', new THREE.Uniform(null)],
       ]),
     })
   }
 
-  update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
+  // Fast mode's quarter-resolution flow field (allocated while fast, freed otherwise)
+  private fieldPass: HelperPass | null = null
+
+  update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
     this.uniforms.get('time')!.value = performance.now() / 1000
+
+    if (!this.uniforms.get('fastMode')!.value) {
+      this.releaseTargets()
+      return
+    }
+    const w = Math.ceil(inputBuffer.width / 4)
+    const h = Math.ceil(inputBuffer.height / 4)
+    if (!this.fieldPass) {
+      this.fieldPass = new HelperPass(FIELD_SHADER, {
+        flowSpeed: this.uniforms.get('flowSpeed')!,
+        scale: this.uniforms.get('scale')!,
+        time: this.uniforms.get('time')!,
+        aspect: this.uniforms.get('aspect')!,
+        fieldSize: { value: new THREE.Vector2(w, h) },
+      }, w, h, THREE.HalfFloatType, THREE.LinearFilter)
+      this.uniforms.get('flowTexture')!.value = this.fieldPass.texture
+    }
+    this.fieldPass.setSize(w, h)
+    ;(this.fieldPass.material.uniforms.fieldSize.value as THREE.Vector2).set(w, h)
+    this.fieldPass.render(renderer)
+  }
+
+  releaseTargets() {
+    if (!this.fieldPass) return
+    this.fieldPass.dispose()
+    this.fieldPass = null
+    this.uniforms.get('flowTexture')!.value = null
+  }
+
+  dispose() {
+    this.releaseTargets()
+    super.dispose()
   }
 
   setAspect(aspect: number) {
@@ -151,6 +212,9 @@ export class LiquidMorphEffect extends Effect {
     }
     if (params.mix !== undefined) {
       this.uniforms.get('effectMix')!.value = params.mix
+    }
+    if (params.fast !== undefined) {
+      this.uniforms.get('fastMode')!.value = params.fast >= 0.5
     }
   }
 }

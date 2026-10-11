@@ -327,6 +327,8 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
         apply: (v) => g().updateFeedbackLoop({ warpAmount: v }), read: () => g().feedbackLoop.warpAmount },
       { id: 'edgeGlow', label: 'GLOW', min: 0, max: 1, step: 0.01,
         apply: (v) => g().updateFeedbackLoop({ edgeGlow: v }), read: () => g().feedbackLoop.edgeGlow },
+      { id: 'fast', label: 'FAST', min: 0, max: 1, step: 1,
+        apply: (v) => g().updateFeedbackLoop({ fast: v }), read: () => g().feedbackLoop.fast ?? 0 },
     ],
     setEnabled: (v) => g().setFeedbackLoopEnabled(v),
     getEnabled: () => g().feedbackLoopEnabled,

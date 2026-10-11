@@ -26,17 +26,15 @@ export const DEFAULT_TRACE_PARAMS: TraceParams = {
 }
 
 /**
- * Base class for trace effects that output mask textures.
- * Provides:
- * - traceMaskTarget: The current frame's trace mask (red channel = mask intensity)
- * - trailTarget: Accumulated trail buffer with decay (for persistence effects)
- * - captureTraceMask(): Call after render to update trail buffer
- * - getTraceMask(): Returns the final mask texture (with trails if enabled)
+ * Base class for trace effects (bright / motion / edge / colour / face / hands).
  *
- * Subclasses should:
- * 1. Override the fragment shader to compute the mask
- * 2. Call super methods for buffer management
- * 3. Use getTraceMask() to provide the mask to other effects
+ * A trace effect is never a pass in the chain. The pipeline's TraceMaskPass
+ * calls renderMask() with the source frame (right after the input is drawn)
+ * only while some effect's Mask dropdown uses it. renderMask() runs the
+ * subclass's mainImage() into a half-resolution mask, then (if trails are on)
+ * folds it into a decaying trail. getTraceMask() returns the result
+ * (red channel = mask intensity); the pass hands it to RGB Split, Block
+ * Displace and Datamosh every frame.
  */
 export class TraceEffect extends Effect {
   // Render targets for mask output
@@ -45,7 +43,8 @@ export class TraceEffect extends Effect {
   protected trailTarget2: THREE.WebGLRenderTarget | null = null
   protected trailSwap: boolean = false
 
-  // Copy infrastructure
+  // Mask / trail / copy infrastructure
+  protected maskMaterial: THREE.ShaderMaterial | null = null
   protected copyMaterial: THREE.ShaderMaterial | null = null
   protected trailMaterial: THREE.ShaderMaterial | null = null
   protected copyGeometry: THREE.PlaneGeometry | null = null
@@ -54,6 +53,8 @@ export class TraceEffect extends Effect {
 
   protected trailEnabled: boolean = true
   protected trailDecay: number = 0.95
+
+  private readonly maskShader: string
 
   constructor(
     name: string,
@@ -73,34 +74,73 @@ export class TraceEffect extends Effect {
       ]),
     })
 
+    this.maskShader = fragmentShader
     this.trailEnabled = p.trailEnabled
     this.trailDecay = p.trailDecay
+  }
+
+  /** Mask size for a drawing-buffer size: half resolution (the mask only scales an effect's strength). */
+  protected static maskSize(width: number, height: number): [number, number] {
+    return [Math.max(1, Math.ceil(width / 2)), Math.max(1, Math.ceil(height / 2))]
+  }
+
+  protected static maskTarget(width: number, height: number): THREE.WebGLRenderTarget {
+    const [w, h] = TraceEffect.maskSize(width, height)
+    return new THREE.WebGLRenderTarget(w, h, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      format: THREE.RGBAFormat,
+      type: THREE.UnsignedByteType,
+      depthBuffer: false,
+    })
   }
 
   initialize(renderer: THREE.WebGLRenderer, alpha: boolean, frameBufferType: number) {
     super.initialize?.(renderer, alpha, frameBufferType)
     if (this.traceMaskTarget) return
 
-    const size = renderer.getSize(new THREE.Vector2())
-    const options = {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-      format: THREE.RGBAFormat,
-      type: THREE.HalfFloatType,
-    }
+    const size = renderer.getDrawingBufferSize(new THREE.Vector2())
 
-    // Current frame mask
-    this.traceMaskTarget = new THREE.WebGLRenderTarget(size.x, size.y, options)
+    // Current frame mask, plus double-buffered trail targets for persistence
+    this.traceMaskTarget = TraceEffect.maskTarget(size.x, size.y)
+    this.trailTarget1 = TraceEffect.maskTarget(size.x, size.y)
+    this.trailTarget2 = TraceEffect.maskTarget(size.x, size.y)
 
-    // Double-buffered trail targets for persistence
-    this.trailTarget1 = new THREE.WebGLRenderTarget(size.x, size.y, options)
-    this.trailTarget2 = new THREE.WebGLRenderTarget(size.x, size.y, options)
+    const vertexShader = `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`
+
+    // The subclass's mainImage() run standalone on the source frame. Its
+    // uniforms are the effect's own Uniform objects, so updateParams() reaches
+    // it; effectMix is pinned to 1 (output the mask) and trailEnabled to false
+    // (the trail material below does the persistence).
+    const uniforms: Record<string, THREE.IUniform> = {}
+    for (const [key, uniform] of this.uniforms) uniforms[key] = uniform
+    uniforms.effectMix = { value: 1 }
+    uniforms.trailEnabled = { value: false }
+    uniforms.inputBuffer = { value: null }
+    this.maskMaterial = new THREE.ShaderMaterial({
+      uniforms,
+      vertexShader,
+      // three.js's prelude already declares luminance(); the trace shaders bring their own
+      fragmentShader: `#define luminance traceLuminance
+uniform sampler2D inputBuffer;
+varying vec2 vUv;
+${this.maskShader}
+void main() {
+  vec4 maskColor;
+  mainImage(texture2D(inputBuffer, vUv), vUv, maskColor);
+  gl_FragColor = vec4(maskColor.rrr, 1.0);
+}`,
+      depthTest: false,
+      depthWrite: false,
+    })
 
     // Simple copy material
     this.copyMaterial = new THREE.ShaderMaterial({
       uniforms: { tDiffuse: { value: null } },
-      vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      vertexShader,
       fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv; void main() { gl_FragColor = texture2D(tDiffuse, vUv); }`,
+      depthTest: false,
+      depthWrite: false,
     })
 
     // Trail accumulation material - blends current mask with decayed previous
@@ -110,7 +150,7 @@ export class TraceEffect extends Effect {
         prevTrail: { value: null },
         decay: { value: this.trailDecay },
       },
-      vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+      vertexShader,
       fragmentShader: `
         uniform sampler2D currentMask;
         uniform sampler2D prevTrail;
@@ -125,6 +165,8 @@ export class TraceEffect extends Effect {
           gl_FragColor = vec4(result, result, result, 1.0);
         }
       `,
+      depthTest: false,
+      depthWrite: false,
     })
 
     this.copyScene = new THREE.Scene()
@@ -135,52 +177,49 @@ export class TraceEffect extends Effect {
   }
 
   update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
-    // Set trail texture for shader to use
-    const readTrail = this.trailSwap ? this.trailTarget2 : this.trailTarget1
-    this.uniforms.get('trailTexture')!.value = readTrail?.texture
-    this.uniforms.get('trailDecay')!.value = this.trailDecay
-    this.uniforms.get('trailEnabled')!.value = this.trailEnabled
+    // Subclasses prepare their inputs here (face/hand geometry, motion history)
+  }
+
+  /** Draw `material` over the whole of `target` with the copy quad. */
+  protected drawQuad(renderer: THREE.WebGLRenderer, material: THREE.Material, target: THREE.WebGLRenderTarget) {
+    if (!this.copyScene || !this.copyCamera) return
+    const quad = this.copyScene.children[0] as THREE.Mesh
+    quad.material = material
+    renderer.setRenderTarget(target)
+    renderer.render(this.copyScene, this.copyCamera)
   }
 
   /**
-   * Call after main render pass to update trail buffers.
-   * This should be called with the output that contains this effect's mask.
+   * Compute this frame's mask from `inputBuffer` (the source frame) and fold
+   * it into the trail. Called by TraceMaskPass; a no-op until initialize().
    */
-  captureTraceMask(renderer: THREE.WebGLRenderer, maskBuffer: THREE.WebGLRenderTarget) {
+  renderMask(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
     if (!this.traceMaskTarget || !this.trailTarget1 || !this.trailTarget2 ||
-        !this.trailMaterial || !this.copyScene || !this.copyCamera || !this.copyMaterial) {
+        !this.maskMaterial || !this.trailMaterial) {
       return
     }
 
-    // Copy current mask to traceMaskTarget
-    this.copyMaterial.uniforms.tDiffuse.value = maskBuffer.texture
-    renderer.setRenderTarget(this.traceMaskTarget)
-    renderer.render(this.copyScene, this.copyCamera)
+    this.update(renderer, inputBuffer, deltaTime)
+
+    this.maskMaterial.uniforms.inputBuffer.value = inputBuffer.texture
+    this.drawQuad(renderer, this.maskMaterial, this.traceMaskTarget)
 
     if (this.trailEnabled) {
       // Accumulate trail: blend current mask with decayed previous trail
       const readTrail = this.trailSwap ? this.trailTarget2 : this.trailTarget1
       const writeTrail = this.trailSwap ? this.trailTarget1 : this.trailTarget2
-
-      // Swap to trail material
-      const quad = this.copyScene.children[0] as THREE.Mesh
-      quad.material = this.trailMaterial
-
       this.trailMaterial.uniforms.currentMask.value = this.traceMaskTarget.texture
       this.trailMaterial.uniforms.prevTrail.value = readTrail.texture
       this.trailMaterial.uniforms.decay.value = this.trailDecay
-
-      renderer.setRenderTarget(writeTrail)
-      renderer.render(this.copyScene, this.copyCamera)
-
+      this.drawQuad(renderer, this.trailMaterial, writeTrail)
       this.trailSwap = !this.trailSwap
-
-      // Restore copy material
-      quad.material = this.copyMaterial
     }
 
-    renderer.setRenderTarget(null)
+    this.afterMask(renderer, inputBuffer)
   }
+
+  /** Hook after the mask is drawn (motion trace stores the frame as next frame's history). */
+  protected afterMask(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget) {}
 
   /**
    * Get the trace mask texture (with trails if enabled).
@@ -198,9 +237,10 @@ export class TraceEffect extends Effect {
 
   setSize(width: number, height: number) {
     super.setSize?.(width, height)
-    this.traceMaskTarget?.setSize(width, height)
-    this.trailTarget1?.setSize(width, height)
-    this.trailTarget2?.setSize(width, height)
+    const [w, h] = TraceEffect.maskSize(width, height)
+    this.traceMaskTarget?.setSize(w, h)
+    this.trailTarget1?.setSize(w, h)
+    this.trailTarget2?.setSize(w, h)
   }
 
   updateParams(params: Partial<TraceParams>) {
@@ -232,6 +272,7 @@ export class TraceEffect extends Effect {
     this.trailTarget1?.dispose(); this.trailTarget1 = null
     this.trailTarget2?.dispose(); this.trailTarget2 = null
     this.trailSwap = false
+    this.maskMaterial?.dispose(); this.maskMaterial = null
     this.copyMaterial?.dispose(); this.copyMaterial = null
     this.trailMaterial?.dispose(); this.trailMaterial = null
     this.copyGeometry?.dispose(); this.copyGeometry = null
@@ -244,6 +285,7 @@ export class TraceEffect extends Effect {
     this.traceMaskTarget?.dispose()
     this.trailTarget1?.dispose()
     this.trailTarget2?.dispose()
+    this.maskMaterial?.dispose()
     this.copyMaterial?.dispose()
     this.trailMaterial?.dispose()
     this.copyGeometry?.dispose()

@@ -85,15 +85,10 @@ export class MotionTraceEffect extends TraceEffect {
     super.initialize(renderer, alpha, frameBufferType)
     if (this.historyTarget) return
 
-    const size = renderer.getSize(new THREE.Vector2())
+    const size = renderer.getDrawingBufferSize(new THREE.Vector2())
 
-    // History buffer for previous frame
-    this.historyTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
-      minFilter: THREE.LinearFilter,
-      magFilter: THREE.LinearFilter,
-      format: THREE.RGBAFormat,
-      type: THREE.HalfFloatType,
-    })
+    // History buffer for previous frame (mask resolution is plenty for a frame difference)
+    this.historyTarget = TraceEffect.maskTarget(size.x, size.y)
 
     // Material for copying to history
     this.historyMaterial = new THREE.ShaderMaterial({
@@ -111,32 +106,18 @@ export class MotionTraceEffect extends TraceEffect {
     this.uniforms.get('hasHistory')!.value = this.hasHistory
   }
 
-  /**
-   * Capture the current frame to history buffer.
-   * Call this with the INPUT frame (before effects) for proper motion detection.
-   */
-  captureFrame(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget) {
-    if (!this.historyTarget || !this.historyMaterial || !this.copyScene || !this.copyCamera) {
-      return
-    }
-
-    // Copy current input to history for next frame comparison
-    const quad = this.copyScene.children[0] as THREE.Mesh
-    const originalMaterial = quad.material
-    quad.material = this.historyMaterial
-
+  /** Keep this frame's input as the next frame's history. */
+  protected afterMask(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget) {
+    if (!this.historyTarget || !this.historyMaterial) return
     this.historyMaterial.uniforms.tDiffuse.value = inputBuffer.texture
-    renderer.setRenderTarget(this.historyTarget)
-    renderer.render(this.copyScene, this.copyCamera)
-    renderer.setRenderTarget(null)
-
-    quad.material = originalMaterial
+    this.drawQuad(renderer, this.historyMaterial, this.historyTarget)
     this.hasHistory = true
   }
 
   setSize(width: number, height: number) {
     super.setSize(width, height)
-    this.historyTarget?.setSize(width, height)
+    const [w, h] = TraceEffect.maskSize(width, height)
+    this.historyTarget?.setSize(w, h)
   }
 
   updateParams(params: Partial<MotionTraceParams>) {

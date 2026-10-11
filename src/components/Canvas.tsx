@@ -418,27 +418,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       pipeline.faceHud.setVideoElement(faceHudEnabled ? videoElement : null)
     }
 
-    // Apply trace masks to glitch effects
-    const applyTraceMask = (effectId: string) => {
-      const maskSource = effectTraceMask[effectId]
-      if (!maskSource || maskSource === 'none') return null
-      return pipeline.getTraceMask(maskSource)
-    }
-
-    // Apply masks to supported effects
-    const rgbMask = applyTraceMask('rgb_split')
-    if (pipeline.rgbSplit) {
-      pipeline.rgbSplit.setTraceMask(rgbMask)
-    }
-
-    const blockMask = applyTraceMask('block_displace')
-    if (pipeline.blockDisplace) {
-      pipeline.blockDisplace.setTraceMask(blockMask)
-    }
-
-    const datamoshMask = applyTraceMask('datamosh')
-    if (pipeline.datamosh) {
-      pipeline.datamosh.setTraceMask(datamoshMask)
+    // Mask dropdowns: the pipeline renders the masks they use and feeds them in every frame
+    for (const effectId of ['rgb_split', 'block_displace', 'datamosh']) {
+      pipeline.setTraceMaskSource(effectId, effectTraceMask[effectId] ?? 'none')
     }
   }, [
     pipeline,

@@ -84,9 +84,14 @@ import {
   SegMatterEffect,
   SegStaleEffect,
   SegTornEffect,
+  type TraceEffect,
 } from './glitch-engine'
+import { TraceMaskPass, type TraceMaskConsumer, type TraceMaskJob } from './glitch-engine/TraceMaskPass'
 import { SegmentationService } from './vision/SegmentationService'
 import { FaceHudEffect } from './morph'
+
+// Trackers: they only make masks for other effects' Mask dropdowns, so they are never chain passes
+const TRACE_IDS = new Set(['track_bright', 'track_motion', 'track_edge', 'track_color', 'track_face', 'track_hands'])
 
 export class EffectPipeline {
   private composer: EffectComposer
@@ -209,6 +214,12 @@ export class EffectPipeline {
   // Every cached pass, including crossfaderPass, is disposed exactly once,
   // in dispose().
   private passCache = new Map<Effect, EffectPass>()
+  // Trace masks: which tracker each Mask dropdown uses (consumer id → 'track_*'
+  // or 'none'), the pass that renders the ones in use, and the trackers whose
+  // targets are currently allocated for it. Trackers are never chain passes.
+  private traceMaskSources: Record<string, string> = {}
+  private traceMaskPass = new TraceMaskPass()
+  private maskedTraces = new Set<TraceEffect>()
   private lastChainKey = '#UNINITIALIZED#'
   private lastActiveIds: string[] = []
   private lastBypass = false
@@ -640,7 +651,7 @@ export class EffectPipeline {
     // active effect chain itself doesn't change.
     const temporalIds = [
       'feedback', 'datamosh', 'motion_extract', 'echo_trail',
-      'time_smear', 'freeze_mask', 'track_motion',
+      'time_smear', 'freeze_mask',
       'feedback_tunnel', 'opium_trails', 'flow_smear',
       'reaction_diffusion', 'rutt_etra', 'physarum',
       'strand_tar', 'strand_extinction', 'strand_path',
@@ -650,7 +661,6 @@ export class EffectPipeline {
       feedback: this.feedbackLoop, datamosh: this.datamosh,
       motion_extract: this.motionExtract, echo_trail: this.echoTrail,
       time_smear: this.timeSmear, freeze_mask: this.freezeMask,
-      track_motion: this.motionTrace,
       feedback_tunnel: this.feedbackTunnel, opium_trails: this.opiumTrails,
       flow_smear: this.flowSmear,
       // No captureFrame — advances its own sim/internal scene in update(),
@@ -767,6 +777,8 @@ export class EffectPipeline {
       this.composer.removePass(this.composedWarpPass)
       this.composedWarpPass = null
     }
+    this.composer.removePass(this.traceMaskPass)
+    this.syncTraceMasks()
 
     // If bypass is active, don't add any effect passes - just render the input (the warp still runs on it)
     if (this.lastBypass) {
@@ -774,8 +786,12 @@ export class EffectPipeline {
       return
     }
 
+    // Trace masks are rendered from the source frame, ahead of the chain
+    if (this.traceMaskPass.jobs.length > 0) this.composer.addPass(this.traceMaskPass)
+
     // Add effect passes in order, reusing cached passes (guitar-pedal chain)
     for (const effectId of activeIds) {
+      if (TRACE_IDS.has(effectId)) continue
       const effect = this.getEffectById(effectId)!
       let pass = this.passCache.get(effect)
       if (!pass) {
@@ -927,9 +943,6 @@ export class EffectPipeline {
       if (this.temporalEnabled['time_smear']) this.timeSmear?.captureFrame(renderer, outputBuffer)
       if (this.temporalEnabled['freeze_mask']) this.freezeMask?.captureFrame(renderer, outputBuffer)
 
-      // Capture frames for trace effects (motion trace needs history)
-      if (this.temporalEnabled['track_motion']) this.motionTrace?.captureFrame(renderer, outputBuffer)
-
       // Trend effects (Phase 2)
       if (this.temporalEnabled['feedback_tunnel']) this.feedbackTunnel?.captureFrame(renderer, outputBuffer)
       if (this.temporalEnabled['opium_trails']) this.opiumTrails?.captureFrame(renderer, outputBuffer)
@@ -940,20 +953,65 @@ export class EffectPipeline {
     }
   }
 
-  /**
-   * Get trace mask texture by effect ID.
-   * Returns the mask texture that can be used by other effects.
-   */
-  getTraceMask(id: string): THREE.Texture | null {
+  /** The tracker an effect's Mask dropdown uses ('none' for no mask). Rebuilds the chain when it changes. */
+  setTraceMaskSource(consumerId: string, source: string) {
+    if ((this.traceMaskSources[consumerId] ?? 'none') === source) return
+    this.traceMaskSources[consumerId] = source
+    this.rebuildPasses()
+  }
+
+  private getTraceEffect(id: string): TraceEffect | null {
     switch (id) {
-      case 'track_bright': return this.brightTrace?.getTraceMask() ?? null
-      case 'track_motion': return this.motionTrace?.getTraceMask() ?? null
-      case 'track_edge': return this.edgeTrace?.getTraceMask() ?? null
-      case 'track_color': return this.colorTrace?.getTraceMask() ?? null
-      case 'track_face': return this.faceTrace?.getTraceMask() ?? null
-      case 'track_hands': return this.handsTrace?.getTraceMask() ?? null
+      case 'track_bright': return this.brightTrace
+      case 'track_motion': return this.motionTrace
+      case 'track_edge': return this.edgeTrace
+      case 'track_color': return this.colorTrace
+      case 'track_face': return this.faceTrace
+      case 'track_hands': return this.handsTrace
       default: return null
     }
+  }
+
+  private getMaskConsumer(id: string): TraceMaskConsumer | null {
+    switch (id) {
+      case 'rgb_split': return this.rgbSplit
+      case 'block_displace': return this.blockDisplace
+      case 'datamosh': return this.datamosh
+      default: return null
+    }
+  }
+
+  /**
+   * Work out which trackers the active chain's Mask dropdowns need, allocate
+   * those and free the rest. An effect that is off, bypassed or unmasked gets
+   * no mask (it applies everywhere).
+   */
+  private syncTraceMasks() {
+    const active = new Set(this.lastBypass ? [] : this.lastActiveIds)
+    const jobs = new Map<TraceEffect, TraceMaskConsumer[]>()
+    for (const [consumerId, source] of Object.entries(this.traceMaskSources)) {
+      const consumer = this.getMaskConsumer(consumerId)
+      if (!consumer) continue
+      const trace = active.has(consumerId) ? this.getTraceEffect(source) : null
+      if (!trace) {
+        consumer.setTraceMask(null)
+        continue
+      }
+      jobs.set(trace, [...(jobs.get(trace) ?? []), consumer])
+    }
+
+    for (const trace of this.maskedTraces) {
+      if (!jobs.has(trace)) trace.releaseTargets()
+    }
+    const renderer = this.composer.getRenderer()
+    const size = renderer.getDrawingBufferSize(new THREE.Vector2())
+    for (const trace of jobs.keys()) {
+      if (this.maskedTraces.has(trace)) continue
+      trace.initialize(renderer, false, THREE.HalfFloatType)
+      trace.setSize(size.x, size.y)
+    }
+    this.maskedTraces = new Set(jobs.keys())
+    this.traceMaskPass.jobs = [...jobs].map(([trace, consumers]): TraceMaskJob => ({ trace, consumers }))
   }
 
   dispose() {

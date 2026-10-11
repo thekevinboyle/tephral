@@ -4,6 +4,7 @@ import { statusHover } from '../../../utils/statusHover'
 import { PAD } from './LinePlot'
 
 const STATUS = 'Loop: drag a handle to set where the loop starts or ends. It snaps to Quantize; Alt drags freely. Double-click a handle to reset it'
+const RANGE_STATUS = 'Loop: drag the bar to move the whole loop (same length). It snaps to Quantize; Alt drags freely'
 
 interface LoopStripProps {
   start: number
@@ -39,11 +40,31 @@ export const LoopStrip = memo(function LoopStrip({ start, end, snap, width, attr
     el.addEventListener('pointerup', up)
     el.addEventListener('pointercancel', up)
   }
+  // Moving the whole region: the grab offset is kept, start snaps to the grid, the length never changes.
+  const dragRange = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return
+    e.preventDefault()
+    const el = e.currentTarget
+    el.setPointerCapture(e.pointerId)
+    const len = end - start
+    const x0 = e.clientX
+    const move = (ev: PointerEvent) => {
+      let s = start + (ev.clientX - x0) / iw
+      if (!ev.altKey) s = Math.round(s / grid) * grid
+      s = Math.max(0, Math.min(1 - len, s))
+      onChange(s, s === 1 - len ? 1 : s + len) // exactly 1 at the right edge, not 1 - len + len
+    }
+    const up = () => { el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up) }
+    el.addEventListener('pointermove', move)
+    el.addEventListener('pointerup', up)
+    el.addEventListener('pointercancel', up)
+  }
   const reset = (which: 'start' | 'end') => () => (which === 'start' ? onChange(0, end) : onChange(start, 1))
   const da = (k: string, v?: string) => ({ [`data-${attr}-loop${k}`]: v ?? '' })
   return (
     <div ref={ref} className="seg-loop-strip" style={{ width }} {...da('-strip')} aria-label="Loop region">
-      <div className="seg-loop-range" style={{ left: PAD + start * iw, width: (end - start) * iw }} />
+      <div className="seg-loop-range" style={{ left: PAD + start * iw, width: (end - start) * iw }} aria-label="Move loop"
+        {...da('', 'range')} onPointerDown={dragRange} {...statusHover(RANGE_STATUS)} />
       {(['start', 'end'] as const).map((w) => (
         <div key={w} className="seg-loop-handle" role="slider" tabIndex={-1} aria-label={w === 'start' ? 'Loop start' : 'Loop end'}
           aria-valuemin={0} aria-valuemax={1} aria-valuenow={w === 'start' ? start : end} data-edge={w}

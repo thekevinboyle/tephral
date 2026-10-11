@@ -152,13 +152,25 @@
 
 /* ─── Bottom panel (BottomPanel2): header, Devices (DeviceChain) / Sequencer bodies ─────────────────── */
 .seg-bottom { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-.seg-bottom-head { flex: none; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 10px; border-bottom: 1px solid var(--border); min-width: 0; }
-.seg-bottom-title { flex: none; font: 600 12px var(--font-sans); color: var(--text-primary); }
+.seg-bottom-head { flex: none; display: flex; align-items: stretch; gap: 10px; height: 30px; padding: 0 6px 0 0; background: var(--bg-void); border-radius: var(--radius-panel) var(--radius-panel) 0 0; min-width: 0; }
+.seg-bottom-head > :not(.seg-nav) { align-self: center; }
+/* Main navigation: the active tab is the panel's own colour, so it reads as the open folder; the others sit back on the dark strip */
+.seg-nav { flex: none; display: flex; gap: 1px; }
+.seg-nav-tab { --tab-accent: var(--text-primary); position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 116px; padding: 0 16px;
+  font: 600 13px var(--font-sans); letter-spacing: .01em; color: var(--text-muted); background: transparent; cursor: pointer; }
+.seg-nav-tab[data-bottom-tab-btn="warp"] { --tab-accent: var(--warp); }
+.seg-nav-tab[data-bottom-tab-btn="sequencer"] { --tab-accent: var(--live); }
+.seg-nav-tab:first-child { border-top-left-radius: var(--radius-panel); }
+.seg-nav-tab::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: transparent; }
+.seg-nav-tab:hover { color: var(--text-primary); background: var(--bg-surface); }
+.seg-nav-tab:hover::before { background: color-mix(in srgb, var(--tab-accent) 35%, transparent); }
+.seg-nav-tab[aria-selected="true"] { color: var(--text-primary); background: color-mix(in srgb, var(--tab-accent) 13%, var(--bg-primary)); }
+.seg-nav-tab[aria-selected="true"]::before { background: var(--tab-accent); }
+.seg-nav-tab[aria-selected="true"] svg { color: var(--tab-accent); }
 .seg-bottom-sub { min-width: 0; display: flex; align-items: center; gap: 8px; font: 400 11px var(--font-sans); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .seg-bottom-cancel { flex: none; font: 500 11px var(--font-sans); padding: 1px 7px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); cursor: pointer; }
 .seg-bottom-cancel:hover { background: var(--bg-hover); color: var(--text-primary); }
 .seg-bottom-spacer { flex: 1 1 auto; }
-.seg-bottom-head .seg-seg { margin-left: 0; }
 .seg-bottom-actions { flex: none; display: flex; gap: 2px; }
 .seg-bottom-btn { font: 500 11px var(--font-sans); height: 22px; padding: 0 8px; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-secondary); cursor: pointer; }
 .seg-bottom-btn:hover:not(:disabled) { background: var(--bg-hover); }
@@ -433,7 +445,10 @@
 .seg-warp-graph[data-tool="erase"] > svg[data-warp-graph] { cursor: cell; }
 .seg-warp-graph > svg[data-warp-graph]:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
 .seg-loop-strip { position: relative; flex: none; height: 12px; margin: 0 9px; } /* 8px panel margin + the graph's 1px border: x lines up with the plot */
-.seg-loop-range { position: absolute; top: 5px; height: 2px; background: var(--warp); opacity: .55; pointer-events: none; }
+.seg-loop-range { position: absolute; top: 0; height: 12px; cursor: grab; touch-action: none; }
+.seg-loop-range::before { content: ''; position: absolute; left: 0; right: 0; top: 5px; height: 2px; background: var(--warp); opacity: .55; }
+.seg-loop-range:hover::before { top: 3px; height: 6px; opacity: .4; }
+.seg-loop-range:active { cursor: grabbing; }
 .seg-loop-handle { position: absolute; top: 0; width: 10px; height: 12px; margin-left: -5px; cursor: ew-resize; }
 .seg-loop-handle::before { content: ''; position: absolute; left: 4px; top: 0; width: 2px; height: 12px; background: var(--warp); }
 .seg-loop-handle[data-edge="start"]::after, .seg-loop-handle[data-edge="end"]::after { content: ''; position: absolute; top: 0; width: 5px; height: 5px; background: var(--warp); }

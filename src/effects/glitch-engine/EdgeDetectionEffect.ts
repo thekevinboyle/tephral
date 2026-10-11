@@ -210,7 +210,7 @@ export class EdgeDetectionEffect extends Effect {
   // Fast mode's half-resolution glow mask (allocated while fast and glowing, freed otherwise)
   private glowMaskPass: HelperPass | null = null
 
-  update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget, _deltaTime?: number) {
+  update(renderer: THREE.WebGLRenderer, inputBuffer: THREE.WebGLRenderTarget) {
     const glowing = (this.uniforms.get('glowAmount')!.value as number) > 0 && (this.uniforms.get('glowSize')!.value as number) > 0
     if (!this.uniforms.get('fastMode')!.value || !glowing) {
       this.releaseTargets()

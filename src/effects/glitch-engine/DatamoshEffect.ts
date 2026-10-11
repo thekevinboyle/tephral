@@ -1,10 +1,29 @@
 import * as THREE from 'three'
 import { Effect, BlendFunction } from 'postprocessing'
+import { HelperPass } from './HelperPass'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ORGANIC DATAMOSH - Messy, destroyed, irregular like real codec corruption
 // ═══════════════════════════════════════════════════════════════════════════
+
+// Fast mode: hash() at every integer lattice point of a 256x256 tile, drawn
+// once by the same GLSL. Reading it at i + smoothstep(f) with linear filtering
+// is the same value noise with one texture read instead of four sin() hashes
+// (the pattern repeats every 256 units instead of never).
+const LATTICE_SIZE = 256
+const LATTICE_SHADER = /* glsl */ `
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+void main() {
+  gl_FragColor = vec4(hash(floor(gl_FragCoord.xy)), 0.0, 0.0, 1.0);
+}
+`
+
 const fragmentShader = `
+uniform bool fastMode;
+uniform sampler2D hashLattice;
 uniform sampler2D prevFrameTexture;
 uniform sampler2D feedbackTexture;
 uniform sampler2D freezeFrameTexture;
@@ -42,6 +61,7 @@ float noise(vec2 p) {
   vec2 i = floor(p);
   vec2 f = fract(p);
   f = f * f * (3.0 - 2.0 * f); // smoothstep
+  if (fastMode) return texture2D(hashLattice, (i + f + 0.5) / ${LATTICE_SIZE}.0).r;
 
   float a = hash(i);
   float b = hash(i + vec2(1.0, 0.0));
@@ -522,6 +542,7 @@ export interface DatamoshParams {
   motionSmooth: number    // 0-1: motion vector smoothing
   colorCorrupt: number    // 0-1: YCbCr color corruption amount
   mix: number             // 0-1: wet/dry mix
+  fast?: number           // 1 = noise read from a lattice texture (cheaper; pattern repeats every 256 units)
 }
 
 export const DEFAULT_DATAMOSH_PARAMS: DatamoshParams = {
@@ -553,6 +574,8 @@ export class DatamoshEffect extends Effect {
   // has data — matters most after releaseTargets() + re-enable, since a new
   // WebGLRenderTarget's content is otherwise sampled one frame early.
   private hasCapturedFrame: boolean = false
+  // Fast mode's hash lattice (drawn once when Fast is first on, freed on disable)
+  private lattice: HelperPass | null = null
 
   constructor(params: Partial<DatamoshParams> = {}) {
     const p = { ...DEFAULT_DATAMOSH_PARAMS, ...params }
@@ -579,6 +602,8 @@ export class DatamoshEffect extends Effect {
         ['traceMask', new THREE.Uniform(null)],
         ['useTraceMask', new THREE.Uniform(false)],
         ['invertTraceMask', new THREE.Uniform(false)],
+        ['fastMode', new THREE.Uniform(!!p.fast)],
+        ['hashLattice', new THREE.Uniform(null)],
       ]),
     })
   }
@@ -619,8 +644,16 @@ export class DatamoshEffect extends Effect {
     this.copyScene.add(quad)
   }
 
-  update(_renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
+  update(renderer: THREE.WebGLRenderer, _inputBuffer: THREE.WebGLRenderTarget, deltaTime?: number) {
     if (!this.prevFrameTarget) return
+
+    if (this.uniforms.get('fastMode')!.value && !this.lattice) {
+      this.lattice = new HelperPass(LATTICE_SHADER, {}, LATTICE_SIZE, LATTICE_SIZE, THREE.HalfFloatType, THREE.LinearFilter)
+      this.lattice.texture.wrapS = THREE.RepeatWrapping
+      this.lattice.texture.wrapT = THREE.RepeatWrapping
+      this.lattice.render(renderer)
+      this.uniforms.get('hashLattice')!.value = this.lattice.texture
+    }
 
     this.time += deltaTime || 0.016
     this.uniforms.get('time')!.value = this.time
@@ -680,6 +713,7 @@ export class DatamoshEffect extends Effect {
     if (params.motionSmooth !== undefined) this.uniforms.get('motionSmooth')!.value = params.motionSmooth
     if (params.colorCorrupt !== undefined) this.uniforms.get('colorCorrupt')!.value = params.colorCorrupt
     if (params.mix !== undefined) this.uniforms.get('effectMix')!.value = params.mix
+    if (params.fast !== undefined) this.uniforms.get('fastMode')!.value = params.fast >= 0.5
   }
 
   // Reset freeze frame - call this to capture new reference
@@ -702,6 +736,8 @@ export class DatamoshEffect extends Effect {
   // these orphaned while a guarded initialize() re-runs (and unconditionally
   // recreates them) leaks GPU resources on every disable/enable cycle.
   releaseTargets() {
+    this.lattice?.dispose(); this.lattice = null
+    this.uniforms.get('hashLattice')!.value = null
     this.prevFrameTarget?.dispose(); this.prevFrameTarget = null
     this.freezeFrameTarget?.dispose(); this.freezeFrameTarget = null
     this.copyMaterial?.dispose(); this.copyMaterial = null
@@ -719,5 +755,6 @@ export class DatamoshEffect extends Effect {
     this.freezeFrameTarget?.dispose()
     this.copyMaterial?.dispose()
     this.copyGeometry?.dispose()
+    this.lattice?.dispose()
   }
 }

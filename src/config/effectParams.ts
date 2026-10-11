@@ -1108,6 +1108,8 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
         apply: (v) => des().updateDatamoshParams({ colorCorrupt: v }), read: () => des().datamoshParams.colorCorrupt },
       { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01,
         apply: (v) => des().updateDatamoshParams({ mix: v }), read: () => des().datamoshParams.mix },
+      { id: 'fast', label: 'FAST', min: 0, max: 1, step: 1,
+        apply: (v) => des().updateDatamoshParams({ fast: v }), read: () => des().datamoshParams.fast ?? 0 },
     ],
     setEnabled: (v) => des().setDatamoshEnabled(v),
     getEnabled: () => des().datamoshEnabled,

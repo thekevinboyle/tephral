@@ -321,6 +321,7 @@ export const PARAM_NAME_OVERRIDES: Record<string, string> = {
 const FAST_DESCRIPTION = 'Cheaper version: parts of the effect render at lower resolution; looks slightly softer'
 
 export const PARAM_DESCRIPTION_OVERRIDES: Record<string, string> = {
+  'datamosh.fast': FAST_DESCRIPTION,
   'pixelSort.fast': FAST_DESCRIPTION,
   'edges.fast': FAST_DESCRIPTION,
   'chromatic.radialAmount': 'Radial vs linear aberration',

@@ -1,6 +1,4 @@
 import { create } from 'zustand'
-import { useSlicerBufferStore } from './slicerBufferStore'
-import { sampleFrames, MAX_FRAMES_PER_CLIP } from '../utils/frameSampler'
 
 export interface AutomationEvent {
   t: number  // timestamp in seconds
@@ -105,18 +103,12 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     const { startTime } = get()
     const duration = startTime ? (performance.now() - startTime) / 1000 : 0
 
-    // Capture frames from slicer buffer before they're cleared
-    const slicerBuffer = useSlicerBufferStore.getState()
-    const capturedFrames = [...slicerBuffer.frames]
-    const sampledFrames = sampleFrames(capturedFrames, MAX_FRAMES_PER_CLIP)
-
     set({
       isRecording: false,
       duration,
-      pendingFrames: sampledFrames,
     })
 
-    return sampledFrames
+    return []
   },
 
   addEvent: (event) => {

@@ -9,6 +9,8 @@ export function SlicerControls() {
   const {
     sliceCount,
     setSliceCount,
+    sliceSequenceMode,
+    setSliceSequenceMode,
     grainSize,
     density,
     scanPosition,
@@ -21,6 +23,7 @@ export function SlicerControls() {
     setScanMode,
     spray,
     jitter,
+    envelope,
     rate,
     reverseProb,
     updateGrainParams,
@@ -69,6 +72,23 @@ export function SlicerControls() {
               }}
             >
               {count}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1 mt-1">
+          {(['forward', 'reverse', 'pendulum', 'random'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setSliceSequenceMode(mode)}
+              title="Order the slices play in, one per trigger"
+              className="flex-1 h-6 text-[11px] font-medium rounded capitalize"
+              style={{
+                backgroundColor: sliceSequenceMode === mode ? '#FF0055' : 'var(--bg-surface)',
+                border: `1px solid ${sliceSequenceMode === mode ? '#FF0055' : 'var(--border)'}`,
+                color: sliceSequenceMode === mode ? 'white' : 'var(--text-muted)',
+              }}
+            >
+              {mode}
             </button>
           ))}
         </div>
@@ -179,6 +199,16 @@ export function SlicerControls() {
             onChange={(v) => updateGrainParams({ jitter: v })}
             format={(v) => `${Math.round(v * 100)}%`}
             paramId="slicer.jitter"
+          />
+          <SliderRow
+            label="Envelope"
+            value={envelope}
+            min={0}
+            max={100}
+            step={5}
+            onChange={(v) => updateGrainParams({ envelope: v })}
+            format={(v) => `${Math.round(v)}%`}
+            paramId="slicer.envelope"
           />
           <SliderRow
             label="Rate"

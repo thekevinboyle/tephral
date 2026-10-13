@@ -19,8 +19,10 @@ import { useMorphStore } from '../stores/morphStore'
 import { useVisionTrackingStore } from '../stores/visionTrackingStore'
 import { useLandmarksStore } from '../stores/landmarksStore'
 import { useSlicerStore } from '../stores/slicerStore'
-import { useSlicerBufferStore } from '../stores/slicerBufferStore'
-import { SlicerCompositor } from '../effects/SlicerCompositor'
+import { useEffectSequencerStore } from '../stores/effectSequencerStore'
+import { SlicerEngine } from '../effects/slicer/SlicerEngine'
+import { slicerCommands, slicerReadout, slicerViewers } from '../effects/slicer/slicerRuntime'
+import { getTransportBeats } from '../effects/lines/linePhase'
 import { OverlayContainer } from './overlays/OverlayContainer'
 import { perfMonitor } from '../utils/perfMonitor'
 import { initParamSync } from '../effects/paramSync'
@@ -35,14 +37,16 @@ import { useWarpStore } from '../stores/warpStore'
 
 /**
  * What the pipeline is fed without the warp (set by the input effect). `live` is the texture the
- * warp captures (media texture, or the slicer output when the slicer drives the input); null with
- * no media, so the warp is inactive on the placeholder.
+ * warp and the slicer capture (the media texture); null with no media, so neither runs on the
+ * placeholder. While the slicer is on, the render loop swaps in its picture as the base.
  */
 interface WarpBase {
   input: THREE.Texture
   source: THREE.Texture | null
   live: THREE.Texture | null
   aspect: () => number
+  /** Pixel size of the picture (null for the placeholder). */
+  size: () => [number, number] | null
 }
 
 
@@ -72,26 +76,17 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     faceHudEnabled,
   } = useMorphStore()
 
-  // Slicer state
-  const {
-    enabled: slicerEnabled,
-    outputMode: slicerOutputMode,
-    wet: slicerWet,
-    blendMode: slicerBlendMode,
-    opacity: slicerOpacity,
-    processEffects: slicerProcessEffects,
-  } = useSlicerStore()
-
-  // Slicer output frame
-  const slicerOutputFrame = useSlicerBufferStore((state) => state.currentOutputFrame)
-
-  // Slicer compositor ref
-  const slicerCompositor = useRef<SlicerCompositor | null>(null)
+  // Slicer: only its on/off and effects bypass reach React; the picture is driven from the rAF loop
+  const slicerEnabled = useSlicerStore((s) => s.enabled)
+  const slicerProcessEffects = useSlicerStore((s) => s.processEffects)
+  const slicerHasOwnFrames = useSlicerStore((s) => s.captureState !== 'live')
+  const slicerEngine = useRef<SlicerEngine | null>(null)
 
   // Video time warp: driven from the rAF loop, never from React state
   const warpBase = useRef<WarpBase | null>(null)
   const warpCompositor = useRef<WarpCompositor | null>(null)
-  const warpApplied = useRef<THREE.Texture | null>(null) // texture the loop last pushed; null = base in place
+  // Textures the pipeline was last given as input and source; the loop pushes only on a change
+  const applied = useRef<{ input: THREE.Texture | null; source: THREE.Texture | null }>({ input: null, source: null })
 
   // Expose canvas element via ref
   useImperativeHandle(ref, () => ({
@@ -249,40 +244,6 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     if (!pipeline) return
     return initParamSync(pipeline)
   }, [pipeline])
-
-  // Initialize slicer compositor
-  useEffect(() => {
-    if (!slicerCompositor.current) {
-      slicerCompositor.current = new SlicerCompositor()
-    }
-    slicerCompositor.current.updateParams({
-      mode: slicerOutputMode,
-      wet: slicerWet,
-      blendMode: slicerBlendMode,
-      opacity: slicerOpacity,
-    })
-  }, [slicerOutputMode, slicerWet, slicerBlendMode, slicerOpacity])
-
-  // Update slicer compositor with output frame and original for mixing
-  useEffect(() => {
-    if (slicerCompositor.current && slicerOutputFrame) {
-      slicerCompositor.current.setSlicerFrame(slicerOutputFrame)
-
-      // For mix/layer modes, capture original video frame
-      if (slicerOutputMode !== 'replace' && videoElement) {
-        // Create canvas to capture current video frame
-        const canvas = document.createElement('canvas')
-        canvas.width = slicerOutputFrame.width
-        canvas.height = slicerOutputFrame.height
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height)
-          const originalFrame = ctx.getImageData(0, 0, canvas.width, canvas.height)
-          slicerCompositor.current.setOriginalFrame(originalFrame)
-        }
-      }
-    }
-  }, [slicerOutputFrame, slicerOutputMode, videoElement])
 
   // Structural effect: enable/disable/reorder only. Per-frame param pushes
   // live in paramSync.ts (direct zustand subscriptions), which keeps this
@@ -489,31 +450,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       pipeline.setSourceTexture(null)
     }
 
-    // Check if slicer should provide the texture (even without media source)
-    if (slicerEnabled && slicerCompositor.current) {
-      const slicerTexture = slicerCompositor.current.getOutputTexture()
-      if (slicerTexture) {
-        pipeline.setInputTexture(slicerTexture)
-        // Also set as source texture so crossfader SRC shows raw slicer output
-        // (not the camera/file which may not exist)
-        pipeline.setSourceTexture(slicerTexture)
-        // Use the slicer texture's actual dimensions for proper aspect ratio
-        // The slicer outputs at 480x270 (16:9) regardless of source
-        const texWidth = (slicerTexture as THREE.DataTexture).image?.width || 480
-        const texHeight = (slicerTexture as THREE.DataTexture).image?.height || 270
-        pipeline.setVideoSize(texWidth, texHeight)
-        pipeline.setSourceVideoSize(texWidth, texHeight)
-        // The slicer frame isn't the video frame — a mask of the video would be misaligned
-        pipeline.segmentation.setSource(null)
-        warpBase.current = { input: slicerTexture, source: slicerTexture, live: slicerTexture, aspect: () => texWidth / texHeight }
-        warpApplied.current = null
-
-        return
-      }
-    }
-
-    // Person segmentation follows the active source (video or still image).
-    // Known limitation: with the video warp on, the mask still follows the live element, not the warped frame.
+    // Person segmentation follows the active source (video or still image); the render loop turns it off
+    // while the slicer's picture is shown. Known limitation: with the video warp on, the mask still follows
+    // the live element, not the warped frame.
     pipeline.segmentation.setSource(videoElement ?? imageElement ?? null)
 
     if (mediaTexture) {
@@ -532,8 +471,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       warpBase.current = {
         input: mediaTexture, source: mediaTexture, live: mediaTexture,
         aspect: () => (v ? v.videoWidth / v.videoHeight : im ? im.naturalWidth / im.naturalHeight : NaN),
+        size: () => (v ? [v.videoWidth, v.videoHeight] : im ? [im.naturalWidth, im.naturalHeight] : null),
       }
-      warpApplied.current = null
+      applied.current = { input: mediaTexture, source: mediaTexture }
     } else {
       const size = 256
       const data = new Uint8Array(size * size * 4)
@@ -547,10 +487,10 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       placeholder.needsUpdate = true
       pipeline.setInputTexture(placeholder)
       pipeline.setVideoSize(size, size)
-      warpBase.current = { input: placeholder, source: null, live: null, aspect: () => 1 }
-      warpApplied.current = null
+      warpBase.current = { input: placeholder, source: null, live: null, aspect: () => 1, size: () => null }
+      applied.current = { input: placeholder, source: null }
     }
-  }, [pipeline, mediaTexture, videoElement, imageElement, slicerEnabled, slicerOutputMode, slicerOutputFrame])
+  }, [pipeline, mediaTexture, videoElement, imageElement])
 
   // Update video aspect ratio for layout
   useEffect(() => {
@@ -657,46 +597,87 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       return c.height > 0 ? c.width / c.height : 16 / 9
     }
     const postPass = new WarpPostPass((live) => runWarp(live, canvasAspect()))
+
+    // Slicer: runs on the media picture before the warp; while it shows, its picture is the base.
+    // Nothing is built until it is first turned on or its panel opens.
+    const slicerBase: WarpBase = {
+      input: null as unknown as THREE.Texture, source: null, live: null,
+      aspect: () => slicerEngine.current?.aspect ?? NaN,
+      size: () => { const s = slicerEngine.current?.outputSize; return s && s[0] ? s : null },
+    }
+    let slicerShown = false
+    const slicerTick = (): WarpBase | null => {
+      const st = useSlicerStore.getState()
+      let eng = slicerEngine.current
+      if (!eng) {
+        if (!st.enabled && slicerViewers() === 0) return null
+        eng = new SlicerEngine()
+        slicerEngine.current = eng
+      }
+      const media = warpBase.current
+      const out = eng.tick(
+        renderer, media?.live ?? null, media?.aspect() ?? NaN, media?.size() ?? null,
+        performance.now(), st, useEffectSequencerStore.getState().bpm, getTransportBeats(),
+      )
+      if (!out) return null
+      slicerBase.input = out
+      slicerBase.source = out
+      slicerBase.live = out
+      return slicerBase
+    }
+    /** Size the chain and the person mask for whichever picture is the base, once per switch. */
+    const setShown = (shown: boolean, base: WarpBase | null) => {
+      if (shown === slicerShown) return
+      slicerShown = shown
+      const size = base?.size() ?? [256, 256]
+      pipeline.setVideoSize(size[0], size[1])
+      pipeline.setSourceVideoSize(size[0], size[1])
+      // The slicer's frame is not the live frame: a mask of the live video would be misaligned
+      const m = useMediaStore.getState()
+      pipeline.segmentation.setSource(shown ? null : (m.videoElement ?? m.imageElement ?? null))
+    }
+
     const warpTick = () => {
       const w = useWarpStore.getState()
-      const base = warpBase.current
+      const sliced = slicerTick()
+      const base = sliced ?? warpBase.current
+      setShown(!!sliced, base)
       const live = base?.live ?? null
       const on = !!(base && live && w.enabled && w.appliesTo !== 'audio')
       const after = on && w.placement === 'after'
       // The end-of-chain pass is in the chain only while the warp runs after it
       pipeline.setWarpPostPass(after ? postPass : null)
       if (!after) postPass.release()
+      let input = base?.input ?? null
+      let source = base?.source ?? null
       if (on && !after && base && live) {
-        const out = runWarp(live, base.aspect())
-        if (out !== warpApplied.current) {
-          pipeline.setInputTexture(out)
-          pipeline.setSourceTexture(out)
-          warpApplied.current = out
-        }
-        return
+        input = source = runWarp(live, base.aspect())
+      } else if (!after) {
+        // Off: free the render targets (programs are kept)
+        const comp = warpCompositor.current
+        if (comp && (comp.targetCount || comp.extraTargetCount)) comp.release()
       }
-      // Off, after the chain, or no source: put the base back exactly once
-      if (warpApplied.current && base) {
-        pipeline.setInputTexture(base.input)
-        pipeline.setSourceTexture(base.source)
+      const a = applied.current
+      if (input && (input !== a.input || source !== a.source)) {
+        pipeline.setInputTexture(input)
+        pipeline.setSourceTexture(source)
+        applied.current = { input, source }
       }
-      warpApplied.current = null
-      if (after) return
-      // Off: free the render targets (programs are kept)
-      const comp = warpCompositor.current
-      if (comp && (comp.targetCount || comp.extraTargetCount)) comp.release()
     }
     if (import.meta.env.DEV) {
       // Test hook (dev only; stripped from the build). Plain functions, not getters.
       ;(window as unknown as { __warpTest?: unknown }).__warpTest = {
         compositor: () => warpCompositor.current, renderer, THREE, WarpCompositor,
-        input: () => warpApplied.current ?? warpBase.current?.input ?? null,
+        input: () => applied.current.input ?? warpBase.current?.input ?? null,
         // what the pipeline itself holds as its input, and the original (unwarped) texture
         pipelineInput: () => (pipeline as unknown as { inputTexture: THREE.Texture | null }).inputTexture,
         baseInput: () => warpBase.current?.input ?? null,
         postPass: () => postPass,
         // the passes the composer runs (the warp's end pass is last while placement is 'after')
         composerPasses: () => (pipeline as unknown as { composer: { passes: unknown[] } }).composer.passes,
+      }
+      ;(window as unknown as { __slicerTest?: unknown }).__slicerTest = {
+        engine: () => slicerEngine.current, readout: slicerReadout, commands: slicerCommands,
       }
     }
 
@@ -719,23 +700,26 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       cancelAnimationFrame(frameIdRef.current)
       resizeObserver.disconnect()
       window.clearTimeout(resizeTimer)
-      slicerCompositor.current?.dispose()
+      slicerEngine.current?.dispose()
+      slicerEngine.current = null
       pipeline.setWarpPostPass(null)
       postPass.dispose()
       warpCompositor.current?.dispose()
       warpCompositor.current = null
       setActiveWarpCompositor(null)
-      warpApplied.current = null
+      applied.current = { input: null, source: null }
     }
   }, [pipeline, renderer, frameIdRef])
 
   // Use unified source from mediaStore
   const { source } = useMediaStore()
-  const hasMedia = source !== 'none'
+  // An imported or frozen slicer buffer plays without any source
+  const hasMedia = source !== 'none' || (slicerEnabled && slicerHasOwnFrames)
 
-  // Source change: the warp ring must never show frames from the previous source
+  // Source change: the warp and slicer rings must never show frames from the previous source
   useEffect(() => {
     warpCompositor.current?.clear()
+    if (useSlicerStore.getState().captureState === 'live') slicerCommands.clear = true
   }, [videoElement, imageElement, source])
 
   return (

@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { useMediaStore } from './mediaStore'
 
 // Types
 export type CaptureState = 'live' | 'frozen' | 'imported'
@@ -63,11 +62,9 @@ interface SlicerState {
   currentSlice: number
   sliceSequenceMode: SliceSequenceMode
 
-  // Playhead (0-1 position within current slice for visualization)
-  playheadPosition: number
-  // Scan position (0-1 user-controllable read position within slice)
+  // Scan position: where in its slice each grain starts (0-1)
   scanPosition: number
-  // Auto-scan: automatically sweep scanPosition through the slice
+  // Auto-scan: sweep the scan position through the slice while playing (the engine keeps the swept value)
   autoScan: boolean
   scanSpeed: number  // Speed in Hz (cycles per second through the slice)
   scanMode: 'loop' | 'pendulum'  // Loop = wrap around, Pendulum = bounce back
@@ -106,7 +103,6 @@ interface SlicerState {
   setSliceCount: (count: 4 | 8 | 16 | 32) => void
   setCurrentSlice: (slice: number) => void
   setSliceSequenceMode: (mode: SliceSequenceMode) => void
-  setPlayheadPosition: (position: number) => void
   setScanPosition: (position: number) => void
   setAutoScan: (autoScan: boolean) => void
   setScanSpeed: (speed: number) => void
@@ -156,7 +152,6 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
   sliceCount: 8,
   currentSlice: 0,
   sliceSequenceMode: 'forward',
-  playheadPosition: 0,
   scanPosition: 0.5,
   autoScan: false,
   scanSpeed: 0.5,  // 0.5 Hz = 2 seconds per cycle
@@ -205,7 +200,6 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
     }))
   },
   setSliceSequenceMode: (sliceSequenceMode) => set({ sliceSequenceMode }),
-  setPlayheadPosition: (playheadPosition) => set({ playheadPosition: clamp(playheadPosition, 0, 1) }),
   setScanPosition: (scanPosition) => set({ scanPosition: clamp(scanPosition, 0, 1) }),
   setAutoScan: (autoScan) => set({ autoScan }),
   setScanSpeed: (scanSpeed) => set({ scanSpeed: clamp(scanSpeed, 0.1, 10) }),
@@ -266,21 +260,8 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
   setWet: (wet) => set({ wet: clamp(wet, 0, 1) }),
   setBlendMode: (blendMode) => set({ blendMode }),
   setOpacity: (opacity) => set({ opacity: clamp(opacity, 0, 1) }),
-  setEnabled: (enabled) => {
-    set({ enabled })
-    // Coordinate with mediaStore
-    if (enabled) {
-      // Stash current source and switch to slicer
-      useMediaStore.getState().stashCurrentSource()
-      useMediaStore.getState().setSource('slicer')
-    } else {
-      // Try to restore stashed source, or set to none
-      const restored = useMediaStore.getState().restoreStashedSource()
-      if (!restored) {
-        useMediaStore.getState().setSource('none')
-      }
-    }
-  },
+  // The slicer processes the current source; it never switches it
+  setEnabled: (enabled) => set({ enabled }),
   setProcessEffects: (processEffects) => set({ processEffects }),
 
   // Snapshot actions

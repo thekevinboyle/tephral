@@ -11,7 +11,12 @@ export const getLinePhase = (id: string): number | null => { const p = pos.get(i
 export const getLineHead = (id: string): number | null => head.get(id) ?? null
 export const setLinePos = (id: string, p: number, x: number): void => { pos.set(id, p); head.set(id, x) }
 export const deleteLinePhase = (id: string): void => { pos.delete(id); head.delete(id) }
-export const clearLinePhases = (): void => { pos.clear(); head.clear(); masterPos = null; masterHead = null }
+export const clearLinePhases = (): void => { pos.clear(); head.clear(); masterPos = null; masterHead = null; transportBeats = null }
+
+// Beats since Play while the sequencer plays (null when stopped); the slicer's synced triggers land on its 16ths
+let transportBeats: number | null = null
+export const getTransportBeats = (): number | null => transportBeats
+export const setTransportBeats = (b: number | null): void => { transportBeats = b }
 
 // The master line's position and x while the sequencer plays (lines editor spec §3); null when stopped
 let masterPos: number | null = null

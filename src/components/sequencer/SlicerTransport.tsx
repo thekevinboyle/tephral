@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
 import { PlayIcon, StopIcon } from '../ui/DotMatrixIcons'
 import { useSlicerStore } from '../../stores/slicerStore'
-import { useSlicerBufferStore } from '../../stores/slicerBufferStore'
-import { useSequencerStore } from '../../stores/sequencerStore'
+import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
+import { slicerCommands } from '../../effects/slicer/slicerRuntime'
 import { useClipStore } from '../../stores/clipStore'
 import { extractFramesFromClip } from '../../utils/clipFrameExtractor'
 
@@ -23,8 +23,7 @@ export function SlicerTransport() {
     setProcessEffects,
   } = useSlicerStore()
 
-  const { capture, release, importFrames } = useSlicerBufferStore()
-  const { bpm } = useSequencerStore()
+  const bpm = useEffectSequencerStore((s) => s.bpm)
   const { clips } = useClipStore()
 
   const [showClipPicker, setShowClipPicker] = useState(false)
@@ -32,10 +31,10 @@ export function SlicerTransport() {
 
   const handleCaptureRelease = () => {
     if (captureState === 'live') {
-      capture()
-      setCaptureState('frozen')
+      setCaptureState('frozen') // the engine stops capturing and keeps what it has
     } else {
-      release()
+      // An imported clip is replaced by live frames; a frozen buffer carries on from where it stopped
+      if (captureState === 'imported') slicerCommands.clear = true
       setCaptureState('live')
       setImportedClipId(null)
     }
@@ -50,7 +49,7 @@ export function SlicerTransport() {
     try {
       const frames = await extractFramesFromClip(clipUrl, duration)
       console.log('[SlicerTransport] Got frames:', frames.length)
-      importFrames(frames)
+      slicerCommands.importFrames = frames
       setCaptureState('imported')
       setImportedClipId(clipId)
     } catch (error) {
@@ -58,7 +57,7 @@ export function SlicerTransport() {
     } finally {
       setIsLoading(false)
     }
-  }, [importFrames, setCaptureState, setImportedClipId])
+  }, [setCaptureState, setImportedClipId])
 
   return (
     <div className="flex flex-row gap-1.5 items-center relative">

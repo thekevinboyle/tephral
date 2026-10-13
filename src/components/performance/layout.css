@@ -21,11 +21,8 @@
 .seg-area-fill[data-area="dock"]    { overflow: hidden; }
 .seg-area-fill[data-area="status"]  { flex: 1 1 auto; }
 
-/* Bottom: Devices is a fixed 236px strip; Sequencer follows its content (auto row) up to 50vh */
-.seg-shell[data-bottom-tab="devices"] > [data-area="bottom"] { height: 236px; }
-.seg-shell[data-bottom-tab="sequencer"] > [data-area="bottom"] { height: auto; max-height: 50vh; }
-/* the Lines view takes the whole Sequencer cap, so its graph is never squeezed by a short track list */
-.seg-shell[data-bottom-tab="sequencer"] > [data-area="bottom"]:has([data-lines-view]) { height: 50vh; }
+/* Bottom: one fixed height for every tab (Devices, Warp, Sequencer), so switching tabs never resizes the stage */
+.seg-shell > [data-area="bottom"] { height: min(400px, 50vh); }
 
 .seg-shell[data-browser="off"] > [data-area="browser"],
 .seg-shell[data-inspector="off"] > [data-area="inspector"],
@@ -231,7 +228,7 @@
 .seg-modcard-rail::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--mod); }
 .seg-modcard-count { font: 500 11px var(--font-mono); color: var(--text-secondary); }
 .seg-modcard-name { writing-mode: vertical-rl; transform: rotate(180deg); font: 600 13px var(--font-sans); letter-spacing: .02em; color: var(--text-primary); white-space: nowrap; }
-.seg-modcard-grid { display: grid; grid-template-columns: repeat(2, 120px); grid-auto-rows: 1fr; gap: 4px; padding: 8px; align-content: stretch; }
+.seg-modcard-grid { display: grid; grid-template-columns: repeat(2, 120px); grid-auto-rows: 34px; gap: 4px; padding: 8px; align-content: start; }
 .seg-mod-slot { display: flex; align-items: center; min-width: 0; border-radius: var(--radius-ctrl); background: var(--bg-elevated); border: 1px solid transparent; }
 .seg-mod-slot:hover { background: var(--bg-hover); }
 .seg-mod-slot[data-selected] { border-color: var(--sel); background: var(--bg-hover); }
@@ -421,7 +418,6 @@
   --warp-lock: #5c5a1a;  /* outline of a group locked for the dice (dim --warp) */
   --warp-note-bg: #262612; /* behind --warp text in a lock note */
 }
-.seg-shell[data-bottom-tab="warp"] > [data-area="bottom"] { height: min(400px, 50vh); }
 .seg-warp { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 2px; background: var(--gutter); outline: none; }
 .seg-warp-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg-void); }
 .seg-warp-tools { flex: none; display: flex; align-items: center; gap: 4px; padding: 6px 8px; }

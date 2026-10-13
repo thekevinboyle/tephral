@@ -1,5 +1,5 @@
 import { memo, useState } from 'react'
-import { EFFECT_CATEGORIES, filterCategories, type EffectInfo } from '../../config/effectNames'
+import { filterCategories, type EffectInfo } from '../../config/effectNames'
 import { getEffectState, toggleEffect, useEnabledEffectIds } from '../../hooks/useEffectToggle'
 import { useUIStore } from '../../stores/uiStore'
 import { getEffectStatusText, getUIStatusText } from '../../config/statusDescriptions'
@@ -29,8 +29,8 @@ function onRowClick(id: string) {
 }
 
 // Categories start folded except Acid and any that already hold chain effects
-const initialOpen = (): Record<string, boolean> =>
-  Object.fromEntries(EFFECT_CATEGORIES.map((c, i) => [c.name, i === 0 || c.effects.some((e) => getEffectState(e.id).active)]))
+// Every category starts collapsed; a search opens the ones that match
+const initialOpen = (): Record<string, boolean> => ({})
 
 const Row = memo(function Row({ info, inChain }: { info: EffectInfo; inChain: boolean }) {
   return (

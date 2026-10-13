@@ -86,7 +86,7 @@ Enabled flags/order and per-frame params are split across two files:
 
 ### Layout Shell (`src/components/performance/PerformanceLayout.tsx` + `layout.css`)
 `.seg-shell` is a CSS grid whose children carry `data-area`: `header`, `browser`, `stage`, `inspector`, `bottom`, `footer`. Footer toggles show or hide the browser, inspector and bottom panel (hidden by CSS, never unmounted, so the canvas is never remounted).
-- **Sizes**: header 44px, footer 30px. Browser 250px / inspector 300px, and 300px / 340px at ≥2200px. Bottom panel 172px on Devices; on Sequencer it fills 40vh while the Lines view shows, otherwise it follows the content up to 40vh.
+- **Sizes**: header 44px, footer 30px. Browser 250px / inspector 300px, and 300px / 340px at ≥2200px. Bottom panel 236px on Devices and min(400px, 50vh) on Warp; on Sequencer it fills 50vh while the Lines view shows, otherwise it follows the content up to 50vh. Device cards sit on the dark well as `--bg-surface` cards with a `--border-emphasis` edge; their dials are `Knob size="lg"` (54px arc).
 - **Narrow (< 1100px)**: the browser and inspector become drawers over the stage (one at a time).
 - `PerformanceLayout` re-renders every engine tick, so `HeaderBar`, `EffectBrowser`, `StageArea`, `Inspector` and `BottomPanel2` are `React.memo`. Keep their props stable and their store selectors narrow.
 

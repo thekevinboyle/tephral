@@ -28,7 +28,7 @@ const DeviceDial = memo(function DeviceDial({ effectId, param }: { effectId: str
       <Knob
         label={displayParamLabel(effectId, param, { short: true })} value={value} min={param.min} max={param.max} step={param.step}
         onChange={onChange} paramId={`${effectId}.${param.id}`} formatValue={formatParamValue}
-        resetOnDoubleClick showArc color="var(--c)" statusText={paramStatusText(effectId, param)}
+        resetOnDoubleClick showArc size="lg" color="var(--c)" statusText={paramStatusText(effectId, param)}
       />
     </div>
   )

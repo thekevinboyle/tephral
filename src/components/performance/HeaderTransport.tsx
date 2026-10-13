@@ -123,16 +123,6 @@ export const HeaderTransport = memo(function HeaderTransport() {
           {isPlaying ? <rect x="2" y="2" width="8" height="8" /> : <path d="M3 1.5v9l7.5-4.5z" />}
         </svg>
       </button>
-      <button
-        data-transport="stop"
-        aria-label="Stop playback"
-        title="Stop playback"
-        onClick={linkedStop}
-        style={btn(false)}
-        {...hint('Stop the step sequencer and pause the video that goes with it')}
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><rect x="2" y="2" width="8" height="8" /></svg>
-      </button>
 
       <div className="flex items-baseline" style={{ gap: 4, minWidth: 82 }}>
         {editing ? (

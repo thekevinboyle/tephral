@@ -18,6 +18,9 @@ export function useThree(containerRef: React.RefObject<HTMLDivElement | null>) {
       antialias: false,
       preserveDrawingBuffer: true
     })
+    // The chain works on the video's sRGB values as they are (media textures are not decoded to linear),
+    // so the output must not be sRGB-encoded again, or every frame comes out washed out and hazy.
+    newRenderer.outputColorSpace = THREE.LinearSRGBColorSpace
     newRenderer.setSize(width, height)
     newRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     container.appendChild(newRenderer.domElement)

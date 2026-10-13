@@ -177,14 +177,14 @@ export const EffectStepCell = memo(function EffectStepCell({
       style={{
         height: '100%',
         minHeight: 56,
-        backgroundColor: '#000000',
+        backgroundColor: 'var(--bg-primary)',
         border: isPlayheadHit
           ? '1px solid #FFFFFF'
           : step.active && hasProbability
             ? `1px solid ${PROB}80`
             : step.active && hasLocks
               ? `1px solid ${PLOCK}`
-              : '1px solid var(--border)',
+              : '1px solid var(--border-emphasis)',
         animation: step.active && hasLocks && !hasProbability
           ? 'hud-blink 0.5s step-end infinite'
           : undefined,

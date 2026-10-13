@@ -82,8 +82,8 @@ export function Knob({
   const isCompact = size === 'xs'
 
   // Arc knob geometry
-  const arcSize = 40
-  const arcStroke = 3
+  const arcSize = size === 'lg' ? 54 : 40
+  const arcStroke = size === 'lg' ? 4 : 3
   const arcRadius = (arcSize - arcStroke) / 2
   const arcCenter = arcSize / 2
   // Arc spans 270° (from 135° to 405°)
@@ -165,7 +165,7 @@ export function Knob({
             <path
               d={describeArc(arcCenter, arcCenter, arcRadius, startAngle, endAngle)}
               fill="none"
-              stroke={isHovered || isDragging ? 'var(--bg-hover)' : 'var(--bg-elevated)'}
+              stroke={isHovered || isDragging ? 'var(--text-muted)' : 'var(--border-emphasis)'}
               strokeWidth={arcStroke}
               strokeLinecap="round"
               style={{ transition: 'stroke var(--dur-quick) var(--ease-out-expo)' }}
@@ -202,7 +202,7 @@ export function Knob({
           <span
             className="tabular-nums"
             style={{
-              fontSize: 11,
+              fontSize: size === 'lg' ? 13 : 11,
               fontWeight: 500,
               color: 'var(--text-primary)',
               fontFamily: 'var(--font-mono)',
@@ -214,8 +214,8 @@ export function Knob({
           </span>
           <span
             style={{
-              fontSize: 10.5,
-              color: 'var(--text-muted)',
+              fontSize: size === 'lg' ? 11.5 : 10.5,
+              color: 'var(--text-secondary)',
               fontFamily: 'var(--font-sans)',
               lineHeight: 1.2,
             }}

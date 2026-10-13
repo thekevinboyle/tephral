@@ -12,7 +12,7 @@
 .seg-shell > [data-area="browser"]   { grid-area: browser; display: flex; flex-direction: column; border-radius: var(--radius-panel); }
 .seg-shell > [data-area="stage"]     { grid-area: stage; background: var(--bg-void); border-radius: var(--radius-panel); }
 .seg-shell > [data-area="inspector"] { grid-area: inspector; display: flex; flex-direction: column; border-radius: var(--radius-panel); }
-.seg-shell > [data-area="bottom"]    { grid-area: bottom; display: flex; flex-direction: column; max-height: 40vh; border-radius: var(--radius-panel); }
+.seg-shell > [data-area="bottom"]    { grid-area: bottom; display: flex; flex-direction: column; max-height: 50vh; border-radius: var(--radius-panel); }
 .seg-shell > [data-area="footer"]    { grid-area: footer; background: var(--bg-void); }
 /* Inner wrappers carry the legacy data-area names (effects / chain / dock / status) that layout-check modes select on */
 .seg-area-fill { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
@@ -21,11 +21,11 @@
 .seg-area-fill[data-area="dock"]    { overflow: hidden; }
 .seg-area-fill[data-area="status"]  { flex: 1 1 auto; }
 
-/* Bottom: Devices is a fixed 172px strip; Sequencer follows its content (auto row) up to 40vh */
-.seg-shell[data-bottom-tab="devices"] > [data-area="bottom"] { height: 172px; }
-.seg-shell[data-bottom-tab="sequencer"] > [data-area="bottom"] { height: auto; max-height: 40vh; }
+/* Bottom: Devices is a fixed 236px strip; Sequencer follows its content (auto row) up to 50vh */
+.seg-shell[data-bottom-tab="devices"] > [data-area="bottom"] { height: 236px; }
+.seg-shell[data-bottom-tab="sequencer"] > [data-area="bottom"] { height: auto; max-height: 50vh; }
 /* the Lines view takes the whole Sequencer cap, so its graph is never squeezed by a short track list */
-.seg-shell[data-bottom-tab="sequencer"] > [data-area="bottom"]:has([data-lines-view]) { height: 40vh; }
+.seg-shell[data-bottom-tab="sequencer"] > [data-area="bottom"]:has([data-lines-view]) { height: 50vh; }
 
 .seg-shell[data-browser="off"] > [data-area="browser"],
 .seg-shell[data-inspector="off"] > [data-area="inspector"],
@@ -152,7 +152,7 @@
 
 /* ─── Bottom panel (BottomPanel2): header, Devices (DeviceChain) / Sequencer bodies ─────────────────── */
 .seg-bottom { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-.seg-bottom-head { flex: none; display: flex; align-items: stretch; gap: 10px; height: 30px; padding: 0 6px 0 0; background: var(--bg-void); border-radius: var(--radius-panel) var(--radius-panel) 0 0; min-width: 0; }
+.seg-bottom-head { flex: none; display: flex; align-items: stretch; gap: 10px; height: 36px; padding: 0 6px 0 0; background: var(--bg-void); border-bottom: 1px solid var(--border-emphasis); border-radius: var(--radius-panel) var(--radius-panel) 0 0; min-width: 0; }
 .seg-bottom-head > :not(.seg-nav) { align-self: center; }
 /* Main navigation: the active tab is the panel's own colour, so it reads as the open folder; the others sit back on the dark strip */
 .seg-nav { flex: none; display: flex; gap: 1px; }
@@ -167,12 +167,12 @@
 .seg-nav-tab[aria-selected="true"] { color: var(--text-primary); background: color-mix(in srgb, var(--tab-accent) 13%, var(--bg-primary)); }
 .seg-nav-tab[aria-selected="true"]::before { background: var(--tab-accent); }
 .seg-nav-tab[aria-selected="true"] svg { color: var(--tab-accent); }
-.seg-bottom-sub { min-width: 0; display: flex; align-items: center; gap: 8px; font: 400 11px var(--font-sans); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-bottom-sub { min-width: 0; display: flex; align-items: center; gap: 8px; font: 400 12px var(--font-sans); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .seg-bottom-cancel { flex: none; font: 500 11px var(--font-sans); padding: 1px 7px; border-radius: var(--radius-ctrl); background: var(--bg-elevated); color: var(--text-secondary); cursor: pointer; }
 .seg-bottom-cancel:hover { background: var(--bg-hover); color: var(--text-primary); }
 .seg-bottom-spacer { flex: 1 1 auto; }
 .seg-bottom-actions { flex: none; display: flex; gap: 2px; }
-.seg-bottom-btn { font: 500 11px var(--font-sans); height: 22px; padding: 0 8px; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-secondary); cursor: pointer; }
+.seg-bottom-btn { font: 500 12px var(--font-sans); height: 26px; padding: 0 8px; border-radius: var(--radius-ctrl); background: transparent; color: var(--text-secondary); cursor: pointer; }
 .seg-bottom-btn:hover:not(:disabled) { background: var(--bg-hover); }
 .seg-bottom-btn[data-on] { background: var(--bg-elevated); color: var(--text-primary); }
 .seg-bottom-btn:disabled { color: var(--text-muted); opacity: .6; cursor: default; }
@@ -183,10 +183,10 @@
 .seg-bottom-seq > div { flex: 1 1 auto; min-height: 0; }
 
 /* Device chain: one horizontal scroller; the page never scrolls sideways */
-.seg-chain { flex: 1 1 auto; min-height: 0; display: flex; align-items: stretch; gap: 2px; padding: 6px 8px; background: var(--bg-void); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.seg-chain { flex: 1 1 auto; min-height: 0; display: flex; align-items: stretch; gap: 4px; padding: 8px 10px; background: var(--bg-void); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
 .seg-chain-devices { display: flex; align-items: stretch; gap: 2px; flex: none; }
 .seg-chain-slot { display: flex; align-items: stretch; gap: 2px; flex: none; }
-.seg-chain-plus { flex: none; width: 18px; display: grid; place-items: center; color: var(--text-muted); font: 400 14px var(--font-sans); cursor: pointer; border-radius: var(--radius-ctrl); }
+.seg-chain-plus { flex: none; width: 18px; display: grid; place-items: center; color: var(--text-secondary); font: 400 16px var(--font-sans); cursor: pointer; border-radius: var(--radius-ctrl); }
 .seg-chain-plus:hover { background: var(--bg-primary); color: var(--text-secondary); }
 .seg-chain-plus[data-drop="gap"], .seg-chain-add[data-drop="gap"] { background: var(--bg-elevated); color: var(--text-primary); box-shadow: inset 0 0 0 1px var(--text-primary); }
 .seg-chain-add { flex: none; width: 60px; display: grid; place-items: center; border: 1px dashed var(--border-emphasis); border-radius: var(--radius-panel); background: transparent; color: var(--text-muted); font: 400 16px var(--font-sans); cursor: pointer; }
@@ -194,28 +194,28 @@
 .seg-chain-empty { align-self: center; margin: 0 0 0 10px; font: 400 12px var(--font-sans); color: var(--text-muted); white-space: nowrap; }
 
 /* Device card */
-.seg-dev { --c: var(--text-muted); position: relative; flex: none; display: flex; background: var(--bg-primary); border: 1px solid transparent; border-radius: var(--radius-panel); overflow: hidden; cursor: default; user-select: none; }
+.seg-dev { --c: var(--text-muted); position: relative; flex: none; display: flex; background: var(--bg-surface); border: 1px solid var(--border-emphasis); border-radius: var(--radius-panel); overflow: hidden; cursor: default; user-select: none; }
 .seg-dev[data-selected] { border-color: var(--sel); }
 .seg-dev:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
 .seg-dev[data-drop="before"] { box-shadow: inset 2px 0 0 var(--text-primary); }
 .seg-dev[data-drop="after"] { box-shadow: inset -2px 0 0 var(--text-primary); }
-.seg-dev-rail { position: relative; flex: none; width: 26px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 7px 0; background: var(--bg-surface); cursor: grab; }
-.seg-dev-rail::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c); }
+.seg-dev-rail { position: relative; flex: none; width: 26px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 0; background: var(--bg-elevated); cursor: grab; }
+.seg-dev-rail::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--c); }
 .seg-dev-pwr { flex: none; width: 14px; height: 14px; padding: 0; border-radius: 50%; border: 2px solid var(--c); background: var(--c); cursor: pointer; }
 .seg-dev[data-bypassed] .seg-dev-pwr { background: transparent; border-color: var(--text-muted); }
-.seg-dev-name { flex: 0 1 auto; min-height: 0; writing-mode: vertical-rl; transform: rotate(180deg); font: 600 12px var(--font-sans); letter-spacing: .02em; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.seg-dev-name { flex: 0 1 auto; min-height: 0; writing-mode: vertical-rl; transform: rotate(180deg); font: 600 13px var(--font-sans); letter-spacing: .02em; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .seg-dev[data-bypassed] .seg-dev-name { color: var(--text-muted); }
-.seg-dev-body { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; min-width: 0; }
+.seg-dev-body { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px 10px; min-width: 0; }
 .seg-dev[data-bypassed] .seg-dev-body { opacity: .5; }
-.seg-dev-knobs { display: grid; grid-template-columns: repeat(4, 50px); gap: 4px; }
-.seg-dev-dial { width: 50px; min-width: 0; display: flex; justify-content: center; }
-/* value + label under each dial: keep within the 50px column */
-.seg-dev-dial [data-param-control] > span { max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.seg-dev-noparams { width: 212px; height: 68px; display: grid; place-items: center; font: 400 11px var(--font-sans); color: var(--text-muted); }
-.seg-dev-mix { margin-top: auto; display: flex; align-items: center; gap: 6px; height: 14px; font: 400 10.5px var(--font-sans); color: var(--text-muted); cursor: ew-resize; touch-action: none; border-radius: 2px; }
-.seg-dev-mix-track { flex: 1 1 auto; position: relative; height: 4px; border-radius: 2px; background: var(--bg-elevated); }
+.seg-dev-knobs { display: grid; grid-template-columns: repeat(4, 66px); gap: 6px; margin: auto 0; }
+.seg-dev-dial { width: 66px; min-width: 0; display: flex; justify-content: center; }
+/* value + label under each dial: keep within the 66px column */
+.seg-dev-dial [data-param-control] > span { max-width: 66px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seg-dev-noparams { width: 282px; height: 96px; display: grid; place-items: center; font: 400 11px var(--font-sans); color: var(--text-muted); }
+.seg-dev-mix { display: flex; align-items: center; gap: 8px; height: 16px; font: 400 11.5px var(--font-sans); color: var(--text-secondary); cursor: ew-resize; touch-action: none; border-radius: 2px; }
+.seg-dev-mix-track { flex: 1 1 auto; position: relative; height: 5px; border-radius: 3px; background: var(--bg-hover); }
 .seg-dev-mix-track > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; background: var(--c); }
-.seg-dev-mix-value { flex: none; width: 34px; text-align: right; font: 500 11px var(--font-mono); color: var(--text-primary); }
+.seg-dev-mix-value { flex: none; width: 38px; text-align: right; font: 500 12px var(--font-mono); color: var(--text-primary); }
 .seg-dev-mix { position: relative; }
 /* Dry/wet as a modulation target (spec §6): dashed outline while a modulator is armed, the routed span hatched in the source's colour */
 .seg-dev-mix[data-assigning] { outline: 1px dashed var(--assign, var(--text-secondary)); outline-offset: 2px; cursor: copy; }
@@ -226,16 +226,16 @@
 .seg-dev-x:hover { background: var(--bg-hover); color: var(--text-primary); }
 
 /* Modulators card: rail like a device, then a 2-column grid of 11 slots */
-.seg-modcard { flex: none; display: flex; background: var(--bg-primary); border-radius: var(--radius-panel); overflow: hidden; }
-.seg-modcard-rail { position: relative; flex: none; width: 26px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 0; background: var(--bg-surface); }
-.seg-modcard-rail::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--mod); }
+.seg-modcard { flex: none; display: flex; background: var(--bg-surface); border: 1px solid var(--border-emphasis); border-radius: var(--radius-panel); overflow: hidden; }
+.seg-modcard-rail { position: relative; flex: none; width: 26px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; background: var(--bg-elevated); }
+.seg-modcard-rail::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--mod); }
 .seg-modcard-count { font: 500 11px var(--font-mono); color: var(--text-secondary); }
-.seg-modcard-name { writing-mode: vertical-rl; transform: rotate(180deg); font: 600 12px var(--font-sans); letter-spacing: .02em; color: var(--text-primary); white-space: nowrap; }
-.seg-modcard-grid { display: grid; grid-template-columns: repeat(2, 106px); grid-auto-rows: 1fr; gap: 3px; padding: 6px; align-content: stretch; }
-.seg-mod-slot { display: flex; align-items: center; min-width: 0; border-radius: var(--radius-ctrl); background: var(--bg-surface); border: 1px solid transparent; }
-.seg-mod-slot:hover { background: var(--bg-elevated); }
-.seg-mod-slot[data-selected] { border-color: var(--sel); background: var(--bg-elevated); }
-.seg-mod-slot-body { flex: 1 1 auto; min-width: 0; height: 100%; display: flex; align-items: center; gap: 6px; padding: 0 4px 0 6px; background: transparent; color: var(--text-secondary); font: 500 11px var(--font-sans); text-align: left; cursor: pointer; }
+.seg-modcard-name { writing-mode: vertical-rl; transform: rotate(180deg); font: 600 13px var(--font-sans); letter-spacing: .02em; color: var(--text-primary); white-space: nowrap; }
+.seg-modcard-grid { display: grid; grid-template-columns: repeat(2, 120px); grid-auto-rows: 1fr; gap: 4px; padding: 8px; align-content: stretch; }
+.seg-mod-slot { display: flex; align-items: center; min-width: 0; border-radius: var(--radius-ctrl); background: var(--bg-elevated); border: 1px solid transparent; }
+.seg-mod-slot:hover { background: var(--bg-hover); }
+.seg-mod-slot[data-selected] { border-color: var(--sel); background: var(--bg-hover); }
+.seg-mod-slot-body { flex: 1 1 auto; min-width: 0; height: 100%; display: flex; align-items: center; gap: 6px; padding: 0 4px 0 6px; background: transparent; color: var(--text-primary); font: 500 12px var(--font-sans); text-align: left; cursor: pointer; }
 .seg-mod-slot[data-selected] .seg-mod-slot-body, .seg-mod-slot-body:hover { color: var(--text-primary); }
 .seg-mod-slot-body > svg { flex: none; }
 .seg-mod-slot-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -398,7 +398,7 @@
 /* Time warp chain card (WarpCard): reuses the device card, coloured --warp */
 .seg-warpcard .seg-dev-body { justify-content: center; }
 .seg-warpcard-row { display: flex; align-items: center; gap: 12px; }
-.seg-warpcard-mini { flex: none; display: block; background: var(--bg-surface); border-radius: var(--radius-ctrl); }
+.seg-warpcard-mini { flex: none; display: block; background: var(--bg-void); border-radius: var(--radius-ctrl); }
 .seg-warp-slot { flex: none; align-self: stretch; padding: 0 14px; border: 1px dashed var(--bg-hover); border-radius: var(--radius-panel); background: transparent; color: var(--text-muted); font: 500 12px var(--font-sans); cursor: pointer; white-space: nowrap; }
 .seg-warp-slot:hover { background: var(--bg-hover); color: var(--text-secondary); border-color: var(--text-muted); }
 .seg-warp-slot:focus-visible { outline: 1px solid var(--text-primary); outline-offset: -1px; }
@@ -421,7 +421,7 @@
   --warp-lock: #5c5a1a;  /* outline of a group locked for the dice (dim --warp) */
   --warp-note-bg: #262612; /* behind --warp text in a lock note */
 }
-.seg-shell[data-bottom-tab="warp"] > [data-area="bottom"] { height: 300px; }
+.seg-shell[data-bottom-tab="warp"] > [data-area="bottom"] { height: min(400px, 50vh); }
 .seg-warp { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 2px; background: var(--gutter); outline: none; }
 .seg-warp-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg-void); }
 .seg-warp-tools { flex: none; display: flex; align-items: center; gap: 4px; padding: 6px 8px; }

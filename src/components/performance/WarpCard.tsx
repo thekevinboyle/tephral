@@ -11,8 +11,8 @@ import { Knob } from './Knob'
  */
 
 const ID = 'time_warp'
-const W = 72
-const H = 36
+const W = 104
+const H = 56
 const PTS = 64
 
 const openWarpTab = () => {
@@ -47,7 +47,7 @@ export const WarpAmountKnob = memo(function WarpAmountKnob() {
     <div className="seg-dev-dial">
       <Knob
         label="Amount" value={amount} min={0} max={1} step={0.01} onChange={onChange}
-        formatValue={(v) => `${Math.round(v * 100)}%`} resetOnDoubleClick showArc color="var(--warp)"
+        formatValue={(v) => `${Math.round(v * 100)}%`} resetOnDoubleClick showArc size="lg" color="var(--warp)"
         statusText="Amount: how far the time line bends playback. 0 is normal playback, 100% is the full line"
       />
     </div>

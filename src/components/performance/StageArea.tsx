@@ -2,9 +2,8 @@ import { StageDropZone } from './StageDropZone'
 import { forwardRef, memo, useEffect, useState } from 'react'
 import { Canvas, type CanvasHandle } from '../Canvas'
 import { ClipBin } from './ClipBin'
-import { CanvasTransportBar } from './CanvasTransportBar'
+import { MediaStrip } from './MediaStrip'
 import { useMediaTimecode, NO_TIME } from '../../hooks/useMediaTimecode'
-import { TransportBar } from './TransportBar'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
@@ -87,10 +86,7 @@ export const StageArea = memo(forwardRef<CanvasHandle>(function StageArea(_props
       </StageDropZone>
       {/* The timelines take dropped files too: an audio file dropped on the Audio timeline becomes the audio */}
       <StageDropZone className="flex-shrink-0">
-        <div data-media-strip className="flex flex-col">
-          <CanvasTransportBar />
-          <TransportBar />
-        </div>
+        <MediaStrip />
       </StageDropZone>
     </div>
   )

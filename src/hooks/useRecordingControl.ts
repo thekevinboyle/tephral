@@ -47,7 +47,7 @@ function initialAutomationEvents(): AutomationEvent[] {
 }
 
 /**
- * Start/stop recording (moved from CanvasTransportBar). Capture itself stays in
+ * Start/stop recording (once in the old media transport bar). Capture itself stays in
  * useRecordingCapture, which reacts to recordingStore.isRecording.
  */
 export function useRecordingControl(): { isRecording: boolean; canRecord: boolean; toggle: () => void } {

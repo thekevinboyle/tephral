@@ -5,6 +5,8 @@ export type MediaSource = 'none' | 'webcam' | 'file' | 'screen'
 
 interface MediaState {
   source: MediaSource
+  /** What the video lane shows as the source's name (file name, "Camera", "Screen"). */
+  sourceName: string | null
   videoElement: HTMLVideoElement | null
   imageElement: HTMLImageElement | null
   isPlaying: boolean
@@ -21,6 +23,7 @@ interface MediaState {
 
   // Actions
   setSource: (source: MediaSource) => void
+  setSourceName: (name: string | null) => void
   setVideoElement: (el: HTMLVideoElement | null) => void
   setImageElement: (el: HTMLImageElement | null) => void
   setVideoAspect: (aspect: number | null) => void
@@ -39,6 +42,7 @@ interface MediaState {
 
 export const useMediaStore = create<MediaState>((set, get) => ({
   source: 'none',
+  sourceName: null,
   videoElement: null,
   imageElement: null,
   isPlaying: false,
@@ -53,6 +57,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
   stashedImageElement: null,
 
   setSource: (source) => set({ source }),
+  setSourceName: (sourceName) => set({ sourceName }),
   setVideoElement: (el) => set({ videoElement: el }),
   setImageElement: (el) => set({ imageElement: el }),
   setVideoAspect: (aspect) => set({ videoAspect: aspect }),
@@ -62,6 +67,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
 
   reset: () => set({
     source: 'none',
+    sourceName: null,
     videoElement: null,
     imageElement: null,
     isPlaying: false,
@@ -76,7 +82,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
   switchSource: (newSource) => {
     const { stopCurrentMedia } = get()
     stopCurrentMedia()
-    set({ source: newSource, error: null })
+    set({ source: newSource, error: null, sourceName: newSource === 'webcam' ? 'Camera' : newSource === 'screen' ? 'Screen' : null })
   },
 
   canSwitchSource: () => {

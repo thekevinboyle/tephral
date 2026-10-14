@@ -1,5 +1,5 @@
 // Master transport: a dropped video waits on its first frame; Space plays and stops sequencer, video and audio
-// together; the media strip's lane buttons only preview their own file. Usage: node transport-check.mjs <port>
+// together; the header's is the only play button in the app. Usage: node transport-check.mjs <port>
 import puppeteer from 'puppeteer'
 import fs from 'fs'
 import { PNG } from 'pngjs'
@@ -42,9 +42,7 @@ await p.mouse.click(800, 300); await p.keyboard.press('Space'); await wait(800)
 out.afterSpace = await state()
 await p.keyboard.press('Space'); await wait(500)
 out.afterSpaceAgain = await state()
-await p.click('[data-media-lane="video"] [data-media="playpause"]'); await wait(600)
-out.afterVideoPreview = await state()
-await p.click('[data-media-lane="video"] [data-media="playpause"]'); await wait(300)
+out.playButtons = await p.evaluate(() => [...document.querySelectorAll('button')].filter((b) => /^(play|pause|start|stop|preview)/i.test(b.getAttribute('aria-label') || '')).map((b) => b.getAttribute('aria-label')))
 await p.click('[data-transport="play"]'); await wait(600)
 out.afterHeaderPlay = await state()
 await p.click('[data-transport="play"]'); await wait(400)

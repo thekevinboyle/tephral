@@ -108,6 +108,9 @@ export function setGateOpen(effectId: string, open: boolean): void {
   gateOpen.set(effectId, open)
 }
 
+/** True while the sequencer gate drives this effect's mix (open or closed). */
+export function isGateDriving(effectId: string): boolean { return gateOpen.has(effectId) }
+
 /** The sequencer gate no longer drives this effect's mix (track left gate mode). */
 export function releaseGate(effectId: string): void {
   gateOpen.delete(effectId)

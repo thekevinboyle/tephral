@@ -1,22 +1,19 @@
 import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 import { useMediaStore } from '../stores/mediaStore'
 import { useRecordingStore } from '../stores/recordingStore'
-import { useSlicerStore } from '../stores/slicerStore'
 import { useAudioSourceStore } from '../stores/audioSourceStore'
 import { setWarpAnchor, warpNow } from '../effects/warp/warpClock'
 import { resetAutomationEffects } from '../hooks/useAutomationPlayback'
 
 /**
  * The master transport (header play, Space). Play starts everything that runs in time, each from where it
- * is: the step sequencer and Line tracks, the recorded take or else the file video, the audio file, and the
- * slicer when it is on; the warp's loop restarts on beat 1 so it lines up with the sequencer. The media
- * strip's lane buttons only preview their own file.
+ * is: the step sequencer and Line tracks, the recorded take or else the file video, and the audio file; the
+ * slicer (when on) plays with it; the warp's loop restarts on beat 1 so it lines up with the sequencer. This
+ * is the app's only play button.
  */
 export function linkedPlay(): void {
   setWarpAnchor(warpNow(), 0)
   useEffectSequencerStore.getState().play()
-  const slicer = useSlicerStore.getState()
-  if (slicer.enabled && !slicer.isPlaying) slicer.setIsPlaying(true)
   const { source, videoElement } = useMediaStore.getState()
   const rec = useRecordingStore.getState()
   if (rec.duration > 0 && !rec.isRecording) {
@@ -34,8 +31,6 @@ export function linkedPlay(): void {
 /** Stop everything linkedPlay started (each keeps its position). */
 export function linkedStop(): void {
   useEffectSequencerStore.getState().stop()
-  const slicer = useSlicerStore.getState()
-  if (slicer.isPlaying) slicer.setIsPlaying(false)
   const { source, videoElement } = useMediaStore.getState()
   const rec = useRecordingStore.getState()
   if (rec.isPlaying) rec.pause()

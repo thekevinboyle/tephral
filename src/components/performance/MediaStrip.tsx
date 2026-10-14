@@ -1,11 +1,10 @@
 import { memo, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { PlayIcon, PauseIcon, LoopIcon } from '../ui/DotMatrixIcons'
+import { LoopIcon } from '../ui/DotMatrixIcons'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useRecordingStore } from '../../stores/recordingStore'
 import { useAudioSourceStore } from '../../stores/audioSourceStore'
 import { useUIStore } from '../../stores/uiStore'
-import { resetAutomationEffects } from '../../hooks/useAutomationPlayback'
 import { useMediaSource } from '../../hooks/useMediaSource'
 import { useAudioFileDrop } from '../../hooks/useAudioFileDrop'
 
@@ -22,41 +21,23 @@ const formatTime = (seconds: number) => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(cs).padStart(2, '0')}`
 }
 
-const MEDIA_EVENTS = ['play', 'pause', 'durationchange', 'loadedmetadata', 'emptied'] as const
+const MEDIA_EVENTS = ['durationchange', 'loadedmetadata', 'emptied'] as const
 
-/** Playing and duration of a media element, straight from its events (null element = stopped, 0). */
+/** Duration of a media element, straight from its events (0 until known or with no element). */
 function useMediaElement(el: HTMLMediaElement | null) {
   const subscribe = useCallback((cb: () => void) => {
     if (!el) return () => {}
     MEDIA_EVENTS.forEach((e) => el.addEventListener(e, cb))
     return () => MEDIA_EVENTS.forEach((e) => el.removeEventListener(e, cb))
   }, [el])
-  const playing = useSyncExternalStore(subscribe, () => !!el && !el.paused)
   const duration = useSyncExternalStore(subscribe, () => (el && Number.isFinite(el.duration) ? el.duration : 0))
-  return { playing, duration }
+  return { duration }
 }
 
 const hint = (text: string) => ({
   onMouseEnter: () => useUIStore.getState().setStatusText(text),
   onMouseLeave: () => useUIStore.getState().setStatusText(null),
 })
-
-function PlayButton({ playing, disabled, onClick, label, attr }: { playing: boolean; disabled?: boolean; onClick: () => void; label: string; attr?: Record<string, string> }) {
-  return (
-    <button
-      className="seg-media-btn"
-      data-on={playing || undefined}
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={playing ? `Pause ${label}` : `Preview ${label}`}
-      title={playing ? `Pause ${label}` : `Preview the ${label} on its own (the header's play runs everything)`}
-      {...hint(`Preview the ${label} on its own. The header's play (or Space) runs everything together`)}
-      {...attr}
-    >
-      {playing ? <PauseIcon size={11} color="currentColor" /> : <PlayIcon size={11} color="currentColor" />}
-    </button>
-  )
-}
 
 /** Lane time readout, written straight to the DOM from the lane's rAF. */
 function TimeReadout({ timeRef, duration }: { timeRef: React.RefObject<HTMLSpanElement | null>; duration: number }) {
@@ -117,7 +98,7 @@ const VideoLane = memo(function VideoLane() {
   const fileVideo = source === 'file' && !!videoElement
   const live = (source === 'webcam' || source === 'screen') && !!videoElement
   const media = useMediaElement(source === 'file' ? videoElement : null)
-  const duration = media.duration, playing = media.playing
+  const duration = media.duration
   const timeRef = useRef<HTMLSpanElement>(null)
   const headRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -178,16 +159,6 @@ const VideoLane = memo(function VideoLane() {
     return () => ro.disconnect()
   }, [thumbs])
 
-  // Preview: this lane only. The header's play (and Space) runs everything together.
-  const togglePlay = useCallback(() => {
-    const v = useMediaStore.getState().videoElement
-    if (recordingMode) {
-      if (rec.isPlaying) rec.pause(); else { if (rec.currentTime === 0) resetAutomationEffects(); rec.play() }
-    } else if (v) {
-      if (v.paused) v.play().catch(console.error); else v.pause()
-    }
-  }, [recordingMode, rec])
-
   const seekTo = (clientX: number, el: HTMLElement) => {
     const r = el.getBoundingClientRect()
     const t = clamp((clientX - r.left) / Math.max(1, r.width), 0, 1) * laneDuration
@@ -202,7 +173,6 @@ const VideoLane = memo(function VideoLane() {
   return (
     <div className="seg-media-row" data-media-lane="video">
       <div className="seg-media-head">
-        <PlayButton playing={recordingMode ? rec.isPlaying : playing} disabled={!playable} onClick={togglePlay} label="video" attr={{ 'data-media': 'playpause' }} />
         <div className="seg-media-name">
           <span className="seg-media-kind">{recordingMode ? 'TAKE' : live ? 'LIVE' : 'VIDEO'}</span>
           <span className="seg-media-file" title={hasVideo ? name : undefined}>{hasVideo ? name : 'None'}</span>
@@ -247,7 +217,7 @@ const AudioLane = memo(function AudioLane() {
   const loadAudio = useAudioFileDrop()
 
   const hasFile = active === 'file' && !!audioEl
-  const { playing, duration } = useMediaElement(audioEl)
+  const { duration } = useMediaElement(audioEl)
   const [drag, setDrag] = useState<DragMode>(null)
   const [hover, setHover] = useState<DragMode>(null)
   const peaks = useRef<Float32Array | null>(null)
@@ -406,7 +376,6 @@ const AudioLane = memo(function AudioLane() {
   return (
     <div className="seg-media-row" data-media-lane="audio">
       <div className="seg-media-head">
-        <PlayButton playing={playing} disabled={!hasFile} onClick={() => { if (!audioEl) return; if (audioEl.paused) audioEl.play().catch(console.error); else audioEl.pause() }} label="audio" />
         <button
           className="seg-media-btn"
           data-loop={loopEnabled && hasLoop ? '' : undefined}

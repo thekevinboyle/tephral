@@ -21,7 +21,7 @@ res.filledWhileOff = await p.evaluate(() => ({ frames: window.__slicerTest.reado
 await p.evaluate(() => import('/src/stores/effectSequencerStore.ts').then((m) => m.useEffectSequencerStore.getState().setBpm(88)))
 await st('s.setEnabled(true)')
 await p.click('[data-transport="play"]'); await wait(1200)
-res.slicerPlayingFromHeader = await st('return s.isPlaying')
+res.slicerPlayingFromHeader = await p.evaluate(async () => (await import('/src/stores/effectSequencerStore.ts')).useEffectSequencerStore.getState().isPlaying)
 res.videoMenu = await p.evaluate(() => document.querySelector('[data-area="header"]')?.innerText.replace(/\s+/g, ' ').slice(0, 120))
 
 // 4 s measurement
@@ -70,6 +70,6 @@ await p.click('[data-transport="play"]'); await wait(200)
 await st('s.setEnabled(false)')
 await p.click('button[aria-label="Step sequencer"]').catch(() => {}); await wait(600)
 res.off = await p.evaluate(() => { const e = window.__slicerTest.engine(); return { viewersClosed: true, ringTargets: e.ring.targetCount, output: e.outputSize, originalInput: window.__warpTest.pipelineInput() === window.__warpTest.baseInput() } })
-res.slicerStoppedFromHeader = !(await st('return s.isPlaying'))
+res.slicerStoppedFromHeader = !(await p.evaluate(async () => (await import('/src/stores/effectSequencerStore.ts')).useEffectSequencerStore.getState().isPlaying))
 console.log(TAG, JSON.stringify(res, null, 1), '\nerrors', JSON.stringify(errors.slice(0, 8)))
 await b.close()

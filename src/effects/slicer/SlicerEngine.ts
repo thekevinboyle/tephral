@@ -20,7 +20,6 @@ const LOOP_MS = 500
 /** What the engine reads from the slicer store each frame. */
 export interface SlicerTickState extends GrainSettings {
   enabled: boolean
-  isPlaying: boolean
   /** The slice to play next, when set from outside (sequencer, modulation). */
   currentSlice: number
   captureState: CaptureState
@@ -111,11 +110,12 @@ export class SlicerEngine {
   /**
    * One frame: run commands, capture `live` (30 fps), advance the grains and draw. Returns the
    * slicer's picture, or null when it should not replace the input (off, or nothing stored yet).
-   * `now` is in ms; `beats` is the transport's beat count while it plays, else null.
+   * `now` is in ms; `beats` is the transport's beat count while it plays, else null; `playing` is the master
+   * transport (stopped, the slicer shows its current slice at the scan position).
    */
   tick(
     renderer: THREE.WebGLRenderer, live: THREE.Texture | null, liveAspect: number, liveSize: [number, number] | null,
-    now: number, st: SlicerTickState, bpm: number, beats: number | null,
+    now: number, st: SlicerTickState, bpm: number, beats: number | null, playing: boolean,
   ): THREE.Texture | null {
     const dt = Number.isFinite(this.lastNow) ? Math.max(0, Math.min(250, now - this.lastNow)) : 0
     this.lastNow = now
@@ -145,7 +145,7 @@ export class SlicerEngine {
     }
 
     // Scan position: the knob, or swept through the slice while auto-scan plays
-    if (st.autoScan && st.isPlaying) {
+    if (st.autoScan && playing) {
       const d = (dt / 1000) * st.scanSpeed
       if (st.scanMode === 'loop') this.scan = frac(this.scan + d)
       else {
@@ -167,7 +167,7 @@ export class SlicerEngine {
     } else {
       this.looping = false
       if (cmd.scrub !== null) g.show(cmd.scrub)
-      else if (!st.isPlaying) g.show((g.slice + this.scan) / n)
+      else if (!playing) g.show((g.slice + this.scan) / n)
       else {
         if (cmd.retrigger !== null) { g.retrigger(cmd.retrigger); cmd.retrigger = null }
         g.step(now, st, this.scan, bpm, size / SLICER_FPS, beats)

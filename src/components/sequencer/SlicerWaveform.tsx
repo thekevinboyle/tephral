@@ -8,7 +8,7 @@ const DRAG_PX = 5
 /**
  * The slicer's buffer strip: how full the buffer is, the slices, the slice playing and the playhead.
  * Drawn from the engine's readout in its own rAF (no React render per frame).
- * Click a slice to play from it, drag to scrub, hold to loop a slice (drag up or down for speed).
+ * Click a slice to jump to it, drag to scrub, hold to loop a slice (drag up or down for speed).
  */
 export function SlicerWaveform() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -111,11 +111,9 @@ export function SlicerWaveform() {
   const onPointerUp = () => {
     const g = gesture.current
     if (g && !g.dragging && !slicerCommands.loop) {
-      // A click: play from this slice now
-      const st = useSlicerStore.getState()
-      st.setCurrentSlice(g.slice)
+      // A click: this slice next (at once while the master plays; shown while it is stopped)
+      useSlicerStore.getState().setCurrentSlice(g.slice)
       slicerCommands.retrigger = g.slice
-      if (!st.isPlaying) st.setIsPlaying(true)
     }
     end()
   }

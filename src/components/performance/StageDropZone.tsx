@@ -7,7 +7,7 @@ import { kindsInTransfer, pickMediaFiles } from '../../utils/mediaFiles'
 type DragState = null | { message: string; ok: boolean }
 
 /**
- * Drop files from the desktop onto the output. Video/image becomes the video source, audio becomes the
+ * Drop files from the desktop onto the output (or the timelines under it). Video/image becomes the video source, audio becomes the
  * audio source; both at once work. Only reacts to external files, so in-app drags (modulators, device
  * cards, clips) pass straight through. The clip bin keeps its own drop (it stops propagation).
  */

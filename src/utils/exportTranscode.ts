@@ -103,5 +103,6 @@ export async function saveBlob(blob: Blob, fileName: string, target: SaveTarget 
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  // Give the download time to read the blob before the URL goes away
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }

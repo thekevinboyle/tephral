@@ -4,6 +4,8 @@ import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { ClipBinPopover } from './ClipBinPopover'
 import { extractFramesFromClip } from '../../utils/clipFrameExtractor'
+import { useAudioFileDrop } from '../../hooks/useAudioFileDrop'
+import { pickMediaFiles } from '../../utils/mediaFiles'
 
 /**
  * Get the duration of a video from its URL
@@ -57,6 +59,7 @@ export function ClipBin() {
   }
 
   // File import handler
+  const loadAudio = useAudioFileDrop()
   const handleFileImport = useCallback(async (file: File) => {
     if (!file.type.startsWith('video/')) {
       console.warn('[ClipBin] Only video files are supported for clip import')
@@ -127,13 +130,16 @@ export function ClipBin() {
     const files = e.dataTransfer.files
     if (files && files.length > 0) {
       const videoFiles = Array.from(files).filter((f) => f.type.startsWith('video/'))
+      // Audio dropped on the bin becomes the audio source, as it would anywhere else on the stage
+      const { audio } = pickMediaFiles(files)
+      if (audio) loadAudio(audio)
       ;(async () => {
         for (const file of videoFiles) {
           await handleFileImport(file)
         }
       })()
     }
-  }, [handleFileImport])
+  }, [handleFileImport, loadAudio])
 
   // Card dimensions
   const cardWidth = 80

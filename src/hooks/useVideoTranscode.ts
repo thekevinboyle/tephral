@@ -110,9 +110,9 @@ export function useVideoTranscode() {
     inputBlob: Blob,
     options: TranscodeOptions
   ): Promise<Blob> => {
-    // For webm output, just return the original blob (it's already webm)
-    // This avoids the slow FFmpeg load for the common case
-    if (options.format === 'webm') {
+    // A WebM recording exported as WebM is returned as it is, which avoids the slow FFmpeg load.
+    // (Recordings are MP4 where the browser can record it; those are converted like any other format.)
+    if (options.format === 'webm' && inputBlob.type.includes('webm')) {
       console.log('[Transcode] WebM format selected, returning original blob')
       return inputBlob
     }
@@ -122,7 +122,7 @@ export function useVideoTranscode() {
     setIsTranscoding(true)
     setProgress(0)
 
-    const inputName = 'input.webm'
+    const inputName = inputBlob.type.includes('mp4') ? 'input.mp4' : 'input.webm'
     const outputExt = options.format === 'mov' ? 'mov' : options.format
     const outputName = `output.${outputExt}`
 
@@ -139,10 +139,11 @@ export function useVideoTranscode() {
         '-crf', String(QUALITY_CRF[options.quality]),
       ]
 
-      // Codec selection - mp4/mov use libx264 (webm returns early above).
+      // Codec selection: mp4/mov use libx264, webm (from an MP4 recording) libvpx.
       // ffmpeg.wasm is single-threaded with no SIMD x264 paths, so 'medium'
       // runs at ~1 fps on large frames; 'veryfast' is several times quicker.
-      args.push('-c:v', 'libx264', '-preset', 'veryfast', '-pix_fmt', 'yuv420p')
+      if (options.format === 'webm') args.push('-c:v', 'libvpx', '-b:v', '0', '-deadline', 'realtime', '-cpu-used', '8')
+      else args.push('-c:v', 'libx264', '-preset', 'veryfast', '-pix_fmt', 'yuv420p')
 
       args.push('-y', outputName)
 
@@ -150,8 +151,7 @@ export function useVideoTranscode() {
       setProgress(100)
 
       const data = await ffmpeg.readFile(outputName) as Uint8Array
-      // At this point format is either 'mp4' or 'mov' (webm returns early)
-      const mimeType = options.format === 'mov' ? 'video/quicktime' : 'video/mp4'
+      const mimeType = options.format === 'mov' ? 'video/quicktime' : options.format === 'webm' ? 'video/webm' : 'video/mp4'
 
       // Create a new Uint8Array to ensure we have a proper ArrayBuffer (not SharedArrayBuffer)
       const outputData = new Uint8Array(data)

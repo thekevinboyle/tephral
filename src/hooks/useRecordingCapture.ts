@@ -1,6 +1,26 @@
 import { useEffect, useRef } from 'react'
 import { useRecordingStore, EXPORT_BITRATES } from '../stores/recordingStore'
 import { useClipStore } from '../stores/clipStore'
+import { useUIStore } from '../stores/uiStore'
+import { saveBlob } from '../utils/exportTranscode'
+
+/** seg-f4ult-2026-10-14-153012.mp4 (local time). */
+export function recordingFileName(mimeType: string, at = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  const stamp = `${at.getFullYear()}-${p(at.getMonth() + 1)}-${p(at.getDate())}-${p(at.getHours())}${p(at.getMinutes())}${p(at.getSeconds())}`
+  return `seg-f4ult-${stamp}.${mimeType.startsWith('video/mp4') ? 'mp4' : 'webm'}`
+}
+
+/** Every finished recording is also saved to disk (the browser's download folder), so a reload never loses it. */
+function saveRecording(blob: Blob, mimeType: string) {
+  const name = recordingFileName(mimeType)
+  saveBlob(blob, name, null)
+    .then(() => useUIStore.getState().setStatusText(`Recording saved as ${name} in your Downloads folder`))
+    .catch((err) => {
+      console.error('[Recording] Saving to disk failed:', err)
+      useUIStore.getState().setStatusText('Could not save the recording to disk. It is still in the clip bin; export it from there')
+    })
+}
 
 /**
  * Hook that captures the canvas to video during recording.
@@ -41,7 +61,8 @@ export function useRecordingCapture(
       startTimeRef.current = performance.now()
 
       // Get supported mime type
-      const mimeTypes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
+      // MP4 first (it opens in QuickTime and most players); WebM where the browser can't record MP4
+      const mimeTypes = ['video/mp4;codecs=avc1.640028', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
       let mimeType = ''
       for (const mime of mimeTypes) {
         if (MediaRecorder.isTypeSupported(mime)) {
@@ -138,6 +159,7 @@ export function useRecordingCapture(
             const blob = new Blob(chunksRef.current, { type: mimeType })
             const duration = (performance.now() - startTimeRef.current) / 1000
             addClip(blob, duration)
+            saveRecording(blob, mimeType)
             console.log('[Recording] Video captured, size:', blob.size, 'duration:', duration)
           }
         }

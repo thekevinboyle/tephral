@@ -10,7 +10,7 @@ import { useSlicerStore } from './slicerStore'
 import { useTrendStore } from './trendStore'
 import { useSegStore } from './segStore'
 import { useWarpStore } from './warpStore'
-import { buildSegExpPreset, FACTORY_FOLDER_ID, SEG_EXP_SEEDED_KEY } from '../presets/segExp'
+import { buildSegExpPreset, buildFaceScanPreset, FACTORY_FOLDER_ID, SEG_EXP_SEEDED_KEY, FACE_SCAN_SEEDED_KEY } from '../presets/segExp'
 
 // Database constants
 const DB_NAME = 'segf4ult-presets'
@@ -350,16 +350,21 @@ export const usePresetLibraryStore = create<PresetLibraryState>((set, get) => ({
       let finalPresets = presets
       try {
         const meta = await getAllFromStore<{ key: string; value: unknown }>(METADATA_STORE)
-        if (!meta.some((m) => m.key === SEG_EXP_SEEDED_KEY)) {
-          if (!finalFolders.some((f) => f.id === FACTORY_FOLDER_ID)) {
-            const factory: Folder = { id: FACTORY_FOLDER_ID, name: 'Factory', parentId: null, order: 3 }
-            await putInStore(FOLDERS_STORE, factory)
-            finalFolders = [...finalFolders, factory]
-          }
-          const preset = buildSegExpPreset(Date.now(), captureCurrentEffects())
+        // Each factory preset is seeded once, under its own marker, so a later one still arrives
+        const factory = [
+          { key: SEG_EXP_SEEDED_KEY, build: buildSegExpPreset },
+          { key: FACE_SCAN_SEEDED_KEY, build: buildFaceScanPreset },
+        ].filter((f) => !meta.some((m) => m.key === f.key))
+        if (factory.length && !finalFolders.some((f) => f.id === FACTORY_FOLDER_ID)) {
+          const folder: Folder = { id: FACTORY_FOLDER_ID, name: 'Factory', parentId: null, order: 3 }
+          await putInStore(FOLDERS_STORE, folder)
+          finalFolders = [...finalFolders, folder]
+        }
+        for (const f of factory) {
+          const preset = f.build(Date.now(), captureCurrentEffects())
           await putInStore(PRESETS_STORE, preset)
-          finalPresets = [...presets, preset]
-          await putInStore(METADATA_STORE, { key: SEG_EXP_SEEDED_KEY, value: true })
+          finalPresets = [...finalPresets, preset]
+          await putInStore(METADATA_STORE, { key: f.key, value: true })
         }
       } catch (err) {
         console.error('Failed to seed factory presets:', err)

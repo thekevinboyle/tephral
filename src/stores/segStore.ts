@@ -67,13 +67,73 @@ export const DEFAULT_SEG_TORN_PARAMS: SegTornParams = {
   depth: 0.04, blockSize: 16, speed: 1, fill: 0, mix: 1,
 }
 
+export interface SegRedactParams {
+  coverage: number        // 0-1, share of people treated
+  shape: number           // 0 box, 1 body (person mask inside the box), 2 mixed per person
+  cell: number            // 6-64 px, mosaic and dot cell
+  pad: number             // 0-0.3, grows each box by this share of its size
+  wPixel: number; wGradient: number; wDots: number; wSlick: number; wBlack: number // 0-1
+  autoReshuffle: boolean
+  reshuffleBeats: number  // 1-32
+  linger: number          // 0-2 s, a box outlives its person this long
+  seed: number            // 0-999
+  mix: number
+}
+export const DEFAULT_SEG_REDACT_PARAMS: SegRedactParams = {
+  coverage: 0.75, shape: 2, cell: 16, pad: 0.04,
+  wPixel: 1, wGradient: 1, wDots: 0.4, wSlick: 0.4, wBlack: 0.2,
+  autoReshuffle: true, reshuffleBeats: 2, linger: 0.4, seed: 0, mix: 1,
+}
+
+export interface SegFaceLockParams {
+  insetSize: number  // 0.15-0.5 of the short side
+  zoom: number       // 1-4, how tight the face crop is
+  insetFx: number    // 0-1, chance per beat that an inset glitches (mosaic, block, edges, dark)
+  fxBeats: number    // 1-32
+  insets: number     // 0-2 face crops
+  hud: number        // 0/1 corner readouts
+  box: number        // 0/1 bracket, labels and leader line
+  opacity: number    // 0-1 lines and text
+  mix: number
+}
+export const DEFAULT_SEG_FACELOCK_PARAMS: SegFaceLockParams = {
+  insetSize: 0.28, zoom: 1.9, insetFx: 0.35, fxBeats: 2, insets: 2, hud: 1, box: 1, opacity: 0.9, mix: 1,
+}
+
+export interface SegBackdropParams {
+  wNormal: number; wSlick: number; wZebra: number; wEdges: number // 0-1, how often each look comes up
+  beats: number      // 1-32, beats between looks
+  auto: boolean      // switch on the beat (off: the heaviest weight holds)
+  keep: number       // 0 off, 1 people (person mask), 2 people boxes (detector)
+  bands: number      // 2-24 oil slick colour cycles
+  stripe: number     // 2-16 px zebra period
+  warp: number       // 0-24 how far brightness bends the stripes
+  mix: number
+}
+export const DEFAULT_SEG_BACKDROP_PARAMS: SegBackdropParams = {
+  wNormal: 0.6, wSlick: 1, wZebra: 0.8, wEdges: 0.8, beats: 4, auto: true, keep: 2, bands: 9, stripe: 4, warp: 6, mix: 1,
+}
+
 export interface SegSnapshot {
   voxelEnabled: boolean; echoEnabled: boolean; matterEnabled: boolean; staleEnabled: boolean; tornEnabled: boolean
   voxelParams: SegVoxelParams; echoParams: SegEchoParams; matterParams: SegMatterParams
   staleParams: SegStaleParams; tornParams: SegTornParams
+  // Added later: optional so older banks and presets load (missing = off, defaults)
+  redactEnabled?: boolean; redactParams?: SegRedactParams
+  faceLockEnabled?: boolean; faceLockParams?: SegFaceLockParams
+  backdropEnabled?: boolean; backdropParams?: SegBackdropParams
 }
 
 interface SegState extends SegSnapshot {
+  redactEnabled: boolean; redactParams: SegRedactParams
+  setRedactEnabled: (v: boolean) => void
+  updateRedactParams: (p: Partial<SegRedactParams>) => void
+  faceLockEnabled: boolean; faceLockParams: SegFaceLockParams
+  setFaceLockEnabled: (v: boolean) => void
+  updateFaceLockParams: (p: Partial<SegFaceLockParams>) => void
+  backdropEnabled: boolean; backdropParams: SegBackdropParams
+  setBackdropEnabled: (v: boolean) => void
+  updateBackdropParams: (p: Partial<SegBackdropParams>) => void
   segStatus: SegStatus
   setSegStatus: (s: SegStatus) => void
   setVoxelEnabled: (v: boolean) => void
@@ -90,8 +150,11 @@ interface SegState extends SegSnapshot {
   applySnapshot: (s: SegSnapshot | undefined) => void
 }
 
-const defaults = (): SegSnapshot => ({
+const defaults = () => ({
   voxelEnabled: false, echoEnabled: false, matterEnabled: false, staleEnabled: false, tornEnabled: false,
+  redactEnabled: false, redactParams: { ...DEFAULT_SEG_REDACT_PARAMS },
+  faceLockEnabled: false, faceLockParams: { ...DEFAULT_SEG_FACELOCK_PARAMS },
+  backdropEnabled: false, backdropParams: { ...DEFAULT_SEG_BACKDROP_PARAMS },
   voxelParams: { ...DEFAULT_SEG_VOXEL_PARAMS },
   echoParams: { ...DEFAULT_SEG_ECHO_PARAMS },
   matterParams: { ...DEFAULT_SEG_MATTER_PARAMS },
@@ -108,6 +171,12 @@ export const useSegStore = create<SegState>((set, get) => ({
   setMatterEnabled: (v) => set({ matterEnabled: v }),
   setStaleEnabled: (v) => set({ staleEnabled: v }),
   setTornEnabled: (v) => set({ tornEnabled: v }),
+  setRedactEnabled: (v) => set({ redactEnabled: v }),
+  updateRedactParams: (p) => set((s) => ({ redactParams: { ...s.redactParams, ...p } })),
+  setFaceLockEnabled: (v) => set({ faceLockEnabled: v }),
+  updateFaceLockParams: (p) => set((s) => ({ faceLockParams: { ...s.faceLockParams, ...p } })),
+  setBackdropEnabled: (v) => set({ backdropEnabled: v }),
+  updateBackdropParams: (p) => set((s) => ({ backdropParams: { ...s.backdropParams, ...p } })),
   updateVoxelParams: (p) => set((s) => ({ voxelParams: { ...s.voxelParams, ...p } })),
   updateEchoParams: (p) => set((s) => ({ echoParams: { ...s.echoParams, ...p } })),
   updateMatterParams: (p) => set((s) => ({ matterParams: { ...s.matterParams, ...p } })),
@@ -120,6 +189,9 @@ export const useSegStore = create<SegState>((set, get) => ({
       staleEnabled: s.staleEnabled, tornEnabled: s.tornEnabled,
       voxelParams: { ...s.voxelParams }, echoParams: { ...s.echoParams }, matterParams: { ...s.matterParams },
       staleParams: { ...s.staleParams }, tornParams: { ...s.tornParams },
+      redactEnabled: s.redactEnabled, redactParams: { ...s.redactParams },
+      faceLockEnabled: s.faceLockEnabled, faceLockParams: { ...s.faceLockParams },
+      backdropEnabled: s.backdropEnabled, backdropParams: { ...s.backdropParams },
     }
   },
   // undefined (older banks/presets) resets to defaults = all disabled
@@ -134,6 +206,12 @@ export const useSegStore = create<SegState>((set, get) => ({
       matterParams: { ...d.matterParams, ...snap.matterParams },
       staleParams: { ...d.staleParams, ...snap.staleParams },
       tornParams: { ...d.tornParams, ...snap.tornParams },
+      redactEnabled: snap.redactEnabled ?? false,
+      redactParams: { ...d.redactParams, ...snap.redactParams },
+      faceLockEnabled: snap.faceLockEnabled ?? false,
+      faceLockParams: { ...d.faceLockParams, ...snap.faceLockParams },
+      backdropEnabled: snap.backdropEnabled ?? false,
+      backdropParams: { ...d.backdropParams, ...snap.backdropParams },
     })
   },
 }))

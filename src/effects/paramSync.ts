@@ -171,12 +171,18 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
     seg_matter: () => { const s = useSegStore.getState(); pipeline.segMatter?.updateParams({ ...s.matterParams, mix: s.matterParams.mix * getMix('seg_matter') }) },
     seg_stale: () => { const s = useSegStore.getState(); pipeline.segStale?.updateParams({ ...s.staleParams, mix: s.staleParams.mix * getMix('seg_stale') }) },
     seg_torn: () => { const s = useSegStore.getState(); pipeline.segTorn?.updateParams({ ...s.tornParams, mix: s.tornParams.mix * getMix('seg_torn') }) },
+    seg_redact: () => { const s = useSegStore.getState(); pipeline.segRedact?.updateParams({ ...s.redactParams, mix: s.redactParams.mix * getMix('seg_redact') }) },
+    seg_backdrop: () => { const s = useSegStore.getState(); pipeline.segBackdrop?.updateParams({ ...s.backdropParams, mix: s.backdropParams.mix * getMix('seg_backdrop') }) },
+    seg_facelock: () => { const s = useSegStore.getState(); pipeline.segFaceLock?.updateParams({ ...s.faceLockParams, mix: s.faceLockParams.mix * getMix('seg_facelock') }) },
   }
   const pushSeg = () => runAll(segPushers)
   const pushBpm = () => {
     const bpm = useEffectSequencerStore.getState().bpm
     pipeline.segMatter?.setBpm(bpm)
     pipeline.segStale?.setBpm(bpm)
+    pipeline.segRedact?.setBpm(bpm)
+    pipeline.segFaceLock?.setBpm(bpm)
+    pipeline.segBackdrop?.setBpm(bpm)
   }
 
   // ACID overlay effects (Phase 3 GPU port) — empty until each port task
@@ -333,7 +339,7 @@ export function initParamSync(pipeline: EffectPipeline): () => void {
       if (
         s.voxelParams !== prev.voxelParams || s.echoParams !== prev.echoParams ||
         s.matterParams !== prev.matterParams || s.staleParams !== prev.staleParams ||
-        s.tornParams !== prev.tornParams
+        s.tornParams !== prev.tornParams || s.redactParams !== prev.redactParams || s.faceLockParams !== prev.faceLockParams || s.backdropParams !== prev.backdropParams
       ) pushSeg()
     }),
     useEffectSequencerStore.subscribe((s, prev) => {

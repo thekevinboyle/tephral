@@ -615,6 +615,36 @@ export function useContinuousModulation() {
           if (paramName === 'mix') s.updateStaleParams({ mix: value })
           break
         }
+        case 'seg_redact': {
+          const s = useSegStore.getState()
+          if (paramName === 'coverage') s.updateRedactParams({ coverage: value })
+          if (paramName === 'cell') s.updateRedactParams({ cell: 6 + Math.round(value * 58) })
+          if (paramName === 'reshuffleBeats') s.updateRedactParams({ reshuffleBeats: 1 + Math.round(value * 31) })
+          if (paramName === 'linger') s.updateRedactParams({ linger: value * 2 })
+          if (paramName === 'pad') s.updateRedactParams({ pad: value * 0.3 })
+          if (paramName === 'seed') s.updateRedactParams({ seed: Math.round(value * 999) })
+          if (paramName === 'mix') s.updateRedactParams({ mix: value })
+          break
+        }
+        case 'seg_backdrop': {
+          const s = useSegStore.getState()
+          if (paramName === 'beats') s.updateBackdropParams({ beats: 1 + Math.round(value * 31) })
+          if (paramName === 'bands') s.updateBackdropParams({ bands: 2 + value * 22 })
+          if (paramName === 'stripe') s.updateBackdropParams({ stripe: 2 + value * 14 })
+          if (paramName === 'warp') s.updateBackdropParams({ warp: value * 24 })
+          if (paramName === 'mix') s.updateBackdropParams({ mix: value })
+          break
+        }
+        case 'seg_facelock': {
+          const s = useSegStore.getState()
+          if (paramName === 'insetSize') s.updateFaceLockParams({ insetSize: 0.15 + value * 0.35 })
+          if (paramName === 'zoom') s.updateFaceLockParams({ zoom: 1 + value * 3 })
+          if (paramName === 'insetFx') s.updateFaceLockParams({ insetFx: value })
+          if (paramName === 'fxBeats') s.updateFaceLockParams({ fxBeats: 1 + Math.round(value * 31) })
+          if (paramName === 'opacity') s.updateFaceLockParams({ opacity: value })
+          if (paramName === 'mix') s.updateFaceLockParams({ mix: value })
+          break
+        }
         case 'seg_torn': {
           const s = useSegStore.getState()
           if (paramName === 'depth') s.updateTornParams({ depth: value * 0.2 })

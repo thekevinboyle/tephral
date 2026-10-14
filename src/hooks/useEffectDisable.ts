@@ -139,6 +139,9 @@ export function disableEffect(effectId: string) {
     case 'seg_matter': seg.setMatterEnabled(false); break
     case 'seg_stale': seg.setStaleEnabled(false); break
     case 'seg_torn': seg.setTornEnabled(false); break
+    case 'seg_redact': seg.setRedactEnabled(false); break
+    case 'seg_facelock': seg.setFaceLockEnabled(false); break
+    case 'seg_backdrop': seg.setBackdropEnabled(false); break
   }
 }
 

@@ -211,6 +211,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   } = useTrendStore()
   const { voxelEnabled: segVoxelEnabled, echoEnabled: segEchoEnabled, matterEnabled: segMatterEnabled,
     staleEnabled: segStaleEnabled, tornEnabled: segTornEnabled } = useSegStore()
+  const segRedactEnabled = useSegStore((s) => s.redactEnabled)
+  const segFaceLockEnabled = useSegStore((s) => s.faceLockEnabled)
+  const segBackdropEnabled = useSegStore((s) => s.backdropEnabled)
 
   // Trace mask routing
   const { effectTraceMask } = useRoutingStore()
@@ -323,6 +326,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       segMatterEnabled: getEffectiveEnabled('seg_matter', segMatterEnabled && !effectBypassed['seg_matter']),
       segStaleEnabled: getEffectiveEnabled('seg_stale', segStaleEnabled && !effectBypassed['seg_stale']),
       segTornEnabled: getEffectiveEnabled('seg_torn', segTornEnabled && !effectBypassed['seg_torn']),
+      segRedactEnabled: getEffectiveEnabled('seg_redact', segRedactEnabled && !effectBypassed['seg_redact']),
+      segFaceLockEnabled: getEffectiveEnabled('seg_facelock', segFaceLockEnabled && !effectBypassed['seg_facelock']),
+      segBackdropEnabled: getEffectiveEnabled('seg_backdrop', segBackdropEnabled && !effectBypassed['seg_backdrop']),
       // ACID GPU-ported effects (Phase 3) - not affected by glitchEnabled;
       // rendered as GPU passes in EffectPipeline (getEffectById cases live
       // there). AcidOverlay.tsx no longer dispatches any of these.
@@ -358,7 +364,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       extinctionEnabled: getEffectiveEnabled('strand_extinction', extinctionEnabled && !effectBypassed['strand_extinction']),
       bypassActive,
       // Raw flags: keeps the person model loaded across bypass/solo/kill
-      segWanted: segVoxelEnabled || segEchoEnabled || segMatterEnabled,
+      segWanted: segVoxelEnabled || segEchoEnabled || segMatterEnabled || segRedactEnabled || segBackdropEnabled,
       crossfaderPosition,
       hasSourceTexture: !!mediaTexture && !slicerEnabled,
       videoWidth: videoElement?.videoWidth || imageElement?.naturalWidth || 1,
@@ -411,7 +417,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     flowSmearEnabled, feedbackTunnelEnabled, opiumTrailsEnabled, ruttEtraEnabled,
     reactionDiffusionEnabled, physarumEnabled, kaleidoscopeEnabled, liquidMorphEnabled,
     crystallizeEnabled, rippleWarpEnabled, fractalDomainEnabled,
-    segVoxelEnabled, segEchoEnabled, segMatterEnabled, segStaleEnabled, segTornEnabled,
+    segVoxelEnabled, segEchoEnabled, segMatterEnabled, segStaleEnabled, segTornEnabled, segRedactEnabled, segFaceLockEnabled, segBackdropEnabled,
     mirrorEnabled, rippleEnabled, scanEnabled, sliceEnabled, thGridEnabled,
     contourEnabled, glyphEnabled, halftoneEnabled, hexEnabled, iconsEnabled, ledEnabled,
     handprintsEnabled, tarSpreadEnabled, timefallEnabled, voidOutEnabled, strandWebEnabled,
@@ -458,6 +464,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     // while the slicer's picture is shown. Known limitation: with the video warp on, the mask still follows
     // the live element, not the warped frame.
     pipeline.segmentation.setSource(videoElement ?? imageElement ?? null)
+    pipeline.detection.setSource(videoElement ?? imageElement ?? null)
 
     if (mediaTexture) {
       pipeline.setInputTexture(mediaTexture)
@@ -669,6 +676,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       // The slicer's frame is not the live frame: a mask of the live video would be misaligned
       const m = useMediaStore.getState()
       pipeline.segmentation.setSource(shown ? null : (m.videoElement ?? m.imageElement ?? null))
+      pipeline.detection.setSource(shown ? null : (m.videoElement ?? m.imageElement ?? null))
     }
 
     const warpTick = () => {

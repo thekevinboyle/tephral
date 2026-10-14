@@ -85,10 +85,13 @@ export const StageArea = memo(forwardRef<CanvasHandle>(function StageArea(_props
           <StageReadouts />
         </div>
       </StageDropZone>
-      <div data-media-strip className="flex flex-col flex-shrink-0">
-        <CanvasTransportBar />
-        <TransportBar />
-      </div>
+      {/* The timelines take dropped files too: an audio file dropped on the Audio timeline becomes the audio */}
+      <StageDropZone className="flex-shrink-0">
+        <div data-media-strip className="flex flex-col">
+          <CanvasTransportBar />
+          <TransportBar />
+        </div>
+      </StageDropZone>
     </div>
   )
 }))

@@ -86,7 +86,7 @@ export function TransportBar() {
   const waveformRef = useRef<HTMLCanvasElement>(null)
   const waveformPeaksRef = useRef<Float32Array | null>(null)
   const dragModeRef = useRef<DragMode>(null)
-  const dragSnap = useRef({ x: 0, loopStart: 0, loopEnd: 0 })
+  const dragSnap = useRef({ x: 0, loopStart: 0, loopEnd: 0, t: 0 })
   const rectRef = useRef<DOMRect | null>(null)
   const audioDurationRef = useRef(audioDuration)
   audioDurationRef.current = audioDuration
@@ -163,18 +163,29 @@ export function TransportBar() {
     }
   }, [audioEl])
 
-  // Audio loop enforcement
+  // Audio loop: wrap only when playback runs into the loop end from inside the region. A seek (the
+  // timeline, a click past the loop) moves the playhead freely; checked every frame, so the wrap is tight.
   useEffect(() => {
-    if (!audioEl) return
-    const handleLoopCheck = () => {
-      if (loopEnabled && loopEnd > loopStart) {
-        if (audioEl.currentTime >= loopEnd) {
-          audioEl.currentTime = loopStart
-        }
+    if (!audioEl || !loopEnabled || loopEnd <= loopStart) return
+    let last = audioEl.currentTime
+    const onSeek = () => { last = audioEl.currentTime }
+    let raf = 0
+    const tick = () => {
+      raf = requestAnimationFrame(tick)
+      const t = audioEl.currentTime
+      if (!audioEl.paused && !audioEl.seeking && last >= loopStart && last < loopEnd && t >= loopEnd) {
+        audioEl.currentTime = loopStart
+        last = loopStart
+        return
       }
+      last = t
     }
-    audioEl.addEventListener('timeupdate', handleLoopCheck)
-    return () => audioEl.removeEventListener('timeupdate', handleLoopCheck)
+    audioEl.addEventListener('seeking', onSeek)
+    raf = requestAnimationFrame(tick)
+    return () => {
+      cancelAnimationFrame(raf)
+      audioEl.removeEventListener('seeking', onSeek)
+    }
   }, [audioEl, loopEnabled, loopStart, loopEnd])
 
   // Decode audio file into peak data for static waveform
@@ -351,16 +362,16 @@ export function TransportBar() {
 
       if (zone === 'start') {
         dragModeRef.current = 'start'
-        dragSnap.current = { x: e.clientX, loopStart, loopEnd }
+        dragSnap.current = { x: e.clientX, loopStart, loopEnd, t: clickTime }
       } else if (zone === 'end') {
         dragModeRef.current = 'end'
-        dragSnap.current = { x: e.clientX, loopStart, loopEnd }
+        dragSnap.current = { x: e.clientX, loopStart, loopEnd, t: clickTime }
       } else if (zone === 'body') {
         dragModeRef.current = 'move'
-        dragSnap.current = { x: e.clientX, loopStart, loopEnd }
+        dragSnap.current = { x: e.clientX, loopStart, loopEnd, t: clickTime }
       } else {
         dragModeRef.current = 'create'
-        dragSnap.current = { x: e.clientX, loopStart: clickTime, loopEnd: clickTime }
+        dragSnap.current = { x: e.clientX, loopStart: clickTime, loopEnd: clickTime, t: clickTime }
       }
 
       setIsAudioDragging(true)
@@ -409,15 +420,11 @@ export function TransportBar() {
         window.removeEventListener('mouseup', handleUp)
         setIsAudioDragging(false)
 
-        const dragMode = dragModeRef.current
         dragModeRef.current = null
 
-        if (dragMode === 'create' && !didDragRef.current) {
-          const r = rectRef.current
-          if (r && audioEl) {
-            const seekTime = clamp(dragSnap.current.loopStart, 0, audioDurationRef.current)
-            audioEl.currentTime = seekTime
-          }
+        if (!didDragRef.current) {
+          // A click (no drag) anywhere seeks, inside the loop region or out of it; the region stays
+          if (audioEl) audioEl.currentTime = clamp(dragSnap.current.t, 0, audioDurationRef.current)
         } else {
           const store = useAudioSourceStore.getState()
           if (store.audioLoopEnd - store.audioLoopStart < MIN_LOOP_SECONDS) {
@@ -729,6 +736,7 @@ export function TransportBar() {
               cursor: hasAudioFile ? waveformCursor : 'default',
               opacity: hasAudioFile ? 1 : 0.5,
             }}
+            data-audio-waveform
             onMouseDown={hasAudioFile ? handleWaveformMouseDown : undefined}
             onMouseMove={hasAudioFile ? handleWaveformMouseMove : undefined}
             onDoubleClick={hasAudioFile ? handleWaveformDoubleClick : undefined}

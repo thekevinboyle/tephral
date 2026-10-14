@@ -101,7 +101,9 @@ Chrome gives WebGL an HDR video's coded signal unconverted (iPhone clips are HLG
 - **FACE SCAN** factory preset (`buildFaceScanPreset` in `src/presets/segExp.ts`): Backdrop → Redact → Face Lock. Factory presets are seeded once each under their own metadata key, so a new one still reaches existing libraries.
 
 ### Header (`src/components/performance/HeaderBar.tsx`)
-VIDEO/AUDIO source menus (portalled, `position: fixed`), the preset picker, and REC (`useRecordingControl`, red `--rec` token).
+VIDEO/AUDIO source menus (portalled, `position: fixed`), the preset picker, and REC (`useRecordingControl`, red `--rec` token). A finished recording (MP4 where the browser can record it, else WebM; `useRecordingCapture`) goes into the clip bin and is also downloaded as `seg-f4ult-<date>-<time>.mp4` (harness `rec-save-check.mjs`).
+
+Files dropped on the stage, the timelines under it, the clip bin (audio only; it imports video itself) or the header's Audio picker load as video and/or audio. The audio timeline's loop wraps only when playback runs into its end from inside the region; a click anywhere seeks (harness `audio-loop-check.mjs`).
 
 ### Stage (`src/components/performance/StageArea.tsx`)
 Aspect-locked output frame that fits the free space, with corner ticks, ruler, ClipBin and four HUD readouts (`StageReadouts`): LIVE/REC + FPS, preset name (or bank), timecode, active band. The frame is a container; under 380px the readouts re-stack.

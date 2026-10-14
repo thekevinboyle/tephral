@@ -1604,6 +1604,29 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
     setEnabled: (v) => sg().setFaceLockEnabled(v),
     getEnabled: () => sg().faceLockEnabled,
   },
+  seg_backdrop: {
+    getParams: () => [
+      { id: 'beats', label: 'BEATS', min: 1, max: 32, step: 1, apply: (v) => sg().updateBackdropParams({ beats: v }), read: () => sg().backdropParams.beats },
+      { id: 'bands', label: 'BANDS', min: 2, max: 24, step: 1, apply: (v) => sg().updateBackdropParams({ bands: v }), read: () => sg().backdropParams.bands },
+      { id: 'stripe', label: 'STRIPE', min: 2, max: 16, step: 1, apply: (v) => sg().updateBackdropParams({ stripe: v }), read: () => sg().backdropParams.stripe },
+      { id: 'warp', label: 'WARP', min: 0, max: 24, step: 0.5, apply: (v) => sg().updateBackdropParams({ warp: v }), read: () => sg().backdropParams.warp },
+      { id: 'wNormal', label: 'NORMAL', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateBackdropParams({ wNormal: v }), read: () => sg().backdropParams.wNormal },
+      { id: 'wSlick', label: 'SLICK', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateBackdropParams({ wSlick: v }), read: () => sg().backdropParams.wSlick },
+      { id: 'wZebra', label: 'ZEBRA', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateBackdropParams({ wZebra: v }), read: () => sg().backdropParams.wZebra },
+      { id: 'wEdges', label: 'EDGES', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateBackdropParams({ wEdges: v }), read: () => sg().backdropParams.wEdges },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateBackdropParams({ mix: v }), read: () => sg().backdropParams.mix },
+    ],
+    getSelectParams: () => [
+      { id: 'keep', label: 'KEEP', type: 'select',
+        options: [{ value: '0', label: 'OFF' }, { value: '1', label: 'BODY' }, { value: '2', label: 'BOX' }],
+        apply: (v) => sg().updateBackdropParams({ keep: Number(v) }), read: () => String(sg().backdropParams.keep) },
+      { id: 'auto', label: 'AUTO', type: 'select',
+        options: [{ value: '0', label: 'HOLD' }, { value: '1', label: 'BEAT' }],
+        apply: (v) => sg().updateBackdropParams({ auto: v === '1' }), read: () => (sg().backdropParams.auto ? '1' : '0') },
+    ],
+    setEnabled: (v) => sg().setBackdropEnabled(v),
+    getEnabled: () => sg().backdropEnabled,
+  },
   seg_stale: {
     getParams: () => [
       { id: 'cellSize', label: 'CELL', min: 8, max: 96, step: 1, apply: (v) => sg().updateStaleParams({ cellSize: v }), read: () => sg().staleParams.cellSize },

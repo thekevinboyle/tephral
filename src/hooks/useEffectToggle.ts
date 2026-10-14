@@ -841,6 +841,13 @@ const EFFECT_ENTRIES: Record<string, EffectEntry> = {
       S.seg.setFaceLockEnabled(!S.seg.faceLockEnabled)
     },
   },
+  seg_backdrop: {
+    active: () => S.seg.backdropEnabled,
+    toggle: (effectId) => {
+      if (!S.seg.backdropEnabled) moveToEndOfChain(effectId)
+      S.seg.setBackdropEnabled(!S.seg.backdropEnabled)
+    },
+  },
 }
 
 /** Lean enabled-flag lookup: reads only the one store the effect lives in. */

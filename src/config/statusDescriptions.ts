@@ -105,6 +105,7 @@ export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   seg_stale: 'Stale: Freeze and decay areas',
   seg_torn: 'Torn: Ragged bites torn into the frame edges',
   seg_redact: 'Redact: Each person blocked out in mosaic, color or dots',
+  seg_backdrop: 'Backdrop: Oil slick, zebra or edge looks behind the people, on the beat',
   seg_facelock: 'Face Lock: Face bracket, enlarged face crops and scan readouts',
 
   // OVERLAYS

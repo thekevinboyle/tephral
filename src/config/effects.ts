@@ -178,6 +178,7 @@ export const DESTRUCTION_EFFECTS: EffectDefinition[] = [
   { id: 'seg_torn', label: 'TORN', color: '#EE30FF', row: 'texture', page: 5, min: 0, max: 0.2 },
   { id: 'seg_redact', label: 'REDACT', color: '#C4FA13', row: 'render', page: 5, min: 0, max: 1 },
   { id: 'seg_facelock', label: 'FLOCK', color: '#13FADE', row: 'texture', page: 5, min: 0.15, max: 0.5 },
+  { id: 'seg_backdrop', label: 'BKDROP', color: '#FFF618', row: 'render', page: 5, min: 1, max: 32 },
 
   // Row 4: Reserved
   { id: 'destruction_reserved_15', label: '—', color: '#C4FA13', row: 'reserved', page: 5, min: 0, max: 100 },

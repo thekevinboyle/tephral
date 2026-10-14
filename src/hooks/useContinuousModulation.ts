@@ -626,6 +626,15 @@ export function useContinuousModulation() {
           if (paramName === 'mix') s.updateRedactParams({ mix: value })
           break
         }
+        case 'seg_backdrop': {
+          const s = useSegStore.getState()
+          if (paramName === 'beats') s.updateBackdropParams({ beats: 1 + Math.round(value * 31) })
+          if (paramName === 'bands') s.updateBackdropParams({ bands: 2 + value * 22 })
+          if (paramName === 'stripe') s.updateBackdropParams({ stripe: 2 + value * 14 })
+          if (paramName === 'warp') s.updateBackdropParams({ warp: value * 24 })
+          if (paramName === 'mix') s.updateBackdropParams({ mix: value })
+          break
+        }
         case 'seg_facelock': {
           const s = useSegStore.getState()
           if (paramName === 'insetSize') s.updateFaceLockParams({ insetSize: 0.15 + value * 0.35 })

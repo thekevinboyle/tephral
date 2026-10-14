@@ -118,6 +118,7 @@ export function useMediaSource() {
 
       // Stop current source
       switchSource('file')
+      useMediaStore.getState().setSourceName(file.name)
 
       const url = URL.createObjectURL(file)
 

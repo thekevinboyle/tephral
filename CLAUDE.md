@@ -103,7 +103,10 @@ Chrome gives WebGL an HDR video's coded signal unconverted (iPhone clips are HLG
 ### Header (`src/components/performance/HeaderBar.tsx`)
 VIDEO/AUDIO source menus (portalled, `position: fixed`), the preset picker, and REC (`useRecordingControl`, red `--rec` token). A finished recording (MP4 where the browser can record it, else WebM; `useRecordingCapture`) goes into the clip bin and is also downloaded as `seg-f4ult-<date>-<time>.mp4` (harness `rec-save-check.mjs`).
 
-Files dropped on the stage, the timelines under it, the clip bin (audio only; it imports video itself) or the header's Audio picker load as video and/or audio. The audio timeline's loop wraps only when playback runs into its end from inside the region; a click anywhere seeks (harness `audio-loop-check.mjs`).
+### Media strip (`src/components/performance/MediaStrip.tsx`)
+Under the stage, two lanes that are always both visible. Video: play/pause (also drives the step sequencer, and plays back a recorded take with its automation), kind (VIDEO / LIVE / TAKE) and file name (`mediaStore.sourceName`), a filmstrip (16 frames grabbed from a hidden copy of the file; a take shows its own thumbnails) to click or drag to scrub, time, × removes the source. Audio: play/pause, loop on/off (cyan), file name, the waveform (peaks normalised to fill the lane, brighter where played), the loop region in cyan with handles, time, × removes the file. A click on the waveform seeks (inside the loop or out of it); a drag makes the loop, its handles resize it and its body moves it; double-click clears it. The loop wraps only when playback runs into its end from inside the region. Empty lanes are dashed drop targets you can also click to pick a file. Playheads and times are written from rAF, play state and duration come from `useSyncExternalStore` on the elements. Harnesses `strip-shot.mjs`, `audio-loop-check.mjs`.
+
+Files dropped on the stage, the media strip, the clip bin (audio only; it imports video itself) or the header's Audio picker load as video and/or audio.
 
 ### Stage (`src/components/performance/StageArea.tsx`)
 Aspect-locked output frame that fits the free space, with corner ticks, ruler, ClipBin and four HUD readouts (`StageReadouts`): LIVE/REC + FPS, preset name (or bank), timecode, active band. The frame is a container; under 380px the readouts re-stack.

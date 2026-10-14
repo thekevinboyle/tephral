@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react'
 import { useMediaStore } from '../stores/mediaStore'
 import { useRecordingStore } from '../stores/recordingStore'
 import { useSlicerStore } from '../stores/slicerStore'
+import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 import { createCroppedCapture, type CroppedCapture, type CropRegion } from '../utils/screenCrop'
 
 /**
@@ -133,11 +134,13 @@ export function useMediaSource() {
           video.onerror = () => reject(new Error('Failed to load video'))
         })
 
-        await video.play()
+        // No autoplay: the video waits on its first frame for play, unless the master transport is running
+        const running = useEffectSequencerStore.getState().isPlaying
+        if (running) await video.play()
 
         setVideoElement(video)
         setRecordingSource('file')
-        setIsPlaying(true)
+        setIsPlaying(running)
         setIsLoading(false)
 
         return true

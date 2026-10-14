@@ -8,6 +8,21 @@ import { useStippleStore } from '../stores/stippleStore'
 import { useVisionTrackingStore } from '../stores/visionTrackingStore'
 import { isInteractiveKeyTarget } from '../utils/keyboard'
 
+/** Switch off every effect a take can automate, so playing a take from its start rebuilds the look from scratch. */
+export function resetAutomationEffects(): void {
+  useGlitchEngineStore.getState().reset()
+  useAcidStore.getState().reset()
+  useAsciiRenderStore.getState().setEnabled(false)
+  useStippleStore.getState().setEnabled(false)
+  const vision = useVisionTrackingStore.getState()
+  vision.setBrightEnabled(false)
+  vision.setEdgeEnabled(false)
+  vision.setColorEnabled(false)
+  vision.setMotionEnabled(false)
+  vision.setFaceEnabled(false)
+  vision.setHandsEnabled(false)
+}
+
 export function useAutomationPlayback() {
   const {
     isPlaying,
@@ -38,18 +53,7 @@ export function useAutomationPlayback() {
   const wasPlaying = useRef<boolean>(false) // Track previous playing state
 
   // Reset all effects to disabled state
-  const resetEffects = useCallback(() => {
-    glitch.reset()
-    acid.reset()
-    ascii.setEnabled(false)
-    stipple.setEnabled(false)
-    vision.setBrightEnabled(false)
-    vision.setEdgeEnabled(false)
-    vision.setColorEnabled(false)
-    vision.setMotionEnabled(false)
-    vision.setFaceEnabled(false)
-    vision.setHandsEnabled(false)
-  }, [glitch, acid, ascii, stipple, vision])
+  const resetEffects = resetAutomationEffects
 
   // Apply an automation event to the appropriate store
   const applyEvent = useCallback((event: AutomationEvent) => {
@@ -222,21 +226,8 @@ export function useAutomationPlayback() {
         return
       }
 
+      // Space is the master transport's (PerformanceLayout), which plays a take with everything else
       switch (e.code) {
-        case 'Space':
-          e.preventDefault()
-          if (duration > 0) {
-            if (isPlaying) {
-              pause()
-            } else {
-              // Reset effects when starting from beginning
-              if (currentTime === 0) {
-                resetEffects()
-              }
-              play()
-            }
-          }
-          break
         case 'Escape':
           if (isPlaying) {
             stop()

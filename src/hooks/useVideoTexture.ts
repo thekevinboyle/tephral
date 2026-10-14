@@ -17,9 +17,16 @@ export function useVideoTexture() {
       videoTexture.minFilter = THREE.LinearFilter
       videoTexture.magFilter = THREE.LinearFilter
       videoTexture.format = THREE.RGBAFormat
+      // A paused video presents no frames, so its first frame and every seek are uploaded by hand
+      const refresh = () => { if (videoElement.readyState >= 2) videoTexture.needsUpdate = true }
+      refresh()
+      videoElement.addEventListener('loadeddata', refresh)
+      videoElement.addEventListener('seeked', refresh)
       setTexture(videoTexture)
 
       return () => {
+        videoElement.removeEventListener('loadeddata', refresh)
+        videoElement.removeEventListener('seeked', refresh)
         videoTexture.dispose()
       }
     }

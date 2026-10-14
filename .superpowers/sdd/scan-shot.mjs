@@ -13,6 +13,8 @@ await p.evaluate((src) => { import('/src/stores/mediaStore.ts').then((m) => {
 }) }, '/.superpowers/sdd/' + MEDIA)
 await p.waitForFunction(() => window.__ready && window.__pipeline, { timeout: 30000 }); await wait(800)
 await p.evaluate((ids) => { import('/src/hooks/useEffectToggle.ts').then((m) => ids.split(',').forEach((id) => m.toggleEffect(id))) }, IDS)
+// SEG='{"updateBackdropParams":{...}}' calls those segStore updaters
+if (process.env.SEG) await p.evaluate((j) => { import('/src/stores/segStore.ts').then((m) => { const s = m.useSegStore.getState(); for (const [k, v] of Object.entries(JSON.parse(j))) s[k](v) }) }, process.env.SEG)
 await p.waitForFunction(() => ['ready', 'error'].includes(window.__pipeline.detection.status), { timeout: 60000 }).catch(() => {})
 await wait(+WAIT)
 const info = await p.evaluate(() => { const d = window.__pipeline.detection; const f = (t) => [t.id, +t.x.toFixed(2), +t.y.toFixed(2), +t.w.toFixed(2), +t.h.toFixed(2)]; return { status: d.status, people: d.people.tracks.length, faces: d.faces.tracks.map(f) } })

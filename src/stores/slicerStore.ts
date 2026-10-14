@@ -80,7 +80,6 @@ interface SlicerState {
   envelope: number
 
   // Playback
-  isPlaying: boolean
   sliceProb: number
   freeze: boolean
   syncToBpm: boolean
@@ -120,7 +119,6 @@ interface SlicerState {
   updateGrainParams: (params: Partial<GrainParams>) => void
 
   // Playback actions
-  setIsPlaying: (playing: boolean) => void
   setSliceProb: (prob: number) => void
   setFreeze: (freeze: boolean) => void
   setSyncToBpm: (sync: boolean) => void
@@ -168,7 +166,6 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
   envelope: 20,
 
   // Playback defaults
-  isPlaying: false,
   sliceProb: 1,
   freeze: false,
   syncToBpm: true,
@@ -249,7 +246,6 @@ export const useSlicerStore = create<SlicerState>((set, get) => ({
   },
 
   // Playback actions
-  setIsPlaying: (isPlaying) => set({ isPlaying }),
   setSliceProb: (sliceProb) => set({ sliceProb: clamp(sliceProb, 0, 1) }),
   setFreeze: (freeze) => set({ freeze }),
   setSyncToBpm: (syncToBpm) => set({ syncToBpm }),

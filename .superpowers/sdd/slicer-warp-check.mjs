@@ -14,7 +14,7 @@ const state = () => p.evaluate(() => { const w = window.__warpTest; const e = wi
   fedBase: w.pipelineInput() === w.baseInput(), warpTargets: w.compositor()?.targetCount ?? 0, slicerShown: window.__slicerTest.readout.active,
   fedSlicer: !!e && e.outputSize[0] > 0 && w.pipelineInput() !== w.baseInput() } })
 const warp = (on, placement = 'before') => p.evaluate((on, placement) => import('/src/stores/warpStore.ts').then((m) => { const s = m.useWarpStore.getState(); s.setPlacement?.(placement); s.setAmount?.(1); s.setEnabled(on) }), on, placement)
-const slicer = (on) => p.evaluate((on) => import('/src/stores/slicerStore.ts').then((m) => { const s = m.useSlicerStore.getState(); s.setEnabled(on); s.setIsPlaying(on) }), on)
+const slicer = (on) => p.evaluate((on) => import('/src/stores/slicerStore.ts').then((m) => { const s = m.useSlicerStore.getState(); s.setEnabled(on) }), on)
 const out = {}
 out.idle = await state()
 await warp(true); await wait(1500); out.warpOn = await state()

@@ -656,9 +656,10 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         eng = new SlicerEngine()
         slicerEngine.current = eng
       }
+      const seq = useEffectSequencerStore.getState()
       const out = eng.tick(
         renderer, media?.live ?? null, media?.aspect() ?? NaN, media?.size() ?? null,
-        performance.now(), st, useEffectSequencerStore.getState().bpm, getTransportBeats(),
+        performance.now(), st, seq.bpm, getTransportBeats(), seq.isPlaying,
       )
       if (!out) return null
       slicerBase.input = out

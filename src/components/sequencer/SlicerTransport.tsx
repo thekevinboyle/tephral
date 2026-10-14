@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react'
-import { PlayIcon, StopIcon } from '../ui/DotMatrixIcons'
 import { useSlicerStore } from '../../stores/slicerStore'
 import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { slicerCommands } from '../../effects/slicer/slicerRuntime'
@@ -8,8 +7,6 @@ import { extractFramesFromClip } from '../../utils/clipFrameExtractor'
 
 export function SlicerTransport() {
   const {
-    isPlaying,
-    setIsPlaying,
     syncToBpm,
     setSyncToBpm,
     captureState,
@@ -156,23 +153,6 @@ export function SlicerTransport() {
           accentColor: '#FF0055',
         }}
       />
-
-      {/* Play/Stop button */}
-      <button
-        onClick={() => setIsPlaying(!isPlaying)}
-        className="w-6 h-6 flex items-center justify-center rounded-sm"
-        style={{
-          backgroundColor: isPlaying ? 'var(--accent)' : 'var(--bg-surface)',
-          border: isPlaying ? '1px solid var(--accent)' : '1px solid var(--border)',
-          boxShadow: isPlaying ? '0 0 6px var(--accent-glow)' : 'none',
-        }}
-      >
-        {isPlaying ? (
-          <StopIcon size={10} color="var(--text-primary)" />
-        ) : (
-          <PlayIcon size={10} color="var(--text-muted)" />
-        )}
-      </button>
 
       {/* BPM Sync toggle */}
       <button

@@ -1,0 +1,23 @@
+<!doctype html><meta charset="utf-8"><title>HDR probe</title>
+<body style="background:#222;color:#eee;font:12px monospace">
+<video id="v" muted playsinline loop style="width:480px"></video><pre id="o">loading</pre>
+<script type="module">
+// Uploads an HLG video frame to WebGL the way three.js does (RGBA/UNSIGNED_BYTE) and reads back patch centres.
+const src = new URLSearchParams(location.search).get('src') || 'fixtures/hlg-pattern.mp4'
+const v = document.getElementById('v'); v.src = src
+await v.play(); await new Promise((r) => setTimeout(r, 500)); v.pause()
+const W = v.videoWidth, H = v.videoHeight
+const c = document.createElement('canvas'); c.width = W; c.height = H
+const gl = c.getContext('webgl2')
+const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex)
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, v)
+const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
+gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0)
+const px = (x, y) => { const b = new Uint8Array(4); gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, b); return [...b.slice(0, 3)] }
+// readPixels rows are bottom-up relative to the uploaded image (no flip): image row y = H-1-y
+const grey = [...Array(16)].map((_, i) => px(Math.round((i + 0.5) * W / 16), H - 1 - Math.round(H / 4)))
+const colours = [...Array(8)].map((_, i) => px(Math.round((i + 0.5) * W / 8), H - 1 - Math.round(3 * H / 4)))
+let cs = null; try { const f = new VideoFrame(v); cs = f.colorSpace.toJSON(); f.close() } catch (e) { cs = String(e) }
+window.__probe = { W, H, grey, colours, cs }
+document.getElementById('o').textContent = JSON.stringify(window.__probe)
+</script>

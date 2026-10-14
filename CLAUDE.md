@@ -90,7 +90,10 @@ Enabled flags/order and per-frame params are split across two files:
 - **Narrow (< 1100px)**: the browser and inspector become drawers over the stage (one at a time).
 - `PerformanceLayout` re-renders every engine tick, so `HeaderBar`, `EffectBrowser`, `StageArea`, `Inspector` and `BottomPanel2` are `React.memo`. Keep their props stable and their store selectors narrow.
 
-### Header (`src/components/performance/HeaderBar.tsx`)
+### HDR sources (`src/effects/HdrToSdrPass.ts`)
+Chrome gives WebGL an HDR video's coded signal unconverted (iPhone clips are HLG BT.2020, often with Dolby Vision 8.4), which looks bright and flat. `detectHdr` reads the transfer from a decoded frame (WebCodecs `VideoFrame.colorSpace`; Canvas retries every 15 frames until a frame is readable), and the render loop then runs `HdrToSdrPass` on the media texture before the slicer and the warp: HLG back to scene light (peak = SDR white), light^0.843, BT.2020 to BT.709, sRGB. That matches Apple's SDR rendering of an HLG test pattern within 2 levels (harness `hdr-pattern-check.mjs`; `hdr-check.mjs` for a real clip). PQ is scaled with 1000 nits as the peak. Dolby Vision reshaping metadata is not available in the browser, so iPhone clips can differ slightly in hue from QuickTime. SDR sources never touch the pass.
+
+`src/components/performance/HeaderBar.tsx`)
 VIDEO/AUDIO source menus (portalled, `position: fixed`), the preset picker, and REC (`useRecordingControl`, red `--rec` token).
 
 ### Stage (`src/components/performance/StageArea.tsx`)

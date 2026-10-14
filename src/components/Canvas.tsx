@@ -23,6 +23,7 @@ import { useEffectSequencerStore } from '../stores/effectSequencerStore'
 import { SlicerEngine } from '../effects/slicer/SlicerEngine'
 import { slicerCommands, slicerReadout, slicerViewers } from '../effects/slicer/slicerRuntime'
 import { getTransportBeats } from '../effects/lines/linePhase'
+import { HdrToSdrPass, detectHdr, type HdrTransfer } from '../effects/HdrToSdrPass'
 import { OverlayContainer } from './overlays/OverlayContainer'
 import { perfMonitor } from '../utils/perfMonitor'
 import { initParamSync } from '../effects/paramSync'
@@ -81,6 +82,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
   const slicerProcessEffects = useSlicerStore((s) => s.processEffects)
   const slicerHasOwnFrames = useSlicerStore((s) => s.captureState !== 'live')
   const slicerEngine = useRef<SlicerEngine | null>(null)
+  // HDR video (iPhone HLG, HDR10 PQ): Chrome gives WebGL the coded signal, so the loop converts it to SDR first
+  // (undefined = not read yet: the render loop retries)
+  const hdrInfo = useRef<{ transfer: HdrTransfer; bt2020: boolean } | null | undefined>(null)
 
   // Video time warp: driven from the rAF loop, never from React state
   const warpBase = useRef<WarpBase | null>(null)
@@ -492,6 +496,12 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     }
   }, [pipeline, mediaTexture, videoElement, imageElement])
 
+  // HDR detection: read the video's transfer from its first decoded frame
+  // (until a frame can be read the render loop retries every 15 frames)
+  useEffect(() => {
+    hdrInfo.current = videoElement ? detectHdr(videoElement) : null
+  }, [videoElement])
+
   // Update video aspect ratio for layout
   useEffect(() => {
     const setAspect = useMediaStore.getState().setVideoAspect
@@ -605,8 +615,33 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       aspect: () => slicerEngine.current?.aspect ?? NaN,
       size: () => { const s = slicerEngine.current?.outputSize; return s && s[0] ? s : null },
     }
+    // HDR source: one conversion pass, before the slicer and the warp, so everything downstream sees SDR
+    const hdrPass = new HdrToSdrPass()
+    let hdrUsed = false
+    const hdrBase: WarpBase = { input: null as unknown as THREE.Texture, source: null, live: null, aspect: () => NaN, size: () => null }
+    let hdrRetry = 0
+    const sourceTick = (): WarpBase | null => {
+      const media = warpBase.current
+      const v = useMediaStore.getState().videoElement
+      if (hdrInfo.current === undefined && v && ++hdrRetry % 15 === 0) hdrInfo.current = detectHdr(v)
+      const hdr = hdrInfo.current
+      const size = media?.size()
+      if (!media?.live || !hdr || !size) {
+        if (hdrUsed) { hdrPass.release(); hdrUsed = false }
+        return media
+      }
+      hdrUsed = true
+      const tex = hdrPass.render(renderer, media.live, size[0], size[1], hdr.transfer, hdr.bt2020)
+      hdrBase.input = tex
+      hdrBase.source = tex
+      hdrBase.live = tex
+      hdrBase.aspect = media.aspect
+      hdrBase.size = media.size
+      return hdrBase
+    }
+
     let slicerShown = false
-    const slicerTick = (): WarpBase | null => {
+    const slicerTick = (media: WarpBase | null): WarpBase | null => {
       const st = useSlicerStore.getState()
       let eng = slicerEngine.current
       if (!eng) {
@@ -614,7 +649,6 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         eng = new SlicerEngine()
         slicerEngine.current = eng
       }
-      const media = warpBase.current
       const out = eng.tick(
         renderer, media?.live ?? null, media?.aspect() ?? NaN, media?.size() ?? null,
         performance.now(), st, useEffectSequencerStore.getState().bpm, getTransportBeats(),
@@ -639,8 +673,9 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
     const warpTick = () => {
       const w = useWarpStore.getState()
-      const sliced = slicerTick()
-      const base = sliced ?? warpBase.current
+      const media = sourceTick()
+      const sliced = slicerTick(media)
+      const base = sliced ?? media
       setShown(!!sliced, base)
       const live = base?.live ?? null
       const on = !!(base && live && w.enabled && w.appliesTo !== 'audio')
@@ -672,6 +707,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         // what the pipeline itself holds as its input, and the original (unwarped) texture
         pipelineInput: () => (pipeline as unknown as { inputTexture: THREE.Texture | null }).inputTexture,
         baseInput: () => warpBase.current?.input ?? null,
+        hdr: () => hdrInfo.current,
+        setHdr: (v: { transfer: HdrTransfer; bt2020: boolean } | null) => { hdrInfo.current = v },
         postPass: () => postPass,
         // the passes the composer runs (the warp's end pass is last while placement is 'after')
         composerPasses: () => (pipeline as unknown as { composer: { passes: unknown[] } }).composer.passes,
@@ -702,6 +739,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       window.clearTimeout(resizeTimer)
       slicerEngine.current?.dispose()
       slicerEngine.current = null
+      hdrPass.dispose()
       pipeline.setWarpPostPass(null)
       postPass.dispose()
       warpCompositor.current?.dispose()

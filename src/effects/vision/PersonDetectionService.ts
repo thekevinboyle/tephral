@@ -11,6 +11,9 @@ const INPUT_LONG_SIDE = 512
 export const MAX_PEOPLE = 12
 export const MAX_FACES = 4
 const MATCH_IOU = 0.25
+/** Faces too small for the full frame are looked for again in the heads of this many people. */
+const HEAD_PASSES = 3
+const HEAD_SIZE = 256
 const SMOOTH = 0.55 // share of the new detection taken per update
 
 /** A tracked box in normalized image coordinates, origin top-left. */
@@ -91,6 +94,8 @@ export class PersonDetectionService {
   private timer: ReturnType<typeof setTimeout> | null = null
   private canvas = document.createElement('canvas')
   private ctx = this.canvas.getContext('2d')!
+  private head = Object.assign(document.createElement('canvas'), { width: HEAD_SIZE, height: HEAD_SIZE })
+  private headCtx = this.head.getContext('2d')!
 
   setSource(el: HTMLVideoElement | HTMLImageElement | null) {
     if (el === this.source) return
@@ -188,13 +193,40 @@ export class PersonDetectionService {
       }
       if (this.wantFaces) {
         const r = this.face.detectForVideo(this.canvas, ts)
-        this.faces.update(r.detections.map((d) => toRaw(d.boundingBox, d.categories[0]?.score ?? 0, w, h)), now, linger, MAX_FACES)
+        let faces = r.detections.map((d) => toRaw(d.boundingBox, d.categories[0]?.score ?? 0, w, h))
+        if (!faces.length) faces = this.facesInHeads(src, sw, sh)
+        this.faces.update(faces, now, linger, MAX_FACES)
       }
       if (src instanceof HTMLVideoElement) this.lastVideoTime = src.currentTime
       else this.lastImage = src
     } catch (err) {
       console.warn('[DETECT] detection failed:', err)
     }
+  }
+
+  /**
+   * The face model is made for faces that fill much of the frame; in a crowd they are tiny. Look again
+   * in a square around the top of each of the largest people, enlarged, and map the hits back.
+   */
+  private facesInHeads(src: HTMLVideoElement | HTMLImageElement, sw: number, sh: number): Raw[] {
+    const out: Raw[] = []
+    for (const t of this.people.tracks.slice(0, HEAD_PASSES)) {
+      const side = Math.max(t.w * sw * 0.9, Math.min(t.h * sh * 0.4, t.w * sw * 1.4))
+      if (side < 16) continue
+      const sx = (t.x + t.w / 2) * sw - side / 2
+      const sy = t.y * sh - side * 0.05
+      this.headCtx.fillStyle = '#000'
+      this.headCtx.fillRect(0, 0, HEAD_SIZE, HEAD_SIZE)
+      this.headCtx.drawImage(src, sx, sy, side, side, 0, 0, HEAD_SIZE, HEAD_SIZE)
+      const ts = (this.lastTs = this.lastTs + 1)
+      const r = this.face!.detectForVideo(this.head, ts)
+      const best = r.detections.sort((a, b) => (b.categories[0]?.score ?? 0) - (a.categories[0]?.score ?? 0))[0]
+      const b = best?.boundingBox
+      if (!b) continue
+      const k = side / HEAD_SIZE
+      out.push({ x: (sx + b.originX * k) / sw, y: (sy + b.originY * k) / sh, w: (b.width * k) / sw, h: (b.height * k) / sh, score: best.categories[0]?.score ?? 0 })
+    }
+    return out
   }
 }
 

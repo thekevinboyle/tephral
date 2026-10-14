@@ -85,18 +85,37 @@ export const DEFAULT_SEG_REDACT_PARAMS: SegRedactParams = {
   autoReshuffle: true, reshuffleBeats: 2, linger: 0.4, seed: 0, mix: 1,
 }
 
+export interface SegFaceLockParams {
+  insetSize: number  // 0.15-0.5 of the short side
+  zoom: number       // 1-4, how tight the face crop is
+  insetFx: number    // 0-1, chance per beat that an inset glitches (mosaic, block, edges, dark)
+  fxBeats: number    // 1-32
+  insets: number     // 0-2 face crops
+  hud: number        // 0/1 corner readouts
+  box: number        // 0/1 bracket, labels and leader line
+  opacity: number    // 0-1 lines and text
+  mix: number
+}
+export const DEFAULT_SEG_FACELOCK_PARAMS: SegFaceLockParams = {
+  insetSize: 0.28, zoom: 1.9, insetFx: 0.35, fxBeats: 2, insets: 2, hud: 1, box: 1, opacity: 0.9, mix: 1,
+}
+
 export interface SegSnapshot {
   voxelEnabled: boolean; echoEnabled: boolean; matterEnabled: boolean; staleEnabled: boolean; tornEnabled: boolean
   voxelParams: SegVoxelParams; echoParams: SegEchoParams; matterParams: SegMatterParams
   staleParams: SegStaleParams; tornParams: SegTornParams
   // Added later: optional so older banks and presets load (missing = off, defaults)
   redactEnabled?: boolean; redactParams?: SegRedactParams
+  faceLockEnabled?: boolean; faceLockParams?: SegFaceLockParams
 }
 
 interface SegState extends SegSnapshot {
   redactEnabled: boolean; redactParams: SegRedactParams
   setRedactEnabled: (v: boolean) => void
   updateRedactParams: (p: Partial<SegRedactParams>) => void
+  faceLockEnabled: boolean; faceLockParams: SegFaceLockParams
+  setFaceLockEnabled: (v: boolean) => void
+  updateFaceLockParams: (p: Partial<SegFaceLockParams>) => void
   segStatus: SegStatus
   setSegStatus: (s: SegStatus) => void
   setVoxelEnabled: (v: boolean) => void
@@ -116,6 +135,7 @@ interface SegState extends SegSnapshot {
 const defaults = () => ({
   voxelEnabled: false, echoEnabled: false, matterEnabled: false, staleEnabled: false, tornEnabled: false,
   redactEnabled: false, redactParams: { ...DEFAULT_SEG_REDACT_PARAMS },
+  faceLockEnabled: false, faceLockParams: { ...DEFAULT_SEG_FACELOCK_PARAMS },
   voxelParams: { ...DEFAULT_SEG_VOXEL_PARAMS },
   echoParams: { ...DEFAULT_SEG_ECHO_PARAMS },
   matterParams: { ...DEFAULT_SEG_MATTER_PARAMS },
@@ -134,6 +154,8 @@ export const useSegStore = create<SegState>((set, get) => ({
   setTornEnabled: (v) => set({ tornEnabled: v }),
   setRedactEnabled: (v) => set({ redactEnabled: v }),
   updateRedactParams: (p) => set((s) => ({ redactParams: { ...s.redactParams, ...p } })),
+  setFaceLockEnabled: (v) => set({ faceLockEnabled: v }),
+  updateFaceLockParams: (p) => set((s) => ({ faceLockParams: { ...s.faceLockParams, ...p } })),
   updateVoxelParams: (p) => set((s) => ({ voxelParams: { ...s.voxelParams, ...p } })),
   updateEchoParams: (p) => set((s) => ({ echoParams: { ...s.echoParams, ...p } })),
   updateMatterParams: (p) => set((s) => ({ matterParams: { ...s.matterParams, ...p } })),
@@ -147,6 +169,7 @@ export const useSegStore = create<SegState>((set, get) => ({
       voxelParams: { ...s.voxelParams }, echoParams: { ...s.echoParams }, matterParams: { ...s.matterParams },
       staleParams: { ...s.staleParams }, tornParams: { ...s.tornParams },
       redactEnabled: s.redactEnabled, redactParams: { ...s.redactParams },
+      faceLockEnabled: s.faceLockEnabled, faceLockParams: { ...s.faceLockParams },
     }
   },
   // undefined (older banks/presets) resets to defaults = all disabled
@@ -163,6 +186,8 @@ export const useSegStore = create<SegState>((set, get) => ({
       tornParams: { ...d.tornParams, ...snap.tornParams },
       redactEnabled: snap.redactEnabled ?? false,
       redactParams: { ...d.redactParams, ...snap.redactParams },
+      faceLockEnabled: snap.faceLockEnabled ?? false,
+      faceLockParams: { ...d.faceLockParams, ...snap.faceLockParams },
     })
   },
 }))

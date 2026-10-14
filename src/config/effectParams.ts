@@ -1589,6 +1589,21 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
     setEnabled: (v) => sg().setRedactEnabled(v),
     getEnabled: () => sg().redactEnabled,
   },
+  seg_facelock: {
+    getParams: () => [
+      { id: 'insetSize', label: 'SIZE', min: 0.15, max: 0.5, step: 0.01, apply: (v) => sg().updateFaceLockParams({ insetSize: v }), read: () => sg().faceLockParams.insetSize },
+      { id: 'zoom', label: 'ZOOM', min: 1, max: 4, step: 0.05, apply: (v) => sg().updateFaceLockParams({ zoom: v }), read: () => sg().faceLockParams.zoom },
+      { id: 'insetFx', label: 'GLITCH', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateFaceLockParams({ insetFx: v }), read: () => sg().faceLockParams.insetFx },
+      { id: 'fxBeats', label: 'BEATS', min: 1, max: 32, step: 1, apply: (v) => sg().updateFaceLockParams({ fxBeats: v }), read: () => sg().faceLockParams.fxBeats },
+      { id: 'insets', label: 'CROPS', min: 0, max: 2, step: 1, apply: (v) => sg().updateFaceLockParams({ insets: v }), read: () => sg().faceLockParams.insets },
+      { id: 'hud', label: 'HUD', min: 0, max: 1, step: 1, apply: (v) => sg().updateFaceLockParams({ hud: v }), read: () => sg().faceLockParams.hud },
+      { id: 'box', label: 'BOX', min: 0, max: 1, step: 1, apply: (v) => sg().updateFaceLockParams({ box: v }), read: () => sg().faceLockParams.box },
+      { id: 'opacity', label: 'OPAC', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateFaceLockParams({ opacity: v }), read: () => sg().faceLockParams.opacity },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateFaceLockParams({ mix: v }), read: () => sg().faceLockParams.mix },
+    ],
+    setEnabled: (v) => sg().setFaceLockEnabled(v),
+    getEnabled: () => sg().faceLockEnabled,
+  },
   seg_stale: {
     getParams: () => [
       { id: 'cellSize', label: 'CELL', min: 8, max: 96, step: 1, apply: (v) => sg().updateStaleParams({ cellSize: v }), read: () => sg().staleParams.cellSize },

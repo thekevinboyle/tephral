@@ -90,6 +90,7 @@ import { TraceMaskPass, type TraceMaskConsumer, type TraceMaskJob } from './glit
 import { SegmentationService } from './vision/SegmentationService'
 import { PersonDetectionService } from './vision/PersonDetectionService'
 import { SegRedactEffect } from './glitch-engine/SegRedactEffect'
+import { SegFaceLockEffect } from './glitch-engine/SegFaceLockEffect'
 import { FaceHudEffect } from './morph'
 
 // Trackers: they only make masks for other effects' Mask dropdowns, so they are never chain passes
@@ -172,6 +173,7 @@ export class EffectPipeline {
   segStale: SegStaleEffect | null = null
   segTorn: SegTornEffect | null = null
   segRedact: SegRedactEffect | null = null
+  segFaceLock: SegFaceLockEffect | null = null
 
   // ACID overlay effects (Phase 3 GPU port)
   acidMirror: AcidMirrorEffect | null = null
@@ -338,6 +340,8 @@ export class EffectPipeline {
     this.segRedact = new SegRedactEffect()
     this.segRedact.setSegmentation(this.segmentation)
     this.segRedact.setDetection(this.detection)
+    this.segFaceLock = new SegFaceLockEffect()
+    this.segFaceLock.setDetection(this.detection)
 
     // ACID overlay effects (Phase 3 GPU port)
     this.acidMirror = new AcidMirrorEffect()
@@ -429,6 +433,7 @@ export class EffectPipeline {
       case 'seg_stale': return this.segStale
       case 'seg_torn': return this.segTorn
       case 'seg_redact': return this.segRedact
+      case 'seg_facelock': return this.segFaceLock
       // ACID overlay effects (Phase 3 GPU port)
       case 'acid_mirror': return this.acidMirror
       case 'acid_ripple': return this.acidRipple
@@ -523,6 +528,7 @@ export class EffectPipeline {
     segStaleEnabled: boolean
     segTornEnabled: boolean
     segRedactEnabled?: boolean
+    segFaceLockEnabled?: boolean
     // ACID overlay effects (Phase 3 GPU port) — rendered as GPU passes via
     // getEffectById below. AcidOverlay.tsx no longer dispatches any of
     // these (it only owns decomp + the already-GPU cloud/slit/voronoi).
@@ -625,6 +631,7 @@ export class EffectPipeline {
       seg_stale: config.segStaleEnabled,
       seg_torn: config.segTornEnabled,
       seg_redact: !!config.segRedactEnabled,
+      seg_facelock: !!config.segFaceLockEnabled,
       // ACID overlay effects (Phase 3 GPU port)
       acid_mirror: config.mirrorEnabled,
       acid_ripple: config.rippleEnabled,
@@ -724,7 +731,9 @@ export class EffectPipeline {
     )
     this.segmentation.setWanted(config.segWanted)
     // The person and face detectors run only while an effect that reads them is in the chain
-    this.detection.setWanted(!!enabledMap['seg_redact'] && !config.bypassActive, false)
+    const faceLock = !!enabledMap['seg_facelock'] && !config.bypassActive
+    // Face lock falls back to the head of the largest person when no face is found, so it wants both
+    this.detection.setWanted((!!enabledMap['seg_redact'] && !config.bypassActive) || faceLock, faceLock)
 
     // Compute the active chain (empty when bypassed). Deduped via Set so a
     // duplicate id in effectOrder can't add the same cached EffectPass twice.
@@ -943,6 +952,7 @@ export class EffectPipeline {
     this.segStale?.setResolution(this.canvasWidth, this.canvasHeight)
     this.segTorn?.setResolution(this.canvasWidth, this.canvasHeight)
     this.segRedact?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.segFaceLock?.setResolution(this.canvasWidth, this.canvasHeight)
   }
 
   private updateQuadScale() {
@@ -1118,6 +1128,7 @@ export class EffectPipeline {
     this.segTorn?.dispose()
     this.segmentation.dispose()
     this.segRedact?.dispose()
+    this.segFaceLock?.dispose()
     this.detection.dispose()
     // ACID overlay effects (Phase 3 GPU port)
     this.acidMirror?.dispose()

@@ -626,6 +626,16 @@ export function useContinuousModulation() {
           if (paramName === 'mix') s.updateRedactParams({ mix: value })
           break
         }
+        case 'seg_facelock': {
+          const s = useSegStore.getState()
+          if (paramName === 'insetSize') s.updateFaceLockParams({ insetSize: 0.15 + value * 0.35 })
+          if (paramName === 'zoom') s.updateFaceLockParams({ zoom: 1 + value * 3 })
+          if (paramName === 'insetFx') s.updateFaceLockParams({ insetFx: value })
+          if (paramName === 'fxBeats') s.updateFaceLockParams({ fxBeats: 1 + Math.round(value * 31) })
+          if (paramName === 'opacity') s.updateFaceLockParams({ opacity: value })
+          if (paramName === 'mix') s.updateFaceLockParams({ mix: value })
+          break
+        }
         case 'seg_torn': {
           const s = useSegStore.getState()
           if (paramName === 'depth') s.updateTornParams({ depth: value * 0.2 })

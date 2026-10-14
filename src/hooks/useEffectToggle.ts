@@ -834,6 +834,13 @@ const EFFECT_ENTRIES: Record<string, EffectEntry> = {
       S.seg.setRedactEnabled(!S.seg.redactEnabled)
     },
   },
+  seg_facelock: {
+    active: () => S.seg.faceLockEnabled,
+    toggle: (effectId) => {
+      if (!S.seg.faceLockEnabled) moveToEndOfChain(effectId)
+      S.seg.setFaceLockEnabled(!S.seg.faceLockEnabled)
+    },
+  },
 }
 
 /** Lean enabled-flag lookup: reads only the one store the effect lives in. */

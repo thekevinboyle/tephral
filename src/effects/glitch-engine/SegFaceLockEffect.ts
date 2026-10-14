@@ -131,7 +131,8 @@ export class SegFaceLockEffect extends Effect {
   /** Faces, largest first; with none, the head of each person (top of the box, a little narrower). */
   private targets(): Box[] {
     const faces = this.detect?.faces.tracks ?? []
-    if (faces.length) return faces.map((f) => ({ ...f }))
+    // The clearest face gets the lock: confidence counts as much as size
+    if (faces.length) return faces.map((f) => ({ ...f })).sort((a, b) => b.score ** 2 * b.w * b.h - a.score ** 2 * a.w * a.h)
     const people: TrackedBox[] = this.detect?.people.tracks ?? []
     const aspect = this.width / this.height
     return people.slice(0, INSETS).map((t) => {

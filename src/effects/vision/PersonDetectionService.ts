@@ -14,6 +14,8 @@ const MATCH_IOU = 0.25
 /** Faces too small for the full frame are looked for again in the heads of this many people. */
 const HEAD_PASSES = 3
 const HEAD_SIZE = 256
+/** A head-pass hit needs more confidence than a full-frame one: signs and patterns get picked up in close crops. */
+const HEAD_MIN_SCORE = 0.65
 const SMOOTH = 0.55 // share of the new detection taken per update
 
 /** A tracked box in normalized image coordinates, origin top-left. */
@@ -222,7 +224,7 @@ export class PersonDetectionService {
       const r = this.face!.detectForVideo(this.head, ts)
       const best = r.detections.sort((a, b) => (b.categories[0]?.score ?? 0) - (a.categories[0]?.score ?? 0))[0]
       const b = best?.boundingBox
-      if (!b) continue
+      if (!b || (best.categories[0]?.score ?? 0) < HEAD_MIN_SCORE) continue
       const k = side / HEAD_SIZE
       out.push({ x: (sx + b.originX * k) / sw, y: (sy + b.originY * k) / sh, w: (b.width * k) / sw, h: (b.height * k) / sh, score: best.categories[0]?.score ?? 0 })
     }

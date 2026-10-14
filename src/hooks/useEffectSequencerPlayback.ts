@@ -7,7 +7,7 @@ import { useAudioReactiveStore } from '../stores/audioReactiveStore'
 import { useAudioSourceStore } from '../stores/audioSourceStore'
 import { EFFECT_PARAM_REGISTRY } from '../config/effectParams'
 import { readModBase } from '../effects/trackBandModulation'
-import { captureUserMix, clearGates, clearLines, clearMaster, gateOpenLevel, getMasterLevel, isGateOpen, isLineActive, releaseGate, releaseLine, setGateOpen, setLineLevel, setMasterLevel } from '../effects/mixModulation'
+import { captureUserMix, clearGates, clearLines, clearMaster, gateOpenLevel, getMasterLevel, getUserMix, isGateDriving, isGateOpen, isLineActive, releaseGate, releaseLine, setGateOpen, setLineLevel, setMasterLevel } from '../effects/mixModulation'
 import { lineLevel, linePlay, lineSeed } from '../effects/lines/lineLevel'
 import { MASTER_SEED, playPosition } from '../effects/playhead'
 import { clearLinePhases, deleteLinePhase, noteLinePass, setLinePos, setMasterPos, setTransportBeats } from '../effects/lines/linePhase'
@@ -231,6 +231,15 @@ export function useEffectSequencerPlayback() {
 
     const step = track.steps[stepIndex]
     const ge = useGlitchEngineStore.getState()
+
+    // A gate track with no steps set does not gate: the effect plays at the user's Dry/wet. (Every device gets a
+    // track, so without this an effect added while playing was shut after its first frame.) If the gate was
+    // driving the mix (its last step was just cleared), the user's value comes back.
+    if (track.mode === 'gate' && !track.midiGate && !track.steps.some((s) => s.active)) {
+      if (isGateDriving(effectId)) ge.setEffectMix(effectId, baseMix.current[effectId] ?? getUserMix(effectId) ?? 1)
+      releaseGate(effectId)
+      return
+    }
 
     // Condition check
     if (step.condition === 'fill' && !fill) {

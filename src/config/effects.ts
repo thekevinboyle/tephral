@@ -176,6 +176,7 @@ export const DESTRUCTION_EFFECTS: EffectDefinition[] = [
   { id: 'seg_matter', label: 'MATTER', color: '#FFF618', row: 'render', page: 5, min: 0, max: 1 },
   { id: 'seg_stale', label: 'STALE', color: '#FFA9F1', row: 'distortion', page: 5, min: 8, max: 96 },
   { id: 'seg_torn', label: 'TORN', color: '#EE30FF', row: 'texture', page: 5, min: 0, max: 0.2 },
+  { id: 'seg_redact', label: 'REDACT', color: '#C4FA13', row: 'render', page: 5, min: 0, max: 1 },
 
   // Row 4: Reserved
   { id: 'destruction_reserved_15', label: '—', color: '#C4FA13', row: 'reserved', page: 5, min: 0, max: 100 },

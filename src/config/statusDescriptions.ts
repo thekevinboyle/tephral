@@ -104,6 +104,7 @@ export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   seg_matter: 'Matter: Color fields in the mask',
   seg_stale: 'Stale: Freeze and decay areas',
   seg_torn: 'Torn: Ragged bites torn into the frame edges',
+  seg_redact: 'Redact: Each person blocked out in mosaic, color or dots',
 
   // OVERLAYS
   texture_overlay: 'Texture Overlay: Film texture laid over the frame',

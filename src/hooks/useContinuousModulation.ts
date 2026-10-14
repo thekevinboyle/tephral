@@ -615,6 +615,17 @@ export function useContinuousModulation() {
           if (paramName === 'mix') s.updateStaleParams({ mix: value })
           break
         }
+        case 'seg_redact': {
+          const s = useSegStore.getState()
+          if (paramName === 'coverage') s.updateRedactParams({ coverage: value })
+          if (paramName === 'cell') s.updateRedactParams({ cell: 6 + Math.round(value * 58) })
+          if (paramName === 'reshuffleBeats') s.updateRedactParams({ reshuffleBeats: 1 + Math.round(value * 31) })
+          if (paramName === 'linger') s.updateRedactParams({ linger: value * 2 })
+          if (paramName === 'pad') s.updateRedactParams({ pad: value * 0.3 })
+          if (paramName === 'seed') s.updateRedactParams({ seed: Math.round(value * 999) })
+          if (paramName === 'mix') s.updateRedactParams({ mix: value })
+          break
+        }
         case 'seg_torn': {
           const s = useSegStore.getState()
           if (paramName === 'depth') s.updateTornParams({ depth: value * 0.2 })

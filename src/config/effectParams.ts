@@ -1563,6 +1563,32 @@ export const EFFECT_PARAM_REGISTRY: Record<string, ParamRegistryEntry> = {
     setEnabled: (v) => sg().setMatterEnabled(v),
     getEnabled: () => sg().matterEnabled,
   },
+  seg_redact: {
+    getParams: () => [
+      { id: 'coverage', label: 'COV', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateRedactParams({ coverage: v }), read: () => sg().redactParams.coverage },
+      { id: 'cell', label: 'CELL', min: 6, max: 64, step: 1, apply: (v) => sg().updateRedactParams({ cell: v }), read: () => sg().redactParams.cell },
+      { id: 'reshuffleBeats', label: 'BEATS', min: 1, max: 32, step: 1, apply: (v) => sg().updateRedactParams({ reshuffleBeats: v }), read: () => sg().redactParams.reshuffleBeats },
+      { id: 'linger', label: 'LINGER', min: 0, max: 2, step: 0.05, apply: (v) => sg().updateRedactParams({ linger: v }), read: () => sg().redactParams.linger },
+      { id: 'wPixel', label: 'PIXEL', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateRedactParams({ wPixel: v }), read: () => sg().redactParams.wPixel },
+      { id: 'wGradient', label: 'GRAD', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateRedactParams({ wGradient: v }), read: () => sg().redactParams.wGradient },
+      { id: 'wDots', label: 'DOTS', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateRedactParams({ wDots: v }), read: () => sg().redactParams.wDots },
+      { id: 'wSlick', label: 'SLICK', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateRedactParams({ wSlick: v }), read: () => sg().redactParams.wSlick },
+      { id: 'wBlack', label: 'BLACK', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateRedactParams({ wBlack: v }), read: () => sg().redactParams.wBlack },
+      { id: 'pad', label: 'PAD', min: 0, max: 0.3, step: 0.01, apply: (v) => sg().updateRedactParams({ pad: v }), read: () => sg().redactParams.pad },
+      { id: 'seed', label: 'SEED', min: 0, max: 999, step: 1, apply: (v) => sg().updateRedactParams({ seed: v }), read: () => sg().redactParams.seed },
+      { id: 'mix', label: 'MIX', min: 0, max: 1, step: 0.01, apply: (v) => sg().updateRedactParams({ mix: v }), read: () => sg().redactParams.mix },
+    ],
+    getSelectParams: () => [
+      { id: 'shape', label: 'SHAPE', type: 'select',
+        options: [{ value: '0', label: 'BOX' }, { value: '1', label: 'BODY' }, { value: '2', label: 'MIXED' }],
+        apply: (v) => sg().updateRedactParams({ shape: Number(v) }), read: () => String(sg().redactParams.shape) },
+      { id: 'autoReshuffle', label: 'AUTO', type: 'select',
+        options: [{ value: '0', label: 'OFF' }, { value: '1', label: 'BEAT' }],
+        apply: (v) => sg().updateRedactParams({ autoReshuffle: v === '1' }), read: () => (sg().redactParams.autoReshuffle ? '1' : '0') },
+    ],
+    setEnabled: (v) => sg().setRedactEnabled(v),
+    getEnabled: () => sg().redactEnabled,
+  },
   seg_stale: {
     getParams: () => [
       { id: 'cellSize', label: 'CELL', min: 8, max: 96, step: 1, apply: (v) => sg().updateStaleParams({ cellSize: v }), read: () => sg().staleParams.cellSize },

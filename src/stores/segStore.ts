@@ -67,13 +67,36 @@ export const DEFAULT_SEG_TORN_PARAMS: SegTornParams = {
   depth: 0.04, blockSize: 16, speed: 1, fill: 0, mix: 1,
 }
 
+export interface SegRedactParams {
+  coverage: number        // 0-1, share of people treated
+  shape: number           // 0 box, 1 body (person mask inside the box), 2 mixed per person
+  cell: number            // 6-64 px, mosaic and dot cell
+  pad: number             // 0-0.3, grows each box by this share of its size
+  wPixel: number; wGradient: number; wDots: number; wSlick: number; wBlack: number // 0-1
+  autoReshuffle: boolean
+  reshuffleBeats: number  // 1-32
+  linger: number          // 0-2 s, a box outlives its person this long
+  seed: number            // 0-999
+  mix: number
+}
+export const DEFAULT_SEG_REDACT_PARAMS: SegRedactParams = {
+  coverage: 0.75, shape: 2, cell: 16, pad: 0.04,
+  wPixel: 1, wGradient: 1, wDots: 0.4, wSlick: 0.4, wBlack: 0.2,
+  autoReshuffle: true, reshuffleBeats: 2, linger: 0.4, seed: 0, mix: 1,
+}
+
 export interface SegSnapshot {
   voxelEnabled: boolean; echoEnabled: boolean; matterEnabled: boolean; staleEnabled: boolean; tornEnabled: boolean
   voxelParams: SegVoxelParams; echoParams: SegEchoParams; matterParams: SegMatterParams
   staleParams: SegStaleParams; tornParams: SegTornParams
+  // Added later: optional so older banks and presets load (missing = off, defaults)
+  redactEnabled?: boolean; redactParams?: SegRedactParams
 }
 
 interface SegState extends SegSnapshot {
+  redactEnabled: boolean; redactParams: SegRedactParams
+  setRedactEnabled: (v: boolean) => void
+  updateRedactParams: (p: Partial<SegRedactParams>) => void
   segStatus: SegStatus
   setSegStatus: (s: SegStatus) => void
   setVoxelEnabled: (v: boolean) => void
@@ -90,8 +113,9 @@ interface SegState extends SegSnapshot {
   applySnapshot: (s: SegSnapshot | undefined) => void
 }
 
-const defaults = (): SegSnapshot => ({
+const defaults = () => ({
   voxelEnabled: false, echoEnabled: false, matterEnabled: false, staleEnabled: false, tornEnabled: false,
+  redactEnabled: false, redactParams: { ...DEFAULT_SEG_REDACT_PARAMS },
   voxelParams: { ...DEFAULT_SEG_VOXEL_PARAMS },
   echoParams: { ...DEFAULT_SEG_ECHO_PARAMS },
   matterParams: { ...DEFAULT_SEG_MATTER_PARAMS },
@@ -108,6 +132,8 @@ export const useSegStore = create<SegState>((set, get) => ({
   setMatterEnabled: (v) => set({ matterEnabled: v }),
   setStaleEnabled: (v) => set({ staleEnabled: v }),
   setTornEnabled: (v) => set({ tornEnabled: v }),
+  setRedactEnabled: (v) => set({ redactEnabled: v }),
+  updateRedactParams: (p) => set((s) => ({ redactParams: { ...s.redactParams, ...p } })),
   updateVoxelParams: (p) => set((s) => ({ voxelParams: { ...s.voxelParams, ...p } })),
   updateEchoParams: (p) => set((s) => ({ echoParams: { ...s.echoParams, ...p } })),
   updateMatterParams: (p) => set((s) => ({ matterParams: { ...s.matterParams, ...p } })),
@@ -120,6 +146,7 @@ export const useSegStore = create<SegState>((set, get) => ({
       staleEnabled: s.staleEnabled, tornEnabled: s.tornEnabled,
       voxelParams: { ...s.voxelParams }, echoParams: { ...s.echoParams }, matterParams: { ...s.matterParams },
       staleParams: { ...s.staleParams }, tornParams: { ...s.tornParams },
+      redactEnabled: s.redactEnabled, redactParams: { ...s.redactParams },
     }
   },
   // undefined (older banks/presets) resets to defaults = all disabled
@@ -134,6 +161,8 @@ export const useSegStore = create<SegState>((set, get) => ({
       matterParams: { ...d.matterParams, ...snap.matterParams },
       staleParams: { ...d.staleParams, ...snap.staleParams },
       tornParams: { ...d.tornParams, ...snap.tornParams },
+      redactEnabled: snap.redactEnabled ?? false,
+      redactParams: { ...d.redactParams, ...snap.redactParams },
     })
   },
 }))

@@ -827,6 +827,13 @@ const EFFECT_ENTRIES: Record<string, EffectEntry> = {
       S.seg.setTornEnabled(!S.seg.tornEnabled)
     },
   },
+  seg_redact: {
+    active: () => S.seg.redactEnabled,
+    toggle: (effectId) => {
+      if (!S.seg.redactEnabled) moveToEndOfChain(effectId)
+      S.seg.setRedactEnabled(!S.seg.redactEnabled)
+    },
+  },
 }
 
 /** Lean enabled-flag lookup: reads only the one store the effect lives in. */

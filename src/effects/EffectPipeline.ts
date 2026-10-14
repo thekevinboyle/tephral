@@ -88,6 +88,8 @@ import {
 } from './glitch-engine'
 import { TraceMaskPass, type TraceMaskConsumer, type TraceMaskJob } from './glitch-engine/TraceMaskPass'
 import { SegmentationService } from './vision/SegmentationService'
+import { PersonDetectionService } from './vision/PersonDetectionService'
+import { SegRedactEffect } from './glitch-engine/SegRedactEffect'
 import { FaceHudEffect } from './morph'
 
 // Trackers: they only make masks for other effects' Mask dropdowns, so they are never chain passes
@@ -162,11 +164,14 @@ export class EffectPipeline {
   physarum: PhysarumEffect | null = null
   // SEG_EXP effects + their shared person segmentation
   segmentation: SegmentationService = new SegmentationService()
+  /** People and faces (boxes, tracked), for Redact and Face lock. */
+  detection: PersonDetectionService = new PersonDetectionService()
   segVoxel: SegVoxelEffect | null = null
   segEcho: SegEchoEffect | null = null
   segMatter: SegMatterEffect | null = null
   segStale: SegStaleEffect | null = null
   segTorn: SegTornEffect | null = null
+  segRedact: SegRedactEffect | null = null
 
   // ACID overlay effects (Phase 3 GPU port)
   acidMirror: AcidMirrorEffect | null = null
@@ -330,6 +335,9 @@ export class EffectPipeline {
     this.segVoxel.setSegmentation(this.segmentation)
     this.segEcho.setSegmentation(this.segmentation)
     this.segMatter.setSegmentation(this.segmentation)
+    this.segRedact = new SegRedactEffect()
+    this.segRedact.setSegmentation(this.segmentation)
+    this.segRedact.setDetection(this.detection)
 
     // ACID overlay effects (Phase 3 GPU port)
     this.acidMirror = new AcidMirrorEffect()
@@ -420,6 +428,7 @@ export class EffectPipeline {
       case 'seg_matter': return this.segMatter
       case 'seg_stale': return this.segStale
       case 'seg_torn': return this.segTorn
+      case 'seg_redact': return this.segRedact
       // ACID overlay effects (Phase 3 GPU port)
       case 'acid_mirror': return this.acidMirror
       case 'acid_ripple': return this.acidRipple
@@ -513,6 +522,7 @@ export class EffectPipeline {
     segMatterEnabled: boolean
     segStaleEnabled: boolean
     segTornEnabled: boolean
+    segRedactEnabled?: boolean
     // ACID overlay effects (Phase 3 GPU port) — rendered as GPU passes via
     // getEffectById below. AcidOverlay.tsx no longer dispatches any of
     // these (it only owns decomp + the already-GPU cloud/slit/voronoi).
@@ -614,6 +624,7 @@ export class EffectPipeline {
       seg_matter: config.segMatterEnabled,
       seg_stale: config.segStaleEnabled,
       seg_torn: config.segTornEnabled,
+      seg_redact: !!config.segRedactEnabled,
       // ACID overlay effects (Phase 3 GPU port)
       acid_mirror: config.mirrorEnabled,
       acid_ripple: config.rippleEnabled,
@@ -709,9 +720,11 @@ export class EffectPipeline {
     // all (raw store flags); bypass/solo/kill/slicer only pause the tick
     // loop so the last mask survives an un-bypass without a model reload.
     this.segmentation.setPaused(
-      config.bypassActive || !(enabledMap['seg_voxel'] || enabledMap['seg_echo'] || enabledMap['seg_matter'])
+      config.bypassActive || !(enabledMap['seg_voxel'] || enabledMap['seg_echo'] || enabledMap['seg_matter'] || enabledMap['seg_redact'])
     )
     this.segmentation.setWanted(config.segWanted)
+    // The person and face detectors run only while an effect that reads them is in the chain
+    this.detection.setWanted(!!enabledMap['seg_redact'] && !config.bypassActive, false)
 
     // Compute the active chain (empty when bypassed). Deduped via Set so a
     // duplicate id in effectOrder can't add the same cached EffectPass twice.
@@ -929,6 +942,7 @@ export class EffectPipeline {
     this.segMatter?.setResolution(this.canvasWidth, this.canvasHeight)
     this.segStale?.setResolution(this.canvasWidth, this.canvasHeight)
     this.segTorn?.setResolution(this.canvasWidth, this.canvasHeight)
+    this.segRedact?.setResolution(this.canvasWidth, this.canvasHeight)
   }
 
   private updateQuadScale() {
@@ -1103,6 +1117,8 @@ export class EffectPipeline {
     this.segStale?.dispose()
     this.segTorn?.dispose()
     this.segmentation.dispose()
+    this.segRedact?.dispose()
+    this.detection.dispose()
     // ACID overlay effects (Phase 3 GPU port)
     this.acidMirror?.dispose()
     this.acidRipple?.dispose()

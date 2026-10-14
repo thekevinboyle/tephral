@@ -184,11 +184,16 @@ export function useUnifiedAudioAnalysis() {
           if (!audioFileUrl) return
           const audio = new Audio(audioFileUrl)
           audio.loop = true
+          // No autoplay: the file waits for play (header or Space), unless the master transport is already running
           try {
-            await audio.play()
-            console.log('[UnifiedAudio] audio.play() succeeded')
+            if (useEffectSequencerStore.getState().isPlaying) await audio.play()
+            else await new Promise<void>((resolve, reject) => {
+              if (audio.readyState >= 1) { resolve(); return }
+              audio.addEventListener('loadedmetadata', () => resolve(), { once: true })
+              audio.addEventListener('error', () => reject(audio.error), { once: true })
+            })
           } catch (err) {
-            console.warn('[UnifiedAudio] Failed to play audio file:', err)
+            console.warn('[UnifiedAudio] Failed to load audio file:', err)
             return
           }
           if (cancelled) {

@@ -4,9 +4,8 @@ import { PlayIcon, PauseIcon, LoopIcon } from '../ui/DotMatrixIcons'
 import { useMediaStore } from '../../stores/mediaStore'
 import { useRecordingStore } from '../../stores/recordingStore'
 import { useAudioSourceStore } from '../../stores/audioSourceStore'
-import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useUIStore } from '../../stores/uiStore'
-import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
+import { resetAutomationEffects } from '../../hooks/useAutomationPlayback'
 import { useMediaSource } from '../../hooks/useMediaSource'
 import { useAudioFileDrop } from '../../hooks/useAudioFileDrop'
 
@@ -49,8 +48,9 @@ function PlayButton({ playing, disabled, onClick, label, attr }: { playing: bool
       data-on={playing || undefined}
       onClick={onClick}
       disabled={disabled}
-      aria-label={playing ? `Pause ${label}` : `Play ${label}`}
-      title={playing ? `Pause ${label}` : `Play ${label}`}
+      aria-label={playing ? `Pause ${label}` : `Preview ${label}`}
+      title={playing ? `Pause ${label}` : `Preview the ${label} on its own (the header's play runs everything)`}
+      {...hint(`Preview the ${label} on its own. The header's play (or Space) runs everything together`)}
       {...attr}
     >
       {playing ? <PauseIcon size={11} color="currentColor" /> : <PlayIcon size={11} color="currentColor" />}
@@ -111,7 +111,6 @@ const VideoLane = memo(function VideoLane() {
     isRecording: s.isRecording, isPlaying: s.isPlaying, duration: s.duration, currentTime: s.currentTime,
     thumbnails: s.thumbnails, play: s.play, pause: s.pause, seek: s.seek,
   })))
-  const { resetEffects } = useAutomationPlayback()
   const { openFilePicker } = useMediaSource()
 
   const recordingMode = rec.duration > 0 && !rec.isRecording
@@ -179,14 +178,15 @@ const VideoLane = memo(function VideoLane() {
     return () => ro.disconnect()
   }, [thumbs])
 
+  // Preview: this lane only. The header's play (and Space) runs everything together.
   const togglePlay = useCallback(() => {
-    const seq = useEffectSequencerStore.getState()
+    const v = useMediaStore.getState().videoElement
     if (recordingMode) {
-      if (rec.isPlaying) { rec.pause(); seq.stop() } else { if (rec.currentTime === 0) resetEffects(); rec.play(); seq.play() }
-    } else if (videoElement) {
-      if (videoElement.paused) { videoElement.play().catch(console.error); seq.play() } else { videoElement.pause(); seq.stop() }
+      if (rec.isPlaying) rec.pause(); else { if (rec.currentTime === 0) resetAutomationEffects(); rec.play() }
+    } else if (v) {
+      if (v.paused) v.play().catch(console.error); else v.pause()
     }
-  }, [recordingMode, rec, resetEffects, videoElement])
+  }, [recordingMode, rec])
 
   const seekTo = (clientX: number, el: HTMLElement) => {
     const r = el.getBoundingClientRect()

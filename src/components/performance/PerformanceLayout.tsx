@@ -27,8 +27,21 @@ import { DestructionOverlay } from '../DestructionOverlay'
 import { StatusBar } from './StatusBar'
 import { ShellDrawers } from './ShellDrawers'
 import { useUIStore } from '../../stores/uiStore'
+import { linkedToggle } from '../../utils/sequencerTransport'
+import { isInteractiveKeyTarget } from '../../utils/keyboard'
 
 export function PerformanceLayout() {
+  // Space plays and stops the master transport anywhere in the app (not while typing or on a focused control)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== ' ' || e.repeat || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || isInteractiveKeyTarget(e.target)) return
+      e.preventDefault()
+      linkedToggle()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const canvasRef = useRef<CanvasHandle>(null)
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null)
 

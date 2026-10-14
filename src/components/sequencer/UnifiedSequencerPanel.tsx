@@ -160,12 +160,6 @@ export function UnifiedSequencerPanel() {
       const state = useEffectSequencerStore.getState()
 
       switch (e.key) {
-        case ' ': {
-          e.preventDefault()
-          if (state.isPlaying) linkedStop()
-          else linkedPlay()
-          break
-        }
         case 'Escape': {
           if (e.defaultPrevented) break // already handled (e.g. cancelled a routing assignment)
           state.clearSelection()

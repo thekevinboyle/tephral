@@ -29,7 +29,8 @@ export function useMediaSource() {
   } = useMediaStore()
 
   const { isRecording, setSource: setRecordingSource } = useRecordingStore()
-  const { setEnabled: setSlicerEnabled } = useSlicerStore()
+  const setSlicerEnabled = useSlicerStore((s) => s.setEnabled)
+  const slicerEnabled = useSlicerStore((s) => s.enabled)
 
   // Check if source switch is allowed
   const switchCheck = useCallback(() => {
@@ -47,9 +48,6 @@ export function useMediaSource() {
     try {
       setIsLoading(true)
       setError(null)
-
-      // Stop slicer if active
-      setSlicerEnabled(false)
 
       // Stop current source
       switchSource('webcam')
@@ -82,7 +80,7 @@ export function useMediaSource() {
       setSource('none')
       return false
     }
-  }, [canSwitchSource, switchSource, setVideoElement, setIsLoading, setError, setIsPlaying, setSource, setRecordingSource, setSlicerEnabled])
+  }, [canSwitchSource, switchSource, setVideoElement, setIsLoading, setError, setIsPlaying, setSource, setRecordingSource])
 
   // Deactivate webcam
   const deactivateWebcam = useCallback(() => {
@@ -117,9 +115,6 @@ export function useMediaSource() {
     try {
       setIsLoading(true)
       setError(null)
-
-      // Stop slicer if active
-      setSlicerEnabled(false)
 
       // Stop current source
       switchSource('file')
@@ -169,35 +164,17 @@ export function useMediaSource() {
       setSource('none')
       return false
     }
-  }, [canSwitchSource, switchSource, setVideoElement, setImageElement, setIsLoading, setError, setIsPlaying, setSource, setRecordingSource, setSlicerEnabled])
+  }, [canSwitchSource, switchSource, setVideoElement, setImageElement, setIsLoading, setError, setIsPlaying, setSource, setRecordingSource])
 
-  // Activate slicer mode
+  // The slicer works on the current source (it never replaces it), so turning it on or off leaves the source alone
   const activateSlicer = useCallback(() => {
-    const check = canSwitchSource()
-    if (!check.allowed) {
-      setError(check.reason || 'Cannot switch source')
-      return false
-    }
-
-    // Stash current source before switching to slicer
-    useMediaStore.getState().stashCurrentSource()
-
     setSlicerEnabled(true)
-    setSource('slicer')
-
     return true
-  }, [canSwitchSource, setSlicerEnabled, setSource, setError])
+  }, [setSlicerEnabled])
 
-  // Deactivate slicer and restore previous source
   const deactivateSlicer = useCallback(() => {
     setSlicerEnabled(false)
-
-    // Try to restore stashed source
-    const restored = useMediaStore.getState().restoreStashedSource()
-    if (!restored) {
-      setSource('none')
-    }
-  }, [setSlicerEnabled, setSource])
+  }, [setSlicerEnabled])
 
   // Deactivate all sources
   const deactivateSource = useCallback(() => {
@@ -225,9 +202,6 @@ export function useMediaSource() {
     try {
       setIsLoading(true)
       setError(null)
-
-      // Stop slicer if active
-      setSlicerEnabled(false)
 
       // Clean up any previous cropped capture
       if (croppedCaptureRef.current) {
@@ -305,7 +279,7 @@ export function useMediaSource() {
       setIsLoading(false)
       return false
     }
-  }, [canSwitchSource, switchSource, setVideoElement, setIsLoading, setError, setIsPlaying, setSlicerEnabled])
+  }, [canSwitchSource, switchSource, setVideoElement, setIsLoading, setError, setIsPlaying])
 
   // Apply a crop region to the current screen capture
   const cropScreenCapture = useCallback(async (crop: CropRegion) => {
@@ -368,7 +342,7 @@ export function useMediaSource() {
   const isWebcamActive = source === 'webcam'
   const isFileActive = source === 'file'
   const isScreenActive = source === 'screen'
-  const isSlicerActive = source === 'slicer'
+  const isSlicerActive = slicerEnabled
   const hasActiveSource = source !== 'none'
 
   return {

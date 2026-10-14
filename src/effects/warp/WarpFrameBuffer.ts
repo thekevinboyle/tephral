@@ -40,12 +40,15 @@ export const makeTarget = (w: number, h: number) => new THREE.WebGLRenderTarget(
   depthBuffer: false, stencilBuffer: false, generateMipmaps: false,
 })
 
-export function frameSizeFor(aspect: number): [number, number] {
+export function frameSizeFor(aspect: number, longSide = WARP_FRAME_LONG_SIDE): [number, number] {
   const a = Number.isFinite(aspect) && aspect > 0 ? aspect : 16 / 9
   return a >= 1
-    ? [WARP_FRAME_LONG_SIDE, Math.max(1, Math.round(WARP_FRAME_LONG_SIDE / a))]
-    : [Math.max(1, Math.round(WARP_FRAME_LONG_SIDE * a)), WARP_FRAME_LONG_SIDE]
+    ? [longSide, Math.max(1, Math.round(longSide / a))]
+    : [Math.max(1, Math.round(longSide * a)), longSide]
 }
+
+/** Frame size and ring limit; the warp uses the defaults, the slicer keeps larger frames for longer. */
+export interface FrameBufferOptions { longSide?: number; maxFrames?: number }
 
 /**
  * GPU ring of downscaled frames with capture timestamps (seconds on the warp clock).
@@ -65,9 +68,13 @@ export class WarpFrameBuffer {
   private lastT = -Infinity
   private readonly copy: THREE.ShaderMaterial
   private readonly quad: QuadPass
+  private readonly longSide: number
+  readonly maxFrames: number
 
-  constructor(quad: QuadPass) {
+  constructor(quad: QuadPass, opts: FrameBufferOptions = {}) {
     this.quad = quad
+    this.longSide = opts.longSide ?? WARP_FRAME_LONG_SIDE
+    this.maxFrames = opts.maxFrames ?? WARP_MAX_FRAMES
     this.copy = new THREE.ShaderMaterial({
       uniforms: { tSrc: { value: null } }, vertexShader: WARP_VERTEX, fragmentShader: WARP_COPY_FRAG,
       depthTest: false, depthWrite: false,
@@ -94,8 +101,8 @@ export class WarpFrameBuffer {
    * `capacity` caps the ring (frames); a smaller value than before frees the oldest targets.
    */
   capture(renderer: THREE.WebGLRenderer, live: THREE.Texture, t: number, aspect: number, capacity: number): boolean {
-    const cap = Math.max(1, Math.min(WARP_MAX_FRAMES, Math.floor(capacity)))
-    const [w, h] = frameSizeFor(aspect)
+    const cap = Math.max(1, Math.min(this.maxFrames, Math.floor(capacity)))
+    const [w, h] = frameSizeFor(aspect, this.longSide)
     if (w !== this.width || h !== this.height) { this.release(); this.width = w; this.height = h }
     if (t < this.lastT || t - this.lastT > MAX_GAP_SECONDS) this.clear()
     this.shrinkTo(cap)

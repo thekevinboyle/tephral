@@ -10,7 +10,7 @@ import { readModBase } from '../effects/trackBandModulation'
 import { captureUserMix, clearGates, clearLines, clearMaster, gateOpenLevel, getMasterLevel, isGateOpen, isLineActive, releaseGate, releaseLine, setGateOpen, setLineLevel, setMasterLevel } from '../effects/mixModulation'
 import { lineLevel, linePlay, lineSeed } from '../effects/lines/lineLevel'
 import { MASTER_SEED, playPosition } from '../effects/playhead'
-import { clearLinePhases, deleteLinePhase, noteLinePass, setLinePos, setMasterPos } from '../effects/lines/linePhase'
+import { clearLinePhases, deleteLinePhase, noteLinePass, setLinePos, setMasterPos, setTransportBeats } from '../effects/lines/linePhase'
 
 // A line with every field (an older line lacks amount, beats and gridY); the phase of a `len`-beat loop at beat `b`
 const lineOf = (l: TrackLine | undefined): TrackLine => (l && l.amount !== undefined && l.beats !== undefined && l.gridY !== undefined ? l : { ...defaultTrackLine(), ...l })
@@ -323,6 +323,7 @@ export function useEffectSequencerPlayback() {
       lastFrameTime.current = timestamp
       // The store's bpm (not the closure's), so a mid-play BPM change bends the beat count without a jump
       beats.current += (Math.max(0, dt) * 1000 * useEffectSequencerStore.getState().bpm) / 60000 // first frame can be < 0
+      setTransportBeats(beats.current)
 
       // Auto-enable audio reactive analysis when any track uses it
       const anyAudioReactive = trackList.some((t) => t.audioReactive.enabled)

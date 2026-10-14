@@ -1,19 +1,17 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { SlicerTransport } from './SlicerTransport'
 import { SlicerWaveform } from './SlicerWaveform'
 import { SlicerControls } from './SlicerControls'
 import { useSlicerStore } from '../../stores/slicerStore'
-import { useSlicerBufferStore } from '../../stores/slicerBufferStore'
 import { useClipStore } from '../../stores/clipStore'
-import { useSlicerPlayback } from '../../hooks/useSlicerPlayback'
+import { addSlicerViewer, slicerCommands } from '../../effects/slicer/slicerRuntime'
 
 export function SlicerPanel() {
   const { setCaptureState, setImportedClipId, enabled, setEnabled } = useSlicerStore()
-  const { importFrames } = useSlicerBufferStore()
   const { clips } = useClipStore()
 
-  // Initialize the slicer playback engine
-  useSlicerPlayback()
+  // The engine runs in Canvas's render loop; while this panel is open the buffer fills, ready for the slicer
+  useEffect(() => addSlicerViewer(), [])
 
   const [isDragOver, setIsDragOver] = useState(false)
 
@@ -42,11 +40,11 @@ export function SlicerPanel() {
     if (!clip || clip.frames.length === 0) return
 
     // Instant - frames already extracted
-    importFrames(clip.frames)
+    slicerCommands.importFrames = clip.frames
     setCaptureState('imported')
     setImportedClipId(clipId)
     setEnabled(true) // Auto-enable slicer when clip is imported
-  }, [clips, importFrames, setCaptureState, setImportedClipId, setEnabled])
+  }, [clips, setCaptureState, setImportedClipId, setEnabled])
 
   return (
     <div

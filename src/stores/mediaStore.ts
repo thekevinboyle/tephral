@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { useRecordingStore } from './recordingStore'
 
-export type MediaSource = 'none' | 'webcam' | 'file' | 'slicer' | 'screen'
+export type MediaSource = 'none' | 'webcam' | 'file' | 'screen'
 
 interface MediaState {
   source: MediaSource

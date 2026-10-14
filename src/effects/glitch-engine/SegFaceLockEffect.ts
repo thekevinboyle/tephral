@@ -209,6 +209,9 @@ export class SegFaceLockEffect extends Effect {
     ctx.strokeStyle = '#f4f4f4'
     ctx.fillStyle = '#f4f4f4'
     ctx.lineWidth = lw
+    // A dark halo keeps thin lines and text readable over busy looks (zebra, slick)
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)'
+    ctx.shadowBlur = Math.max(2, lw * 2.5)
 
     const main = this.shown[0]
     if (this.p.box > 0.5) {
@@ -272,6 +275,7 @@ export class SegFaceLockEffect extends Effect {
       line(cw - m - rw, ch - m - fs * 1.45 * rows.length, rows)
     }
     ctx.globalAlpha = 1
+    ctx.shadowBlur = 0
     this.overlay.needsUpdate = true
   }
 

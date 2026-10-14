@@ -168,7 +168,7 @@ export class SegFaceLockEffect extends Effect {
       const f = this.shown[i]
       if (!f || i >= this.p.insets) { this.modes[i] = -1; continue }
       // Room for the two text lines under each crop
-      const gap = (Math.min(W, H) * 0.017 * 3.6) / H
+      const gap = (Math.min(W, H) * 0.015 * 3.6) / H
       const y0 = top + i * (ih + gap)
       this.insetRects[i].set(left, 1 - (y0 + ih), left + iw, 1 - y0)
       // A square crop around the face, `zoom` face-heights tall, kept inside the frame
@@ -201,7 +201,7 @@ export class SegFaceLockEffect extends Effect {
     const show = this.p.box > 0.5 || this.p.hud > 0.5
     this.uniforms.get('hasOverlay')!.value = show ? 1 : 0
     if (!show) { this.overlay.needsUpdate = true; return }
-    const fs = Math.max(8, Math.round(short * 0.017))
+    const fs = Math.max(8, Math.round(short * 0.015))
     const lw = Math.max(1, short / 700)
     ctx.font = `${fs}px "IBM Plex Mono", ui-monospace, monospace`
     ctx.textBaseline = 'top'
@@ -215,7 +215,9 @@ export class SegFaceLockEffect extends Effect {
       for (let i = 0; i < INSETS; i++) {
         const f = this.shown[i]
         if (!f) continue
-        const bx = f.x * cw, by = f.y * ch, bw = f.w * cw, bh = f.h * ch
+        // The bracket takes in head and shoulders: a square about twice the face, set a little low
+        const side = Math.max(f.w * cw, f.h * ch) * 2.1
+        const bx = (f.x + f.w / 2) * cw - side / 2, by = (f.y + f.h / 2) * ch - side * 0.42, bw = side, bh = side
         // Bracket: a thin box with heavier corners
         ctx.strokeRect(bx, by, bw, bh)
         const k = Math.min(bw, bh) * 0.18

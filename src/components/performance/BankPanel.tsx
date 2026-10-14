@@ -1,7 +1,5 @@
 import { useCallback, useState, useRef, useEffect } from 'react'
-import { Button } from '../ui/Button'
 import { BankButton } from './BankButton'
-import { ShuffleIcon } from '../ui/DotMatrixIcons'
 import { useUIStore } from '../../stores/uiStore'
 import { getUIStatusText } from '../../config/statusDescriptions'
 import { useBankStore } from '../../stores/bankStore'
@@ -12,6 +10,30 @@ import { useContourStore } from '../../stores/contourStore'
 import { useLandmarksStore } from '../../stores/landmarksStore'
 
 const BANK_LABELS = ['A', 'B', 'C', 'D'] as const
+
+/** A die showing five: reads as "random" at 16 px, drawn with the stroke weight of the app's other icons. */
+function DiceIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="1.75" y="1.75" width="12.5" height="12.5" rx="2.5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="5.25" cy="5.25" r="1.15" fill="currentColor" />
+      <circle cx="10.75" cy="5.25" r="1.15" fill="currentColor" />
+      <circle cx="8" cy="8" r="1.15" fill="currentColor" />
+      <circle cx="5.25" cy="10.75" r="1.15" fill="currentColor" />
+      <circle cx="10.75" cy="10.75" r="1.15" fill="currentColor" />
+    </svg>
+  )
+}
+
+/** Curved arrow back: undo, in the same 16 px stroke style as the die. */
+function UndoArrowIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M5.5 3.5 2.5 6.5l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 6.5h6.25a3.75 3.75 0 0 1 0 7.5H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 const RANDOMIZABLE_EFFECTS = [
   'rgb_split', 'block_displace', 'scan_lines', 'noise',
@@ -233,14 +255,7 @@ export function BankPanel() {
   }, [restoreState, isRektLocked])
 
   return (
-    <div
-      className="h-full w-full grid items-center"
-      style={{
-        gridTemplateColumns: 'repeat(4, minmax(0, 1fr)) repeat(3, minmax(0, 1.2fr))',
-        gap: 6,
-        padding: '8px 14px',
-      }}
-    >
+    <div className="seg-banks">
       {/* Bank buttons */}
       {BANK_LABELS.map((label, index) => (
         <span key={label} data-bank-slot className="h-full min-w-0 block">
@@ -256,16 +271,18 @@ export function BankPanel() {
         </span>
       ))}
 
+      <span className="seg-banks-divider" aria-hidden="true" />
+
       {/* Action buttons */}
       <span data-bank-slot onMouseEnter={() => setStatusText(getUIStatusText('randomize'))} onMouseLeave={() => setStatusText(null)} className="h-full min-w-0 block">
-        <Button size="lg" className="h-full w-full" onClick={handleRandom} title="Randomize effects" aria-label="Randomize effects">
-          <ShuffleIcon size={16} />
-        </Button>
+        <button className="seg-bank-act" onClick={handleRandom} title="Randomize effects" aria-label="Randomize effects">
+          <DiceIcon />
+        </button>
       </span>
       <span data-bank-slot onMouseEnter={() => setStatusText(getUIStatusText('undo'))} onMouseLeave={() => setStatusText(null)} className="h-full min-w-0 block">
-        <Button size="lg" className="h-full w-full" style={{ padding: 0, fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-sans)', textTransform: 'none', letterSpacing: 0 }} onClick={handleUndo} disabled={!hasPreviousState} aria-label="Undo randomize" title="Undo the last randomize">
-          Undo
-        </Button>
+        <button className="seg-bank-act" onClick={handleUndo} disabled={!hasPreviousState} aria-label="Undo randomize" title="Undo the last randomize">
+          <UndoArrowIcon />
+        </button>
       </span>
       <span data-bank-slot className="h-full min-w-0 block">
         <button
@@ -273,16 +290,12 @@ export function BankPanel() {
           onPointerUp={handleRektUp}
           onPointerLeave={isRektLocked ? undefined : handleRektUp}
           onPointerCancel={isRektLocked ? undefined : handleRektUp}
-          onMouseEnter={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'var(--bg-hover)'); setStatusText(getUIStatusText('rekt')) }}
-          onMouseLeave={(e) => { !isRekt && (e.currentTarget.style.backgroundColor = 'transparent'); setStatusText(null) }}
-          className="h-full text-[11px] font-medium transition-all select-none touch-none active:scale-95"
+          onMouseEnter={() => setStatusText(getUIStatusText('rekt'))}
+          onMouseLeave={() => setStatusText(null)}
+          className="seg-bank-act select-none touch-none active:scale-95"
+          data-on={isRekt || undefined}
           aria-label="Rekt chaos mode"
           style={{
-            width: '100%',
-            fontFamily: 'var(--font-sans)',
-            backgroundColor: isRekt ? '#FFFFFF' : 'transparent',
-            border: isRekt ? '1px solid #FFFFFF' : '1px solid var(--border)',
-            color: isRekt ? '#000000' : 'var(--text-muted)',
             animation: isRektLocked ? (rektFlashOn ? undefined : 'hud-blink 0.5s step-end infinite') : undefined,
           }}
           title={isRektLocked ? 'Click to unlock' : 'Hold or tap to lock'}

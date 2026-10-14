@@ -406,6 +406,17 @@
 .seg-stage-drop[data-ok] { border-color: var(--live); }
 .seg-stage-drop span { font: 500 13px var(--font-sans); color: var(--text-primary); background: var(--bg-surface); padding: 6px 12px; border-radius: var(--radius-ctrl); }
 .seg-stage-drop:not([data-ok]) span { color: var(--text-secondary); }
+/* ─── Bank row under the browser: banks A–D | randomize, undo, rekt ─────────────────────────────────── */
+.seg-banks { height: 100%; width: 100%; display: grid; align-items: stretch; gap: 5px; padding: 8px 12px; box-sizing: border-box;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) 1px repeat(3, minmax(0, 1.15fr)); }
+.seg-banks-divider { width: 1px; margin: 4px 2px; background: var(--border-emphasis); }
+.seg-bank-act { width: 100%; height: 100%; display: grid; place-items: center; padding: 0; border-radius: var(--radius-ctrl);
+  border: 1px solid var(--border-emphasis); background: var(--bg-surface); color: var(--text-secondary);
+  font: 500 11px var(--font-sans); cursor: pointer; transition: background-color var(--dur-quick, 120ms), color var(--dur-quick, 120ms); }
+.seg-bank-act:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-primary); }
+.seg-bank-act:disabled { opacity: .4; cursor: default; }
+.seg-bank-act[data-on] { background: var(--text-primary); border-color: var(--text-primary); color: var(--bg-void); }
+
 /* ─── Media strip under the stage: video lane and audio lane, always both ─────────────────────────── */
 .seg-media { display: grid; gap: 6px; padding: 8px 10px; background: var(--bg-primary); border-top: 1px solid var(--border); }
 .seg-media-row { display: grid; grid-template-columns: 172px minmax(0, 1fr) auto 24px; align-items: center; gap: 10px; }

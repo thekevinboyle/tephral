@@ -18,11 +18,16 @@ export const TIER_LIMITS: Record<PerfTier, {
   detectMs: number
   headPasses: number
   segMs: number
+  /** Long side of the frame the person/face detectors look at. */
+  detectSide: number
   /** While recording, the drawing buffer's long side is at least this (720p), however small the stage is on screen. */
   recordLongSide: number
+  /** Most bits a second a recording may use (a phone's takes stay around 45 MB a minute). */
+  recordBitrate: number
 }> = {
-  full: { renderLongSide: Infinity, fps: 0, warpLongSide: 512, warpMaxFrames: 240, slicerLongSide: 768, slicerMaxFrames: 300, detectMs: 66, headPasses: 3, segMs: 33, recordLongSide: 1280 },
-  mobile: { renderLongSide: 720, fps: 30, warpLongSide: 384, warpMaxFrames: 120, slicerLongSide: 480, slicerMaxFrames: 150, detectMs: 200, headPasses: 1, segMs: 100, recordLongSide: 1280 },
+  full: { renderLongSide: Infinity, fps: 0, warpLongSide: 512, warpMaxFrames: 240, slicerLongSide: 768, slicerMaxFrames: 300, detectMs: 66, headPasses: 3, segMs: 33, detectSide: 512, recordLongSide: 1280, recordBitrate: Infinity },
+  // Measured on an iPhone: vision every 200 ms held ~24 fps and slowed as the phone warmed, so it runs lighter still
+  mobile: { renderLongSide: 720, fps: 30, warpLongSide: 384, warpMaxFrames: 120, slicerLongSide: 480, slicerMaxFrames: 150, detectMs: 333, headPasses: 1, segMs: 150, detectSide: 384, recordLongSide: 1280, recordBitrate: 6_000_000 },
 }
 
 const KEY = 'seg.tier'

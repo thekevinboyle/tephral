@@ -1,0 +1,80 @@
+/* ─── Phone layout (under 700 px wide): stage, chips, Steps | Pad, transport ─────────────────────────── */
+.seg-phone { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg-primary); color: var(--text-primary);
+  font-family: var(--font-sans); padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left); overflow: hidden; }
+.seg-phone-stage { position: relative; flex: 0 0 auto; height: 42vh; min-height: 220px; margin: 8px 8px 0; container-type: size;
+  display: flex; align-items: center; justify-content: center; }
+.seg-phone-frame { position: relative; max-width: 100%; max-height: 100%; border-radius: 10px; overflow: hidden; background: #000; }
+.seg-phone-source { position: absolute; left: 8px; top: 8px; display: flex; gap: 6px; z-index: 20; }
+.seg-phone-source button { height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, .25); background: rgba(0, 0, 0, .55);
+  color: var(--text-primary); font: 600 12px var(--font-sans); backdrop-filter: blur(6px); }
+.seg-phone-source button[data-on] { background: var(--text-primary); color: var(--bg-void); border-color: var(--text-primary); }
+
+.seg-phone-chips { flex: none; display: flex; gap: 6px; padding: 10px 8px 6px; overflow-x: auto; scrollbar-width: none; }
+.seg-phone-chips::-webkit-scrollbar { display: none; }
+.seg-phone-chip { flex: none; height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid var(--text-muted); background: var(--bg-elevated);
+  display: flex; align-items: center; gap: 7px; font: 600 13px var(--font-sans); color: var(--text-primary); }
+.seg-phone-chip i { width: 9px; height: 9px; border-radius: 50%; }
+.seg-phone-chip[data-off] { background: var(--bg-surface); border-color: var(--border-emphasis); color: var(--text-muted); }
+.seg-phone-chip[data-off] i { opacity: .35; }
+.seg-phone-add { width: 34px; padding: 0; justify-content: center; font-size: 18px; border-color: var(--border-emphasis); background: var(--bg-surface); }
+
+.seg-phone-views { flex: none; display: flex; margin: 4px 8px 8px; background: var(--bg-void); border: 1px solid var(--border); border-radius: 9px; padding: 3px; }
+.seg-phone-views button { flex: 1; height: 32px; border: 0; border-radius: 7px; background: transparent; color: var(--text-muted); font: 600 14px var(--font-sans); }
+.seg-phone-views button[aria-selected="true"] { background: var(--bg-elevated); color: var(--text-primary); }
+
+.seg-phone-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 8px; display: flex; flex-direction: column; }
+.seg-phone-tracks { display: grid; gap: 8px; }
+.seg-phone-track { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 8px; align-items: center; }
+.seg-phone-tname { display: flex; align-items: center; gap: 7px; min-width: 0; height: 40px; padding: 0; border: 0; background: transparent; color: var(--text-primary);
+  font: 600 12px var(--font-sans); text-align: left; }
+.seg-phone-tname i { width: 4px; height: 28px; border-radius: 2px; flex: none; }
+.seg-phone-tname span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seg-phone-tname small { display: block; font: 500 9.5px var(--font-mono); color: var(--text-muted); }
+.seg-phone-steps { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 3px; height: 40px; }
+.seg-phone-steps button { border: 1px solid var(--border-emphasis); border-radius: 4px; background: var(--bg-void); padding: 0; min-width: 0; }
+.seg-phone-steps button[data-on] { border-color: transparent; }
+.seg-phone-steps button[data-head] { outline: 2px solid var(--live); outline-offset: -1px; }
+.seg-phone-steps button:nth-child(4n + 1):not([data-on]) { background: var(--bg-surface); }
+.seg-phone-line { width: 100%; height: 40px; border-radius: 4px; background: var(--bg-void); }
+.seg-phone-empty { color: var(--text-muted); font-size: 13px; text-align: center; margin: 24px 0; }
+
+/* The Pad view reused: pad above its controls */
+.seg-phone .seg-pad { padding: 0; }
+.seg-phone .seg-pad-main { flex-direction: column; }
+.seg-phone .seg-pad-area { width: 100%; max-width: none; height: auto; aspect-ratio: 4 / 3; flex: none; }
+.seg-phone .seg-pad-side { flex: none; min-width: 0; }
+
+.seg-phone-transport { flex: none; display: flex; align-items: center; gap: 10px; padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border); background: var(--bg-primary); }
+.seg-phone-play { width: 48px; height: 48px; border-radius: 12px; border: 0; background: var(--live); color: var(--bg-void); display: grid; place-items: center; }
+.seg-phone-play[data-on] { background: var(--text-primary); }
+.seg-phone-bpm { display: flex; align-items: center; gap: 4px; }
+.seg-phone-bpm span { font: 500 18px var(--font-mono); min-width: 58px; text-align: center; }
+.seg-phone-bpm small { display: block; font: 600 9px var(--font-sans); color: var(--text-muted); letter-spacing: .08em; }
+.seg-phone-bpm button { width: 32px; height: 32px; border-radius: 16px; border: 1px solid var(--border-emphasis); background: var(--bg-surface); color: var(--text-primary); font-size: 18px; }
+.seg-phone-rec { margin-left: auto; height: 38px; padding: 0 14px; border-radius: 19px; border: 1px solid var(--rec); background: transparent; color: var(--rec); font: 700 13px var(--font-sans); }
+.seg-phone-rec[data-on] { background: var(--rec); color: var(--text-primary); }
+.seg-phone-rec:disabled, .seg-phone-share:disabled { opacity: .35; }
+.seg-phone-share { width: 38px; height: 38px; border-radius: 19px; border: 1px solid var(--border-emphasis); background: transparent; color: var(--text-secondary); display: grid; place-items: center; }
+
+.seg-phone-sheet { position: fixed; inset: 0; z-index: 900; display: flex; flex-direction: column; background: var(--bg-primary);
+  padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+.seg-phone-sheet-head { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--border);
+  font: 600 16px var(--font-sans); }
+.seg-phone-sheet-head button { height: 34px; padding: 0 14px; border-radius: 17px; border: 0; background: var(--live); color: var(--bg-void); font: 700 14px var(--font-sans); }
+.seg-phone-sheet-body { flex: 1; min-height: 0; overflow: auto; }
+
+.seg-phone-fx { padding: 8px 10px 20px; display: grid; gap: 2px; }
+.seg-phone-fx-search { height: 40px; border-radius: 10px; border: 1px solid var(--border-emphasis); background: var(--bg-surface); color: var(--text-primary);
+  font: 15px var(--font-sans); padding: 0 12px; margin-bottom: 8px; }
+.seg-phone-fx-cat { width: 100%; height: 44px; display: flex; align-items: center; justify-content: space-between; border: 0; background: transparent;
+  color: var(--text-primary); font: 600 15px var(--font-sans); padding: 0 4px; }
+.seg-phone-fx-cat small { font: 12px var(--font-mono); color: var(--text-muted); }
+.seg-phone-fx-row { width: 100%; min-height: 54px; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--text-primary); text-align: left; padding: 6px 6px; }
+.seg-phone-fx-row i { width: 10px; height: 10px; border-radius: 50%; }
+.seg-phone-fx-row b { display: block; font: 600 14px var(--font-sans); }
+.seg-phone-fx-row small { display: block; font: 12px var(--font-sans); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg-phone-fx-row em { font: 600 12px var(--font-sans); font-style: normal; color: var(--text-secondary); border: 1px solid var(--border-emphasis); border-radius: 14px; padding: 5px 10px; }
+.seg-phone-fx-row[aria-pressed="true"] { background: var(--bg-surface); }
+.seg-phone-fx-row[aria-pressed="true"] em { background: var(--live); border-color: var(--live); color: var(--bg-void); }

@@ -1,18 +1,16 @@
 import type { ObjectDetector, FaceDetector } from '@mediapipe/tasks-vision'
+import { tierLimits } from '../../stores/perfTierStore'
 
 const WASM_PATH = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.33/wasm'
 const PERSON_MODEL =
   'https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite'
 const FACE_MODEL =
   'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite'
-const TICK_MS = 66 // ≈ 15 detections a second; boxes are smoothed in between
 const INPUT_LONG_SIDE = 512
 /** Most people / faces tracked (the shaders have this many slots). */
 export const MAX_PEOPLE = 12
 export const MAX_FACES = 4
 const MATCH_IOU = 0.25
-/** Faces too small for the full frame are looked for again in the heads of this many people. */
-const HEAD_PASSES = 3
 const HEAD_SIZE = 256
 /** A head-pass hit needs more confidence than a full-frame one: signs and patterns get picked up in close crops. */
 const HEAD_MIN_SCORE = 0.65
@@ -163,7 +161,8 @@ export class PersonDetectionService {
 
   private schedule() {
     if (!(this.wantPeople || this.wantFaces) || this.timer) return
-    this.timer = setTimeout(() => { this.timer = null; this.tick(); this.schedule() }, TICK_MS)
+    // ≈ 15 detections a second (5 in the Mobile tier); boxes are smoothed in between
+    this.timer = setTimeout(() => { this.timer = null; this.tick(); this.schedule() }, tierLimits().detectMs)
   }
 
   private tick() {
@@ -212,7 +211,8 @@ export class PersonDetectionService {
    */
   private facesInHeads(src: HTMLVideoElement | HTMLImageElement, sw: number, sh: number): Raw[] {
     const out: Raw[] = []
-    for (const t of this.people.tracks.slice(0, HEAD_PASSES)) {
+    // Faces too small for the full frame are looked for again in the heads of the largest people (3, or 1 on Mobile)
+    for (const t of this.people.tracks.slice(0, tierLimits().headPasses)) {
       const side = Math.max(t.w * sw * 0.9, Math.min(t.h * sh * 0.4, t.w * sw * 1.4))
       if (side < 16) continue
       const sx = (t.x + t.w / 2) * sw - side / 2

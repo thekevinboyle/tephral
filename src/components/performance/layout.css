@@ -688,3 +688,19 @@
 .seg-line-lock:hover { background: var(--bg-hover); }
 .seg-line-lock[aria-pressed="false"] > svg { opacity: .45; }
 .seg-line-lock[aria-pressed="true"] { color: var(--warp); }
+
+/* ─── Device test panel (?devicetest) ──────────────────────────────────────────────────────────────── */
+.seg-devtest { position: fixed; top: 52px; right: 12px; z-index: 1000; width: min(360px, calc(100vw - 24px)); max-height: calc(100vh - 70px); overflow: auto;
+  background: var(--bg-surface); border: 1px solid var(--border-emphasis); border-radius: var(--radius-panel); padding: 12px; color: var(--text-secondary);
+  font: 12.5px/1.45 var(--font-sans); box-shadow: 0 12px 40px rgba(0, 0, 0, .55); }
+.seg-devtest p { margin: 0 0 10px; }
+.seg-devtest-title { font: 600 14px var(--font-sans); color: var(--text-primary); margin-bottom: 8px; }
+.seg-devtest-warn { color: var(--text-primary); background: color-mix(in oklab, var(--rec) 22%, transparent); border-radius: var(--radius-ctrl); padding: 8px; }
+.seg-devtest-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.seg-devtest button { min-height: 36px; padding: 0 12px; border-radius: var(--radius-ctrl); border: 1px solid var(--border-emphasis); background: var(--bg-elevated);
+  color: var(--text-primary); font: 600 13px var(--font-sans); cursor: pointer; }
+.seg-devtest-live { display: grid; gap: 4px; }
+.seg-devtest-big { font: 500 28px var(--font-mono); color: var(--live); }
+.seg-devtest-report { display: grid; gap: 4px; font-size: 12px; }
+.seg-devtest-report [data-pass] { color: var(--live); }
+.seg-devtest-report [data-fail] { color: var(--rec); }

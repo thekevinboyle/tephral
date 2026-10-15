@@ -135,7 +135,7 @@ export class SlicerEngine {
     }
     const size = this.ring.size
     slicerReadout.frames = size
-    slicerReadout.capacity = liveMode ? Math.min(SLICER_MAX_FRAMES, Math.round(st.bufferSize * SLICER_FPS)) : size
+    slicerReadout.capacity = liveMode ? Math.min(this.ring.maxFrames, Math.round(st.bufferSize * SLICER_FPS)) : size
 
     if (!st.enabled || size === 0) {
       slicerReadout.active = false

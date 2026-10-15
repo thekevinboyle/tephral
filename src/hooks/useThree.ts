@@ -23,6 +23,7 @@ export function useThree(containerRef: React.RefObject<HTMLDivElement | null>) {
     newRenderer.outputColorSpace = THREE.LinearSRGBColorSpace
     newRenderer.setSize(width, height)
     newRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    newRenderer.domElement.dataset.stageGl = '' // the stage's WebGL canvas (overlays are separate 2D canvases)
     container.appendChild(newRenderer.domElement)
 
     setRenderer(newRenderer)

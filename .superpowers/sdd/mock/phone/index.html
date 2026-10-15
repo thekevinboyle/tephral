@@ -1,0 +1,183 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Phone Sequencer Mock</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-void: #171717; --bg-primary: #222222; --bg-surface: #2e2e2e; --bg-elevated: #3b3b3b; --bg-hover: #4a4a4a;
+    --border: #444444; --border-emphasis: #575757; --text-primary: #F4F4F4; --text-secondary: #d6d4cf; --text-muted: #aeaca7;
+    --live: #C4FA13; --mod: #13FADE; --warp: #FFF618; --rec: #FF175D; --degen: #FFA9F1; --uv: #EE30FF;
+    --font-sans: 'IBM Plex Sans', system-ui, sans-serif; --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0e0e0e; color: var(--text-primary); font-family: var(--font-sans); padding: 28px; }
+  .row { display: flex; gap: 36px; align-items: flex-start; }
+  .cap { width: 390px; margin-top: 12px; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  .cap b { color: var(--text-primary); font-weight: 600; }
+  .phone { width: 390px; height: 844px; border-radius: 46px; background: var(--bg-primary); border: 1px solid #333; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 0 8px #050505; }
+  .status { height: 47px; flex: none; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 30px 6px; font: 600 15px var(--font-sans); }
+  .stage { flex: none; height: 300px; margin: 0 10px; border-radius: 10px; overflow: hidden; position: relative; background: #000 url(stage.jpg) center/cover; }
+  .stage .hud { position: absolute; left: 8px; top: 8px; font: 500 10px var(--font-mono); background: rgba(0,0,0,.55); padding: 2px 6px; border-radius: 3px; }
+  .fx { display: flex; gap: 6px; padding: 10px 10px 6px; overflow: hidden; flex: none; }
+  .chip { flex: none; height: 30px; padding: 0 10px; border-radius: 15px; border: 1px solid var(--border-emphasis); background: var(--bg-surface); display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; }
+  .chip.on { background: var(--bg-elevated); color: var(--text-primary); border-color: var(--text-muted); }
+  .seg { margin: 4px 10px 8px; display: flex; background: var(--bg-void); border: 1px solid var(--border); border-radius: 8px; padding: 3px; flex: none; }
+  .seg div { flex: 1; text-align: center; padding: 6px 0; font-size: 13px; font-weight: 600; border-radius: 6px; color: var(--text-muted); }
+  .seg div.on { background: var(--bg-elevated); color: var(--text-primary); }
+  .body { flex: 1; min-height: 0; padding: 0 10px; display: flex; flex-direction: column; gap: 6px; }
+  .track { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 8px; }
+  .tname { font-size: 11.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; }
+  .tname i { width: 4px; height: 22px; border-radius: 2px; flex: none; }
+  .tname small { display: block; font: 9.5px var(--font-mono); color: var(--text-muted); font-weight: 400; }
+  .steps { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; height: 34px; }
+  .steps b { border-radius: 3px; background: var(--bg-primary); border: 1px solid var(--border-emphasis); }
+  .steps b.on { border: none; }
+  .steps b.head { outline: 2px solid var(--live); outline-offset: -1px; }
+  .line { height: 34px; border-radius: 4px; background: var(--bg-void); position: relative; overflow: hidden; }
+  .transport { flex: none; height: 84px; padding: 10px 14px 26px; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border); background: var(--bg-primary); }
+  .play { width: 46px; height: 46px; border-radius: 10px; background: var(--live); display: grid; place-items: center; color: #111; }
+  .bpm { font: 500 17px var(--font-mono); } .bpm span { font-size: 11px; color: var(--text-muted); font-family: var(--font-sans); }
+  .rec { margin-left: auto; height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--rec); color: var(--rec); display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px; }
+  .save { height: 36px; width: 36px; border-radius: 18px; border: 1px solid var(--border-emphasis); display: grid; place-items: center; color: var(--text-secondary); }
+  .tabs { display: flex; gap: 6px; overflow: hidden; flex: none; }
+  .tab { flex: none; padding: 5px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600; color: var(--text-muted); border: 1px solid transparent; display: flex; gap: 6px; align-items: center; }
+  .tab i { width: 7px; height: 7px; border-radius: 50%; }
+  .tab.on { color: var(--text-primary); background: var(--bg-elevated); border-color: var(--border-emphasis); }
+  .pad { position: relative; width: 100%; aspect-ratio: 1 / 0.74; border-radius: 10px; background: var(--bg-void); border: 1px solid var(--border-emphasis); overflow: hidden; flex: none; }
+  .pad canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .axis { position: absolute; font: 500 10px var(--font-mono); padding: 3px 7px; border-radius: 4px; background: var(--bg-surface); border: 1px solid var(--border-emphasis); color: var(--text-secondary); white-space: nowrap; }
+  .axis b { color: var(--text-primary); font-weight: 500; }
+  .padbar { display: flex; gap: 6px; align-items: center; flex: none; }
+  .pill { height: 30px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--border-emphasis); background: var(--bg-surface); display: flex; align-items: center; font-size: 11.5px; font-weight: 500; color: var(--text-secondary); gap: 5px; }
+  .pill.on { background: var(--mod); color: #111; border-color: var(--mod); }
+  .pill.sel { color: var(--text-primary); border-color: var(--text-muted); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 430px; background: var(--bg-surface); border-radius: 18px 18px 0 0; border-top: 1px solid var(--border-emphasis); padding: 10px 14px; box-shadow: 0 -20px 40px rgba(0,0,0,.6); }
+  .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--bg-hover); margin: 0 auto 12px; }
+  .sh { font-size: 15px; font-weight: 600; margin-bottom: 2px; } .shs { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+  .grp { font: 600 10px var(--font-sans); letter-spacing: .1em; color: var(--text-muted); margin: 10px 0 6px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opts span { padding: 7px 10px; border-radius: 6px; background: var(--bg-elevated); font-size: 12px; color: var(--text-secondary); }
+  .opts span.on { background: var(--mod); color: #111; font-weight: 600; }
+  .dim { position: absolute; inset: 0; background: rgba(0,0,0,.45); }
+</style>
+</head>
+<body>
+<div class="row">
+
+<!-- 1: Steps -->
+<div>
+<div class="phone">
+  <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+  <div class="stage"><span class="hud">● LIVE 30 FPS</span></div>
+  <div class="fx">
+    <div class="chip on"><i style="background:var(--degen)"></i>Pixelate</div>
+    <div class="chip on"><i style="background:var(--uv)"></i>RGB Split</div>
+    <div class="chip on"><i style="background:var(--live)"></i>Redact</div>
+    <div class="chip"><i style="background:var(--mod)"></i>Zebra</div>
+    <div class="chip">＋</div>
+  </div>
+  <div class="seg"><div class="on">Steps</div><div>Pad</div></div>
+  <div class="body">
+    <div class="track"><div class="tname"><i style="background:var(--degen)"></i><div>Pixelate<small>STEPS</small></div></div><div class="steps" id="s1"></div></div>
+    <div class="track"><div class="tname"><i style="background:var(--uv)"></i><div>RGB Split<small>LINE</small></div></div><div class="line"><canvas id="l1" style="width:100%;height:100%"></canvas></div></div>
+    <div class="track"><div class="tname"><i style="background:var(--live)"></i><div>Redact<small>STEPS</small></div></div><div class="steps" id="s2"></div></div>
+    <div class="track"><div class="tname"><i style="background:var(--warp)"></i><div>Master<small>LINE</small></div></div><div class="line"><canvas id="l2" style="width:100%;height:100%"></canvas></div></div>
+  </div>
+  <div class="transport"><div class="play"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" fill="currentColor"/></svg></div><div class="bpm">120.0 <span>BPM</span></div><div class="rec">● REC</div><div class="save">⤓</div></div>
+</div>
+<div class="cap"><b>1 · Steps.</b> One row per effect. Tap cells to set steps; the label (STEPS / LINE) flips a row to a drawn line, edited full-screen with a tap. The master line scales them all. The chips above add or switch effects; + opens the effect list.</div>
+</div>
+
+<!-- 2: Pad (effect) -->
+<div>
+<div class="phone">
+  <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+  <div class="stage"><span class="hud">● LIVE 30 FPS</span></div>
+  <div class="seg" style="margin-top:10px"><div>Steps</div><div class="on">Pad</div></div>
+  <div class="body">
+    <div class="tabs">
+      <div class="tab"><i style="background:var(--warp)"></i>Master</div>
+      <div class="tab on"><i style="background:var(--degen)"></i>Pixelate</div>
+      <div class="tab"><i style="background:var(--uv)"></i>RGB Split</div>
+      <div class="tab"><i style="background:var(--live)"></i>Redact</div>
+    </div>
+    <div class="pad"><canvas id="p1"></canvas>
+      <div class="axis" style="left:8px; bottom:8px">X → <b>Pixelate · Cell size</b></div>
+      <div class="axis" style="left:8px; top:8px">Y → <b>RGB Split · Amount</b></div>
+    </div>
+    <div class="padbar">
+      <div class="pill sel">2 bars ▾</div>
+      <div class="pill on">Replace</div><div class="pill">Overdub</div>
+      <div class="pill" style="margin-left:auto">⚄</div><div class="pill">Clear</div>
+    </div>
+  </div>
+  <div class="transport"><div class="play"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" fill="currentColor"/></svg></div><div class="bpm">120.0 <span>BPM</span></div><div class="rec">● REC</div><div class="save">⤓</div></div>
+</div>
+<div class="cap"><b>2 · Pad, per effect.</b> Drag while it plays: the path is recorded over the loop (½–8 bars) and replays as a trail with a lime dot. Each axis targets anything (here X is one effect's param, Y another's). Replace or Overdub, Dice draws a path, Clear empties it. Each effect has its own pad; tabs switch them.</div>
+</div>
+
+<!-- 3: Master pad + target sheet -->
+<div>
+<div class="phone">
+  <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+  <div class="stage"><span class="hud">● LIVE 30 FPS</span></div>
+  <div class="seg" style="margin-top:10px"><div>Steps</div><div class="on">Pad</div></div>
+  <div class="body">
+    <div class="tabs">
+      <div class="tab on"><i style="background:var(--warp)"></i>Master</div>
+      <div class="tab"><i style="background:var(--degen)"></i>Pixelate</div>
+      <div class="tab"><i style="background:var(--uv)"></i>RGB Split</div>
+      <div class="tab"><i style="background:var(--live)"></i>Redact</div>
+    </div>
+    <div class="pad"><canvas id="p2"></canvas>
+      <div class="axis" style="left:8px; bottom:8px">X → <b>All Dry/wet</b></div>
+      <div class="axis" style="left:8px; top:8px">Y → <b>Warp · Amount</b></div>
+    </div>
+  </div>
+  <div class="dim"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="sh">Y axis target</div>
+    <div class="shs">Master pad · anything in the app</div>
+    <div class="grp">MASTER</div>
+    <div class="opts"><span>All Dry/wet</span><span class="on">Warp · Amount</span><span>Warp · Skew</span><span>BPM ±</span></div>
+    <div class="grp">PIXELATE</div>
+    <div class="opts"><span>Cell size</span><span>Dry/wet</span><span>Shape</span></div>
+    <div class="grp">RGB SPLIT</div>
+    <div class="opts"><span>Amount</span><span>Angle</span><span>Dry/wet</span></div>
+    <div class="grp">REDACT</div>
+    <div class="opts"><span>Coverage</span><span>Cell</span><span>Beats</span><span>Dry/wet</span></div>
+  </div>
+</div>
+<div class="cap"><b>3 · Master pad and targets.</b> The master pad drives anything across the chain (here every Dry/wet at once and the warp). Tapping an axis label opens this sheet: any parameter of any effect, grouped by effect, plus master targets. Same sheet for every pad.</div>
+</div>
+
+</div>
+<script>
+  const P = (id) => { const c = document.getElementById(id); const r = c.getBoundingClientRect(); c.width = r.width * 2; c.height = r.height * 2; const g = c.getContext('2d'); g.scale(2, 2); return [g, r.width, r.height] }
+  const steps = (id, on, color, head) => { const el = document.getElementById(id); for (let i = 0; i < 16; i++) { const b = document.createElement('b'); if (on.includes(i)) { b.className = 'on'; b.style.background = color } if (i === head) b.classList.add('head'); el.appendChild(b) } }
+  steps('s1', [0, 3, 4, 8, 11, 12, 14], '#FFA9F1', 4); steps('s2', [2, 6, 10, 14], '#C4FA13', 4)
+  const line = (id, color, f) => { const [g, w, h] = P(id); g.beginPath(); for (let x = 0; x <= w; x++) { const y = h - 3 - f(x / w) * (h - 6); x ? g.lineTo(x, y) : g.moveTo(x, y) } g.strokeStyle = color; g.lineWidth = 1.6; g.stroke(); g.lineTo(w, h); g.lineTo(0, h); g.fillStyle = color + '22'; g.fill(); g.fillStyle = '#C4FA13'; g.fillRect(w * 0.27, 0, 2, h) }
+  line('l1', '#EE30FF', (x) => (x < 0.5 ? x * 2 : 0.15 + (x > 0.75 ? 0.8 : 0.3)))
+  line('l2', '#FFF618', (x) => 0.55 + 0.4 * Math.sin(x * Math.PI * 2))
+  const pad = (id, color, pts) => {
+    const [g, w, h] = P(id)
+    g.strokeStyle = '#2b2b2b'; g.lineWidth = 1
+    for (let i = 1; i < 8; i++) { g.beginPath(); g.moveTo(w * i / 8, 0); g.lineTo(w * i / 8, h); g.stroke(); g.beginPath(); g.moveTo(0, h * i / 8); g.lineTo(w, h * i / 8); g.stroke() }
+    const n = pts.length
+    for (let i = 1; i < n; i++) { g.beginPath(); g.moveTo(pts[i - 1][0] * w, pts[i - 1][1] * h); g.lineTo(pts[i][0] * w, pts[i][1] * h); g.strokeStyle = color; g.globalAlpha = 0.25 + 0.75 * (i / n); g.lineWidth = 2 + 3 * (i / n); g.lineCap = 'round'; g.stroke() }
+    g.globalAlpha = 1
+    const [hx, hy] = pts[Math.floor(n * 0.62)]
+    g.strokeStyle = 'rgba(196,250,19,.45)'; g.lineWidth = 1; g.beginPath(); g.moveTo(hx * w, 0); g.lineTo(hx * w, h); g.moveTo(0, hy * h); g.lineTo(w, hy * h); g.stroke()
+    g.fillStyle = '#C4FA13'; g.beginPath(); g.arc(hx * w, hy * h, 8, 0, Math.PI * 2); g.fill()
+    g.strokeStyle = '#111'; g.lineWidth = 2; g.stroke()
+  }
+  const path1 = [...Array(120)].map((_, i) => { const t = i / 119; return [0.15 + 0.7 * t + 0.08 * Math.sin(t * 19), 0.5 + 0.32 * Math.sin(t * Math.PI * 3) * (1 - t * 0.4)] })
+  const path2 = [...Array(120)].map((_, i) => { const t = i / 119 * Math.PI * 2; return [0.5 + 0.34 * Math.sin(t * 2), 0.5 + 0.3 * Math.sin(t * 3 + 0.6)] })
+  addEventListener('load', () => { pad('p1', '#FFA9F1', path1); pad('p2', '#FFF618', path2) })
+</script>
+</body>
+</html>

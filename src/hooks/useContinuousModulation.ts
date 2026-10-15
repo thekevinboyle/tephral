@@ -21,6 +21,7 @@ import { warpModValueAt } from '../effects/warp/warpMath'
 import { getHeardWarpPosition } from '../effects/warp/warpClock'
 import { playPosition, warpPlay } from '../effects/playhead'
 import { beginMixModulationFrame, noteModulatedMix } from '../effects/mixModulation'
+import { stepPads } from '../effects/pads/padEngine'
 
 /**
  * Applies continuous modulation from special sources (euclidean, ricochet, lfo, random, step, envelope, warp)
@@ -789,6 +790,9 @@ export function useContinuousModulation() {
 
       // Per-track band → param modulation (track's own frequency window)
       stepTrackBandModulation()
+
+      // X/Y pads (master and per effect): recorded paths replayed with the transport, or a live touch
+      stepPads()
 
       animationFrameId.current = requestAnimationFrame(modulationLoop)
     }

@@ -47,9 +47,11 @@ interface UIState {
   toggleDrawer: (p: DrawerPanel) => void
   closeDrawer: () => void
   setBottomTab: (t: BottomTab) => void
-  sequencerView: 'steps' | 'lines'
-  setSequencerView: (v: 'steps' | 'lines') => void
+  sequencerView: 'steps' | 'lines' | 'pad'
+  setSequencerView: (v: 'steps' | 'lines' | 'pad') => void
   lineTab: string // 'master' or an effect id (lines editor spec §4.2)
+  padTab: string // 'master' or an effect id: the X/Y pad open in the Pad view
+  setPadTab: (t: string) => void
   setLineTab: (t: string) => void
   setSelectedModulator: (id: string | null) => void
 
@@ -121,6 +123,8 @@ export const useUIStore = create<UIState>((set) => ({
   setSequencerView: (v) => set({ sequencerView: v }),
   lineTab: 'master',
   setLineTab: (t) => set({ lineTab: t }),
+  padTab: 'master',
+  setPadTab: (t) => set({ padTab: t }),
   setSelectedModulator: (id) => {
     if (id == null) { set({ selectedModulator: null }); return }
     // Clear any step selection first: UnifiedSequencerPanel re-selects a step's effect when

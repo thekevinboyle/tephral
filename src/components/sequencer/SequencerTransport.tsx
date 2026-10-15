@@ -347,12 +347,12 @@ export function SequencerTransport({
         )}
       </div>
 
-      {/* Steps | Lines */}
+      {/* Steps | Lines | Pad */}
       <div className="seg-seq-view" role="group" aria-label="Sequencer view" style={{ marginRight: 16 }}>
-        {(['steps', 'lines'] as const).map((v) => (
+        {(['steps', 'lines', 'pad'] as const).map((v) => (
           <button key={v} type="button" data-seq-view={v} aria-pressed={view === v} onClick={() => useUIStore.getState().setSequencerView(v)}
-            {...statusHover(v === 'lines' ? 'Lines: draw each effect\'s Dry/wet, and a master line over all of them' : 'Steps: the step grid')}>
-            {v === 'lines' ? 'Lines' : 'Steps'}
+            {...statusHover(v === 'lines' ? 'Lines: draw each effect\'s Dry/wet, and a master line over all of them' : v === 'pad' ? 'Pad: X/Y pads to draw modulation, a master pad and one per effect' : 'Steps: the step grid')}>
+            {v === 'lines' ? 'Lines' : v === 'pad' ? 'Pad' : 'Steps'}
           </button>
         ))}
       </div>

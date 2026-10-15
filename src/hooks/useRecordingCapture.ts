@@ -3,7 +3,7 @@ import { useRecordingStore, EXPORT_BITRATES } from '../stores/recordingStore'
 import { useClipStore } from '../stores/clipStore'
 import { useUIStore } from '../stores/uiStore'
 import { saveBlob } from '../utils/exportTranscode'
-import { usePerfTierStore } from '../stores/perfTierStore'
+import { tierLimits, usePerfTierStore } from '../stores/perfTierStore'
 
 /** seg-f4ult-2026-10-14-153012.mp4 (local time). */
 export function recordingFileName(mimeType: string, at = new Date()): string {
@@ -141,7 +141,7 @@ export function useRecordingCapture(
 
         // Capture from composite canvas
         const stream = compositeCanvas.captureStream(30) // 30 FPS
-        const bitrate = EXPORT_BITRATES[exportQuality]
+        const bitrate = Math.min(EXPORT_BITRATES[exportQuality], tierLimits().recordBitrate) // a phone's takes stay small
 
         mediaRecorderRef.current = new MediaRecorder(stream, {
           mimeType,

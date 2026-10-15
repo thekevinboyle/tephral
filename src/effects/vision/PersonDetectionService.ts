@@ -248,7 +248,7 @@ export class PersonDetectionService {
     const linger = video ? this.linger : Infinity // a still keeps its boxes until the source changes
     this.inFlight = true
     createImageBitmap(this.big)
-      .then((frame) => requestVision({ type: 'detect', frame, people: this.wantPeople, faces: this.wantFaces, headPasses: tierLimits().headPasses, ts: performance.now() }))
+      .then((frame) => requestVision({ type: 'detect', frame, people: this.wantPeople, faces: this.wantFaces, headPasses: tierLimits().headPasses, side: tierLimits().detectSide, ts: performance.now() }))
       .then((r) => {
         if (gen !== this.gen || r.type !== 'detect') return
         const now = performance.now()

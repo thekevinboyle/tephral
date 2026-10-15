@@ -28,7 +28,7 @@ const HEAD_MIN_SCORE = 0.65
 
 export type Raw = { x: number; y: number; w: number; h: number; score: number }
 export type VisionRequest =
-  | { type: 'detect'; id: number; frame: ImageBitmap; people: boolean; faces: boolean; headPasses: number; ts: number }
+  | { type: 'detect'; id: number; frame: ImageBitmap; people: boolean; faces: boolean; headPasses: number; side: number; ts: number }
   | { type: 'segment'; id: number; frame: ImageBitmap; ts: number }
   | { type: 'release'; what: 'detect' | 'segment' }
 export type VisionResponse =
@@ -95,8 +95,8 @@ const toRaw = (b: Box | undefined, score: number, w: number, h: number): Raw =>
 async function detect(m: Extract<VisionRequest, { type: 'detect' }>): Promise<VisionResponse> {
   const { person, face } = await detectors()
   const f = m.frame
-  // Detectors take a 512 px copy; head crops come from the full frame sent (sharper on small faces)
-  const k = DETECT_SIDE / Math.max(f.width, f.height)
+  // Detectors take a 512 px copy (the tier's detectSide); head crops come from the full frame sent (sharper on small faces)
+  const k = (m.side || DETECT_SIDE) / Math.max(f.width, f.height)
   const w = Math.max(1, Math.round(f.width * k)), h = Math.max(1, Math.round(f.height * k))
   if (small.width !== w || small.height !== h) { small.width = w; small.height = h }
   smallCtx.drawImage(f, 0, 0, w, h)

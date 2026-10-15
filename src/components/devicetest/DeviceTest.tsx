@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMediaSource } from '../../hooks/useMediaSource'
 import { toggleEffect, isEffectActive } from '../../hooks/useEffectToggle'
 import { useWarpStore } from '../../stores/warpStore'
-import { usePerfTierStore, TIER_LIMITS } from '../../stores/perfTierStore'
+import { usePerfTierStore, TIER_LIMITS, tierLimits } from '../../stores/perfTierStore'
 import { perfMonitor } from '../../utils/perfMonitor'
 import { visionDelegate, visionMode } from '../../effects/vision/visionWorkerClient'
 
@@ -53,8 +53,9 @@ function deviceInfo(): Record<string, unknown> {
  */
 async function loadInPage(src: string, ms = 10000): Promise<{ v: HTMLVideoElement; error?: string }> {
   const v = document.createElement('video')
-  v.muted = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto'
-  v.setAttribute('playsinline', '')
+  // iOS plays without a tap only when the element is muted as an attribute, inline and set to autoplay
+  v.muted = true; v.defaultMuted = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto'
+  v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('autoplay', '')
   Object.assign(v.style, { position: 'fixed', left: '0', top: '0', width: '2px', height: '2px', opacity: '0.01', pointerEvents: 'none' })
   document.body.appendChild(v)
   v.src = src
@@ -79,7 +80,9 @@ async function recordProbe(secs: number, ac: AudioContext): Promise<RecResult> {
   const stream = new MediaStream([...video.getVideoTracks(), ...dest.stream.getAudioTracks()])
   const mime = ['video/mp4;codecs=avc1.640028,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'].find((m) => MediaRecorder.isTypeSupported(m)) ?? ''
   const chunks: Blob[] = []
-  const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined)
+  // The same bitrate cap REC uses on this tier
+  const bps = Math.min(8_000_000, tierLimits().recordBitrate)
+  const rec = new MediaRecorder(stream, { ...(mime ? { mimeType: mime } : {}), videoBitsPerSecond: bps })
   rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data) }
   const stopped = new Promise<void>((r) => { rec.onstop = () => r() })
   rec.start(1000)
@@ -91,19 +94,24 @@ async function recordProbe(secs: number, ac: AudioContext): Promise<RecResult> {
   const blob = new Blob(chunks, { type: rec.mimeType || mime })
   lastRecording = blob
   const out: RecResult = { mime: blob.type, sizeKB: Math.round(blob.size / 1024), durationS: 0, width: 0, height: 0, audioS: 0, ok: false }
-  try {
-    const { v, error } = await loadInPage(URL.createObjectURL(blob))
-    let d = v.duration
-    if (!Number.isFinite(d)) { v.currentTime = 1e9; await Promise.race([new Promise((r) => { v.ondurationchange = r }), wait(5000)]); d = v.duration }
-    Object.assign(out, { durationS: +(+d || 0).toFixed(1), width: v.videoWidth, height: v.videoHeight })
-    if (error) out.error = `video: ${error}`
-    v.pause(); v.remove()
-  } catch (e) { out.error = `video: ${e}` }
+  Object.assign(out, await checkVideo(blob))
   try { out.audioS = +(await ac.decodeAudioData(await blob.arrayBuffer())).duration.toFixed(1) } catch (e) { out.error = (out.error ? out.error + '; ' : '') + `audio: ${e}` }
   out.ok = out.width > 0 && out.durationS > secs * 0.8 && out.audioS > secs * 0.8
   return out
 }
 let lastRecording: Blob | null = null
+
+/** The recording's picture: plays it in the page and reads its size and length. */
+async function checkVideo(blob: Blob): Promise<Pick<RecResult, 'durationS' | 'width' | 'height' | 'error'>> {
+  try {
+    const { v, error } = await loadInPage(URL.createObjectURL(blob))
+    let d = v.duration
+    if (!Number.isFinite(d)) { v.currentTime = 1e9; await Promise.race([new Promise((r) => { v.ondurationchange = r }), wait(5000)]); d = v.duration }
+    const out = { durationS: +(+d || 0).toFixed(1), width: v.videoWidth, height: v.videoHeight, error: error ? `video: ${error}` : undefined }
+    v.pause(); v.remove()
+    return out
+  } catch (e) { return { durationS: 0, width: 0, height: 0, error: `video: ${e}` } }
+}
 
 /** Does Safari hand WebGL the raw HLG signal (Chrome does) or already tone-map it? Reads a known grey ramp. */
 async function hdrProbe(): Promise<HdrResult> {
@@ -211,6 +219,22 @@ export function DeviceTest() {
   }
 
   const report = saved && saved.status === 'done' ? summarize(saved, saved.build) : null
+  // iPhone Safari may refuse to play a clip without a tap; a tap here runs both clip checks again
+  const blocked = !!saved && saved.status === 'done' && (/NotAllowed/.test(saved.rec?.error ?? '') || /NotAllowed/.test(saved.hdr?.verdict ?? ''))
+  const recheck = async () => {
+    if (!saved) return
+    setBusy(true)
+    setLive({ phase: 'Checking the recording and HDR', left: 0, fps: 0 })
+    const s = { ...saved }
+    if (lastRecording && s.rec) {
+      const v = await checkVideo(lastRecording)
+      const rec = { ...s.rec, ...v }
+      rec.ok = rec.width > 0 && rec.durationS > 0 && rec.audioS > 0 && Math.abs(rec.durationS - rec.audioS) < 3
+      s.rec = rec
+    }
+    s.hdr = await hdrProbe()
+    writeSaved(s); setSaved(s); setLive(null); setBusy(false)
+  }
   const text = report ? `SEG_F4ULT device test\n${report.lines.join('\n')}\n\n${JSON.stringify(saved)}` : ''
 
   return (
@@ -240,6 +264,11 @@ export function DeviceTest() {
         <div className="seg-devtest-report">
           <div className="seg-devtest-when">Results of the run on {new Date(saved!.startedAt).toLocaleString()} (kept until the next run)</div>
           {report.lines.map((l, i) => <div key={i} data-pass={l.startsWith('PASS') || undefined} data-fail={l.startsWith('FAIL') || undefined}>{l}</div>)}
+          {blocked && (
+            <div className="seg-devtest-row">
+              <button onClick={recheck}>{lastRecording ? 'Check the recording and HDR' : 'Check HDR'}</button>
+            </div>
+          )}
           <div className="seg-devtest-row">
             <button onClick={() => navigator.clipboard?.writeText(text)}>Copy results</button>
             <button onClick={() => { try { localStorage.removeItem(KEY) } catch { /* nothing kept */ } setSaved(null) }}>Clear</button>

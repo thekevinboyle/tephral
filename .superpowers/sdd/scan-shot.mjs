@@ -18,6 +18,7 @@ if (process.env.SEG) await p.evaluate((j) => { import('/src/stores/segStore.ts')
 await p.waitForFunction(() => ['ready', 'error'].includes(window.__pipeline.detection.status), { timeout: 60000 }).catch(() => {})
 await wait(+WAIT)
 const info = await p.evaluate(() => { const d = window.__pipeline.detection; const f = (t) => [t.id, +t.x.toFixed(2), +t.y.toFixed(2), +t.w.toFixed(2), +t.h.toFixed(2)]; return { status: d.status, people: d.people.tracks.length, faces: d.faces.tracks.map(f) } })
+info.vision = await p.evaluate(async () => { const m = await import('/src/effects/vision/visionWorkerClient.ts'); return [m.visionMode(), m.visionDelegate()] })
 const cs = await p.$$('[data-video-canvas-container] canvas'); let best = null
 for (const c of cs) { const bb = await c.boundingBox(); if (bb && (!best || bb.width * bb.height > best.a)) best = { c, a: bb.width * bb.height } }
 await best.c.screenshot({ path: `.superpowers/sdd/shots/scan-${TAG}.png` })

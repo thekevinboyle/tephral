@@ -1,5 +1,9 @@
 import type { ObjectDetector, FaceDetector } from '@mediapipe/tasks-vision'
 import { tierLimits } from '../../stores/perfTierStore'
+import { requestVision, releaseVision, visionMode } from './visionWorkerClient'
+
+/** Frames sent to the vision worker are at most this long side (its detectors take a 512 px copy, head crops the full one). */
+const WORKER_FRAME_SIDE = 1024
 
 const WASM_PATH = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.33/wasm'
 const PERSON_MODEL =
@@ -99,6 +103,7 @@ export class PersonDetectionService {
 
   setSource(el: HTMLVideoElement | HTMLImageElement | null) {
     if (el === this.source) return
+    this.gen++ // a result for the previous source is dropped
     this.source = el
     this.lastVideoTime = -1
     this.lastImage = null
@@ -115,8 +120,10 @@ export class PersonDetectionService {
       this.schedule()
     } else {
       this.loadId++
+      this.gen++
       if (this.timer) clearTimeout(this.timer)
       this.timer = null
+      if (visionMode() === 'worker') releaseVision('detect')
       this.person?.close(); this.person = null
       this.face?.close(); this.face = null
       this.loading = null
@@ -129,6 +136,8 @@ export class PersonDetectionService {
   dispose() { this.setWanted(false, false) }
 
   private ensureLoaded() {
+    // In the worker the models load on its first job; 'ready' comes with the first result
+    if (visionMode() === 'worker') { if (this.status === 'idle') this.status = 'loading'; return }
     if (this.loading) return
     const id = ++this.loadId
     this.status = 'loading'
@@ -166,6 +175,7 @@ export class PersonDetectionService {
   }
 
   private tick() {
+    if (visionMode() === 'worker') { this.workerTick(); return }
     const src = this.source
     const now = performance.now()
     if (!src || !this.person || !this.face) return
@@ -203,6 +213,56 @@ export class PersonDetectionService {
     } catch (err) {
       console.warn('[DETECT] detection failed:', err)
     }
+  }
+
+  private inFlight = false
+  private gen = 0
+  private big = document.createElement('canvas')
+  private bigCtx = this.big.getContext('2d')!
+
+  /**
+   * Off the main thread: send the frame (up to 1024 px) to the vision worker and take its boxes when they come
+   * back. One job at a time, so a slow phone simply detects less often instead of queueing. If the worker turns
+   * out to be unavailable, the main-thread models load and the next tick uses them.
+   */
+  private workerTick() {
+    const src = this.source
+    if (!src || this.inFlight) return
+    let sw: number, sh: number
+    if (src instanceof HTMLVideoElement) {
+      if (src.readyState < 2 || !src.videoWidth) return
+      if (src.currentTime === this.lastVideoTime) return // paused: keep the boxes as they are
+      sw = src.videoWidth; sh = src.videoHeight
+    } else {
+      if (!src.complete || !src.naturalWidth) return
+      if (src === this.lastImage) return // a still: detect once, keep the boxes
+      sw = src.naturalWidth; sh = src.naturalHeight
+    }
+    const k = Math.min(1, WORKER_FRAME_SIDE / Math.max(sw, sh))
+    const w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k))
+    if (this.big.width !== w || this.big.height !== h) { this.big.width = w; this.big.height = h }
+    this.bigCtx.drawImage(src, 0, 0, w, h)
+    const gen = this.gen
+    const video = src instanceof HTMLVideoElement ? src : null
+    const frameTime = video?.currentTime ?? 0
+    const linger = video ? this.linger : Infinity // a still keeps its boxes until the source changes
+    this.inFlight = true
+    createImageBitmap(this.big)
+      .then((frame) => requestVision({ type: 'detect', frame, people: this.wantPeople, faces: this.wantFaces, headPasses: tierLimits().headPasses, ts: performance.now() }))
+      .then((r) => {
+        if (gen !== this.gen || r.type !== 'detect') return
+        const now = performance.now()
+        if (this.wantPeople) this.people.update(r.people, now, linger, MAX_PEOPLE)
+        if (this.wantFaces) this.faces.update(r.faces, now, linger, MAX_FACES)
+        this.status = 'ready'
+        if (video) this.lastVideoTime = frameTime
+        else this.lastImage = src as HTMLImageElement
+      })
+      .catch((err) => {
+        if (visionMode() === 'main') this.ensureLoaded() // fell back: load the models here
+        else console.warn('[DETECT] detection failed:', err)
+      })
+      .finally(() => { this.inFlight = false })
   }
 
   /**

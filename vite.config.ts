@@ -32,6 +32,8 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'credentialless',
     },
   },
+  // The vision worker imports MediaPipe dynamically, which needs an ES module worker
+  worker: { format: 'es' },
   // Optimize FFmpeg deps
   optimizeDeps: {
     exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],

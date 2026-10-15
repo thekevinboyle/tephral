@@ -4,6 +4,7 @@ import { toggleEffect, isEffectActive } from '../../hooks/useEffectToggle'
 import { useWarpStore } from '../../stores/warpStore'
 import { usePerfTierStore, TIER_LIMITS } from '../../stores/perfTierStore'
 import { perfMonitor } from '../../utils/perfMonitor'
+import { visionDelegate, visionMode } from '../../effects/vision/visionWorkerClient'
 
 /*
  * Device test (open the app with ?devicetest). The go/no-go for iOS: on a real phone, does the engine hold
@@ -20,7 +21,7 @@ const VISION_FX = ['seg_redact', 'seg_facelock']
 interface PhaseResult { id: string; label: string; secs: number; fps: number[]; longFrames: number }
 interface RecResult { mime: string; sizeKB: number; durationS: number; width: number; height: number; audioS: number; ok: boolean; error?: string }
 interface HdrResult { videoFrame: string; greys: number[]; verdict: string }
-interface Saved { status: 'running' | 'done'; startedAt: number; mode: string; phase: string; elapsed: number; phases: PhaseResult[]; rec?: RecResult; hdr?: HdrResult; contextLost: boolean; device: Record<string, unknown> }
+interface Saved { vision?: string; status: 'running' | 'done'; startedAt: number; mode: string; phase: string; elapsed: number; phases: PhaseResult[]; rec?: RecResult; hdr?: HdrResult; contextLost: boolean; device: Record<string, unknown> }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const pct = (arr: number[], p: number) => { if (!arr.length) return 0; const s = [...arr].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(p * s.length))] }
@@ -203,6 +204,7 @@ export function DeviceTest() {
       setLive({ phase: 'HDR check', left: 0, fps: 0 })
       s.hdr = await hdrProbe()
     }
+    s.vision = `${visionMode() === 'worker' ? 'in a background worker' : 'on the main thread'}${visionDelegate() ? ` (${visionDelegate()})` : ''}`
     s.status = 'done'; s.elapsed = Math.round((Date.now() - s.startedAt) / 1000)
     writeSaved(s); setSaved({ ...s }); setLive(null); setBusy(false)
     ac.close()
@@ -269,6 +271,7 @@ function summarize(s: Saved) {
   lines.push(`${s.contextLost ? 'FAIL' : 'PASS'} the graphics context survived`)
   if (s.rec) lines.push(`${s.rec.ok ? 'PASS' : 'FAIL'} recording: ${s.rec.mime || 'none'}, ${s.rec.durationS} s video ${s.rec.width}x${s.rec.height}, ${s.rec.audioS} s audio, ${s.rec.sizeKB} KB${s.rec.error ? ` (${s.rec.error})` : ''}`)
   if (s.hdr) lines.push(`HDR: ${s.hdr.verdict}; frame colour space ${s.hdr.videoFrame}; greys ${s.hdr.greys.join(',')}`)
+  if (s.vision) lines.push(`Vision: ${s.vision}`)
   lines.push(`Device: ${String(s.device.gpu)}, ${String(s.device.screen)} @${String(s.device.dpr)}x, run ${s.elapsed} s`)
   return { lines }
 }

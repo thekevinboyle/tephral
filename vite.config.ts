@@ -32,6 +32,8 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'credentialless',
     },
   },
+  // Build stamp, shown by the device test so a cached page can be told from a fresh one
+  define: { __BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')) },
   // The vision worker imports MediaPipe dynamically, which needs an ES module worker
   worker: { format: 'es' },
   // Optimize FFmpeg deps

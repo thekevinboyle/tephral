@@ -21,7 +21,7 @@ const VISION_FX = ['seg_redact', 'seg_facelock']
 interface PhaseResult { id: string; label: string; secs: number; fps: number[]; longFrames: number }
 interface RecResult { mime: string; sizeKB: number; durationS: number; width: number; height: number; audioS: number; ok: boolean; error?: string }
 interface HdrResult { videoFrame: string; greys: number[]; verdict: string }
-interface Saved { vision?: string; status: 'running' | 'done'; startedAt: number; mode: string; phase: string; elapsed: number; phases: PhaseResult[]; rec?: RecResult; hdr?: HdrResult; contextLost: boolean; device: Record<string, unknown> }
+interface Saved { build?: string; vision?: string; status: 'running' | 'done'; startedAt: number; mode: string; phase: string; elapsed: number; phases: PhaseResult[]; rec?: RecResult; hdr?: HdrResult; contextLost: boolean; device: Record<string, unknown> }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const pct = (arr: number[], p: number) => { if (!arr.length) return 0; const s = [...arr].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(p * s.length))] }
@@ -150,7 +150,7 @@ export function DeviceTest() {
     setBusy(true)
     const ac = new AudioContext() // created in the tap, so iOS lets it run
     usePerfTierStore.getState().setTier('mobile')
-    const s: Saved = { status: 'running', startedAt: Date.now(), mode, phase: 'camera', elapsed: 0, phases: [], contextLost: false, device: deviceInfo() }
+    const s: Saved = { build: __BUILD__, status: 'running', startedAt: Date.now(), mode, phase: 'camera', elapsed: 0, phases: [], contextLost: false, device: deviceInfo() }
     writeSaved(s); setSaved({ ...s })
     await activateWebcam()
     await wait(1500)
@@ -210,12 +210,12 @@ export function DeviceTest() {
     ac.close()
   }
 
-  const report = saved && saved.status === 'done' ? summarize(saved) : null
+  const report = saved && saved.status === 'done' ? summarize(saved, saved.build) : null
   const text = report ? `SEG_F4ULT device test\n${report.lines.join('\n')}\n\n${JSON.stringify(saved)}` : ''
 
   return (
     <div className="seg-devtest" data-devicetest>
-      <div className="seg-devtest-title">Device test</div>
+      <div className="seg-devtest-title">Device test <small>build {__BUILD__} UTC</small></div>
       {previousCrash && !busy && (
         <p className="seg-devtest-warn">The last run stopped during <b>{saved!.phase}</b> after {saved!.elapsed} s and never finished: iOS most likely closed the page for using too much memory.</p>
       )}
@@ -238,9 +238,11 @@ export function DeviceTest() {
       )}
       {report && !busy && (
         <div className="seg-devtest-report">
+          <div className="seg-devtest-when">Results of the run on {new Date(saved!.startedAt).toLocaleString()} (kept until the next run)</div>
           {report.lines.map((l, i) => <div key={i} data-pass={l.startsWith('PASS') || undefined} data-fail={l.startsWith('FAIL') || undefined}>{l}</div>)}
           <div className="seg-devtest-row">
             <button onClick={() => navigator.clipboard?.writeText(text)}>Copy results</button>
+            <button onClick={() => { try { localStorage.removeItem(KEY) } catch { /* nothing kept */ } setSaved(null) }}>Clear</button>
             {'share' in navigator && <button onClick={() => navigator.share({ title: 'SEG_F4ULT device test', text }).catch(() => {})}>Share results</button>}
             {lastRecording && 'share' in navigator && (
               <button onClick={() => {
@@ -255,7 +257,7 @@ export function DeviceTest() {
   )
 }
 
-function summarize(s: Saved) {
+function summarize(s: Saved, build?: string) {
   const lines: string[] = []
   // Each step's first 5 s are warm-up (a model loading, a ring filling) when the step is long enough to leave them out
   const steady = (p: PhaseResult) => (p.fps.length > 20 ? p.fps.slice(5) : p.fps)
@@ -273,5 +275,6 @@ function summarize(s: Saved) {
   if (s.hdr) lines.push(`HDR: ${s.hdr.verdict}; frame colour space ${s.hdr.videoFrame}; greys ${s.hdr.greys.join(',')}`)
   if (s.vision) lines.push(`Vision: ${s.vision}`)
   lines.push(`Device: ${String(s.device.gpu)}, ${String(s.device.screen)} @${String(s.device.dpr)}x, run ${s.elapsed} s`)
+  lines.push(`Build: ${build ?? 'older than the build stamp'}${build && build !== __BUILD__ ? ` (this page: ${__BUILD__})` : ''}`)
   return { lines }
 }

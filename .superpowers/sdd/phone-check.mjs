@@ -34,6 +34,8 @@ for (let i = 0; i <= 30; i++) { const t = i / 30 * Math.PI * 2; await p.touchscr
 await p.touchscreen.touchEnd(); await wait(600)
 out.padSlots = await p.evaluate(async () => { const m = await import('/src/effects/pads/padEngine.ts'); const ids = Object.keys((await import('/src/stores/padStore.ts')).usePadStore.getState().pads); return ids.map((id) => [id, [...m.getPadPath(id).xs].filter((v) => !Number.isNaN(v)).length]) })
 await shot('4-pad')
+out.padFits = await p.evaluate(() => { const vh = innerHeight; const tr = document.querySelector('.seg-phone-transport').getBoundingClientRect().top
+  return ['.seg-pad-area', '[data-pad-axis="x"]', '[data-pad-beats]', '[data-pad-clear]'].map((sel) => { const r = document.querySelector(sel).getBoundingClientRect(); return [sel, Math.round(r.top), Math.round(r.bottom), r.bottom <= tr + 1 && r.top >= 0] }) })
 await p.click('.seg-phone-rec'); await wait(2500); await p.click('.seg-phone-rec'); await wait(1500)
 out.clip = await p.evaluate(async () => { const c = (await import('/src/stores/clipStore.ts')).useClipStore.getState().clips.at(-1); return c ? [c.blob.type, Math.round(c.blob.size / 1024) + 'KB'] : null })
 out.shareEnabled = await p.evaluate(() => !document.querySelector('.seg-phone-share')?.hasAttribute('disabled'))

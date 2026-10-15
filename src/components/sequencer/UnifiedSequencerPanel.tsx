@@ -19,6 +19,7 @@ import { EffectTrackRow } from './EffectTrackRow'
 import { getEffectInfo } from '../../config/effectNames'
 import { TrackParamPanel } from './TrackParamPanel'
 import { LinesView } from './LinesView'
+import { PadView } from './PadView'
 import { linkedPlay, linkedStop } from '../../utils/sequencerTransport'
 import { isInteractiveKeyTarget } from '../../utils/keyboard'
 
@@ -225,7 +226,9 @@ export function UnifiedSequencerPanel() {
         onPageChange={setStepPage}
       />
 
-      {sequencerView === 'lines' && activeTrackIds.length > 0 ? (
+      {sequencerView === 'pad' ? (
+        <PadView ids={activeTrackIds} colors={trackColors} />
+      ) : sequencerView === 'lines' && activeTrackIds.length > 0 ? (
         <LinesView ids={activeTrackIds} colors={trackColors} />
       ) : (
       /* ─── Track list + param panel ───────────────────────── */

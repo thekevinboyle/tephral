@@ -406,6 +406,32 @@
 .seg-stage-drop[data-ok] { border-color: var(--live); }
 .seg-stage-drop span { font: 500 13px var(--font-sans); color: var(--text-primary); background: var(--bg-surface); padding: 6px 12px; border-radius: var(--radius-ctrl); }
 .seg-stage-drop:not([data-ok]) span { color: var(--text-secondary); }
+/* ─── Sequencer Pad view: X/Y pads (master + one per effect) ─────────────────────────────────────── */
+.seg-pad { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 8px 10px 10px; }
+.seg-pad-tabs { display: flex; gap: 4px; overflow-x: auto; flex: none; scrollbar-width: none; }
+.seg-pad-tabs button { flex: none; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: var(--radius-ctrl);
+  border: 1px solid transparent; background: transparent; color: var(--text-muted); font: 600 12px var(--font-sans); cursor: pointer; }
+.seg-pad-tabs button i { width: 7px; height: 7px; border-radius: 50%; }
+.seg-pad-tabs button[aria-selected="true"] { background: var(--bg-elevated); border-color: var(--border-emphasis); color: var(--text-primary); }
+.seg-pad-main { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.seg-pad-area { position: relative; height: 100%; aspect-ratio: 4 / 3; max-width: 60%; border-radius: 8px; background: var(--bg-void);
+  border: 1px solid var(--border-emphasis); overflow: hidden; }
+.seg-pad-surface { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+.seg-pad-axis { position: absolute; left: 8px; pointer-events: none; font: 500 10.5px var(--font-mono); color: var(--text-secondary);
+  background: color-mix(in oklab, var(--bg-surface) 85%, transparent); border: 1px solid var(--border-emphasis); border-radius: 4px; padding: 2px 7px; }
+.seg-pad-axis[data-axis="y"] { top: 8px; }
+.seg-pad-axis[data-axis="x"] { bottom: 8px; }
+.seg-pad-side { flex: 0 1 300px; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+.seg-pad-target { display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: 8px; font: 600 11px var(--font-sans); color: var(--text-muted); }
+.seg-pad-target select { height: 30px; min-width: 0; border-radius: var(--radius-ctrl); border: 1px solid var(--border-emphasis); background: var(--bg-surface);
+  color: var(--text-primary); font: 12px var(--font-sans); padding: 0 6px; }
+.seg-pad-modes, .seg-pad-actions { display: flex; gap: 6px; }
+.seg-pad-modes button, .seg-pad-actions button { flex: 1; height: 30px; border-radius: var(--radius-ctrl); border: 1px solid var(--border-emphasis);
+  background: var(--bg-surface); color: var(--text-secondary); font: 500 12px var(--font-sans); cursor: pointer; }
+.seg-pad-modes button[aria-pressed="true"] { background: var(--mod); border-color: var(--mod); color: var(--bg-void); }
+.seg-pad-actions button:hover:not(:disabled), .seg-pad-modes button:hover:not([aria-pressed="true"]) { background: var(--bg-hover); color: var(--text-primary); }
+.seg-pad-actions button:disabled { opacity: .4; cursor: default; }
+
 /* ─── Bank row under the browser: banks A–D | randomize, undo, rekt ─────────────────────────────────── */
 .seg-banks { height: 100%; width: 100%; display: grid; align-items: stretch; gap: 5px; padding: 8px 12px; box-sizing: border-box;
   grid-template-columns: repeat(4, minmax(0, 1fr)) 1px repeat(3, minmax(0, 1.15fr)); }

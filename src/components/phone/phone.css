@@ -38,11 +38,17 @@
 .seg-phone-line { width: 100%; height: 40px; border-radius: 4px; background: var(--bg-void); }
 .seg-phone-empty { color: var(--text-muted); font-size: 13px; text-align: center; margin: 24px 0; }
 
-/* The Pad view reused: pad above its controls */
-.seg-phone .seg-pad { padding: 0; }
-.seg-phone .seg-pad-main { flex-direction: column; }
-.seg-phone .seg-pad-area { width: 100%; max-width: none; height: auto; aspect-ratio: 4 / 3; flex: none; }
-.seg-phone .seg-pad-side { flex: none; min-width: 0; }
+/* The Pad view reused, fitted to the screen with no scrolling (a scroll gesture on the pad would draw instead):
+   the stage gives up some height, the pad takes what is left, its controls sit in a compact block under it */
+.seg-phone[data-view="pad"] .seg-phone-stage { height: 30vh; min-height: 180px; }
+.seg-phone[data-view="pad"] .seg-phone-body { overflow: hidden; }
+.seg-phone .seg-pad { padding: 0; flex: 1; min-height: 0; gap: 6px; }
+.seg-phone .seg-pad-main { flex: 1; min-height: 0; flex-direction: column; gap: 8px; }
+.seg-phone .seg-pad-area { flex: 1 1 auto; min-height: 120px; width: 100%; max-width: none; height: auto; aspect-ratio: auto; }
+.seg-phone .seg-pad-side { flex: none; min-width: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.seg-phone .seg-pad-target { grid-template-columns: auto minmax(0, 1fr); gap: 6px; }
+.seg-phone .seg-pad-target select { height: 32px; }
+.seg-phone .seg-pad-modes button, .seg-phone .seg-pad-actions button { height: 32px; }
 
 .seg-phone-transport { flex: none; display: flex; align-items: center; gap: 10px; padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--border); background: var(--bg-primary); }

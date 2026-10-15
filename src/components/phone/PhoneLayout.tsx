@@ -170,7 +170,7 @@ export function PhoneLayout() {
   const [adding, setAdding] = useState(false)
   const colors = Object.fromEntries(ids.map((id) => [id, getEffectInfo(id).color]))
   return (
-    <div className="seg-phone" data-phone-layout>
+    <div className="seg-phone" data-phone-layout data-view={view}>
       <PhoneStage canvasRef={canvasRef} />
       <PhoneChips onAdd={() => setAdding(true)} />
       <div className="seg-phone-views" role="tablist" aria-label="Sequencer">

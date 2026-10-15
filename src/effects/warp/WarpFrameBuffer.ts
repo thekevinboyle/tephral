@@ -68,8 +68,8 @@ export class WarpFrameBuffer {
   private lastT = -Infinity
   private readonly copy: THREE.ShaderMaterial
   private readonly quad: QuadPass
-  private readonly longSide: number
-  readonly maxFrames: number
+  private longSide: number
+  maxFrames: number
 
   constructor(quad: QuadPass, opts: FrameBufferOptions = {}) {
     this.quad = quad
@@ -79,6 +79,12 @@ export class WarpFrameBuffer {
       uniforms: { tSrc: { value: null } }, vertexShader: WARP_VERTEX, fragmentShader: WARP_COPY_FRAG,
       depthTest: false, depthWrite: false,
     })
+  }
+
+  /** Change the frame size and ring limit (performance tier); a new frame size frees the stored frames. */
+  setLimits(longSide: number, maxFrames: number) {
+    if (longSide !== this.longSide) { this.longSide = longSide; this.release() }
+    this.maxFrames = maxFrames
   }
 
   get size() { return this._size }

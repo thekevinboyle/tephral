@@ -5,7 +5,10 @@ let index = 0
 let count = 0
 
 export const perfMonitor = {
+  /** Frames actually rendered since load (the fps cap skips display frames, so rAF counts would overstate it). */
+  drawn: 0,
   record(frameMs: number) {
+    this.drawn++
     samples[index] = frameMs
     index = (index + 1) % SIZE
     if (count < SIZE) count++

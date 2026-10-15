@@ -35,6 +35,7 @@ import { getHeardWarpPosition, warpLoopSecondsAt, warpNow } from '../effects/war
 import { delayAtX } from '../effects/warp/warpMath'
 import { playPosition, slicesFor, WARP_SEED, type PlayParams } from '../effects/playhead'
 import { useWarpStore } from '../stores/warpStore'
+import { tierLimits, usePerfTierStore } from '../stores/perfTierStore'
 
 /**
  * What the pipeline is fed without the warp (set by the input effect). `live` is the texture the
@@ -561,6 +562,10 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       if (w === sizeW && h === sizeH) return
       sizeW = w
       sizeH = h
+      // The performance tier caps the drawing buffer's long side (Mobile: 720 device px); never above 2x
+      const cap = tierLimits().renderLongSide
+      const ratio = Math.min(window.devicePixelRatio || 1, 2)
+      renderer.setPixelRatio(Number.isFinite(cap) ? Math.max(0.25, Math.min(ratio, cap / Math.max(1, w, h))) : ratio)
       pipeline.setSize(w, h) // also sizes the renderer
       // Update resolution for GPU effects that need it
       pipeline.dotsEffect?.setResolution(w, h)
@@ -574,6 +579,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
     }
 
     updateSize()
+    // A tier change resizes at once (the drawing buffer's cap moves)
+    const unsubTier = usePerfTierStore.subscribe((st, prev) => { if (st.tier !== prev.tier) { sizeW = sizeH = -1; updateSize() } })
 
     const resizeObserver = new ResizeObserver(() => {
       if (container.clientWidth === sizeW && container.clientHeight === sizeH) return
@@ -596,6 +603,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       const w = useWarpStore.getState()
       let comp = warpCompositor.current
       if (!comp) { comp = new WarpCompositor(renderer); warpCompositor.current = comp; setActiveWarpCompositor(comp) }
+      const lim = tierLimits()
+      comp.setFrameLimits(lim.warpLongSide, lim.warpMaxFrames)
       const now = warpNow()
       const loop = warpLoopSecondsAt(now)
       const pos = getHeardWarpPosition()
@@ -656,6 +665,8 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
         eng = new SlicerEngine()
         slicerEngine.current = eng
       }
+      const lim = tierLimits()
+      eng.ring.setLimits(lim.slicerLongSide, lim.slicerMaxFrames)
       const seq = useEffectSequencerStore.getState()
       const out = eng.tick(
         renderer, media?.live ?? null, media?.aspect() ?? NaN, media?.size() ?? null,
@@ -727,8 +738,14 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       }
     }
 
+    // A tier with an fps cap (Mobile: 30) skips display frames; 4 ms of slack keeps 60 and 120 Hz displays at a steady 30
+    let lastDraw = -Infinity
     const animate = () => {
       frameIdRef.current = requestAnimationFrame(animate)
+      const cap = tierLimits().fps
+      const now = performance.now()
+      if (cap > 0 && now - lastDraw < 1000 / cap - 4) return
+      lastDraw = now
       advanceReadbackFrame()
       const start = performance.now()
       try {
@@ -744,6 +761,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
     return () => {
       cancelAnimationFrame(frameIdRef.current)
+      unsubTier()
       resizeObserver.disconnect()
       window.clearTimeout(resizeTimer)
       slicerEngine.current?.dispose()

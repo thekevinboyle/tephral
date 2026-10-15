@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import type { ImageSegmenter, ImageSegmenterResult } from '@mediapipe/tasks-vision'
 import { useSegStore, type SegStatus } from '../../stores/segStore'
+import { tierLimits } from '../../stores/perfTierStore'
 
 const WASM_PATH = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.33/wasm'
 const MODEL_PATH =
@@ -151,7 +152,8 @@ export class SegmentationService {
 
   private schedule() {
     if (!this.wanted || this.paused || this.timer) return
-    this.timer = setTimeout(() => { this.timer = null; this.tick(); this.schedule() }, this.interval)
+    // The Mobile tier updates the mask less often (main-thread time is the phone's scarcest resource)
+    this.timer = setTimeout(() => { this.timer = null; this.tick(); this.schedule() }, Math.max(this.interval, tierLimits().segMs))
   }
 
   private stopTimer() {

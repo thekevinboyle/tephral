@@ -5,6 +5,7 @@ import { useNarrow } from '../../hooks/useNarrow'
 import { perfMonitor } from '../../utils/perfMonitor'
 import { statusHover } from '../../utils/statusHover'
 import { getUIStatusText } from '../../config/statusDescriptions'
+import { usePerfTierStore } from '../../stores/perfTierStore'
 
 const TOGGLES: { id: PanelId; label: string }[] = [
   { id: 'browser', label: 'Browser' },
@@ -49,6 +50,29 @@ const PanelToggles = memo(function PanelToggles() {
   )
 })
 
+/** Render quality: Full, or Mobile (720p, 30 fps, smaller frame rings) for phones and tablets. */
+const TierToggle = memo(function TierToggle() {
+  const tier = usePerfTierStore((s) => s.tier)
+  const setStatusText = useUIStore((s) => s.setStatusText)
+  return (
+    <button
+      type="button"
+      className="seg-toggle"
+      data-tier={tier}
+      data-on={tier === 'mobile' ? '' : undefined}
+      aria-pressed={tier === 'mobile'}
+      onClick={() => usePerfTierStore.getState().setTier(tier === 'mobile' ? 'full' : 'mobile')}
+      onMouseEnter={() => setStatusText(tier === 'mobile'
+        ? 'Quality: Mobile (720p, 30 fps, smaller warp and slicer memory). Click for Full'
+        : 'Quality: Full. Click for Mobile (720p, 30 fps, smaller warp and slicer memory)')}
+      onMouseLeave={() => setStatusText(null)}
+    >
+      <i aria-hidden />
+      {tier === 'mobile' ? 'Mobile quality' : 'Full quality'}
+    </button>
+  )
+})
+
 const FpsReadout = memo(function FpsReadout() {
   const [perf, setPerf] = useState({ avgMs: 0, fps: 0 })
   useEffect(() => {
@@ -76,6 +100,7 @@ export const StatusBar = memo(function StatusBar() {
       {/* Sibling, not a child of the truncating status span: a long hover text must not hide it */}
       {segText && <span data-seg-status={segStatus} className="seg-footer-seg" style={{ flex: 'none', color: 'var(--text-muted)', fontSize: 11, whiteSpace: 'nowrap' }}>{segText}</span>}
       <PanelToggles />
+      <TierToggle />
       <FpsReadout />
     </div>
   )

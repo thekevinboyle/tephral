@@ -3,7 +3,7 @@ import { isOutputOpen, isProfileNeutral, type Knobs, type ProfileId, type WarpOu
 import { delayAtX, LUT_SIZE, MAX_DELAY_SECONDS } from './warpMath'
 import { playPosition, type PlayParams } from '../playhead'
 import { onWarpClockChange } from './warpClock'
-import { QuadPass, WarpFrameBuffer, WARP_CAPTURE_FPS, WARP_MAX_FRAMES, makeTarget } from './WarpFrameBuffer'
+import { QuadPass, WarpFrameBuffer, WARP_CAPTURE_FPS, makeTarget } from './WarpFrameBuffer'
 import {
   bandLuma, WARP_CLEAN_FRAG, WARP_COPY_FRAG, WARP_DEGRADE_FRAG, WARP_FAUXCODER_FRAG, WARP_FILTERSPAM_FRAG, WARP_FLANGE_FRAG,
   WARP_HARMONICER_FRAG, WARP_LOFIZZLY_FRAG, WARP_VERTEX,
@@ -220,13 +220,16 @@ export class WarpCompositor {
     this.thumbHistory = Number.isFinite(seconds) ? Math.max(0, seconds) : 0
   }
 
+  /** Frame size and most frames kept (performance tier). */
+  setFrameLimits(longSide: number, maxFrames: number) { this.buffer.setLimits(longSide, maxFrames) }
+
   private capacity() {
     const L = Math.max(0, this.opts.loopSeconds)
     // Reads past the loop: Filter Spam's Octaves start up to a slice (L/16) further back, Degrade's Chaos up to 0.3 s
     const p = this.opts.profile
     const margin = p === 'filterspam' ? L / 16 : p === 'degrade' ? 0.3 : 0
     const longest = Math.min(MAX_DELAY_SECONDS, Math.max(L + margin, this.thumbHistory))
-    return Math.min(WARP_MAX_FRAMES, Math.ceil(longest * WARP_CAPTURE_FPS) + 2)
+    return Math.min(this.buffer.maxFrames, Math.ceil(longest * WARP_CAPTURE_FPS) + 2)
   }
 
   /** Remember `live` and the time; store a downscaled copy if 1/30 s has elapsed since the last one. */

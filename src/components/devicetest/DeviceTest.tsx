@@ -46,6 +46,26 @@ function deviceInfo(): Record<string, unknown> {
   }
 }
 
+/**
+ * iPhone Safari does not load a video that is not in the page and playing, so play it muted, hidden, then read it.
+ * Resolves once a frame is decoded (or after `ms`); the caller removes the element.
+ */
+async function loadInPage(src: string, ms = 10000): Promise<{ v: HTMLVideoElement; error?: string }> {
+  const v = document.createElement('video')
+  v.muted = true; v.playsInline = true; v.autoplay = true; v.preload = 'auto'
+  v.setAttribute('playsinline', '')
+  Object.assign(v.style, { position: 'fixed', left: '0', top: '0', width: '2px', height: '2px', opacity: '0.01', pointerEvents: 'none' })
+  document.body.appendChild(v)
+  v.src = src
+  let error: string | undefined
+  const ready = new Promise<void>((r) => { v.addEventListener('loadeddata', () => r(), { once: true }); v.addEventListener('playing', () => r(), { once: true }) })
+  const failed = new Promise<void>((r) => v.addEventListener('error', () => { error = `media error ${v.error?.code ?? '?'}: ${v.error?.message ?? ''}`; r() }, { once: true }))
+  v.play().catch((e) => { error = `play(): ${e?.name ?? e}` })
+  await Promise.race([ready, failed, wait(ms)])
+  if (v.readyState < 2 && !error) error = `not loaded after ${ms / 1000} s (readyState ${v.readyState})`
+  return { v, error }
+}
+
 /** 60 s (or `secs`) of the stage canvas plus a quiet tone through MediaRecorder, then check both tracks come back. */
 async function recordProbe(secs: number, ac: AudioContext): Promise<RecResult> {
   const canvas = stageCanvas()
@@ -71,12 +91,12 @@ async function recordProbe(secs: number, ac: AudioContext): Promise<RecResult> {
   lastRecording = blob
   const out: RecResult = { mime: blob.type, sizeKB: Math.round(blob.size / 1024), durationS: 0, width: 0, height: 0, audioS: 0, ok: false }
   try {
-    const v = document.createElement('video')
-    v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = URL.createObjectURL(blob)
-    await Promise.race([new Promise((r) => { v.onloadeddata = r }), wait(10000)])
+    const { v, error } = await loadInPage(URL.createObjectURL(blob))
     let d = v.duration
     if (!Number.isFinite(d)) { v.currentTime = 1e9; await Promise.race([new Promise((r) => { v.ondurationchange = r }), wait(5000)]); d = v.duration }
     Object.assign(out, { durationS: +(+d || 0).toFixed(1), width: v.videoWidth, height: v.videoHeight })
+    if (error) out.error = `video: ${error}`
+    v.pause(); v.remove()
   } catch (e) { out.error = `video: ${e}` }
   try { out.audioS = +(await ac.decodeAudioData(await blob.arrayBuffer())).duration.toFixed(1) } catch (e) { out.error = (out.error ? out.error + '; ' : '') + `audio: ${e}` }
   out.ok = out.width > 0 && out.durationS > secs * 0.8 && out.audioS > secs * 0.8
@@ -86,9 +106,10 @@ let lastRecording: Blob | null = null
 
 /** Does Safari hand WebGL the raw HLG signal (Chrome does) or already tone-map it? Reads a known grey ramp. */
 async function hdrProbe(): Promise<HdrResult> {
-  const v = document.createElement('video')
-  v.muted = true; v.playsInline = true; v.src = '/devicetest/hlg-pattern.mp4'
-  try { await v.play(); await wait(400); v.pause() } catch { return { videoFrame: 'n/a', greys: [], verdict: 'could not play the HLG clip (HEVC)' } }
+  const { v, error } = await loadInPage('/devicetest/hlg-pattern.mp4')
+  if (error || v.readyState < 2) { v.remove(); return { videoFrame: 'n/a', greys: [], verdict: `could not play the HLG clip (HEVC): ${error ?? 'no frame'}` } }
+  await wait(300)
+  v.pause()
   let cs = 'n/a'
   try { const f = new VideoFrame(v); cs = JSON.stringify(f.colorSpace.toJSON()); f.close() } catch (e) { cs = `unsupported (${e})` }
   const gl = document.createElement('canvas').getContext('webgl2')
@@ -103,6 +124,7 @@ async function hdrProbe(): Promise<HdrResult> {
   for (let i = 1; i < 16; i += 2) { gl.readPixels(Math.round(((i + 0.5) / 16) * W), Math.round(H / 4), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); greys.push(px[1]) }
   // The clip's grey steps are HLG code values i * 17; raw = WebGL got them unchanged
   const raw = greys.filter((g, k) => Math.abs(g - (2 * k + 1) * 17) <= 6).length >= 6
+  v.remove()
   return { videoFrame: cs, greys, verdict: raw ? 'raw HLG (the app tone-maps it)' : 'converted by Safari (tone-mapping must be skipped here)' }
 }
 
@@ -140,34 +162,45 @@ export function DeviceTest() {
       { id: 'warp', label: '+ time warp', enter: () => { const w = useWarpStore.getState(); w.loadPreset('Stutter build'); w.patch({ amount: 1 }); w.setEnabled(true) } },
       { id: 'vision', label: '+ person and face effects', enter: () => VISION_FX.forEach((id) => { if (!isEffectActive(id)) toggleEffect(id) }) },
     ]
+    /** Sample rendered fps for the step until `secs` pass (or `until` resolves), saving progress every 2 s. */
+    const measure = (ph: PhaseResult, until?: Promise<unknown>) => new Promise<void>((done) => {
+      let finished = false
+      until?.then(() => { finished = true })
+      const t0 = performance.now()
+      // Rendered frames (perfMonitor.drawn), not display refreshes: the Mobile tier draws every other one
+      let last = t0, drawn0 = perfMonitor.drawn, secStart = t0, lastSave = t0
+      const tick = (now: number) => {
+        if (now - last > 100) ph.longFrames++
+        last = now
+        if (now - secStart >= 1000) {
+          const fps = ((perfMonitor.drawn - drawn0) * 1000) / (now - secStart)
+          ph.fps.push(+fps.toFixed(1)); drawn0 = perfMonitor.drawn; secStart = now
+          setLive({ phase: ph.label, left: Math.max(0, Math.round(ph.secs - (now - t0) / 1000)), fps: Math.round(fps) })
+        }
+        if (now - lastSave > 2000) { s.elapsed = Math.round((Date.now() - s.startedAt) / 1000); writeSaved(s); lastSave = now }
+        if (stop.current || finished || (!until && now - t0 >= ph.secs * 1000)) { done(); return }
+        requestAnimationFrame(tick)
+      }
+      requestAnimationFrame(tick)
+    })
     for (let p = 0; p < plan.length && !stop.current; p++) {
       const ph: PhaseResult = { id: plan[p].id, label: plan[p].label, secs: secs[p], fps: [], longFrames: 0 }
       s.phases.push(ph); s.phase = ph.id
       plan[p].enter()
-      await new Promise<void>((done) => {
-        const t0 = performance.now()
-        // Rendered frames (perfMonitor.drawn), not display refreshes: the Mobile tier draws every other one
-        let last = t0, drawn0 = perfMonitor.drawn, secStart = t0, lastSave = t0
-        const tick = (now: number) => {
-          if (now - last > 100) ph.longFrames++
-          last = now
-          if (now - secStart >= 1000) {
-            const fps = ((perfMonitor.drawn - drawn0) * 1000) / (now - secStart)
-            ph.fps.push(+fps.toFixed(1)); drawn0 = perfMonitor.drawn; secStart = now
-            setLive({ phase: ph.label, left: Math.max(0, Math.round(ph.secs - (now - t0) / 1000)), fps: Math.round(fps) })
-          }
-          if (now - lastSave > 2000) { s.elapsed = Math.round((Date.now() - s.startedAt) / 1000); writeSaved(s); lastSave = now }
-          if (stop.current || now - t0 >= ph.secs * 1000) { done(); return }
-          requestAnimationFrame(tick)
-        }
-        requestAnimationFrame(tick)
-      })
+      await measure(ph)
     }
     if (!stop.current) {
-      s.phase = 'record'; writeSaved(s)
-      setLive({ phase: 'Recording with audio', left: recSecs, fps: 0 })
-      s.rec = await recordProbe(recSecs, ac)
+      // Record at the app's recording size (720p), as REC does, and keep measuring while it records
+      const ph: PhaseResult = { id: 'record', label: '+ recording at 720p', secs: recSecs, fps: [], longFrames: 0 }
+      s.phases.push(ph); s.phase = 'record'; writeSaved(s)
+      usePerfTierStore.getState().setRecording(true)
+      await wait(300) // the drawing buffer resizes first
+      const probe = recordProbe(recSecs, ac)
+      await measure(ph, probe)
+      s.rec = await probe
+      usePerfTierStore.getState().setRecording(false)
       s.phase = 'hdr'; writeSaved(s)
+      setLive({ phase: 'HDR check', left: 0, fps: 0 })
       s.hdr = await hdrProbe()
     }
     s.status = 'done'; s.elapsed = Math.round((Date.now() - s.startedAt) / 1000)
@@ -230,7 +263,7 @@ function summarize(s: Saved) {
     return `${p.label}: median ${median(f)} fps, low ${pct(f, 0.1)} fps, ${p.longFrames} stalls, ${drop > 0 ? `${drop}% slower by the end` : 'no slow-down'}`
   }
   s.phases.forEach((p) => lines.push(phaseLine(p)))
-  const heavy = s.phases[s.phases.length - 1]
+  const heavy = s.phases.find((p) => p.id === 'vision') ?? s.phases[s.phases.length - 1]
   const sustain = !!heavy && median(steady(heavy)) >= 27 && pct(steady(heavy), 0.1) >= 20
   lines.push(`${sustain ? 'PASS' : 'FAIL'} 30 fps with everything on (median 27+, low 20+)`)
   lines.push(`${s.contextLost ? 'FAIL' : 'PASS'} the graphics context survived`)

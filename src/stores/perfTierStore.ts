@@ -18,9 +18,11 @@ export const TIER_LIMITS: Record<PerfTier, {
   detectMs: number
   headPasses: number
   segMs: number
+  /** While recording, the drawing buffer's long side is at least this (720p), however small the stage is on screen. */
+  recordLongSide: number
 }> = {
-  full: { renderLongSide: Infinity, fps: 0, warpLongSide: 512, warpMaxFrames: 240, slicerLongSide: 768, slicerMaxFrames: 300, detectMs: 66, headPasses: 3, segMs: 33 },
-  mobile: { renderLongSide: 720, fps: 30, warpLongSide: 384, warpMaxFrames: 120, slicerLongSide: 480, slicerMaxFrames: 150, detectMs: 200, headPasses: 1, segMs: 100 },
+  full: { renderLongSide: Infinity, fps: 0, warpLongSide: 512, warpMaxFrames: 240, slicerLongSide: 768, slicerMaxFrames: 300, detectMs: 66, headPasses: 3, segMs: 33, recordLongSide: 1280 },
+  mobile: { renderLongSide: 720, fps: 30, warpLongSide: 384, warpMaxFrames: 120, slicerLongSide: 480, slicerMaxFrames: 150, detectMs: 200, headPasses: 1, segMs: 100, recordLongSide: 1280 },
 }
 
 const KEY = 'seg.tier'
@@ -43,6 +45,9 @@ function initialTier(): PerfTier {
 interface PerfTierState {
   tier: PerfTier
   setTier: (t: PerfTier) => void
+  /** Recording (the app's REC or the device test): the canvas draws at recordLongSide while true. */
+  recording: boolean
+  setRecording: (v: boolean) => void
 }
 
 /** Render quality tier: Full on computers, Mobile on phones and tablets by default; the footer switches it. A per-device preference (localStorage), never in banks or presets. */
@@ -52,6 +57,8 @@ export const usePerfTierStore = create<PerfTierState>((set) => ({
     try { localStorage.setItem(KEY, tier) } catch { /* the choice lasts for this session */ }
     set({ tier })
   },
+  recording: false,
+  setRecording: (recording) => set({ recording }),
 }))
 
 export const tierLimits = () => TIER_LIMITS[usePerfTierStore.getState().tier]

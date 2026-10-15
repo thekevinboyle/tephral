@@ -3,6 +3,7 @@ import { useRecordingStore, EXPORT_BITRATES } from '../stores/recordingStore'
 import { useClipStore } from '../stores/clipStore'
 import { useUIStore } from '../stores/uiStore'
 import { saveBlob } from '../utils/exportTranscode'
+import { usePerfTierStore } from '../stores/perfTierStore'
 
 /** seg-f4ult-2026-10-14-153012.mp4 (local time). */
 export function recordingFileName(mimeType: string, at = new Date()): string {
@@ -77,6 +78,8 @@ export function useRecordingCapture(
       }
 
       try {
+        // Draw at the recording size (720p) from here on; Canvas resizes the drawing buffer at once
+        usePerfTierStore.getState().setRecording(true)
         // Create composite canvas for capturing all layers
         if (!compositeCanvasRef.current) {
           compositeCanvasRef.current = document.createElement('canvas')
@@ -107,8 +110,8 @@ export function useRecordingCapture(
           // Clear composite canvas
           compositeCtx.clearRect(0, 0, compositeCanvas.width, compositeCanvas.height)
 
-          // Draw the main WebGL canvas first
-          compositeCtx.drawImage(canvas, 0, 0)
+          // Draw the main WebGL canvas first (scaled: the stage may have been resized since the take started)
+          compositeCtx.drawImage(canvas, 0, 0, compositeCanvas.width, compositeCanvas.height)
 
           // Find and draw all overlay canvases in the container
           if (container) {
@@ -176,6 +179,7 @@ export function useRecordingCapture(
         mediaRecorderRef.current.stop()
         console.log('[Recording] Stopped capturing')
       }
+      usePerfTierStore.getState().setRecording(false) // back to the screen's own size
     }
 
     return () => {

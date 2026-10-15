@@ -562,10 +562,14 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
       if (w === sizeW && h === sizeH) return
       sizeW = w
       sizeH = h
-      // The performance tier caps the drawing buffer's long side (Mobile: 720 device px); never above 2x
-      const cap = tierLimits().renderLongSide
+      // The performance tier caps the drawing buffer's long side (Mobile: 720 device px); never above 2x.
+      // While recording it is at least the tier's recordLongSide (720p), so a small stage never means a small video.
+      const lim = tierLimits()
+      const longest = Math.max(1, w, h)
       const ratio = Math.min(window.devicePixelRatio || 1, 2)
-      renderer.setPixelRatio(Number.isFinite(cap) ? Math.max(0.25, Math.min(ratio, cap / Math.max(1, w, h))) : ratio)
+      let pr = Number.isFinite(lim.renderLongSide) ? Math.max(0.25, Math.min(ratio, lim.renderLongSide / longest)) : ratio
+      if (usePerfTierStore.getState().recording) pr = Math.max(pr, lim.recordLongSide / longest)
+      renderer.setPixelRatio(pr)
       pipeline.setSize(w, h) // also sizes the renderer
       // Update resolution for GPU effects that need it
       pipeline.dotsEffect?.setResolution(w, h)
@@ -580,7 +584,7 @@ export const Canvas = forwardRef<CanvasHandle>(function Canvas(_, ref) {
 
     updateSize()
     // A tier change resizes at once (the drawing buffer's cap moves)
-    const unsubTier = usePerfTierStore.subscribe((st, prev) => { if (st.tier !== prev.tier) { sizeW = sizeH = -1; updateSize() } })
+    const unsubTier = usePerfTierStore.subscribe((st, prev) => { if (st.tier !== prev.tier || st.recording !== prev.recording) { sizeW = sizeH = -1; updateSize() } })
 
     const resizeObserver = new ResizeObserver(() => {
       if (container.clientWidth === sizeW && container.clientHeight === sizeH) return

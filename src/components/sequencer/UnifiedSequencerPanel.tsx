@@ -3,9 +3,6 @@ import { useEffectSequencerStore } from '../../stores/effectSequencerStore'
 import { useSequencerContainerStore } from '../../stores/sequencerContainerStore'
 import { useRoutingStore } from '../../stores/routingStore'
 import { useUIStore } from '../../stores/uiStore'
-import { useEffectSequencerPlayback } from '../../hooks/useEffectSequencerPlayback'
-import { useWebMIDI } from '../../hooks/useWebMIDI'
-import { useMIDINoteGate } from '../../hooks/useMIDINoteGate'
 import { useActiveEffects } from '../../hooks/useActiveEffects'
 import {
   EFFECTS,
@@ -53,10 +50,7 @@ export function UnifiedSequencerPanel() {
     trackParamPanelOpen,
   } = useEffectSequencerStore()
 
-  // Initialize playback engine
-  useEffectSequencerPlayback()
-  useWebMIDI()
-  useMIDINoteGate()
+  // Playback, MIDI and the MIDI gate run in useEngine (the layout), so they keep running whichever view is open
 
   // ─── Active effects (reactive to all store changes) ─────────────────────
   const { sortedEffects } = useActiveEffects()

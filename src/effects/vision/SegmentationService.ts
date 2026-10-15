@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import type { ImageSegmenter, ImageSegmenterResult } from '@mediapipe/tasks-vision'
 import { useSegStore, type SegStatus } from '../../stores/segStore'
 import { tierLimits } from '../../stores/perfTierStore'
+import { requestVision, releaseVision, visionMode } from './visionWorkerClient'
 
 const WASM_PATH = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.33/wasm'
 const MODEL_PATH =
@@ -85,6 +86,7 @@ export class SegmentationService {
       this.dropPending()
       this.segmenter?.close()
       this.segmenter = null
+      if (visionMode() === 'worker') releaseVision('segment')
       this.mpGl = null
       this.loadPromise = null
       this.setStatus('idle')
@@ -120,6 +122,8 @@ export class SegmentationService {
   }
 
   private ensureLoaded() {
+    // In the vision worker the model loads on its first job; 'ready' comes with the first mask
+    if (visionMode() === 'worker') { if (this.status !== 'ready') this.setStatus('loading'); return }
     if (this.loadPromise) return
     const id = ++this.loadId
     this.setStatus('loading')
@@ -167,6 +171,7 @@ export class SegmentationService {
   }
 
   private tick() {
+    if (visionMode() === 'worker') { this.workerTick(); return }
     const seg = this.segmenter
     if (!seg) return
     const t0 = performance.now()
@@ -221,6 +226,39 @@ export class SegmentationService {
       console.warn('[SEG] segmentation failed:', err)
     }
     return true
+  }
+
+  private inFlight = false
+
+  /** Off the main thread: send a 256 px copy to the vision worker and publish its mask when it comes back. */
+  private workerTick() {
+    const src = this.source
+    if (!src || this.inFlight) return
+    if (src instanceof HTMLVideoElement) {
+      if (src.readyState < 2 || src.videoWidth === 0 || src.currentTime === this.lastVideoTime) return
+    } else if (!src.complete || src.naturalWidth === 0 || src === this.lastImage) return
+    const sw = src instanceof HTMLVideoElement ? src.videoWidth : src.naturalWidth
+    const sh = src instanceof HTMLVideoElement ? src.videoHeight : src.naturalHeight
+    const w = INPUT_WIDTH, h = Math.max(1, Math.round((INPUT_WIDTH * sh) / sw))
+    if (this.canvas.width !== w || this.canvas.height !== h) { this.canvas.width = w; this.canvas.height = h }
+    this.ctx.drawImage(src, 0, 0, w, h)
+    const gen = this.generation
+    const frameTime = src instanceof HTMLVideoElement ? src.currentTime : -1
+    this.inFlight = true
+    createImageBitmap(this.canvas)
+      .then((frame) => requestVision({ type: 'segment', frame, ts: performance.now() }))
+      .then((r) => {
+        if (gen !== this.generation || r.type !== 'segment') return
+        this.publish(r.mask, r.width, r.height)
+        if (this.status !== 'ready') this.setStatus('ready')
+        if (src instanceof HTMLImageElement) this.lastImage = src
+        else this.lastVideoTime = frameTime
+      })
+      .catch((err) => {
+        if (visionMode() === 'main') this.ensureLoaded() // fell back: load the model here
+        else console.warn('[SEG] segmentation failed:', err)
+      })
+      .finally(() => { this.inFlight = false })
   }
 
   /** Back off to SLOW_TICK_MS while ticks run long; recover after a run of fast ones. */

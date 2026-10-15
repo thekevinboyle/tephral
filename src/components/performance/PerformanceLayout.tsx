@@ -1,4 +1,5 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef } from 'react'
+import { useEngine } from '../../hooks/useEngine'
 import './layout.css'
 import type { CanvasHandle } from '../Canvas'
 import { StageArea } from './StageArea'
@@ -10,83 +11,16 @@ import { Inspector } from './Inspector'
 import { ModulationLines } from './ModulationLines'
 // DataTerminal stashed — component file kept, just not rendered
 // import { DataTerminal } from '../terminal/DataTerminal'
-import { useRecordingCapture } from '../../hooks/useRecordingCapture'
-import { useAutomationPlayback } from '../../hooks/useAutomationPlayback'
-import { useContinuousModulation } from '../../hooks/useContinuousModulation'
-import { useEuclideanEngine } from '../../hooks/useEuclideanEngine'
-import { useRicochetEngine } from '../../hooks/useRicochetEngine'
-import { usePolyEuclidEngine } from '../../hooks/usePolyEuclidEngine'
-import { useModulationEngine } from '../../hooks/useModulationEngine'
-import { useDestructionMode } from '../../hooks/useDestructionMode'
-import { useDestructionChaos } from '../../hooks/useDestructionChaos'
-import { useUnifiedAudioAnalysis } from '../../hooks/useUnifiedAudioAnalysis'
-import { useAudioReactive } from '../../hooks/useAudioReactive'
 import { DestructionOverlay } from '../DestructionOverlay'
 // LFO Editor Panel hidden — component kept, just not rendered
 // import { LFOEditorPanel } from './LFOEditorPanel'
 import { StatusBar } from './StatusBar'
 import { ShellDrawers } from './ShellDrawers'
 import { useUIStore } from '../../stores/uiStore'
-import { linkedToggle } from '../../utils/sequencerTransport'
-import { isInteractiveKeyTarget } from '../../utils/keyboard'
 
 export function PerformanceLayout() {
-  // Space plays and stops the master transport anywhere in the app (not while typing or on a focused control)
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== ' ' || e.repeat || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || isInteractiveKeyTarget(e.target)) return
-      e.preventDefault()
-      linkedToggle()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-
   const canvasRef = useRef<CanvasHandle>(null)
-  const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null)
-
-  // Initialize automation playback (handles keyboard shortcuts and event replay)
-  useAutomationPlayback()
-
-  // Initialize sequencer engines (always running)
-  useEuclideanEngine()
-  useRicochetEngine()
-  usePolyEuclidEngine()
-
-  // Initialize modulation engine (LFO, Random, Step, Envelope value generators)
-  useModulationEngine()
-
-  // Initialize continuous modulation for special sources (euclidean, ricochet, lfo, random, step, envelope)
-  useContinuousModulation()
-
-  // Initialize destruction mode (hidden feature)
-  useDestructionMode()
-  useDestructionChaos()
-
-  // Audio analysis (always runs — feeds waveform display + audio gate)
-  useUnifiedAudioAnalysis()
-
-  // Audio reactive DSP (FFT band splitting + envelope following)
-  useAudioReactive()
-
-  const captureRef = useRef<HTMLCanvasElement | null>(null)
-
-  useEffect(() => {
-    const checkCanvas = () => {
-      if (canvasRef.current) {
-        const canvas = canvasRef.current.getCanvas()
-        if (canvas && canvas !== captureRef.current) {
-          captureRef.current = canvas
-          setCanvasElement(canvas)
-        }
-      }
-    }
-    checkCanvas()
-    const interval = setInterval(checkCanvas, 100)
-    return () => clearInterval(interval)
-  }, [])
-
-  useRecordingCapture(captureRef, canvasElement)
+  const captureRef = useEngine(canvasRef)
 
   // Narrow selectors: panel flags change rarely. The children below keep a fixed position in the tree
   // (hidden by CSS, never conditionally rendered) so the stage/canvas is never remounted.
